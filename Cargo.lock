@@ -1624,6 +1624,7 @@ dependencies = [
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
+ "serde_json",
  "token_storage_client",
  "token_storage_types",
  "tokio",

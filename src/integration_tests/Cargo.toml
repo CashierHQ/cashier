@@ -22,6 +22,7 @@ ic_mple_pocket_ic = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_json = { workspace = true }
 token_storage_client = { workspace = true }
 token_storage_types = { workspace = true }
 tokio = { workspace = true }
