@@ -5,8 +5,10 @@ on:
     branches:
       - main
       - staging
+      - feature/cache-dfx-orbit-cli # TODO: remove after testing
     paths:
       - 'src/cashier_frontend_new/**'
+      - '.github/workflows/orbit-frontend-deploy.yml' # TODO: remove after testing
   workflow_dispatch:
     inputs:
       mode:
