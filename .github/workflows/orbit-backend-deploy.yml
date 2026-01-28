@@ -136,7 +136,6 @@ jobs:
         run: |
           git clone https://github.com/dfinity/orbit.git
           cd orbit
-          git checkout @orbit/control-panel-v0.4.0
           cargo install -f --path tools/dfx-orbit/
   
       - name: Setup station
