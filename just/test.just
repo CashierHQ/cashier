@@ -17,6 +17,10 @@ test test_name="": download_artifacts build_canisters
 
 
 # Run integration tests only (supports nextest sharding)
+# If partition and total are provided, runs only that partition of tests.
+# Args:
+# partition: which partition to run (1-based index)
+# total: total number of partitions
 [group('test')]
 test_integration partition="" total="":
   #!/usr/bin/env bash

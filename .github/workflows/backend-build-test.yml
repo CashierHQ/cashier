@@ -151,6 +151,18 @@ jobs:
             --workspace-remap ${{ github.workspace }} \
             --partition count:${{ matrix.partition }}/${{ matrix.total }}
 
+  cleanup-artifacts:
+    name: "Cleanup Artifacts"
+    needs: integration-test
+    if: always()
+    permissions:
+      actions: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: geekyeggo/delete-artifact@v5
+        with:
+          name: test-artifacts
+
   backend-test-i686:
     name: "Backend Test (i686)"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
