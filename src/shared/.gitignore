@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Generated TypeScript/Rust files are TRACKED (they're the package output)
+# The generated/ directory contains the files that consumers import
+
+# Build artifacts (NOT the generated/ directory!)
+dist/
+*.tsbuildinfo
+
+# TypeScript compilation artifacts from tsx/ts-node (NOT from tsc builds)
+scripts/**/*.js
+scripts/**/*.js.map
+scripts/**/*.d.ts
+scripts/**/*.d.ts.map
+logic/**/*.js
+logic/**/*.js.map
+logic/**/*.d.ts
+logic/**/*.d.ts.map
+
+# Test coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust/Cargo build artifacts
+tests/rust-validation/target/
+tests/rust-validation/Cargo.lock

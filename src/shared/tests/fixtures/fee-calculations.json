@@ -1,0 +1,272 @@
+{
+	"$schema": "../../schemas/test-fixtures.schema.json",
+	"description": "Test fixtures for fee calculation functions",
+	"version": "1.0.0",
+
+	"testCases": {
+		"calculateIntentTotalAmount": [
+			{
+				"name": "CreatorToTreasury returns link creation fee",
+				"input": {
+					"participants": "CreatorToTreasury",
+					"userInputAmount": "0",
+					"maxUse": 1,
+					"linkCreationFee": "50000",
+					"linkMaxAssetAmount": "0"
+				},
+				"expected": "50000"
+			},
+			{
+				"name": "CreatorToLink multiplies by max_use",
+				"input": {
+					"participants": "CreatorToLink",
+					"userInputAmount": "20000",
+					"maxUse": 3,
+					"linkCreationFee": "0",
+					"linkMaxAssetAmount": "0"
+				},
+				"expected": "60000"
+			},
+			{
+				"name": "UserToLink returns user input amount",
+				"input": {
+					"participants": "UserToLink",
+					"userInputAmount": "100000000",
+					"maxUse": 1,
+					"linkCreationFee": "0",
+					"linkMaxAssetAmount": "0"
+				},
+				"expected": "100000000"
+			},
+			{
+				"name": "LinkToUser returns user input amount",
+				"input": {
+					"participants": "LinkToUser",
+					"userInputAmount": "20000",
+					"maxUse": 1,
+					"linkCreationFee": "0",
+					"linkMaxAssetAmount": "0"
+				},
+				"expected": "20000"
+			},
+			{
+				"name": "LinkToCreator returns link max asset amount",
+				"input": {
+					"participants": "LinkToCreator",
+					"userInputAmount": "0",
+					"maxUse": 1,
+					"linkCreationFee": "0",
+					"linkMaxAssetAmount": "150000"
+				},
+				"expected": "150000"
+			}
+		],
+
+		"calculateIntentTotalNetworkFee": [
+			{
+				"name": "CreatorToTreasury ICRC1 - 1x inbound only",
+				"input": {
+					"participants": "CreatorToTreasury",
+					"tokenStandard": "ICRC1",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "10000"
+			},
+			{
+				"name": "CreatorToTreasury ICRC2 - 2x inbound only",
+				"input": {
+					"participants": "CreatorToTreasury",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "20000"
+			},
+			{
+				"name": "CreatorToLink ICRC1 - 1x inbound + 1x per use",
+				"input": {
+					"participants": "CreatorToLink",
+					"tokenStandard": "ICRC1",
+					"assetNetworkFee": "10000",
+					"maxUse": 3
+				},
+				"expected": "40000",
+				"comment": "10000 * 1 + 10000 * 3 = 40000"
+			},
+			{
+				"name": "CreatorToLink ICRC2 - 2x inbound + 1x per use",
+				"input": {
+					"participants": "CreatorToLink",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 3
+				},
+				"expected": "50000",
+				"comment": "10000 * 2 + 10000 * 3 = 50000"
+			},
+			{
+				"name": "UserToLink ICRC1 - 1x inbound + 1x outbound",
+				"input": {
+					"participants": "UserToLink",
+					"tokenStandard": "ICRC1",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "20000"
+			},
+			{
+				"name": "UserToLink ICRC2 - 2x inbound + 1x outbound",
+				"input": {
+					"participants": "UserToLink",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "30000"
+			},
+			{
+				"name": "LinkToUser - 1x outbound only (same for ICRC1/ICRC2)",
+				"input": {
+					"participants": "LinkToUser",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "10000"
+			},
+			{
+				"name": "LinkToCreator - 1x outbound only",
+				"input": {
+					"participants": "LinkToCreator",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 1
+				},
+				"expected": "10000"
+			}
+		],
+
+		"calculateIntentUserFee": [
+			{
+				"name": "CreatorToTreasury - pays amount + network fee",
+				"input": {
+					"participants": "CreatorToTreasury",
+					"totalAmount": "50000",
+					"totalNetworkFee": "20000"
+				},
+				"expected": "70000"
+			},
+			{
+				"name": "CreatorToLink - pays only network fee",
+				"input": {
+					"participants": "CreatorToLink",
+					"totalAmount": "60000",
+					"totalNetworkFee": "50000"
+				},
+				"expected": "50000"
+			},
+			{
+				"name": "UserToLink - pays only network fee",
+				"input": {
+					"participants": "UserToLink",
+					"totalAmount": "100000000",
+					"totalNetworkFee": "30000"
+				},
+				"expected": "30000"
+			},
+			{
+				"name": "LinkToUser - pays nothing (free to receive)",
+				"input": {
+					"participants": "LinkToUser",
+					"totalAmount": "20000",
+					"totalNetworkFee": "10000"
+				},
+				"expected": "0"
+			},
+			{
+				"name": "LinkToCreator - pays network fee for withdrawal",
+				"input": {
+					"participants": "LinkToCreator",
+					"totalAmount": "150000",
+					"totalNetworkFee": "10000"
+				},
+				"expected": "10000"
+			}
+		],
+
+		"calculateIntentFees_endToEnd": [
+			{
+				"name": "Airdrop Link - CreatorToTreasury intent (ICRC2)",
+				"description": "Example from Mason's doc: AirdropLink with ICP, link_creation_fee=0.0005, network_fee=0.0001",
+				"input": {
+					"intent_participants": "CreatorToTreasury",
+					"token_standard": "ICRC2",
+					"user_input_amount": "0",
+					"max_use": 3,
+					"link_creation_fee": "50000",
+					"asset_network_fee": "10000",
+					"link_max_asset_amount": "0"
+				},
+				"expected": {
+					"intent_total_amount": "50000",
+					"intent_total_network_fee": "20000",
+					"intent_user_fee": "70000"
+				}
+			},
+			{
+				"name": "Airdrop Link - CreatorToLink intent (ICRC2)",
+				"description": "Example: user_input=0.0002, max_use=3",
+				"input": {
+					"intent_participants": "CreatorToLink",
+					"token_standard": "ICRC2",
+					"user_input_amount": "20000",
+					"max_use": 3,
+					"link_creation_fee": "0",
+					"asset_network_fee": "10000",
+					"link_max_asset_amount": "0"
+				},
+				"expected": {
+					"intent_total_amount": "60000",
+					"intent_total_network_fee": "50000",
+					"intent_user_fee": "50000"
+				}
+			},
+			{
+				"name": "Airdrop Link - LinkToUser intent (claim)",
+				"input": {
+					"intent_participants": "LinkToUser",
+					"token_standard": "ICRC2",
+					"user_input_amount": "20000",
+					"max_use": 1,
+					"link_creation_fee": "0",
+					"asset_network_fee": "10000",
+					"link_max_asset_amount": "0"
+				},
+				"expected": {
+					"intent_total_amount": "20000",
+					"intent_total_network_fee": "10000",
+					"intent_user_fee": "0"
+				}
+			},
+			{
+				"name": "Payment Link - UserToLink intent (ICRC2)",
+				"description": "User sending 1 ICP to payment link",
+				"input": {
+					"intent_participants": "UserToLink",
+					"token_standard": "ICRC2",
+					"user_input_amount": "100000000",
+					"max_use": 1,
+					"link_creation_fee": "0",
+					"asset_network_fee": "10000",
+					"link_max_asset_amount": "0"
+				},
+				"expected": {
+					"intent_total_amount": "100000000",
+					"intent_total_network_fee": "30000",
+					"intent_user_fee": "30000"
+				}
+			}
+		]
+	}
+}
