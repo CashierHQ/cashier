@@ -5,12 +5,10 @@ on:
     branches:
       - main
       - staging
-      - feature/cache-dfx-orbit-cli # TODO: remove after testing
     paths:
       - 'src/cashier_backend/**'
       - 'src/token_storage/**'
       - 'src/transaction_manager/**'
-      - '.github/workflows/orbit-backend-deploy.yml' # TODO: remove after testing
   workflow_dispatch:
     inputs:
       mode:
