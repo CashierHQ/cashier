@@ -25,36 +25,38 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
     /// * `Result<ExecuteTransactionsResult, CanisterError>` - The result of executing the transactions
     pub async fn execute_transactions(
         &self,
-        transactions: &[Transaction],
+        transactions: &[Vec<Transaction>],
     ) -> Result<ExecuteTransactionsResult, CanisterError> {
         let mut executed_transactions = Vec::<Transaction>::new();
         let mut errors = Vec::<String>::new();
         let mut is_success = true;
         let executor = self.executor.clone();
 
-        let futures = transactions
-            .iter()
-            .map(|transaction| executor.execute(transaction.clone()))
-            .collect::<Vec<_>>();
-        let results = join_all(futures).await;
+        for level in transactions.iter() {
+            let futures = level
+                .iter()
+                .map(|transaction| executor.execute(transaction.clone()))
+                .collect::<Vec<_>>();
+            let results = join_all(futures).await;
 
-        for (transaction, result) in transactions.iter().zip(results.into_iter()) {
-            match result {
-                Ok(_) => {
-                    executed_transactions.push(Transaction {
-                        state: TransactionState::Success,
-                        ..transaction.clone()
-                    });
-                }
-                Err(e) => {
-                    let mut failed_tx = transaction.clone();
-                    failed_tx.state = TransactionState::Fail;
-                    executed_transactions.push(failed_tx);
-                    errors.push(format!(
-                        "Failed to execute transaction {}: {}",
-                        transaction.id, e
-                    ));
-                    is_success = false;
+            for (transaction, result) in level.iter().zip(results.into_iter()) {
+                match result {
+                    Ok(_) => {
+                        executed_transactions.push(Transaction {
+                            state: TransactionState::Success,
+                            ..transaction.clone()
+                        });
+                    }
+                    Err(e) => {
+                        let mut failed_tx = transaction.clone();
+                        failed_tx.state = TransactionState::Fail;
+                        executed_transactions.push(failed_tx);
+                        errors.push(format!(
+                            "Failed to execute transaction {}: {}",
+                            transaction.id, e
+                        ));
+                        is_success = false;
+                    }
                 }
             }
         }

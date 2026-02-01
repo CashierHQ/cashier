@@ -173,7 +173,9 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 errors.extend(executed_transactions_result.errors);
                 is_success &= executed_transactions_result.is_success;
             } else {
-                processed_transactions.extend(validate_transactions_result.canister_transactions);
+                for level in validate_transactions_result.canister_transactions.iter() {
+                    processed_transactions.extend(level.clone());
+                }
             }
 
             let link_account = get_link_account(&link_id, canister_id)?;

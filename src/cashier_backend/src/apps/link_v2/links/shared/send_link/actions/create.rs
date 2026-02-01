@@ -89,14 +89,6 @@ impl CreateAction {
                     &token_fee_map,
                 )?;
 
-                // TransferWalletToLinkIntent::create_icrc1(
-                //     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                //     asset_info.asset.clone(),
-                //     sending_amount.clone(),
-                //     link.creator,
-                //     link_account,
-                //     link.create_at,
-                // )
                 TransferWalletToLinkIntent::create_icrc2(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
