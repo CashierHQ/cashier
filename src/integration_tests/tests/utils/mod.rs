@@ -14,13 +14,16 @@ use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs::File,
     io::Read,
-    path::PathBuf,
-    sync::{Arc, OnceLock},
+    path::{Path, PathBuf},
+    sync::{
+        Arc, OnceLock,
+        atomic::{AtomicU64, Ordering},
+    },
     time::Duration,
 };
 use token_storage_client::client::TokenStorageClient;
@@ -35,15 +38,71 @@ pub mod principal;
 pub mod token_icp;
 pub mod token_icrc;
 
-/// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
-///
-/// This function sets up a client and deploys a canister with the provided bytecode to the local
-/// IC instance. It then executes the given asynchronous function `f` with the initialized
-/// `PocketIcTestContext`, which contains the client and the canister's principal.
-pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
-where
-    F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
-{
+/// Canister principals deployed in the shared template state.
+/// Serialized to JSON for cross-process sharing (nextest compatibility).
+#[derive(Clone, Serialize, Deserialize)]
+struct SharedPrincipals {
+    token_storage: Principal,
+    cashier_backend: Principal,
+    gate_service: Principal,
+    icp_ledger: Principal,
+    icrc_tokens: HashMap<String, Principal>,
+    icrc7_ledger: Principal,
+    ckbtc_minter: Principal,
+    ckbtc_kyt: Principal,
+}
+
+/// Base path for PocketIC test state directories
+const POCKET_IC_STATE_DIR: &str = "../../target/pocket-ic-test-state";
+/// Fixed template dir name (shared across processes)
+const TEMPLATE_DIR_NAME: &str = "template";
+/// Marker file indicating template is fully built
+const READY_MARKER: &str = "template.ready";
+/// Lock file for cross-process synchronization
+const LOCK_FILE_NAME: &str = "template.lock";
+/// File storing serialized SharedPrincipals
+const PRINCIPALS_FILE: &str = "principals.json";
+
+/// Atomic counter for unique test dir names
+static TEST_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// Get or initialize the shared template state using file-based locking.
+/// Works across processes (nextest compatible).
+async fn get_shared_principals() -> (PathBuf, SharedPrincipals) {
+    let base_dir = PathBuf::from(POCKET_IC_STATE_DIR);
+    std::fs::create_dir_all(&base_dir).unwrap();
+
+    let template_dir = base_dir.join(TEMPLATE_DIR_NAME);
+    let ready_marker = base_dir.join(READY_MARKER);
+    let lock_path = base_dir.join(LOCK_FILE_NAME);
+    let principals_path = base_dir.join(PRINCIPALS_FILE);
+
+    // Try to acquire exclusive lock via create_new (atomic mkdir-like)
+    // Only one process succeeds; others poll until ready_marker appears.
+    let is_initializer = File::create_new(&lock_path).is_ok();
+
+    if is_initializer {
+        // First process: deploy canisters and persist state
+        let principals = deploy_template_state(&template_dir).await;
+        let json = serde_json::to_string(&principals).unwrap();
+        std::fs::write(&principals_path, &json).unwrap();
+        // Mark template as ready after everything is written
+        std::fs::write(&ready_marker, "ready").unwrap();
+        (template_dir, principals)
+    } else {
+        // Wait for the initializer to finish (poll for ready marker)
+        while !ready_marker.exists() {
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        let json = std::fs::read_to_string(&principals_path).unwrap();
+        let principals: SharedPrincipals = serde_json::from_str(&json).unwrap();
+        (template_dir, principals)
+    }
+}
+
+/// Deploy all canisters once, persist state to template_dir on disk.
+/// Called only by the first process that acquires the file lock.
+async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let log = LogServiceSettings {
         enable_console: Some(true),
         in_memory_records: None,
@@ -51,7 +110,18 @@ where
         log_filter: Some("debug".to_string()),
     };
 
-    let client = Arc::new(get_pocket_ic_client().await.build_async().await);
+    // Clean and create template dir
+    if template_dir.exists() {
+        std::fs::remove_dir_all(template_dir).unwrap();
+    }
+    std::fs::create_dir_all(template_dir).unwrap();
+
+    // Build PocketIC with state_dir to persist canister state to disk
+    let client = get_pocket_ic_client()
+        .await
+        .with_state_dir(template_dir.to_path_buf())
+        .build_async()
+        .await;
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
@@ -152,12 +222,11 @@ where
         &(CashierBackendInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::CashierBackendAdmin.get_principal(),
-            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000), // 168 hours
+            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
         }),
     )
     .await;
 
-    // Deploy gate_service and set GateCreator permissions for cashier_backend
     let gate_service_principal = deploy_canister(
         &client,
         None,
@@ -173,7 +242,6 @@ where
     )
     .await;
 
-    // Deploy ICP and ICRC ledger canisters
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
 
     let mut icrc_token_map = HashMap::new();
@@ -223,7 +291,6 @@ where
     icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
 
-    // deploy ICRC7 NFT canister
     let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
         &client,
         "TestCollection",
@@ -233,22 +300,82 @@ where
     )
     .await;
 
+    // Drop PocketIC instance - state is persisted in template_dir
+    client.drop().await;
+
+    SharedPrincipals {
+        token_storage: token_storage_principal,
+        cashier_backend: cashier_backend_principal,
+        gate_service: gate_service_principal,
+        icp_ledger: icp_ledger_principal,
+        icrc_tokens: icrc_token_map,
+        icrc7_ledger: icrc7_ledger_principal,
+        ckbtc_minter: ckbtc_minter_principal,
+        ckbtc_kyt: ckbtc_kyt_principal,
+    }
+}
+
+/// Recursively copy directory contents for test isolation
+fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dst_path = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(&entry.path(), &dst_path)?;
+        } else {
+            std::fs::copy(entry.path(), &dst_path)?;
+        }
+    }
+    Ok(())
+}
+
+/// Executes the provided asynchronous function within a `PocketIcTestContext` environment.
+///
+/// Uses shared state_dir for fast test execution. First call deploys all canisters
+/// and persists state to disk (~30s). Subsequent calls copy the template state_dir
+/// to a unique temp dir and mount it (~1s). Each test gets full isolation via
+pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
+where
+    F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
+{
+    let (template_dir, principals) = get_shared_principals().await;
+
+    // Copy template state to unique temp dir for this test
+    let test_id = TEST_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let test_dir =
+        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("test-{}-{}", std::process::id(), test_id));
+    copy_dir_all(&template_dir, &test_dir).expect("Failed to copy template state dir");
+
+    // Mount state from copied dir (skips canister deployment)
+    let client = Arc::new(
+        get_pocket_ic_client()
+            .await
+            .with_state_dir(test_dir.clone())
+            .build_async()
+            .await,
+    );
+
     let result = f(&PocketIcTestContext {
         client: client.clone(),
-        token_storage_principal,
-        cashier_backend_principal,
-        gate_service_principal,
-        icp_ledger_principal,
-        icrc_token_map,
-        icrc7_ledger_principal,
-        ckbtc_minter_principal,
-        ckbtc_kyt_principal,
+        token_storage_principal: principals.token_storage,
+        cashier_backend_principal: principals.cashier_backend,
+        gate_service_principal: principals.gate_service,
+        icp_ledger_principal: principals.icp_ledger,
+        icrc_token_map: principals.icrc_tokens.clone(),
+        icrc7_ledger_principal: principals.icrc7_ledger,
+        ckbtc_minter_principal: principals.ckbtc_minter,
+        ckbtc_kyt_principal: principals.ckbtc_kyt,
     })
     .await;
 
     if let Ok(client) = Arc::try_unwrap(client) {
-        client.drop().await
+        client.drop().await;
     }
+
+    // Cleanup test state dir
+    let _ = std::fs::remove_dir_all(&test_dir);
 
     result
 }

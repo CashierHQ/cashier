@@ -16,6 +16,32 @@ test test_name="": download_artifacts build_canisters
   cargo test {{test_name}}
 
 
+# Run integration tests only (supports nextest sharding)
+# If partition and total are provided, runs only that partition of tests.
+# Args:
+# partition: which partition to run (1-based index)
+# total: total number of partitions
+[group('test')]
+test_integration partition="" total="":
+  #!/usr/bin/env bash
+  set -e
+  # Clean stale lock/ready files to ensure fresh template deployment
+  rm -f ./target/pocket-ic-test-state/template.lock
+  rm -f ./target/pocket-ic-test-state/template.ready
+  rm -f ./target/pocket-ic-test-state/principals.json
+  rm -rf ./target/pocket-ic-test-state/template
+  if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
+    cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
+  else
+    cargo nextest run -p integration_tests
+  fi
+
+# Build nextest archive for integration tests (used by CI)
+[group('test')]
+test_integration_archive:
+  cargo nextest archive -p integration_tests --archive-file target/nextest-archive.tar.zst
+
+
 # Run unit tests for the i686 target
 [group('test')]
 test_unit_i686 test_name="":

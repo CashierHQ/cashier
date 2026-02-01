@@ -54,8 +54,8 @@ jobs:
         run: |
           just check_code
 
-  backend-test:
-    name: "Backend Build and Test"
+  backend-build:
+    name: "Backend Build"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -99,9 +99,69 @@ jobs:
         run: |
           just build
 
-      - name: Test
+      - name: Unit Test
         run: |
-          just test
+          just test_unit
+
+      - name: Install cargo-nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
+
+      - name: Create nextest archive
+        run: |
+          cargo nextest archive -p integration_tests --archive-file target/nextest-archive.tar.zst
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: |
+            target/artifacts/
+            target/nextest-archive.tar.zst
+          retention-days: 1
+
+  integration-test:
+    name: "Integration Test (shard ${{ matrix.partition }}/${{ matrix.total }})"
+    needs: backend-build
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [1, 2, 3]
+        total: [3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cargo-nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
+
+      - name: Download test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifacts
+          path: target
+
+      - name: Run integration tests (shard ${{ matrix.partition }}/${{ matrix.total }})
+        run: |
+          cargo nextest run --archive-file target/nextest-archive.tar.zst \
+            --workspace-remap ${{ github.workspace }} \
+            --partition count:${{ matrix.partition }}/${{ matrix.total }}
+
+  cleanup-artifacts:
+    name: "Cleanup Artifacts"
+    needs: integration-test
+    if: always()
+    permissions:
+      actions: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: geekyeggo/delete-artifact@v5
+        with:
+          name: test-artifacts
 
   backend-test-i686:
     name: "Backend Test (i686)"
