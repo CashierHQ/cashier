@@ -28,7 +28,8 @@
       <button
         class="text-green text-sm font-bold mt-3 cursor-pointer"
         type="button"
-        onclick={handleDismissOnboarding}>{locale.t("links.page.gotItButton")}</button
+        onclick={handleDismissOnboarding}
+        >{locale.t("links.page.gotItButton")}</button
       >
     </div>
   {/if}
