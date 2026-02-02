@@ -348,7 +348,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_rollup_icrc2_wallet_transaction_state() {
+    async fn it_should_rollup_icrc2_wallet_transaction_state_success() {
         // Arrange
         let from = random_principal_id();
         let cashier_be = random_principal_id();
@@ -382,6 +382,43 @@ mod tests {
         assert_eq!(all_txs[1].state, TransactionState::Success); // Transfer should succeed
         assert_eq!(all_txs[2].state, TransactionState::Success); // Approve should change to Success
         assert_eq!(all_txs[3].state, TransactionState::Success); // Transfer should succeed
+    }
+
+    #[tokio::test]
+    async fn it_should_rollup_icrc2_wallet_transaction_state_failed() {
+        // Arrange
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let mut fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let mut asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+        fee_txs[1].state = TransactionState::Fail; // Simulate fee transfer failure
+        asset_txs[1].state = TransactionState::Fail; // Simulate asset transfer failure
+
+        let mut all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
+        let service = ValidatorService::new(MockValidator::new());
+
+        // Assert initial states
+        assert_eq!(all_txs[0].state, TransactionState::Created);
+        assert_eq!(all_txs[2].state, TransactionState::Created);
+
+        // Act
+        service.rollup_icrc2_wallet_transaction_state(&mut all_txs);
+
+        // Assert after rollup
+        assert_eq!(all_txs[0].state, TransactionState::Fail);
+        assert_eq!(all_txs[1].state, TransactionState::Fail);
+        assert_eq!(all_txs[2].state, TransactionState::Fail);
+        assert_eq!(all_txs[3].state, TransactionState::Fail);
     }
 
     #[tokio::test]
