@@ -8,7 +8,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::{CreateIcrc2WalletToLinkIntentArgs, Intent},
+        intent::v1::{CreateIcrc2WalletToLinkIntentArgs, CreateWalletToTreasuryIntentArgs, Intent},
         link::v1::Link,
     },
 };
@@ -76,10 +76,10 @@ impl CreateAction {
                 let input = CreateIcrc2WalletToLinkIntentArgs {
                     label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset: asset_info.asset.clone(),
-                    actual_amount: actual_amount.clone(),
-                    approval_amount: approval_amount.clone(),
+                    actual_amount,
+                    approval_amount,
                     sender_id: link.creator,
-                    link_account: link_account.clone(),
+                    link_account,
                     spender_account,
                     created_at_ts: link.create_at,
                 };
@@ -96,16 +96,17 @@ impl CreateAction {
             owner: canister_id,
             subaccount: None,
         };
-
-        let fee_intent = TransferWalletToTreasuryIntent::create(
-            INTENT_LABEL_LINK_CREATION_FEE.to_string(),
-            fee_asset,
+        let input = CreateWalletToTreasuryIntentArgs {
+            label: INTENT_LABEL_LINK_CREATION_FEE.to_string(),
+            asset: fee_asset,
             actual_amount,
             approval_amount,
-            link.creator,
+            sender_id: link.creator,
             spender_account,
-            link.create_at,
-        )?;
+            created_at_ts: link.create_at,
+        };
+
+        let fee_intent = TransferWalletToTreasuryIntent::create(input)?;
 
         let mut intents = Vec::<Intent>::new();
         deposit_intents.iter().for_each(|dintent| {

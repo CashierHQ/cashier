@@ -171,3 +171,24 @@ pub struct CreateIcrc1WalletToLinkIntentArgs {
     pub link_account: Account,
     pub created_at_ts: u64,
 }
+
+/// Arguments for creating a TransferWalletToTreasury intent using ICRC2
+pub struct CreateWalletToTreasuryIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub actual_amount: Nat,
+    pub approval_amount: Nat,
+    pub sender_id: Principal,
+    pub spender_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferLinkToWallet intent
+pub struct CreateLinkToWalletIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub sending_amount: Nat,
+    pub receiver_id: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
+}

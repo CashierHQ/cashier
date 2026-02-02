@@ -8,7 +8,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::Intent,
+        intent::v1::{CreateWalletToTreasuryIntentArgs, Intent},
         link::v1::Link,
     },
 };
@@ -60,16 +60,17 @@ impl CreateAction {
             owner: canister_id,
             subaccount: None,
         };
-
-        let fee_intent = TransferWalletToTreasuryIntent::create(
-            INTENT_LABEL_LINK_CREATION_FEE.to_string(),
-            fee_asset,
+        let input: CreateWalletToTreasuryIntentArgs = CreateWalletToTreasuryIntentArgs {
+            label: INTENT_LABEL_LINK_CREATION_FEE.to_string(),
+            asset: fee_asset,
             actual_amount,
             approval_amount,
-            link.creator,
+            sender_id: link.creator,
             spender_account,
-            link.create_at,
-        )?;
+            created_at_ts: link.create_at,
+        };
+
+        let fee_intent = TransferWalletToTreasuryIntent::create(input)?;
 
         let intents = vec![fee_intent.intent];
         Ok(Self::new(action, intents))
