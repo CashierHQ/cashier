@@ -265,7 +265,6 @@ mod tests {
 
         // Act
         let res = manager.create_action(action.clone(), vec![intent.clone()], None);
-        println!("Create action result: {:?}", res);
 
         // Assert
         assert!(res.is_ok());

@@ -12,7 +12,6 @@ use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
-use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::{
     common::Asset,
     transaction::v1::{IcTransaction, Protocol},

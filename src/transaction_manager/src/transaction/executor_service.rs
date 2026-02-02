@@ -9,8 +9,7 @@ use cashier_backend_types::{
     link_v2::{graph::Graph, transaction_manager::ExecuteTransactionsResult},
     repository::transaction::v1::{FromCallType, Transaction, TransactionState},
 };
-use futures::future::join_all;
-use std::{collections::HashMap, pin::Pin};
+use std::collections::HashMap;
 
 pub struct ExecutorService<E: TransactionExecutor + Clone> {
     executor: E,
@@ -71,7 +70,7 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
                 .iter()
                 .map(|&tx| executor.execute(tx.clone()))
                 .collect::<Vec<_>>();
-            let results = join_all(futures).await;
+            let results = futures::future::join_all(futures).await;
 
             for (&tx, result) in level_txs.iter().zip(results.into_iter()) {
                 match result {
@@ -105,6 +104,7 @@ mod tests {
     use candid::Nat;
     use cashier_backend_types::repository::common::Asset;
     use cashier_common::test_utils::random_principal_id;
+    use std::pin::Pin;
 
     use crate::utils::test_utils::{
         generate_mock_icrc2_wallet_to_link_transactions,
