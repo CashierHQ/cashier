@@ -9,7 +9,7 @@ describe("getTokenLogo", () => {
   });
 
   it("should return icexplorer URL for other token addresses", () => {
-    const otherTokenAddress = "mxzaz-hqaaa-aaaar-qaada-cai";
+    const otherTokenAddress = "xevnm-gaaaa-aaaar-qafnq-cai";
     const logo = getTokenLogo(otherTokenAddress);
     expect(logo).toBe(`https://api.icexplorer.io/images/${otherTokenAddress}`);
   });
