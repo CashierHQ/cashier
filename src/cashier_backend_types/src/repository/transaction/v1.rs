@@ -47,6 +47,9 @@ impl Codec<Transaction> for TransactionCodec {
 }
 
 impl Transaction {
+    /// Retrieves the asset of the transaction based on its protocol
+    /// # Returns
+    /// * `Asset` - The asset of the transaction
     pub fn get_asset(&self) -> Asset {
         match &self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
@@ -59,6 +62,9 @@ impl Transaction {
         }
     }
 
+    /// Retrieves the 'from' account of the transaction based on its protocol
+    /// # Returns
+    /// * `Account` - The 'from' account of the transaction
     pub fn get_from_account(&self) -> Account {
         match &self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
@@ -73,6 +79,9 @@ impl Transaction {
         }
     }
 
+    /// Sets the 'from' account of the transaction based on its protocol
+    /// # Arguments
+    /// * `from_account` - The account to set as the 'from' account
     pub fn set_from(&mut self, from_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
@@ -87,6 +96,9 @@ impl Transaction {
         }
     }
 
+    /// Sets the 'to' account of the transaction based on its protocol
+    /// # Arguments
+    /// * `to_account` - The account to set as the 'to' account
     pub fn set_to(&mut self, to_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
@@ -99,6 +111,9 @@ impl Transaction {
         }
     }
 
+    /// Generates a unique key for the transaction based on its protocol and relevant fields
+    /// # Returns
+    /// * `String` - The generated protocol key
     pub fn get_protocol_key(&self) -> String {
         match &self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(transfer_data)) => format!(
@@ -116,6 +131,9 @@ impl Transaction {
         }
     }
 
+    /// Merges another transaction into this one by summing their amounts if they share the same protocol
+    /// # Arguments
+    /// * `other` - The other transaction to merge
     pub fn merge_with(&mut self, other: &Transaction) {
         if self.get_protocol_key() != other.get_protocol_key() {
             return;
@@ -142,6 +160,20 @@ impl Transaction {
                 }
             }
         }
+    }
+
+    /// Checks if the transaction is an ICRC-1 transfer
+    /// # Returns
+    /// * `bool` - true if the transaction is an ICRC-1 transfer, false otherwise
+    pub fn is_icrc1(&self) -> bool {
+        matches!(self.protocol, Protocol::IC(IcTransaction::Icrc1Transfer(_)))
+    }
+
+    /// Checks if the transaction is an ICRC-2 approve
+    /// # Returns
+    /// * `bool` - true if the transaction is an ICRC-2 approve, false otherwise
+    pub fn is_icrc2_approve(&self) -> bool {
+        matches!(self.protocol, Protocol::IC(IcTransaction::Icrc2Approve(_)))
     }
 }
 
@@ -286,4 +318,381 @@ pub enum TransactionState {
     Processing,
     Success,
     Fail,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn it_should_get_icrc1_transfer_protocol_key_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let to_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let tx = Transaction {
+            id: "tx3".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                asset: asset.clone(),
+                amount: Nat::from(200u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        let protocol_key = tx.get_protocol_key();
+
+        // Assert
+        assert_eq!(
+            protocol_key,
+            format!("icrc1_transfer_{}_{}_{}", asset, from_address, to_address)
+        );
+    }
+
+    #[test]
+    fn it_should_get_icrc2_approve_protocol_key_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let spender_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let tx = Transaction {
+            id: "tx4".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: Nat::from(75u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        let protocol_key = tx.get_protocol_key();
+
+        // Assert
+        assert_eq!(
+            protocol_key,
+            format!(
+                "icrc2_approve_{}_{}_{}",
+                asset, from_address, spender_address
+            )
+        );
+    }
+
+    #[test]
+    fn it_should_get_icrc2_transfer_from_protocol_key_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let to_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let spender_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let tx = Transaction {
+            id: "tx5".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: Nat::from(150u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        let protocol_key = tx.get_protocol_key();
+
+        // Assert
+        assert_eq!(
+            protocol_key,
+            format!(
+                "icrc2_transfer_from_{}_{}_{}",
+                asset, from_address, spender_address
+            )
+        );
+    }
+
+    #[test]
+    fn it_should_merge_icrc1_transfer_transactions_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let to_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let amount1 = Nat::from(100u64);
+        let amount2 = Nat::from(250u64);
+        let mut tx1 = Transaction {
+            id: "tx6".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        let tx2 = Transaction {
+            id: "tx7".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        tx1.merge_with(&tx2);
+
+        // Assert
+        if let Protocol::IC(IcTransaction::Icrc1Transfer(merged_transfer)) = &tx1.protocol {
+            assert_eq!(merged_transfer.amount, amount1 + amount2);
+        } else {
+            panic!("Merged transaction protocol is not ICRC-1 Transfer");
+        }
+    }
+
+    #[test]
+    fn it_should_merge_icrc2_approve_transactions_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let spender_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let amount1 = Nat::from(80u64);
+        let amount2 = Nat::from(120u64);
+        let mut tx1 = Transaction {
+            id: "tx8".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        let tx2 = Transaction {
+            id: "tx9".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        tx1.merge_with(&tx2);
+
+        // Assert
+        if let Protocol::IC(IcTransaction::Icrc2Approve(merged_approve)) = &tx1.protocol {
+            assert_eq!(merged_approve.amount, amount1 + amount2);
+        } else {
+            panic!("Merged transaction protocol is not ICRC-2 Approve");
+        }
+    }
+
+    #[test]
+    fn it_should_merge_icrc2_transfer_from_transactions_correctly() {
+        // Arrange
+        let from_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let to_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let spender_address = Wallet::IC {
+            address: random_principal_id(),
+            subaccount: None,
+        };
+        let asset = Asset::default();
+        let amount1 = Nat::from(150u64);
+        let amount2 = Nat::from(350u64);
+        let mut tx1 = Transaction {
+            id: "tx10".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        let tx2 = Transaction {
+            id: "tx11".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: from_address.clone(),
+                to: to_address.clone(),
+                spender: spender_address.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        tx1.merge_with(&tx2);
+
+        // Assert
+        if let Protocol::IC(IcTransaction::Icrc2TransferFrom(merged_transfer_from)) = &tx1.protocol
+        {
+            assert_eq!(merged_transfer_from.amount, amount1 + amount2);
+        } else {
+            panic!("Merged transaction protocol is not ICRC-2 Transfer From");
+        }
+    }
+
+    #[test]
+    fn it_should_indicate_icrc1_procotol_correctly() {
+        // Arrange
+        let tx = Transaction {
+            id: "tx1".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(100u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act & Assert
+        assert!(tx.is_icrc1());
+    }
+
+    #[test]
+    fn it_should_indicate_icrc2_approve_protocol_correctly() {
+        // Arrange
+        let tx = Transaction {
+            id: "tx2".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: Wallet::default(),
+                spender: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(50u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act & Assert
+        assert!(tx.is_icrc2_approve());
+    }
 }

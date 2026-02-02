@@ -1,6 +1,8 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{
-    transaction::traits::TransactionValidator,
-    utils::topological_sort::{kahn_topological_sort, kahn_topological_sort_flat},
+    transaction::traits::TransactionValidator, utils::topological_sort::kahn_topological_sort,
 };
 use cashier_backend_types::{
     error::CanisterError,
@@ -14,14 +16,14 @@ use cashier_backend_types::{
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
-pub struct ValidatorService<V: TransactionValidator> {
-    validator: Rc<V>,
+pub struct ValidatorService<V: TransactionValidator + Clone> {
+    validator: V,
 }
 
-impl<V: TransactionValidator> ValidatorService<V> {
-    pub fn new(validator: Rc<V>) -> Self {
+impl<V: TransactionValidator + Clone> ValidatorService<V> {
+    pub fn new(validator: V) -> Self {
         Self { validator }
     }
 
@@ -34,46 +36,79 @@ impl<V: TransactionValidator> ValidatorService<V> {
         &self,
         transactions: &[Transaction],
     ) -> Result<ValidateActionTransactionsResult, CanisterError> {
-        let mut wallet_transactions = Vec::<Transaction>::new();
-        let mut canister_transactions = Vec::<Vec<Transaction>>::new();
         let mut errors = Vec::<String>::new();
+        let validator = self.validator.clone();
 
-        let mut txs_map: HashMap<String, Transaction> = transactions
+        let txs_map: HashMap<&str, &Transaction> =
+            transactions.iter().map(|tx| (tx.id.as_str(), tx)).collect();
+
+        // split canister and wallet transactions
+        let (canister_transactions, mut wallet_transactions): (Vec<Transaction>, Vec<Transaction>) =
+            transactions
+                .iter()
+                .cloned()
+                .partition(|tx| tx.from_call_type == FromCallType::Canister);
+
+        // verify ICRC1 wallet transactions in topological order and update their status
+        // the ICRC2 wallet transactions verification is skipped because they are verified during execution
+        let icrc1_wallet_transactions = wallet_transactions
             .iter()
-            .map(|tx| (tx.id.clone(), tx.clone()))
-            .collect();
+            .filter(|tx| tx.is_icrc1())
+            .cloned()
+            .collect::<Vec<_>>();
 
-        // topologically sort transactions
-        let graph: Graph = transactions.to_vec().into();
-        //let sorted_transactions = kahn_topological_sort_flat(&graph)?;
-        let sorted_transactions = kahn_topological_sort(&graph)?;
-
-        // validate transactions in topological order and update their status
+        let graph: Graph = icrc1_wallet_transactions.into();
+        let sorted_levels = kahn_topological_sort(&graph)?;
         let is_success = true;
-        for level in sorted_transactions.iter() {
-            let mut canister_transactions_level = Vec::<Transaction>::new();
-            for tx_id in level.iter() {
-                if let Some(tx) = txs_map.get_mut(tx_id) {
-                    if tx.from_call_type == FromCallType::Canister {
-                        // Skip validation for canister-initiated transactions
-                        canister_transactions_level.push(tx.clone());
-                        continue;
+
+        for level_txids in sorted_levels.iter() {
+            // validate all transactions in the same level in parallel
+            let level_txs = level_txids
+                .iter()
+                .map(|txid| {
+                    txs_map.get(txid.as_str()).cloned().ok_or_else(|| {
+                        CanisterError::HandleLogicError(format!(
+                            "Transaction with id {} not found",
+                            txid
+                        ))
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let futures = level_txs
+                .iter()
+                .map(|&tx| validator.validate_success(tx.clone()))
+                .collect::<Vec<_>>();
+            let results = futures::future::join_all(futures).await;
+
+            for (txid, result) in level_txids.iter().zip(results.into_iter()) {
+                let mut updated_tx = txs_map
+                    .get(txid.as_str())
+                    .cloned()
+                    .ok_or_else(|| {
+                        CanisterError::HandleLogicError(format!(
+                            "Transaction with id {} not found",
+                            txid
+                        ))
+                    })?
+                    .clone();
+                match result {
+                    Ok(_) => {
+                        updated_tx.state = TransactionState::Success;
                     }
-
-                    // match self.validator.validate_success(tx.clone()).await {
-                    //     Ok(_) => tx.state = TransactionState::Success,
-                    //     Err(e) => {
-                    //         tx.state = TransactionState::Fail;
-                    //         errors.push(e);
-                    //         is_success = false;
-                    //     }
-                    // }
-
-                    tx.state = TransactionState::Success;
-                    wallet_transactions.push(tx.clone());
+                    Err(e) => {
+                        updated_tx.state = TransactionState::Fail;
+                        errors.push(format!("Failed to validate transaction {}: {}", txid, e));
+                    }
+                }
+                // update in wallet transactions
+                if let Some(pos) = wallet_transactions
+                    .iter()
+                    .position(|wtx| wtx.id == updated_tx.id)
+                {
+                    wallet_transactions[pos] = updated_tx;
                 }
             }
-            canister_transactions.push(canister_transactions_level);
         }
 
         Ok(ValidateActionTransactionsResult {
@@ -82,6 +117,42 @@ impl<V: TransactionValidator> ValidatorService<V> {
             is_success,
             errors,
         })
+    }
+
+    /// Rollup the state of ICRC-2 wallet transactions based on their dependent transactions
+    /// # Arguments
+    /// * `transactions` - A mutable slice of transactions to be rolled up
+    pub fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]) {
+        // Build dependent_map with immutable borrows
+        let mut dependent_map: HashMap<String, Vec<TransactionState>> = HashMap::new();
+
+        for tx in transactions.iter() {
+            if let Some(deps) = &tx.dependency {
+                for dep in deps.iter() {
+                    dependent_map
+                        .entry(dep.clone())
+                        .or_default()
+                        .push(tx.state.clone());
+                }
+            }
+        }
+
+        // Now mutably iterate and update
+        for tx in transactions.iter_mut() {
+            if tx.is_icrc2_approve()
+                && tx.from_call_type == FromCallType::Wallet
+                && let Some(dependent_states) = dependent_map.get(&tx.id)
+            {
+                if dependent_states.contains(&TransactionState::Fail) {
+                    tx.state = TransactionState::Fail;
+                } else if dependent_states
+                    .iter()
+                    .all(|state| *state == TransactionState::Success)
+                {
+                    tx.state = TransactionState::Success;
+                }
+            }
+        }
     }
 
     /// Rollup the state of an action based on its intents and their transactions
@@ -153,6 +224,7 @@ mod tests {
     use std::rc::Rc;
 
     // Mock TransactionValidator
+    #[derive(Clone)]
     struct MockValidator {
         should_fail: RefCell<bool>,
     }
@@ -224,7 +296,7 @@ mod tests {
     #[tokio::test]
     async fn test_validate_action_transactions_fail() {
         // Arrange
-        let validator_fail = Rc::new(MockValidator::new(true));
+        let validator_fail = MockValidator::new(true);
         let service_fail = ValidatorService::new(validator_fail);
         let mut tx1 = generate_mock_transaction("tx1", vec![]);
         tx1.from_call_type = FromCallType::Wallet;
@@ -249,7 +321,7 @@ mod tests {
     #[test]
     fn test_rollup_action_state_success() {
         // Arrange
-        let validator = Rc::new(MockValidator::new(false));
+        let validator = MockValidator::new(false);
         let service = ValidatorService::new(validator);
         let action = make_action(ActionState::Created);
         let mut intent1 = generate_mock_intent("intent1", vec![]);
@@ -278,7 +350,7 @@ mod tests {
     #[test]
     fn test_rollup_action_state_fail() {
         // Arrange
-        let validator = Rc::new(MockValidator::new(false));
+        let validator = MockValidator::new(false);
         let service = ValidatorService::new(validator);
         let action = make_action(ActionState::Created);
         let mut intent1 = generate_mock_intent("intent1", vec![]);

@@ -5,7 +5,7 @@ use crate::repository::{action::v1::Action, intent::v1::Intent, transaction::v1:
 #[derive(Debug, Clone)]
 pub struct ValidateActionTransactionsResult {
     pub wallet_transactions: Vec<Transaction>,
-    pub canister_transactions: Vec<Vec<Transaction>>,
+    pub canister_transactions: Vec<Transaction>,
     pub is_success: bool,
     pub errors: Vec<String>,
 }

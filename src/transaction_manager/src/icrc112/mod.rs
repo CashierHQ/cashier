@@ -50,6 +50,7 @@ pub fn create_icrc_112_requests(
         .filter(|tx| tx.state == TransactionState::Created || tx.state == TransactionState::Fail)
         .collect();
 
+    // TODO
     let wallet_transactions = merge_transactions_by_protocol_key(wallet_transactions);
 
     let tx_graph: Graph = wallet_transactions.clone().into();
