@@ -170,3 +170,48 @@ describe("LinkListStore.getLinks", () => {
     expect(result[1]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
   });
 });
+
+describe("LinkListStore.onboarding", () => {
+  let store: LinkListStore;
+  let mockQuery: MockManagedState<Link[]>;
+
+  beforeEach(() => {
+    localStorageMock.clear();
+
+    mockQuery = {
+      data: undefined,
+      refresh: vi.fn(),
+      isLoading: false,
+      error: undefined,
+      isSuccess: true,
+      reset: vi.fn(),
+    };
+    const mockManagedState = vi.mocked(managedState);
+    mockManagedState.mockReturnValue(
+      mockQuery as unknown as ReturnType<typeof managedState>,
+    );
+    store = new LinkListStore();
+  });
+
+  it("should return false for isOnboardingDismissed initially", () => {
+    expect(store.isOnboardingDismissed).toBe(false);
+  });
+
+  it("should set isOnboardingDismissed to true after dismissOnboarding", () => {
+    store.dismissOnboarding();
+    expect(store.isOnboardingDismissed).toBe(true);
+  });
+
+  it("should persist dismissal to localStorage", () => {
+    store.dismissOnboarding();
+    expect(localStorageMock.getItem("onboarding_link_list_dismissed")).toBe(
+      "true",
+    );
+  });
+
+  it("should read persisted value from localStorage on initialization", () => {
+    localStorageMock.setItem("onboarding_link_list_dismissed", "true");
+    const newStore = new LinkListStore();
+    expect(newStore.isOnboardingDismissed).toBe(true);
+  });
+});
