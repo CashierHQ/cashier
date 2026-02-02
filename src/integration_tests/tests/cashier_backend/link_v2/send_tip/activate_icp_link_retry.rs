@@ -580,8 +580,12 @@ async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice
         // Assert: Activated link result
         assert!(activate_link_result.is_ok());
         let activate_link_result = activate_link_result.unwrap();
+        println!("activate_link_result: {:?}", activate_link_result);
+
         assert!(activate_link_result.action.icrc_112_requests.is_some());
         let icrc112_requests = activate_link_result.action.icrc_112_requests.unwrap();
+        println!("icrc112_requests: {:?}", icrc112_requests);
+
         assert_eq!(icrc112_requests.len(), 1);
         let requests = &icrc112_requests[0];
         assert_eq!(requests.len(), 2, "There should be 2 ICRC-112 requests");
