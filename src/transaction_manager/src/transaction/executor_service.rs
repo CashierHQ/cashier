@@ -7,10 +7,10 @@ use crate::{
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::{graph::Graph, transaction_manager::ExecuteTransactionsResult},
-    repository::transaction::v1::{Transaction, TransactionState},
+    repository::transaction::v1::{FromCallType, Transaction, TransactionState},
 };
 use futures::future::join_all;
-use std::collections::HashMap;
+use std::{collections::HashMap, pin::Pin};
 
 pub struct ExecutorService<E: TransactionExecutor + Clone> {
     executor: E,
@@ -56,6 +56,17 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
                 })
                 .collect::<Result<Vec<_>, _>>()?;
 
+            // filter only Canister call type transactions for execution
+            let level_txs = level_txs
+                .iter()
+                .filter(|tx| tx.from_call_type == FromCallType::Canister)
+                .cloned()
+                .collect::<Vec<_>>();
+
+            if level_txs.is_empty() {
+                continue;
+            }
+
             let futures = level_txs
                 .iter()
                 .map(|&tx| executor.execute(tx.clone()))
@@ -86,5 +97,143 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
             is_success,
             errors,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Nat;
+    use cashier_backend_types::repository::common::Asset;
+    use cashier_common::test_utils::random_principal_id;
+
+    use crate::utils::test_utils::{
+        generate_mock_icrc2_wallet_to_link_transactions,
+        generate_mock_wallet_to_treasury_transactions,
+    };
+
+    use super::*;
+
+    #[derive(Clone)]
+    struct MockTransactionExecutor {
+        should_fail: HashMap<String, bool>,
+    }
+
+    impl MockTransactionExecutor {
+        fn new() -> Self {
+            Self {
+                should_fail: HashMap::new(),
+            }
+        }
+
+        fn set_failure(&mut self, tx_id: &str, should_fail: bool) {
+            self.should_fail.insert(tx_id.to_string(), should_fail);
+        }
+
+        fn is_failure(&self, tx_id: &str) -> bool {
+            *self.should_fail.get(tx_id).unwrap_or(&false)
+        }
+    }
+
+    impl TransactionExecutor for MockTransactionExecutor {
+        fn execute(
+            &self,
+            transaction: Transaction,
+        ) -> Pin<Box<dyn std::future::Future<Output = Result<(), CanisterError>>>> {
+            let tx_id = transaction.id.clone();
+            let should_fail = self.is_failure(&tx_id);
+            Box::pin(async move {
+                if should_fail {
+                    Err(CanisterError::HandleLogicError(format!(
+                        "Execution failed for transaction {}",
+                        tx_id
+                    )))
+                } else {
+                    Ok(())
+                }
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_execute_transaction_failed() {
+        // Arrange
+        let from = random_principal_id();
+        let link_account = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+
+        let fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+        let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
+        let mut mock_executor = MockTransactionExecutor::new();
+        mock_executor.set_failure(&fee_txs[1].id, true);
+        mock_executor.set_failure(&asset_txs[1].id, true);
+        let service = ExecutorService::new(mock_executor);
+
+        // Act
+        let result = service.execute_transactions(&all_txs).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let exec_result = result.unwrap();
+        assert!(!exec_result.is_success);
+        assert_eq!(exec_result.errors.len(), 2);
+        assert_eq!(exec_result.transactions.len(), 2);
+        let fee_tx = exec_result
+            .transactions
+            .iter()
+            .find(|tx| tx.id == fee_txs[1].id)
+            .unwrap();
+        assert_eq!(fee_tx.state, TransactionState::Fail);
+        let asset_tx = exec_result
+            .transactions
+            .iter()
+            .find(|tx| tx.id == asset_txs[1].id)
+            .unwrap();
+        assert_eq!(asset_tx.state, TransactionState::Fail);
+    }
+
+    #[tokio::test]
+    async fn it_should_execute_transaction_success() {
+        // Arrange
+        let from = random_principal_id();
+        let link_account = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+
+        let fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+        let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
+        let mock_executor = MockTransactionExecutor::new();
+        let service = ExecutorService::new(mock_executor);
+
+        // Act
+        let result = service.execute_transactions(&all_txs).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let exec_result = result.unwrap();
+        assert!(exec_result.is_success);
+        assert_eq!(exec_result.errors.len(), 0);
+        assert_eq!(exec_result.transactions.len(), 2);
+        for tx in exec_result.transactions.iter() {
+            assert_eq!(tx.state, TransactionState::Success);
+        }
     }
 }
