@@ -7,12 +7,9 @@ use cashier_backend_types::repository::common::{Asset, Chain, Wallet};
 use cashier_backend_types::repository::intent::v1::{
     Intent, IntentState, IntentTask, IntentType, TransferData,
 };
-use cashier_backend_types::repository::{
-    intent::v1::TransferFromData,
-    transaction::v1::{
-        FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
-        Transaction, TransactionState,
-    },
+use cashier_backend_types::repository::transaction::v1::{
+    FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
+    Transaction, TransactionState,
 };
 use cashier_common::test_utils;
 
@@ -199,7 +196,6 @@ pub fn generate_mock_transactions(
                 ts: None,
             })
         }
-        _ => panic!("Unsupported transaction type for mock generation"),
     };
 
     Transaction {
@@ -215,26 +211,5 @@ pub fn generate_mock_transactions(
         from_call_type,
         protocol: Protocol::IC(ic_transaction),
         start_ts: None,
-    }
-}
-
-pub fn generate_mock_wallet_to_treasury_intent() -> Intent {
-    Intent {
-        id: "mock_intent".to_string(),
-        state: IntentState::Created,
-        created_at: 0,
-        dependency: vec![],
-        chain: Chain::IC,
-        task: IntentTask::TransferWalletToTreasury,
-        r#type: IntentType::TransferFrom(TransferFromData {
-            from: Wallet::default(),
-            to: Wallet::default(),
-            spender: Wallet::default(),
-            asset: Asset::default(),
-            actual_amount: None,
-            approve_amount: None,
-            amount: Nat::from(100u64),
-        }),
-        label: "mock_intent".to_string(),
     }
 }

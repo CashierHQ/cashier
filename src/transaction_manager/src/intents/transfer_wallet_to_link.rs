@@ -97,7 +97,7 @@ impl TransferWalletToLinkIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::{Nat, Principal};
+    use candid::Nat;
     use cashier_backend_types::repository::common::Asset;
     use cashier_common::test_utils::random_principal_id;
     use icrc_ledger_types::icrc1::account::Account;
@@ -143,5 +143,56 @@ mod tests {
         assert_eq!(transfer_data.asset, asset);
         assert_eq!(transfer_data.from, Wallet::new(sender_id));
         assert_eq!(transfer_data.to, link_account.into());
+    }
+
+    #[test]
+    fn it_should_create_icrc2_wallet_to_link_intent() {
+        // Arrange
+        let label = "Test Intent".to_string();
+        let asset = Asset::default();
+        let actual_amount = Nat::from(1000u64);
+        let approval_amount = Nat::from(1500u64);
+        let sender_id = random_principal_id();
+        let spender_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let ts = 1_632_192_100_000_000_000;
+        let input_arg = CreateIcrc2WalletToLinkIntentArgs {
+            label: label.clone(),
+            asset: asset.clone(),
+            actual_amount: actual_amount.clone(),
+            approval_amount: approval_amount.clone(),
+            sender_id,
+            spender_account,
+            link_account,
+            created_at_ts: ts,
+        };
+
+        // Act
+        let intent_result = TransferWalletToLinkIntent::create_icrc2(input_arg);
+
+        // Assert
+        assert!(intent_result.is_ok());
+        let transfer_intent = intent_result.unwrap().intent;
+        assert_eq!(transfer_intent.label, label);
+        assert_eq!(transfer_intent.created_at, ts);
+        assert_eq!(transfer_intent.state, IntentState::Created);
+        assert_eq!(transfer_intent.chain, Chain::IC);
+        let transfer_from_data = transfer_intent
+            .r#type
+            .as_transfer_from()
+            .expect("Expected transfer from data");
+        assert_eq!(transfer_from_data.amount, actual_amount.clone());
+        assert_eq!(transfer_from_data.approve_amount, Some(approval_amount));
+        assert_eq!(transfer_from_data.actual_amount, Some(actual_amount));
+        assert_eq!(transfer_from_data.asset, asset);
+        assert_eq!(transfer_from_data.from, Wallet::new(sender_id));
+        assert_eq!(transfer_from_data.to, link_account.into());
+        assert_eq!(transfer_from_data.spender, spender_account.into());
     }
 }

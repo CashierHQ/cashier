@@ -55,6 +55,14 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
     )
 }
 
+/// Calculate the actual and approval amount for an ICRC2 transfer intent
+/// # Arguments
+/// * `max_use` - The maximum number of uses for the link
+/// * `amount_per_use` - The amount to be sent per use
+/// * `asset` - The asset being transferred
+/// * `fee_map` - A map of token principal to its corresponding fee
+/// # Returns
+/// * `Result<(Nat, Nat), CanisterError>` - A tuple containing the actual amount and the approval amount, or an error if the calculation fails
 pub fn calculate_icrc2_transfer_intent_amount(
     max_use: u64,
     amount_per_use: &Nat,
@@ -67,6 +75,13 @@ pub fn calculate_icrc2_transfer_intent_amount(
     Ok((actual_amount, approval_amount))
 }
 
+/// Calculate the inbound and outbound fee for an ICRC2 transfer intent
+/// # Arguments
+/// * `max_use` - The maximum number of uses for the link
+/// * `asset` - The asset being transferred
+/// * `fee_map` - A map of token principal to its corresponding fee
+/// # Returns
+/// * `Result<(Nat, Nat), CanisterError>` - A tuple containing the inbound and outbound fee, or an error if the calculation fails
 pub fn calculate_icrc2_transfer_intent_fee(
     max_use: u64,
     asset: &Asset,
@@ -89,7 +104,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_link_balance_map() {
+    fn it_should_calculate_link_balance_map() {
         // Arrange
         let asset = Asset::default();
         let label = "Test Asset1".to_string();
@@ -122,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn test_calculate_create_link_fee() {
+    fn it_should_calculate_create_link_fee() {
         // Arrange
         let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(5u64))]
             .into_iter()
@@ -134,5 +149,54 @@ mod tests {
         // Assert
         assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
         assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 5u64));
+    }
+
+    #[test]
+    fn it_should_calculate_icrc2_transfer_intent_amount() {
+        // Arrange
+        let max_use = 4u64;
+        let amount_per_use = Nat::from(20u64);
+        let asset = Asset::IC {
+            address: ICP_CANISTER_PRINCIPAL,
+        };
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(3u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approval_amount) =
+            calculate_icrc2_transfer_intent_amount(max_use, &amount_per_use, &asset, &fee_map)
+                .unwrap();
+
+        // Assert
+        let expected_outbound_fee = Nat::from(3u64) * Nat::from(max_use);
+        let expected_inbound_fee = Nat::from(2u32) * Nat::from(3u64);
+        let expected_actual_amount =
+            amount_per_use.clone() * Nat::from(max_use) + expected_outbound_fee;
+        let expected_approval_amount = expected_actual_amount.clone() + expected_inbound_fee;
+        assert_eq!(actual_amount, expected_actual_amount);
+        assert_eq!(approval_amount, expected_approval_amount);
+    }
+
+    #[test]
+    fn it_should_calculate_icrc2_transfer_intent_fee() {
+        // Arrange
+        let max_use = 5u64;
+        let asset = Asset::IC {
+            address: ICP_CANISTER_PRINCIPAL,
+        };
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(4u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (inbound_fee, outbound_fee) =
+            calculate_icrc2_transfer_intent_fee(max_use, &asset, &fee_map).unwrap();
+
+        // Assert
+        let expected_inbound_fee = Nat::from(2u32) * Nat::from(4u64);
+        let expected_outbound_fee = Nat::from(4u64) * Nat::from(max_use);
+        assert_eq!(inbound_fee, expected_inbound_fee);
+        assert_eq!(outbound_fee, expected_outbound_fee);
     }
 }
