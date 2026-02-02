@@ -4,7 +4,7 @@
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{asset_info::AssetInfo, common::Asset, link::v1::Link},
+    repository::{asset_info::AssetInfo, common::Asset},
 };
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use std::collections::HashMap;

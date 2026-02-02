@@ -221,7 +221,6 @@ mod tests {
     use std::collections::HashMap;
     use std::future::Future;
     use std::pin::Pin;
-    use std::rc::Rc;
 
     // Mock TransactionValidator
     #[derive(Clone)]
@@ -263,36 +262,37 @@ mod tests {
         }
     }
 
-    //#[tokio::test]
-    // async fn test_validate_action_transactions_success() {
-    //     // Arrange
-    //     let validator = Rc::new(MockValidator::new(false));
-    //     let service = ValidatorService::new(validator.clone());
-    //     let mut tx1 = generate_mock_transaction("tx1", vec![]);
-    //     tx1.from_call_type = FromCallType::Wallet;
-    //     let mut tx2 = generate_mock_transaction("tx2", vec![]);
-    //     tx2.from_call_type = FromCallType::Canister;
-    //     let txs = vec![tx1.clone(), tx2.clone()];
+    #[tokio::test]
+    async fn test_validate_action_transactions_success() {
+        // Arrange
+        let validator = MockValidator::new(false);
+        let service = ValidatorService::new(validator.clone());
+        let mut tx1 = generate_mock_transaction("tx1", vec![]);
+        tx1.from_call_type = FromCallType::Wallet;
+        let mut tx2 = generate_mock_transaction("tx2", vec![]);
+        tx2.from_call_type = FromCallType::Canister;
+        let txs = vec![tx1.clone(), tx2.clone()];
 
-    //     // Act
-    //     let result = service.validate_action_transactions(&txs).await.unwrap();
+        // Act
+        let result = service.validate_action_transactions(&txs).await.unwrap();
 
-    //     // Assert
-    //     let tx1_result = result
-    //         .wallet_transactions
-    //         .iter()
-    //         .find(|tx| tx.id == "tx1")
-    //         .unwrap();
-    //     assert_eq!(tx1_result.state, TransactionState::Success);
-    //     let tx2_result = result
-    //         .canister_transactions
-    //         .iter()
-    //         .find(|tx| tx.id == "tx2")
-    //         .unwrap();
-    //     assert_eq!(tx2_result.state, TransactionState::Created);
-    //     assert!(result.is_success);
-    //     assert!(result.errors.is_empty());
-    // }
+        // Assert
+        let tx1_result = result
+            .wallet_transactions
+            .iter()
+            .find(|tx| tx.id == "tx1")
+            .unwrap();
+        assert_eq!(tx1_result.state, TransactionState::Success);
+        let tx2_result = result
+            .canister_transactions
+            .iter()
+            .find(|tx| tx.id == "tx2")
+            .unwrap();
+        assert_eq!(tx2_result.state, TransactionState::Created);
+        assert!(result.is_success);
+        assert!(result.errors.is_empty());
+    }
+
     #[tokio::test]
     async fn test_validate_action_transactions_fail() {
         // Arrange

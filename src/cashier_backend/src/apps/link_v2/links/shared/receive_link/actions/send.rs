@@ -8,7 +8,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::Intent,
+        intent::v1::{CreateIcrc1WalletToLinkIntentArgs, Intent},
         link::v1::Link,
     },
 };
@@ -78,14 +78,16 @@ impl SendAction {
                     )
                 })?;
 
-                TransferWalletToLinkIntent::create_icrc1(
-                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                    asset_info.asset.clone(),
-                    sending_amount.clone(),
+                let input = CreateIcrc1WalletToLinkIntentArgs {
+                    label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                    asset: asset_info.asset.clone(),
+                    sending_amount: sending_amount.clone(),
                     sender_id,
                     link_account,
-                    link.create_at,
-                )
+                    created_at_ts: link.create_at,
+                };
+
+                TransferWalletToLinkIntent::create_icrc1(input)
             })
             .collect::<Result<Vec<TransferWalletToLinkIntent>, CanisterError>>()?;
 

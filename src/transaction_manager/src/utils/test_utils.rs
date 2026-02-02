@@ -7,8 +7,12 @@ use cashier_backend_types::repository::common::{Asset, Chain, Wallet};
 use cashier_backend_types::repository::intent::v1::{
     Intent, IntentState, IntentTask, IntentType, TransferData,
 };
-use cashier_backend_types::repository::transaction::v1::{
-    FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
+use cashier_backend_types::repository::{
+    intent::v1::TransferFromData,
+    transaction::v1::{
+        FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
+        Transaction, TransactionState,
+    },
 };
 use cashier_common::test_utils;
 
@@ -118,5 +122,119 @@ pub fn generate_mock_transaction(id: &str, dependencies: Vec<&str>) -> Transacti
             ts: None,
         })),
         start_ts: None,
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+/// Generate a mock Transaction with specified parameters
+/// # Arguments
+/// * `id` - The ID of the transaction
+/// * `from_call_type` - The call type of the transaction (Wallet or Canister)
+/// * `tx_type` - The type of IC transaction (Icrc1Transfer, Icrc2Approve, etc.)
+/// * `dependencies` - A vector of dependency IDs
+/// * `from` - Optional Principal for the 'from' wallet
+/// * `to` - Optional Principal for the 'to' wallet
+/// * `spender` - Optional Principal for the 'spender' wallet (for Icrc2Approve and Icrc2TransferFrom)
+/// * `asset` - Optional Asset for the transaction
+/// * `amount` - The amount for the transaction
+/// # Returns
+/// * `Transaction` - The generated mock transaction
+pub fn generate_mock_transactions(
+    id: &str,
+    from_call_type: FromCallType,
+    tx_type: IcTransaction,
+    dependencies: Vec<&str>,
+    from: Option<Principal>,
+    to: Option<Principal>,
+    spender: Option<Principal>,
+    asset: Option<Asset>,
+    amount: Nat,
+) -> Transaction {
+    let ic_transaction = match tx_type {
+        IcTransaction::Icrc1Transfer(_) => IcTransaction::Icrc1Transfer(Icrc1Transfer {
+            from: Wallet::IC {
+                address: from.unwrap_or_else(Principal::anonymous),
+                subaccount: None,
+            },
+            to: Wallet::IC {
+                address: to.unwrap_or_else(Principal::anonymous),
+                subaccount: None,
+            },
+            asset: asset.unwrap_or_default(),
+            amount,
+            memo: None,
+            ts: None,
+        }),
+        IcTransaction::Icrc2Approve(_) => IcTransaction::Icrc2Approve(Icrc2Approve {
+            from: Wallet::IC {
+                address: from.unwrap_or_else(Principal::anonymous),
+                subaccount: None,
+            },
+            spender: Wallet::IC {
+                address: spender.unwrap_or_else(Principal::anonymous),
+                subaccount: None,
+            },
+            asset: asset.unwrap_or_default(),
+            amount,
+            memo: None,
+            ts: None,
+        }),
+        IcTransaction::Icrc2TransferFrom(_) => {
+            IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: Wallet::IC {
+                    address: from.unwrap_or_else(Principal::anonymous),
+                    subaccount: None,
+                },
+                to: Wallet::IC {
+                    address: to.unwrap_or_else(Principal::anonymous),
+                    subaccount: None,
+                },
+                spender: Wallet::IC {
+                    address: spender.unwrap_or_else(Principal::anonymous),
+                    subaccount: None,
+                },
+                asset: asset.unwrap_or_default(),
+                amount,
+                memo: None,
+                ts: None,
+            })
+        }
+        _ => panic!("Unsupported transaction type for mock generation"),
+    };
+
+    Transaction {
+        id: id.to_string(),
+        created_at: 0,
+        state: TransactionState::Created,
+        dependency: if dependencies.is_empty() {
+            None
+        } else {
+            Some(dependencies.into_iter().map(ToString::to_string).collect())
+        },
+        group: 0,
+        from_call_type,
+        protocol: Protocol::IC(ic_transaction),
+        start_ts: None,
+    }
+}
+
+pub fn generate_mock_wallet_to_treasury_intent() -> Intent {
+    Intent {
+        id: "mock_intent".to_string(),
+        state: IntentState::Created,
+        created_at: 0,
+        dependency: vec![],
+        chain: Chain::IC,
+        task: IntentTask::TransferWalletToTreasury,
+        r#type: IntentType::TransferFrom(TransferFromData {
+            from: Wallet::default(),
+            to: Wallet::default(),
+            spender: Wallet::default(),
+            asset: Asset::default(),
+            actual_amount: None,
+            approve_amount: None,
+            amount: Nat::from(100u64),
+        }),
+        label: "mock_intent".to_string(),
     }
 }

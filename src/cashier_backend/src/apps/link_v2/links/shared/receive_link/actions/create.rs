@@ -12,7 +12,7 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::convert_nat_to_u64};
+use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
     intents::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
