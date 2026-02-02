@@ -37,6 +37,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
         transactions: &[Transaction],
     ) -> Result<ValidateActionTransactionsResult, CanisterError> {
         let mut errors = Vec::<String>::new();
+        let mut is_success = true;
         let validator = self.validator.clone();
 
         let txs_map: HashMap<&str, &Transaction> =
@@ -59,7 +60,6 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
 
         let graph: Graph = icrc1_wallet_transactions.into();
         let sorted_levels = kahn_topological_sort(&graph)?;
-        let is_success = true;
 
         for level_txids in sorted_levels.iter() {
             // validate all transactions in the same level in parallel
@@ -98,6 +98,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
                     }
                     Err(e) => {
                         updated_tx.state = TransactionState::Fail;
+                        is_success = false;
                         errors.push(format!("Failed to validate transaction {}: {}", txid, e));
                     }
                 }
@@ -211,13 +212,17 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{generate_mock_intent, generate_mock_transaction};
-    use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
-    use cashier_backend_types::repository::intent::v1::IntentState;
-    use cashier_backend_types::repository::transaction::v1::{
-        FromCallType, Transaction, TransactionState,
+    use crate::utils::test_utils::{
+        generate_mock_create_action, generate_mock_icrc1_wallet_to_link_transactions,
+        generate_mock_icrc2_wallet_to_link_transactions,
+        generate_mock_wallet_to_treasury_transactions,
     };
-    use std::cell::RefCell;
+    use candid::Nat;
+    use cashier_backend_types::repository::action::v1::ActionState;
+    use cashier_backend_types::repository::common::Asset;
+    use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask};
+    use cashier_backend_types::repository::transaction::v1::{Transaction, TransactionState};
+    use cashier_common::test_utils::random_principal_id;
     use std::collections::HashMap;
     use std::future::Future;
     use std::pin::Pin;
@@ -225,23 +230,31 @@ mod tests {
     // Mock TransactionValidator
     #[derive(Clone)]
     struct MockValidator {
-        should_fail: RefCell<bool>,
+        should_fail: HashMap<String, bool>,
     }
 
     impl MockValidator {
-        fn new(should_fail: bool) -> Self {
+        fn new() -> Self {
             Self {
-                should_fail: RefCell::new(should_fail),
+                should_fail: HashMap::new(),
             }
+        }
+
+        fn set_failure(&mut self, tx_id: &str, fail: bool) {
+            self.should_fail.insert(tx_id.to_string(), fail);
+        }
+
+        fn is_fail(&self, tx_id: &str) -> bool {
+            *self.should_fail.get(tx_id).unwrap_or(&false)
         }
     }
 
     impl TransactionValidator for MockValidator {
         fn validate_success(
             &self,
-            _tx: Transaction,
+            tx: Transaction,
         ) -> Pin<Box<dyn Future<Output = Result<(), String>>>> {
-            let fail = *self.should_fail.borrow();
+            let fail = self.is_fail(&tx.id);
             Box::pin(async move {
                 if fail {
                     Err("mock fail".to_string())
@@ -252,135 +265,302 @@ mod tests {
         }
     }
 
-    fn make_action(state: ActionState) -> Action {
-        Action {
-            id: "action1".to_string(),
-            state,
-            r#type: ActionType::CreateLink,
-            creator: candid::Principal::anonymous(),
-            link_id: "mock_link_id".to_string(),
-        }
-    }
-
     #[tokio::test]
-    async fn test_validate_action_transactions_success() {
+    async fn it_should_validate_icrc2_create_action_transaction_success() {
         // Arrange
-        let validator = MockValidator::new(false);
-        let service = ValidatorService::new(validator.clone());
-        let mut tx1 = generate_mock_transaction("tx1", vec![]);
-        tx1.from_call_type = FromCallType::Wallet;
-        let mut tx2 = generate_mock_transaction("tx2", vec![]);
-        tx2.from_call_type = FromCallType::Canister;
-        let txs = vec![tx1.clone(), tx2.clone()];
+        let mut mock_validator = MockValidator::new();
+
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let asset: Asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+        let all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
+        mock_validator.set_failure(&fee_txs[0].id, true);
+        mock_validator.set_failure(&asset_txs[0].id, true);
+        let service = ValidatorService::new(mock_validator);
 
         // Act
-        let result = service.validate_action_transactions(&txs).await.unwrap();
-
-        // Assert
-        let tx1_result = result
-            .wallet_transactions
-            .iter()
-            .find(|tx| tx.id == "tx1")
-            .unwrap();
-        assert_eq!(tx1_result.state, TransactionState::Success);
-        let tx2_result = result
-            .canister_transactions
-            .iter()
-            .find(|tx| tx.id == "tx2")
-            .unwrap();
-        assert_eq!(tx2_result.state, TransactionState::Created);
-        assert!(result.is_success);
-        assert!(result.errors.is_empty());
-    }
-
-    #[tokio::test]
-    async fn test_validate_action_transactions_fail() {
-        // Arrange
-        let validator_fail = MockValidator::new(true);
-        let service_fail = ValidatorService::new(validator_fail);
-        let mut tx1 = generate_mock_transaction("tx1", vec![]);
-        tx1.from_call_type = FromCallType::Wallet;
-
-        // Act
-        let result_fail = service_fail
-            .validate_action_transactions(&[tx1.clone()])
+        let result = service
+            .validate_action_transactions(&all_txs)
             .await
             .unwrap();
 
         // Assert
-        let tx1_fail = result_fail
-            .wallet_transactions
-            .iter()
-            .find(|tx| tx.id == "tx1")
-            .unwrap();
-        assert_eq!(tx1_fail.state, TransactionState::Fail);
-        assert!(!result_fail.is_success);
-        assert_eq!(result_fail.errors, vec!["mock fail".to_string()]);
+        assert!(result.is_success);
+        assert!(result.errors.is_empty());
+        assert_eq!(result.wallet_transactions.len(), 2);
+        assert_eq!(result.canister_transactions.len(), 2);
     }
 
-    #[test]
-    fn test_rollup_action_state_success() {
+    #[tokio::test]
+    async fn it_should_validate_icrc1_create_action_transaction_failed() {
         // Arrange
-        let validator = MockValidator::new(false);
-        let service = ValidatorService::new(validator);
-        let action = make_action(ActionState::Created);
-        let mut intent1 = generate_mock_intent("intent1", vec![]);
-        intent1.state = IntentState::Created;
-        let mut intent2 = generate_mock_intent("intent2", vec![]);
-        intent2.state = IntentState::Created;
-        let mut intent_txs_map = HashMap::new();
-        let mut tx_success = generate_mock_transaction("tx1", vec![]);
-        tx_success.from_call_type = FromCallType::Wallet;
-        tx_success.state = TransactionState::Success;
-        intent_txs_map.insert("intent1".to_string(), vec![tx_success.clone()]);
-        intent_txs_map.insert("intent2".to_string(), vec![tx_success]);
+        let mut mock_validator = MockValidator::new();
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset: Asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let fee_tx = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let asset_txs = generate_mock_icrc1_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+
+        let all_txs: Vec<Transaction> = [fee_tx.clone(), asset_txs.clone()].concat();
+
+        mock_validator.set_failure(&fee_tx[0].id, true);
+        mock_validator.set_failure(&asset_txs[0].id, true);
+        let service = ValidatorService::new(mock_validator);
 
         // Act
         let result = service
-            .rollup_action_state(action, &[intent1, intent2], intent_txs_map.clone())
+            .validate_action_transactions(&all_txs)
+            .await
+            .unwrap();
+
+        // Assert
+        assert!(!result.is_success);
+        assert_eq!(result.errors.len(), 1);
+        assert_eq!(result.wallet_transactions.len(), 2);
+        assert_eq!(result.canister_transactions.len(), 1);
+
+        let fail_tx = result
+            .wallet_transactions
+            .iter()
+            .find(|tx| tx.id == asset_txs[0].id)
+            .unwrap();
+        assert_eq!(fail_tx.state, TransactionState::Fail);
+    }
+
+    #[tokio::test]
+    async fn it_should_rollup_icrc2_wallet_transaction_state() {
+        // Arrange
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let mut fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let mut asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+        fee_txs[1].state = TransactionState::Success; // Simulate fee transfer success
+        asset_txs[1].state = TransactionState::Success; // Simulate asset transfer
+
+        let mut all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
+        let service = ValidatorService::new(MockValidator::new());
+
+        // Assert initial states
+        assert_eq!(all_txs[0].state, TransactionState::Created);
+        assert_eq!(all_txs[2].state, TransactionState::Created);
+
+        // Act
+        service.rollup_icrc2_wallet_transaction_state(&mut all_txs);
+
+        // Assert after rollup
+        assert_eq!(all_txs[0].state, TransactionState::Success); // Approve should change to Success
+        assert_eq!(all_txs[1].state, TransactionState::Success); // Transfer should succeed
+        assert_eq!(all_txs[2].state, TransactionState::Success); // Approve should change to Success
+        assert_eq!(all_txs[3].state, TransactionState::Success); // Transfer should succeed
+    }
+
+    #[tokio::test]
+    async fn it_should_rollup_action_failed_fee_intent_success() {
+        // Arrange
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+
+        let (action, intents, mut intent_txs_map) =
+            generate_mock_create_action(from, link_account, cashier_be, treasury, asset, amount);
+
+        let fee_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .unwrap()
+            .id
+            .as_str();
+        let fee_txs = intent_txs_map.get_mut(fee_intent_id).unwrap();
+        for tx in fee_txs.iter_mut() {
+            tx.state = TransactionState::Success;
+        }
+
+        let asset_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap()
+            .id
+            .as_str();
+        let asset_txs = intent_txs_map.get_mut(asset_intent_id).unwrap();
+        for tx in asset_txs.iter_mut() {
+            tx.state = TransactionState::Fail;
+        }
+
+        let mock_validator = MockValidator::new();
+        let service = ValidatorService::new(mock_validator);
+
+        // Act
+        let result = service
+            .rollup_action_state(action, &intents, intent_txs_map.clone())
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.action.state, ActionState::Fail);
+        assert_eq!(result.intents.len(), 2);
+        let fee_intent = result
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .unwrap();
+        assert_eq!(fee_intent.state, IntentState::Success);
+        let asset_intent = result
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap();
+        assert_eq!(asset_intent.state, IntentState::Fail);
+    }
+
+    #[tokio::test]
+    async fn it_should_rollup_action_failed_asset_intent_success() {
+        // Arrange
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+
+        let (action, intents, mut intent_txs_map) =
+            generate_mock_create_action(from, link_account, cashier_be, treasury, asset, amount);
+
+        let fee_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .unwrap()
+            .id
+            .as_str();
+        let fee_txs = intent_txs_map.get_mut(fee_intent_id).unwrap();
+        for tx in fee_txs.iter_mut() {
+            tx.state = TransactionState::Fail;
+        }
+
+        let asset_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap()
+            .id
+            .as_str();
+        let asset_txs = intent_txs_map.get_mut(asset_intent_id).unwrap();
+        for tx in asset_txs.iter_mut() {
+            tx.state = TransactionState::Success;
+        }
+
+        let mock_validator = MockValidator::new();
+        let service = ValidatorService::new(mock_validator);
+
+        // Act
+        let result = service
+            .rollup_action_state(action, &intents, intent_txs_map.clone())
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.action.state, ActionState::Fail);
+        assert_eq!(result.intents.len(), 2);
+        let fee_intent = result
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .unwrap();
+        assert_eq!(fee_intent.state, IntentState::Fail);
+        let asset_intent = result
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap();
+        assert_eq!(asset_intent.state, IntentState::Success);
+    }
+
+    #[tokio::test]
+    async fn it_should_rollup_action_success() {
+        // Arrange
+        let from = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let link_account = random_principal_id();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+
+        let (action, intents, mut intent_txs_map) =
+            generate_mock_create_action(from, link_account, cashier_be, treasury, asset, amount);
+
+        let fee_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .unwrap()
+            .id
+            .as_str();
+        let fee_txs = intent_txs_map.get_mut(fee_intent_id).unwrap();
+        for tx in fee_txs.iter_mut() {
+            tx.state = TransactionState::Success;
+        }
+
+        let asset_intent_id = intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap()
+            .id
+            .as_str();
+        let asset_txs = intent_txs_map.get_mut(asset_intent_id).unwrap();
+        for tx in asset_txs.iter_mut() {
+            tx.state = TransactionState::Success;
+        }
+
+        let mock_validator = MockValidator::new();
+        let service = ValidatorService::new(mock_validator);
+
+        // Act
+        let result = service
+            .rollup_action_state(action, &intents, intent_txs_map.clone())
             .unwrap();
 
         // Assert
         assert_eq!(result.action.state, ActionState::Success);
-        for intent in result.intents.iter() {
-            assert_eq!(intent.state, IntentState::Success);
-        }
-    }
-
-    #[test]
-    fn test_rollup_action_state_fail() {
-        // Arrange
-        let validator = MockValidator::new(false);
-        let service = ValidatorService::new(validator);
-        let action = make_action(ActionState::Created);
-        let mut intent1 = generate_mock_intent("intent1", vec![]);
-        intent1.state = IntentState::Created;
-        let mut intent2 = generate_mock_intent("intent2", vec![]);
-        intent2.state = IntentState::Created;
-        let mut intent_txs_map = HashMap::new();
-        let mut tx_success = generate_mock_transaction("tx1", vec![]);
-        tx_success.from_call_type = FromCallType::Wallet;
-        tx_success.state = TransactionState::Success;
-        let mut tx_fail = generate_mock_transaction("tx2", vec![]);
-        tx_fail.from_call_type = FromCallType::Wallet;
-        tx_fail.state = TransactionState::Fail;
-        intent_txs_map.insert("intent1".to_string(), vec![tx_success.clone()]);
-        intent_txs_map.insert("intent2".to_string(), vec![tx_success]);
-
-        // Act
-        let mut intent_txs_map_fail = intent_txs_map.clone();
-        intent_txs_map_fail.insert("intent2".to_string(), vec![tx_fail]);
-        let result_fail = service
-            .rollup_action_state(action, &[intent1, intent2], intent_txs_map_fail)
-            .unwrap();
-
-        // Assert
-        assert_eq!(result_fail.action.state, ActionState::Fail);
-        let intent2_result = result_fail
+        assert_eq!(result.intents.len(), 2);
+        let fee_intent = result
             .intents
             .iter()
-            .find(|i| i.id == "intent2")
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
             .unwrap();
-        assert_eq!(intent2_result.state, IntentState::Fail);
+        assert_eq!(fee_intent.state, IntentState::Success);
+        let asset_intent = result
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .unwrap();
+        assert_eq!(asset_intent.state, IntentState::Success);
     }
 }
