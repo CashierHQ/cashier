@@ -3138,6 +3138,7 @@ dependencies = [
  "ic-cdk-timers",
  "icrc-ledger-types",
  "icrc_112_utils",
+ "log",
  "serde",
  "serde_bytes",
  "tokio",

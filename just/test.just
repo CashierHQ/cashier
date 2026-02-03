@@ -25,11 +25,9 @@ test test_name="": download_artifacts build_canisters
 test_integration partition="" total="":
   #!/usr/bin/env bash
   set -e
-  # Clean stale lock/ready files to ensure fresh template deployment
-  rm -f ./target/pocket-ic-test-state/template.lock
-  rm -f ./target/pocket-ic-test-state/template.ready
-  rm -f ./target/pocket-ic-test-state/principals.json
-  rm -rf ./target/pocket-ic-test-state/template
+  # Clean the cache state directory
+  rm -rf ./target/pocket-ic-test-state
+  
   if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
     cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
   else
@@ -60,4 +58,5 @@ test_coverage:
   # WARN: using tarpaulin for the coverage report is faster but not recommended because it is not reliable.
   # To output the coverage report in the lcov format replace `--html` with `--lcov --output-path ./target/lcov.file`.
   cargo llvm-cov --release --all-features --ignore-run-fail --workspace --html
+
   
