@@ -7,6 +7,12 @@ import {
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
 import { feeService } from "$modules/shared/services/feeService";
+import {
+  calculateIntentFees,
+  IntentParticipants,
+  TokenStandard,
+} from "$shared";
+import { ICP_LEDGER_FEE } from "$modules/token/constants";
 
 export type FeeBreakdownItem = {
   name: string;
@@ -22,7 +28,7 @@ type FindTokenByAddress = (
 ) => Result<TokenWithPriceAndBalance, Error>;
 
 /**
- * Calculate fees breakdown for link creation/preview
+ * Calculate fees breakdown for link creation/preview using shared package.
  * @param assetAddresses - Array of asset addresses
  * @param maxUse - Maximum number of uses for the link
  * @param findTokenByAddress - Function to find token by address
@@ -36,7 +42,7 @@ export function calculateFeesBreakdown(
   const breakdown: FeeBreakdownItem[] = [];
   const maxUseNum = maxUse || 1;
 
-  // Calculate network fees for each asset
+  // Calculate network fees for each asset using shared package
   for (const assetAddress of assetAddresses) {
     if (!assetAddress) continue;
 
@@ -44,8 +50,18 @@ export function calculateFeesBreakdown(
     if (tokenResult.isErr()) continue;
 
     const token = tokenResult.unwrap();
-    // Network fee = token.fee * maxUse (one fee per use)
-    const networkFee = token.fee * BigInt(maxUseNum);
+    
+    // Use shared package to calculate network fee for CreatorToLink
+    // (which represents funding a link with maxUse)
+    const feeResult = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToLink,
+      token_standard: TokenStandard.ICRC1, // Default to ICRC1
+      user_input_amount: 0n, // We only care about network fee
+      max_use: maxUseNum,
+      asset_network_fee: token.fee,
+    });
+    
+    const networkFee = BigInt(feeResult.intent_total_network_fee);
     const networkFeeAmount = parseBalanceUnits(networkFee, token.decimals);
     const usdValue = token.priceUSD ? networkFeeAmount * token.priceUSD : 0;
 
@@ -59,13 +75,24 @@ export function calculateFeesBreakdown(
     });
   }
 
-  // Add link creation fee (always in ICP)
+  // Add link creation fee (always in ICP) using shared package
   const linkCreationFeeInfo = feeService.getLinkCreationFee();
   const icpTokenResult = findTokenByAddress(linkCreationFeeInfo.tokenAddress);
   if (icpTokenResult.isOk()) {
     const icpToken = icpTokenResult.unwrap();
+    
+    // Calculate link creation fee using shared package
+    // Use ICP_LEDGER_FEE constant to ensure consistency
+    const linkCreationResult = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToTreasury,
+      token_standard: TokenStandard.ICRC1, // ICP is ICRC1
+      link_creation_fee: linkCreationFeeInfo.amount,
+      asset_network_fee: ICP_LEDGER_FEE,
+    });
+    
+    const totalCreationFee = BigInt(linkCreationResult.intent_user_fee);
     const creationFeeAmount = parseBalanceUnits(
-      linkCreationFeeInfo.amount,
+      totalCreationFee,
       icpToken.decimals,
     );
     const creationFeeUsd = icpToken.priceUSD
@@ -74,7 +101,7 @@ export function calculateFeesBreakdown(
 
     breakdown.push({
       name: "Link creation fee",
-      amount: linkCreationFeeInfo.amount,
+      amount: totalCreationFee,
       tokenAddress: linkCreationFeeInfo.tokenAddress,
       tokenSymbol: icpToken.symbol,
       tokenDecimals: icpToken.decimals,

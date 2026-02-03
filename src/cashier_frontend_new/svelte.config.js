@@ -10,6 +10,7 @@ const config = {
     }),
     alias: {
       $modules: "./src/modules",
+      $shared: "../shared/generated/ts",
     },
   },
 };

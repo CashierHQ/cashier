@@ -90,6 +90,8 @@ describe("feesBreakdown", () => {
       expect(result).toHaveLength(3);
 
       // Check network fee for ICP
+      // Shared package calculation for CreatorToLink with maxUse=1:
+      // Network fee = inbound (1x) + outbound (1x) = 2x fee = 20_000n
       const icpNetworkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
@@ -97,20 +99,21 @@ describe("feesBreakdown", () => {
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(icpNetworkFee).toBeDefined();
-      expect(icpNetworkFee?.amount).toBe(10_000n);
+      expect(icpNetworkFee?.amount).toBe(20_000n); // 2x ICP fee (inbound + outbound)
       expect(icpNetworkFee?.tokenSymbol).toBe("ICP");
-      expect(icpNetworkFee?.usdAmount).toBeCloseTo(0.0005); // 0.0001 * 5.0
+      expect(icpNetworkFee?.usdAmount).toBeCloseTo(0.001); // 0.0002 * 5.0
 
       // Check network fee for USDC
+      // Network fee = inbound (1x) + outbound (1x) = 2x fee = 2_000n
       const usdcNetworkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
           fee.tokenAddress === "token-usdc-address",
       );
       expect(usdcNetworkFee).toBeDefined();
-      expect(usdcNetworkFee?.amount).toBe(1_000n);
+      expect(usdcNetworkFee?.amount).toBe(2_000n); // 2x USDC fee (inbound + outbound)
       expect(usdcNetworkFee?.tokenSymbol).toBe("USDC");
-      expect(usdcNetworkFee?.usdAmount).toBeCloseTo(0.001); // 0.001 * 1.0
+      expect(usdcNetworkFee?.usdAmount).toBeCloseTo(0.002); // 0.002 * 1.0
 
       // Check link creation fee
       const linkCreationFee = result.find(
@@ -150,7 +153,9 @@ describe("feesBreakdown", () => {
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
-      expect(networkFee?.amount).toBe(50_000n); // 10_000 * 5
+      // Shared package calculation for CreatorToLink with maxUse=5:
+      // Network fee = inbound (1x) + outbound (5x) = 6x fee = 60_000n
+      expect(networkFee?.amount).toBe(60_000n); // 10_000 * (1 inbound + 5 outbound)
     });
 
     it("should use maxUse = 1 when maxUse is 0", () => {
@@ -180,7 +185,9 @@ describe("feesBreakdown", () => {
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
-      expect(networkFee?.amount).toBe(10_000n); // 10_000 * 1
+      // Shared package calculation for CreatorToLink with maxUse=1:
+      // Network fee = inbound (1x) + outbound (1x) = 2x fee = 20_000n
+      expect(networkFee?.amount).toBe(20_000n); // 10_000 * (1 inbound + 1 outbound)
     });
 
     it("should skip empty asset addresses", () => {
