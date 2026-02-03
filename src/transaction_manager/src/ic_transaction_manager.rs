@@ -176,6 +176,15 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             // rollup ICRC-2 wallet transaction states from canister transaction executions
             validator_service.rollup_icrc2_wallet_transaction_state(&mut processed_transactions);
 
+            // create ICRC-112 requests from failed transactions for retry
+            let link_account = get_link_account(&link_id, canister_id)?;
+            let icrc112_requests = create_icrc_112_requests(
+                &mut processed_transactions,
+                link_account,
+                canister_id,
+                current_ts,
+            )?;
+
             // update intent_txs_map with processed transactions
             let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
             for intent in intents.iter() {
@@ -200,15 +209,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 action.clone(),
                 &intents,
                 updated_intent_txs_map.clone(),
-            )?;
-
-            // create ICRC-112 requests from failed transactions for retry
-            let link_account = get_link_account(&link_id, canister_id)?;
-            let icrc112_requests = create_icrc_112_requests(
-                &mut processed_transactions,
-                link_account,
-                canister_id,
-                current_ts,
             )?;
 
             Ok(ProcessActionResult {

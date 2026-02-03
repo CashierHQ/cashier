@@ -1,7 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::utils::topological_sort::kahn_topological_sort;
+use crate::{
+    transaction::utils::update_transaction_with_current_ts,
+    utils::topological_sort::kahn_topological_sort,
+};
 use candid::Principal;
 use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests},
@@ -12,7 +15,6 @@ use cashier_backend_types::{
         transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction, TransactionState},
     },
 };
-use cashier_common::constant::ICRC_TRANSACTION_TIME_WINDOW_NANOSECS;
 use cashier_common::utils::nonce_from_tx_id;
 use icrc_112_utils::build_canister_call;
 use icrc_ledger_types::{
@@ -37,6 +39,11 @@ pub fn create_icrc_112_requests(
     canister_id: Principal,
     current_ts: u64,
 ) -> Result<Icrc112Requests, CanisterError> {
+    // update timestamps of ICRC transactions
+    for tx in transactions.iter_mut() {
+        update_transaction_with_current_ts(tx, current_ts);
+    }
+
     // filter only wallet transactions
     let wallet_transactions: Vec<Transaction> = transactions
         .iter()
@@ -50,7 +57,7 @@ pub fn create_icrc_112_requests(
         .filter(|tx| tx.state == TransactionState::Created || tx.state == TransactionState::Fail)
         .collect();
 
-    // TODO
+    // merge transactions by protocol key
     let wallet_transactions = merge_transactions_by_protocol_key(wallet_transactions);
 
     let tx_graph: Graph = wallet_transactions.clone().into();
@@ -67,7 +74,7 @@ pub fn create_icrc_112_requests(
         for tx_id in tx_group.iter() {
             if let Some(tx) = tx_map.get_mut(tx_id) {
                 let icrc_112_request =
-                    convert_tx_to_icrc_112_request(tx, link_account, canister_id, current_ts)?;
+                    convert_tx_to_icrc_112_request(tx, link_account, canister_id)?;
                 group_requests.push(icrc_112_request);
             }
         }
@@ -76,16 +83,14 @@ pub fn create_icrc_112_requests(
         }
     }
 
-    // update the original transactions using the modified tx_map
-    for tx in transactions.iter_mut() {
-        if let Some(updated_tx) = tx_map.get(&tx.id) {
-            *tx = updated_tx.clone();
-        }
-    }
-
     Ok(icrc_112_requests)
 }
 
+/// Merges transactions that share the same protocol key.
+/// # Arguments
+/// * `transactions` - A vector of Transactions to be merged.
+/// # Returns
+/// * `Vec<Transaction>` - A vector of merged Transactions.
 pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec<Transaction> {
     let mut merged_map: HashMap<String, Vec<Transaction>> = HashMap::new();
     let mut merged_transactions: Vec<Transaction> = Vec::new();
@@ -101,8 +106,12 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
         if tx_group.len() == 1 {
             merged_transactions.push(tx_group.into_iter().next().unwrap());
         } else {
-            let mut merged_tx = tx_group[0].clone();
-            for tx in tx_group.iter().skip(1) {
+            // sort the transactions by created_at timestamp before merging
+            let mut sorted_tx_group = tx_group;
+            sorted_tx_group.sort_by_key(|tx| tx.created_at);
+
+            let mut merged_tx = sorted_tx_group[0].clone();
+            for tx in sorted_tx_group.iter().skip(1) {
                 merged_tx.merge_with(tx);
             }
 
@@ -118,14 +127,12 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
 /// * `tx` - The transaction to convert.
 /// * `link_account` - The account to which the tokens will be transferred.
 /// * `canister_id` - The canister ID of the token contract.
-/// * `current_ts` - The current timestamp to be used for the created_at_time field.
 /// # Returns
 /// * `Result<Icrc112Request, CanisterError>` - The resulting Icrc112Request or an error if the conversion fails.
 pub fn convert_tx_to_icrc_112_request(
     tx: &mut Transaction,
     link_account: Account,
     canister_id: Principal,
-    current_ts: u64,
 ) -> Result<Icrc112Request, CanisterError> {
     match &mut tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -134,18 +141,11 @@ pub fn convert_tx_to_icrc_112_request(
             })?;
 
             // update the created_at_time to current_ts if the tx created_at_time is outdated
-            let mut created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
+            let created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
                 )
             })?;
-
-            if (current_ts as i64 - created_at_time as i64)
-                > ICRC_TRANSACTION_TIME_WINDOW_NANOSECS as i64
-            {
-                created_at_time = current_ts;
-                tx_transfer.ts = Some(created_at_time);
-            }
 
             let arg = TransferArg {
                 to: link_account,
@@ -176,18 +176,11 @@ pub fn convert_tx_to_icrc_112_request(
             })?;
 
             // update the created_at_time to current_ts if the tx created_at_time is outdated
-            let mut created_at_time = tx_approve.clone().ts.ok_or_else(|| {
+            let created_at_time = tx_approve.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
                 )
             })?;
-
-            if (current_ts as i64 - created_at_time as i64)
-                > ICRC_TRANSACTION_TIME_WINDOW_NANOSECS as i64
-            {
-                created_at_time = current_ts;
-                tx_approve.ts = Some(created_at_time);
-            }
 
             let spender = Account {
                 owner: canister_id,
@@ -269,11 +262,10 @@ mod tests {
             subaccount: None,
         };
         let canister_id = random_principal_id();
-        let current_ts = 1_632_192_100_000_000_000;
 
         // Act
         let icrc_112_request =
-            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, current_ts).unwrap();
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id).unwrap();
 
         // Assert
         assert_eq!(
@@ -323,11 +315,10 @@ mod tests {
             subaccount: None,
         };
         let canister_id = random_principal_id();
-        let current_ts = 1_632_192_100_000_000_000;
 
         // Act
         let icrc_112_request =
-            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, current_ts).unwrap();
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id).unwrap();
 
         // Assert
         assert_eq!(
