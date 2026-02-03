@@ -154,8 +154,9 @@ jobs:
       - name: Build candid args (single run)
         run: |
           owner=${{ vars.ORBIT_STATION_ID }}
+          ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
           just build_backend_args "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
-          just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" token_storage_args.txt
+          just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args.txt
           echo "Backend args:"
           cat backend_args.txt
           echo ""
