@@ -63,15 +63,22 @@ orbit_upgrade canister_name mode network arg_file:
 [group('orbit')]
 build_backend_args owner log_filter file_name:
   #!/usr/bin/env bash
-  sed -e 's/__OWNER__/{{owner}}/g' -e 's/__LOG_FILTER__/{{log_filter}}/g' \
-    scripts/args/backend_args.template | tr -d '\n' | tr -s ' ' > {{file_name}}
+  sed \
+    -e 's/__OWNER__/{{owner}}/g' \
+    -e 's/__LOG_FILTER__/{{log_filter}}/g' \
+    scripts/args/backend_args.template \
+    | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Build token_storage canister args and save to file
 [group('orbit')]
-build_token_storage_args owner log_filter file_name:
+build_token_storage_args owner log_filter ckbtc_minter_id file_name:
   #!/usr/bin/env bash
-  sed -e 's/__OWNER__/{{owner}}/g' -e 's/__LOG_FILTER__/{{log_filter}}/g' \
-    scripts/args/token_storage_args.template | tr -d '\n' | tr -s ' ' > {{file_name}}
+  sed \
+    -e 's/__OWNER__/{{owner}}/g' \
+    -e 's/__LOG_FILTER__/{{log_filter}}/g' \
+    -e 's/__CKBTC_MINTER_ID__/{{ckbtc_minter_id}}/g' \
+    scripts/args/token_storage_args.template \
+    | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Encode candid args and compute SHA-256 checksum of the raw bytes
 # Returns: hex checksum string
