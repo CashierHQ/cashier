@@ -51,4 +51,5 @@
       enabled_by_default = true;
     };
   };
+  ckbtc_minter_id= principal "__CKBTC_MINTER_ID__";
 })
