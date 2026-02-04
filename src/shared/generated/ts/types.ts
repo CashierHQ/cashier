@@ -64,6 +64,30 @@ export const IntentParticipants = {
 
 export type IntentParticipants = typeof IntentParticipants[keyof typeof IntentParticipants];
 
+/**
+ * Type of action being performed
+ */
+export const ActionType = {
+  CreateLink: 'CreateLink',
+  Withdraw: 'Withdraw',
+  Send: 'Send',
+  Receive: 'Receive',
+} as const;
+
+export type ActionType = typeof ActionType[keyof typeof ActionType];
+
+/**
+ * Current state of an action
+ */
+export const ActionState = {
+  Created: 'Created',
+  Processing: 'Processing',
+  Success: 'Success',
+  Failed: 'Failed',
+} as const;
+
+export type ActionState = typeof ActionState[keyof typeof ActionState];
+
 // =============================================================================
 // Interfaces
 // =============================================================================
@@ -138,4 +162,22 @@ export interface FeeCalculationResult {
   intent_total_network_fee: bigint;
   /** Fee paid by the user */
   intent_user_fee: bigint;
+}
+
+/**
+ * Represents an action containing multiple intents
+ */
+export interface Action {
+  /** Unique identifier for the action */
+  id: string;
+  /** Principal of the action creator */
+  creator: Principal;
+  /** Type of creator address */
+  creator_address_type: AddressType;
+  /** Type of action being performed */
+  action_type: ActionType;
+  /** List of intents that make up this action */
+  intents: Intent[];
+  /** Current state of the action */
+  action_state: ActionState;
 }

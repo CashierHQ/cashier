@@ -41,6 +41,18 @@
 			"description": "Combination of source and destination for fee calculation"
 		},
 
+		"ActionType": {
+			"type": "string",
+			"enum": ["CreateLink", "Withdraw", "Send", "Receive"],
+			"description": "Type of action being performed"
+		},
+
+		"ActionState": {
+			"type": "string",
+			"enum": ["Created", "Processing", "Success", "Failed"],
+			"description": "Current state of an action"
+		},
+
 		"Asset": {
 			"type": "object",
 			"description": "Asset/Token reference",
@@ -203,6 +215,49 @@
 				"intent_total_amount",
 				"intent_total_network_fee",
 				"intent_user_fee"
+			]
+		},
+
+		"Action": {
+			"type": "object",
+			"description": "Represents an action containing multiple intents",
+			"properties": {
+				"id": {
+					"type": "string",
+					"description": "Unique identifier for the action"
+				},
+				"creator": {
+					"type": "string",
+					"format": "icp-principal",
+					"description": "Principal of the action creator"
+				},
+				"creator_address_type": {
+					"$ref": "#/definitions/AddressType",
+					"description": "Type of creator address"
+				},
+				"action_type": {
+					"$ref": "#/definitions/ActionType",
+					"description": "Type of action being performed"
+				},
+				"intents": {
+					"type": "array",
+					"items": {
+						"$ref": "#/definitions/Intent"
+					},
+					"description": "List of intents that make up this action"
+				},
+				"action_state": {
+					"$ref": "#/definitions/ActionState",
+					"description": "Current state of the action"
+				}
+			},
+			"required": [
+				"id",
+				"creator",
+				"creator_address_type",
+				"action_type",
+				"intents",
+				"action_state"
 			]
 		}
 	}

@@ -103,6 +103,46 @@ impl std::fmt::Display for IntentParticipants {
     }
 }
 
+/// Type of action being performed
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum ActionType {
+    CreateLink,
+    Withdraw,
+    Send,
+    Receive,
+}
+
+impl std::fmt::Display for ActionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ActionType::CreateLink => write!(f, "CreateLink"),
+            ActionType::Withdraw => write!(f, "Withdraw"),
+            ActionType::Send => write!(f, "Send"),
+            ActionType::Receive => write!(f, "Receive"),
+        }
+    }
+}
+
+/// Current state of an action
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum ActionState {
+    Created,
+    Processing,
+    Success,
+    Failed,
+}
+
+impl std::fmt::Display for ActionState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ActionState::Created => write!(f, "Created"),
+            ActionState::Processing => write!(f, "Processing"),
+            ActionState::Success => write!(f, "Success"),
+            ActionState::Failed => write!(f, "Failed"),
+        }
+    }
+}
+
 // =============================================================================
 // Structs
 // =============================================================================
@@ -172,4 +212,21 @@ pub struct FeeCalculationResult {
     pub intent_total_network_fee: Nat,
     /// Fee paid by the user
     pub intent_user_fee: Nat,
+}
+
+/// Represents an action containing multiple intents
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Action {
+    /// Unique identifier for the action
+    pub id: String,
+    /// Principal of the action creator
+    pub creator: Principal,
+    /// Type of creator address
+    pub creator_address_type: AddressType,
+    /// Type of action being performed
+    pub action_type: ActionType,
+    /// List of intents that make up this action
+    pub intents: Vec<Intent>,
+    /// Current state of the action
+    pub action_state: ActionState,
 }
