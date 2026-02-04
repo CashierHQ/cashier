@@ -230,9 +230,8 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_icrc1
                     let new_icrc2_approve_args = Decode!(&req.arg, ApproveArgs)
                         .expect("Failed to decode icrc2_approve args");
                     assert_eq!(
-                        new_icrc2_approve_args.created_at_time,
-                        initial_icrc2_approve_arg.created_at_time,
-                        "ICRC2 approve 'created_at_time' field should be the same"
+                        new_icrc2_approve_args, initial_icrc2_approve_arg,
+                        "ICRC2 approve arguments should be the same"
                     );
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
@@ -477,6 +476,11 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_icrc11
                         initial_icrc2_approve_arg.from_subaccount,
                         "ICRC2 approve 'from_subaccount' field should be the same"
                     );
+                    assert_eq!(
+                        new_icrc2_approve_args.memo, initial_icrc2_approve_arg.memo,
+                        "ICRC2 approve 'memo' field should be the same"
+                    );
+                    // Check that created_at_time is advanced by more than 1 day
                     let new_created_ts = new_icrc2_approve_args
                         .created_at_time
                         .expect("New icrc2_approve args ts should not be None");

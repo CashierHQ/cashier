@@ -106,9 +106,9 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
         if tx_group.len() == 1 {
             merged_transactions.push(tx_group.into_iter().next().unwrap());
         } else {
-            // sort the transactions by created_at timestamp before merging
+            // sort the transactions by id before merging to ensure deterministic behavior
             let mut sorted_tx_group = tx_group;
-            sorted_tx_group.sort_by_key(|tx| tx.created_at);
+            sorted_tx_group.sort_by_key(|tx| tx.id.clone());
 
             let mut merged_tx = sorted_tx_group[0].clone();
             for tx in sorted_tx_group.iter().skip(1) {
