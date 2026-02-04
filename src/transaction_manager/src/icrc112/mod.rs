@@ -414,9 +414,23 @@ mod tests {
         let from = Wallet::new(random_principal_id());
         let spender = Wallet::new(random_principal_id());
         let memo = Some(Memo::default());
+        let tx1_id = random_id_string();
+        let tx2_id = random_id_string();
+        let merged_id = {
+            let mut ids = [tx1_id.clone(), tx2_id.clone()];
+            ids.sort();
+            ids[0].clone()
+        };
+        let merged_ts = {
+            match merged_id.as_str() {
+                id if id == tx1_id => start_ts1,
+                id if id == tx2_id => start_ts2,
+                _ => panic!("Merged ID does not match any transaction ID"),
+            }
+        };
 
         let tx1 = Transaction {
-            id: random_id_string(),
+            id: tx1_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
@@ -434,7 +448,7 @@ mod tests {
         };
 
         let tx2 = Transaction {
-            id: random_id_string(),
+            id: tx2_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
@@ -462,7 +476,7 @@ mod tests {
             &merged_transactions[0].protocol
         {
             assert_eq!(merged_approve.amount, Nat::from(800u64));
-            assert_eq!(merged_approve.ts, Some(start_ts1));
+            assert_eq!(merged_approve.ts, Some(merged_ts));
         } else {
             panic!("Merged transaction is not an ICRC-2 Approve");
         }
@@ -480,9 +494,23 @@ mod tests {
         let from = Wallet::new(random_principal_id());
         let to = Wallet::new(random_principal_id());
         let memo = Some(Memo::default());
+        let tx1_id = random_id_string();
+        let tx2_id = random_id_string();
+        let merged_id = {
+            let mut ids = [tx1_id.clone(), tx2_id.clone()];
+            ids.sort();
+            ids[0].clone()
+        };
+        let merged_ts = {
+            match merged_id.as_str() {
+                id if id == tx1_id => start_ts1,
+                id if id == tx2_id => start_ts2,
+                _ => panic!("Merged ID does not match any transaction ID"),
+            }
+        };
 
         let tx1 = Transaction {
-            id: random_id_string(),
+            id: tx1_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
@@ -500,7 +528,7 @@ mod tests {
         };
 
         let tx2 = Transaction {
-            id: random_id_string(),
+            id: tx2_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
@@ -528,7 +556,7 @@ mod tests {
             &merged_transactions[0].protocol
         {
             assert_eq!(merged_transfer.amount, Nat::from(3000u64));
-            assert_eq!(merged_transfer.ts, Some(start_ts1));
+            assert_eq!(merged_transfer.ts, Some(merged_ts));
         } else {
             panic!("Merged transaction is not an ICRC-1 Transfer");
         }
@@ -546,9 +574,24 @@ mod tests {
         let from = Wallet::new(random_principal_id());
         let spender = Wallet::new(random_principal_id());
         let memo = Some(Memo::default());
+        let tx1_id = random_id_string();
+        let tx2_id = random_id_string();
+
+        let merged_id = {
+            let mut ids = [tx1_id.clone(), tx2_id.clone()];
+            ids.sort();
+            ids[0].clone()
+        };
+        let merged_ts = {
+            match merged_id.as_str() {
+                id if id == tx1_id => start_ts1,
+                id if id == tx2_id => start_ts2,
+                _ => panic!("Merged ID does not match any transaction ID"),
+            }
+        };
 
         let tx1 = Transaction {
-            id: random_id_string(),
+            id: tx1_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
@@ -566,7 +609,7 @@ mod tests {
         };
 
         let tx2 = Transaction {
-            id: random_id_string(),
+            id: tx2_id.clone(),
             from_call_type: FromCallType::Wallet,
             state: TransactionState::Created,
             protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
@@ -604,6 +647,6 @@ mod tests {
         assert_eq!(icrc112_request.method, "icrc2_approve");
         let icrc2_approve_args = Decode!(icrc112_request.arg.as_slice(), ApproveArgs).unwrap();
         assert_eq!(icrc2_approve_args.amount, Nat::from(800u64));
-        assert_eq!(icrc2_approve_args.created_at_time, Some(start_ts1));
+        assert_eq!(icrc2_approve_args.created_at_time, Some(merged_ts));
     }
 }
