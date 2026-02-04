@@ -127,7 +127,7 @@
 				"intent_token_standard": {
 					"$ref": "#/definitions/TokenStandard"
 				},
-				"dependency": {
+				"dependencies": {
 					"type": "array",
 					"items": {
 						"type": "string"

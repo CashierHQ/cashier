@@ -45,7 +45,7 @@ export type IntentType = typeof IntentType[keyof typeof IntentType];
 export const IntentState = {
   Created: 'Created',
   Processing: 'Processing',
-  Completed: 'Completed',
+  Success: 'Success',
   Failed: 'Failed',
 } as const;
 
@@ -130,7 +130,7 @@ export interface Intent {
   dest_address_type: AddressType;
   intent_token_standard: TokenStandard;
   /** IDs of intents this intent depends on */
-  dependency?: string[];
+  dependencies?: string[];
   intent_state: IntentState;
 }
 

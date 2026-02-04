@@ -66,7 +66,7 @@ impl std::fmt::Display for IntentType {
 pub enum IntentState {
     Created,
     Processing,
-    Completed,
+    Success,
     Failed,
 }
 
@@ -75,7 +75,7 @@ impl std::fmt::Display for IntentState {
         match self {
             IntentState::Created => write!(f, "Created"),
             IntentState::Processing => write!(f, "Processing"),
-            IntentState::Completed => write!(f, "Completed"),
+            IntentState::Success => write!(f, "Success"),
             IntentState::Failed => write!(f, "Failed"),
         }
     }
@@ -182,7 +182,7 @@ pub struct Intent {
     pub dest_address_type: AddressType,
     pub intent_token_standard: TokenStandard,
     /// IDs of intents this intent depends on
-    pub dependency: Option<Vec<String>>,
+    pub dependencies: Option<Vec<String>>,
     pub intent_state: IntentState,
 }
 
