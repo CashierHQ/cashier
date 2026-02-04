@@ -135,6 +135,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
       - name: Install cargo-nextest
         run: |
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
