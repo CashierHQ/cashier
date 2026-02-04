@@ -89,6 +89,11 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
                     }
                 }
             }
+
+            // If any transaction in the level failed, stop executing further levels
+            if !is_success {
+                break;
+            }
         }
 
         Ok(ExecuteTransactionsResult {
@@ -101,17 +106,15 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
 
 #[cfg(test)]
 mod tests {
-    use candid::Nat;
-    use cashier_backend_types::repository::common::Asset;
-    use cashier_common::test_utils::random_principal_id;
-    use std::pin::Pin;
-
+    use super::*;
     use crate::utils::test_utils::{
         generate_mock_icrc2_wallet_to_link_transactions,
         generate_mock_wallet_to_treasury_transactions,
     };
-
-    use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::common::Asset;
+    use cashier_common::test_utils::random_principal_id;
+    use std::pin::Pin;
 
     #[derive(Clone)]
     struct MockTransactionExecutor {
@@ -219,6 +222,7 @@ mod tests {
             asset,
             amount,
         );
+
         let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
         let mock_executor = MockTransactionExecutor::new();
         let service = ExecutorService::new(mock_executor);
@@ -235,5 +239,63 @@ mod tests {
         for tx in exec_result.transactions.iter() {
             assert_eq!(tx.state, TransactionState::Success);
         }
+    }
+
+    #[tokio::test]
+    async fn it_should_stop_execution_further_if_execution_failed_in_level() {
+        // Arrange
+        let from = random_principal_id();
+        let link_account = random_principal_id();
+        let cashier_be = random_principal_id();
+        let treasury = random_principal_id();
+        let asset = Asset::IC {
+            address: random_principal_id(),
+        };
+        let amount = Nat::from(1000u64);
+
+        let mut fee_txs = generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
+        let mut asset_txs = generate_mock_icrc2_wallet_to_link_transactions(
+            from,
+            cashier_be,
+            link_account,
+            asset,
+            amount,
+        );
+
+        // Set all transactions to Canister call type to be executed
+        for tx in fee_txs.iter_mut() {
+            tx.from_call_type = FromCallType::Canister;
+        }
+        for tx in asset_txs.iter_mut() {
+            tx.from_call_type = FromCallType::Canister;
+        }
+
+        let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
+        let mut mock_executor = MockTransactionExecutor::new();
+        mock_executor.set_failure(&fee_txs[0].id, true); // Fail the first fee transaction
+        let service = ExecutorService::new(mock_executor);
+
+        // Act
+        let result = service.execute_transactions(&all_txs).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let exec_result = result.unwrap();
+        assert!(!exec_result.is_success);
+        assert_eq!(exec_result.errors.len(), 1);
+        // Only the fee transactions should be executed, asset transactions should be skipped
+        assert_eq!(exec_result.transactions.len(), 2);
+        let fee_tx = exec_result
+            .transactions
+            .iter()
+            .find(|tx| tx.id == fee_txs[0].id)
+            .unwrap();
+        assert_eq!(fee_tx.state, TransactionState::Fail);
+        let asset_tx = exec_result
+            .transactions
+            .iter()
+            .find(|tx| tx.id == asset_txs[0].id)
+            .unwrap();
+        assert_eq!(asset_tx.state, TransactionState::Success);
     }
 }
