@@ -2,13 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
-use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
-use crate::utils::icrc_112::execute_icrc112_request;
+use crate::constant::ICP_PRINCIPAL;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::constant::{self, CKBTC_ICRC_TOKEN, ICP_TOKEN};
-use cashier_backend_types::dto::action::Icrc112Request;
+use cashier_backend_types::constant::{self, ICP_TOKEN};
 use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
@@ -498,8 +496,7 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_icrc11
 }
 
 #[tokio::test]
-async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice_later_than_1_day()
-{
+async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice_within_1_day() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
