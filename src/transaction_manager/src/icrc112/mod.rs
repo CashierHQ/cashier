@@ -220,7 +220,7 @@ pub fn convert_tx_to_icrc_112_request(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Nat;
+    use candid::{Decode, Nat};
     use cashier_backend_types::repository::{
         common::Wallet,
         transaction::v1::{Icrc1Transfer, Icrc2Approve},
@@ -229,7 +229,7 @@ mod tests {
     use icrc_ledger_types::icrc1::transfer::Memo;
 
     #[test]
-    fn test_convert_tx_to_icrc_112_request_for_icrc1_transfer() {
+    fn it_should_convert_tx_to_icrc_112_request_for_icrc1_transfer() {
         // Arrange
         let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
         let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
@@ -282,7 +282,7 @@ mod tests {
     }
 
     #[test]
-    fn test_convert_tx_to_icrc_112_request_for_icrc2_approve() {
+    fn it_should_convert_tx_to_icrc_112_request_for_icrc2_approve() {
         // Arrange
         let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
         let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
@@ -334,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn test_create_icrc112_requests_from_icrc1_transfer_and_icrc2_approve() {
+    fn it_should_create_icrc112_requests_from_icrc1_transfer_and_icrc2_approve() {
         // Arrange
         let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
         let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
@@ -400,5 +400,210 @@ mod tests {
         // Assert
         assert_eq!(icrc_112_requests.len(), 1);
         assert_eq!(icrc_112_requests[0].len(), 2);
+    }
+
+    #[test]
+    fn it_should_merge_icrc2_approval_transactions_by_protocol_key() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts1 = 1_632_192_100_000_000_000u64; // Current timestamp
+        let start_ts2 = 1_632_192_200_000_000_000u64; // Later timestamp
+        let asset = Asset::default();
+        let amount1 = Nat::from(500u64);
+        let amount2 = Nat::from(300u64);
+        let from = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let tx1 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from.clone(),
+                spender: spender.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts1),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts1),
+            group: 1u16,
+        };
+
+        let tx2 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from.clone(),
+                spender: spender.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts2),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts2),
+            group: 1u16,
+        };
+
+        let transactions = vec![tx1, tx2];
+
+        // Act
+        let merged_transactions = merge_transactions_by_protocol_key(transactions);
+
+        // Assert
+        assert_eq!(merged_transactions.len(), 1);
+        if let Protocol::IC(IcTransaction::Icrc2Approve(merged_approve)) =
+            &merged_transactions[0].protocol
+        {
+            assert_eq!(merged_approve.amount, Nat::from(800u64));
+            assert_eq!(merged_approve.ts, Some(start_ts1));
+        } else {
+            panic!("Merged transaction is not an ICRC-2 Approve");
+        }
+    }
+
+    #[test]
+    fn it_should_merge_icrc1_transfer_transactions_by_protocol_key() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts1 = 1_632_192_100_000_000_000u64; // Current timestamp
+        let start_ts2 = 1_632_192_200_000_000_000u64; // Later timestamp
+        let asset = Asset::default();
+        let amount1 = Nat::from(1000u64);
+        let amount2 = Nat::from(2000u64);
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let tx1 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from.clone(),
+                to: to.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts1),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts1),
+            group: 1u16,
+        };
+
+        let tx2 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from.clone(),
+                to: to.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts2),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts2),
+            group: 1u16,
+        };
+
+        let transactions = vec![tx1, tx2];
+
+        // Act
+        let merged_transactions = merge_transactions_by_protocol_key(transactions);
+
+        // Assert
+        assert_eq!(merged_transactions.len(), 1);
+        if let Protocol::IC(IcTransaction::Icrc1Transfer(merged_transfer)) =
+            &merged_transactions[0].protocol
+        {
+            assert_eq!(merged_transfer.amount, Nat::from(3000u64));
+            assert_eq!(merged_transfer.ts, Some(start_ts1));
+        } else {
+            panic!("Merged transaction is not an ICRC-1 Transfer");
+        }
+    }
+
+    #[test]
+    fn it_should_merge_icrc2_approval_transactions_and_create_icrc112_requests() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts1 = 1_632_192_100_000_000_000u64; // Current timestamp
+        let start_ts2 = 1_632_192_200_000_000_000u64; // Later timestamp
+        let asset = Asset::default();
+        let amount1 = Nat::from(500u64);
+        let amount2 = Nat::from(300u64);
+        let from = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let tx1 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from.clone(),
+                spender: spender.clone(),
+                asset: asset.clone(),
+                amount: amount1.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts1),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts1),
+            group: 1u16,
+        };
+
+        let tx2 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: from.clone(),
+                spender: spender.clone(),
+                asset: asset.clone(),
+                amount: amount2.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts2),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts2),
+            group: 1u16,
+        };
+
+        let mut transactions = vec![tx1, tx2];
+
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_300_000_000_000;
+
+        // Act
+        let icrc_112_requests =
+            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)
+                .unwrap();
+
+        // Assert
+        assert_eq!(icrc_112_requests.len(), 1);
+        assert_eq!(icrc_112_requests[0].len(), 1);
+        let icrc112_request = &icrc_112_requests[0][0];
+        assert_eq!(icrc112_request.method, "icrc2_approve");
+        let icrc2_approve_args = Decode!(icrc112_request.arg.as_slice(), ApproveArgs).unwrap();
+        assert_eq!(icrc2_approve_args.amount, Nat::from(800u64));
+        assert_eq!(icrc2_approve_args.created_at_time, Some(start_ts1));
     }
 }
