@@ -1,4 +1,4 @@
-name: "Build test backend"
+name: 'Build test backend'
 
 on:
   pull_request:
@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   rust-check:
-    name: "Rust Code Check"
+    name: 'Rust Code Check'
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -55,7 +55,7 @@ jobs:
           just check_code
 
   backend-build:
-    name: "Backend Build"
+    name: 'Backend Build'
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -75,7 +75,7 @@ jobs:
       - name: Install dfx
         uses: dfinity/setup-dfx@main
         with:
-          dfx-version: "0.29.2"
+          dfx-version: '0.29.2'
 
       - name: Install ic-wasm
         run: |
@@ -121,7 +121,7 @@ jobs:
           retention-days: 1
 
   integration-test:
-    name: "Integration Test (shard ${{ matrix.partition }}/${{ matrix.total }})"
+    name: 'Integration Test (shard ${{ matrix.partition }}/${{ matrix.total }})'
     needs: backend-build
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
@@ -147,12 +147,10 @@ jobs:
 
       - name: Run integration tests (shard ${{ matrix.partition }}/${{ matrix.total }})
         run: |
-          cargo nextest run --archive-file target/nextest-archive.tar.zst \
-            --workspace-remap ${{ github.workspace }} \
-            --partition count:${{ matrix.partition }}/${{ matrix.total }}
+          just test_integration ${{ matrix.partition }} ${{ matrix.total }} target/nextest-archive.tar.zst ${{ github.workspace }}
 
   cleanup-artifacts:
-    name: "Cleanup Artifacts"
+    name: 'Cleanup Artifacts'
     needs: integration-test
     if: always()
     permissions:
@@ -164,7 +162,7 @@ jobs:
           name: test-artifacts
 
   backend-test-i686:
-    name: "Backend Test (i686)"
+    name: 'Backend Test (i686)'
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
