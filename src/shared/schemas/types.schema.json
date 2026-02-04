@@ -25,7 +25,7 @@
 
 		"IntentState": {
 			"type": "string",
-			"enum": ["Created", "Processing", "Completed", "Failed"],
+			"enum": ["Created", "Processing", "Success", "Failed"],
 			"description": "Current state of an intent"
 		},
 
