@@ -457,6 +457,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cashier_shared"
+version = "0.1.1"
+dependencies = [
+ "candid",
+ "serde",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3132,6 +3140,7 @@ dependencies = [
  "candid",
  "cashier_backend_types",
  "cashier_common",
+ "cashier_shared",
  "futures",
  "ic-cdk",
  "ic-cdk-timers",

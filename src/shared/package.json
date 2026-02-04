@@ -30,8 +30,7 @@
 		"clean": "rm -rf generated/ts generated/rust",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"test:rust": "cd tests/rust-validation && cargo check",
-		"test:rust:full": "cd tests/rust-validation && cargo test",
+		"test:rust": "cargo test -p cashier_shared",
 		"test:all": "npm test && npm run test:rust"
 	},
 	"devDependencies": {
