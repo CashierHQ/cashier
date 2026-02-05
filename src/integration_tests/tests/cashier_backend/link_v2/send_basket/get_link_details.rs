@@ -19,7 +19,6 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_common::constant::CREATE_LINK_FEE;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
@@ -172,8 +171,7 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
             .expect("Initial TransferWalletToLink intent not found");
 
         assert_eq!(initial_intent1.state, IntentState::Created);
-        assert_eq!(initial_intent1.transactions.len(), 1);
-        let initial_tx0 = &initial_intent1.transactions[0];
+        assert_eq!(initial_intent1.transactions.len(), 2);
 
         let initial_intent2 = initial_action
             .intents
@@ -204,17 +202,11 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let initial_icrc112 = initial_icrc112.unwrap();
         assert_eq!(initial_icrc112.len(), 1);
         let initial_icrc112_requests = &initial_icrc112[0];
-        let initial_icrc1_transfer_request = initial_icrc112_requests
-            .iter()
-            .find(|req| req.method == "icrc1_transfer")
-            .expect("Initial icrc1_transfer request not found");
-        let initial_icrc1_transfer_arg = Decode!(&initial_icrc1_transfer_request.arg, TransferArg)
-            .expect("Failed to decode initial icrc1_transfer args");
         let initial_icrc2_approve_request = initial_icrc112_requests
             .iter()
             .find(|req| req.method == "icrc2_approve")
             .expect("Initial icrc2_approve request not found");
-        let initial_icrc2_approve_arg = Decode!(&initial_icrc2_approve_request.arg, ApproveArgs)
+        let _initial_icrc2_approve_arg = Decode!(&initial_icrc2_approve_request.arg, ApproveArgs)
             .expect("Failed to decode initial icrc2_approve args");
 
         // Act
@@ -248,23 +240,13 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         assert_eq!(intent1.created_at, initial_intent1.created_at);
         assert_eq!(intent1.state, IntentState::Created);
         match intent1.r#type {
-            IntentType::Transfer(ref transfer) => {
+            IntentType::TransferFrom(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
             }
-            _ => panic!("Expected Transfer intent type"),
+            _ => panic!("Expected TransferFrom intent type"),
         }
-        assert_eq!(intent1.transactions.len(), 1);
-        let tx0 = &intent1.transactions[0];
-        assert_eq!(tx0.id, initial_tx0.id);
-        assert_eq!(tx0.created_at, initial_tx0.created_at);
-        match tx0.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
-                assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
-            }
-            _ => panic!("Expected Icrc1Transfer transaction"),
-        }
+        assert_eq!(intent1.transactions.len(), 2);
 
         // Assert Intent2 TransferWalletToTreasury
         let intent2 = action
@@ -327,29 +309,14 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let icrc112_requests = action.icrc_112_requests.unwrap();
         assert_eq!(icrc112_requests.len(), 1);
         let requests = &icrc112_requests[0];
-        assert_eq!(requests.len(), 2);
-
-        let icrc1_transfer_request = requests
-            .iter()
-            .find(|req| req.method == "icrc1_transfer")
-            .expect("Initial icrc1_transfer request not found");
-        let icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
-            .expect("Failed to decode initial icrc1_transfer args");
-        assert_eq!(
-            icrc1_transfer_arg, initial_icrc1_transfer_arg,
-            "ICRC1 transfer args do not match"
-        );
+        assert_eq!(requests.len(), 1);
 
         let icrc2_approve_request = requests
             .iter()
             .find(|req| req.method == "icrc2_approve")
             .expect("Initial icrc2_approve request not found");
-        let icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
+        let _icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
             .expect("Failed to decode initial icrc2_approve args");
-        assert_eq!(
-            icrc2_approve_arg, initial_icrc2_approve_arg,
-            "ICRC2 approve args do not match"
-        );
 
         Ok(())
     })

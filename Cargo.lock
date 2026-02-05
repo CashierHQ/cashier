@@ -1628,6 +1628,7 @@ dependencies = [
  "token_storage_client",
  "token_storage_types",
  "tokio",
+ "transaction_manager",
  "uuid",
 ]
 
@@ -3137,6 +3138,7 @@ dependencies = [
  "ic-cdk-timers",
  "icrc-ledger-types",
  "icrc_112_utils",
+ "log",
  "serde",
  "serde_bytes",
  "tokio",
