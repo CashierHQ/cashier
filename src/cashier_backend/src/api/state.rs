@@ -2,6 +2,7 @@ use crate::{
     apps::{
         auth::AuthService,
         link_v2::service::LinkV2Service,
+        link_v3::service::LinkV3Service,
         request_lock::RequestLockService,
         settings::SettingsService,
         token_fee::{IcrcTokenFetcher, TokenFeeService},
@@ -19,6 +20,7 @@ use transaction_manager::ic_transaction_manager::IcTransactionManager;
 pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub link_v2_service: LinkV2Service<ThreadlocalRepositories, IcTransactionManager<E>>,
+    pub link_v3_service: LinkV3Service<ThreadlocalRepositories, IcTransactionManager<E>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -31,14 +33,16 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
 
-        let transaction_manager_v2 = IcTransactionManager::new(env.clone());
-        let link_v2_service = LinkV2Service::new(&*repo, Rc::new(transaction_manager_v2));
+        let transaction_manager = Rc::new(IcTransactionManager::new(env.clone()));
+        let link_v2_service = LinkV2Service::new(&*repo, transaction_manager.clone());
+        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager.clone());
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             link_v2_service,
+            link_v3_service,
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
