@@ -150,6 +150,115 @@ pub enum IntentTask {
     TransferLinkToWallet,
 }
 
+// --- From<cashier_shared> impls ---
+
+impl From<cashier_shared::IntentState> for IntentState {
+    fn from(state: cashier_shared::IntentState) -> Self {
+        match state {
+            cashier_shared::IntentState::Created => IntentState::Created,
+            cashier_shared::IntentState::Processing => IntentState::Processing,
+            cashier_shared::IntentState::Success => IntentState::Success,
+            cashier_shared::IntentState::Failed => IntentState::Fail,
+        }
+    }
+}
+
+impl IntentState {
+    pub fn into_generated(self) -> cashier_shared::IntentState {
+        match self {
+            IntentState::Created => cashier_shared::IntentState::Created,
+            IntentState::Processing => cashier_shared::IntentState::Processing,
+            IntentState::Success => cashier_shared::IntentState::Success,
+            IntentState::Fail => cashier_shared::IntentState::Failed,
+        }
+    }
+}
+
+/// Defaults for fields not in generated type:
+/// chain=IC, task=TransferWalletToTreasury, label="", created_at=0
+impl From<cashier_shared::Intent> for Intent {
+    fn from(value: cashier_shared::Intent) -> Self {
+        let from = Wallet::new(value.source_address);
+        let to = Wallet::new(value.dest_address);
+        let asset = Asset::IC {
+            address: value.asset.address,
+        };
+
+        Intent {
+            id: value.id,
+            state: value.intent_state.into(),
+            created_at: 0,
+            dependency: value.dependencies.unwrap_or_default(),
+            chain: Chain::IC,
+            task: IntentTask::TransferWalletToTreasury,
+            r#type: IntentType::Transfer(TransferData {
+                from,
+                to,
+                asset,
+                amount: value.amount,
+            }),
+            label: String::new(),
+        }
+    }
+}
+
+impl Intent {
+    /// Convert to generated Intent. Requires context not stored in repo type.
+    pub fn into_generated(
+        self,
+        source_address_type: cashier_shared::AddressType,
+        dest_address_type: cashier_shared::AddressType,
+        token_standard: cashier_shared::TokenStandard,
+    ) -> cashier_shared::Intent {
+        let (from_addr, to_addr, asset_addr, amount) = match &self.r#type {
+            IntentType::Transfer(d) => extract_wallet_fields(&d.from, &d.to, &d.asset, &d.amount),
+            IntentType::TransferFrom(d) => {
+                extract_wallet_fields(&d.from, &d.to, &d.asset, &d.amount)
+            }
+        };
+
+        cashier_shared::Intent {
+            id: self.id,
+            intent_type: cashier_shared::IntentType::Transfer,
+            asset: cashier_shared::Asset {
+                address: asset_addr,
+                token_standard: token_standard.clone(),
+            },
+            amount,
+            source_address: from_addr,
+            source_address_type,
+            dest_address: to_addr,
+            dest_address_type,
+            intent_token_standard: token_standard,
+            dependencies: if self.dependency.is_empty() {
+                None
+            } else {
+                Some(self.dependency)
+            },
+            intent_state: self.state.into_generated(),
+        }
+    }
+}
+
+/// Extract Principal addresses from Wallet/Asset for generated type construction
+fn extract_wallet_fields(
+    from: &Wallet,
+    to: &Wallet,
+    asset: &Asset,
+    amount: &Nat,
+) -> (Principal, Principal, Principal, Nat) {
+    let from_addr = match from {
+        Wallet::IC { address, .. } => *address,
+    };
+    let to_addr = match to {
+        Wallet::IC { address, .. } => *address,
+    };
+    let asset_addr = match asset {
+        Asset::IC { address } => *address,
+    };
+    (from_addr, to_addr, asset_addr, amount.clone())
+}
+
 /// Arguments for creating a TransferWalletToLink intent using ICRC2
 pub struct CreateIcrc2WalletToLinkIntentArgs {
     pub label: String,

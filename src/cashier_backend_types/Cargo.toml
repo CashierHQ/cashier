@@ -20,3 +20,4 @@ serde = { workspace = true, features = ['derive'] }
 serde_json = { workspace = true }
 ic-cdk = { workspace = true }
 thiserror = { workspace = true }
+cashier_shared = { workspace = true }

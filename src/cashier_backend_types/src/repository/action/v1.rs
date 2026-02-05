@@ -49,3 +49,82 @@ pub enum ActionState {
     Success,
     Fail,
 }
+
+// --- From<cashier_shared> impls ---
+
+impl From<cashier_shared::ActionType> for ActionType {
+    fn from(t: cashier_shared::ActionType) -> Self {
+        match t {
+            cashier_shared::ActionType::CreateLink => ActionType::CreateLink,
+            cashier_shared::ActionType::Withdraw => ActionType::Withdraw,
+            cashier_shared::ActionType::Send => ActionType::Send,
+            cashier_shared::ActionType::Receive => ActionType::Receive,
+        }
+    }
+}
+
+impl ActionType {
+    pub fn into_generated(self) -> cashier_shared::ActionType {
+        match self {
+            ActionType::CreateLink => cashier_shared::ActionType::CreateLink,
+            ActionType::Withdraw => cashier_shared::ActionType::Withdraw,
+            ActionType::Send => cashier_shared::ActionType::Send,
+            ActionType::Receive => cashier_shared::ActionType::Receive,
+        }
+    }
+}
+
+impl From<cashier_shared::ActionState> for ActionState {
+    fn from(state: cashier_shared::ActionState) -> Self {
+        match state {
+            cashier_shared::ActionState::Created => ActionState::Created,
+            cashier_shared::ActionState::Processing => ActionState::Processing,
+            cashier_shared::ActionState::Success => ActionState::Success,
+            cashier_shared::ActionState::Failed => ActionState::Fail,
+        }
+    }
+}
+
+impl ActionState {
+    pub fn into_generated(self) -> cashier_shared::ActionState {
+        match self {
+            ActionState::Created => cashier_shared::ActionState::Created,
+            ActionState::Processing => cashier_shared::ActionState::Processing,
+            ActionState::Success => cashier_shared::ActionState::Success,
+            ActionState::Fail => cashier_shared::ActionState::Failed,
+        }
+    }
+}
+
+/// Default for link_id: "" (must be set after conversion).
+/// Note: gen.intents are NOT stored — use ActionIntent junction separately.
+impl From<cashier_shared::Action> for Action {
+    fn from(value: cashier_shared::Action) -> Self {
+        Action {
+            id: value.id,
+            r#type: value.action_type.into(),
+            state: value.action_state.into(),
+            creator: value.creator,
+            link_id: String::new(),
+        }
+    }
+}
+
+impl Action {
+    /// Convert to generated Action.
+    /// Requires `creator_address_type` and `intents` — not stored in repo type.
+    pub fn into_generated(
+        self,
+        creator_address_type: cashier_shared::AddressType,
+        intents: Vec<cashier_shared::Intent>,
+    ) -> cashier_shared::Action {
+        cashier_shared::Action {
+            id: self.id,
+            creator: self.creator,
+            creator_address_type,
+            action_type: self.r#type.into_generated(),
+            intents,
+            action_state: self.state.into_generated(),
+        }
+    }
+}
