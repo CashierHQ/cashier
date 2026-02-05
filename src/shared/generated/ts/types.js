@@ -45,4 +45,19 @@ export const IntentParticipants = {
     LinkToUser: 'LinkToUser',
     LinkToCreator: 'LinkToCreator',
 };
+/**
+ * Type of action being performed
+ */
+export const ActionType = {
+    CreateLink: 'CreateLink',
+};
+/**
+ * Current state of an action
+ */
+export const ActionState = {
+    Created: 'Created',
+    Processing: 'Processing',
+    Completed: 'Completed',
+    Failed: 'Failed',
+};
 //# sourceMappingURL=types.js.map
