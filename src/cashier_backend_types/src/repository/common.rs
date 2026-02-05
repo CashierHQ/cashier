@@ -4,6 +4,7 @@
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 pub type Chain = cashier_common::chain::Chain;
 
@@ -25,6 +26,14 @@ impl Asset {
     pub fn chain(&self) -> Chain {
         match self {
             Asset::IC { .. } => Chain::IC,
+        }
+    }
+}
+
+impl Display for Asset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Asset::IC { address } => write!(f, "ic_asset_{}", address),
         }
     }
 }
@@ -70,6 +79,25 @@ impl Wallet {
                 owner: *address,
                 subaccount: *subaccount,
             },
+        }
+    }
+}
+
+impl Display for Wallet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Wallet::IC {
+                address,
+                subaccount,
+            } => write!(
+                f,
+                "ic_wallet_{}_{}",
+                address,
+                match subaccount {
+                    Some(sub) => format!("{:?}", sub),
+                    None => "none".to_string(),
+                }
+            ),
         }
     }
 }

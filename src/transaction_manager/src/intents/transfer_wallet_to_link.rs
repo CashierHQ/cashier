@@ -1,15 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
-        common::{Asset, Chain, Wallet},
-        intent::v1::{Intent, IntentState, IntentTask, IntentType},
+        common::{Chain, Wallet},
+        intent::v1::{
+            CreateIcrc1WalletToLinkIntentArgs, CreateIcrc2WalletToLinkIntentArgs, Intent,
+            IntentState, IntentTask, IntentType,
+        },
     },
 };
-use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
 pub struct TransferWalletToLinkIntent {
@@ -23,27 +24,15 @@ impl TransferWalletToLinkIntent {
 
     /// Creates a new TransferWalletToLinkIntent.
     /// # Arguments
-    /// * `label` - A label for the intent.
-    /// * `asset` - The asset to be transferred.
-    /// * `sending_amount` - The amount to be sent.
-    /// * `sender_id` - The Principal ID of the sender's wallet.
-    /// * `link_account` - The account to which the tokens will be transferred.
-    /// * `created_at_ts` - The timestamp when the intent is created.
+    /// * `input` - The arguments required to create the intent.
     /// # Returns
     /// * `Result<TransferWalletToLinkIntent, CanisterError>` - The resulting intent or an error if the creation fails.
-    pub fn create(
-        label: String,
-        asset: Asset,
-        sending_amount: Nat,
-        sender_id: Principal,
-        link_account: Account,
-        created_at_ts: u64,
-    ) -> Result<Self, CanisterError> {
+    pub fn create_icrc1(input: CreateIcrc1WalletToLinkIntentArgs) -> Result<Self, CanisterError> {
         let mut intent = Intent {
             id: Uuid::new_v4().to_string(),
-            label,
+            label: input.label,
             state: IntentState::Created,
-            created_at: created_at_ts,
+            created_at: input.created_at_ts,
             dependency: vec![],
             chain: Chain::IC,
             task: IntentTask::TransferWalletToLink,
@@ -51,18 +40,56 @@ impl TransferWalletToLinkIntent {
         };
 
         // enrich the intent with asset info
-        let from_wallet = Wallet::new(sender_id);
-        let to_wallet: Wallet = link_account.into();
+        let from_wallet = Wallet::new(input.sender_id);
+        let to_wallet: Wallet = input.link_account.into();
 
         let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
             CanisterError::HandleLogicError("Transfer data not found".to_string())
         })?;
-        transfer_data.amount = sending_amount;
-        transfer_data.asset = asset;
+        transfer_data.amount = input.sending_amount;
+        transfer_data.asset = input.asset;
         transfer_data.from = from_wallet;
         transfer_data.to = to_wallet;
         intent.r#type = IntentType::Transfer(transfer_data);
 
+        Ok(Self::new(intent))
+    }
+
+    /// Creates a new TransferWalletToLinkIntent using ICRC2 standard.
+    /// # Arguments
+    /// * `input` - The arguments required to create the intent.
+    /// # Returns
+    /// * `Result<TransferWalletToLinkIntent, CanisterError>` - The resulting intent or an error if the creation fails.
+    pub fn create_icrc2(input: CreateIcrc2WalletToLinkIntentArgs) -> Result<Self, CanisterError> {
+        let mut intent = Intent {
+            id: Uuid::new_v4().to_string(),
+            label: input.label,
+            state: IntentState::Created,
+            created_at: input.created_at_ts,
+            dependency: vec![],
+            chain: Chain::IC,
+            task: IntentTask::TransferWalletToLink,
+            r#type: IntentType::default_transfer_from(),
+        };
+
+        // enrich the intent with asset info
+        let from_wallet = Wallet::new(input.sender_id);
+        let to_wallet: Wallet = input.link_account.into();
+        let spender_wallet: Wallet = input.spender_account.into();
+
+        // TransferFrom case
+        let mut transfer_from_data = intent.r#type.as_transfer_from().ok_or_else(|| {
+            CanisterError::HandleLogicError("TransferFrom data not found".to_string())
+        })?;
+        transfer_from_data.amount = input.actual_amount.clone();
+        transfer_from_data.approve_amount = Some(input.approval_amount);
+        transfer_from_data.actual_amount = Some(input.actual_amount);
+        transfer_from_data.asset = input.asset;
+        transfer_from_data.from = from_wallet;
+        transfer_from_data.to = to_wallet;
+        transfer_from_data.spender = spender_wallet;
+
+        intent.r#type = IntentType::TransferFrom(transfer_from_data);
         Ok(Self::new(intent))
     }
 }
@@ -70,10 +97,13 @@ impl TransferWalletToLinkIntent {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::common::Asset;
     use cashier_common::test_utils::random_principal_id;
+    use icrc_ledger_types::icrc1::account::Account;
 
     #[test]
-    fn test_create_wallet_to_link_intent() {
+    fn it_should_create_icrc1_wallet_to_link_intent() {
         // Arrange
         let label = "Test Intent".to_string();
         let asset = Asset::default();
@@ -84,16 +114,17 @@ mod tests {
             subaccount: None,
         };
         let ts = 1_632_192_100_000_000_000;
-
-        // Act
-        let intent_result = TransferWalletToLinkIntent::create(
-            label.clone(),
-            asset.clone(),
-            amount.clone(),
+        let input_arg = CreateIcrc1WalletToLinkIntentArgs {
+            label: label.clone(),
+            asset: asset.clone(),
+            sending_amount: amount.clone(),
             sender_id,
             link_account,
-            ts,
-        );
+            created_at_ts: ts,
+        };
+
+        // Act
+        let intent_result = TransferWalletToLinkIntent::create_icrc1(input_arg);
 
         // Assert
         assert!(intent_result.is_ok());
@@ -112,5 +143,56 @@ mod tests {
         assert_eq!(transfer_data.asset, asset);
         assert_eq!(transfer_data.from, Wallet::new(sender_id));
         assert_eq!(transfer_data.to, link_account.into());
+    }
+
+    #[test]
+    fn it_should_create_icrc2_wallet_to_link_intent() {
+        // Arrange
+        let label = "Test Intent".to_string();
+        let asset = Asset::default();
+        let actual_amount = Nat::from(1000u64);
+        let approval_amount = Nat::from(1500u64);
+        let sender_id = random_principal_id();
+        let spender_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let ts = 1_632_192_100_000_000_000;
+        let input_arg = CreateIcrc2WalletToLinkIntentArgs {
+            label: label.clone(),
+            asset: asset.clone(),
+            actual_amount: actual_amount.clone(),
+            approval_amount: approval_amount.clone(),
+            sender_id,
+            spender_account,
+            link_account,
+            created_at_ts: ts,
+        };
+
+        // Act
+        let intent_result = TransferWalletToLinkIntent::create_icrc2(input_arg);
+
+        // Assert
+        assert!(intent_result.is_ok());
+        let transfer_intent = intent_result.unwrap().intent;
+        assert_eq!(transfer_intent.label, label);
+        assert_eq!(transfer_intent.created_at, ts);
+        assert_eq!(transfer_intent.state, IntentState::Created);
+        assert_eq!(transfer_intent.chain, Chain::IC);
+        let transfer_from_data = transfer_intent
+            .r#type
+            .as_transfer_from()
+            .expect("Expected transfer from data");
+        assert_eq!(transfer_from_data.amount, actual_amount.clone());
+        assert_eq!(transfer_from_data.approve_amount, Some(approval_amount));
+        assert_eq!(transfer_from_data.actual_amount, Some(actual_amount));
+        assert_eq!(transfer_from_data.asset, asset);
+        assert_eq!(transfer_from_data.from, Wallet::new(sender_id));
+        assert_eq!(transfer_from_data.to, link_account.into());
+        assert_eq!(transfer_from_data.spender, spender_account.into());
     }
 }
