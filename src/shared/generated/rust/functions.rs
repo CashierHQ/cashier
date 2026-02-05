@@ -6,6 +6,8 @@
 // transpiled because they use TypeScript-specific features like typeof,
 // nullish coalescing (??), and union types.
 
+#![allow(dead_code)]
+
 use candid::Nat;
 use crate::types::{IntentParticipants, TokenStandard};
 
