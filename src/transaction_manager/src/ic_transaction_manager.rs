@@ -285,11 +285,90 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
 
     fn process_action_v3(
         &self,
+        link_id: String,
         action: ActionShared,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResultV3, CanisterError>>>> {
-        // Implementation for V3 process_action
-        unimplemented!()
+        let current_ts = self.ic_env.time();
+
+        // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
+        let mut transactions = Vec::<Transaction>::new();
+        let mut processed_transactions = Vec::<Transaction>::new();
+        let mut errors = Vec::<String>::new();
+        let mut is_success = true;
+        for intent in action.intents.iter() {
+            if let Some(intent_transactions) = intent_txs_map.get(&intent.id) {
+                transactions.extend(intent_transactions.clone());
+            }
+        }
+
+        // create ICRC112 requests from transactions
+        let canister_id = self.ic_env.id();
+        let validator_service = ValidatorService::new(Rc::new(IcTransactionValidator));
+        let executor_service = ExecutorService::new(Rc::new(IcTransactionExecutor));
+
+        Box::pin(async move {
+            // validate and update transactions dependencies and states
+            let validate_transactions_result = validator_service
+                .validate_action_transactions(&transactions)
+                .await?;
+            errors.extend(validate_transactions_result.errors.clone());
+
+            processed_transactions.extend(validate_transactions_result.wallet_transactions);
+            is_success &= validate_transactions_result.is_success;
+
+            // execute canister transactions if all dependencies are resolved
+            if validate_transactions_result.is_success {
+                let executed_transactions_result = executor_service
+                    .execute_transactions(&validate_transactions_result.canister_transactions)
+                    .await?;
+
+                processed_transactions.extend(executed_transactions_result.transactions);
+                errors.extend(executed_transactions_result.errors);
+                is_success &= executed_transactions_result.is_success;
+            } else {
+                processed_transactions.extend(validate_transactions_result.canister_transactions);
+            }
+
+            let link_account = get_link_account(&link_id, canister_id)?;
+            let icrc112_requests = create_icrc_112_requests(
+                &mut processed_transactions,
+                link_account,
+                canister_id,
+                current_ts,
+            )?;
+
+            // update intent_txs_map with processed transactions
+            let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
+            for intent in action.intents.iter() {
+                let tx_ids = intent_txs_map
+                    .get(&intent.id)
+                    .unwrap()
+                    .iter()
+                    .map(|tx| tx.id.clone())
+                    .collect::<HashSet<String>>();
+
+                let updated_txs = processed_transactions
+                    .iter()
+                    .filter(|tx| tx_ids.contains(&tx.id))
+                    .cloned()
+                    .collect::<Vec<Transaction>>();
+
+                updated_intent_txs_map.insert(intent.id.clone(), updated_txs);
+            }
+
+            // rollup action and intents states from processed transactions
+            let rollup_action_state_result = validator_service
+                .rollup_action_state_v3(action.clone(), updated_intent_txs_map.clone())?;
+
+            Ok(ProcessActionResultV3 {
+                action: rollup_action_state_result.action,
+                intent_txs_map: updated_intent_txs_map,
+                icrc112_requests: Some(icrc112_requests),
+                is_success,
+                errors,
+            })
+        })
     }
 }
 

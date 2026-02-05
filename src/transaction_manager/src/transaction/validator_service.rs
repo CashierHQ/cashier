@@ -7,11 +7,16 @@ use cashier_backend_types::{
         graph::Graph,
         transaction_manager::{RollupActionStateResult, ValidateActionTransactionsResult},
     },
+    link_v3::transaction_manager::RollupActionStateResultV3,
     repository::{
         action::v1::{Action, ActionState},
         intent::v1::{Intent, IntentState},
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
+};
+use cashier_shared::types::{
+    Action as ActionShared, ActionState as ActionStateShared, Intent as IntentShared,
+    IntentState as IntentStateShared,
 };
 use std::{collections::HashMap, rc::Rc};
 
@@ -124,6 +129,50 @@ impl<V: TransactionValidator> ValidatorService<V> {
         Ok(RollupActionStateResult {
             action: updated_action,
             intents: updated_intents,
+            intent_txs_map,
+        })
+    }
+
+    pub fn rollup_action_state_v3(
+        &self,
+        action: ActionShared,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Result<RollupActionStateResultV3, CanisterError> {
+        // rollup intent state from its transactions state
+        let mut updated_intents = Vec::<IntentShared>::new();
+        for intent in action.intents.iter() {
+            let mut updated_intent = intent.clone();
+            if let Some(txs) = intent_txs_map.get(&intent.id) {
+                let all_success = txs.iter().all(|tx| tx.state == TransactionState::Success);
+                let any_fail = txs.iter().any(|tx| tx.state == TransactionState::Fail);
+
+                if all_success {
+                    updated_intent.intent_state = IntentStateShared::Success;
+                } else if any_fail {
+                    updated_intent.intent_state = IntentStateShared::Failed;
+                }
+            }
+            updated_intents.push(updated_intent);
+        }
+
+        // rollup action state from its intents state
+        let mut updated_action = action;
+        let all_intent_success = updated_intents
+            .iter()
+            .all(|intent| intent.intent_state == IntentStateShared::Success);
+        let any_intent_fail = updated_intents
+            .iter()
+            .any(|intent| intent.intent_state == IntentStateShared::Failed);
+
+        if all_intent_success {
+            updated_action.action_state = ActionStateShared::Success;
+        } else if any_intent_fail {
+            updated_action.action_state = ActionStateShared::Failed;
+        }
+        updated_action.intents = updated_intents;
+
+        Ok(RollupActionStateResultV3 {
+            action: updated_action,
             intent_txs_map,
         })
     }
