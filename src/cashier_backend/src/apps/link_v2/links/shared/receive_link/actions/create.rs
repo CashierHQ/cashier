@@ -8,11 +8,11 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::Intent,
+        intent::v1::{CreateWalletToTreasuryIntentArgs, Intent},
         link::v1::Link,
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::convert_nat_to_u64};
+use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
     intents::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
@@ -56,22 +56,21 @@ impl CreateAction {
             address: ICP_CANISTER_PRINCIPAL,
         };
         let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
-        let actual_amount = convert_nat_to_u64(&actual_amount)?;
-        let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {
             owner: canister_id,
             subaccount: None,
         };
-
-        let fee_intent = TransferWalletToTreasuryIntent::create(
-            INTENT_LABEL_LINK_CREATION_FEE.to_string(),
-            fee_asset,
+        let input: CreateWalletToTreasuryIntentArgs = CreateWalletToTreasuryIntentArgs {
+            label: INTENT_LABEL_LINK_CREATION_FEE.to_string(),
+            asset: fee_asset,
             actual_amount,
             approval_amount,
-            link.creator,
+            sender_id: link.creator,
             spender_account,
-            link.create_at,
-        )?;
+            created_at_ts: link.create_at,
+        };
+
+        let fee_intent = TransferWalletToTreasuryIntent::create(input)?;
 
         let intents = vec![fee_intent.intent];
         Ok(Self::new(action, intents))

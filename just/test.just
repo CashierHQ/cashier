@@ -21,19 +21,36 @@ test test_name="": download_artifacts build_canisters
 # Args:
 # partition: which partition to run (1-based index)
 # total: total number of partitions
+# archive: nextest archive file (using by CI)
+# workspace: workspace remap (using by CI)
 [group('test')]
-test_integration partition="" total="":
+test_integration partition="" total="" archive="" workspace="":
   #!/usr/bin/env bash
   set -e
-  # Clean stale lock/ready files to ensure fresh template deployment
-  rm -f ./target/pocket-ic-test-state/template.lock
-  rm -f ./target/pocket-ic-test-state/template.ready
-  rm -f ./target/pocket-ic-test-state/principals.json
-  rm -rf ./target/pocket-ic-test-state/template
-  if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
-    cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
+  rm -rf ./target/pocket-ic-test-state
+  
+  if [ -n "{{archive}}" ]; then
+    # Use pre-built archive (CI mode)
+    NEXTEST_CMD="cargo nextest run --archive-file {{archive}}"
+    
+    # Add workspace remap if provided (needed in CI)
+    if [ -n "{{workspace}}" ]; then
+      NEXTEST_CMD="$NEXTEST_CMD --workspace-remap {{workspace}}"
+    fi
+    
+    # Add partition if provided
+    if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
+      NEXTEST_CMD="$NEXTEST_CMD --partition count:{{partition}}/{{total}}"
+    fi
+    
+    $NEXTEST_CMD
   else
-    cargo nextest run -p integration_tests
+    # Build and run (local mode)
+    if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
+      cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
+    else
+      cargo nextest run -p integration_tests
+    fi
   fi
 
 # Build nextest archive for integration tests (used by CI)
@@ -60,4 +77,5 @@ test_coverage:
   # WARN: using tarpaulin for the coverage report is faster but not recommended because it is not reliable.
   # To output the coverage report in the lcov format replace `--html` with `--lcov --output-path ./target/lcov.file`.
   cargo llvm-cov --release --all-features --ignore-run-fail --workspace --html
+
   

@@ -1,10 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Nat};
+use candid::{CandidType, Nat, Principal};
 use cashier_macros::storable;
 use derive_more::Display;
 use ic_mple_structures::Codec;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::common::{Asset, Chain, Wallet};
@@ -147,4 +148,47 @@ pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
+}
+
+/// Arguments for creating a TransferWalletToLink intent using ICRC2
+pub struct CreateIcrc2WalletToLinkIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub actual_amount: Nat,
+    pub approval_amount: Nat,
+    pub sender_id: Principal,
+    pub spender_account: Account,
+    pub link_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferWalletToLink intent using ICRC1
+pub struct CreateIcrc1WalletToLinkIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub sending_amount: Nat,
+    pub sender_id: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferWalletToTreasury intent using ICRC2
+pub struct CreateWalletToTreasuryIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub actual_amount: Nat,
+    pub approval_amount: Nat,
+    pub sender_id: Principal,
+    pub spender_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferLinkToWallet intent
+pub struct CreateLinkToWalletIntentArgs {
+    pub label: String,
+    pub asset: Asset,
+    pub sending_amount: Nat,
+    pub receiver_id: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
 }

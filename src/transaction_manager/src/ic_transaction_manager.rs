@@ -26,7 +26,6 @@ use std::{
     collections::{HashMap, HashSet},
     future::Future,
     pin::Pin,
-    rc::Rc,
 };
 
 pub struct IcTransactionManager<E: IcEnvironment> {
@@ -147,35 +146,37 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             }
         }
 
-        // create ICRC112 requests from transactions
+        // verify and execute transactions
         let canister_id = self.ic_env.id();
         let link_id = action.link_id.clone();
-        let validator_service = ValidatorService::new(Rc::new(IcTransactionValidator));
-        let executor_service = ExecutorService::new(Rc::new(IcTransactionExecutor));
+        let validator_service = ValidatorService::new(IcTransactionValidator);
+        let executor_service = ExecutorService::new(IcTransactionExecutor);
 
         Box::pin(async move {
             // validate and update transactions dependencies and states
-            let validate_transactions_result = validator_service
+            let validation_result = validator_service
                 .validate_action_transactions(&transactions)
                 .await?;
-            errors.extend(validate_transactions_result.errors.clone());
 
-            processed_transactions.extend(validate_transactions_result.wallet_transactions);
-            is_success &= validate_transactions_result.is_success;
+            processed_transactions.extend(validation_result.wallet_transactions);
+            errors.extend(validation_result.errors);
+            is_success &= validation_result.is_success;
 
-            // execute canister transactions if all dependencies are resolved
-            if validate_transactions_result.is_success {
+            // execute canister transactions
+            if !validation_result.canister_transactions.is_empty() {
                 let executed_transactions_result = executor_service
-                    .execute_transactions(&validate_transactions_result.canister_transactions)
+                    .execute_transactions(&validation_result.canister_transactions)
                     .await?;
 
                 processed_transactions.extend(executed_transactions_result.transactions);
                 errors.extend(executed_transactions_result.errors);
                 is_success &= executed_transactions_result.is_success;
-            } else {
-                processed_transactions.extend(validate_transactions_result.canister_transactions);
             }
 
+            // rollup ICRC-2 wallet transaction states from canister transaction executions
+            validator_service.rollup_icrc2_wallet_transaction_state(&mut processed_transactions);
+
+            // create ICRC-112 requests from failed transactions for retry
             let link_account = get_link_account(&link_id, canister_id)?;
             let icrc112_requests = create_icrc_112_requests(
                 &mut processed_transactions,
@@ -264,7 +265,6 @@ mod tests {
 
         // Act
         let res = manager.create_action(action.clone(), vec![intent.clone()], None);
-        println!("Create action result: {:?}", res);
 
         // Assert
         assert!(res.is_ok());

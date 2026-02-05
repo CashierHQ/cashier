@@ -8,21 +8,18 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::Intent,
+        intent::v1::{CreateIcrc2WalletToLinkIntentArgs, CreateWalletToTreasuryIntentArgs, Intent},
         link::v1::Link,
     },
 };
-use cashier_common::{
-    constant::ICP_CANISTER_PRINCIPAL,
-    utils::{convert_nat_to_u64, get_link_account},
-};
+use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
     intents::{
         transfer_wallet_to_link::TransferWalletToLinkIntent,
         transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     },
-    utils::calculator::{calculate_create_link_fee, calculate_link_balance_map},
+    utils::calculator::{calculate_create_link_fee, calculate_icrc2_transfer_intent_amount},
 };
 
 use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
@@ -59,35 +56,35 @@ impl CreateAction {
         // token_fee_map
         let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
 
-        let link_token_balance_map = calculate_link_balance_map(
-            &link.asset_info,
-            &token_fee_map,
-            link.link_use_action_max_count,
-        );
-
         // intents
         let deposit_intents = link
             .asset_info
             .iter()
             .map(|asset_info| {
-                let address = match asset_info.asset {
-                    Asset::IC { address } => address,
+                let spender_account = Account {
+                    owner: canister_id,
+                    subaccount: None,
                 };
 
-                let sending_amount = link_token_balance_map.get(&address).ok_or_else(|| {
-                    CanisterError::HandleLogicError(
-                        "Failed to get sending amount from balance map".to_string(),
-                    )
-                })?;
+                let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
+                    link.link_use_action_max_count,
+                    &asset_info.amount_per_link_use_action,
+                    &asset_info.asset,
+                    &token_fee_map,
+                )?;
 
-                TransferWalletToLinkIntent::create(
-                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                    asset_info.asset.clone(),
-                    sending_amount.clone(),
-                    link.creator,
+                let input = CreateIcrc2WalletToLinkIntentArgs {
+                    label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                    asset: asset_info.asset.clone(),
+                    actual_amount,
+                    approval_amount,
+                    sender_id: link.creator,
                     link_account,
-                    link.create_at,
-                )
+                    spender_account,
+                    created_at_ts: link.create_at,
+                };
+
+                TransferWalletToLinkIntent::create_icrc2(input)
             })
             .collect::<Result<Vec<TransferWalletToLinkIntent>, CanisterError>>()?;
 
@@ -95,22 +92,21 @@ impl CreateAction {
             address: ICP_CANISTER_PRINCIPAL,
         };
         let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
-        let actual_amount = convert_nat_to_u64(&actual_amount)?;
-        let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {
             owner: canister_id,
             subaccount: None,
         };
-
-        let fee_intent = TransferWalletToTreasuryIntent::create(
-            INTENT_LABEL_LINK_CREATION_FEE.to_string(),
-            fee_asset,
+        let input = CreateWalletToTreasuryIntentArgs {
+            label: INTENT_LABEL_LINK_CREATION_FEE.to_string(),
+            asset: fee_asset,
             actual_amount,
             approval_amount,
-            link.creator,
+            sender_id: link.creator,
             spender_account,
-            link.create_at,
-        )?;
+            created_at_ts: link.create_at,
+        };
+
+        let fee_intent = TransferWalletToTreasuryIntent::create(input)?;
 
         let mut intents = Vec::<Intent>::new();
         deposit_intents.iter().for_each(|dintent| {

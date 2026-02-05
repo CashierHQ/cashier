@@ -3,6 +3,7 @@
 
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
@@ -72,14 +73,16 @@ impl WithdrawAction {
                     sending_amount - fee_amount
                 };
 
-                TransferLinkToWalletIntent::create(
-                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                    asset_info.asset.clone(),
+                let input = CreateLinkToWalletIntentArgs {
+                    label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                    receiver_id: link.creator,
                     sending_amount,
-                    link.creator,
+                    asset: asset_info.asset.clone(),
                     link_account,
-                    link.create_at,
-                )
+                    created_at_ts: link.create_at,
+                };
+
+                TransferLinkToWalletIntent::create(input)
             })
             .collect::<Result<Vec<TransferLinkToWalletIntent>, CanisterError>>()?;
 
