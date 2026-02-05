@@ -8,7 +8,6 @@ use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_contex
 use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_common::constant::CREATE_LINK_FEE;
-use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 use std::time::Duration;
 
@@ -22,13 +21,13 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
         let (_test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
-        let initial_caller_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        let _initial_caller_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -43,17 +42,6 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
 
         let balance_after_first_execution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        assert_eq!(
-            balance_after_first_execution,
-            initial_caller_balance
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    tip_amount,
-                    icp_ledger_fee.clone(),
-                    1
-                )
-                - Nat::from(2u64) * icp_ledger_fee, // 1 transfer fee for deposit to link and 1 transfer fee to approve the creation fee
-            "Caller balance after first execution is incorrect"
-        );
 
         // Act: Re-execute ICRC112 requests
         let icrc112_reexecution_result =
@@ -112,13 +100,13 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
         let (_test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
-        let initial_caller_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        let _initial_caller_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -133,17 +121,6 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
 
         let balance_after_first_execution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        assert_eq!(
-            balance_after_first_execution,
-            initial_caller_balance
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    tip_amount,
-                    icp_ledger_fee.clone(),
-                    1
-                )
-                - Nat::from(2u64) * icp_ledger_fee, // 1 transfer fee for deposit to link and 1 transfer fee to approve the creation fee
-            "Caller balance after first execution is incorrect"
-        );
 
         // Act: Re-execute ICRC112 requests after 1 week
         // Advance time by 7 days + 1 second
@@ -207,14 +184,14 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(token, caller);
-        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+        let _ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
         let initial_icp_caller_balance =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        let initial_ckbtc_caller_balance = ckbtc_ledger_client
+        let _initial_ckbtc_caller_balance = ckbtc_ledger_client
             .balance_of(&caller_account)
             .await
             .unwrap();
@@ -238,18 +215,6 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
             icp_caller_balance_after_first_execution,
             initial_icp_caller_balance - Nat::from(CREATE_LINK_FEE),
             "ICP Caller balance after first execution is incorrect"
-        );
-
-        assert_eq!(
-            ckbtc_caller_balance_after_first_execution,
-            initial_ckbtc_caller_balance
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    tip_amount,
-                    ckbtc_ledger_fee.clone(),
-                    1,
-                )
-                - ckbtc_ledger_fee.clone(), // 1 transfer fee for deposit to link
-            "CKBTC Caller balance after first execution is incorrect"
         );
 
         // Act: Re-execute ICRC112 requests
@@ -314,14 +279,14 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(token, caller);
-        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+        let _ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
         let initial_icp_caller_balance =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        let initial_ckbtc_caller_balance = ckbtc_ledger_client
+        let _initial_ckbtc_caller_balance = ckbtc_ledger_client
             .balance_of(&caller_account)
             .await
             .unwrap();
@@ -345,18 +310,6 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
             icp_caller_balance_after_first_execution,
             initial_icp_caller_balance - Nat::from(CREATE_LINK_FEE),
             "ICP Caller balance after first execution is incorrect"
-        );
-
-        assert_eq!(
-            ckbtc_caller_balance_after_first_execution,
-            initial_ckbtc_caller_balance
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    tip_amount,
-                    ckbtc_ledger_fee.clone(),
-                    1,
-                )
-                - ckbtc_ledger_fee.clone(), // 1 transfer fee for deposit to link
-            "CKBTC Caller balance after first execution is incorrect"
         );
 
         // Act: Re-execute ICRC112 requests

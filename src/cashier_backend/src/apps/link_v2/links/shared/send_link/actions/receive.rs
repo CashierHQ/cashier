@@ -7,7 +7,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        intent::v1::Intent,
+        intent::v1::{CreateLinkToWalletIntentArgs, Intent},
         link::v1::Link,
     },
 };
@@ -54,15 +54,16 @@ impl ReceiveAction {
             .iter()
             .map(|asset_info| {
                 let sending_amount = asset_info.amount_per_link_use_action.clone();
-
-                TransferLinkToWalletIntent::create(
-                    INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                    asset_info.asset.clone(),
-                    sending_amount,
+                let input = CreateLinkToWalletIntentArgs {
+                    label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     receiver_id,
+                    sending_amount,
+                    asset: asset_info.asset.clone(),
                     link_account,
-                    link.create_at,
-                )
+                    created_at_ts: link.create_at,
+                };
+
+                TransferLinkToWalletIntent::create(input)
             })
             .collect::<Result<Vec<TransferLinkToWalletIntent>, CanisterError>>()?;
 

@@ -24,15 +24,14 @@ impl From<Vec<Intent>> for Graph {
         // First pass: collect all vertices
         for intent in intents.iter() {
             vertices.insert(intent.id.clone());
-
-            for dep in intent.dependency.iter() {
-                vertices.insert(dep.clone());
-            }
         }
 
         // Second pass: build adjacency list
         for intent in intents.iter() {
             for dep in intent.dependency.iter() {
+                if !vertices.contains(dep) {
+                    continue;
+                }
                 adjacency_list
                     .entry(dep.clone())
                     .or_default()
@@ -58,18 +57,15 @@ impl From<Vec<Transaction>> for Graph {
         // First pass: collect all vertices
         for tx in transactions.iter() {
             vertices.insert(tx.id.clone());
-
-            if let Some(deps) = &tx.dependency {
-                for dep in deps.iter() {
-                    vertices.insert(dep.clone());
-                }
-            }
         }
 
         // Second pass: build adjacency list
         for tx in transactions.iter() {
             if let Some(deps) = &tx.dependency {
                 for dep in deps.iter() {
+                    if !vertices.contains(dep) {
+                        continue;
+                    }
                     adjacency_list
                         .entry(dep.clone())
                         .or_default()
