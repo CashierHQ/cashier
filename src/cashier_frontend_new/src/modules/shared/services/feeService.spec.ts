@@ -25,18 +25,6 @@ import { FlowDirection } from "$modules/transactionCart/types/transactionSource"
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import type { WalletAssetInput } from "$modules/shared/types/feeService";
-import {
-  calculateIntentFees,
-  IntentParticipants,
-  TokenStandard,
-} from "$shared";
-
-/**
- * FeeService Tests - Now using @cashier/shared package for calculations
- * 
- * The FeeService now integrates with the shared package to ensure fee
- * calculations are consistent between frontend and backend.
- */
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);
@@ -95,53 +83,9 @@ describe("FeeService", () => {
     vi.resetAllMocks();
   });
 
-  describe("shared package integration", () => {
-    it("should have access to shared package fee calculation functions", () => {
-      // Verify the shared package is accessible
-      expect(calculateIntentFees).toBeDefined();
-      expect(IntentParticipants).toBeDefined();
-      expect(TokenStandard).toBeDefined();
-    });
-
-    it("should calculate CreatorToTreasury fees using shared package", () => {
-      const result = calculateIntentFees({
-        intent_participants: IntentParticipants.CreatorToTreasury,
-        token_standard: TokenStandard.ICRC1,
-        link_creation_fee: 10_000n,
-        asset_network_fee: ICP_LEDGER_FEE,
-      });
-
-      expect(result.intent_total_amount).toBeDefined();
-      expect(result.intent_total_network_fee).toBeDefined();
-      expect(result.intent_user_fee).toBeDefined();
-      
-      // User fee should equal total amount + network fee for CreatorToTreasury
-      expect(BigInt(result.intent_user_fee)).toBe(
-        BigInt(result.intent_total_amount) + BigInt(result.intent_total_network_fee)
-      );
-    });
-
-    it("should calculate CreatorToLink fees with maxUse using shared package", () => {
-      const result = calculateIntentFees({
-        intent_participants: IntentParticipants.CreatorToLink,
-        token_standard: TokenStandard.ICRC1,
-        user_input_amount: 100_000_000n,
-        max_use: 3,
-        asset_network_fee: LEDGER_FEE,
-      });
-
-      // Total amount should be user_input_amount * max_use
-      expect(BigInt(result.intent_total_amount)).toBe(100_000_000n * 3n);
-      
-      // Network fee should be inbound fee + outbound fee per use
-      // ICRC1: 1x inbound + 3x outbound = 4x LEDGER_FEE
-      expect(BigInt(result.intent_total_network_fee)).toBe(LEDGER_FEE * 4n);
-    });
-  });
-
   describe("computeAmount", () => {
     describe("CREATE_LINK action type", () => {
-      it("TRANSFER_WALLET_TO_TREASURY: uses shared package CreatorToTreasury calculation", () => {
+      it("TRANSFER_WALLET_TO_TREASURY: amount=fee=ledgerFee*2+payload.amount", () => {
         const intent = createIntentWithPayload(
           "id-1",
           IntentTask.TRANSFER_WALLET_TO_TREASURY,
@@ -154,13 +98,12 @@ describe("FeeService", () => {
           actionType: ActionType.CREATE_LINK,
         });
 
-        // Shared package: link_creation_fee (100_000_000n) + network_fee (1x LEDGER_FEE = 10_000n)
-        const expectedTotal = 100_000_000n + LEDGER_FEE;
+        const expectedTotal = LEDGER_FEE * 2n + 100_000_000n;
         expect(res.amount).toBe(expectedTotal);
         expect(res.fee).toBe(expectedTotal);
       });
 
-      it("other intents: backend amount already includes fees", () => {
+      it("other intents: amount=ledgerFee+payload.amount, fee=ledgerFee", () => {
         const intent = createIntentWithPayload(
           "id-2",
           IntentTask.TRANSFER_WALLET_TO_LINK,
@@ -173,9 +116,7 @@ describe("FeeService", () => {
           actionType: ActionType.CREATE_LINK,
         });
 
-        // Backend already includes fees in payload.amount, display backend amount as-is
-        // Show ledgerFee as the network fee for breakdown display (minimum estimate)
-        expect(res.amount).toBe(100_000_000n);
+        expect(res.amount).toBe(LEDGER_FEE + 100_000_000n);
         expect(res.fee).toBe(LEDGER_FEE);
       });
     });
@@ -410,20 +351,17 @@ describe("FeeService", () => {
       const p = pairs[0];
       expect(p.asset.symbol).toBe("N/A");
 
-      // Shared package calculation for CreatorToLink with maxUse=1:
-      // Network fee = inbound fee + outbound fee * maxUse
-      // ICRC1: 1x inbound + 1x outbound = 2x LEDGER_FEE = 20_000n
-      const expectedNetworkFee = 20_000n; // 2 * ICP_LEDGER_FEE
+      // Formula: (useAmount + ledgerFee) * maxUse + ledgerFee
+      // maxUse=1: (100_000_000n + 10_000n) * 1 + 10_000n = 100_020_000n
       const expectedTotal = parseBalanceUnits(
-        100_000_000n * 1n + expectedNetworkFee,
+        (100_000_000n + 10_000n) * 1n + 10_000n,
         8,
       );
       expect(p.asset.amount).toBe(expectedTotal.toString());
       expect(p.fee).toBeDefined();
       if (p.fee) {
-        // Fee should be 20,000 (inbound + outbound for ICRC1 with maxUse=1)
         expect(p.fee.amountFormattedStr).toBe(
-          parseBalanceUnits(expectedNetworkFee, 8).toString(),
+          parseBalanceUnits(10_000n, 8).toString(),
         );
         expect(p.fee.symbol).toBe("N/A");
       }

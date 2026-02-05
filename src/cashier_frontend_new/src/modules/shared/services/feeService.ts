@@ -37,55 +37,8 @@ import type {
   ForecastAssetAndFee,
   WalletAssetInput,
 } from "../types/feeService";
-import {
-  calculateIntentFees,
-  IntentParticipants,
-  TokenStandard,
-  type IntentParticipants as IntentParticipantsType,
-  type TokenStandard as TokenStandardType,
-} from "$shared";
 
 export class FeeService {
-  /**
-   * Map ActionType and IntentTask to IntentParticipants from shared package.
-   * @param actionType ActionType
-   * @param intentTask IntentTask
-   * @returns IntentParticipantsType
-   */
-  private mapToIntentParticipants(
-    actionType: string,
-    intentTask: string,
-  ): IntentParticipantsType {
-    switch (actionType) {
-      case ActionType.CREATE_LINK:
-        if (intentTask === IntentTask.TRANSFER_WALLET_TO_TREASURY) {
-          return IntentParticipants.CreatorToTreasury;
-        }
-        return IntentParticipants.CreatorToLink;
-      case ActionType.SEND:
-        return IntentParticipants.UserToLink;
-      case ActionType.RECEIVE:
-        return IntentParticipants.LinkToUser;
-      case ActionType.WITHDRAW:
-        return IntentParticipants.LinkToCreator;
-      default:
-        throw new Error(`Unknown action type: ${actionType}`);
-    }
-  }
-
-  /**
-   * Get token standard for a token.
-   * Currently defaults to ICRC1 for all tokens.
-   * TODO: Add proper ICRC1/ICRC2 detection when backend provides this info.
-   * @param _token TokenWithPriceAndBalance
-   * @returns TokenStandardType
-   */
-  private getTokenStandard(_token?: TokenWithPriceAndBalance): TokenStandardType {
-    // For now, default to ICRC1
-    // In the future, we can check token metadata or backend info
-    return TokenStandard.ICRC1;
-  }
-
   /**
    * Compute flow direction from intent payload.
    * @param payload IntentPayload
@@ -106,14 +59,12 @@ export class FeeService {
 
   /**
    * Compute amount and fee based on action type.
-   * Rules (maintaining backward compatibility with existing behavior):
+   * Rules:
    * 1) CreateLink + TransferWalletToTreasury: amount=fee=ledgerFee*2+payload.amount
    * 2) CreateLink + other: amount=ledgerFee+payload.amount, fee=ledgerFee
    * 3) Withdraw: amount=payload.amount, fee=ledgerFee
    * 4) Receive: amount=payload.amount, fee=undefined
    * 5) Send: amount=payload.amount+ledgerFee, fee=ledgerFee
-   * 
-   * Note: Uses shared package fee calculations for consistent fee display across all components.
    */
   computeAmount({
     intent,
@@ -124,22 +75,11 @@ export class FeeService {
     switch (actionType) {
       case ActionType.CREATE_LINK:
         if (intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY) {
-          // Use shared package for CreatorToTreasury
-          const result = calculateIntentFees({
-            intent_participants: IntentParticipants.CreatorToTreasury,
-            token_standard: TokenStandard.ICRC1,
-            link_creation_fee: intent.type.payload.amount,
-            asset_network_fee: ledgerFee,
-          });
-          const userFee = BigInt(result.intent_user_fee);
-          output = { amount: userFee, fee: userFee };
+          const total = ledgerFee * 2n + intent.type.payload.amount;
+          output = { amount: total, fee: total };
         } else {
-          // For TRANSFER_WALLET_TO_LINK: Backend sends total amount (asset + fees) × maxUse
-          // Display the backend's amount as-is, but show fees separately for breakdown
-          // We don't know maxUse here, so we estimate: backend sends (amount_per_use + fee) × maxUse
-          // Since we don't have the original amount_per_use, we show the ledgerFee as a minimum estimate
           output = {
-            amount: intent.type.payload.amount,
+            amount: ledgerFee + intent.type.payload.amount,
             fee: ledgerFee,
           };
         }
@@ -342,7 +282,6 @@ export class FeeService {
 
   /**
    * Forecast asset and fee list for link creation preview (before Action exists).
-   * Uses shared package fee calculation functions.
    * @param linkAssets Array of assets in the link
    * @param maxUse Maximum uses of the link
    * @param tokens Token lookup by address
@@ -359,16 +298,9 @@ export class FeeService {
 
       if (!token) {
         console.error("Failed to resolve token for asset:", assetData.address);
-        // Fallback calculation when token not found
-        const feeResult = calculateIntentFees({
-          intent_participants: IntentParticipants.CreatorToLink,
-          token_standard: TokenStandard.ICRC1,
-          user_input_amount: assetData.useAmount,
-          max_use: maxUse,
-          asset_network_fee: ICP_LEDGER_FEE,
-        });
-        
-        const totalAmount = BigInt(feeResult.intent_user_fee) + assetData.useAmount * BigInt(maxUse);
+        const totalAmount =
+          (assetData.useAmount + ICP_LEDGER_FEE) * BigInt(maxUse) +
+          ICP_LEDGER_FEE;
         const amountStr = parseBalanceUnits(totalAmount, 8).toString();
 
         pairs.push({
@@ -380,32 +312,21 @@ export class FeeService {
             usdValueStr: undefined,
           },
           fee: {
-            amount: BigInt(feeResult.intent_total_network_fee),
+            amount: ICP_LEDGER_FEE,
             feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: parseBalanceUnits(BigInt(feeResult.intent_total_network_fee), 8).toString(),
+            amountFormattedStr: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
             symbol: "N/A",
           },
         });
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        const tokenStandard = this.getTokenStandard(token);
-        
-        // Calculate using shared package
-        const feeResult = calculateIntentFees({
-          intent_participants: IntentParticipants.CreatorToLink,
-          token_standard: tokenStandard,
-          user_input_amount: assetData.useAmount,
-          max_use: maxUse,
-          asset_network_fee: tokenFee,
-        });
-        
-        const networkFee = BigInt(feeResult.intent_total_network_fee);
-        const totalAmount = assetData.useAmount * BigInt(maxUse) + networkFee;
+        const totalAmount =
+          (assetData.useAmount + tokenFee) * BigInt(maxUse) + tokenFee;
         const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
         const totalUsd = token.priceUSD
           ? totalAmountUi * token.priceUSD
           : undefined;
-        const feeAmountUi = parseBalanceUnits(networkFee, token.decimals);
+        const feeAmountUi = parseBalanceUnits(tokenFee, token.decimals);
         const feeUsd = token.priceUSD
           ? feeAmountUi * token.priceUSD
           : undefined;
@@ -419,7 +340,7 @@ export class FeeService {
             usdValueStr: totalUsd ? formatUsdAmount(totalUsd) : undefined,
           },
           fee: {
-            amount: networkFee,
+            amount: tokenFee,
             feeType: FeeType.NETWORK_FEE,
             amountFormattedStr: formatNumber(feeAmountUi),
             symbol: token.symbol,
@@ -431,18 +352,11 @@ export class FeeService {
       }
     }
 
-    // Add link creation fee item using shared package
+    // Add link creation fee item
     const linkFeeInfo = this.getLinkCreationFee();
     const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
     if (linkFeeToken) {
-      const linkCreationResult = calculateIntentFees({
-        intent_participants: IntentParticipants.CreatorToTreasury,
-        token_standard: TokenStandard.ICRC1, // ICP is ICRC1
-        link_creation_fee: linkFeeInfo.amount,
-        asset_network_fee: ICP_LEDGER_FEE,
-      });
-      
-      const linkCreationFeeTotal = BigInt(linkCreationResult.intent_user_fee);
+      const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
       const linkFeeFormatted = parseBalanceUnits(
         linkCreationFeeTotal,
         linkFeeToken.decimals,
