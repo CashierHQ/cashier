@@ -93,11 +93,10 @@ async function main(): Promise<void> {
 		writeFile(path.join(GENERATED_TS_DIR, 'functions.ts'), tsFunctions);
 	}
 
-	// Generate index file
-	const tsIndex = generateTypeScript.index(
-		shouldGenerateTypes,
-		shouldGenerateFunctions,
-	);
+	// Generate index file - check file existence to avoid overriding previous generation
+	const hasTsTypes = fs.existsSync(path.join(GENERATED_TS_DIR, 'types.ts'));
+	const hasTsFunctions = fs.existsSync(path.join(GENERATED_TS_DIR, 'functions.ts'));
+	const tsIndex = generateTypeScript.index(hasTsTypes, hasTsFunctions);
 	writeFile(path.join(GENERATED_TS_DIR, 'index.ts'), tsIndex);
 
 	// =========================================================================
@@ -117,11 +116,10 @@ async function main(): Promise<void> {
 		writeFile(path.join(GENERATED_RUST_DIR, 'functions.rs'), rustFunctions);
 	}
 
-	// Generate mod.rs
-	const rustMod = generateRust.mod(
-		shouldGenerateTypes,
-		shouldGenerateFunctions,
-	);
+	// Generate mod.rs - check file existence to avoid overriding previous generation
+	const hasRustTypes = fs.existsSync(path.join(GENERATED_RUST_DIR, 'types.rs'));
+	const hasRustFunctions = fs.existsSync(path.join(GENERATED_RUST_DIR, 'functions.rs'));
+	const rustMod = generateRust.mod(hasRustTypes, hasRustFunctions);
 	writeFile(path.join(GENERATED_RUST_DIR, 'mod.rs'), rustMod);
 
 	console.log('\n━'.repeat(50));

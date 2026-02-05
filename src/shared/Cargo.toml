@@ -1,0 +1,12 @@
+[package]
+name = "cashier_shared"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+path = "generated/rust/mod.rs"
+
+[dependencies]
+candid.workspace = true
+serde.workspace = true
