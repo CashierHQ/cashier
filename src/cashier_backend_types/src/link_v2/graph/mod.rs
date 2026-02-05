@@ -1,4 +1,5 @@
 use crate::repository::{intent::v1::Intent, transaction::v1::Transaction};
+use cashier_shared::types::Intent as IntentShared;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
@@ -37,6 +38,38 @@ impl From<Vec<Intent>> for Graph {
                     .entry(dep.clone())
                     .or_default()
                     .insert(intent.id.clone());
+            }
+        }
+
+        Self {
+            vertices: vertices.into_iter().collect(),
+            adjacency_list: adjacency_list
+                .into_iter()
+                .map(|(k, v)| (k, v.into_iter().collect()))
+                .collect(),
+        }
+    }
+}
+
+impl From<Vec<IntentShared>> for Graph {
+    fn from(intents: Vec<IntentShared>) -> Self {
+        let mut vertices = HashSet::<String>::new();
+        let mut adjacency_list = HashMap::<String, HashSet<String>>::new();
+
+        // First pass: collect all vertices
+        for intent in intents.iter() {
+            vertices.insert(intent.id.clone());
+        }
+
+        // Second pass: build adjacency list
+        for intent in intents.iter() {
+            for deps in intent.dependencies.iter() {
+                for dep in deps.iter() {
+                    adjacency_list
+                        .entry(dep.clone())
+                        .or_default()
+                        .insert(intent.id.clone());
+                }
             }
         }
 

@@ -103,6 +103,19 @@ impl std::fmt::Display for IntentParticipants {
     }
 }
 
+impl From<Intent> for IntentParticipants {
+    fn from(intent: Intent) -> Self {
+        match (intent.source_address_type, intent.dest_address_type) {
+            (AddressType::Creator, AddressType::Treasury) => IntentParticipants::CreatorToTreasury,
+            (AddressType::Creator, AddressType::Link) => IntentParticipants::CreatorToLink,
+            (AddressType::User, AddressType::Link) => IntentParticipants::UserToLink,
+            (AddressType::Link, AddressType::User) => IntentParticipants::LinkToUser,
+            (AddressType::Link, AddressType::Creator) => IntentParticipants::LinkToCreator,
+            _ => panic!("Invalid address type combination for IntentParticipants"),
+        }
+    }
+}
+
 /// Type of action being performed
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ActionType {

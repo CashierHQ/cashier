@@ -1,10 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::adapter::IntentAdapterTrait;
+use crate::adapter::{IntentAdapterTrait, IntentAdapterV3Trait};
+use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
+        common::{Asset, Wallet},
         intent::v1::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
         transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
@@ -13,6 +15,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::to_memo;
+use cashier_shared::types::{Intent as IntentShared, IntentParticipants, TokenStandard};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
@@ -200,6 +203,45 @@ impl IntentAdapterTrait for IcIntentAdapter {
             _ => Err(CanisterError::InvalidInput(
                 "Unsupported intent task or type".to_string(),
             )),
+        }
+    }
+}
+
+impl IntentAdapterV3Trait for IcIntentAdapter {
+    fn intent_to_transactions_v3(
+        &self,
+        canister_id: Principal,
+        ts: u64,
+        intent: &IntentShared,
+    ) -> Result<Vec<Transaction>, CanisterError> {
+        let _intent_participants: IntentParticipants = intent.clone().into();
+        let token_standard = intent.intent_token_standard.clone();
+        match token_standard {
+            TokenStandard::ICRC1 => {
+                let transfer_data = TransferData {
+                    from: Wallet::new(intent.source_address),
+                    to: Wallet::new(intent.dest_address),
+                    asset: Asset::IC {
+                        address: intent.asset.address,
+                    },
+                    amount: intent.amount.clone(),
+                };
+                self.assemble_icrc1_wallet_transfer(ts, transfer_data)
+            }
+            TokenStandard::ICRC2 => {
+                let transfer_from_data = TransferFromData {
+                    from: Wallet::new(intent.source_address),
+                    to: Wallet::new(intent.dest_address),
+                    spender: Wallet::new(canister_id),
+                    asset: Asset::IC {
+                        address: intent.asset.address,
+                    },
+                    amount: intent.amount.clone(),
+                    approve_amount: Some(intent.amount.clone()),
+                    actual_amount: Some(intent.amount.clone()),
+                };
+                self.assemble_icrc2_wallet_transfer(ts, transfer_from_data)
+            }
         }
     }
 }

@@ -416,6 +416,7 @@ dependencies = [
  "candid",
  "cashier_common",
  "cashier_macros",
+ "cashier_shared",
  "ciborium",
  "derive_more",
  "ic-cdk",
