@@ -18,7 +18,9 @@ use cashier_backend_types::dto::link::*;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::init::CashierBackendInitData;
 use cashier_backend_types::link_v2::dto::*;
+use cashier_backend_types::link_v3::api_args::*;
 use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
+use cashier_shared::types::Action as ActionShared;
 
 ic_cdk::export_candid!();

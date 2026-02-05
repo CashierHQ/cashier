@@ -3,27 +3,26 @@
 
 use crate::api::state::get_state;
 use cashier_backend_types::{
-    dto::{
-        action::{ActionDto, CreateActionInput},
-        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto},
-    },
+    dto::action::{ActionDto, CreateActionInput},
     error::CanisterError,
-    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    link_v3::api_args::{CreateActionV3Input, CreateLinkV3Input, CreateLinkV3Result},
     repository::keys::RequestLockKey,
-    service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
+use cashier_shared::types::Action as ActionShared;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
-/// Creates a new link V2
+/// Creates a new link V3
 /// # Arguments
 /// * `input` - Link creation data
 /// # Returns
 /// * `Ok(CreateLinkDto)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn user_create_link_v3(input: CreateLinkInput) -> Result<CreateLinkDto, CanisterError> {
+async fn user_create_link_v3(
+    input: CreateLinkV3Input,
+) -> Result<CreateLinkV3Result, CanisterError> {
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
@@ -54,7 +53,7 @@ async fn user_create_link_v3(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
 /// * `Ok(ActionDto)` - The created action data
 /// * `Err(CanisterError)` - If action creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn user_create_action_v3(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+async fn user_create_action_v3(input: CreateActionV3Input) -> Result<ActionShared, CanisterError> {
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
@@ -62,96 +61,10 @@ async fn user_create_action_v3(input: CreateActionInput) -> Result<ActionDto, Ca
     let mut link_v3_service = get_state().link_v3_service;
     let canister_id = get_state().env.id();
     let caller = msg_caller();
-    let key = RequestLockKey::CreateAction {
-        user_principal: caller,
-        link_id: input.link_id.clone(),
-        action_type: input.action_type.clone().to_string(),
-    };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
-        .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
+        .create_action(msg_caller(), canister_id, &input.link_id, input.action)
         .await;
-    let _ = request_lock_service.drop(&key);
 
     res
-}
-
-/// Processes a created action V3.
-/// # Arguments
-/// * `input` - Action processing data
-/// # Returns
-/// * `Ok(ProcessActionDto)` - The processed action data
-/// * `Err(CanisterError)` - If action processing fails or validation errors occur
-#[update(guard = "is_not_anonymous")]
-async fn user_process_action_v3(
-    input: ProcessActionV2Input,
-) -> Result<ProcessActionDto, CanisterError> {
-    info!("[user_process_action_v3]");
-    debug!("[user_process_action_v3] input: {input:?}");
-
-    let mut request_lock_service = get_state().request_lock_service;
-    let mut link_v3_service = get_state().link_v3_service;
-    let canister_id = get_state().env.id();
-    let caller = msg_caller();
-    let key = RequestLockKey::ProcessAction {
-        user_principal: caller,
-        action_id: input.action_id.clone(),
-    };
-
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
-    let res = link_v3_service
-        .process_action(msg_caller(), canister_id, &input.action_id)
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
-}
-
-/// Retrieves a paginated list of links created by the authenticated caller.
-///
-/// This endpoint requires the caller to be authenticated (non-anonymous) and returns
-/// only the links that were created by the calling principal.
-///
-/// # Arguments
-/// * `input` - Optional pagination parameters (page size, offset, etc.)
-///
-/// # Returns
-/// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
-/// * `Err(CanisterError)` - Error message if retrieval fails
-#[query(guard = "is_not_anonymous")]
-async fn user_get_links_v3(
-    input: Option<PaginateInput>,
-) -> Result<PaginateResult<LinkDto>, CanisterError> {
-    info!("[get_links_v3]");
-    debug!("[get_links_v3] input: {input:?}");
-    let link_v3_service = get_state().link_v3_service;
-    link_v3_service.get_links(msg_caller(), input).await
-}
-
-/// Retrieves a specific link by its ID with optional action data.
-///
-/// This endpoint is accessible to both anonymous and authenticated users. The response
-/// includes the link details and optionally associated action data based on the caller's
-/// permissions and the requested action type.
-///
-/// # Arguments
-/// * `link_id` - The unique identifier of the link to retrieve
-/// * `options` - Optional parameters including action type to include in response
-///
-/// # Returns
-/// * `Ok(LinkDto)` - Link data
-/// * `Err(String)` - Error message if link not found or access denied
-#[query]
-async fn get_link_details_v3(
-    link_id: &str,
-    options: Option<GetLinkOptions>,
-) -> Result<GetLinkResp, CanisterError> {
-    info!("[get_link_details_v3]");
-    debug!("[get_link_details_v3] link_id: {link_id}, options: {options:?}");
-
-    let link_v3_service = get_state().link_v3_service;
-    link_v3_service
-        .get_link_details(msg_caller(), link_id, options)
-        .await
 }

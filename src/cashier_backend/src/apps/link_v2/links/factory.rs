@@ -9,6 +9,7 @@ use candid::Principal;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput},
     error::CanisterError,
+    link_v3::api_args::CreateLinkV3Input,
     repository::{
         asset_info::AssetInfo,
         link::v1::{Link, LinkType},
@@ -90,6 +91,25 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
             )
             .link),
         }
+    }
+
+    pub fn create_link_v3(
+        &self,
+        creator: Principal,
+        input: CreateLinkV3Input,
+        created_at_ts: u64,
+        canister_id: Principal,
+    ) -> Result<Link, CanisterError> {
+        Ok(TipLink::create(
+            creator,
+            input.title,
+            vec![],
+            1u64,
+            created_at_ts,
+            canister_id,
+            self.transaction_manager.clone(),
+        )
+        .link)
     }
 
     /// Converts a Link model to a corresponding LinkV2 instance.
