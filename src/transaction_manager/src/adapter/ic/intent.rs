@@ -194,6 +194,9 @@ impl IntentAdapterTrait for IcIntentAdapter {
             (IntentTask::TransferWalletToLink, IntentType::Transfer(transfer_intent)) => {
                 self.assemble_icrc1_wallet_transfer(ts, transfer_intent)
             }
+            (IntentTask::TransferWalletToLink, IntentType::TransferFrom(transfer_intent)) => {
+                self.assemble_icrc2_wallet_transfer(ts, transfer_intent)
+            }
             (IntentTask::TransferWalletToTreasury, IntentType::TransferFrom(transfer_intent)) => {
                 self.assemble_icrc2_wallet_transfer(ts, transfer_intent)
             }
@@ -260,7 +263,7 @@ mod tests {
     };
 
     #[test]
-    fn test_assemble_icrc1_wallet_transfer() {
+    fn it_should_assemble_icrc1_wallet_transfer() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp
@@ -296,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_assemble_icrc2_wallet_transfer() {
+    fn it_should_assemble_icrc2_wallet_transfer() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp
@@ -352,7 +355,7 @@ mod tests {
     }
 
     #[test]
-    fn test_assemble_icrc1_canister_transfer() {
+    fn it_should_assemble_icrc1_canister_transfer() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp
@@ -387,7 +390,7 @@ mod tests {
     }
 
     #[test]
-    fn test_intent_to_transactions_transfer_wallet_to_link() {
+    fn it_should_intent_to_transactions_transfer_wallet_to_link() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp
@@ -433,7 +436,7 @@ mod tests {
     }
 
     #[test]
-    fn test_intent_to_transactions_transfer_wallet_to_treasury() {
+    fn it_should_intent_to_transactions_transfer_wallet_to_treasury() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp
@@ -499,7 +502,7 @@ mod tests {
     }
 
     #[test]
-    fn test_intent_to_transactions_transfer_link_to_wallet() {
+    fn it_should_intent_to_transactions_transfer_link_to_wallet() {
         // Arrange
         let adapter = IcIntentAdapter;
         let ts = 1_632_144_000; // Example timestamp

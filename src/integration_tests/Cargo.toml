@@ -26,4 +26,5 @@ serde_json = { workspace = true }
 token_storage_client = { workspace = true }
 token_storage_types = { workspace = true }
 tokio = { workspace = true }
+transaction_manager = { workspace = true }
 uuid = { workspace = true }
