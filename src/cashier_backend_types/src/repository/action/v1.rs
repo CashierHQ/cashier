@@ -96,23 +96,36 @@ impl ActionState {
     }
 }
 
-/// Default for link_id: "" (must be set after conversion).
-/// Note: gen.intents are NOT stored — use ActionIntent junction separately.
-impl From<cashier_shared::Action> for Action {
-    fn from(value: cashier_shared::Action) -> Self {
+impl Action {
+    /// Create repo Action from `cashier_shared::Action`.
+    ///
+    /// # Arguments
+    /// * `value` - Source generated Action
+    /// * `link_id` - Associated link ID (not stored in generated type)
+    ///
+    /// # Returns
+    /// Repo Action with all fields explicitly set
+    ///
+    /// # Note
+    /// `value.intents` are NOT stored — use ActionIntent junction separately
+    pub fn from_generated(value: cashier_shared::Action, link_id: String) -> Self {
         Action {
             id: value.id,
             r#type: value.action_type.into(),
             state: value.action_state.into(),
             creator: value.creator,
-            link_id: String::new(),
+            link_id,
         }
     }
-}
 
-impl Action {
-    /// Convert to generated Action.
-    /// Requires `creator_address_type` and `intents` — not stored in repo type.
+    /// Convert repo Action to `cashier_shared::Action`.
+    ///
+    /// # Arguments
+    /// * `creator_address_type` - Address type of creator (not stored in repo)
+    /// * `intents` - Pre-converted intents fetched via ActionIntent junction
+    ///
+    /// # Returns
+    /// `cashier_shared::Action` with all fields populated
     pub fn into_generated(
         self,
         creator_address_type: cashier_shared::AddressType,

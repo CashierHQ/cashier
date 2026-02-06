@@ -9,6 +9,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::common::{Asset, Chain, Wallet};
+use crate::utils::extract_wallet_fields;
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]
@@ -174,10 +175,25 @@ impl IntentState {
     }
 }
 
-/// Defaults for fields not in generated type:
-/// chain=IC, task=TransferWalletToTreasury, label="", created_at=0
-impl From<cashier_shared::Intent> for Intent {
-    fn from(value: cashier_shared::Intent) -> Self {
+impl Intent {
+    /// Create repo Intent from `cashier_shared::Intent`.
+    ///
+    /// # Arguments
+    /// * `value` - Source generated Intent
+    /// * `chain` - Blockchain network
+    /// * `task` - Intent task type
+    /// * `label` - Display label
+    /// * `created_at` - Creation timestamp
+    ///
+    /// # Returns
+    /// Repo Intent with all fields explicitly set
+    pub fn from_generated(
+        value: cashier_shared::Intent,
+        chain: Chain,
+        task: IntentTask,
+        label: String,
+        created_at: u64,
+    ) -> Self {
         let from = Wallet::new(value.source_address);
         let to = Wallet::new(value.dest_address);
         let asset = Asset::IC {
@@ -187,23 +203,29 @@ impl From<cashier_shared::Intent> for Intent {
         Intent {
             id: value.id,
             state: value.intent_state.into(),
-            created_at: 0,
+            created_at,
             dependency: value.dependencies.unwrap_or_default(),
-            chain: Chain::IC,
-            task: IntentTask::TransferWalletToTreasury,
+            chain,
+            task,
             r#type: IntentType::Transfer(TransferData {
                 from,
                 to,
                 asset,
                 amount: value.amount,
             }),
-            label: String::new(),
+            label,
         }
     }
-}
 
-impl Intent {
-    /// Convert to generated Intent. Requires context not stored in repo type.
+    /// Convert repo Intent to `cashier_shared::Intent`.
+    ///
+    /// # Arguments
+    /// * `source_address_type` - Type of source address (Creator/User/Treasury/Link)
+    /// * `dest_address_type` - Type of destination address
+    /// * `token_standard` - Token standard (ICRC1/ICRC2)
+    ///
+    /// # Returns
+    /// `cashier_shared::Intent` with transfer data extracted from repo type
     pub fn into_generated(
         self,
         source_address_type: cashier_shared::AddressType,
@@ -238,25 +260,6 @@ impl Intent {
             intent_state: self.state.into_generated(),
         }
     }
-}
-
-/// Extract Principal addresses from Wallet/Asset for generated type construction
-fn extract_wallet_fields(
-    from: &Wallet,
-    to: &Wallet,
-    asset: &Asset,
-    amount: &Nat,
-) -> (Principal, Principal, Principal, Nat) {
-    let from_addr = match from {
-        Wallet::IC { address, .. } => *address,
-    };
-    let to_addr = match to {
-        Wallet::IC { address, .. } => *address,
-    };
-    let asset_addr = match asset {
-        Asset::IC { address } => *address,
-    };
-    (from_addr, to_addr, asset_addr, amount.clone())
 }
 
 /// Arguments for creating a TransferWalletToLink intent using ICRC2
