@@ -10,6 +10,7 @@ use cashier_backend_types::{
     dto::{action::ActionDto, link::LinkDto},
     error::CanisterError,
     link_v3::api_args::{CreateLinkV3Input, CreateLinkV3Result},
+    link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
 };
 use cashier_shared::types::Action as ActionShared;
@@ -62,7 +63,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         self.user_link_repository.create(new_user_link);
 
         // create action firstly
-        let action = self
+        let action_result = self
             .create_action(
                 creator_id,
                 canister_id,
@@ -75,7 +76,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
 
         Ok(CreateLinkV3Result {
             link: link_dto,
-            action,
+            action: action_result.create_action_result.action,
         })
     }
 
@@ -94,7 +95,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         canister_id: Principal,
         link_id: &str,
         action: ActionShared,
-    ) -> Result<ActionShared, CanisterError> {
+    ) -> Result<LinkCreateActionResult, CanisterError> {
         let link_model = self
             .link_repository
             .get(&link_id.to_string())
@@ -104,6 +105,52 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         let link = factory.create_from_link(link_model, canister_id)?;
         let result = link.create_action(caller, action).await?;
 
-        Ok(result.create_action_result.action)
+        Ok(result)
+    }
+
+    pub async fn process_action(
+        &mut self,
+        caller: Principal,
+        canister_id: Principal,
+        link_id: &str,
+        action_id: &str,
+    ) -> Result<LinkProcessActionResult, CanisterError> {
+        let action_data = self
+            .action_service
+            .get_action_data(action_id)
+            .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+
+        let link_model = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        let factory = LinkFactory::new(self.transaction_manager.clone());
+        let link = factory.create_from_link(link_model, canister_id)?;
+        let result = link
+            .process_action(caller, action_data.action, action_data.intent_txs)
+            .await?;
+
+        // save data to DB
+        self.link_repository.update(result.link.clone());
+        self.action_service.update_action_data(
+            result.process_action_result.action.clone(),
+            result.process_action_result.intents.clone(),
+            &result.process_action_result.intent_txs_map,
+        )?;
+        self.action_service.update_link_user_state(&result);
+
+        // response dto
+        let action_dto = ActionDto::build(
+            &ActionData {
+                action: result.process_action_result.action.clone(),
+                intents: result.process_action_result.intents.clone(),
+                intent_txs: result.process_action_result.intent_txs_map,
+            },
+            result.process_action_result.icrc112_requests,
+        );
+        let link_dto = LinkDto::from(result.link);
+
+        Ok(result)
     }
 }

@@ -1,6 +1,14 @@
 use candid::Principal;
-use cashier_backend_types::{error::CanisterError, link_v3::link_result::LinkCreateActionResult};
+use cashier_backend_types::{
+    error::CanisterError,
+    link_v3::{
+        action_result::{CreateActionResult, ProcessActionResult},
+        link_result::{LinkCreateActionResult, LinkProcessActionResult},
+    },
+    repository::transaction::v1::Transaction,
+};
 use cashier_shared::types::Action as ActionShared;
+use std::collections::HashMap;
 use std::pin::Pin;
 
 pub trait LinkV3 {
@@ -17,6 +25,15 @@ pub trait LinkV3 {
         caller: Principal,
         action: ActionShared,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+
+    fn process_action(
+        &self,
+        _caller: Principal,
+        _action: ActionShared,
+        _intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
+    }
 }
 
 pub trait LinkV3State {
@@ -34,5 +51,14 @@ pub trait LinkV3State {
         _action: ActionShared,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
+    }
+
+    fn process_action(
+        &self,
+        _caller: Principal,
+        _action: ActionShared,
+        _intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }
