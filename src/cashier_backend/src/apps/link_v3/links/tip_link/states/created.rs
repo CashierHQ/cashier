@@ -40,7 +40,7 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
-    pub async fn create_create_action(
+    pub async fn create_action(
         caller: Principal,
         link: Link,
         action: ActionShared,
@@ -56,7 +56,7 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
         let create_action_result = transaction_manager.create_action_v3(link.id.clone(), action)?;
 
         Ok(LinkCreateActionResult {
-            link: link.clone(),
+            link,
             create_action_result,
         })
     }
@@ -69,15 +69,14 @@ impl<M: TransactionManagerV3 + 'static> LinkV3State for CreatedState<M> {
         action: ActionShared,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
-        let canister_id = self.canister_id;
+        let _canister_id = self.canister_id;
         let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
             match action.action_type {
                 ActionTypeShared::CreateLink => {
                     let create_action_result =
-                        Self::create_create_action(caller, link, action, transaction_manager)
-                            .await?;
+                        Self::create_action(caller, link, action, transaction_manager).await?;
                     Ok(create_action_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(

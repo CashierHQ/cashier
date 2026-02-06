@@ -19,9 +19,6 @@ use transaction_manager::traits::{TransactionManager, TransactionManagerV3};
 pub struct LinkV3Service<R: Repositories, M: TransactionManagerV3 + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
-    pub user_link_action_repository:
-        repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
-    pub action_service: ActionService<R>,
     pub transaction_manager: Rc<M>,
 }
 
@@ -30,8 +27,6 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         Self {
             link_repository: repo.link(),
             user_link_repository: repo.user_link(),
-            user_link_action_repository: repo.user_link_action(),
-            action_service: ActionService::new(repo),
             transaction_manager,
         }
     }

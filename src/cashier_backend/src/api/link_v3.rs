@@ -26,22 +26,14 @@ async fn user_create_link_v3(
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
     let caller = msg_caller();
-    let key = RequestLockKey::CreateLink {
-        user_principal: caller,
-    };
 
-    let _ = request_lock_service.create(&key, created_at)?;
     let res = link_v3_service
-        .create_link(msg_caller(), canister_id, input, created_at)
+        .create_link(caller, canister_id, input, created_at)
         .await;
-    let _ = request_lock_service.drop(&RequestLockKey::CreateLink {
-        user_principal: caller,
-    });
 
     res
 }
@@ -57,13 +49,12 @@ async fn user_create_action_v3(input: CreateActionV3Input) -> Result<ActionShare
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let canister_id = get_state().env.id();
     let caller = msg_caller();
 
     let res = link_v3_service
-        .create_action(msg_caller(), canister_id, &input.link_id, input.action)
+        .create_action(caller, canister_id, &input.link_id, input.action)
         .await;
 
     res

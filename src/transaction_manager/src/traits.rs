@@ -52,11 +52,4 @@ pub trait TransactionManagerV3 {
         link_id: String,
         action: ActionShared,
     ) -> Result<CreateActionResultV3, CanisterError>;
-
-    fn process_action_v3(
-        &self,
-        link_id: String,
-        action: ActionShared,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResultV3, CanisterError>>>>;
 }
