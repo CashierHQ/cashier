@@ -103,6 +103,19 @@ impl std::fmt::Display for IntentParticipants {
     }
 }
 
+impl From<Intent> for IntentParticipants {
+    fn from(intent: Intent) -> Self {
+        match (intent.source_address_type, intent.dest_address_type) {
+            (AddressType::Creator, AddressType::Treasury) => IntentParticipants::CreatorToTreasury,
+            (AddressType::Creator, AddressType::Link) => IntentParticipants::CreatorToLink,
+            (AddressType::User, AddressType::Link) => IntentParticipants::UserToLink,
+            (AddressType::Link, AddressType::User) => IntentParticipants::LinkToUser,
+            (AddressType::Link, AddressType::Creator) => IntentParticipants::LinkToCreator,
+            _ => panic!("Invalid address type combination for IntentParticipants"),
+        }
+    }
+}
+
 /// Type of action being performed
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ActionType {
@@ -143,46 +156,6 @@ impl std::fmt::Display for ActionState {
     }
 }
 
-/// Type of link
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum LinkType {
-    Tip,
-    Airdrop,
-    TokenBasket,
-    Payment,
-}
-
-impl std::fmt::Display for LinkType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LinkType::Tip => write!(f, "Tip"),
-            LinkType::Airdrop => write!(f, "Airdrop"),
-            LinkType::TokenBasket => write!(f, "TokenBasket"),
-            LinkType::Payment => write!(f, "Payment"),
-        }
-    }
-}
-
-/// Current state of the link
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum LinkState {
-    Created,
-    Active,
-    Inactivate,
-    Ended,
-}
-
-impl std::fmt::Display for LinkState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            LinkState::Created => write!(f, "Created"),
-            LinkState::Active => write!(f, "Active"),
-            LinkState::Inactivate => write!(f, "Inactivate"),
-            LinkState::Ended => write!(f, "Ended"),
-        }
-    }
-}
-
 // =============================================================================
 // Structs
 // =============================================================================
@@ -214,12 +187,6 @@ pub struct Intent {
     pub asset: Asset,
     /// Amount to transfer
     pub amount: Nat,
-    /// Total amount to transfer
-    pub total_amount: Option<Nat>,
-    /// Network fee amount
-    pub network_fee: Option<Nat>,
-    /// User fee amount
-    pub user_fee: Option<Nat>,
     /// Source address (Principal)
     pub source_address: Principal,
     pub source_address_type: AddressType,
@@ -277,17 +244,36 @@ pub struct Action {
     pub action_state: ActionState,
 }
 
-/// Represents a payment link
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LinkType {
+    TipLink,
+}
+
+impl std::fmt::Display for LinkType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinkType::TipLink => write!(f, "TipLink"),
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Link {
-    /// Unique identifier for the link
     pub id: String,
-    /// Principal of the link creator
+    pub title: String,
+    pub link_type: LinkType,
+    pub asset_info: Vec<AssetInfo>,
+    pub use_count: u64,
+    pub max_use: u64,
     pub creator: Principal,
-    /// Title of the link
-    pub title: Option<String>,
-    pub link_type: Option<LinkType>,
-    /// Maximum number of times the link can be used
-    pub max_use: i64,
-    pub link_state: Option<LinkState>,
+    pub created_at_ts: u64,
+    pub link_state: LinkState,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LinkState {
+    Created,
+    Active,
+    Inactive,
+    InactiveEnded,
 }

@@ -88,6 +88,30 @@ export const ActionState = {
 
 export type ActionState = typeof ActionState[keyof typeof ActionState];
 
+/**
+ * Type of link
+ */
+export const LinkType = {
+  Tip: 'Tip',
+  Airdrop: 'Airdrop',
+  TokenBasket: 'TokenBasket',
+  Payment: 'Payment',
+} as const;
+
+export type LinkType = typeof LinkType[keyof typeof LinkType];
+
+/**
+ * Current state of the link
+ */
+export const LinkState = {
+  Created: 'Created',
+  Active: 'Active',
+  Inactivate: 'Inactivate',
+  Ended: 'Ended',
+} as const;
+
+export type LinkState = typeof LinkState[keyof typeof LinkState];
+
 // =============================================================================
 // Interfaces
 // =============================================================================
@@ -122,6 +146,12 @@ export interface Intent {
   asset: Asset;
   /** Amount to transfer */
   amount: bigint;
+  /** Total amount to transfer */
+  total_amount?: bigint;
+  /** Network fee amount */
+  network_fee?: bigint;
+  /** User fee amount */
+  user_fee?: bigint;
   /** Source address (Principal) */
   source_address: Principal;
   source_address_type: AddressType;
@@ -180,4 +210,20 @@ export interface Action {
   intents: Intent[];
   /** Current state of the action */
   action_state: ActionState;
+}
+
+/**
+ * Represents a payment link
+ */
+export interface Link {
+  /** Unique identifier for the link */
+  id: string;
+  /** Principal of the link creator */
+  creator: Principal;
+  /** Title of the link */
+  title?: string;
+  link_type?: LinkType;
+  /** Maximum number of times the link can be used */
+  max_use: number;
+  link_state?: LinkState;
 }
