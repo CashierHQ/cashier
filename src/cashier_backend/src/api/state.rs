@@ -14,13 +14,14 @@ use crate::{
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
-use transaction_manager::ic_transaction_manager::IcTransactionManager;
+use transaction_manager::v2::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV2;
+use transaction_manager::v3::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV3;
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
-    pub link_v2_service: LinkV2Service<ThreadlocalRepositories, IcTransactionManager<E>>,
-    pub link_v3_service: LinkV3Service<ThreadlocalRepositories, IcTransactionManager<E>>,
+    pub link_v2_service: LinkV2Service<ThreadlocalRepositories, IcTransactionManagerV2<E>>,
+    pub link_v3_service: LinkV3Service<ThreadlocalRepositories, IcTransactionManagerV3<E>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -33,9 +34,10 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
 
-        let transaction_manager = Rc::new(IcTransactionManager::new(env.clone()));
-        let link_v2_service = LinkV2Service::new(&*repo, transaction_manager.clone());
-        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager.clone());
+        let transaction_manager_v2 = Rc::new(IcTransactionManagerV2::new(env.clone()));
+        let transaction_manager_v3 = Rc::new(IcTransactionManagerV3::new(env.clone()));
+        let link_v2_service = LinkV2Service::new(&*repo, transaction_manager_v2.clone());
+        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager_v3.clone());
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
 

@@ -16,7 +16,7 @@ use cashier_backend_types::{
     },
 };
 use std::rc::Rc;
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 
 pub struct LinkFactory<M: TransactionManager + 'static> {
     pub transaction_manager: Rc<M>,

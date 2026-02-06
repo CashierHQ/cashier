@@ -14,7 +14,7 @@ use cashier_backend_types::{
 };
 use cashier_shared::types::Action as ActionShared;
 use std::rc::Rc;
-use transaction_manager::traits::{TransactionManager, TransactionManagerV3};
+use transaction_manager::v3::traits::TransactionManagerV3;
 
 pub struct LinkV3Service<R: Repositories, M: TransactionManagerV3 + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,

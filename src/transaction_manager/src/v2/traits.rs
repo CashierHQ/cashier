@@ -4,12 +4,8 @@
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},
-    link_v3::action_result::{
-        CreateActionResult as CreateActionResultV3, ProcessActionResult as ProcessActionResultV3,
-    },
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
-use cashier_shared::types::Action as ActionShared;
 use std::{collections::HashMap, future::Future, pin::Pin};
 
 pub trait TransactionManager {
@@ -44,12 +40,4 @@ pub trait TransactionManager {
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>>;
-}
-
-pub trait TransactionManagerV3 {
-    fn create_action_v3(
-        &self,
-        link_id: String,
-        action: ActionShared,
-    ) -> Result<CreateActionResultV3, CanisterError>;
 }

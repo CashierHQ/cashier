@@ -20,7 +20,7 @@ use cashier_backend_types::{
 use cashier_shared::types::Action as ActionShared;
 use states::created::CreatedState;
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManagerV3;
+use transaction_manager::v3::traits::TransactionManagerV3;
 use uuid::Uuid;
 
 pub struct TipLink<M: TransactionManagerV3 + 'static> {

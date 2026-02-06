@@ -15,7 +15,7 @@ use cashier_backend_types::{
 };
 use cashier_shared::types::{Action as ActionShared, ActionType as ActionTypeShared};
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManagerV3;
+use transaction_manager::v3::traits::TransactionManagerV3;
 
 pub struct CreatedState<M: TransactionManagerV3 + 'static> {
     pub link: Link,
@@ -53,7 +53,7 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
             ));
         }
 
-        let create_action_result = transaction_manager.create_action_v3(link.id.clone(), action)?;
+        let create_action_result = transaction_manager.create_action(link.id.clone(), action)?;
 
         Ok(LinkCreateActionResult {
             link,

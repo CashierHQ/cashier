@@ -90,11 +90,7 @@ impl DependencyAnalyzer {
             .map(|intent| {
                 (
                     intent.id.clone(),
-                    intent
-                        .dependencies
-                        .as_ref()
-                        .map(|deps| deps.clone())
-                        .unwrap_or_default(),
+                    intent.dependencies.clone().unwrap_or_default(),
                 )
             })
             .collect();

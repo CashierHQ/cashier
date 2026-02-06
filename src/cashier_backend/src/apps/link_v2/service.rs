@@ -20,7 +20,7 @@ use cashier_backend_types::{
     service::action::ActionData,
 };
 use std::rc::Rc;
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,

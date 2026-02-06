@@ -21,7 +21,7 @@ use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, Intent as IntentShared,
     IntentState as IntentStateShared,
 };
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 pub struct ValidatorService<V: TransactionValidator + Clone> {
     validator: V,

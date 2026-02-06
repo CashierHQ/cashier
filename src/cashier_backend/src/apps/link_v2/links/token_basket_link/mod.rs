@@ -20,7 +20,7 @@ use cashier_backend_types::{
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
 pub struct TokenBasketLink<M: TransactionManager + 'static> {

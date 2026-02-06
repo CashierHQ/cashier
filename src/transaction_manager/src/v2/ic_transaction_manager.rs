@@ -5,7 +5,6 @@ use crate::adapter::{IntentAdapterTrait, IntentAdapterV3Trait};
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::IcIntentAdapter,
-    traits::{TransactionManager, TransactionManagerV3},
     transaction::{
         dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
         validator_service::ValidatorService,
@@ -14,6 +13,7 @@ use crate::{
         ic_transaction_executor::IcTransactionExecutor,
         ic_transaction_validator::IcTransactionValidator,
     },
+    v2::traits::TransactionManager,
 };
 use cashier_backend_types::{
     error::CanisterError,
@@ -38,7 +38,6 @@ pub struct IcTransactionManager<E: IcEnvironment> {
     pub dependency_analyzer: DependencyAnalyzer,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
         let intent_adapter = IcIntentAdapter;
@@ -223,64 +222,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 is_success,
                 errors,
             })
-        })
-    }
-}
-
-impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
-    fn create_action_v3(
-        &self,
-        link_id: String,
-        action: ActionShared,
-    ) -> Result<CreateActionResultV3, CanisterError> {
-        let current_ts = self.ic_env.time();
-        let canister_id = self.ic_env.id();
-
-        // assemble intent transactions
-        let mut transactions = Vec::<Transaction>::new();
-
-        let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
-
-        for intent in action.intents.iter() {
-            let intent_transactions =
-                self.intent_adapter
-                    .intent_to_transactions_v3(canister_id, current_ts, intent)?;
-            transactions.extend(intent_transactions.clone());
-            intent_txs_map.insert(intent.id.clone(), intent_transactions);
-        }
-
-        // transaction with dependencies filled
-        let mut transactions = self
-            .dependency_analyzer
-            .analyze_and_fill_transaction_dependencies_v3(&action.intents, &intent_txs_map)?;
-
-        // update intent_txs_map with updated transactions
-        for intent in action.intents.iter() {
-            let tx_ids = intent_txs_map
-                .get(&intent.id)
-                .unwrap()
-                .iter()
-                .map(|tx| tx.id.clone())
-                .collect::<HashSet<String>>();
-
-            let updated_txs = transactions
-                .iter()
-                .filter(|tx| tx_ids.contains(&tx.id))
-                .cloned()
-                .collect::<Vec<Transaction>>();
-
-            intent_txs_map.insert(intent.id.clone(), updated_txs);
-        }
-
-        // create ICRC112 requests from transactions
-        let canister_id = self.ic_env.id();
-        let link_account = get_link_account(&link_id, canister_id)?;
-        let icrc112_requests =
-            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)?;
-
-        Ok(CreateActionResultV3 {
-            action,
-            icrc112_requests: Some(icrc112_requests),
         })
     }
 }
