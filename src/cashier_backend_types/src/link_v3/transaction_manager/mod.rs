@@ -1,5 +1,5 @@
 use crate::repository::transaction::v1::Transaction;
-use cashier_shared::types::{Action as ActionShared, Intent as IntentShared};
+use cashier_shared::types::Action as ActionShared;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]

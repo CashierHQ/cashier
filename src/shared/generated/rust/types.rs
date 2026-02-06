@@ -243,3 +243,37 @@ pub struct Action {
     /// Current state of the action
     pub action_state: ActionState,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LinkType {
+    TipLink,
+}
+
+impl std::fmt::Display for LinkType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LinkType::TipLink => write!(f, "TipLink"),
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Link {
+    pub id: String,
+    pub title: String,
+    pub link_type: LinkType,
+    pub asset_info: Vec<AssetInfo>,
+    pub use_count: u64,
+    pub max_use: u64,
+    pub creator: Principal,
+    pub created_at_ts: u64,
+    pub link_state: LinkState,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum LinkState {
+    Created,
+    Active,
+    Inactive,
+    InactiveEnded,
+}

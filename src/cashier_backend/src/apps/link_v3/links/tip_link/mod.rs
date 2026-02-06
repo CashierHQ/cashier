@@ -7,11 +7,11 @@ use crate::apps::link_v3::traits::{LinkV3, LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::action_result::CreateActionResult,
-    link_v3::link_result::LinkCreateActionResult,
+    link_v2::{action_result::CreateActionResult, link_result::LinkCreateActionResult},
     repository::{
         action::v1::{Action, ActionType},
-        asset_info::AssetInfo,
+        asset_info::{self, AssetInfo},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState, LinkType},
         transaction::v1::Transaction,
@@ -20,16 +20,16 @@ use cashier_backend_types::{
 use cashier_shared::types::Action as ActionShared;
 use states::created::CreatedState;
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
-pub struct TipLink<M: TransactionManagerV3 + 'static> {
+pub struct TipLink<M: TransactionManager + 'static> {
     pub link: Link,
     pub canister_id: Principal,
     pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManagerV3 + 'static> TipLink<M> {
+impl<M: TransactionManager + 'static> TipLink<M> {
     pub fn new(link: Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
         Self {
             link,
@@ -51,7 +51,6 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
         creator: Principal,
         title: String,
         asset_info: Vec<AssetInfo>,
-        max_use: u64,
         created_at_ts: u64,
         canister_id: Principal,
         transaction_manager: Rc<M>,
@@ -62,7 +61,7 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
             title,
             asset_info,
             link_use_action_counter: 0,
-            link_use_action_max_count: max_use,
+            link_use_action_max_count: 1,
             creator,
             state: LinkState::CreateLink,
             create_at: created_at_ts,
@@ -91,7 +90,7 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
     }
 }
 
-impl<M: TransactionManagerV3 + 'static> LinkV3 for TipLink<M> {
+impl<M: TransactionManager + 'static> LinkV3 for TipLink<M> {
     /// Creates an action for the TipLink.
     /// # Arguments
     /// * `canister_id` - The canister ID of the token contract.
@@ -101,7 +100,8 @@ impl<M: TransactionManagerV3 + 'static> LinkV3 for TipLink<M> {
     fn create_action(
         &self,
         caller: Principal,
-        action: ActionShared,
+        action: Action,
+        intents: Vec<Intent>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;
@@ -109,8 +109,37 @@ impl<M: TransactionManagerV3 + 'static> LinkV3 for TipLink<M> {
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let create_action_result = state.create_action(caller, action).await?;
+            let create_action_result = state.create_action(caller, action, intents).await?;
             Ok(create_action_result)
+        })
+    }
+
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: Action,
+        intents: Vec<Intent>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<
+        Box<
+            dyn Future<
+                Output = Result<
+                    cashier_backend_types::link_v2::link_result::LinkProcessActionResult,
+                    CanisterError,
+                >,
+            >,
+        >,
+    > {
+        let link = self.link.clone();
+        let canister_id = self.canister_id;
+        let transaction_manager = self.transaction_manager.clone();
+
+        Box::pin(async move {
+            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
+            let process_action_result = state
+                .process_action(caller, action, intents, intent_txs_map)
+                .await?;
+            Ok(process_action_result)
         })
     }
 }

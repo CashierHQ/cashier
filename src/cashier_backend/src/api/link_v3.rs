@@ -3,9 +3,14 @@
 
 use crate::api::state::get_state;
 use cashier_backend_types::{
-    dto::action::{ActionDto, CreateActionInput},
     error::CanisterError,
-    link_v3::api_args::{CreateActionV3Input, CreateLinkV3Input, CreateLinkV3Result},
+    link_v3::dto::{
+        action::{
+            CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
+            ProcessActionResponseV3,
+        },
+        link::{CreateLinkInputV3, CreateLinkResponseV3},
+    },
     repository::keys::RequestLockKey,
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
@@ -17,12 +22,12 @@ use log::{debug, info};
 /// # Arguments
 /// * `input` - Link creation data
 /// # Returns
-/// * `Ok(CreateLinkDto)` - The created link data
+/// * `Ok(CreateLinkResponse)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_create_link_v3(
-    input: CreateLinkV3Input,
-) -> Result<CreateLinkV3Result, CanisterError> {
+    input: CreateLinkInputV3,
+) -> Result<CreateActionResponseV3, CanisterError> {
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
@@ -37,7 +42,7 @@ async fn user_create_link_v3(
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
-        .create_link(caller, canister_id, input, created_at)
+        .create_link(input, caller, canister_id, created_at)
         .await;
     let _ = request_lock_service.drop(&key);
 
@@ -48,10 +53,12 @@ async fn user_create_link_v3(
 /// # Arguments
 /// * `input` - Action creation data
 /// # Returns
-/// * `Ok(ActionDto)` - The created action data
+/// * `Ok(CreateActionResponse)` - The created action data
 /// * `Err(CanisterError)` - If action creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn user_create_action_v3(input: CreateActionV3Input) -> Result<ActionShared, CanisterError> {
+async fn user_create_action_v3(
+    input: CreateActionInputV3,
+) -> Result<CreateActionResponseV3, CanisterError> {
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
@@ -59,6 +66,7 @@ async fn user_create_action_v3(input: CreateActionV3Input) -> Result<ActionShare
     let mut link_v3_service = get_state().link_v3_service;
     let canister_id = get_state().env.id();
     let caller = msg_caller();
+    let created_at_ts = get_state().env.time();
     let key = RequestLockKey::CreateAction {
         user_principal: caller,
         link_id: input.link_id.clone(),
@@ -67,7 +75,44 @@ async fn user_create_action_v3(input: CreateActionV3Input) -> Result<ActionShare
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
-        .create_action(caller, canister_id, &input.link_id, input.action)
+        .create_action(
+            &input.link_id,
+            input.action,
+            caller,
+            canister_id,
+            created_at_ts,
+        )
+        .await;
+    let _ = request_lock_service.drop(&key);
+
+    res
+}
+
+/// Processes a created action V2.
+/// # Arguments
+/// * `input` - Action processing data
+/// # Returns
+/// * `Ok(ProcessActionDto)` - The processed action data
+/// * `Err(CanisterError)` - If action processing fails or validation errors occur
+#[update(guard = "is_not_anonymous")]
+async fn user_process_action_v3(
+    input: ProcessActionInputV3,
+) -> Result<ProcessActionResponseV3, CanisterError> {
+    info!("[user_process_action_v3]");
+    debug!("[user_process_action_v3] input: {input:?}");
+
+    let mut request_lock_service = get_state().request_lock_service;
+    let mut link_v3_service = get_state().link_v3_service;
+    let canister_id = get_state().env.id();
+    let caller = msg_caller();
+    let key = RequestLockKey::ProcessAction {
+        user_principal: caller,
+        action_id: input.action_id.clone(),
+    };
+
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    let res = link_v3_service
+        .process_action(&input.link_id, &input.action_id, caller, canister_id)
         .await;
     let _ = request_lock_service.drop(&key);
 

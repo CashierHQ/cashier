@@ -8,6 +8,7 @@ use ic_mple_structures::Codec;
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
+use crate::repository::action::v1::Action;
 use crate::repository::common::{Asset, Chain, Wallet};
 use crate::utils::extract_wallet_fields;
 
@@ -190,7 +191,6 @@ impl Intent {
     pub fn from_generated(
         value: cashier_shared::Intent,
         chain: Chain,
-        task: IntentTask,
         label: String,
         created_at: u64,
     ) -> Self {
@@ -199,6 +199,20 @@ impl Intent {
         let asset = Asset::IC {
             address: value.asset.address,
         };
+        let intent_task: IntentTask = match (value.source_address_type, value.dest_address_type) {
+            (cashier_shared::AddressType::Creator, cashier_shared::AddressType::Treasury) => {
+                IntentTask::TransferWalletToTreasury
+            }
+            (cashier_shared::AddressType::Creator, cashier_shared::AddressType::Link)
+            | (cashier_shared::AddressType::User, cashier_shared::AddressType::Link) => {
+                IntentTask::TransferWalletToLink
+            }
+            (cashier_shared::AddressType::Link, cashier_shared::AddressType::Creator)
+            | (cashier_shared::AddressType::Link, cashier_shared::AddressType::User) => {
+                IntentTask::TransferLinkToWallet
+            }
+            _ => IntentTask::TransferWalletToTreasury,
+        };
 
         Intent {
             id: value.id,
@@ -206,7 +220,7 @@ impl Intent {
             created_at,
             dependency: value.dependencies.unwrap_or_default(),
             chain,
-            task,
+            task: intent_task,
             r#type: IntentType::Transfer(TransferData {
                 from,
                 to,
@@ -226,12 +240,7 @@ impl Intent {
     ///
     /// # Returns
     /// `cashier_shared::Intent` with transfer data extracted from repo type
-    pub fn into_generated(
-        self,
-        source_address_type: cashier_shared::AddressType,
-        dest_address_type: cashier_shared::AddressType,
-        token_standard: cashier_shared::TokenStandard,
-    ) -> cashier_shared::Intent {
+    pub fn into_generated(&self, action: Action) -> cashier_shared::Intent {
         let (from_addr, to_addr, asset_addr, amount) = match &self.r#type {
             IntentType::Transfer(d) => extract_wallet_fields(&d.from, &d.to, &d.asset, &d.amount),
             IntentType::TransferFrom(d) => {
@@ -239,8 +248,31 @@ impl Intent {
             }
         };
 
+        let (source_address_type, dest_address_type) = match action.r#type {
+            crate::repository::action::v1::ActionType::CreateLink => (
+                cashier_shared::AddressType::Creator,
+                cashier_shared::AddressType::Link,
+            ),
+            crate::repository::action::v1::ActionType::Withdraw => (
+                cashier_shared::AddressType::Link,
+                cashier_shared::AddressType::Creator,
+            ),
+            crate::repository::action::v1::ActionType::Send => (
+                cashier_shared::AddressType::User,
+                cashier_shared::AddressType::Link,
+            ),
+            crate::repository::action::v1::ActionType::Receive => (
+                cashier_shared::AddressType::Link,
+                cashier_shared::AddressType::User,
+            ),
+        };
+        let token_standard = match &self.r#type {
+            IntentType::Transfer(_d) => cashier_shared::TokenStandard::ICRC1,
+            IntentType::TransferFrom(_d) => cashier_shared::TokenStandard::ICRC2,
+        };
+
         cashier_shared::Intent {
-            id: self.id,
+            id: self.id.clone(),
             intent_type: cashier_shared::IntentType::Transfer,
             asset: cashier_shared::Asset {
                 address: asset_addr,
@@ -255,9 +287,9 @@ impl Intent {
             dependencies: if self.dependency.is_empty() {
                 None
             } else {
-                Some(self.dependency)
+                Some(self.dependency.clone())
             },
-            intent_state: self.state.into_generated(),
+            intent_state: self.state.clone().into_generated(),
         }
     }
 }

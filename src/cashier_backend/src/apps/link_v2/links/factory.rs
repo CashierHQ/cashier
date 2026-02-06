@@ -9,9 +9,8 @@ use candid::Principal;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput},
     error::CanisterError,
-    link_v3::api_args::CreateLinkV3Input,
     repository::{
-        asset_info::AssetInfo,
+        asset_info::{self, AssetInfo},
         link::v1::{Link, LinkType},
     },
 };
@@ -95,21 +94,56 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
 
     pub fn create_link_v3(
         &self,
+        link_type: LinkType,
+        title: String,
+        asset_info: Vec<AssetInfo>,
+        max_use_count: u64,
         creator: Principal,
-        input: CreateLinkV3Input,
         created_at_ts: u64,
         canister_id: Principal,
     ) -> Result<Link, CanisterError> {
-        Ok(TipLink::create(
-            creator,
-            input.title,
-            vec![],
-            1u64,
-            created_at_ts,
-            canister_id,
-            self.transaction_manager.clone(),
-        )
-        .link)
+        match link_type {
+            LinkType::SendTip => Ok(TipLink::create(
+                creator,
+                title,
+                asset_info,
+                max_use_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::SendAirdrop => Ok(AirdropLink::create(
+                creator,
+                title,
+                asset_info,
+                max_use_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::SendTokenBasket => Ok(TokenBasketLink::create(
+                creator,
+                title,
+                asset_info,
+                max_use_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::ReceivePayment => Ok(PaymentLink::create(
+                creator,
+                title,
+                asset_info,
+                max_use_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+        }
     }
 
     /// Converts a Link model to a corresponding LinkV2 instance.

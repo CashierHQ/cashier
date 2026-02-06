@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{CandidType, Principal};
+use cashier_shared::types::Asset as AssetShared;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -26,6 +27,15 @@ impl Asset {
     pub fn chain(&self) -> Chain {
         match self {
             Asset::IC { .. } => Chain::IC,
+        }
+    }
+
+    pub fn into_generated(&self) -> AssetShared {
+        match self {
+            Asset::IC { address } => AssetShared {
+                address: *address,
+                token_standard: cashier_shared::TokenStandard::ICRC2, // TODO
+            },
         }
     }
 }

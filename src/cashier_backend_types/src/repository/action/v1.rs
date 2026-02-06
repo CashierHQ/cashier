@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::repository::intent::v1::Intent;
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use derive_more::Display;
@@ -64,7 +65,7 @@ impl From<cashier_shared::ActionType> for ActionType {
 }
 
 impl ActionType {
-    pub fn into_generated(self) -> cashier_shared::ActionType {
+    pub fn into_generated(&self) -> cashier_shared::ActionType {
         match self {
             ActionType::CreateLink => cashier_shared::ActionType::CreateLink,
             ActionType::Withdraw => cashier_shared::ActionType::Withdraw,
@@ -86,7 +87,7 @@ impl From<cashier_shared::ActionState> for ActionState {
 }
 
 impl ActionState {
-    pub fn into_generated(self) -> cashier_shared::ActionState {
+    pub fn into_generated(&self) -> cashier_shared::ActionState {
         match self {
             ActionState::Created => cashier_shared::ActionState::Created,
             ActionState::Processing => cashier_shared::ActionState::Processing,
@@ -126,18 +127,26 @@ impl Action {
     ///
     /// # Returns
     /// `cashier_shared::Action` with all fields populated
-    pub fn into_generated(
-        self,
-        creator_address_type: cashier_shared::AddressType,
-        intents: Vec<cashier_shared::Intent>,
-    ) -> cashier_shared::Action {
+    pub fn into_generated(&self, intents: Vec<Intent>) -> cashier_shared::Action {
+        let creator_address_type: cashier_shared::AddressType = {
+            match self.r#type {
+                ActionType::CreateLink => cashier_shared::AddressType::Creator,
+                ActionType::Withdraw => cashier_shared::AddressType::Creator,
+                ActionType::Send => cashier_shared::AddressType::User,
+                ActionType::Receive => cashier_shared::AddressType::User,
+            }
+        };
+
         cashier_shared::Action {
-            id: self.id,
+            id: self.id.clone(),
             creator: self.creator,
             creator_address_type,
-            action_type: self.r#type.into_generated(),
-            intents,
-            action_state: self.state.into_generated(),
+            action_type: self.r#type.clone().into_generated(),
+            intents: intents
+                .into_iter()
+                .map(|intent| intent.into_generated(self.clone()))
+                .collect(),
+            action_state: self.state.clone().into_generated(),
         }
     }
 }
