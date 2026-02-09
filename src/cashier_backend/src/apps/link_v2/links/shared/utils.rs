@@ -5,7 +5,7 @@ use crate::api::state::get_state;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{common::Asset, link::v1::Link},
+    repository::{asset::v1::Asset, link::v1::Link},
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
 use futures::future;

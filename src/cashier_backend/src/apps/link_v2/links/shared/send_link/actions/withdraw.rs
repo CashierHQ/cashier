@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,

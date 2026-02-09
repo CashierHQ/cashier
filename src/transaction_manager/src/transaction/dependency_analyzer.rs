@@ -5,9 +5,11 @@ use crate::utils::topological_sort::kahn_topological_sort;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::graph::Graph,
-    repository::{intent::v1::Intent, transaction::v1::Transaction},
+    repository::{
+        intent::{v1::Intent, v3::IntentV3},
+        transaction::v1::Transaction,
+    },
 };
-use cashier_shared::types::Intent as IntentShared;
 use std::collections::{HashMap, HashSet};
 
 pub struct DependencyAnalyzer;
@@ -77,7 +79,7 @@ impl DependencyAnalyzer {
 
     pub fn analyze_and_fill_transaction_dependencies_v3(
         &self,
-        intents: &[IntentShared],
+        intents: &[IntentV3],
         intent_txs_map: &HashMap<String, Vec<Transaction>>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         self.check_circular_intents_dependencies_v3(intents)?;
@@ -87,12 +89,7 @@ impl DependencyAnalyzer {
         // build intent dependency map
         let intent_dependency_map: HashMap<String, Vec<String>> = intents
             .iter()
-            .map(|intent| {
-                (
-                    intent.id.clone(),
-                    intent.dependencies.clone().unwrap_or_default(),
-                )
-            })
+            .map(|intent| (intent.id.clone(), intent.dependencies.clone()))
             .collect();
 
         // build transaction dependency map
@@ -153,7 +150,7 @@ impl DependencyAnalyzer {
 
     pub fn check_circular_intents_dependencies_v3(
         &self,
-        intents: &[IntentShared],
+        intents: &[IntentV3],
     ) -> Result<(), CanisterError> {
         let graph: Graph = intents.to_vec().into();
         let _sorted_levels = kahn_topological_sort(&graph)?;

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::action::ActionService;
+use crate::apps::action::v1::ActionService;
 use crate::apps::link_v2::links::factory::LinkFactory;
 use crate::repositories;
 use crate::repositories::Repositories;
@@ -23,7 +23,7 @@ use std::rc::Rc;
 use transaction_manager::v2::traits::TransactionManager;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
-    pub link_repository: repositories::link::LinkRepository<R::Link>,
+    pub link_repository: repositories::link::v1::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
@@ -31,7 +31,6 @@ pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub transaction_manager: Rc<M>,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
     pub fn new(repo: &R, transaction_manager: Rc<M>) -> Self {
         Self {

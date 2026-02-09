@@ -1,4 +1,7 @@
-use crate::repository::{intent::v1::Intent, transaction::v1::Transaction};
+use crate::repository::{
+    intent::{v1::Intent, v3::IntentV3},
+    transaction::v1::Transaction,
+};
 use cashier_shared::types::Intent as IntentShared;
 use std::collections::{HashMap, HashSet};
 
@@ -50,8 +53,8 @@ impl From<Vec<Intent>> for Graph {
     }
 }
 
-impl From<Vec<IntentShared>> for Graph {
-    fn from(intents: Vec<IntentShared>) -> Self {
+impl From<Vec<IntentV3>> for Graph {
+    fn from(intents: Vec<IntentV3>) -> Self {
         let mut vertices = HashSet::<String>::new();
         let mut adjacency_list = HashMap::<String, HashSet<String>>::new();
 
@@ -62,13 +65,11 @@ impl From<Vec<IntentShared>> for Graph {
 
         // Second pass: build adjacency list
         for intent in intents.iter() {
-            for deps in intent.dependencies.iter() {
-                for dep in deps.iter() {
-                    adjacency_list
-                        .entry(dep.clone())
-                        .or_default()
-                        .insert(intent.id.clone());
-                }
+            for dep in intent.dependencies.iter() {
+                adjacency_list
+                    .entry(dep.clone())
+                    .or_default()
+                    .insert(intent.id.clone());
             }
         }
 
@@ -122,12 +123,15 @@ mod tests {
     use std::collections::HashSet;
 
     use crate::link_v2::graph::Graph;
-    use crate::repository::common::{Asset, Chain, Wallet};
     use crate::repository::intent::v1::{
         Intent, IntentState, IntentTask, IntentType, TransferData,
     };
     use crate::repository::transaction::v1::{
         FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
+    };
+    use crate::repository::{
+        asset::v1::Asset,
+        common::{Chain, Wallet},
     };
     use candid::Nat;
 

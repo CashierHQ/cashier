@@ -1,30 +1,28 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::traits::{LinkV3, LinkV3State};
+use crate::apps::link_v3::traits::{LinkV3Instance, LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
+    link_v3::link_result::LinkCreateActionResult,
     repository::{
-        action::v1::{Action, ActionType},
-        intent::v1::Intent,
-        link::v1::{Link, LinkState},
-        transaction::v1::Transaction,
+        action::{v1::ActionType, v3::ActionV3},
+        intent::v3::IntentV3,
+        link::v3::LinkV3,
     },
 };
-use cashier_shared::types::{Action as ActionShared, ActionType as ActionTypeShared};
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::v2::traits::TransactionManager;
+use std::{future::Future, pin::Pin, rc::Rc};
+use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct CreatedState<M: TransactionManager + 'static> {
-    pub link: Link,
+pub struct CreatedState<M: TransactionManagerV3 + 'static> {
+    pub link: LinkV3,
     pub canister_id: Principal,
     pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> CreatedState<M> {
-    pub fn new(link: &Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
+impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
+    pub fn new(link: &LinkV3, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
         Self {
             link: link.clone(),
             canister_id,
@@ -42,9 +40,9 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
     pub async fn create_action(
         caller: Principal,
-        link: Link,
-        action: Action,
-        intents: Vec<Intent>,
+        link: LinkV3,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
         transaction_manager: Rc<M>,
     ) -> Result<LinkCreateActionResult, CanisterError> {
         // validate caller is the link creator
@@ -54,95 +52,34 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             ));
         }
 
-        let create_action_result = transaction_manager.create_action(action, intents, None)?;
+        let create_action_result =
+            transaction_manager.create_action(link.id.clone(), action, intents, None)?;
 
         Ok(LinkCreateActionResult {
             link,
             create_action_result,
         })
     }
-
-    pub async fn activate(
-        caller: Principal,
-        link: Link,
-        action: Action,
-        intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkProcessActionResult, CanisterError> {
-        if caller != link.creator {
-            return Err(CanisterError::Unauthorized(
-                "Only the creator can publish the link".to_string(),
-            ));
-        }
-
-        let mut link = link.clone();
-
-        let process_action_result = transaction_manager
-            .process_action(action, intents, intent_txs_map)
-            .await?;
-
-        // if process action succeeds, activate the link
-        if process_action_result.is_success {
-            link.state = LinkState::Active;
-        }
-
-        Ok(LinkProcessActionResult {
-            link,
-            process_action_result,
-        })
-    }
 }
 
-impl<M: TransactionManager + 'static> LinkV3State for CreatedState<M> {
+impl<M: TransactionManagerV3 + 'static> LinkV3State for CreatedState<M> {
     fn create_action(
         &self,
         caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let _canister_id = self.canister_id;
         let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
-            match action.r#type {
+            match action.action_type {
                 ActionType::CreateLink => {
                     let create_action_result =
                         Self::create_action(caller, link, action, intents, transaction_manager)
                             .await?;
                     Ok(create_action_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for Created state".to_string(),
-                )),
-            }
-        })
-    }
-
-    fn process_action(
-        &self,
-        caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
-        let link = self.link.clone();
-        let transaction_manager = self.transaction_manager.clone();
-
-        Box::pin(async move {
-            match action.r#type {
-                ActionType::CreateLink => {
-                    let activate_link_result = Self::activate(
-                        caller,
-                        link,
-                        action,
-                        intents,
-                        intent_txs_map,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(activate_link_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
                     "Unsupported action type for Created state".to_string(),

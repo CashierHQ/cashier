@@ -1,9 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    transaction::traits::TransactionValidator, utils::topological_sort::kahn_topological_sort,
-};
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::{
@@ -12,8 +9,14 @@ use cashier_backend_types::{
     },
     link_v3::transaction_manager::RollupActionStateResultV3,
     repository::{
-        action::v1::{Action, ActionState},
-        intent::v1::{Intent, IntentState},
+        action::{
+            v1::{Action, ActionState},
+            v3::ActionV3,
+        },
+        intent::{
+            v1::{Intent, IntentState},
+            v3::IntentV3,
+        },
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };
@@ -22,6 +25,10 @@ use cashier_shared::types::{
     IntentState as IntentStateShared,
 };
 use std::collections::HashMap;
+
+use crate::{
+    transaction::traits::TransactionValidator, utils::topological_sort::kahn_topological_sort,
+};
 
 pub struct ValidatorService<V: TransactionValidator + Clone> {
     validator: V,
@@ -215,21 +222,22 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
 
     pub fn rollup_action_state_v3(
         &self,
-        action: ActionShared,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<RollupActionStateResultV3, CanisterError> {
         // rollup intent state from its transactions state
-        let mut updated_intents = Vec::<IntentShared>::new();
-        for intent in action.intents.iter() {
+        let mut updated_intents = Vec::<IntentV3>::new();
+        for intent in intents.iter() {
             let mut updated_intent = intent.clone();
             if let Some(txs) = intent_txs_map.get(&intent.id) {
                 let all_success = txs.iter().all(|tx| tx.state == TransactionState::Success);
                 let any_fail = txs.iter().any(|tx| tx.state == TransactionState::Fail);
 
                 if all_success {
-                    updated_intent.intent_state = IntentStateShared::Success;
+                    updated_intent.state = IntentState::Success;
                 } else if any_fail {
-                    updated_intent.intent_state = IntentStateShared::Failed;
+                    updated_intent.state = IntentState::Fail;
                 }
             }
             updated_intents.push(updated_intent);
@@ -239,20 +247,20 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
         let mut updated_action = action;
         let all_intent_success = updated_intents
             .iter()
-            .all(|intent| intent.intent_state == IntentStateShared::Success);
+            .all(|intent| intent.state == IntentState::Success);
         let any_intent_fail = updated_intents
             .iter()
-            .any(|intent| intent.intent_state == IntentStateShared::Failed);
+            .any(|intent| intent.state == IntentState::Fail);
 
         if all_intent_success {
-            updated_action.action_state = ActionStateShared::Success;
+            updated_action.state = ActionState::Success;
         } else if any_intent_fail {
-            updated_action.action_state = ActionStateShared::Failed;
+            updated_action.state = ActionState::Fail;
         }
-        updated_action.intents = updated_intents;
 
         Ok(RollupActionStateResultV3 {
             action: updated_action,
+            intents: updated_intents,
             intent_txs_map,
         })
     }
@@ -268,7 +276,7 @@ mod tests {
     };
     use candid::Nat;
     use cashier_backend_types::repository::action::v1::ActionState;
-    use cashier_backend_types::repository::common::Asset;
+    use cashier_backend_types::repository::asset::v1::Asset;
     use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask};
     use cashier_backend_types::repository::transaction::v1::{Transaction, TransactionState};
     use cashier_common::test_utils::random_principal_id;

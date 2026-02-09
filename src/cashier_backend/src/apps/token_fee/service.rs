@@ -6,7 +6,7 @@
 use super::TokenFetcher;
 use crate::repositories::{self, Repositories};
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::{error::CanisterError, repository::token_fee::CachedFee};
 use cashier_common::runtime::IcEnvironment;
 use std::{cell::RefCell, collections::HashMap};

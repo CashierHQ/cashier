@@ -1,10 +1,10 @@
-use crate::{dto::action::Icrc112Requests, repository::transaction::v1::Transaction};
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use crate::dto::action::Icrc112Requests;
 use candid::CandidType;
-use cashier_shared::types::{
-    Action as ActionShared, Link as LinkShared, LinkType as LinkTypeShared,
-};
+use cashier_shared::types::{Action as ActionShared, Link as LinkShared};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInputV3 {

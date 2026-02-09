@@ -2,51 +2,12 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{CandidType, Principal};
-use cashier_shared::types::Asset as AssetShared;
+use cashier_shared::types::AddressType as AddressTypeShared;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 pub type Chain = cashier_common::chain::Chain;
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
-pub enum Asset {
-    IC { address: Principal },
-}
-
-impl Default for Asset {
-    fn default() -> Self {
-        Asset::IC {
-            address: Principal::anonymous(),
-        }
-    }
-}
-
-impl Asset {
-    /// Returns the chain of the asset
-    pub fn chain(&self) -> Chain {
-        match self {
-            Asset::IC { .. } => Chain::IC,
-        }
-    }
-
-    pub fn into_generated(&self) -> AssetShared {
-        match self {
-            Asset::IC { address } => AssetShared {
-                address: *address,
-                token_standard: cashier_shared::TokenStandard::ICRC2, // TODO
-            },
-        }
-    }
-}
-
-impl Display for Asset {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Asset::IC { address } => write!(f, "ic_asset_{}", address),
-        }
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Wallet {
@@ -117,6 +78,36 @@ impl From<Account> for Wallet {
         Wallet::IC {
             address: value.owner,
             subaccount: value.subaccount,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
+pub enum AddressTypeV3 {
+    Creator,
+    User,
+    Treasury,
+    Link,
+}
+
+impl From<AddressTypeShared> for AddressTypeV3 {
+    fn from(address_type: AddressTypeShared) -> Self {
+        match address_type {
+            AddressTypeShared::Creator => AddressTypeV3::Creator,
+            AddressTypeShared::User => AddressTypeV3::User,
+            AddressTypeShared::Treasury => AddressTypeV3::Treasury,
+            AddressTypeShared::Link => AddressTypeV3::Link,
+        }
+    }
+}
+
+impl AddressTypeV3 {
+    pub fn to_shared(&self) -> AddressTypeShared {
+        match self {
+            AddressTypeV3::Creator => AddressTypeShared::Creator,
+            AddressTypeV3::User => AddressTypeShared::User,
+            AddressTypeV3::Treasury => AddressTypeShared::Treasury,
+            AddressTypeV3::Link => AddressTypeShared::Link,
         }
     }
 }

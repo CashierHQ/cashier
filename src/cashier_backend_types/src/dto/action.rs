@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        common::{Asset, Chain, Wallet},
+        asset::v1::Asset,
+        common::{Chain, Wallet},
         intent::v1::{Intent, IntentState, IntentTask, IntentType},
         transaction::v1::{FromCallType, Protocol, Transaction, TransactionState},
     },

@@ -5,7 +5,7 @@
 
 use candid::{Nat, Principal};
 
-use crate::repository::common::{Asset, Wallet};
+use crate::repository::{asset::v1::Asset, common::Wallet};
 
 /// Extract Principal addresses from Wallet/Asset for generated type construction.
 ///

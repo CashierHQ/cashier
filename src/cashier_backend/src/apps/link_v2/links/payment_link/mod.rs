@@ -13,7 +13,7 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         intent::v1::Intent,
         link::v1::{Link, LinkState, LinkType},
         transaction::v1::Transaction,

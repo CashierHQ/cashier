@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::adapter::{IntentAdapterTrait, IntentAdapterV3Trait};
+use crate::adapter::ic::intent::traits::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
-    adapter::ic::intent::IcIntentAdapter,
+    adapter::ic::intent::v1::IcIntentAdapter,
     transaction::{
         dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
         validator_service::ValidatorService,
@@ -18,14 +18,10 @@ use crate::{
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},
-    link_v3::action_result::{
-        CreateActionResult as CreateActionResultV3, ProcessActionResult as ProcessActionResultV3,
-    },
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
 use cashier_common::utils::get_link_account;
-use cashier_shared::types::Action as ActionShared;
 use std::{
     collections::{HashMap, HashSet},
     future::Future,
@@ -232,8 +228,8 @@ mod tests {
     use candid::Nat;
     use candid::Principal;
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
-    use cashier_backend_types::repository::common::{Asset, Wallet};
     use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType, TransferData};
+    use cashier_backend_types::repository::{asset::v1::Asset, common::Wallet};
 
     // Use the shared mock environment from test utilities
     use crate::utils::test_utils::runtime::MockIcEnvironment;

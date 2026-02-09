@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
 use crate::repository::action::v1::ActionType;
-use crate::repository::asset_info::AssetInfo;
-use crate::repository::common::Asset;
+use crate::repository::asset::v1::Asset;
+use crate::repository::asset_info::v1::AssetInfo;
 use crate::repository::link::v1::{Link, LinkState, LinkType};
 use crate::repository::link_action::v1::LinkUserState;
 

@@ -2,12 +2,13 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::apps::link_v3::factory::LinkFactoryV3;
-use crate::apps::{action::ActionService, link_v2::links::shared::receive_link::actions::create};
+use crate::apps::{
+    action::v3::ActionServiceV3, link_v2::links::shared::receive_link::actions::create,
+};
 use crate::repositories;
 use crate::repositories::Repositories;
 use candid::Principal;
 use cashier_backend_types::{
-    dto::{action::ActionDto, link::LinkDto},
     error::CanisterError,
     link_v3::{
         dto::{
@@ -17,39 +18,33 @@ use cashier_backend_types::{
         link_result::{LinkCreateActionResult, LinkProcessActionResult},
     },
     repository::{
-        action::v1::{Action, ActionType},
-        asset_info::AssetInfo,
-        common::Asset,
-        intent::v1::Intent,
-        link::v1::LinkType,
-        link_action::v1::LinkAction,
-        user_link::v1::UserLink,
+        action::v3::ActionV3, asset::v1::Asset, asset_info::v3::AssetInfoV3, intent::v3::IntentV3,
+        link::v1::LinkType, link_action::v1::LinkAction, user_link::v1::UserLink,
     },
 };
-use cashier_common::chain::Chain;
 use cashier_shared::{
     AddressType as AddressTypeShared, Asset as AssetShared, AssetInfo as AssetInfoShared,
     types::Action as ActionShared,
 };
 use std::rc::Rc;
-use transaction_manager::v2::traits::TransactionManager;
+use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct LinkV3Service<R: Repositories, M: TransactionManager + 'static> {
-    pub link_repository: repositories::link::LinkRepository<R::Link>,
+pub struct LinkV3Service<R: Repositories, M: TransactionManagerV3 + 'static> {
+    pub link_v3_repository: repositories::link::v3::LinkV3Repository<R::LinkV3>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
-    pub action_service: ActionService<R>,
+    pub action_service: ActionServiceV3<R>,
     pub transaction_manager: Rc<M>,
 }
 
-impl<R: Repositories, M: TransactionManager + 'static> LinkV3Service<R, M> {
+impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
     pub fn new(repo: &R, transaction_manager: Rc<M>) -> Self {
         Self {
-            link_repository: repo.link(),
+            link_v3_repository: repo.link_v3(),
             user_link_repository: repo.user_link(),
             user_link_action_repository: repo.user_link_action(),
-            action_service: ActionService::new(repo),
+            action_service: ActionServiceV3::new(repo),
             transaction_manager,
         }
     }
@@ -78,21 +73,11 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV3Service<R, M> {
         }
 
         let link_type: LinkType = input.link_type.into();
-        let asset_info: Vec<AssetInfo> = input
+        let asset_info: Vec<AssetInfoV3> = input
             .action
             .intents
             .iter()
-            .filter(|intent| {
-                intent.source_address_type == AddressTypeShared::Creator
-                    && intent.dest_address_type == AddressTypeShared::Link
-            })
-            .map(|intent| AssetInfo {
-                asset: Asset::IC {
-                    address: intent.asset.address.clone(),
-                },
-                label: "foo".to_string(),
-                amount_per_link_use_action: intent.amount.clone(),
-            })
+            .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
         let factory = LinkFactoryV3::new(self.transaction_manager.clone());
@@ -100,14 +85,14 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV3Service<R, M> {
             link_type,
             input.title,
             asset_info,
-            input.max_use_count,
+            input.max_use,
             creator_id,
             created_at_ts,
             canister_id,
         )?;
 
         // save link & user_link to db
-        self.link_repository.create(link_model.clone());
+        self.link_v3_repository.create(link_model.clone());
 
         let new_user_link = UserLink {
             user_id: creator_id,
@@ -142,32 +127,37 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV3Service<R, M> {
         &mut self,
         link_id: &str,
         action: ActionShared,
-        creator_id: Principal,
+        creator: Principal,
         canister_id: Principal,
         created_at_ts: u64,
     ) -> Result<CreateActionResponseV3, CanisterError> {
         let link_model = self
-            .link_repository
+            .link_v3_repository
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        let action_model: Action = Action::from_generated(action.clone(), link_id.to_string());
-        let intent_models: Vec<Intent> = action
+        let action_model = self.action_service.create_action_from_shared_data(
+            action.clone(),
+            Some(link_id.to_string()),
+            creator,
+        );
+
+        let intent_models: Vec<IntentV3> = action
             .intents
             .iter()
-            .map(|i| Intent::from_generated(i.clone(), Chain::IC, "bar".to_string(), created_at_ts))
+            .map(|i| IntentV3::from(i.clone()))
             .collect();
 
         let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link = factory.create_from_link(link_model, canister_id)?;
-        let result = link
-            .create_action(creator_id, action_model, intent_models)
+        let link_instance = factory.create_from_link_model(link_model, canister_id)?;
+        let result = link_instance
+            .create_action(creator, action_model, intent_models)
             .await?;
 
         // save data to DB
         let link_action = LinkAction {
             link_id: link_id.to_string(),
-            action_type: result.create_action_result.action.r#type.clone(),
+            action_type: result.create_action_result.action.action_type.clone(),
             action_id: result.create_action_result.action.id.clone(),
             user_id: result.create_action_result.action.creator,
             link_user_state: None,
@@ -181,81 +171,17 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV3Service<R, M> {
             result.create_action_result.action.creator,
         )?;
 
-        self.user_link_action_repository.create(link_action);
-
         // format response
-        let link_shared = result.link.into_generated();
-        let creator_address_type: AddressTypeShared = {
-            match link_shared.link_type {
-                cashier_shared::types::LinkType::TipLink => match action.action_type {
-                    cashier_shared::types::ActionType::CreateLink => AddressTypeShared::Creator,
-                    _ => AddressTypeShared::Link,
-                },
-                _ => unimplemented!(),
-            }
-        };
+        let link_shared = result.link.to_shared();
         let action_shared = result
             .create_action_result
             .action
-            .into_generated(result.create_action_result.intents);
+            .to_shared(result.create_action_result.intents);
 
         Ok(CreateActionResponseV3 {
             link: link_shared,
             action: action_shared,
             icrc112_requests: result.create_action_result.icrc112_requests,
-        })
-    }
-
-    pub async fn process_action(
-        &mut self,
-        link_id: &str,
-        action_id: &str,
-        caller: Principal,
-        canister_id: Principal,
-    ) -> Result<ProcessActionResponseV3, CanisterError> {
-        let action_data = self
-            .action_service
-            .get_action_data(action_id)
-            .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
-
-        let link_model = self
-            .link_repository
-            .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
-
-        let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link = factory.create_from_link(link_model, canister_id)?;
-        let result = link
-            .process_action(
-                caller,
-                action_data.action.clone(),
-                action_data.intents.clone(),
-                action_data.intent_txs.clone(),
-            )
-            .await?;
-
-        // save data to DB
-        self.link_repository.update(result.link.clone());
-        self.action_service.update_action_data(
-            result.process_action_result.action.clone(),
-            result.process_action_result.intents.clone(),
-            &result.process_action_result.intent_txs_map,
-        )?;
-        self.action_service.update_link_user_state(&result);
-
-        // format response
-        let link_shared = result.link.into_generated();
-        let action_shared = result
-            .process_action_result
-            .action
-            .into_generated(result.process_action_result.intents);
-
-        Ok(ProcessActionResponseV3 {
-            link: link_shared,
-            action: action_shared,
-            icrc112_requests: result.process_action_result.icrc112_requests,
-            is_success: result.process_action_result.is_success,
-            errors: result.process_action_result.errors,
         })
     }
 }

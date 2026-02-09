@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::{links::tip_link::TipLink, traits::LinkV3};
+use crate::apps::link_v3::{links::tip_link::TipLink, traits::LinkV3Instance};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -10,19 +10,21 @@ use cashier_backend_types::{
         link::{CreateLinkInputV3, CreateLinkResponseV3},
     },
     repository::{
-        asset_info::AssetInfo,
-        link::v1::{Link, LinkType},
+        asset_info::v3::AssetInfoV3,
+        link::{
+            v1::{Link, LinkType},
+            v3::LinkV3,
+        },
     },
 };
-use cashier_shared::types::LinkType as LinkTypeShared;
 use std::rc::Rc;
-use transaction_manager::v2::traits::TransactionManager;
+use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct LinkFactoryV3<M: TransactionManager + 'static> {
+pub struct LinkFactoryV3<M: TransactionManagerV3 + 'static> {
     pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> LinkFactoryV3<M> {
+impl<M: TransactionManagerV3 + 'static> LinkFactoryV3<M> {
     pub fn new(transaction_manager: Rc<M>) -> Self {
         Self {
             transaction_manager,
@@ -33,12 +35,12 @@ impl<M: TransactionManager + 'static> LinkFactoryV3<M> {
         &self,
         link_type: LinkType,
         title: String,
-        asset_info: Vec<AssetInfo>,
-        max_use_count: u64,
+        asset_info: Vec<AssetInfoV3>,
+        max_use: u64,
         creator: Principal,
         created_at_ts: u64,
         canister_id: Principal,
-    ) -> Result<Link, CanisterError> {
+    ) -> Result<LinkV3, CanisterError> {
         match link_type {
             LinkType::SendTip => Ok(TipLink::create(
                 creator,
@@ -60,11 +62,11 @@ impl<M: TransactionManager + 'static> LinkFactoryV3<M> {
     /// * `link` - The Link model to convert.
     /// # Returns
     /// * `Result<Box<dyn LinkV3>, CanisterError>` - The resulting LinkV3 instance or an error if the conversion fails.
-    pub fn create_from_link(
+    pub fn create_from_link_model(
         &self,
-        link: Link,
+        link: LinkV3,
         canister_id: Principal,
-    ) -> Result<Box<dyn LinkV3>, CanisterError> {
+    ) -> Result<Box<dyn LinkV3Instance>, CanisterError> {
         match link.link_type {
             LinkType::SendTip => Ok(Box::new(TipLink::new(
                 link,

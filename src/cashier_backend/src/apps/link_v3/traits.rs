@@ -1,20 +1,16 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{
+    link_v3::{
         action_result::{CreateActionResult, ProcessActionResult},
         link_result::{LinkCreateActionResult, LinkProcessActionResult},
     },
-    repository::{
-        action::v1::Action,
-        intent::{self, v1::Intent},
-        transaction::v1::Transaction,
-    },
+    repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
 };
 use std::collections::HashMap;
 use std::pin::Pin;
 
-pub trait LinkV3 {
+pub trait LinkV3Instance {
     /// Create an action associated with the link
     /// # Arguments
     /// * `caller` - The principal of the user creating the action
@@ -26,17 +22,9 @@ pub trait LinkV3 {
     fn create_action(
         &self,
         caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
-
-    fn process_action(
-        &self,
-        caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
 }
 
 pub trait LinkV3State {
@@ -51,15 +39,7 @@ pub trait LinkV3State {
     fn create_action(
         &self,
         caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
-
-    fn process_action(
-        &self,
-        caller: Principal,
-        action: Action,
-        intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
 }

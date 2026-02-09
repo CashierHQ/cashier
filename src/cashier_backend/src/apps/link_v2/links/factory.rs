@@ -10,7 +10,7 @@ use cashier_backend_types::{
     dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput},
     error::CanisterError,
     repository::{
-        asset_info::{self, AssetInfo},
+        asset_info::v1::AssetInfo,
         link::v1::{Link, LinkType},
     },
 };

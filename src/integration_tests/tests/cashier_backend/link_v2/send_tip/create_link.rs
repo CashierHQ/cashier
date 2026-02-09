@@ -13,7 +13,7 @@ use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::{
-    common::Asset,
+    asset::v1::Asset,
     transaction::v1::{IcTransaction, Protocol},
 };
 use cashier_backend_types::{constant, repository::link::v1::LinkType};
