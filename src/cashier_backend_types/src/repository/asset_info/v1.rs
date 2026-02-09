@@ -4,7 +4,7 @@
 use candid::Nat;
 use serde::{Deserialize, Serialize};
 
-use crate::repository::common::Asset;
+use crate::repository::asset::v1::Asset;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AssetInfo {

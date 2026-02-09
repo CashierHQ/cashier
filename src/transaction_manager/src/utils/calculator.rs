@@ -4,10 +4,10 @@
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{asset_info::AssetInfo, common::Asset},
+    repository::{asset::v1::Asset, asset_info::v1::AssetInfo},
 };
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
-use cashier_shared::{calculate_intent_total_amount, IntentParticipants};
+use cashier_shared::{IntentParticipants, calculate_intent_total_amount};
 use std::collections::HashMap;
 
 /// Calculate the token balance required for the link

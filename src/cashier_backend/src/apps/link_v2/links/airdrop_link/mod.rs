@@ -13,14 +13,14 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         intent::v1::Intent,
         link::v1::{Link, LinkState, LinkType},
         transaction::v1::Transaction,
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
 pub struct AirdropLink<M: TransactionManager + 'static> {

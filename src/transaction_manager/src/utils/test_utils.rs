@@ -4,7 +4,8 @@
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::{
     action::v1::{Action, ActionState, ActionType},
-    common::{Asset, Chain, Wallet},
+    asset::v1::Asset,
+    common::{Chain, Wallet},
     intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData, TransferFromData},
     transaction::v1::{
         FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,

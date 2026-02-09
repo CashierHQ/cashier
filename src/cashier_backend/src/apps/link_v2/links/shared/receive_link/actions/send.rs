@@ -7,7 +7,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        common::Asset,
+        asset::v1::Asset,
         intent::v1::{CreateIcrc1WalletToLinkIntentArgs, Intent},
         link::v1::Link,
     },

@@ -4,11 +4,20 @@
 use std::cell::RefCell;
 use std::thread::LocalKey;
 
-use cashier_backend_types::repository::action::v1::ActionCodec;
+use cashier_backend_types::repository::action::{
+    v1::ActionCodec,
+    v3::{ActionCodecV3, ActionV3},
+};
 use cashier_backend_types::repository::action_intent::v1::ActionIntentCodec;
-use cashier_backend_types::repository::intent::v1::IntentCodec;
+use cashier_backend_types::repository::intent::{
+    v1::IntentCodec,
+    v3::{IntentCodecV3, IntentV3},
+};
 use cashier_backend_types::repository::intent_transaction::v1::IntentTransactionCodec;
-use cashier_backend_types::repository::link::v1::LinkCodec;
+use cashier_backend_types::repository::link::{
+    v1::LinkCodec,
+    v3::{LinkCodecV3, LinkV3},
+};
 use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
 use cashier_backend_types::repository::request_lock::RequestLockCodec;
 use cashier_backend_types::repository::transaction::v1::TransactionCodec;
@@ -28,14 +37,23 @@ use cashier_backend_types::repository::{
     user_action::v1::UserAction, user_link::v1::UserLink,
 };
 
-use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
+use crate::repositories::action::{
+    v1::{ActionRepository, ActionRepositoryStorage},
+    v3::{ActionV3Repository, ActionV3RepositoryStorage},
+};
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
 use crate::repositories::auth::AuthServiceStorage;
-use crate::repositories::intent::{IntentRepository, IntentRepositoryStorage};
+use crate::repositories::intent::{
+    v1::{IntentRepository, IntentRepositoryStorage},
+    v3::{IntentV3Repository, IntentV3RepositoryStorage},
+};
 use crate::repositories::intent_transaction::{
     IntentTransactionRepository, IntentTransactionRepositoryStorage,
 };
-use crate::repositories::link::{LinkRepository, LinkRepositoryStorage};
+use crate::repositories::link::{
+    v1::{LinkRepository, LinkRepositoryStorage},
+    v3::{LinkV3Repository, LinkV3RepositoryStorage},
+};
 use crate::repositories::link_action::{LinkActionRepository, LinkActionRepositoryStorage};
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
@@ -78,6 +96,9 @@ const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(13);
 const USER_LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(14);
+const LINK_V3_MEMORY_ID: MemoryId = MemoryId::new(15);
+const ACTION_V3_MEMORY_ID: MemoryId = MemoryId::new(16);
+const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -96,6 +117,9 @@ pub trait Repositories {
     type UserAction: Storage<UserActionRepositoryStorage>;
     type UserLink: Storage<UserLinkRepositoryStorage>;
     type UserLinkAction: Storage<UserLinkActionRepositoryStorage>;
+    type LinkV3: Storage<LinkV3RepositoryStorage>;
+    type ActionV3: Storage<ActionV3RepositoryStorage>;
+    type IntentV3: Storage<IntentV3RepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -110,6 +134,9 @@ pub trait Repositories {
     fn user_action(&self) -> UserActionRepository<Self::UserAction>;
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
     fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction>;
+    fn link_v3(&self) -> LinkV3Repository<Self::LinkV3>;
+    fn action_v3(&self) -> ActionV3Repository<Self::ActionV3>;
+    fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -129,6 +156,9 @@ impl Repositories for ThreadlocalRepositories {
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
     type UserLinkAction = &'static LocalKey<RefCell<UserLinkActionRepositoryStorage>>;
+    type LinkV3 = &'static LocalKey<RefCell<LinkV3RepositoryStorage>>;
+    type ActionV3 = &'static LocalKey<RefCell<ActionV3RepositoryStorage>>;
+    type IntentV3 = &'static LocalKey<RefCell<IntentV3RepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -180,6 +210,18 @@ impl Repositories for ThreadlocalRepositories {
 
     fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction> {
         UserLinkActionRepository::new(&USER_LINK_ACTION_STORE)
+    }
+
+    fn link_v3(&self) -> LinkV3Repository<Self::LinkV3> {
+        LinkV3Repository::new(&LINK_V3_STORE)
+    }
+
+    fn action_v3(&self) -> ActionV3Repository<Self::ActionV3> {
+        ActionV3Repository::new(&ACTION_V3_STORE)
+    }
+
+    fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3> {
+        IntentV3Repository::new(&INTENT_V3_STORE)
     }
 }
 
@@ -337,14 +379,46 @@ thread_local! {
     /// Token fee cache - volatile BTreeMap (not persisted to stable memory)
     pub static TOKEN_FEE_CACHE_STORE: RefCell<TokenFeeRepositoryStorage> =
         const { RefCell::new(std::collections::BTreeMap::new()) };
+
+    static LINK_V3_STORE: RefCell<VersionedBTreeMap<
+        LinkKey,
+        LinkV3,
+        LinkCodecV3,
+        Memory
+    >> = RefCell::new(
+        VersionedBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(LINK_V3_MEMORY_ID)),
+        )
+    );
+
+    static ACTION_V3_STORE: RefCell<VersionedBTreeMap<
+        ActionKey,
+        ActionV3,
+        ActionCodecV3,
+        Memory
+    >> = RefCell::new(
+        VersionedBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_V3_MEMORY_ID)),
+        )
+    );
+
+    static INTENT_V3_STORE: RefCell<VersionedBTreeMap<
+        String,
+        IntentV3,
+        IntentCodecV3,
+        Memory
+    >> = RefCell::new(
+        VersionedBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_V3_MEMORY_ID)),
+        )
+    );
 }
 
 #[cfg(test)]
 pub mod tests {
 
-    use std::rc::Rc;
-
     use super::*;
+    use std::rc::Rc;
 
     /// A struct for testing Repositories and services
     pub struct TestRepositories {
@@ -361,6 +435,9 @@ pub mod tests {
         user_action: Rc<RefCell<UserActionRepositoryStorage>>,
         user_link: Rc<RefCell<UserLinkRepositoryStorage>>,
         user_link_action: Rc<RefCell<UserLinkActionRepositoryStorage>>,
+        link_v3: Rc<RefCell<LinkV3RepositoryStorage>>,
+        action_v3: Rc<RefCell<ActionV3RepositoryStorage>>,
+        intent_v3: Rc<RefCell<IntentV3RepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -409,6 +486,15 @@ pub mod tests {
                 user_link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_LINK_ACTION_MEMORY_ID),
                 ))),
+                link_v3: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(LINK_V3_MEMORY_ID),
+                ))),
+                action_v3: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(ACTION_V3_MEMORY_ID),
+                ))),
+                intent_v3: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(INTENT_V3_MEMORY_ID),
+                ))),
             }
         }
     }
@@ -427,6 +513,9 @@ pub mod tests {
         type UserAction = Rc<RefCell<UserActionRepositoryStorage>>;
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
         type UserLinkAction = Rc<RefCell<UserLinkActionRepositoryStorage>>;
+        type LinkV3 = Rc<RefCell<LinkV3RepositoryStorage>>;
+        type ActionV3 = Rc<RefCell<ActionV3RepositoryStorage>>;
+        type IntentV3 = Rc<RefCell<IntentV3RepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -478,6 +567,18 @@ pub mod tests {
 
         fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction> {
             UserLinkActionRepository::new(self.user_link_action.clone())
+        }
+
+        fn link_v3(&self) -> LinkV3Repository<Self::LinkV3> {
+            LinkV3Repository::new(self.link_v3.clone())
+        }
+
+        fn action_v3(&self) -> ActionV3Repository<Self::ActionV3> {
+            ActionV3Repository::new(self.action_v3.clone())
+        }
+
+        fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3> {
+            IntentV3Repository::new(self.intent_v3.clone())
         }
     }
 }

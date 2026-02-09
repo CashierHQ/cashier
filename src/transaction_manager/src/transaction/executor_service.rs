@@ -112,7 +112,7 @@ mod tests {
         generate_mock_wallet_to_treasury_transactions,
     };
     use candid::Nat;
-    use cashier_backend_types::repository::common::Asset;
+    use cashier_backend_types::repository::asset::v1::Asset;
     use cashier_common::test_utils::random_principal_id;
     use std::pin::Pin;
 

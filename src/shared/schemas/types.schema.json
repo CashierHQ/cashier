@@ -1,264 +1,355 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"$id": "https://cashier.io/schemas/types.schema.json",
-	"title": "Cashier Shared Types",
-	"description": "Shared type definitions for Cashier Protocol - Intent and Fee calculation types",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cashier.io/schemas/types.schema.json",
+  "title": "Cashier Shared Types",
+  "description": "Shared type definitions for Cashier Protocol - Intent and Fee calculation types",
 
-	"definitions": {
-		"TokenStandard": {
-			"type": "string",
-			"enum": ["ICRC1", "ICRC2"],
-			"description": "Token standard for ICP tokens"
-		},
+  "definitions": {
+    "TokenStandard": {
+      "type": "string",
+      "enum": ["ICRC1", "ICRC2"],
+      "description": "Token standard for ICP tokens"
+    },
 
-		"AddressType": {
-			"type": "string",
-			"enum": ["Creator", "User", "Treasury", "Link"],
-			"description": "Type of address in the system"
-		},
+    "AddressType": {
+      "type": "string",
+      "enum": ["Creator", "User", "Treasury", "Link"],
+      "description": "Type of address in the system"
+    },
 
-		"IntentType": {
-			"type": "string",
-			"enum": ["Transfer"],
-			"description": "Type of intent (Transfer can be Send or Receive based on context)"
-		},
+    "IntentType": {
+      "type": "string",
+      "enum": ["Send", "Receive"],
+      "description": "Type of intent"
+    },
 
-		"IntentState": {
-			"type": "string",
-			"enum": ["Created", "Processing", "Success", "Failed"],
-			"description": "Current state of an intent"
-		},
+    "IntentState": {
+      "type": "string",
+      "enum": ["Created", "Processing", "Success", "Fail"],
+      "description": "Current state of an intent"
+    },
 
-		"IntentParticipants": {
-			"type": "string",
-			"enum": [
-				"CreatorToTreasury",
-				"CreatorToLink",
-				"UserToLink",
-				"LinkToUser",
-				"LinkToCreator"
-			],
-			"description": "Combination of source and destination for fee calculation"
-		},
+    "IntentParticipants": {
+      "type": "string",
+      "enum": [
+        "CreatorToTreasury",
+        "CreatorToLink",
+        "UserToLink",
+        "LinkToUser",
+        "LinkToCreator"
+      ],
+      "description": "Combination of source and destination for fee calculation"
+    },
 
-		"ActionType": {
-			"type": "string",
-			"enum": ["CreateLink", "Withdraw", "Send", "Receive"],
-			"description": "Type of action being performed"
-		},
+    "ActionType": {
+      "type": "string",
+      "enum": ["CreateLink", "Withdraw", "Send", "Receive"],
+      "description": "Type of action being performed"
+    },
 
-		"ActionState": {
-			"type": "string",
-			"enum": ["Created", "Processing", "Success", "Failed"],
-			"description": "Current state of an action"
-		},
+    "ActionState": {
+      "type": "string",
+      "enum": ["Created", "Processing", "Success", "Fail"],
+      "description": "Current state of an action"
+    },
 
-		"Asset": {
-			"type": "object",
-			"description": "Asset/Token reference",
-			"properties": {
-				"address": {
-					"type": "string",
-					"format": "icp-principal",
-					"description": "Canister ID of the token"
-				},
-				"token_standard": {
-					"$ref": "#/definitions/TokenStandard"
-				}
-			},
-			"required": ["address", "token_standard"]
-		},
+    "Asset": {
+      "type": "object",
+      "description": "Asset/Token reference",
+      "properties": {
+        "address": {
+          "type": "string",
+          "format": "icp-principal",
+          "description": "Canister ID of the token"
+        },
+        "network_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Network fee for this asset in base units (Nat)"
+        },
+        "token_standard": {
+          "$ref": "#/definitions/TokenStandard"
+        }
+      },
+      "required": ["address"]
+    },
 
-		"AssetInfo": {
-			"type": "object",
-			"description": "Asset information with amount and label",
-			"properties": {
-				"asset": {
-					"$ref": "#/definitions/Asset"
-				},
-				"label": {
-					"type": "string",
-					"description": "Display label for the asset"
-				},
-				"amount": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Amount in base units (Nat)"
-				}
-			},
-			"required": ["asset", "label", "amount"]
-		},
+    "AssetInfo": {
+      "type": "object",
+      "description": "Asset information with amount and label",
+      "properties": {
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the asset"
+        },
+        "amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Amount in base units (Nat)"
+        }
+      },
+      "required": ["asset", "label", "amount"]
+    },
 
-		"Intent": {
-			"type": "object",
-			"description": "Represents a single intent within an action",
-			"properties": {
-				"id": {
-					"type": "string",
-					"description": "Unique identifier for the intent"
-				},
-				"intent_type": {
-					"$ref": "#/definitions/IntentType"
-				},
-				"asset": {
-					"$ref": "#/definitions/Asset"
-				},
-				"amount": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Amount to transfer"
-				},
-				"source_address": {
-					"type": "string",
-					"format": "icp-principal",
-					"description": "Source address (Principal)"
-				},
-				"source_address_type": {
-					"$ref": "#/definitions/AddressType"
-				},
-				"dest_address": {
-					"type": "string",
-					"format": "icp-principal",
-					"description": "Destination address (Principal)"
-				},
-				"dest_address_type": {
-					"$ref": "#/definitions/AddressType"
-				},
-				"intent_token_standard": {
-					"$ref": "#/definitions/TokenStandard"
-				},
-				"dependencies": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"description": "IDs of intents this intent depends on"
-				},
-				"intent_state": {
-					"$ref": "#/definitions/IntentState"
-				}
-			},
-			"required": [
-				"id",
-				"intent_type",
-				"asset",
-				"amount",
-				"source_address",
-				"source_address_type",
-				"dest_address",
-				"dest_address_type",
-				"intent_token_standard",
-				"intent_state"
-			]
-		},
+    "Intent": {
+      "type": "object",
+      "description": "Represents a single intent within an action",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the intent"
+        },
+        "intent_type": {
+          "$ref": "#/definitions/IntentType"
+        },
+        "asset": {
+          "$ref": "#/definitions/Asset"
+        },
+        "amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Amount to transfer"
+        },
+        "total_amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Total amount to transfer"
+        },
+        "network_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Network fee amount"
+        },
+        "user_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "User fee amount"
+        },
+        "source_address": {
+          "type": "string",
+          "format": "icp-principal",
+          "description": "Source address (Principal)"
+        },
+        "source_address_type": {
+          "$ref": "#/definitions/AddressType"
+        },
+        "dest_address": {
+          "type": "string",
+          "format": "icp-principal",
+          "description": "Destination address (Principal)"
+        },
+        "dest_address_type": {
+          "$ref": "#/definitions/AddressType"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "IDs of intents this intent depends on"
+        },
+        "intent_state": {
+          "$ref": "#/definitions/IntentState"
+        }
+      },
+      "required": [
+        "id",
+        "intent_type",
+        "asset",
+        "amount",
+        "source_address",
+        "source_address_type",
+        "dest_address",
+        "dest_address_type",
+        "intent_token_standard",
+        "intent_state"
+      ]
+    },
 
-		"FeeCalculationInput": {
-			"type": "object",
-			"description": "Input parameters for fee calculation",
-			"properties": {
-				"intent_participants": {
-					"$ref": "#/definitions/IntentParticipants"
-				},
-				"token_standard": {
-					"$ref": "#/definitions/TokenStandard"
-				},
-				"user_input_amount": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Amount entered by user"
-				},
-				"max_use": {
-					"type": "integer",
-					"minimum": 1,
-					"description": "Maximum number of times the link can be used"
-				},
-				"link_creation_fee": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Fee for creating the link"
-				},
-				"asset_network_fee": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Network fee for the asset"
-				},
-				"link_max_asset_amount": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Maximum asset amount in the link (for withdrawals)"
-				}
-			},
-			"required": ["intent_participants", "token_standard", "asset_network_fee"]
-		},
+    "FeeCalculationInput": {
+      "type": "object",
+      "description": "Input parameters for fee calculation",
+      "properties": {
+        "intent_participants": {
+          "$ref": "#/definitions/IntentParticipants"
+        },
+        "token_standard": {
+          "$ref": "#/definitions/TokenStandard"
+        },
+        "user_input_amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Amount entered by user"
+        },
+        "max_use": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of times the link can be used"
+        },
+        "link_creation_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Fee for creating the link"
+        },
+        "asset_network_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Network fee for the asset"
+        },
+        "link_max_asset_amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Maximum asset amount in the link (for withdrawals)"
+        }
+      },
+      "required": ["intent_participants", "token_standard", "asset_network_fee"]
+    },
 
-		"FeeCalculationResult": {
-			"type": "object",
-			"description": "Result of fee calculation for an intent",
-			"properties": {
-				"intent_total_amount": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Total amount for the intent"
-				},
-				"intent_total_network_fee": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Total network fee (inbound + outbound)"
-				},
-				"intent_user_fee": {
-					"type": "string",
-					"format": "icp-nat",
-					"description": "Fee paid by the user"
-				}
-			},
-			"required": [
-				"intent_total_amount",
-				"intent_total_network_fee",
-				"intent_user_fee"
-			]
-		},
+    "FeeCalculationResult": {
+      "type": "object",
+      "description": "Result of fee calculation for an intent",
+      "properties": {
+        "intent_total_amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Total amount for the intent"
+        },
+        "intent_total_network_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Total network fee (inbound + outbound)"
+        },
+        "intent_user_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Fee paid by the user"
+        }
+      },
+      "required": [
+        "intent_total_amount",
+        "intent_total_network_fee",
+        "intent_user_fee"
+      ]
+    },
 
-		"Action": {
-			"type": "object",
-			"description": "Represents an action containing multiple intents",
-			"properties": {
-				"id": {
-					"type": "string",
-					"description": "Unique identifier for the action"
-				},
-				"creator": {
-					"type": "string",
-					"format": "icp-principal",
-					"description": "Principal of the action creator"
-				},
-				"creator_address_type": {
-					"$ref": "#/definitions/AddressType",
-					"description": "Type of creator address"
-				},
-				"action_type": {
-					"$ref": "#/definitions/ActionType",
-					"description": "Type of action being performed"
-				},
-				"intents": {
-					"type": "array",
-					"items": {
-						"$ref": "#/definitions/Intent"
-					},
-					"description": "List of intents that make up this action"
-				},
-				"action_state": {
-					"$ref": "#/definitions/ActionState",
-					"description": "Current state of the action"
-				}
-			},
-			"required": [
-				"id",
-				"creator",
-				"creator_address_type",
-				"action_type",
-				"intents",
-				"action_state"
-			]
-		}
-	}
+    "Action": {
+      "type": "object",
+      "description": "Represents an action containing multiple intents",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the action"
+        },
+        "creator": {
+          "type": "string",
+          "format": "icp-principal",
+          "description": "Principal of the action creator"
+        },
+        "creator_address_type": {
+          "$ref": "#/definitions/AddressType",
+          "description": "Type of creator address"
+        },
+        "action_type": {
+          "$ref": "#/definitions/ActionType",
+          "description": "Type of action being performed"
+        },
+        "intents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Intent"
+          },
+          "description": "List of intents that make up this action"
+        },
+        "action_state": {
+          "$ref": "#/definitions/ActionState",
+          "description": "Current state of the action"
+        },
+        "link_id": {
+          "type": "string",
+          "description": "ID of the link associated with this action, if any"
+        },
+        "intent_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of intent IDs associated with this action"
+        }
+      },
+      "required": [
+        "id",
+        "creator",
+        "creator_address_type",
+        "action_type",
+        "intents",
+        "action_state"
+      ]
+    },
+
+    "Link": {
+      "type": "object",
+      "description": "Represents a link",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the link"
+        },
+        "creator": {
+          "type": "string",
+          "format": "icp-principal",
+          "description": "Principal of the link creator"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the link"
+        },
+        "link_type": {
+          "$ref": "#/definitions/LinkType"
+        },
+        "asset_info": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetInfo"
+          },
+          "description": "List of assets associated with the link"
+        },
+        "max_use": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum number of times the link can be used"
+        },
+        "use_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of times the link has been used"
+        },
+        "link_state": {
+          "$ref": "#/definitions/LinkState"
+        }
+      },
+      "required": [
+        "id",
+        "creator",
+        "title",
+        "link_type",
+        "asset_info",
+        "max_use",
+        "use_count",
+        "link_state"
+      ]
+    },
+    "LinkType": {
+      "type": "string",
+      "enum": ["SendTip", "SendAirdrop", "SendTokenBasket", "ReceivePayment"],
+      "description": "Type of link"
+    },
+    "LinkState": {
+      "type": "string",
+      "enum": ["Created", "Active", "Inactive", "Ended"],
+      "description": "Current state of the link"
+    }
+  }
 }

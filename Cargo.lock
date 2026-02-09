@@ -372,6 +372,7 @@ dependencies = [
  "cashier_backend_types",
  "cashier_common",
  "cashier_macros",
+ "cashier_shared",
  "ciborium",
  "futures",
  "getrandom 0.2.16",

@@ -11,7 +11,7 @@ use cashier_backend_types::{
     error::CanisterError,
     link_v2::graph::Graph,
     repository::{
-        common::Asset,
+        asset::v1::Asset,
         transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction, TransactionState},
     },
 };

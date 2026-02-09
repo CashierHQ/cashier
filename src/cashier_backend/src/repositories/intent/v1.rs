@@ -48,7 +48,8 @@ mod tests {
     use crate::repositories::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_backend_types::repository::{
-        common::{Asset, Chain, Wallet},
+        asset::v1::Asset,
+        common::{Chain, Wallet},
         intent::v1::{IntentState, IntentTask, IntentType, TransferData},
     };
     use cashier_common::test_utils::{random_id_string, random_principal_id};

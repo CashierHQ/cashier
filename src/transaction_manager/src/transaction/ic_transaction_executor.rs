@@ -6,7 +6,7 @@ use crate::icrc_token::{
     types::{Account, TransferArg, TransferFromArgs},
 };
 use crate::transaction::traits::TransactionExecutor;
-use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::transaction::v1::{
     FromCallType, IcTransaction, Icrc1Transfer, Protocol,
 };

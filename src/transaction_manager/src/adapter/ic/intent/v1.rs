@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::adapter::IntentAdapterTrait;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
@@ -15,6 +14,8 @@ use cashier_backend_types::{
 use cashier_common::utils::to_memo;
 use uuid::Uuid;
 
+use crate::adapter::ic::intent::traits::IntentAdapterTrait;
+
 #[derive(Clone, Default)]
 pub struct IcIntentAdapter;
 
@@ -25,7 +26,7 @@ impl IcIntentAdapter {
     /// * `transfer_intent` - The transfer intent containing transfer details.
     /// # Returns
     /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
-    fn assemble_icrc1_wallet_transfer(
+    pub fn assemble_icrc1_wallet_transfer(
         &self,
         ts: u64,
         transfer_intent: TransferData,
@@ -65,7 +66,7 @@ impl IcIntentAdapter {
     /// * `transfer_intent` - The transfer intent containing transfer details.
     /// # Returns
     /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
-    fn assemble_icrc2_wallet_transfer(
+    pub fn assemble_icrc2_wallet_transfer(
         &self,
         ts: u64,
         transfer_intent: TransferFromData,
@@ -147,7 +148,7 @@ impl IcIntentAdapter {
     /// * `transfer_intent` - The transfer intent containing transfer details.
     /// # Returns
     /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
-    fn assemble_icrc1_canister_transfer(
+    pub fn assemble_icrc1_canister_transfer(
         &self,
         ts: u64,
         transfer_intent: TransferData,
@@ -212,8 +213,7 @@ mod tests {
     use super::*;
     use candid::Nat;
     use cashier_backend_types::repository::{
-        common::{Asset, Wallet},
-        intent::v1::IntentState,
+        asset::v1::Asset, common::Wallet, intent::v1::IntentState,
     };
     use cashier_common::{
         chain::Chain,

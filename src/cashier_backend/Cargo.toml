@@ -15,6 +15,7 @@ candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
 cashier_macros = { workspace = true }
+cashier_shared = { workspace = true }
 ciborium = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }

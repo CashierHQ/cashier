@@ -46,7 +46,8 @@ mod tests {
     use crate::repositories::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_backend_types::repository::{
-        common::{Asset, Wallet},
+        asset::v1::Asset,
+        common::Wallet,
         transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
         },

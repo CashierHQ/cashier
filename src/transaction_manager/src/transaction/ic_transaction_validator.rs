@@ -4,7 +4,7 @@
 use crate::icrc_token::{service::IcrcService, types::AllowanceArgs};
 use crate::transaction::traits::TransactionValidator;
 use cashier_backend_types::repository::{
-    common::Asset,
+    asset::v1::Asset,
     transaction::v1::{
         FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction,
     },

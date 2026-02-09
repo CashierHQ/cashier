@@ -1,11 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::adapter::IntentAdapterTrait;
+use crate::adapter::ic::intent::traits::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
-    adapter::ic::intent::IcIntentAdapter,
-    traits::TransactionManager,
+    adapter::ic::intent::v1::IcIntentAdapter,
     transaction::{
         dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
         validator_service::ValidatorService,
@@ -14,6 +13,7 @@ use crate::{
         ic_transaction_executor::IcTransactionExecutor,
         ic_transaction_validator::IcTransactionValidator,
     },
+    v2::traits::TransactionManager,
 };
 use cashier_backend_types::{
     error::CanisterError,
@@ -34,7 +34,6 @@ pub struct IcTransactionManager<E: IcEnvironment> {
     pub dependency_analyzer: DependencyAnalyzer,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
         let intent_adapter = IcIntentAdapter;
@@ -229,8 +228,8 @@ mod tests {
     use candid::Nat;
     use candid::Principal;
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
-    use cashier_backend_types::repository::common::{Asset, Wallet};
     use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType, TransferData};
+    use cashier_backend_types::repository::{asset::v1::Asset, common::Wallet};
 
     // Use the shared mock environment from test utilities
     use crate::utils::test_utils::runtime::MockIcEnvironment;
