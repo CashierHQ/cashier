@@ -71,7 +71,7 @@
           "$ref": "#/definitions/TokenStandard"
         }
       },
-      "required": ["address", "network_fee", "token_standard"]
+      "required": ["address"]
     },
 
     "AssetInfo": {

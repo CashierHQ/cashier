@@ -124,8 +124,8 @@ export interface Asset {
   /** Canister ID of the token */
   address: Principal;
   /** Network fee for this asset in base units (Nat) */
-  network_fee: bigint;
-  token_standard: TokenStandard;
+  network_fee?: bigint;
+  token_standard?: TokenStandard;
 }
 
 /**

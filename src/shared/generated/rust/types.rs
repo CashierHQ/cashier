@@ -195,8 +195,8 @@ pub struct Asset {
     /// Canister ID of the token
     pub address: Principal,
     /// Network fee for this asset in base units (Nat)
-    pub network_fee: Nat,
-    pub token_standard: TokenStandard,
+    pub network_fee: Option<Nat>,
+    pub token_standard: Option<TokenStandard>,
 }
 
 /// Asset information with amount and label
@@ -297,8 +297,8 @@ pub struct Link {
     /// List of assets associated with the link
     pub asset_info: Vec<AssetInfo>,
     /// Maximum number of times the link can be used
-    pub max_use: u64,
+    pub max_use: i64,
     /// Number of times the link has been used
-    pub use_count: u64,
+    pub use_count: i64,
     pub link_state: LinkState,
 }
