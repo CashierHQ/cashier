@@ -14,7 +14,7 @@ use cashier_backend_types::{
         intent_transaction::v1::IntentTransaction, link_action::v1::LinkAction,
         transaction::v1::Transaction, user_action::v1::UserAction,
     },
-    service::action::ActionData,
+    service::action::v1::ActionData,
 };
 
 use std::collections::HashMap;

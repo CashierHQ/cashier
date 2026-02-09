@@ -4,11 +4,21 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
+    link_v3::link_result::LinkProcessActionResult,
     repository::{
-        action::v3::ActionV3, action_intent::v1::ActionIntent, intent::v3::IntentV3,
-        intent_transaction::v1::IntentTransaction, link::v3::LinkV3, link_action::v1::LinkAction,
-        transaction::v1::Transaction, user_action::v1::UserAction,
+        action::{
+            v1::{ActionState, ActionType},
+            v3::ActionV3,
+        },
+        action_intent::v1::ActionIntent,
+        intent::v3::IntentV3,
+        intent_transaction::v1::IntentTransaction,
+        link::v3::LinkV3,
+        link_action::v1::{LinkAction, LinkUserState},
+        transaction::v1::Transaction,
+        user_action::v1::UserAction,
     },
+    service::action::v3::ActionDataV3,
 };
 use cashier_shared::types::Action as ActionShared;
 use std::collections::HashMap;
@@ -121,5 +131,91 @@ impl<R: Repositories> ActionServiceV3<R> {
         self.user_link_action_repository.create(link_action);
 
         Ok(())
+    }
+
+    /// Retrieves action-related data from the database.
+    /// # Arguments
+    /// * `action_id` - The ID of the action to retrieve
+    /// # Returns
+    /// * `Result<ActionDataV3, String>` - The retrieved action data or an error message
+    pub fn get_action_data(&self, action_id: &str) -> Result<ActionDataV3, String> {
+        let action = self
+            .action_repository
+            .get(action_id)
+            .ok_or_else(|| "action not found".to_string())?;
+
+        let all_intents = self.action_intent_repository.get_by_action_id(action_id);
+
+        let intents: Vec<IntentV3> = all_intents
+            .iter()
+            .map(|ai| {
+                self.intent_repository
+                    .get(&ai.intent_id)
+                    .ok_or_else(|| format!("intent not found: {}", ai.intent_id))
+            })
+            .collect::<Result<_, _>>()?;
+
+        let mut intent_txs_hashmap = HashMap::new();
+
+        for action_intent in all_intents {
+            let intent_transactions = self
+                .intent_transaction_repository
+                .get_by_intent_id(&action_intent.intent_id);
+
+            let mut txs = vec![];
+            for intent_tx in intent_transactions {
+                let tx = self
+                    .transaction_repository
+                    .get(&intent_tx.transaction_id.clone())
+                    .ok_or_else(|| "transaction not found".to_string())?;
+                txs.push(tx);
+            }
+
+            intent_txs_hashmap.insert(action_intent.intent_id, txs);
+        }
+
+        Ok(ActionDataV3 {
+            action,
+            intents,
+            intent_txs: intent_txs_hashmap,
+        })
+    }
+
+    pub fn update_action_data(
+        &mut self,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
+        intent_tx_map: &HashMap<String, Vec<Transaction>>,
+    ) -> Result<(), CanisterError> {
+        self.action_repository.update(action);
+        self.intent_repository.batch_update(intents);
+
+        let mut transactions: Vec<Transaction> = vec![];
+        for txs in intent_tx_map.values() {
+            for tx in txs {
+                transactions.push(tx.clone());
+            }
+        }
+        self.transaction_repository.batch_create(transactions);
+
+        Ok(())
+    }
+
+    pub fn update_link_user_state(&mut self, result: &LinkProcessActionResult) {
+        let action = &result.process_action_result.action;
+        if result.process_action_result.is_success
+            && matches!(action.action_type, ActionType::Receive | ActionType::Send)
+            && action.state == ActionState::Success
+        {
+            let link_action = LinkAction {
+                link_id: result.link.id.clone(),
+                action_type: action.action_type.clone(),
+                action_id: action.id.clone(),
+                user_id: action.creator,
+                link_user_state: Some(LinkUserState::Completed),
+            };
+
+            self.user_link_action_repository.update(link_action);
+        }
     }
 }

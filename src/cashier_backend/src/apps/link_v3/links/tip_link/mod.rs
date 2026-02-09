@@ -7,7 +7,10 @@ use crate::apps::link_v3::traits::{LinkV3Instance, LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::{action_result::CreateActionResult, link_result::LinkCreateActionResult},
+    link_v3::{
+        action_result::CreateActionResult,
+        link_result::{LinkCreateActionResult, LinkProcessActionResult},
+    },
     repository::{
         action::v3::ActionV3,
         asset::v1::Asset,
@@ -114,6 +117,26 @@ impl<M: TransactionManagerV3 + 'static> LinkV3Instance for TipLink<M> {
             let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
             let create_action_result = state.create_action(caller, action, intents).await?;
             Ok(create_action_result)
+        })
+    }
+
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        let link = self.link.clone();
+        let canister_id = self.canister_id;
+        let transaction_manager = self.transaction_manager.clone();
+
+        Box::pin(async move {
+            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
+            let process_action_result = state
+                .process_action(caller, action, intents, intent_txs_map)
+                .await?;
+            Ok(process_action_result)
         })
     }
 }

@@ -25,6 +25,14 @@ pub trait LinkV3Instance {
         action: ActionV3,
         intents: Vec<IntentV3>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
 }
 
 pub trait LinkV3State {
@@ -42,4 +50,12 @@ pub trait LinkV3State {
         action: ActionV3,
         intents: Vec<IntentV3>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: ActionV3,
+        intents: Vec<IntentV3>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
 }

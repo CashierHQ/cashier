@@ -17,7 +17,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
-    service::action::ActionData,
+    service::action::v1::ActionData,
 };
 use std::rc::Rc;
 use transaction_manager::v2::traits::TransactionManager;

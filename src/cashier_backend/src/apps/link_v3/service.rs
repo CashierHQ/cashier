@@ -184,4 +184,60 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             icrc112_requests: result.create_action_result.icrc112_requests,
         })
     }
+
+    pub async fn process_action(
+        &mut self,
+        caller: Principal,
+        canister_id: Principal,
+        action_id: &str,
+    ) -> Result<ProcessActionResponseV3, CanisterError> {
+        let action_data = self
+            .action_service
+            .get_action_data(action_id)
+            .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+
+        let link_id = action_data.action.link_id.as_ref().ok_or_else(|| {
+            CanisterError::InvalidInput("Action does not belong to any link".to_string())
+        })?;
+
+        let link_model = self
+            .link_v3_repository
+            .get(link_id)
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        let factory = LinkFactoryV3::new(self.transaction_manager.clone());
+        let link = factory.create_from_link_model(link_model, canister_id)?;
+        let result = link
+            .process_action(
+                caller,
+                action_data.action,
+                action_data.intents,
+                action_data.intent_txs,
+            )
+            .await?;
+
+        // save data to DB
+        self.link_v3_repository.update(result.link.clone());
+        self.action_service.update_action_data(
+            result.process_action_result.action.clone(),
+            result.process_action_result.intents.clone(),
+            &result.process_action_result.intent_txs_map,
+        )?;
+        self.action_service.update_link_user_state(&result);
+
+        // format response
+        let link_shared = result.link.to_shared();
+        let action_shared = result
+            .process_action_result
+            .action
+            .to_shared(result.process_action_result.intents);
+
+        Ok(ProcessActionResponseV3 {
+            link: link_shared,
+            action: action_shared,
+            icrc112_requests: result.process_action_result.icrc112_requests,
+            is_success: result.process_action_result.is_success,
+            errors: result.process_action_result.errors,
+        })
+    }
 }

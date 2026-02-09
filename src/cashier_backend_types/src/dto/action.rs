@@ -16,7 +16,7 @@ use crate::{
         intent::v1::{Intent, IntentState, IntentTask, IntentType},
         transaction::v1::{FromCallType, Protocol, Transaction, TransactionState},
     },
-    service::action::ActionData,
+    service::action::v1::ActionData,
 };
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
