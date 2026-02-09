@@ -9,6 +9,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::common::{Asset, Chain, Wallet};
+use crate::utils::extract_wallet_fields;
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]
@@ -148,6 +149,117 @@ pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
+}
+
+// --- From<cashier_shared> impls ---
+
+impl From<cashier_shared::IntentState> for IntentState {
+    fn from(state: cashier_shared::IntentState) -> Self {
+        match state {
+            cashier_shared::IntentState::Created => IntentState::Created,
+            cashier_shared::IntentState::Processing => IntentState::Processing,
+            cashier_shared::IntentState::Success => IntentState::Success,
+            cashier_shared::IntentState::Failed => IntentState::Fail,
+        }
+    }
+}
+
+impl IntentState {
+    pub fn into_generated(self) -> cashier_shared::IntentState {
+        match self {
+            IntentState::Created => cashier_shared::IntentState::Created,
+            IntentState::Processing => cashier_shared::IntentState::Processing,
+            IntentState::Success => cashier_shared::IntentState::Success,
+            IntentState::Fail => cashier_shared::IntentState::Failed,
+        }
+    }
+}
+
+impl Intent {
+    /// Create repo Intent from `cashier_shared::Intent`.
+    ///
+    /// # Arguments
+    /// * `value` - Source generated Intent
+    /// * `chain` - Blockchain network
+    /// * `task` - Intent task type
+    /// * `label` - Display label
+    /// * `created_at` - Creation timestamp
+    ///
+    /// # Returns
+    /// Repo Intent with all fields explicitly set
+    pub fn from_generated(
+        value: cashier_shared::Intent,
+        chain: Chain,
+        task: IntentTask,
+        label: String,
+        created_at: u64,
+    ) -> Self {
+        let from = Wallet::new(value.source_address);
+        let to = Wallet::new(value.dest_address);
+        let asset = Asset::IC {
+            address: value.asset.address,
+        };
+
+        Intent {
+            id: value.id,
+            state: value.intent_state.into(),
+            created_at,
+            dependency: value.dependencies.unwrap_or_default(),
+            chain,
+            task,
+            r#type: IntentType::Transfer(TransferData {
+                from,
+                to,
+                asset,
+                amount: value.amount,
+            }),
+            label,
+        }
+    }
+
+    /// Convert repo Intent to `cashier_shared::Intent`.
+    ///
+    /// # Arguments
+    /// * `source_address_type` - Type of source address (Creator/User/Treasury/Link)
+    /// * `dest_address_type` - Type of destination address
+    /// * `token_standard` - Token standard (ICRC1/ICRC2)
+    ///
+    /// # Returns
+    /// `cashier_shared::Intent` with transfer data extracted from repo type
+    pub fn into_generated(
+        self,
+        source_address_type: cashier_shared::AddressType,
+        dest_address_type: cashier_shared::AddressType,
+        token_standard: cashier_shared::TokenStandard,
+    ) -> cashier_shared::Intent {
+        let (from_addr, to_addr, asset_addr, amount) = match &self.r#type {
+            IntentType::Transfer(d) => extract_wallet_fields(&d.from, &d.to, &d.asset, &d.amount),
+            IntentType::TransferFrom(d) => {
+                extract_wallet_fields(&d.from, &d.to, &d.asset, &d.amount)
+            }
+        };
+
+        cashier_shared::Intent {
+            id: self.id,
+            intent_type: cashier_shared::IntentType::Transfer,
+            asset: cashier_shared::Asset {
+                address: asset_addr,
+                token_standard: token_standard.clone(),
+            },
+            amount,
+            source_address: from_addr,
+            source_address_type,
+            dest_address: to_addr,
+            dest_address_type,
+            intent_token_standard: token_standard,
+            dependencies: if self.dependency.is_empty() {
+                None
+            } else {
+                Some(self.dependency)
+            },
+            intent_state: self.state.into_generated(),
+        }
+    }
 }
 
 /// Arguments for creating a TransferWalletToLink intent using ICRC2
