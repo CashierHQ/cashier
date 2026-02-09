@@ -33,7 +33,6 @@ pub struct IntentV3 {
     pub intent_tx_data: Option<IntentTransactionDataV3>,
     pub dependencies: Vec<String>,
     pub state: IntentState,
-    pub action_id: Option<String>,
     pub created_at: u64,
 }
 
@@ -72,7 +71,6 @@ impl From<IntentShared> for IntentV3 {
             intent_tx_data: None,
             dependencies: intent.dependencies.unwrap_or_default(),
             state: IntentState::from(intent.intent_state),
-            action_id: intent.action_id,
             created_at: 0,
         }
     }
@@ -146,7 +144,6 @@ impl IntentV3 {
             dest_address_type: self.dest_address_type.to_shared(),
             dependencies: Some(self.dependencies.clone()),
             intent_state: self.state.to_shared(),
-            action_id: self.action_id.clone(),
         }
     }
 }

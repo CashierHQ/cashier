@@ -591,3 +591,11 @@ dfx_local_deploy_ckbtc_canisters owner ledger_id minter_id kyt_id:
         })"
 
   dfx canister call ckbtc_kyt set_api_key "(record { api_key = \"\" })"
+
+[group('dfx')]
+dfx_mainnet_deploy_backend:
+  #!/usr/bin/env bash
+  set -e
+
+  export OWNER=$(dfx identity get-principal)
+  just dfx_deploy_backend "${OWNER}" --network=ic --mode=upgrage

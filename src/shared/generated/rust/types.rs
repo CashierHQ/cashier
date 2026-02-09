@@ -233,8 +233,6 @@ pub struct Intent {
     /// IDs of intents this intent depends on
     pub dependencies: Option<Vec<String>>,
     pub intent_state: IntentState,
-    /// ID of the action this intent belongs to
-    pub action_id: Option<String>,
 }
 
 /// Input parameters for fee calculation
@@ -282,6 +280,8 @@ pub struct Action {
     pub action_state: ActionState,
     /// ID of the link associated with this action, if any
     pub link_id: Option<String>,
+    /// List of intent IDs associated with this action
+    pub intent_ids: Option<Vec<String>>,
 }
 
 /// Represents a link

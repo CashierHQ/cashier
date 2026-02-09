@@ -164,8 +164,6 @@ export interface Intent {
   /** IDs of intents this intent depends on */
   dependencies?: string[];
   intent_state: IntentState;
-  /** ID of the action this intent belongs to */
-  action_id?: string;
 }
 
 /**
@@ -216,6 +214,8 @@ export interface Action {
   action_state: ActionState;
   /** ID of the link associated with this action, if any */
   link_id?: string;
+  /** List of intent IDs associated with this action */
+  intent_ids?: string[];
 }
 
 /**

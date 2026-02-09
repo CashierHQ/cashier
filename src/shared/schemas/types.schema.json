@@ -153,10 +153,6 @@
         },
         "intent_state": {
           "$ref": "#/definitions/IntentState"
-        },
-        "action_id": {
-          "type": "string",
-          "description": "ID of the action this intent belongs to"
         }
       },
       "required": [
@@ -274,6 +270,13 @@
         "link_id": {
           "type": "string",
           "description": "ID of the link associated with this action, if any"
+        },
+        "intent_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of intent IDs associated with this action"
         }
       },
       "required": [
