@@ -19,13 +19,13 @@
 
     "IntentType": {
       "type": "string",
-      "enum": ["Transfer"],
-      "description": "Type of intent (Transfer can be Send or Receive based on context)"
+      "enum": ["Send", "Receive"],
+      "description": "Type of intent"
     },
 
     "IntentState": {
       "type": "string",
-      "enum": ["Created", "Processing", "Success", "Failed"],
+      "enum": ["Created", "Processing", "Success", "Fail"],
       "description": "Current state of an intent"
     },
 
@@ -49,7 +49,7 @@
 
     "ActionState": {
       "type": "string",
-      "enum": ["Created", "Processing", "Success", "Failed"],
+      "enum": ["Created", "Processing", "Success", "Fail"],
       "description": "Current state of an action"
     },
 
@@ -62,11 +62,16 @@
           "format": "icp-principal",
           "description": "Canister ID of the token"
         },
+        "network_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Network fee for this asset in base units (Nat)"
+        },
         "token_standard": {
           "$ref": "#/definitions/TokenStandard"
         }
       },
-      "required": ["address", "token_standard"]
+      "required": ["address", "network_fee", "token_standard"]
     },
 
     "AssetInfo": {
@@ -139,9 +144,6 @@
         "dest_address_type": {
           "$ref": "#/definitions/AddressType"
         },
-        "intent_token_standard": {
-          "$ref": "#/definitions/TokenStandard"
-        },
         "dependencies": {
           "type": "array",
           "items": {
@@ -151,6 +153,10 @@
         },
         "intent_state": {
           "$ref": "#/definitions/IntentState"
+        },
+        "action_id": {
+          "type": "string",
+          "description": "ID of the action this intent belongs to"
         }
       },
       "required": [
@@ -264,6 +270,10 @@
         "action_state": {
           "$ref": "#/definitions/ActionState",
           "description": "Current state of the action"
+        },
+        "link_id": {
+          "type": "string",
+          "description": "ID of the link associated with this action, if any"
         }
       },
       "required": [
@@ -278,7 +288,7 @@
 
     "Link": {
       "type": "object",
-      "description": "Represents a payment link",
+      "description": "Represents a link",
       "properties": {
         "id": {
           "type": "string",
@@ -296,25 +306,46 @@
         "link_type": {
           "$ref": "#/definitions/LinkType"
         },
+        "asset_info": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetInfo"
+          },
+          "description": "List of assets associated with the link"
+        },
         "max_use": {
           "type": "integer",
           "minimum": 1,
           "description": "Maximum number of times the link can be used"
         },
+        "use_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of times the link has been used"
+        },
         "link_state": {
           "$ref": "#/definitions/LinkState"
         }
       },
-      "required": ["id", "creator", "max_use"]
+      "required": [
+        "id",
+        "creator",
+        "title",
+        "link_type",
+        "asset_info",
+        "max_use",
+        "use_count",
+        "link_state"
+      ]
     },
     "LinkType": {
       "type": "string",
-      "enum": ["Tip", "Airdrop", "TokenBasket", "Payment"],
+      "enum": ["SendTip", "SendAirdrop", "SendTokenBasket", "ReceivePayment"],
       "description": "Type of link"
     },
     "LinkState": {
       "type": "string",
-      "enum": ["Created", "Active", "Inactivate", "Ended"],
+      "enum": ["Created", "Active", "Inactive", "Ended"],
       "description": "Current state of the link"
     }
   }

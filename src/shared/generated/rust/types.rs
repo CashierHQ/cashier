@@ -47,16 +47,18 @@ impl std::fmt::Display for AddressType {
     }
 }
 
-/// Type of intent (Transfer can be Send or Receive based on context)
+/// Type of intent
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum IntentType {
-    Transfer,
+    Send,
+    Receive,
 }
 
 impl std::fmt::Display for IntentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            IntentType::Transfer => write!(f, "Transfer"),
+            IntentType::Send => write!(f, "Send"),
+            IntentType::Receive => write!(f, "Receive"),
         }
     }
 }
@@ -67,7 +69,7 @@ pub enum IntentState {
     Created,
     Processing,
     Success,
-    Failed,
+    Fail,
 }
 
 impl std::fmt::Display for IntentState {
@@ -76,7 +78,7 @@ impl std::fmt::Display for IntentState {
             IntentState::Created => write!(f, "Created"),
             IntentState::Processing => write!(f, "Processing"),
             IntentState::Success => write!(f, "Success"),
-            IntentState::Failed => write!(f, "Failed"),
+            IntentState::Fail => write!(f, "Fail"),
         }
     }
 }
@@ -129,7 +131,7 @@ pub enum ActionState {
     Created,
     Processing,
     Success,
-    Failed,
+    Fail,
 }
 
 impl std::fmt::Display for ActionState {
@@ -138,7 +140,7 @@ impl std::fmt::Display for ActionState {
             ActionState::Created => write!(f, "Created"),
             ActionState::Processing => write!(f, "Processing"),
             ActionState::Success => write!(f, "Success"),
-            ActionState::Failed => write!(f, "Failed"),
+            ActionState::Fail => write!(f, "Fail"),
         }
     }
 }
@@ -146,19 +148,19 @@ impl std::fmt::Display for ActionState {
 /// Type of link
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LinkType {
-    Tip,
-    Airdrop,
-    TokenBasket,
-    Payment,
+    SendTip,
+    SendAirdrop,
+    SendTokenBasket,
+    ReceivePayment,
 }
 
 impl std::fmt::Display for LinkType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LinkType::Tip => write!(f, "Tip"),
-            LinkType::Airdrop => write!(f, "Airdrop"),
-            LinkType::TokenBasket => write!(f, "TokenBasket"),
-            LinkType::Payment => write!(f, "Payment"),
+            LinkType::SendTip => write!(f, "SendTip"),
+            LinkType::SendAirdrop => write!(f, "SendAirdrop"),
+            LinkType::SendTokenBasket => write!(f, "SendTokenBasket"),
+            LinkType::ReceivePayment => write!(f, "ReceivePayment"),
         }
     }
 }
@@ -168,7 +170,7 @@ impl std::fmt::Display for LinkType {
 pub enum LinkState {
     Created,
     Active,
-    Inactivate,
+    Inactive,
     Ended,
 }
 
@@ -177,7 +179,7 @@ impl std::fmt::Display for LinkState {
         match self {
             LinkState::Created => write!(f, "Created"),
             LinkState::Active => write!(f, "Active"),
-            LinkState::Inactivate => write!(f, "Inactivate"),
+            LinkState::Inactive => write!(f, "Inactive"),
             LinkState::Ended => write!(f, "Ended"),
         }
     }
@@ -192,6 +194,8 @@ impl std::fmt::Display for LinkState {
 pub struct Asset {
     /// Canister ID of the token
     pub address: Principal,
+    /// Network fee for this asset in base units (Nat)
+    pub network_fee: Nat,
     pub token_standard: TokenStandard,
 }
 
@@ -226,10 +230,11 @@ pub struct Intent {
     /// Destination address (Principal)
     pub dest_address: Principal,
     pub dest_address_type: AddressType,
-    pub intent_token_standard: TokenStandard,
     /// IDs of intents this intent depends on
     pub dependencies: Option<Vec<String>>,
     pub intent_state: IntentState,
+    /// ID of the action this intent belongs to
+    pub action_id: Option<String>,
 }
 
 /// Input parameters for fee calculation
@@ -275,9 +280,11 @@ pub struct Action {
     pub intents: Vec<Intent>,
     /// Current state of the action
     pub action_state: ActionState,
+    /// ID of the link associated with this action, if any
+    pub link_id: Option<String>,
 }
 
-/// Represents a payment link
+/// Represents a link
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Link {
     /// Unique identifier for the link
@@ -285,9 +292,13 @@ pub struct Link {
     /// Principal of the link creator
     pub creator: Principal,
     /// Title of the link
-    pub title: Option<String>,
-    pub link_type: Option<LinkType>,
+    pub title: String,
+    pub link_type: LinkType,
+    /// List of assets associated with the link
+    pub asset_info: Vec<AssetInfo>,
     /// Maximum number of times the link can be used
-    pub max_use: i64,
-    pub link_state: Option<LinkState>,
+    pub max_use: u64,
+    /// Number of times the link has been used
+    pub use_count: u64,
+    pub link_state: LinkState,
 }

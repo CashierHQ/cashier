@@ -31,10 +31,11 @@ export const AddressType = {
 export type AddressType = typeof AddressType[keyof typeof AddressType];
 
 /**
- * Type of intent (Transfer can be Send or Receive based on context)
+ * Type of intent
  */
 export const IntentType = {
-  Transfer: 'Transfer',
+  Send: 'Send',
+  Receive: 'Receive',
 } as const;
 
 export type IntentType = typeof IntentType[keyof typeof IntentType];
@@ -46,7 +47,7 @@ export const IntentState = {
   Created: 'Created',
   Processing: 'Processing',
   Success: 'Success',
-  Failed: 'Failed',
+  Fail: 'Fail',
 } as const;
 
 export type IntentState = typeof IntentState[keyof typeof IntentState];
@@ -83,7 +84,7 @@ export const ActionState = {
   Created: 'Created',
   Processing: 'Processing',
   Success: 'Success',
-  Failed: 'Failed',
+  Fail: 'Fail',
 } as const;
 
 export type ActionState = typeof ActionState[keyof typeof ActionState];
@@ -92,10 +93,10 @@ export type ActionState = typeof ActionState[keyof typeof ActionState];
  * Type of link
  */
 export const LinkType = {
-  Tip: 'Tip',
-  Airdrop: 'Airdrop',
-  TokenBasket: 'TokenBasket',
-  Payment: 'Payment',
+  SendTip: 'SendTip',
+  SendAirdrop: 'SendAirdrop',
+  SendTokenBasket: 'SendTokenBasket',
+  ReceivePayment: 'ReceivePayment',
 } as const;
 
 export type LinkType = typeof LinkType[keyof typeof LinkType];
@@ -106,7 +107,7 @@ export type LinkType = typeof LinkType[keyof typeof LinkType];
 export const LinkState = {
   Created: 'Created',
   Active: 'Active',
-  Inactivate: 'Inactivate',
+  Inactive: 'Inactive',
   Ended: 'Ended',
 } as const;
 
@@ -122,6 +123,8 @@ export type LinkState = typeof LinkState[keyof typeof LinkState];
 export interface Asset {
   /** Canister ID of the token */
   address: Principal;
+  /** Network fee for this asset in base units (Nat) */
+  network_fee: bigint;
   token_standard: TokenStandard;
 }
 
@@ -158,10 +161,11 @@ export interface Intent {
   /** Destination address (Principal) */
   dest_address: Principal;
   dest_address_type: AddressType;
-  intent_token_standard: TokenStandard;
   /** IDs of intents this intent depends on */
   dependencies?: string[];
   intent_state: IntentState;
+  /** ID of the action this intent belongs to */
+  action_id?: string;
 }
 
 /**
@@ -210,10 +214,12 @@ export interface Action {
   intents: Intent[];
   /** Current state of the action */
   action_state: ActionState;
+  /** ID of the link associated with this action, if any */
+  link_id?: string;
 }
 
 /**
- * Represents a payment link
+ * Represents a link
  */
 export interface Link {
   /** Unique identifier for the link */
@@ -221,9 +227,13 @@ export interface Link {
   /** Principal of the link creator */
   creator: Principal;
   /** Title of the link */
-  title?: string;
-  link_type?: LinkType;
+  title: string;
+  link_type: LinkType;
+  /** List of assets associated with the link */
+  asset_info: AssetInfo[];
   /** Maximum number of times the link can be used */
   max_use: number;
-  link_state?: LinkState;
+  /** Number of times the link has been used */
+  use_count: number;
+  link_state: LinkState;
 }
