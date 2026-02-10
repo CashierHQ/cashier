@@ -75,7 +75,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         creator_id: Principal,
         canister_id: Principal,
         created_at_ts: u64,
-    ) -> Result<CreateActionResponseV3, CanisterError> {
+    ) -> Result<CreateLinkResponseV3, CanisterError> {
         if input.action.action_type != cashier_shared::types::ActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
                 "Only CREATE action can be created when creating a link".to_string(),
@@ -121,7 +121,11 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             )
             .await?;
 
-        Ok(action_result)
+        Ok(CreateLinkResponseV3 {
+            link: action_result.link,
+            action: action_result.action,
+            icrc112_requests: action_result.icrc112_requests,
+        })
     }
 
     /// Creates a new action V3.

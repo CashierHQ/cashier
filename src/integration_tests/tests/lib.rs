@@ -4,7 +4,6 @@
 mod cashier_backend;
 mod ckbtc;
 pub mod constant;
-mod constants;
 mod gate_service;
 pub mod icrc7;
 mod token_storage;

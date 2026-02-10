@@ -1,7 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::utils::{PocketIcTestContext, principal::TestUser};
+use crate::{
+    constant::treasury_principal,
+    utils::{PocketIcTestContext, principal::TestUser},
+};
+
 use candid::{Nat, Principal};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
@@ -26,6 +30,12 @@ use cashier_backend_types::{
     },
     repository::asset::v1::Asset,
     service::link::{PaginateInput, PaginateResult},
+};
+use cashier_shared::types::{
+    Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
+    AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
+    IntentState as IntentStateShared, IntentType as IntentTypeShared, LinkType as LinkTypeShared,
+    TokenStandard as TokenStandardShared,
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -75,11 +85,9 @@ impl LinkTestFixtureV3 {
     /// * `LinkDto` - The activated link data
     pub async fn activate_link_v3(
         &self,
-        link_id: &str,
         action_id: &str,
     ) -> Result<ProcessActionResponseV3, CanisterError> {
         let process_action_input = ProcessActionInputV3 {
-            link_id: link_id.to_string(),
             action_id: action_id.to_string(),
         };
 
@@ -96,7 +104,10 @@ impl LinkTestFixtureV3 {
     /// * `link_id` - The ID of the link to disable
     /// # Returns
     /// * `LinkDto` - The disabled link data
-    pub async fn disable_link_v3(&self, link_id: &str) -> Result<LinkDto, CanisterError> {
+    pub async fn disable_link_v3(
+        &self,
+        link_id: &str,
+    ) -> Result<DisableLinkResponseV3, CanisterError> {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
@@ -109,7 +120,7 @@ impl LinkTestFixtureV3 {
     /// # Arguments
     /// * `input` - The input data for creating the action
     /// # Returns
-    /// * `ActionDto` - The created action data
+    /// * `CreateActionResponseV3` - The created action data
     /// * `CanisterError` - Error if the action creation fails
     pub async fn create_action_v3(
         &self,
@@ -127,7 +138,7 @@ impl LinkTestFixtureV3 {
     /// # Arguments
     /// * `input` - The input data for processing the action
     /// # Returns
-    /// * `ProcessActionDto` - The processed action data
+    /// * `ProcessActionResponseV3` - The processed action data
     /// * `CanisterError` - Error if the action processing fails
     pub async fn process_action_v3(
         &self,
@@ -145,12 +156,12 @@ impl LinkTestFixtureV3 {
     /// # Arguments
     /// * `options` - Optional pagination input
     /// # Returns
-    /// * `PaginateResult<LinkDto>` - The paginated list of links
+    /// * `GetLinksResponseV3` - The paginated list of links
     /// * `CanisterError` - Error if the retrieval fails
     pub async fn user_get_links_v3(
         &self,
         options: Option<PaginateInput>,
-    ) -> Result<PaginateResult<GetLinksResponseV3>, CanisterError> {
+    ) -> Result<GetLinksResponseV3, CanisterError> {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
@@ -164,7 +175,7 @@ impl LinkTestFixtureV3 {
     /// * `link_id` - The ID of the link to retrieve details for
     /// * `options` - Optional parameters for retrieving link details
     /// # Returns
-    /// * `GetLinkResp` - The link details response
+    /// * `GetLinkResponseV3` - The link details response
     /// * `CanisterError` - Error if the retrieval fails
     pub async fn get_link_details_v3(
         &self,
@@ -234,16 +245,15 @@ impl LinkTestFixtureV3 {
     /// - `is_token_basket`: A boolean indicating if the link is a token basket
     ///
     /// # Returns
-    /// - A vector of `LinkDetailUpdateAssetInfoInput` structs containing the transformed asset information.
+    /// - An `ActionShared` struct containing the created asset information.
     /// # Errors
     /// Returns an error if the tokens not found in the token map
-    pub fn asset_info_from_tokens_and_amount(
+    pub fn create_action_from_tokens_and_amount(
         &self,
+        creator: Principal,
         tokens: Vec<String>,
         amounts: Vec<Nat>,
-        label: &str,
-        is_token_basket: bool,
-    ) -> Result<Vec<LinkDetailUpdateAssetInfoInput>, String> {
+    ) -> Result<ActionShared, String> {
         if tokens.len() != amounts.len() {
             return Err(format!(
                 "Tokens and amounts must have the same length: {} vs {}",
@@ -252,52 +262,88 @@ impl LinkTestFixtureV3 {
             ));
         }
 
-        tokens
+        let mut intents: Vec<IntentShared> = Vec::new();
+
+        let fee_intent = IntentShared {
+            id: "fee_intent".to_string(),
+            intent_type: IntentTypeShared::Send,
+            asset: AssetShared {
+                address: self.ctx.icp_ledger_principal,
+                network_fee: None,
+                token_standard: Some(TokenStandardShared::ICRC2),
+            },
+            amount: Nat::from(10_000u64),
+            total_amount: None,
+            network_fee: None,
+            user_fee: None,
+            source_address: creator,
+            source_address_type: AddressTypeShared::Creator,
+            dest_address: treasury_principal(),
+            dest_address_type: AddressTypeShared::Treasury,
+            dependencies: None,
+            intent_state: IntentStateShared::Created,
+        };
+
+        let asset_intents: Vec<IntentShared> = tokens
             .into_iter()
             .zip(amounts)
             .map(|(token, amount)| match token.as_str() {
-                constant::ICP_TOKEN => {
-                    if is_token_basket {
-                        Ok(LinkDetailUpdateAssetInfoInput {
-                            asset: Asset::IC {
-                                address: self.ctx.icp_ledger_principal,
-                            },
-                            label: format!("{}_{}", label, self.ctx.icp_ledger_principal.to_text()),
-                            amount_per_link_use_action: amount,
-                        })
-                    } else {
-                        Ok(LinkDetailUpdateAssetInfoInput {
-                            asset: Asset::IC {
-                                address: self.ctx.icp_ledger_principal,
-                            },
-                            label: label.to_string(),
-                            amount_per_link_use_action: amount,
-                        })
-                    }
-                }
+                constant::ICP_TOKEN => Ok(IntentShared {
+                    id: "intent_id".to_string(),
+                    asset: AssetShared {
+                        address: self.ctx.icp_ledger_principal,
+                        network_fee: None,
+                        token_standard: Some(TokenStandardShared::ICRC2),
+                    },
+                    intent_type: IntentTypeShared::Send,
+                    amount: amount.clone(),
+                    total_amount: None,
+                    network_fee: None,
+                    user_fee: None,
+                    source_address: creator,
+                    source_address_type: AddressTypeShared::Creator,
+                    dest_address: self.ctx.cashier_backend_principal,
+                    dest_address_type: AddressTypeShared::Link,
+                    dependencies: None,
+                    intent_state: IntentStateShared::Created,
+                }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
-                    Some(token_principal) => {
-                        if is_token_basket {
-                            Ok(LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC {
-                                    address: *token_principal,
-                                },
-                                label: format!("{}_{}", label, token_principal.to_text()),
-                                amount_per_link_use_action: amount,
-                            })
-                        } else {
-                            Ok(LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC {
-                                    address: *token_principal,
-                                },
-                                label: label.to_string(),
-                                amount_per_link_use_action: amount,
-                            })
-                        }
-                    }
+                    Some(token_principal) => Ok(IntentShared {
+                        id: "intent_id".to_string(),
+                        asset: AssetShared {
+                            address: *token_principal,
+                            network_fee: None,
+                            token_standard: Some(TokenStandardShared::ICRC2),
+                        },
+                        intent_type: IntentTypeShared::Send,
+                        amount: amount.clone(),
+                        total_amount: None,
+                        network_fee: None,
+                        user_fee: None,
+                        source_address: creator,
+                        source_address_type: AddressTypeShared::Creator,
+                        dest_address: self.ctx.cashier_backend_principal,
+                        dest_address_type: AddressTypeShared::Link,
+                        dependencies: None,
+                        intent_state: IntentStateShared::Created,
+                    }),
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
                 },
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()?;
+
+        intents.push(fee_intent);
+        intents.extend(asset_intents);
+
+        Ok(ActionShared {
+            id: "action_id".to_string(),
+            action_type: ActionTypeShared::CreateLink,
+            intents,
+            creator,
+            creator_address_type: AddressTypeShared::Creator,
+            action_state: ActionStateShared::Created,
+            link_id: None,
+            intent_ids: None,
+        })
     }
 }

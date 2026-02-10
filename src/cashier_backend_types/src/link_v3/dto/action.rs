@@ -21,7 +21,6 @@ pub struct CreateActionResponseV3 {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ProcessActionInputV3 {
-    pub link_id: String,
     pub action_id: String,
 }
 

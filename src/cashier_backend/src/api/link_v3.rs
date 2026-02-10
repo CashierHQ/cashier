@@ -10,7 +10,10 @@ use cashier_backend_types::{
             CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
             ProcessActionResponseV3,
         },
-        link::{CreateLinkInputV3, DisableLinkResponseV3, GetLinkResponseV3, GetLinksResponseV3},
+        link::{
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
+            GetLinksResponseV3,
+        },
     },
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
@@ -23,12 +26,12 @@ use log::{debug, info};
 /// # Arguments
 /// * `input` - Link creation data
 /// # Returns
-/// * `Ok(CreateLinkResponse)` - The created link data
+/// * `Ok(CreateLinkResponseV3)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_create_link_v3(
     input: CreateLinkInputV3,
-) -> Result<CreateActionResponseV3, CanisterError> {
+) -> Result<CreateLinkResponseV3, CanisterError> {
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
