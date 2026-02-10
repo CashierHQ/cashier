@@ -10,7 +10,7 @@ use cashier_backend_types::{
         action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
         link::{CreateLinkInputV3, CreateLinkResponseV3},
     },
-    repository::link::v1::LinkType,
+    repository::{link::v1::LinkType, token_fee},
 };
 use cashier_shared::types::{IntentType as IntentTypeShared, LinkType as LinkTypeShared};
 use std::sync::Arc;
@@ -19,6 +19,7 @@ pub struct TipLinkV3Fixture {
     pub caller: Principal,
     pub token: String,
     pub amount: Nat,
+    pub token_fee: Nat,
     pub link_fixture: LinkTestFixtureV3,
 }
 
@@ -28,14 +29,18 @@ impl TipLinkV3Fixture {
         caller: Principal,
         token: &str,
         amount: Nat,
+        token_fee: Nat,
+        icp_ledger_fee: Nat,
     ) -> Self {
-        let link_fixture = LinkTestFixtureV3::new(Arc::clone(&ctx), caller).await;
+        let link_fixture =
+            LinkTestFixtureV3::new(Arc::clone(&ctx), caller, icp_ledger_fee.clone()).await;
 
         Self {
             caller,
             token: token.to_string(),
             amount,
             link_fixture,
+            token_fee,
         }
     }
 
@@ -84,6 +89,7 @@ impl TipLinkV3Fixture {
             self.caller,
             vec![self.token.to_string()],
             vec![self.amount.clone()],
+            vec![self.token_fee.clone()],
         )?;
 
         Ok(CreateLinkInputV3 {
@@ -126,9 +132,18 @@ pub async fn create_tip_linkv3_fixture(
     creator: Principal,
     token: &str,
     amount: Nat,
+    token_fee: Nat,
+    icp_ledger_fee: Nat,
 ) -> (LinkTestFixtureV3, CreateLinkResponseV3) {
-    let mut creator_fixture =
-        TipLinkV3Fixture::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
+    let mut creator_fixture = TipLinkV3Fixture::new(
+        Arc::new(ctx.clone()),
+        creator,
+        token,
+        amount.clone(),
+        token_fee.clone(),
+        icp_ledger_fee.clone(),
+    )
+    .await;
 
     creator_fixture.airdrop_icp_and_asset().await;
 
@@ -147,11 +162,19 @@ pub async fn activate_tip_link_v3_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
     amount: Nat,
+    token_fee: Nat,
+    icp_ledger_fee: Nat,
 ) -> (LinkTestFixtureV3, ProcessActionResponseV3) {
     let creator = TestUser::User1.get_principal();
-    let mut creator_fixture =
-        TipLinkV3Fixture::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
-
+    let mut creator_fixture = TipLinkV3Fixture::new(
+        Arc::new(ctx.clone()),
+        creator,
+        token,
+        amount.clone(),
+        token_fee.clone(),
+        icp_ledger_fee.clone(),
+    )
+    .await;
     let activate_link_result = creator_fixture.activate_link().await;
     (creator_fixture.link_fixture, activate_link_result)
 }

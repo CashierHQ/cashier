@@ -28,9 +28,9 @@ use cashier_backend_types::{
             GetLinksResponseV3,
         },
     },
-    repository::asset::v1::Asset,
     service::link::{PaginateInput, PaginateResult},
 };
+use cashier_common::constant::CREATE_LINK_FEE;
 use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
@@ -45,10 +45,15 @@ use std::{sync::Arc, time::Duration};
 pub struct LinkTestFixtureV3 {
     pub ctx: Arc<PocketIcTestContext>,
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
+    pub icp_ledger_fee: Nat,
 }
 
 impl LinkTestFixtureV3 {
-    pub async fn new(ctx: Arc<PocketIcTestContext>, caller: Principal) -> Self {
+    pub async fn new(
+        ctx: Arc<PocketIcTestContext>,
+        caller: Principal,
+        icp_ledger_fee: Nat,
+    ) -> Self {
         // Initialize the cashier backend client with the provided caller
         let cashier_backend_client = Some(ctx.new_cashier_backend_client(caller));
 
@@ -60,6 +65,7 @@ impl LinkTestFixtureV3 {
         Self {
             ctx,
             cashier_backend_client,
+            icp_ledger_fee,
         }
     }
 
@@ -253,12 +259,14 @@ impl LinkTestFixtureV3 {
         creator: Principal,
         tokens: Vec<String>,
         amounts: Vec<Nat>,
+        token_fees: Vec<Nat>,
     ) -> Result<ActionShared, String> {
-        if tokens.len() != amounts.len() {
+        if tokens.len() != amounts.len() || tokens.len() != token_fees.len() {
             return Err(format!(
-                "Tokens and amounts must have the same length: {} vs {}",
+                "Tokens, amounts, and token_fees must have the same length: {} vs {} vs {}",
                 tokens.len(),
-                amounts.len()
+                amounts.len(),
+                token_fees.len()
             ));
         }
 
@@ -272,9 +280,9 @@ impl LinkTestFixtureV3 {
                 network_fee: None,
                 token_standard: Some(TokenStandardShared::ICRC2),
             },
-            amount: Nat::from(10_000u64),
-            total_amount: None,
-            network_fee: None,
+            amount: Nat::from(CREATE_LINK_FEE),
+            total_amount: Some(Nat::from(CREATE_LINK_FEE)),
+            network_fee: Some(Nat::from(2u64) * self.icp_ledger_fee.clone()),
             user_fee: None,
             source_address: creator,
             source_address_type: AddressTypeShared::Creator,
@@ -287,7 +295,8 @@ impl LinkTestFixtureV3 {
         let asset_intents: Vec<IntentShared> = tokens
             .into_iter()
             .zip(amounts)
-            .map(|(token, amount)| match token.as_str() {
+            .zip(token_fees)
+            .map(|((token, amount), token_fee)| match token.as_str() {
                 constant::ICP_TOKEN => Ok(IntentShared {
                     id: "intent_id".to_string(),
                     asset: AssetShared {
@@ -297,8 +306,8 @@ impl LinkTestFixtureV3 {
                     },
                     intent_type: IntentTypeShared::Send,
                     amount: amount.clone(),
-                    total_amount: None,
-                    network_fee: None,
+                    total_amount: Some(amount.clone()),
+                    network_fee: Some(Nat::from(2u64) * token_fee.clone()),
                     user_fee: None,
                     source_address: creator,
                     source_address_type: AddressTypeShared::Creator,
@@ -317,8 +326,8 @@ impl LinkTestFixtureV3 {
                         },
                         intent_type: IntentTypeShared::Send,
                         amount: amount.clone(),
-                        total_amount: None,
-                        network_fee: None,
+                        total_amount: Some(amount.clone()),
+                        network_fee: Some(Nat::from(2u64) * token_fee.clone()),
                         user_fee: None,
                         source_address: creator,
                         source_address_type: AddressTypeShared::Creator,

@@ -6,7 +6,7 @@ use crate::{
     constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL},
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
 };
-use candid::{Nat, Principal};
+use candid::{Decode, Nat, Principal};
 use cashier_backend_types::{
     constant,
     repository::link::v1::LinkType,
@@ -22,6 +22,7 @@ use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use cashier_shared::types::{AddressType as AddressTypeShared, LinkType as LinkTypeShared};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use std::{collections::HashMap, sync::Arc};
 use transaction_manager::utils::calculator::calculate_icrc2_transfer_intent_amount;
 
@@ -33,9 +34,18 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
 
         let caller = TestUser::User1.get_principal();
         let token = constant::ICP_TOKEN;
-        let amount = Nat::from(1_000_000u64);
-        let test_fixture =
-            TipLinkV3Fixture::new(Arc::new(ctx.clone()), caller, token, amount.clone()).await;
+        let tip_amount = Nat::from(1_000_000u64);
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let test_fixture = TipLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            tip_amount.clone(),
+            token_fee.clone(),
+            token_fee.clone(),
+        )
+        .await;
         let input = test_fixture.tip_link_input().unwrap();
 
         // Act
@@ -61,8 +71,17 @@ async fn it_should_create_icp_token_tip_link_successfully() {
         let caller = TestUser::User1.get_principal();
         let token = constant::ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
-        let mut test_fixture =
-            TipLinkV3Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let mut test_fixture = TipLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            tip_amount.clone(),
+            token_fee.clone(),
+            token_fee.clone(),
+        )
+        .await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let initial_balance = Nat::from(1_000_000_000u64);
@@ -70,7 +89,6 @@ async fn it_should_create_icp_token_tip_link_successfully() {
             owner: caller,
             subaccount: None,
         };
-        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         // Act
         test_fixture
@@ -141,6 +159,9 @@ async fn it_should_create_icp_token_tip_link_successfully() {
                         req.canister_id,
                         Principal::from_text(ICP_PRINCIPAL).unwrap()
                     );
+
+                    let approve_args: ApproveArgs =
+                        Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
             }
@@ -159,8 +180,17 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
         let caller = TestUser::User1.get_principal();
         let token = constant::CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(5_000_000u64);
-        let mut test_fixture =
-            TipLinkV3Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let mut test_fixture = TipLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            tip_amount.clone(),
+            token_fee.clone(),
+            token_fee.clone(),
+        )
+        .await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
