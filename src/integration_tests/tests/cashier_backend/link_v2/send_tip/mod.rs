@@ -3,6 +3,7 @@
 
 pub mod activate_icp_link_retry;
 pub mod activate_icrc_link_retry;
+pub mod activate_icrc_link_retry_failure;
 pub mod activate_link;
 pub mod activate_link_deduplication;
 pub mod create_link;
