@@ -1623,6 +1623,7 @@ dependencies = [
  "cashier_backend_client",
  "cashier_backend_types",
  "cashier_common",
+ "cashier_shared",
  "gate_service_client",
  "gate_service_types",
  "ic-btc-interface",

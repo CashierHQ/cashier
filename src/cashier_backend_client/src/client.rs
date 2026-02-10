@@ -7,6 +7,16 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    link_v3::dto::{
+        action::{
+            CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
+            ProcessActionResponseV3,
+        },
+        link::{
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
+            GetLinksResponseV3,
+        },
+    },
     service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
@@ -234,6 +244,92 @@ impl<C: CanisterClient> CashierBackendClient<C> {
 
     pub async fn icrc114_validate(&self, args: Icrc114ValidateArgs) -> CanisterClientResult<bool> {
         self.client.update("icrc114_validate", (args,)).await
+    }
+
+    /// Creates a new link V3.
+    /// # Arguments
+    /// * `input` - Link creation data
+    /// # Returns
+    /// * `Ok(CreateLinkResponseV3)` - The created link data
+    /// * `Err(CanisterError)` - If link creation fails or validation errors occur
+    pub async fn user_create_link_v3(
+        &self,
+        input: CreateLinkInputV3,
+    ) -> CanisterClientResult<Result<CreateLinkResponseV3, CanisterError>> {
+        self.client.update("user_create_link_v3", ((input),)).await
+    }
+
+    /// Creates a new action V3.
+    /// # Arguments
+    /// * `input` - Action creation data
+    /// # Returns
+    /// * `Ok(CreateActionResponseV3)` - The created action data
+    /// * `Err(CanisterError)` - If action creation fails or validation errors occur
+    pub async fn user_create_action_v3(
+        &self,
+        input: CreateActionInputV3,
+    ) -> CanisterClientResult<Result<CreateActionResponseV3, CanisterError>> {
+        self.client
+            .update("user_create_action_v3", ((input),))
+            .await
+    }
+
+    /// Processes a created action V3.
+    /// # Arguments
+    /// * `input` - Action processing data
+    /// # Returns
+    /// * `Ok(ProcessActionResponseV3)` - The processed action data
+    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
+    pub async fn user_process_action_v3(
+        &self,
+        input: ProcessActionInputV3,
+    ) -> CanisterClientResult<Result<ProcessActionResponseV3, CanisterError>> {
+        self.client
+            .update("user_process_action_v3", ((input),))
+            .await
+    }
+
+    /// Retrieves user links list with pagination.
+    /// # Arguments
+    /// * `options` - Pagination options
+    /// # Returns
+    /// * `Ok(GetLinksResponseV3)` - The paginated list of links
+    /// * `Err(CanisterError)` - If retrieval fails
+    pub async fn user_get_links_v3(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> CanisterClientResult<Result<GetLinksResponseV3, CanisterError>> {
+        self.client.query("user_get_links_v3", (options,)).await
+    }
+
+    /// Retrieves a specific link V3 by its ID.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to retrieve
+    /// * `options` - Optional link retrieval options
+    /// # Returns
+    /// * `Ok(GetLinkResponseV3)` - The link details
+    /// * `Err(CanisterError)` - If retrieval fails
+    pub async fn get_link_details_v3(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> CanisterClientResult<Result<GetLinkResponseV3, CanisterError>> {
+        self.client
+            .query("get_link_details_v3", (link_id, options))
+            .await
+    }
+
+    /// Disables a link V3.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to disable
+    /// # Returns
+    /// * `Ok(DisableLinkResponseV3)` - The disabled link data
+    /// * `Err(CanisterError)` - If disabling fails or unauthorized
+    pub async fn user_disable_link_v3(
+        &self,
+        link_id: &str,
+    ) -> CanisterClientResult<Result<DisableLinkResponseV3, CanisterError>> {
+        self.client.update("user_disable_link_v3", (link_id,)).await
     }
 }
 

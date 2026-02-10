@@ -1,7 +1,6 @@
 use crate::{
     ckbtc,
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
-    constants,
+    constant::{self, CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
     icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
@@ -125,15 +124,15 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
-        Principal::from_text(constants::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
-        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
     )
     .await;
 
     let ckbtc_minter_principal = ckbtc::minter::deploy_ckbtc_minter_canister(
         &client,
-        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
-        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
         Some(ckbtc_kyt_principal),
     )
     .await;

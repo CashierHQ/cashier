@@ -3,30 +3,35 @@
 
 use crate::api::state::get_state;
 use cashier_backend_types::{
+    dto::link::GetLinkOptions,
     error::CanisterError,
     link_v3::dto::{
         action::{
             CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
             ProcessActionResponseV3,
         },
-        link::CreateLinkInputV3,
+        link::{
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
+            GetLinksResponseV3,
+        },
     },
     repository::keys::RequestLockKey,
+    service::link::PaginateInput,
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
-use ic_cdk::{api::msg_caller, update};
+use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
 /// Creates a new link V3
 /// # Arguments
 /// * `input` - Link creation data
 /// # Returns
-/// * `Ok(CreateLinkResponse)` - The created link data
+/// * `Ok(CreateLinkResponseV3)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_create_link_v3(
     input: CreateLinkInputV3,
-) -> Result<CreateActionResponseV3, CanisterError> {
+) -> Result<CreateLinkResponseV3, CanisterError> {
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
@@ -110,4 +115,37 @@ async fn user_process_action_v3(
     let _ = request_lock_service.drop(&key);
 
     res
+}
+
+#[query(guard = "is_not_anonymous")]
+async fn user_get_links_v3(
+    input: Option<PaginateInput>,
+) -> Result<GetLinksResponseV3, CanisterError> {
+    info!("[get_links_v3]");
+    debug!("[get_links_v3] input: {input:?}");
+    let link_v3_service = get_state().link_v3_service;
+    link_v3_service.get_links(msg_caller(), input).await
+}
+
+#[query]
+async fn get_link_details_v3(
+    link_id: &str,
+    options: Option<GetLinkOptions>,
+) -> Result<GetLinkResponseV3, CanisterError> {
+    info!("[get_link_details_v3]");
+    debug!("[get_link_details_v3] link_id: {link_id}, options: {options:?}");
+
+    let link_v3_service = get_state().link_v3_service;
+    link_v3_service
+        .get_link_details(msg_caller(), link_id, options)
+        .await
+}
+
+#[update(guard = "is_not_anonymous")]
+fn user_disable_link_v3(link_id: &str) -> Result<DisableLinkResponseV3, CanisterError> {
+    info!("[disable_link_v3]");
+    debug!("[disable_link_v3] link_id: {link_id}");
+
+    let mut link_v3_service = get_state().link_v3_service;
+    link_v3_service.disable_link(msg_caller(), link_id)
 }
