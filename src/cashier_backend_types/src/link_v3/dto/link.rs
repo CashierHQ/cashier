@@ -7,6 +7,8 @@ use cashier_shared::types::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::{repository::link_action::v1::LinkUserState, service::link::PaginateResult};
+
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInputV3 {
     pub title: String,
@@ -19,4 +21,18 @@ pub struct CreateLinkInputV3 {
 pub struct CreateLinkResponseV3 {
     pub link: LinkShared,
     pub action: ActionShared,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct DisableLinkResponseV3 {
+    pub link: LinkShared,
+}
+
+pub type GetLinksResponseV3 = PaginateResult<LinkShared>;
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetLinkResponseV3 {
+    pub link: LinkShared,
+    pub action: Option<ActionShared>,
+    pub link_user_state: Option<LinkUserState>,
 }
