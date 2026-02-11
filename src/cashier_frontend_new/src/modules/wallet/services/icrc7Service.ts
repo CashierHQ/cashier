@@ -22,10 +22,11 @@ export class Icrc7Service {
    * @returns Authenticated Icrc Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icrc7Ledger._SERVICE | null {
+  #getActor(options?: { anonymous?: boolean }): icrc7Ledger._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: icrc7Ledger.idlFactory,
+      options,
     });
   }
 
@@ -35,9 +36,9 @@ export class Icrc7Service {
    * @returns NFTMetadata
    */
   public async getTokenMetadata(tokenId: bigint): Promise<NFTMetadata> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({ anonymous: true });
     if (!actor) {
-      throw new Error("User is not authenticated");
+      throw new Error("Failed to create actor");
     }
     const res = await actor.icrc7_token_metadata([tokenId]);
     return NFTMetadataMapper.fromIcrc7LedgerTokenMetadata(res[0]);
@@ -48,9 +49,9 @@ export class Icrc7Service {
    * @returns CollectionMetadata
    */
   public async getCollectionMetadata(): Promise<CollectionMetadata> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({ anonymous: true });
     if (!actor) {
-      throw new Error("User is not authenticated");
+      throw new Error("Failed to create actor");
     }
     const res = await actor.icrc7_collection_metadata();
     return CollectionMetadataMapper.fromIcrc7LedgerCollectionMetadata(res);

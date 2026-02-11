@@ -21,10 +21,11 @@ export class IcrcLedgerService {
    * @returns Authenticated Icrc Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icrcLedger._SERVICE | null {
+  #getActor(options?: { anonymous?: boolean }): icrcLedger._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: icrcLedger.idlFactory,
+      options,
     });
   }
 
@@ -50,9 +51,9 @@ export class IcrcLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({ anonymous: true });
     if (!actor) {
-      throw new Error("User is not authenticated");
+      throw new Error("Failed to create actor");
     }
     const account: icrcLedger.Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
