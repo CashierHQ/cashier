@@ -6,6 +6,7 @@ import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
 import { Signer } from "@slide-computer/signer";
+import { SignerAgent } from "@slide-computer/signer-agent";
 
 /**
  * Account interface representing the connected user's account details.
@@ -23,7 +24,7 @@ interface Account {
 export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
   private authClient: AuthClient | null = null;
-  private identity: Identity | null = null;
+  #signerAgent: SignerAgent | null = null;
 
   constructor(
     args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig,
@@ -60,6 +61,10 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
 
   getAuthClient(): AuthClient | null {
     return this.authClient;
+  }
+
+  getSignerAgent(): SignerAgent | null {
+    return this.#signerAgent;
   }
 
   protected ensureTransportInitialized(): Promise<void> {
@@ -105,7 +110,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
 
   // Use the resolved config for agent initialization
   private async initAgentAndSigner(identity: Identity): Promise<void> {
-    const agent = HttpAgent.createSync({
+    const agent = await HttpAgent.create({
       identity,
       host: HOST_ICP,
       shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
@@ -117,6 +122,11 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     this.agent = agent;
     this.signer = new Signer<IITransport>({
       transport: transport,
+    });
+    this.#signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: identity.getPrincipal(),
+      agent,
     });
   }
 
@@ -178,7 +188,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
               owner: identity.getPrincipal().toText(),
               subaccount: null,
             };
-            this.identity = identity;
             await this.initAgentAndSigner(identity);
 
             this.setState(Status.CONNECTED);
@@ -250,6 +259,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   protected cleanupInternal(): void {
     this.authClient = null;
     this.agent = null;
+    this.#signerAgent = null;
   }
 
   /**
@@ -267,5 +277,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       this.authClient = null;
     }
     this.agent = null;
+    this.#signerAgent = null;
   }
 }

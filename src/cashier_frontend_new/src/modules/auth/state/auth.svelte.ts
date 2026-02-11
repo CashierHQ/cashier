@@ -234,14 +234,15 @@ export const authState = {
       return null;
     }
 
-    if (canisterId instanceof Principal) {
-      canisterId = canisterId.toText();
+    // Build SignerAgent from adapter's Signer - routes Actor calls through Signer -> IIChannel
+    const signerAgent = (pnp.provider as BaseSignerAdapter).getSignerAgent();
+    if (!signerAgent) {
+      throw new Error("Signer not available after connect");
     }
 
-    // pnp is initialized and user is logged in, return actor with current identity
-    return pnp.getActor({
+    return Actor.createActor(idlFactory, {
+      agent: signerAgent,
       canisterId,
-      idl: idlFactory,
     });
   },
 
