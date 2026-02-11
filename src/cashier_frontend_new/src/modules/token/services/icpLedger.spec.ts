@@ -88,6 +88,7 @@ describe("IcpLedgerService", () => {
       expect(mockBuildActor).toHaveBeenCalledWith({
         canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
         idlFactory: expect.any(Function),
+        options: { anonymous: true },
       });
       expect(mockIcrc1BalanceOf).toHaveBeenCalledWith({
         owner: Principal.fromText("aaaaa-aa"),
@@ -96,11 +97,11 @@ describe("IcpLedgerService", () => {
       expect(balance).toBe(expectedBalance);
     });
 
-    it("should throw when actor is null (not authenticated)", async () => {
+    it("should throw when actor is null", async () => {
       mockBuildActor.mockReturnValue(null);
 
       await expect(service.getBalance()).rejects.toThrow(
-        "User is not authenticated",
+        "Failed to create actor",
       );
     });
 
