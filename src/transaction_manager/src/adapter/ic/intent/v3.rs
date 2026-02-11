@@ -23,14 +23,37 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
         intent: &IntentV3,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let token_standard = intent.asset.token_standard.clone();
+        let from_wallet = {
+            if intent.source_account.is_some()
+                && let Some(source_account) = intent.source_account
+            {
+                source_account.into()
+            } else {
+                Wallet::new(intent.source_address)
+            }
+        };
+
+        let to_wallet = {
+            if intent.dest_account.is_some()
+                && let Some(dest_account) = intent.dest_account
+            {
+                dest_account.into()
+            } else {
+                Wallet::new(intent.dest_address)
+            }
+        };
+
+        let spender_wallet = Wallet::new(canister_id);
+        let asset = Asset::IC {
+            address: intent.asset.address,
+        };
+
         match token_standard {
             TokenStandardV3::ICRC1 => {
                 let transfer_data = TransferData {
-                    from: Wallet::new(intent.source_address),
-                    to: Wallet::new(intent.dest_address),
-                    asset: Asset::IC {
-                        address: intent.asset.address,
-                    },
+                    from: from_wallet,
+                    to: to_wallet,
+                    asset,
                     amount: (intent.total_amount.clone().unwrap_or_default()
                         + intent.network_fee.clone().unwrap_or_default()),
                 };
@@ -38,12 +61,10 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
             }
             TokenStandardV3::ICRC2 => {
                 let transfer_from_data = TransferFromData {
-                    from: Wallet::new(intent.source_address),
-                    to: Wallet::new(intent.dest_address),
-                    spender: Wallet::new(canister_id),
-                    asset: Asset::IC {
-                        address: intent.asset.address,
-                    },
+                    from: from_wallet,
+                    to: to_wallet,
+                    spender: spender_wallet,
+                    asset,
                     amount: intent.total_amount.clone().unwrap_or_default(),
                     approve_amount: Some(
                         intent.total_amount.clone().unwrap_or_default()

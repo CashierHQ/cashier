@@ -7,10 +7,12 @@ use cashier_shared::types::{
     Intent as IntentShared, IntentState as IntentStateShared, IntentType as IntentTypeShared,
 };
 use ic_mple_structures::Codec;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::{
     asset::v3::AssetV3,
+    asset_info::v3::AssetInfoV3,
     common::AddressTypeV3,
     intent::v1::{Intent, IntentState, TransferData, TransferFromData},
 };
@@ -27,8 +29,10 @@ pub struct IntentV3 {
     pub network_fee: Option<Nat>,
     pub user_fee: Option<Nat>,
     pub source_address: Principal,
+    pub source_account: Option<Account>,
     pub source_address_type: AddressTypeV3,
     pub dest_address: Principal,
+    pub dest_account: Option<Account>,
     pub dest_address_type: AddressTypeV3,
     pub intent_tx_data: Option<IntentTransactionDataV3>,
     pub dependencies: Vec<String>,
@@ -65,8 +69,10 @@ impl From<IntentShared> for IntentV3 {
             network_fee: intent.network_fee,
             user_fee: intent.user_fee,
             source_address: intent.source_address,
+            source_account: None,
             source_address_type: AddressTypeV3::from(intent.source_address_type),
             dest_address: intent.dest_address,
+            dest_account: None,
             dest_address_type: AddressTypeV3::from(intent.dest_address_type),
             intent_tx_data: None,
             dependencies: intent.dependencies.unwrap_or_default(),
@@ -144,6 +150,38 @@ impl IntentV3 {
             dest_address_type: self.dest_address_type.to_shared(),
             dependencies: Some(self.dependencies.clone()),
             intent_state: self.state.to_shared(),
+        }
+    }
+
+    pub fn from_asset_info(
+        asset_info: &AssetInfoV3,
+        source_address: Principal,
+        source_account: Option<Account>,
+        source_address_type: AddressTypeV3,
+        dest_address: Principal,
+        dest_account: Option<Account>,
+        dest_address_type: AddressTypeV3,
+        created_at: u64,
+    ) -> Self {
+        IntentV3 {
+            id: "".to_string(),
+            label: "".to_string(),
+            intent_type: IntentTypeV3::Send,
+            asset: asset_info.asset.clone(),
+            amount: asset_info.amount.clone(),
+            total_amount: None,
+            network_fee: None,
+            user_fee: None,
+            source_address,
+            source_account,
+            source_address_type,
+            dest_address,
+            dest_account,
+            dest_address_type,
+            intent_tx_data: None,
+            dependencies: vec![],
+            state: IntentState::Created,
+            created_at,
         }
     }
 }

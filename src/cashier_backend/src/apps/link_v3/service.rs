@@ -143,7 +143,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         action: ActionShared,
         creator: Principal,
         canister_id: Principal,
-        created_at_ts: u64,
+        created_at: u64,
     ) -> Result<CreateActionResponseV3, CanisterError> {
         let link_model = self
             .link_v3_repository
@@ -165,7 +165,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         let factory = LinkFactoryV3::new(self.transaction_manager.clone());
         let link_instance = factory.create_from_link_model(link_model, canister_id)?;
         let result = link_instance
-            .create_action(creator, action_model, intent_models)
+            .create_action(creator, action_model, intent_models, created_at)
             .await?;
 
         // save data to DB
