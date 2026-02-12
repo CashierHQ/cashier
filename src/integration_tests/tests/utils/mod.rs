@@ -29,7 +29,7 @@ use std::{
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::{
     init::TokenStorageInitData,
-    token::{ChainTokenDetails, RegistryToken},
+    token::{ChainTokenDetails, IcrcStandard, RegistryToken},
 };
 
 pub mod icrc_112;
@@ -153,6 +153,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                             Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
                         ),
                         fee: Nat::from(10_000u64),
+                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
                     symbol: "ICP".to_string(),
                     name: "Internet Computer".to_string(),
@@ -166,6 +167,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                             Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
                         ),
                         fee: Nat::from(10u64),
+                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
                     symbol: "ckBTC".to_string(),
                     name: "Chain Key Bitcoin".to_string(),
@@ -179,6 +181,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                             Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap(),
                         ),
                         fee: Nat::from(2_000_000_000_000u64),
+                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
                     symbol: "ckETH".to_string(),
                     name: "Chain Key Ethereum".to_string(),
@@ -192,6 +195,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                             Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
                         ),
                         fee: Nat::from(10_000u64),
+                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
                     symbol: "ckUSDC".to_string(),
                     name: "Chain Key USD Coin".to_string(),
@@ -203,6 +207,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         ledger_id: Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap(),
                         index_id: None,
                         fee: Nat::from(10_000u64),
+                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
                     symbol: "tICP".to_string(),
                     name: "Test Internet Computer".to_string(),

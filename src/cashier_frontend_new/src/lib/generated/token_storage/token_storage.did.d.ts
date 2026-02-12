@@ -74,6 +74,7 @@ export type ChainTokenDetails = {
       'fee' : bigint,
       'ledger_id' : Principal,
       'index_id' : [] | [Principal],
+      'supported_standards' : Array<IcrcStandard>,
     }
   };
 export interface CreateBridgeTransactionInputArg {
@@ -95,6 +96,9 @@ export interface GetUserNftInput {
   'limit' : [] | [number],
   'start' : [] | [number],
 }
+export type IcrcStandard = { 'ICRC1' : null } |
+  { 'ICRC2' : null } |
+  { 'ICRC3' : null };
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
@@ -181,6 +185,10 @@ export interface UpdateTokenInput {
   'token_id' : TokenId,
   'is_enabled' : boolean,
 }
+export interface UpdateTokenStandardsInput {
+  'token_id' : TokenId,
+  'supported_standards' : Array<IcrcStandard>,
+}
 export interface UserBridgeTransactionDto {
   'retry_times' : number,
   'status' : BridgeTransactionStatus,
@@ -242,6 +250,13 @@ export interface _SERVICE {
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
     Result_6
+  >,
+  /**
+   * Admin override for a token's supported standards
+   */
+  'admin_update_token_standards' : ActorMethod<
+    [UpdateTokenStandardsInput],
+    Result_3
   >,
   /**
    * Returns the build data of the canister.
