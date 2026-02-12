@@ -369,8 +369,21 @@ impl LinkTestFixtureV3 {
 
     pub fn receive_action(&self, link_id: String, creator: Principal) -> ActionShared {
         ActionShared {
-            id: "action_id".to_string(),
+            id: "receive_action_id".to_string(),
             action_type: ActionTypeShared::Receive,
+            intents: vec![],
+            creator,
+            creator_address_type: AddressTypeShared::User,
+            action_state: ActionStateShared::Created,
+            link_id: Some(link_id),
+            intent_ids: None,
+        }
+    }
+
+    pub fn withdraw_action(&self, link_id: String, creator: Principal) -> ActionShared {
+        ActionShared {
+            id: "withdraw_action_id".to_string(),
+            action_type: ActionTypeShared::Withdraw,
             intents: vec![],
             creator,
             creator_address_type: AddressTypeShared::Creator,
