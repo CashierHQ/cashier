@@ -68,6 +68,27 @@ pub enum ChainTokenDetails {
     },
 }
 
+/// Record returned by icrc10_supported_standards query
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct SupportedStandardRecord {
+    pub name: String,
+    pub url: String,
+}
+
+impl From<Vec<SupportedStandardRecord>> for IcrcStandards {
+    fn from(records: Vec<SupportedStandardRecord>) -> Self {
+        IcrcStandards(
+            records
+                .iter()
+                .filter_map(|r| IcrcStandard::from_name(&r.name))
+                .collect(),
+        )
+    }
+}
+
+/// Newtype wrapper for `Vec<IcrcStandard>` to enable `From` trait implementations
+pub struct IcrcStandards(pub Vec<IcrcStandard>);
+
 impl ChainTokenDetails {
     pub fn index_id(&self) -> Option<IndexId> {
         match self {

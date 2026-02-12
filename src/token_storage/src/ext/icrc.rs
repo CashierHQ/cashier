@@ -1,18 +1,11 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
-use candid::{self, CandidType, Deserialize, Principal};
+use candid::{self, Principal};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
-use token_storage_types::error::CanisterError;
+use token_storage_types::{error::CanisterError, token::SupportedStandardRecord};
 
 pub type Icrc1Tokens = candid::Nat;
-
-/// Record returned by icrc1_supported_standards query
-#[derive(CandidType, Deserialize, Clone, Debug)]
-pub struct SupportedStandardRecord {
-    pub name: String,
-    pub url: String,
-}
 
 pub struct Service(pub Principal);
 impl Service {
@@ -52,11 +45,11 @@ impl Service {
         parsed_res.map_err(CanisterError::from)
     }
 
-    /// Query supported standards — optional, some tokens don't implement this
-    pub async fn icrc_1_supported_standards(
+    /// Query supported standards via ICRC-10 — optional, some tokens don't implement this
+    pub async fn icrc_10_supported_standards(
         &self,
     ) -> Result<Vec<SupportedStandardRecord>, CanisterError> {
-        let res = Call::bounded_wait(self.0, "icrc1_supported_standards")
+        let res = Call::bounded_wait(self.0, "icrc10_supported_standards")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<Vec<SupportedStandardRecord>, CandidDecodeFailed> = res.candid();

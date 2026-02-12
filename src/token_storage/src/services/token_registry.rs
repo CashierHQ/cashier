@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::ext::icrc::SupportedStandardRecord;
 use crate::repository::{
     Repositories, token_registry::TokenRegistryRepository,
     token_registry_metadata::TokenRegistryMetadataRepository,
@@ -9,16 +8,8 @@ use crate::repository::{
 use futures::try_join;
 use token_storage_types::{
     IndexId, TokenId,
-    token::{ChainTokenDetails, IcrcStandard, RegistryToken, TokenRegistryMetadata},
+    token::{ChainTokenDetails, IcrcStandard, IcrcStandards, RegistryToken, TokenRegistryMetadata},
 };
-
-/// Parse canister response into IcrcStandard vec, dropping unknown standards
-fn parse_supported_standards(records: Vec<SupportedStandardRecord>) -> Vec<IcrcStandard> {
-    records
-        .iter()
-        .filter_map(|r| IcrcStandard::from_name(&r.name))
-        .collect()
-}
 
 pub struct TokenRegistryService<R: Repositories> {
     registry_repository: TokenRegistryRepository<R::TokenRegistry>,
@@ -71,9 +62,9 @@ impl<R: Repositories> TokenRegistryService<R> {
 
                 // Fetch standards separately — optional, default to [ICRC1] on failure
                 let supported_standards = icrc_service
-                    .icrc_1_supported_standards()
+                    .icrc_10_supported_standards()
                     .await
-                    .map(parse_supported_standards)
+                    .map(|r| IcrcStandards::from(r).0)
                     .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
 
                 let registry_token = RegistryToken {
@@ -119,9 +110,9 @@ impl<R: Repositories> TokenRegistryService<R> {
 
                 // Fetch standards separately — optional, default to [ICRC1] on failure
                 let supported_standards = icrc_service
-                    .icrc_1_supported_standards()
+                    .icrc_10_supported_standards()
                     .await
-                    .map(parse_supported_standards)
+                    .map(|r| IcrcStandards::from(r).0)
                     .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
 
                 current_record.symbol = symbol;
