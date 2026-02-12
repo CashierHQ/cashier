@@ -219,7 +219,7 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
 
         assert_eq!(result.link.link_state, LinkStateShared::Active);
 
-        // Asset: Link account balance
+        // Assert: Link account balance
         let link_account = link_id_to_account(ctx, &link_id);
         let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
@@ -228,6 +228,20 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
             icp_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
             "Link balance is incorrect"
+        );
+
+        // Assert: Treasury account balance
+        let fee_treasury_account = fee_treasury_account();
+        let icp_fee_treasury_balance = icp_ledger_client
+            .balance_of(&fee_treasury_account)
+            .await
+            .unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            icp_fee_treasury_balance,
+            Nat::from(CREATE_LINK_FEE),
+            "Fee treasury balance is incorrect"
         );
 
         Ok(())
