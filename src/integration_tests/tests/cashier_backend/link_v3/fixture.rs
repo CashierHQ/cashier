@@ -30,7 +30,7 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
-use cashier_common::constant::CREATE_LINK_FEE;
+use cashier_common::{constant::CREATE_LINK_FEE, fee_calculator::icrc2};
 use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
@@ -307,8 +307,12 @@ impl LinkTestFixtureV3 {
                     },
                     intent_type: IntentTypeShared::Send,
                     amount: amount.clone(),
-                    total_amount: Some(amount.clone()),
-                    network_fee: Some(Nat::from(2u64) * token_fee.clone()),
+                    total_amount: Some(icrc2::total_amount_icrc2_send_intent(
+                        amount,
+                        token_fee.clone(),
+                        1,
+                    )),
+                    network_fee: Some(icrc2::network_fee_icrc2_send_intent(token_fee, 1)),
                     user_fee: None,
                     source_address: creator,
                     source_address_type: AddressTypeShared::Creator,
@@ -328,8 +332,12 @@ impl LinkTestFixtureV3 {
                         },
                         intent_type: IntentTypeShared::Send,
                         amount: amount.clone(),
-                        total_amount: Some(amount.clone()),
-                        network_fee: Some(Nat::from(2u64) * token_fee.clone()),
+                        total_amount: Some(icrc2::total_amount_icrc2_send_intent(
+                            amount,
+                            token_fee.clone(),
+                            1,
+                        )),
+                        network_fee: Some(icrc2::network_fee_icrc2_send_intent(token_fee, 1)),
                         user_fee: None,
                         source_address: creator,
                         source_address_type: AddressTypeShared::Creator,

@@ -55,7 +55,7 @@ impl WithdrawAction {
             get_batch_tokens_balance_for_link_v3(link, canister_id).await?;
         let token_fee_map = get_batch_tokens_fee_for_link_v3(link).await?;
         let source_address = canister_id;
-        let source_account = Some(link_account.clone());
+        let source_account = Some(link_account);
         let source_address_type = AddressTypeV3::Link;
         let dest_address = link.creator;
         let dest_account = None;
@@ -92,6 +92,7 @@ impl WithdrawAction {
                     dest_address,
                     dest_account,
                     dest_address_type.clone(),
+                    action.id.clone(),
                     created_at,
                 )
             })

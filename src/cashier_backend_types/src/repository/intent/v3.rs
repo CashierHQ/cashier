@@ -164,6 +164,7 @@ impl IntentV3 {
         dest_address: Principal,
         dest_account: Option<Account>,
         dest_address_type: AddressTypeV3,
+        action_id: String,
         created_at: u64,
     ) -> Self {
         IntentV3 {
@@ -183,7 +184,7 @@ impl IntentV3 {
             dest_address_type,
             intent_tx_data: None,
             dependencies: vec![],
-            action_id: "".to_string(),
+            action_id,
             state: IntentState::Created,
             created_at,
         }

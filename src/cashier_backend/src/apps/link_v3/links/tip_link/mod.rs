@@ -108,9 +108,9 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
                 canister_id,
                 transaction_manager,
             ))),
-            _ => Err(CanisterError::HandleLogicError(format!(
-                "Unsupported link state"
-            ))),
+            _ => Err(CanisterError::HandleLogicError(
+                "Unsupported link state".to_string(),
+            )),
         }
     }
 }

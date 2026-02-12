@@ -41,7 +41,7 @@ impl ReceiveAction {
     ) -> Result<Self, CanisterError> {
         let link_account = get_link_account(&link.id, canister_id)?;
         let source_address = canister_id;
-        let source_account = Some(link_account.clone());
+        let source_account = Some(link_account);
         let source_address_type = AddressTypeV3::Link;
         let dest_address = receiver_id;
         let dest_account = None;
@@ -60,6 +60,7 @@ impl ReceiveAction {
                     dest_address,
                     dest_account,
                     dest_address_type.clone(),
+                    action.id.clone(),
                     created_at,
                 )
             })
