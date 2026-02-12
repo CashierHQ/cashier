@@ -31,7 +31,8 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
                     asset: Asset::IC {
                         address: intent.asset.address,
                     },
-                    amount: intent.amount.clone(),
+                    amount: (intent.total_amount.clone().unwrap_or_default()
+                        + intent.network_fee.clone().unwrap_or_default()),
                 };
                 self.assemble_icrc1_wallet_transfer(ts, transfer_data)
             }
@@ -43,9 +44,12 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
                     asset: Asset::IC {
                         address: intent.asset.address,
                     },
-                    amount: intent.amount.clone(),
-                    approve_amount: Some(intent.amount.clone()),
-                    actual_amount: Some(intent.amount.clone()),
+                    amount: intent.total_amount.clone().unwrap_or_default(),
+                    approve_amount: Some(
+                        intent.total_amount.clone().unwrap_or_default()
+                            + intent.network_fee.clone().unwrap_or_default(),
+                    ),
+                    actual_amount: Some(intent.total_amount.clone().unwrap_or_default()),
                 };
                 self.assemble_icrc2_wallet_transfer(ts, transfer_from_data)
             }

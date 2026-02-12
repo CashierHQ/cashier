@@ -3,6 +3,7 @@
 
 use candid::Principal;
 use cashier_backend_types::{
+    dto::link::GetLinkOptions,
     error::CanisterError,
     link_v3::link_result::LinkProcessActionResult,
     repository::{
@@ -216,6 +217,36 @@ impl<R: Repositories> ActionServiceV3<R> {
             };
 
             self.user_link_action_repository.update(link_action);
+        }
+    }
+
+    pub fn get_first_action(
+        &self,
+        caller: &Principal,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> (Option<ActionV3>, Option<LinkUserState>) {
+        match options {
+            Some(opts) => {
+                let action_type = opts.action_type;
+
+                let user_link_actions = self
+                    .user_link_action_repository
+                    .get_actions_by_user_link_and_type(*caller, link_id, &action_type);
+
+                if let Some(actions) = &user_link_actions {
+                    if let Some(link_action) = actions.first() {
+                        let action = self.action_repository.get(&link_action.action_id.clone());
+
+                        (action, link_action.link_user_state.clone())
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                }
+            }
+            None => (None, None),
         }
     }
 }

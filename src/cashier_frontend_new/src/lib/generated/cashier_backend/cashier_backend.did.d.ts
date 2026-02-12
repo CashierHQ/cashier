@@ -2,23 +2,51 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface Action {
+  'id' : string,
+  'creator' : Principal,
+  'intents' : Array<Intent>,
+  'link_id' : [] | [string],
+  'action_type' : ActionType_1,
+  'action_state' : IntentState_1,
+  'creator_address_type' : AddressType,
+  'intent_ids' : [] | [Array<string>],
+}
 export interface ActionDto {
   'id' : string,
   'icrc_112_requests' : [] | [Array<Array<Icrc112Request>>],
   'creator' : Principal,
   'intents' : Array<IntentDto>,
-  'type' : ActionType,
-  'state' : IntentState,
+  'type' : ActionType_1,
+  'state' : IntentState_1,
 }
 export type ActionType = { 'Withdraw' : null } |
   { 'Send' : null } |
   { 'CreateLink' : null } |
   { 'Receive' : null };
+export type ActionType_1 = { 'Withdraw' : null } |
+  { 'Send' : null } |
+  { 'CreateLink' : null } |
+  { 'Receive' : null };
+export type AddressType = { 'Link' : null } |
+  { 'User' : null } |
+  { 'Treasury' : null } |
+  { 'Creator' : null };
 export type Asset = { 'IC' : { 'address' : Principal } };
+export interface AssetInfo {
+  'asset' : Asset_1,
+  'label' : string,
+  'amount' : bigint,
+}
 export interface AssetInfoDto {
   'asset' : Asset,
   'amount_per_link_use_action' : bigint,
   'label' : string,
+}
+export interface Asset_1 {
+  'token_standard' : [] | [TokenStandard],
+  'address' : Principal,
+  'network_fee' : [] | [bigint],
 }
 export interface BuildData {
   'rustc_semver' : string,
@@ -68,15 +96,33 @@ export interface CashierBackendInitData {
 export type Chain = { 'IC' : null };
 export interface CreateActionInput {
   'link_id' : string,
-  'action_type' : ActionType,
+  'action_type' : ActionType_1,
+}
+export interface CreateActionInputV3 { 'action' : Action, 'link_id' : string }
+export interface CreateActionResponseV3 {
+  'action' : Action,
+  'link' : Link,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export interface CreateLinkDto { 'action' : ActionDto, 'link' : LinkDto }
 export interface CreateLinkInput {
   'title' : string,
   'asset_info' : Array<AssetInfoDto>,
-  'link_type' : LinkType,
+  'link_type' : LinkType_1,
   'link_use_action_max_count' : bigint,
 }
+export interface CreateLinkInputV3 {
+  'title' : string,
+  'action' : Action,
+  'link_type' : LinkType_1,
+  'max_use' : bigint,
+}
+export interface CreateLinkResponseV3 {
+  'action' : Action,
+  'link' : Link,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
+}
+export interface DisableLinkResponseV3 { 'link' : Link }
 export type FromCallType = { 'Canister' : null } |
   { 'Wallet' : null };
 export interface GetLinkOptions { 'action_type' : ActionType }
@@ -84,6 +130,11 @@ export interface GetLinkResp {
   'action' : [] | [ActionDto],
   'link_user_state' : LinkUserStateDto,
   'link' : LinkDto,
+}
+export interface GetLinkResponseV3 {
+  'action' : [] | [Action],
+  'link_user_state' : [] | [LinkUserState],
+  'link' : Link,
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
   { 'Icrc1Transfer' : Icrc1Transfer } |
@@ -166,16 +217,35 @@ export interface Icrc2TransferFrom {
   'amount' : bigint,
   'spender' : Wallet,
 }
+export interface Intent {
+  'id' : string,
+  'user_fee' : [] | [bigint],
+  'total_amount' : [] | [bigint],
+  'asset' : Asset_1,
+  'dest_address_type' : AddressType,
+  'dest_address' : Principal,
+  'source_address' : Principal,
+  'intent_state' : IntentState_1,
+  'source_address_type' : AddressType,
+  'dependencies' : [] | [Array<string>],
+  'amount' : bigint,
+  'network_fee' : [] | [bigint],
+  'intent_type' : IntentType_1,
+}
 export interface IntentDto {
   'id' : string,
   'chain' : Chain,
   'task' : IntentTask,
   'type' : IntentType,
   'created_at' : bigint,
-  'state' : IntentState,
+  'state' : IntentState_1,
   'transactions' : Array<TransactionDto>,
 }
 export type IntentState = { 'Fail' : null } |
+  { 'Success' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null };
+export type IntentState_1 = { 'Fail' : null } |
   { 'Success' : null } |
   { 'Processing' : null } |
   { 'Created' : null };
@@ -184,12 +254,24 @@ export type IntentTask = { 'TransferWalletToLink' : null } |
   { 'TransferWalletToTreasury' : null };
 export type IntentType = { 'Transfer' : TransferData } |
   { 'TransferFrom' : TransferFromData };
+export type IntentType_1 = { 'Send' : null } |
+  { 'Receive' : null };
+export interface Link {
+  'id' : string,
+  'title' : string,
+  'creator' : Principal,
+  'asset_info' : Array<AssetInfo>,
+  'link_state' : LinkState_1,
+  'link_type' : LinkType_1,
+  'use_count' : bigint,
+  'max_use' : bigint,
+}
 export interface LinkDto {
   'id' : string,
   'title' : string,
   'creator' : Principal,
   'asset_info' : Array<AssetInfoDto>,
-  'link_type' : LinkType,
+  'link_type' : LinkType_1,
   'create_at' : bigint,
   'state' : LinkState,
   'link_use_action_max_count' : bigint,
@@ -199,7 +281,15 @@ export type LinkState = { 'Inactive' : null } |
   { 'Active' : null } |
   { 'CreateLink' : null } |
   { 'InactiveEnded' : null };
+export type LinkState_1 = { 'Ended' : null } |
+  { 'Inactive' : null } |
+  { 'Active' : null } |
+  { 'Created' : null };
 export type LinkType = { 'SendAirdrop' : null } |
+  { 'SendTip' : null } |
+  { 'ReceivePayment' : null } |
+  { 'SendTokenBasket' : null };
+export type LinkType_1 = { 'SendAirdrop' : null } |
   { 'SendTip' : null } |
   { 'ReceivePayment' : null } |
   { 'SendTokenBasket' : null };
@@ -230,6 +320,10 @@ export interface PaginateResultMetadata {
   'offset' : bigint,
   'limit' : bigint,
 }
+export interface PaginateResult_1 {
+  'metadata' : PaginateResultMetadata,
+  'data' : Array<Link>,
+}
 export type Permission = { 'Admin' : null };
 export interface ProcessActionDto {
   'action' : ActionDto,
@@ -237,32 +331,53 @@ export interface ProcessActionDto {
   'errors' : Array<string>,
   'is_success' : boolean,
 }
+export interface ProcessActionResponseV3 {
+  'action' : Action,
+  'link' : Link,
+  'errors' : Array<string>,
+  'is_success' : boolean,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
+}
 export interface ProcessActionV2Input { 'action_id' : string }
 export type Protocol = { 'IC' : IcTransaction };
 export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
+export type Result_10 = { 'Ok' : DisableLinkResponseV3 } |
+  { 'Err' : CanisterError };
+export type Result_11 = { 'Ok' : PaginateResult } |
+  { 'Err' : CanisterError };
+export type Result_12 = { 'Ok' : PaginateResult_1 } |
+  { 'Err' : CanisterError };
+export type Result_13 = { 'Ok' : ProcessActionDto } |
+  { 'Err' : CanisterError };
+export type Result_14 = { 'Ok' : ProcessActionResponseV3 } |
+  { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_3 = { 'Ok' : GetLinkResponseV3 } |
+  { 'Err' : CanisterError };
+export type Result_4 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_4 = { 'Ok' : ActionDto } |
+export type Result_5 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
-export type Result_5 = { 'Ok' : CreateLinkDto } |
+export type Result_6 = { 'Ok' : CreateActionResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_6 = { 'Ok' : LinkDto } |
+export type Result_7 = { 'Ok' : CreateLinkDto } |
   { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : PaginateResult } |
+export type Result_8 = { 'Ok' : CreateLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : ProcessActionDto } |
+export type Result_9 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
+export type TokenStandard = { 'ICRC1' : null } |
+  { 'ICRC2' : null };
 export interface TransactionDto {
   'id' : string,
   'protocol' : Protocol,
   'from_call_type' : FromCallType,
   'created_at' : bigint,
-  'state' : IntentState,
+  'state' : IntentState_1,
   'dependency' : [] | [Array<string>],
   'group' : number,
 }
@@ -377,6 +492,10 @@ export interface _SERVICE {
     [string, [] | [GetLinkOptions]],
     Result_2
   >,
+  'get_link_details_v3' : ActorMethod<
+    [string, [] | [GetLinkOptions]],
+    Result_3
+  >,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -384,7 +503,7 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_3
+    Result_4
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
   /**
@@ -399,7 +518,16 @@ export interface _SERVICE {
    * * `Ok(ActionDto)` - The created action data
    * * `Err(CanisterError)` - If action creation fails or validation errors occur
    */
-  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_4>,
+  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_5>,
+  /**
+   * Creates a new action V3.
+   * # Arguments
+   * * `input` - Action creation data
+   * # Returns
+   * * `Ok(CreateActionResponse)` - The created action data
+   * * `Err(CanisterError)` - If action creation fails or validation errors occur
+   */
+  'user_create_action_v3' : ActorMethod<[CreateActionInputV3], Result_6>,
   /**
    * Creates a new link V2
    * # Arguments
@@ -408,7 +536,16 @@ export interface _SERVICE {
    * * `Ok(CreateLinkDto)` - The created link data
    * * `Err(CanisterError)` - If link creation fails or validation errors occur
    */
-  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_5>,
+  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_7>,
+  /**
+   * Creates a new link V3
+   * # Arguments
+   * * `input` - Link creation data
+   * # Returns
+   * * `Ok(CreateLinkResponseV3)` - The created link data
+   * * `Err(CanisterError)` - If link creation fails or validation errors occur
+   */
+  'user_create_link_v3' : ActorMethod<[CreateLinkInputV3], Result_8>,
   /**
    * Disables an existing link V2
    * # Arguments
@@ -417,7 +554,8 @@ export interface _SERVICE {
    * * `Ok(LinkDto)` - The disabled link data
    * * `Err(CanisterError)` - If disabling fails or unauthorized
    */
-  'user_disable_link_v2' : ActorMethod<[string], Result_6>,
+  'user_disable_link_v2' : ActorMethod<[string], Result_9>,
+  'user_disable_link_v3' : ActorMethod<[string], Result_10>,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
    * 
@@ -431,7 +569,8 @@ export interface _SERVICE {
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(CanisterError)` - Error message if retrieval fails
    */
-  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_7>,
+  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_11>,
+  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_12>,
   /**
    * Processes a created action V2.
    * # Arguments
@@ -440,7 +579,8 @@ export interface _SERVICE {
    * * `Ok(ProcessActionDto)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_8>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_13>,
+  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_14>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

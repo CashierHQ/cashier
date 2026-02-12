@@ -8,19 +8,29 @@ use crate::apps::{
 use crate::repositories;
 use crate::repositories::Repositories;
 use candid::Principal;
+use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
+    dto::link::GetLinkOptions,
     error::CanisterError,
     link_v3::{
         dto::{
             action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
-            link::{CreateLinkInputV3, CreateLinkResponseV3},
+            link::{
+                CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
+            },
         },
         link_result::{LinkCreateActionResult, LinkProcessActionResult},
     },
     repository::{
-        action::v3::ActionV3, asset::v1::Asset, asset_info::v3::AssetInfoV3, intent::v3::IntentV3,
-        link::v1::LinkType, link_action::v1::LinkAction, user_link::v1::UserLink,
+        action::v3::ActionV3,
+        asset::v1::Asset,
+        asset_info::v3::AssetInfoV3,
+        intent::v3::IntentV3,
+        link::{v1::LinkType, v3::LinkState},
+        link_action::v1::LinkAction,
+        user_link::v1::UserLink,
     },
+    service::link::{PaginateInput, PaginateResult},
 };
 use cashier_shared::{
     AddressType as AddressTypeShared, Asset as AssetShared, AssetInfo as AssetInfoShared,
@@ -65,7 +75,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         creator_id: Principal,
         canister_id: Principal,
         created_at_ts: u64,
-    ) -> Result<CreateActionResponseV3, CanisterError> {
+    ) -> Result<CreateLinkResponseV3, CanisterError> {
         if input.action.action_type != cashier_shared::types::ActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
                 "Only CREATE action can be created when creating a link".to_string(),
@@ -111,7 +121,11 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             )
             .await?;
 
-        Ok(action_result)
+        Ok(CreateLinkResponseV3 {
+            link: action_result.link,
+            action: action_result.action,
+            icrc112_requests: action_result.icrc112_requests,
+        })
     }
 
     /// Creates a new action V3.
@@ -239,5 +253,107 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             is_success: result.process_action_result.is_success,
             errors: result.process_action_result.errors,
         })
+    }
+
+    pub async fn get_links(
+        &self,
+        caller: Principal,
+        input: Option<PaginateInput>,
+    ) -> Result<GetLinksResponseV3, CanisterError> {
+        let user_links = self
+            .user_link_repository
+            .get_links_by_user_id(&caller, &input.unwrap_or_default());
+
+        let link_ids = user_links
+            .data
+            .iter()
+            .map(|link_user| link_user.link_id.clone())
+            .collect();
+
+        let links = self.link_v3_repository.get_batch(link_ids);
+
+        let paginate_result = PaginateResult::new(links, user_links.metadata);
+
+        // format response
+        Ok(paginate_result.map(|link| link.to_shared()))
+    }
+
+    pub async fn get_link_details(
+        &self,
+        caller: Principal,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResponseV3, CanisterError> {
+        let link_model = self
+            .link_v3_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        // pick first Action and link_user_state
+        let (action, link_user_state) = self
+            .action_service
+            .get_first_action(&caller, link_id, options);
+
+        // build response dto
+        let link_shared = link_model.to_shared();
+        let action_shared: Option<ActionShared> = if let Some(action) = action {
+            let action_data = self
+                .action_service
+                .get_action_data(&action.id)
+                .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+
+            let create_action_result = self.transaction_manager.create_action(
+                link_id.to_string(),
+                action,
+                action_data.intents,
+                Some(action_data.intent_txs),
+            )?;
+
+            let action_shared = create_action_result
+                .action
+                .to_shared(create_action_result.intents);
+
+            Some(action_shared)
+        } else {
+            None
+        };
+
+        Ok(GetLinkResponseV3 {
+            link: link_shared,
+            action: action_shared,
+            link_user_state,
+        })
+    }
+
+    pub fn disable_link(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+    ) -> Result<DisableLinkResponseV3, CanisterError> {
+        let mut link = self
+            .link_v3_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can disable the link".to_string(),
+            ));
+        }
+
+        if link.state != LinkState::Active {
+            return Err(CanisterError::ValidationErrors(
+                "Only active links can be disabled".to_string(),
+            ));
+        }
+
+        link.state = LinkState::Inactive;
+        // update link in db
+        self.link_v3_repository.update(link.clone());
+
+        // format response
+        let link_shared = link.to_shared();
+
+        Ok(DisableLinkResponseV3 { link: link_shared })
     }
 }
