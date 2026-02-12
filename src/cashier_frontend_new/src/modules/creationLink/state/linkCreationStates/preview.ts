@@ -1,6 +1,10 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+import { buildCreateLinkInputV3 } from "$modules/creationLink/utils/createLinkInputV3Builder";
+import { actionStore } from "$modules/creationLink/state/actionStore.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { mapV3ActionToFrontend } from "$modules/links/utils/actionV3Mapper";
+import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
@@ -25,26 +29,48 @@ export class PreviewState implements LinkCreationState {
 
   // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
-    const result = await cashierBackendService.createLinkV2(
-      this.#link.createLinkData,
-    );
-
-    if (result.isErr()) {
-      throw new Error(`Link creation failed: ${result.error.message}`);
-    }
-
-    // remove temp link from local storage
-    if (this.#link.id)
-      tempLinkRepository.delete(
-        this.#link.id,
-        authState.account?.owner ?? "anon",
+    if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+      const inputResult = buildCreateLinkInputV3(
+        this.#link.createLinkData,
+        actionStore.action,
+      );
+      if (inputResult.isErr()) {
+        throw new Error(inputResult.error.message);
+      }
+      const result = await cashierBackendService.createLinkV3(inputResult.value);
+      if (result.isErr()) {
+        throw new Error(`Link creation failed: ${result.error.message}`);
+      }
+      const res = result.value;
+      if (this.#link.id)
+        tempLinkRepository.delete(
+          this.#link.id,
+          authState.account?.owner ?? "anon",
+        );
+      this.#link.id = res.link.id;
+      this.#link.state = new LinkCreatedState();
+      this.#link.link = mapV3LinkToFrontend(res.link);
+      this.#link.action = mapV3ActionToFrontend(res.action, res.icrc112_requests);
+    } else {
+      const result = await cashierBackendService.createLinkV2(
+        this.#link.createLinkData,
       );
 
-    // set id to backend link id
-    this.#link.id = result.value.link.id;
-    this.#link.state = new LinkCreatedState();
-    this.#link.link = LinkMapper.fromBackendType(result.value.link);
-    this.#link.action = ActionMapper.fromBackendType(result.value.action);
+      if (result.isErr()) {
+        throw new Error(`Link creation failed: ${result.error.message}`);
+      }
+
+      if (this.#link.id)
+        tempLinkRepository.delete(
+          this.#link.id,
+          authState.account?.owner ?? "anon",
+        );
+
+      this.#link.id = result.value.link.id;
+      this.#link.state = new LinkCreatedState();
+      this.#link.link = LinkMapper.fromBackendType(result.value.link);
+      this.#link.action = ActionMapper.fromBackendType(result.value.action);
+    }
   }
 
   // Go back to the add asset state

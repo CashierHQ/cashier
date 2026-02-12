@@ -328,6 +328,11 @@
         },
         "link_state": {
           "$ref": "#/definitions/LinkState"
+        },
+        "created_at_ts": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Creation timestamp in nanoseconds since Unix epoch (IC time)"
         }
       },
       "required": [

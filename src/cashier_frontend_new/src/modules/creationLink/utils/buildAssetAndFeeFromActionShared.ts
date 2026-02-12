@@ -61,7 +61,13 @@ export function buildAssetAndFeeFromActionShared(
   maxUse: number,
 ): AssetAndFeeList {
   return action.intents.map((intent) => {
-    const address = intent.type.payload.asset.address.toString();
+    const payloadAsset = intent.type?.payload?.asset;
+    const address = payloadAsset?.address?.toString();
+    if (!address) {
+      throw new Error(
+        `Intent ${intent.id} has invalid payload: missing asset.address`,
+      );
+    }
     const token = tokens[address];
     const direction: FlowDirectionValue = feeService.getFlowDirection(
       intent.type.payload,

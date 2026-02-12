@@ -45,6 +45,37 @@ class CanisterBackendService {
   }
 
   /**
+   * Returns a list of links for the current user using the V3 API.
+   * @param params Pagination parameters (offset, limit)
+   * @returns A Result containing paginated Link array and metadata or an Error.
+   */
+  async getLinksV3(
+    params: {
+      offset: number;
+      limit: number;
+    } = {
+      offset: 0,
+      limit: 100,
+    },
+  ): Promise<Result<cashierBackend.PaginateResult_1, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+    const response = await actor.user_get_links_v3(
+      toNullable({
+        offset: BigInt(params.offset),
+        limit: BigInt(params.limit),
+      }),
+    );
+
+    return responseToResult(response)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
    * Returns a list of links for the current user.
    * @param offset The offset for pagination.
    * @param limit The maximum number of links to return.
@@ -224,6 +255,27 @@ class CanisterBackendService {
   }
 
   /**
+   * Disable an existing link using the V3 API.
+   * @param linkId The ID of the link to disable.
+   * @returns A Result containing DisableLinkResponseV3 or an Error.
+   */
+  async disableLinkV3(
+    linkId: string,
+  ): Promise<Result<cashierBackend.DisableLinkResponseV3, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_disable_link_v3(linkId);
+
+    return responseToResult(response)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
    * Create a new action using the v2 API format.
    * @param input The CreateActionInput containing action creation details.
    * @returns A Result containing ActionDto or an Error.
@@ -280,6 +332,32 @@ class CanisterBackendService {
         | { Err: cashierBackend.CanisterError },
     )
       .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Retrieve a single link by id using the V3 API.
+   * @param id The ID of the link to retrieve.
+   * @param options Optional GetLinkOptions (e.g. action_type for scoped details).
+   * @param actorOptions Optional { anonymous?: boolean } for unauthenticated reads.
+   * @returns A Result containing GetLinkResponseV3 or an Error.
+   */
+  async getLinkDetailsV3(
+    id: string,
+    options?: cashierBackend.GetLinkOptions,
+    actorOptions?: {
+      anonymous?: boolean;
+    },
+  ): Promise<Result<cashierBackend.GetLinkResponseV3, Error>> {
+    const actor = this.#getActor({
+      anonymous: actorOptions?.anonymous,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+    const response = await actor.get_link_details_v3(id, toNullable(options));
+
+    return responseToResult(response)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 

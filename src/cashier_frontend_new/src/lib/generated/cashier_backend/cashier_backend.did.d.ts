@@ -265,6 +265,7 @@ export interface Link {
   'link_type' : LinkType_1,
   'use_count' : bigint,
   'max_use' : bigint,
+  'created_at_ts'?: bigint,
 }
 export interface LinkDto {
   'id' : string,

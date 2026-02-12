@@ -4,6 +4,7 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { LinkStep } from "$modules/links/types/linkStep";
 
   let {
     linkId,
@@ -35,7 +36,13 @@
           new LinkCreationStore(tempLinkResult.value),
         );
       } else {
-        context.linkCreationStore = null;
+        // Do not clear store when link was successfully created (temp link was deleted)
+        const existing = context.linkCreationStore;
+        const isInCreatedState =
+          existing && "state" in existing && existing.state?.step === LinkStep.CREATED;
+        if (!isInCreatedState) {
+          context.linkCreationStore = null;
+        }
       }
       context.setHasTempLinkLoadAttempted(true);
     } else if (!tempLinkId) {

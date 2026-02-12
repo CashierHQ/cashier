@@ -17,7 +17,7 @@
 	import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
 	import { toast } from "svelte-sonner";
 	import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
-	import { actionStore } from "../../state/actionStore.svelte";
+	import { actionStore } from "$modules/creationLink/state/actionStore.svelte";
 
 	const {
 		link,
@@ -279,50 +279,7 @@
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
-	<!-- Shared Package Test Badge -->
-	<div
-		class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center gap-2"
-	>
-		<span class="text-2xl">🧪</span>
-		<div>
-			<p class="text-sm font-semibold text-purple-900">Shared Package Test</p>
-			<p class="text-xs text-purple-700">
-				Testing Action object and fee calculations
-			</p>
-		</div>
-	</div>
 
-	<!-- Action Debug Info -->
-	{#if action}
-		<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-xs">
-			<p class="font-semibold text-blue-900 mb-2">🧪 Shared Package - Action Object:</p>
-			<div class="space-y-1 text-blue-700">
-				<p><span class="font-medium">ID:</span> {action.id.substring(0, 8)}...</p>
-				<p><span class="font-medium">Type:</span> {action.action_type}</p>
-				<p><span class="font-medium">State:</span> {action.action_state}</p>
-				<p><span class="font-medium">Intents:</span> {action.intents.length}</p>
-			</div>
-			{#if intents.length > 0}
-				<div class="mt-2 pt-2 border-t border-blue-200">
-					<p class="font-semibold text-blue-900 mb-1">Intents:</p>
-					{#each intents as intent, i}
-						<p class="text-blue-700">
-							{i + 1}. {intent.source_address_type} → {intent.dest_address_type}
-						</p>
-					{/each}
-				</div>
-			{/if}
-		</div>
-		<div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-xs">
-			<p class="font-semibold text-green-900 mb-2">
-				✓ Fee calculations using calculateIntentFees() from shared package
-			</p>
-			<p class="text-green-700">
-				Preview page will show fees computed by the shared package instead of
-				frontend logic
-			</p>
-		</div>
-	{/if}
 
 	<div class="input-label-field-container space-y-1">
 		<div class="flex w-full items-center">

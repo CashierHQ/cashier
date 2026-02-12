@@ -6,6 +6,10 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkType } from "$modules/links/types/link/linkType";
+  import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { mapV3ProcessActionResult } from "$modules/links/utils/actionV3Mapper";
+  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { onMount } from "svelte";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
@@ -31,10 +35,22 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    if (!linkDetailStore) {
-      throw new Error("LinkDetailStore is not initialized");
+    if (linkDetailStore?.action && linkDetailStore?.link && link.createLinkData.linkType !== LinkType.TIP_SHARED_TEST) {
+      return await linkDetailStore.processAction();
     }
-    return await linkDetailStore.processAction();
+    if (link.id && link.action && link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+      const result = await cashierBackendService.processActionV3({
+        link_id: link.id,
+        action_id: link.action.id,
+      });
+      if (result.isErr()) {
+        throw new Error(`Failed to activate link: ${result.error.message}`);
+      }
+      linkListStore.refresh();
+      linkDetailStore?.query.refresh();
+      return mapV3ProcessActionResult(result.unwrap() as never);
+    }
+    throw new Error("LinkDetailStore or link data is not ready");
   }
 
   $effect(() => {
@@ -51,7 +67,10 @@
   onMount(() => {
     // Initialize LinkDetailStore with the created link ID
     if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
+      linkDetailStore = new LinkDetailStore({
+        id: link.id,
+        linkType: link.createLinkData.linkType,
+      });
     }
 
     if (link.action && link.action.state !== ActionState.SUCCESS) {
@@ -75,11 +94,11 @@
   </div>
 </div>
 
-{#if showTxCart && linkDetailStore && linkDetailStore.action}
+{#if showTxCart && linkDetailStore && (linkDetailStore.action ?? link.action)}
   <LinkTxCart
     bind:isOpen={showTxCart}
     source={{
-      action: linkDetailStore.action,
+      action: linkDetailStore.action ?? link.action!,
       handleProcessAction,
       linkType: link.createLinkData.linkType,
       maxUse: link.createLinkData.maxUse,

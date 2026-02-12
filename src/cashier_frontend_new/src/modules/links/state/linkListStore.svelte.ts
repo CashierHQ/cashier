@@ -1,6 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
+import { mapV3LinkToFrontend } from "../utils/linkV3Mapper";
 import { ONBOARDING_DISMISSED_KEY } from "../constants";
 import { Link, LinkMapper } from "../types/link/link";
 import type { UnifiedLinkList } from "../types/linkList";
@@ -8,9 +9,10 @@ import { UnifiedLinkItemMapper } from "../types/linkList";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 /**
- * Store managing the list of links
- * This is persisted in localStorage and auto-refetched every 15 seconds
- * Clear on logout/login to avoid data leakage between users
+ * Store managing the list of links.
+ * Fetches from both V2 API (standard links) and V3 API (TIP_SHARED_TEST etc.)
+ * to show all user links in a unified list.
+ * Persisted in localStorage, auto-refetched every 15 seconds.
  */
 export class LinkListStore {
   #linkListQuery;
@@ -28,12 +30,26 @@ export class LinkListStore {
           return [];
         }
 
-        const res = await cashierBackendService.getLinks();
-        if (res.isErr()) {
-          throw res.unwrapErr();
-        }
-        const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
-        return links;
+        const [v2Res, v3Res] = await Promise.all([
+          cashierBackendService.getLinks(),
+          cashierBackendService.getLinksV3(),
+        ]);
+
+        const v2Links: Link[] = v2Res.isOk()
+          ? v2Res.unwrap().map((b) => LinkMapper.fromBackendType(b))
+          : [];
+
+        const v3Links: Link[] =
+          v3Res.isOk() && v3Res.unwrap().data
+            ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
+            : [];
+
+        const v2Ids = new Set(v2Links.map((l) => l.id));
+        const v3Only = v3Links.filter((l) => !v2Ids.has(l.id));
+        return [
+          // ...v2Links,
+          ...v3Only,
+        ];
       },
       watch: [() => authState.account],
       refetchInterval: 15 * 1000, // 15 seconds

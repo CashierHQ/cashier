@@ -36,6 +36,20 @@ class ActionStore {
 		}
 	}
 
+	/** Replace all intents. Used when building Action for V3 create flow. */
+	setIntents(intents: Intent[]) {
+		if (this._action) {
+			this._action.intents = intents;
+		}
+	}
+
+	/** Update creator principal. Used when building Action with real user identity. */
+	updateCreator(creator: Principal) {
+		if (this._action) {
+			this._action.creator = creator;
+		}
+	}
+
 	// Update action state
 	updateActionState(state: ActionState) {
 		if (this._action) {

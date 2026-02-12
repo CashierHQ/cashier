@@ -288,6 +288,7 @@ export const idlFactory = ({ IDL }) => {
     'link_type' : LinkType_1,
     'use_count' : IDL.Nat64,
     'max_use' : IDL.Nat64,
+    'created_at_ts' : IDL.Opt(IDL.Nat64),
   });
   const GetLinkResponseV3 = IDL.Record({
     'action' : IDL.Opt(Action),

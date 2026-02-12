@@ -19,14 +19,17 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
 export class LinkDetailStore {
   #linkDetailQuery;
   #id: string;
+  #linkType?: string;
 
-  constructor({ id }: { id: string }) {
+  constructor({ id, linkType }: { id: string; linkType?: string }) {
     this.#id = id;
+    this.#linkType = linkType;
     this.#linkDetailQuery = managedState<LinkAction>({
       queryFn: async () => {
         const linkDetail = await detailLinkService.fetchLinkDetail({
           id,
           anonymous: !authState.isLoggedIn,
+          linkType: this.#linkType,
         });
         if (linkDetail.isErr()) {
           throw linkDetail.error;
@@ -90,6 +93,14 @@ export class LinkDetailStore {
    */
   get id() {
     return this.#id;
+  }
+
+  /**
+   * Get link type (e.g. TIP_SHARED_TEST) when provided to constructor.
+   * Used to select V2 vs V3 API for processAction.
+   */
+  get linkType() {
+    return this.#linkType;
   }
 
   /**

@@ -236,4 +236,6 @@ export interface Link {
   /** Number of times the link has been used */
   use_count: number;
   link_state: LinkState;
+  /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
+  created_at_ts?: number;
 }
