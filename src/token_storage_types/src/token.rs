@@ -241,6 +241,13 @@ pub struct TokenListResponse {
     pub perference: Option<UserPreference>,
 }
 
+/// The input for updating a token's supported standards
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UpdateTokenStandardsInput {
+    pub token_id: TokenId,
+    pub supported_standards: Vec<IcrcStandard>,
+}
+
 /// The input for updating a token's status (enable/disable)
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct UpdateTokenBalanceInput {

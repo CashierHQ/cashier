@@ -122,6 +122,10 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
   });
+  const UpdateTokenStandardsInput = IDL.Record({
+    'token_id' : TokenId,
+    'supported_standards' : IDL.Vec(IcrcStandard),
+  });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
     'git_branch' : IDL.Text,
@@ -262,6 +266,11 @@ export const idlFactory = ({ IDL }) => {
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
         [Result_6],
+        [],
+      ),
+    'admin_update_token_standards' : IDL.Func(
+        [UpdateTokenStandardsInput],
+        [Result_3],
         [],
       ),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),

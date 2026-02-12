@@ -173,6 +173,30 @@ impl<R: Repositories> TokenRegistryService<R> {
         Ok(token_ids)
     }
 
+    /// Update supported standards for a token (admin override)
+    pub fn update_token_standards(
+        &mut self,
+        token_id: TokenId,
+        supported_standards: Vec<IcrcStandard>,
+    ) -> Result<(), String> {
+        let Some(mut token) = self.registry_repository.get_token(&token_id) else {
+            return Err(format!("Token with id '{token_id:?}' not found in registry"));
+        };
+
+        match &mut token.details {
+            ChainTokenDetails::IC {
+                supported_standards: current,
+                ..
+            } => {
+                *current = supported_standards;
+            }
+        }
+
+        self.registry_repository
+            .register_token(token, &mut self.metadata_repository)?;
+        Ok(())
+    }
+
     /// Delete all tokens from the registry
     pub fn delete_all(&mut self) -> Result<(), String> {
         self.registry_repository.delete_all()
