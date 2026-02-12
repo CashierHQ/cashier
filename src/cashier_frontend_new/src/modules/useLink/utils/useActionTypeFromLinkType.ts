@@ -18,6 +18,7 @@ export function findUseActionTypeFromLinkType(
 ): ActionTypeValue | null {
   switch (linkType) {
     case LinkType.TIP:
+    case LinkType.TIP_SHARED_TEST:
     case LinkType.AIRDROP:
       return ActionType.RECEIVE;
     case LinkType.TOKEN_BASKET:

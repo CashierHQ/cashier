@@ -53,6 +53,7 @@ export class ActionTypeMapper {
     switch (a) {
       case LinkType.AIRDROP:
       case LinkType.TIP:
+      case LinkType.TIP_SHARED_TEST:
       case LinkType.TOKEN_BASKET:
         return ActionType.RECEIVE;
       case LinkType.RECEIVE_PAYMENT:

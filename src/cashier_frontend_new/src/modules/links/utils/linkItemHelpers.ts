@@ -58,6 +58,8 @@ export function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
       return "/token-basket-default.svg";
     case LinkType.RECEIVE_PAYMENT:
       return "/receive-payment-default.svg";
+    case LinkType.TIP_SHARED_TEST:
+      return "/tip-link-default.svg";
     default:
       assertUnreachable(linkType);
   }
@@ -73,13 +75,15 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
       return "Receive Payment";
     case LinkType.TOKEN_BASKET:
       return "Send Token Basket";
+    case LinkType.TIP_SHARED_TEST:
+      return "Send Tip (Test)";
     default:
       assertUnreachable(linkType);
   }
 }
 
 /**
- * Check if link type is a send type (TIP, AIRDROP, TOKEN_BASKET)
+ * Check if link type is a send type (TIP, AIRDROP, TOKEN_BASKET, TIP_SHARED_TEST)
  * @param linkType - Link type to check
  * @returns true if link type is a send type
  */
@@ -87,7 +91,8 @@ export function isSendLinkType(linkType: LinkTypeValue): boolean {
   return (
     linkType === LinkType.TIP ||
     linkType === LinkType.AIRDROP ||
-    linkType === LinkType.TOKEN_BASKET
+    linkType === LinkType.TOKEN_BASKET ||
+    linkType === LinkType.TIP_SHARED_TEST
   );
 }
 

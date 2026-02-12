@@ -12,6 +12,7 @@ import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
+import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -50,6 +51,8 @@ export class PreviewState implements LinkCreationState {
   async goBack(): Promise<void> {
     if (this.#link.createLinkData.linkType === LinkType.TIP) {
       this.#link.state = new AddAssetTipLinkState(this.#link);
+    } else if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+      this.#link.state = new AddAssetTipSharedTestState(this.#link);
     } else if (this.#link.createLinkData.linkType === LinkType.AIRDROP) {
       this.#link.state = new AddAssetAirdropState(this.#link);
     } else if (this.#link.createLinkData.linkType === LinkType.TOKEN_BASKET) {

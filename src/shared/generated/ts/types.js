@@ -32,7 +32,7 @@ export const IntentType = {
 export const IntentState = {
     Created: 'Created',
     Processing: 'Processing',
-    Completed: 'Completed',
+    Success: 'Success',
     Failed: 'Failed',
 };
 /**
@@ -50,6 +50,9 @@ export const IntentParticipants = {
  */
 export const ActionType = {
     CreateLink: 'CreateLink',
+    Withdraw: 'Withdraw',
+    Send: 'Send',
+    Receive: 'Receive',
 };
 /**
  * Current state of an action
@@ -57,7 +60,7 @@ export const ActionType = {
 export const ActionState = {
     Created: 'Created',
     Processing: 'Processing',
-    Completed: 'Completed',
+    Success: 'Success',
     Failed: 'Failed',
 };
 //# sourceMappingURL=types.js.map

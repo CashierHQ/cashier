@@ -4,6 +4,7 @@
   import TipCompleted from "$modules/useLink/components/tiplink/Completed.svelte";
   import AirdropCompleted from "$modules/useLink/components/airdrop/Completed.svelte";
   import BasketCompleted from "$modules/useLink/components/tokenbasket/Completed.svelte";
+  import TipSharedTestCompleted from "$modules/useLink/components/tipSharedTest/Completed.svelte";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 
@@ -23,6 +24,9 @@
   {/if}
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketCompleted {linkDetail} />
+  {/if}
+  {#if linkType === LinkType.TIP_SHARED_TEST}
+    <TipSharedTestCompleted {linkDetail} />
   {/if}
   <!-- TODO: Other link types will be added here -->
   <!-- 

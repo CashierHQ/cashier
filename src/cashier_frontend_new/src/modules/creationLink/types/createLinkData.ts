@@ -78,11 +78,12 @@ export class CreateLinkDataMapper {
     if (
       input.linkType !== LinkType.TIP &&
       input.linkType !== LinkType.AIRDROP &&
-      input.linkType !== LinkType.TOKEN_BASKET
+      input.linkType !== LinkType.TOKEN_BASKET &&
+      input.linkType !== LinkType.TIP_SHARED_TEST
     ) {
       return Err(
         new Error(
-          "Only Tip, Airdrop, and Token Basket link types are supported currently",
+          "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
         ),
       );
     }
@@ -101,6 +102,8 @@ export class CreateLinkDataMapper {
       let assetLabel: string;
       if (input.linkType === LinkType.TIP) {
         assetLabel = "SEND_TIP_ASSET";
+      } else if (input.linkType === LinkType.TIP_SHARED_TEST) {
+        assetLabel = "SEND_TIP_ASSET"; // Same as TIP - backend treats it the same
       } else if (input.linkType === LinkType.AIRDROP) {
         assetLabel = "SEND_AIRDROP_ASSET";
       } else if (input.linkType === LinkType.TOKEN_BASKET) {

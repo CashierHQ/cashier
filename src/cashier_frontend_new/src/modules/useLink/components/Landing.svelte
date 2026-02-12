@@ -4,6 +4,7 @@
   import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
   import AirdropLanding from "$modules/useLink/components/airdrop/Landing.svelte";
   import BasketLanding from "$modules/useLink/components/tokenbasket/Landing.svelte";
+  import TipSharedTestLanding from "$modules/useLink/components/tipSharedTest/Landing.svelte";
 
   const {
     userLink,
@@ -29,6 +30,9 @@
   {/if}
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketLanding {userLink} {openLoginModal} />
+  {/if}
+  {#if linkType === LinkType.TIP_SHARED_TEST}
+    <TipSharedTestLanding {userLink} {openLoginModal} />
   {/if}
   <!-- TODO: Other link types will be added here -->
   <!-- 

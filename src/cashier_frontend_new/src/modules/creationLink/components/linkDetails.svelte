@@ -69,6 +69,16 @@
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
+    // Use shared package calculations for TIP_SHARED_TEST template
+    if (link.createLinkData.linkType === "TIP_SHARED_TEST") {
+      return feeService.forecastLinkCreationFeesShared(
+        link.createLinkData.assets,
+        link.createLinkData.maxUse,
+        tokens,
+      );
+    }
+
+    // Use old frontend calculations for other link types
     return feeService.forecastLinkCreationFees(
       link.createLinkData.assets,
       link.createLinkData.maxUse,

@@ -30,7 +30,7 @@ export type IntentType = typeof IntentType[keyof typeof IntentType];
 export declare const IntentState: {
     readonly Created: "Created";
     readonly Processing: "Processing";
-    readonly Completed: "Completed";
+    readonly Success: "Success";
     readonly Failed: "Failed";
 };
 export type IntentState = typeof IntentState[keyof typeof IntentState];
@@ -50,6 +50,9 @@ export type IntentParticipants = typeof IntentParticipants[keyof typeof IntentPa
  */
 export declare const ActionType: {
     readonly CreateLink: "CreateLink";
+    readonly Withdraw: "Withdraw";
+    readonly Send: "Send";
+    readonly Receive: "Receive";
 };
 export type ActionType = typeof ActionType[keyof typeof ActionType];
 /**
@@ -58,7 +61,7 @@ export type ActionType = typeof ActionType[keyof typeof ActionType];
 export declare const ActionState: {
     readonly Created: "Created";
     readonly Processing: "Processing";
-    readonly Completed: "Completed";
+    readonly Success: "Success";
     readonly Failed: "Failed";
 };
 export type ActionState = typeof ActionState[keyof typeof ActionState];
@@ -98,7 +101,7 @@ export interface Intent {
     dest_address_type: AddressType;
     intent_token_standard: TokenStandard;
     /** IDs of intents this intent depends on */
-    dependency?: string[];
+    dependencies?: string[];
     intent_state: IntentState;
 }
 /**
