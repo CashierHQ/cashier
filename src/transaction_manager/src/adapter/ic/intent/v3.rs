@@ -7,9 +7,11 @@ use cashier_backend_types::{
     repository::{
         asset::{v1::Asset, v3::TokenStandardV3},
         common::{AddressTypeV3, Wallet},
-        intent::v1::{TransferData, TransferFromData},
-        intent::v3::IntentV3,
-        transaction::v1::Transaction,
+        intent::{
+            v1::{TransferData, TransferFromData},
+            v3::IntentV3,
+        },
+        transaction::v1::{FromCallType, Transaction},
     },
 };
 
@@ -62,6 +64,14 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
             }
         }?;
 
+        let from_call_type: FromCallType = {
+            if intent.source_address_type == AddressTypeV3::Link {
+                FromCallType::Canister
+            } else {
+                FromCallType::Wallet
+            }
+        };
+
         match intent_standard {
             TokenStandardV3::ICRC1 => {
                 let transfer_data = TransferData {
@@ -71,7 +81,12 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
                     amount: (intent.total_amount.clone().unwrap_or_default()
                         + intent.network_fee.clone().unwrap_or_default()),
                 };
-                self.assemble_icrc1_wallet_transfer(ts, transfer_data)
+                match from_call_type {
+                    FromCallType::Canister => {
+                        self.assemble_icrc1_canister_transfer(ts, transfer_data)
+                    }
+                    FromCallType::Wallet => self.assemble_icrc1_wallet_transfer(ts, transfer_data),
+                }
             }
             TokenStandardV3::ICRC2 => {
                 let transfer_from_data = TransferFromData {

@@ -60,7 +60,7 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
             ));
         }
 
-        let create_action = CreateActionV3::create(&link, canister_id, action, intents)?;
+        let create_action = CreateActionV3::create(&link, canister_id, action, &intents)?;
         let create_action_result =
             transaction_manager.create_action(create_action.action, create_action.intents, None)?;
 

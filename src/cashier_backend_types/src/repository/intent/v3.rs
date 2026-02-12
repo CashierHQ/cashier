@@ -158,6 +158,7 @@ impl IntentV3 {
 
     pub fn from_asset_info(
         asset_info: &AssetInfoV3,
+        intent_type: IntentTypeV3,
         source_address: Principal,
         source_account: Option<Account>,
         source_address_type: AddressTypeV3,
@@ -170,10 +171,10 @@ impl IntentV3 {
         IntentV3 {
             id: "".to_string(),
             label: "".to_string(),
-            intent_type: IntentTypeV3::Send,
+            intent_type,
             asset: asset_info.asset.clone(),
             amount: asset_info.amount.clone(),
-            total_amount: None,
+            total_amount: Some(asset_info.amount.clone()),
             network_fee: None,
             user_fee: None,
             source_address,

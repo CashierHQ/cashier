@@ -53,7 +53,7 @@ impl CreateActionV3 {
         link: &LinkV3,
         canister_id: Principal,
         action: ActionV3,
-        intents: Vec<IntentV3>,
+        intents: &[IntentV3],
     ) -> Result<Self, CanisterError> {
         let link_account = get_link_account(&link.id, canister_id)?;
 

@@ -4,6 +4,7 @@
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
+use cashier_backend_types::repository::intent::v3::IntentTypeV3;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
@@ -86,6 +87,7 @@ impl WithdrawAction {
 
                 IntentV3::from_asset_info(
                     &asset_info,
+                    IntentTypeV3::Receive,
                     source_address,
                     source_account,
                     source_address_type.clone(),

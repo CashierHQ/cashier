@@ -6,7 +6,10 @@ use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
     repository::{
-        action::v3::ActionV3, common::AddressTypeV3, intent::v3::IntentV3, link::v3::LinkV3,
+        action::v3::ActionV3,
+        common::AddressTypeV3,
+        intent::v3::{IntentTypeV3, IntentV3},
+        link::v3::LinkV3,
     },
 };
 use cashier_common::utils::get_link_account;
@@ -54,6 +57,7 @@ impl ReceiveAction {
             .map(|asset_info| {
                 IntentV3::from_asset_info(
                     asset_info,
+                    IntentTypeV3::Receive,
                     source_address,
                     source_account,
                     source_address_type.clone(),
