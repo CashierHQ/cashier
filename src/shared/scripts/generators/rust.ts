@@ -7,223 +7,224 @@
 
 // Type mapping from JSON Schema format to Rust
 const TYPE_MAP: Record<string, string> = {
-	string: 'String',
-	integer: 'i64',
-	number: 'f64',
-	boolean: 'bool',
+  string: 'String',
+  integer: 'i64',
+  number: 'f64',
+  boolean: 'bool',
 };
 
 // Special ICP type formats
 const ICP_TYPE_MAP: Record<string, string> = {
-	'icp-principal': 'Principal',
-	'icp-nat': 'Nat',
+  'icp-principal': 'Principal',
+  'icp-nat': 'Nat',
+  'rust-u64': 'u64',
 };
 
 interface SchemaDefinition {
-	type?: string;
-	format?: string;
-	enum?: string[];
-	description?: string;
-	properties?: Record<string, SchemaDefinition>;
-	items?: SchemaDefinition;
-	required?: string[];
-	$ref?: string;
-	minimum?: number;
-	maximum?: number;
+  type?: string;
+  format?: string;
+  enum?: string[];
+  description?: string;
+  properties?: Record<string, SchemaDefinition>;
+  items?: SchemaDefinition;
+  required?: string[];
+  $ref?: string;
+  minimum?: number;
+  maximum?: number;
 }
 
 interface Schema {
-	definitions?: Record<string, SchemaDefinition>;
+  definitions?: Record<string, SchemaDefinition>;
 }
 
 /**
  * Convert a JSON Schema type to Rust type
  */
 function convertType(
-	def: SchemaDefinition,
-	definitions: Record<string, SchemaDefinition>,
+  def: SchemaDefinition,
+  definitions: Record<string, SchemaDefinition>
 ): string {
-	// Handle $ref references
-	if (def.$ref) {
-		const refName = def.$ref.split('/').pop();
-		return refName || 'String';
-	}
+  // Handle $ref references
+  if (def.$ref) {
+    const refName = def.$ref.split('/').pop();
+    return refName || 'String';
+  }
 
-	// Handle ICP-specific formats
-	if (def.format && ICP_TYPE_MAP[def.format]) {
-		return ICP_TYPE_MAP[def.format];
-	}
+  // Handle ICP-specific formats
+  if (def.format && ICP_TYPE_MAP[def.format]) {
+    return ICP_TYPE_MAP[def.format];
+  }
 
-	// Handle arrays
-	if (def.type === 'array' && def.items) {
-		const itemType = convertType(def.items, definitions);
-		return `Vec<${itemType}>`;
-	}
+  // Handle arrays
+  if (def.type === 'array' && def.items) {
+    const itemType = convertType(def.items, definitions);
+    return `Vec<${itemType}>`;
+  }
 
-	// Handle basic types
-	return TYPE_MAP[def.type || 'string'] || 'String';
+  // Handle basic types
+  return TYPE_MAP[def.type || 'string'] || 'String';
 }
 
 /**
  * Generate Rust enum from schema definition
  */
 function generateEnum(name: string, def: SchemaDefinition): string {
-	if (!def.enum) return '';
+  if (!def.enum) return '';
 
-	const lines: string[] = [];
+  const lines: string[] = [];
 
-	// Add description if available
-	if (def.description) {
-		lines.push(`/// ${def.description}`);
-	}
+  // Add description if available
+  if (def.description) {
+    lines.push(`/// ${def.description}`);
+  }
 
-	// Generate enum with derives
-	lines.push(
-		'#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]',
-	);
-	lines.push(`pub enum ${name} {`);
+  // Generate enum with derives
+  lines.push(
+    '#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]'
+  );
+  lines.push(`pub enum ${name} {`);
 
-	for (const value of def.enum) {
-		lines.push(`    ${value},`);
-	}
+  for (const value of def.enum) {
+    lines.push(`    ${value},`);
+  }
 
-	lines.push('}');
-	lines.push('');
+  lines.push('}');
+  lines.push('');
 
-	// Add Display implementation
-	lines.push(`impl std::fmt::Display for ${name} {`);
-	lines.push(
-		"    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {",
-	);
-	lines.push('        match self {');
-	for (const value of def.enum) {
-		lines.push(`            ${name}::${value} => write!(f, "${value}"),`);
-	}
-	lines.push('        }');
-	lines.push('    }');
-	lines.push('}');
+  // Add Display implementation
+  lines.push(`impl std::fmt::Display for ${name} {`);
+  lines.push(
+    "    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {"
+  );
+  lines.push('        match self {');
+  for (const value of def.enum) {
+    lines.push(`            ${name}::${value} => write!(f, "${value}"),`);
+  }
+  lines.push('        }');
+  lines.push('    }');
+  lines.push('}');
 
-	return lines.join('\n');
+  return lines.join('\n');
 }
 
 /**
  * Generate Rust struct from schema definition
  */
 function generateStruct(
-	name: string,
-	def: SchemaDefinition,
-	definitions: Record<string, SchemaDefinition>,
+  name: string,
+  def: SchemaDefinition,
+  definitions: Record<string, SchemaDefinition>
 ): string {
-	if (!def.properties) return '';
+  if (!def.properties) return '';
 
-	const lines: string[] = [];
+  const lines: string[] = [];
 
-	// Add description if available
-	if (def.description) {
-		lines.push(`/// ${def.description}`);
-	}
+  // Add description if available
+  if (def.description) {
+    lines.push(`/// ${def.description}`);
+  }
 
-	// Generate struct with derives
-	lines.push(
-		'#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]',
-	);
-	lines.push(`pub struct ${name} {`);
+  // Generate struct with derives
+  lines.push(
+    '#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]'
+  );
+  lines.push(`pub struct ${name} {`);
 
-	const required = def.required || [];
+  const required = def.required || [];
 
-	for (const [propName, propDef] of Object.entries(def.properties)) {
-		// Add field description
-		if (propDef.description) {
-			lines.push(`    /// ${propDef.description}`);
-		}
+  for (const [propName, propDef] of Object.entries(def.properties)) {
+    // Add field description
+    if (propDef.description) {
+      lines.push(`    /// ${propDef.description}`);
+    }
 
-		let fieldType = convertType(propDef, definitions);
+    let fieldType = convertType(propDef, definitions);
 
-		// Wrap in Option if not required
-		if (!required.includes(propName)) {
-			fieldType = `Option<${fieldType}>`;
-		}
+    // Wrap in Option if not required
+    if (!required.includes(propName)) {
+      fieldType = `Option<${fieldType}>`;
+    }
 
-		lines.push(`    pub ${propName}: ${fieldType},`);
-	}
+    lines.push(`    pub ${propName}: ${fieldType},`);
+  }
 
-	lines.push('}');
+  lines.push('}');
 
-	return lines.join('\n');
+  return lines.join('\n');
 }
 
 export const generateRust = {
-	/**
-	 * Generate Rust types from JSON Schema
-	 */
-	types(schema: Schema): string {
-		const lines: string[] = [
-			'// AUTO-GENERATED FILE - DO NOT EDIT',
-			'// Generated by @cashier/shared code generator',
-			'// Source: schemas/types.schema.json',
-			'',
-			'#![allow(dead_code)]',
-			'',
-			'use candid::{CandidType, Nat, Principal};',
-			'use serde::{Deserialize, Serialize};',
-			'',
-			'// =============================================================================',
-			'// Enums',
-			'// =============================================================================',
-			'',
-		];
+  /**
+   * Generate Rust types from JSON Schema
+   */
+  types(schema: Schema): string {
+    const lines: string[] = [
+      '// AUTO-GENERATED FILE - DO NOT EDIT',
+      '// Generated by @cashier/shared code generator',
+      '// Source: schemas/types.schema.json',
+      '',
+      '#![allow(dead_code)]',
+      '',
+      'use candid::{CandidType, Nat, Principal};',
+      'use serde::{Deserialize, Serialize};',
+      '',
+      '// =============================================================================',
+      '// Enums',
+      '// =============================================================================',
+      '',
+    ];
 
-		const definitions = schema.definitions || {};
-		const enums: string[] = [];
-		const structs: string[] = [];
+    const definitions = schema.definitions || {};
+    const enums: string[] = [];
+    const structs: string[] = [];
 
-		// Separate enums and structs
-		for (const [name, def] of Object.entries(definitions)) {
-			if (def.enum) {
-				enums.push(generateEnum(name, def));
-			} else if (def.type === 'object') {
-				structs.push(generateStruct(name, def, definitions));
-			}
-		}
+    // Separate enums and structs
+    for (const [name, def] of Object.entries(definitions)) {
+      if (def.enum) {
+        enums.push(generateEnum(name, def));
+      } else if (def.type === 'object') {
+        structs.push(generateStruct(name, def, definitions));
+      }
+    }
 
-		// Add enums first
-		lines.push(...enums.map((e) => e + '\n'));
+    // Add enums first
+    lines.push(...enums.map((e) => e + '\n'));
 
-		lines.push(
-			'// =============================================================================',
-		);
-		lines.push('// Structs');
-		lines.push(
-			'// =============================================================================',
-		);
-		lines.push('');
+    lines.push(
+      '// ============================================================================='
+    );
+    lines.push('// Structs');
+    lines.push(
+      '// ============================================================================='
+    );
+    lines.push('');
 
-		// Add structs
-		lines.push(...structs.map((s) => s + '\n'));
+    // Add structs
+    lines.push(...structs.map((s) => s + '\n'));
 
-		return lines.join('\n');
-	},
+    return lines.join('\n');
+  },
 
-	/**
-	 * Generate mod.rs file that exports all types and functions
-	 */
-	mod(includeTypes: boolean, includeFunctions: boolean): string {
-		const lines: string[] = [
-			'// AUTO-GENERATED FILE - DO NOT EDIT',
-			'// Generated by @cashier/shared code generator',
-			'',
-		];
+  /**
+   * Generate mod.rs file that exports all types and functions
+   */
+  mod(includeTypes: boolean, includeFunctions: boolean): string {
+    const lines: string[] = [
+      '// AUTO-GENERATED FILE - DO NOT EDIT',
+      '// Generated by @cashier/shared code generator',
+      '',
+    ];
 
-		if (includeTypes) {
-			lines.push('pub mod types;');
-			lines.push('pub use types::*;');
-		}
+    if (includeTypes) {
+      lines.push('pub mod types;');
+      lines.push('pub use types::*;');
+    }
 
-		if (includeFunctions) {
-			lines.push('pub mod functions;');
-			lines.push('pub use functions::*;');
-		}
+    if (includeFunctions) {
+      lines.push('pub mod functions;');
+      lines.push('pub use functions::*;');
+    }
 
-		return lines.join('\n');
-	},
+    return lines.join('\n');
+  },
 };

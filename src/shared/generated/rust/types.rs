@@ -232,6 +232,8 @@ pub struct Intent {
     pub dest_address_type: AddressType,
     /// IDs of intents this intent depends on
     pub dependencies: Option<Vec<String>>,
+    /// ID of the action this intent belongs to
+    pub action_id: Option<String>,
     pub intent_state: IntentState,
 }
 

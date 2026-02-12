@@ -151,6 +151,10 @@
           },
           "description": "IDs of intents this intent depends on"
         },
+        "action_id": {
+          "type": "string",
+          "description": "ID of the action this intent belongs to"
+        },
         "intent_state": {
           "$ref": "#/definitions/IntentState"
         }
@@ -164,7 +168,6 @@
         "source_address_type",
         "dest_address",
         "dest_address_type",
-        "intent_token_standard",
         "intent_state"
       ]
     },
@@ -317,13 +320,13 @@
           "description": "List of assets associated with the link"
         },
         "max_use": {
-          "type": "integer",
-          "minimum": 1,
+          "type": "string",
+          "format": "rust-u64",
           "description": "Maximum number of times the link can be used"
         },
         "use_count": {
-          "type": "integer",
-          "minimum": 0,
+          "type": "string",
+          "format": "rust-u64",
           "description": "Number of times the link has been used"
         },
         "link_state": {

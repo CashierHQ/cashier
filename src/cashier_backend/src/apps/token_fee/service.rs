@@ -6,7 +6,7 @@
 use super::TokenFetcher;
 use crate::repositories::{self, Repositories};
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::asset::v1::Asset;
+use cashier_backend_types::repository::asset::{v1::Asset, v3::AssetV3};
 use cashier_backend_types::{error::CanisterError, repository::token_fee::CachedFee};
 use cashier_common::runtime::IcEnvironment;
 use std::{cell::RefCell, collections::HashMap};
@@ -126,6 +126,44 @@ impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F
             let address = match asset {
                 Asset::IC { address, .. } => *address,
             };
+            let key = address.to_text();
+
+            // Check cache first
+            if let Some(cached) = self.token_fee_repo.get(&key)
+                && self.is_valid(&cached)
+            {
+                fee_map_result.insert(address, cached.fee);
+                continue;
+            }
+
+            // Cache miss or expired - fetch fresh via injected fetcher
+            let fee = self.fetcher.fetch_fee(address).await.map_err(|e| {
+                CanisterError::CallCanisterFailed(format!("Failed to get fee for {}: {:?}", key, e))
+            })?;
+
+            // Cache the fetched fee
+            let updated_at = self.ic_env.time();
+            self.token_fee_repo.insert(
+                &key,
+                CachedFee {
+                    fee: fee.clone(),
+                    updated_at,
+                },
+            );
+            fee_map_result.insert(address, fee);
+        }
+
+        Ok(fee_map_result)
+    }
+
+    pub async fn get_batch_tokens_fee_v3(
+        &mut self,
+        assets: &[AssetV3],
+    ) -> Result<HashMap<Principal, Nat>, CanisterError> {
+        let mut fee_map_result = HashMap::with_capacity(assets.len());
+
+        for asset in assets {
+            let address = asset.address;
             let key = address.to_text();
 
             // Check cache first

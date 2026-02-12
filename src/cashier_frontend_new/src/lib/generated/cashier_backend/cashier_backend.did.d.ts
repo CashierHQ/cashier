@@ -219,6 +219,7 @@ export interface Icrc2TransferFrom {
 }
 export interface Intent {
   'id' : string,
+  'action_id' : [] | [string],
   'user_fee' : [] | [bigint],
   'total_amount' : [] | [bigint],
   'asset' : Asset_1,

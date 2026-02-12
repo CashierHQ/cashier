@@ -13,7 +13,6 @@ use std::{collections::HashMap, future::Future, pin::Pin};
 pub trait TransactionManagerV3 {
     fn create_action(
         &self,
-        link_id: String,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: Option<HashMap<String, Vec<Transaction>>>,
@@ -21,7 +20,6 @@ pub trait TransactionManagerV3 {
 
     fn process_action(
         &self,
-        link_id: String,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,

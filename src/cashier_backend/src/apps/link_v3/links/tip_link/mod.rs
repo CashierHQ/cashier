@@ -1,9 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+pub mod actions;
 pub mod states;
 
-use crate::apps::link_v3::traits::{LinkV3Instance, LinkV3State};
+use crate::apps::{
+    link_v2::links::shared::receive_link::actions::create,
+    link_v3::traits::{LinkV3Instance, LinkV3State},
+};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -24,7 +28,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_shared::types::Action as ActionShared;
-use states::created::CreatedState;
+use states::{active::ActiveState, created::CreatedState, inactive::InactiveState};
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::v3::traits::TransactionManagerV3;
 use uuid::Uuid;
@@ -88,11 +92,26 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
         canister_id: Principal,
         transaction_manager: Rc<M>,
     ) -> Result<Box<dyn LinkV3State>, CanisterError> {
-        Ok(Box::new(CreatedState::new(
-            link,
-            canister_id,
-            transaction_manager,
-        )))
+        match link.state {
+            LinkStateV3::Created => Ok(Box::new(CreatedState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
+            LinkStateV3::Active => Ok(Box::new(ActiveState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
+            LinkStateV3::Inactive => Ok(Box::new(InactiveState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
+            _ => Err(CanisterError::HandleLogicError(
+                "Unsupported link state".to_string(),
+            )),
+        }
     }
 }
 
@@ -108,6 +127,7 @@ impl<M: TransactionManagerV3 + 'static> LinkV3Instance for TipLink<M> {
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
+        created_at: u64,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;
@@ -115,7 +135,9 @@ impl<M: TransactionManagerV3 + 'static> LinkV3Instance for TipLink<M> {
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let create_action_result = state.create_action(caller, action, intents).await?;
+            let create_action_result = state
+                .create_action(caller, action, intents, created_at)
+                .await?;
             Ok(create_action_result)
         })
     }

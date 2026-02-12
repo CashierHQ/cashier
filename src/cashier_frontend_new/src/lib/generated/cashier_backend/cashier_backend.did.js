@@ -245,6 +245,7 @@ export const idlFactory = ({ IDL }) => {
   const IntentType_1 = IDL.Variant({ 'Send' : IDL.Null, 'Receive' : IDL.Null });
   const Intent = IDL.Record({
     'id' : IDL.Text,
+    'action_id' : IDL.Opt(IDL.Text),
     'user_fee' : IDL.Opt(IDL.Nat),
     'total_amount' : IDL.Opt(IDL.Nat),
     'asset' : Asset_1,
