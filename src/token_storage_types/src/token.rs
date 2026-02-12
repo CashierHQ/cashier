@@ -472,7 +472,7 @@ mod tests {
         assert_eq!(token.symbol, "ICP");
         assert_eq!(token.name, "Internet Computer");
         assert_eq!(token.decimals, 8);
-        assert_eq!(token.enabled_by_default, true);
+        assert!(token.enabled_by_default);
         match &token.details {
             ChainTokenDetails::IC {
                 supported_standards,
@@ -508,7 +508,7 @@ mod tests {
 
         assert_eq!(result.symbol, "ckBTC");
         assert_eq!(result.decimals, 8);
-        assert_eq!(result.enabled_by_default, false);
+        assert!(!result.enabled_by_default);
         match &result.details {
             ChainTokenDetails::IC {
                 supported_standards,
