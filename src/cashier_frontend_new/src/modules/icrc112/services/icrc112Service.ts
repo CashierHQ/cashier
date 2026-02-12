@@ -6,7 +6,11 @@ import type {
   Transport,
 } from "@slide-computer/signer";
 import { Buffer } from "buffer";
-import type { Icrc112ExecutionResult } from "../types/icrc112Request";
+import type {
+  Icrc112Error,
+  Icrc112ExecutionResult,
+} from "../types/icrc112Request";
+import type { IcrcErrorData } from "$modules/auth/signer/icrc-parser";
 
 // Class of service handler for ICRC-112 requests
 // T is the Transport type used by the Signer
@@ -69,13 +73,20 @@ class Icrc112Service<T extends Transport> {
         console.error("ICRC-112 batch request failed:", res.error);
         return {
           isSuccess: false,
-          errors: [res.error ? JSON.stringify(res.error) : "Unknown error"],
+          errors: [
+            {
+              message: res.error
+                ? JSON.stringify(res.error)
+                : "Unknown error",
+              data: null,
+            },
+          ],
         };
       }
 
       if ("result" in res) {
         let isSuccess = true;
-        const errors: string[] = [];
+        const errors: Icrc112Error[] = [];
 
         res.result.responses.forEach(
           (
@@ -92,17 +103,23 @@ class Icrc112Service<T extends Transport> {
                   typeof parallelResponse === "object" &&
                   "error" in parallelResponse
                 ) {
-                  const { error } = parallelResponse;
+                  const err = parallelResponse.error as {
+                    code?: number;
+                    message?: string;
+                    data?: IcrcErrorData;
+                  } | null;
                   console.error(
                     `  ❌ Sequence ${sequenceIndex} Parallel ${parallelIndex} - Error:`,
-                    error,
+                    err,
                   );
                   isSuccess = false;
-                  errors.push(
-                    `Sequence ${sequenceIndex} Parallel ${parallelIndex} Error: ${
-                      error ? JSON.stringify(error) : "Unknown error"
-                    }`,
-                  );
+                  errors.push({
+                    message: `Seq ${sequenceIndex} Par ${parallelIndex}: ${err?.message ?? "Unknown"}`,
+                    data:
+                      err?.code === 1003
+                        ? (err.data as IcrcErrorData) ?? null
+                        : null,
+                  });
                 }
               },
             );
@@ -114,13 +131,21 @@ class Icrc112Service<T extends Transport> {
 
       return {
         isSuccess: false,
-        errors: ["Invalid response structure from signer."],
+        errors: [
+          { message: "Invalid response structure from signer.", data: null },
+        ],
       };
     } catch (error) {
       console.error("Signer request failed:", error);
       return {
         isSuccess: false,
-        errors: [error instanceof Error ? error.message : String(error)],
+        errors: [
+          {
+            message:
+              error instanceof Error ? error.message : String(error),
+            data: null,
+          },
+        ],
       };
     }
   }

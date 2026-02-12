@@ -1,6 +1,7 @@
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
 import type { Principal } from "@dfinity/principal";
 import { fromNullable } from "@dfinity/utils";
+import type { IcrcErrorData } from "$modules/auth/signer/icrc-parser";
 
 // Frontend representation of an ICRC-112 request
 export type Icrc112Requests = Icrc112Request[][];
@@ -46,7 +47,12 @@ export class Icrc112RequestMapper {
   }
 }
 
+export interface Icrc112Error {
+  message: string;
+  data: IcrcErrorData | null;
+}
+
 export type Icrc112ExecutionResult = {
   isSuccess: boolean;
-  errors: string[] | null;
+  errors: Icrc112Error[] | null;
 };

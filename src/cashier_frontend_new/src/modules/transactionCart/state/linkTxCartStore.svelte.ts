@@ -158,11 +158,46 @@ export class LinkTxCartStore implements TxCartStore {
 
     try {
       if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
-        await this.#icrc112Service.sendBatchRequest(
+        const icrc112Result = await this.#icrc112Service.sendBatchRequest(
           action.icrc_112_requests,
           authState.account!.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );
+
+        // icrc-112 can be failed, but we still proceed to processAction if
+        // the icrc-2 approve is error because deduplication.
+        if (!icrc112Result.isSuccess) {
+          if (icrc112Result.errors) {
+            const errors = [];
+
+            for (const error of icrc112Result.errors) {
+              const data = error.data;
+              // Skip icrc2_approve duplicate errors (approval already on-chain)
+              if (
+                data &&
+                data.method === "icrc2_approve" &&
+                typeof data.icrcError === "object" &&
+                data.icrcError.variant === "Duplicate"
+              ) {
+                console.warn("ICRC-2 approve duplicate tx, continuing");
+                continue;
+              }
+
+              errors.push(error);
+            }
+
+            if (errors.length > 0) {
+              console.error(
+                "ICRC-112 batch request errors:",
+                JSON.stringify(errors),
+              );
+              this.setSourceState(IntentState.FAIL);
+              throw new Error(
+                `ICRC-112 batch request failed: ${JSON.stringify(errors)}`,
+              );
+            }
+          }
+        }
       }
 
       const result = await handleProcessAction();

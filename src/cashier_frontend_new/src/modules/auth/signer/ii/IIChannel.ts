@@ -32,6 +32,8 @@ import {
   scopes,
   supportedStandards,
 } from "./constants";
+import { parseIcrcError, formatIcrcError } from "../icrc-parser";
+import type { IcrcErrorData } from "../icrc-parser";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9
@@ -416,25 +418,45 @@ export class IIChannel implements Channel {
                       },
                     };
                   }
-                  //console.log("request:", request);
                   if (
                     request.method.startsWith("icrc1_") ||
                     request.method.startsWith("icrc2_") ||
                     request.method.startsWith("icrc7_") ||
                     request.method.startsWith("icrc37_")
                   ) {
-                    // Built in validation, basically checks if variant with Err is returned
+                    // Built in validation, checks if Err variant is returned
+                    // and extracts the specific ICRC error variant name
                     try {
-                      const value = IDL.decode(
+                      const [value] = IDL.decode(
                         [IDL.Variant({ Err: IDL.Reserved })],
                         reply.value as ArrayBuffer,
                       );
-                      if ("Err" in value) {
+                      if (
+                        value &&
+                        typeof value === "object" &&
+                        "Err" in value
+                      ) {
+                        const parsed = parseIcrcError(
+                          request.method,
+                          reply.value as ArrayBuffer,
+                        );
+                        const errName = parsed
+                          ? formatIcrcError(parsed)
+                          : "Unknown";
                         batchFailed = true;
+                        // IcrcErrorData: passed by reference, not JSON-serialized.
+                        // Cast needed because signer's JsonValue excludes null.
+                        const errorData = {
+                          source: "frontend",
+                          method: request.method,
+                          canisterId: request.canisterId,
+                          icrcError: parsed ?? "Unknown error",
+                        };
                         return {
                           error: {
                             code: 1003,
-                            message: "Validation failed.",
+                            message: errName,
+                            data: errorData,
                           },
                         };
                       }
@@ -466,10 +488,17 @@ export class IIChannel implements Channel {
 
                     if (!isValid) {
                       batchFailed = true;
+                      const errorData: IcrcErrorData = {
+                        method: request.method,
+                        canisterId: request.canisterId,
+                        icrcError:
+                          "Validation canister rejected the response as invalid.",
+                      };
                       return {
                         error: {
                           code: 1003,
                           message: "Validation failed.",
+                          data: errorData,
                         },
                       };
                     }
