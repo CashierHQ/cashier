@@ -258,20 +258,20 @@ async fn it_should_succeed_activate_icrc_token_tip_link() {
         let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(5_000_000u64);
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+
+        let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
         let mut test_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
             token,
             tip_amount.clone(),
             token_fee.clone(),
-            token_fee.clone(),
+            icp_fee.clone(),
         )
         .await;
         let create_link_result = test_fixture.create_link().await;
-
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
 
         // deposit ICP and asset to caller wallet
         test_fixture.airdrop_icp_and_asset().await;
@@ -293,6 +293,34 @@ async fn it_should_succeed_activate_icrc_token_tip_link() {
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
         assert_eq!(result.link.link_state, LinkStateShared::Active);
+
+        // Assert: Link balance after activation
+        let link_account = link_id_to_account(ctx, &link_id);
+        let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            ckbtc_link_balance,
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                tip_amount,
+                ckbtc_ledger_fee,
+                1,
+            ),
+            "Link balance is incorrect"
+        );
+
+        // Assert: Fee treasury balance after activation
+        let fee_treasury_account = fee_treasury_account();
+        let icp_fee_treasury_balance = icp_ledger_client
+            .balance_of(&fee_treasury_account)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            icp_fee_treasury_balance,
+            Nat::from(CREATE_LINK_FEE),
+            "Fee treasury balance is incorrect"
+        );
 
         Ok(())
     })
