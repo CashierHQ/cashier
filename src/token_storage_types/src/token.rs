@@ -474,7 +474,10 @@ mod tests {
         assert_eq!(token.decimals, 8);
         assert_eq!(token.enabled_by_default, true);
         match &token.details {
-            ChainTokenDetails::IC { supported_standards, .. } => {
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => {
                 assert_eq!(*supported_standards, vec![IcrcStandard::ICRC1]);
             }
         }
@@ -507,8 +510,14 @@ mod tests {
         assert_eq!(result.decimals, 8);
         assert_eq!(result.enabled_by_default, false);
         match &result.details {
-            ChainTokenDetails::IC { supported_standards, .. } => {
-                assert_eq!(*supported_standards, vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2]);
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => {
+                assert_eq!(
+                    *supported_standards,
+                    vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2]
+                );
             }
         }
     }
