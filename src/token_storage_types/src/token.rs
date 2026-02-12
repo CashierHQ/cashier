@@ -446,6 +446,74 @@ mod tests {
     }
 
     #[test]
+    fn it_should_decode_v1_codec_with_default_standards() {
+        use ic_mple_structures::Storable;
+
+        let v1 = RegistryTokenV1 {
+            symbol: "ICP".to_string(),
+            name: "Internet Computer".to_string(),
+            decimals: 8,
+            details: ChainTokenDetailsV1::IC {
+                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+                index_id: None,
+                fee: 10_000u64.into(),
+            },
+            enabled_by_default: true,
+        };
+
+        // Serialize as V1
+        let v1_codec = RegistryTokenCodec::V1(v1);
+        let bytes = v1_codec.to_bytes();
+
+        // Deserialize and decode
+        let decoded_codec = RegistryTokenCodec::from_bytes(bytes);
+        let token: RegistryToken = RegistryTokenCodec::decode(decoded_codec);
+
+        assert_eq!(token.symbol, "ICP");
+        assert_eq!(token.name, "Internet Computer");
+        assert_eq!(token.decimals, 8);
+        assert_eq!(token.enabled_by_default, true);
+        match &token.details {
+            ChainTokenDetails::IC { supported_standards, .. } => {
+                assert_eq!(*supported_standards, vec![IcrcStandard::ICRC1]);
+            }
+        }
+    }
+
+    #[test]
+    fn it_should_roundtrip_v2_codec() {
+        use ic_mple_structures::Storable;
+
+        let token = RegistryToken {
+            symbol: "ckBTC".to_string(),
+            name: "Chain-key Bitcoin".to_string(),
+            decimals: 8,
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+                index_id: None,
+                fee: 10u64.into(),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            enabled_by_default: false,
+        };
+
+        // Encode → serialize → deserialize → decode
+        let codec = RegistryTokenCodec::encode(token.clone());
+        let bytes = codec.to_bytes();
+        let decoded_codec = RegistryTokenCodec::from_bytes(bytes);
+        let result: RegistryToken = RegistryTokenCodec::decode(decoded_codec);
+
+        assert_eq!(result.symbol, "ckBTC");
+        assert_eq!(result.decimals, 8);
+        assert_eq!(result.enabled_by_default, false);
+        match &result.details {
+            ChainTokenDetails::IC { supported_standards, .. } => {
+                assert_eq!(*supported_standards, vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2]);
+            }
+        }
+    }
+
+    #[test]
     fn it_should_return_ic_chain_type_from_token_id() {
         let token_id = TokenId::IC {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
