@@ -61,12 +61,8 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
         }
 
         let create_action = CreateActionV3::create(&link, canister_id, action, intents)?;
-        let create_action_result = transaction_manager.create_action(
-            link.id.clone(),
-            create_action.action,
-            create_action.intents,
-            None,
-        )?;
+        let create_action_result =
+            transaction_manager.create_action(create_action.action, create_action.intents, None)?;
 
         Ok(LinkCreateActionResult {
             link,
@@ -91,7 +87,7 @@ impl<M: TransactionManagerV3 + 'static> CreatedState<M> {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
-            .process_action(link.id.clone(), action, intents, intent_txs_map)
+            .process_action(action, intents, intent_txs_map)
             .await?;
 
         // if process action succeeds, activate the link

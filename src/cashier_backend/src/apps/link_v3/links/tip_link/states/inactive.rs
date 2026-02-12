@@ -62,7 +62,6 @@ impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
         let withdraw_action =
             WithdrawAction::create(&link, canister_id, action, intents, created_at).await?;
         let create_action_result = transaction_manager.create_action(
-            link.id.clone(),
             withdraw_action.action,
             withdraw_action.intents,
             None,
@@ -100,7 +99,7 @@ impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
-            .process_action(link.id.clone(), action, intents, intent_txs_map)
+            .process_action(action, intents, intent_txs_map)
             .await?;
 
         if process_action_result.is_success {

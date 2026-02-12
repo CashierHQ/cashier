@@ -210,13 +210,9 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             .get_action_data(action_id)
             .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
-        let link_id = action_data.action.link_id.as_ref().ok_or_else(|| {
-            CanisterError::InvalidInput("Action does not belong to any link".to_string())
-        })?;
-
         let link_model = self
             .link_v3_repository
-            .get(link_id)
+            .get(&action_data.action.link_id)
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let factory = LinkFactoryV3::new(self.transaction_manager.clone());
@@ -303,7 +299,6 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
                 .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
             let create_action_result = self.transaction_manager.create_action(
-                link_id.to_string(),
                 action,
                 action_data.intents,
                 Some(action_data.intent_txs),

@@ -56,7 +56,6 @@ impl<E: IcEnvironment> IcTransactionManager<E> {
 impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
     fn create_action(
         &self,
-        link_id: String,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: Option<HashMap<String, Vec<Transaction>>>,
@@ -108,7 +107,7 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
 
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
-        let link_account = get_link_account(&link_id, canister_id)?;
+        let link_account = get_link_account(&action.link_id, canister_id)?;
         let icrc112_requests =
             create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)?;
 
@@ -122,7 +121,6 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
 
     fn process_action(
         &self,
-        link_id: String,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
@@ -170,7 +168,7 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
             validator_service.rollup_icrc2_wallet_transaction_state(&mut processed_transactions);
 
             // create ICRC-112 requests from failed transactions for retry
-            let link_account = get_link_account(&link_id, canister_id)?;
+            let link_account = get_link_account(&action.link_id, canister_id)?;
             let icrc112_requests = create_icrc_112_requests(
                 &mut processed_transactions,
                 link_account,

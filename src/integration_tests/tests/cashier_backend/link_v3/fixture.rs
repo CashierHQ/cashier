@@ -289,6 +289,7 @@ impl LinkTestFixtureV3 {
             dest_address: treasury_principal(),
             dest_address_type: AddressTypeShared::Treasury,
             dependencies: None,
+            action_id: None,
             intent_state: IntentStateShared::Created,
         };
 
@@ -314,6 +315,7 @@ impl LinkTestFixtureV3 {
                     dest_address: self.ctx.cashier_backend_principal,
                     dest_address_type: AddressTypeShared::Link,
                     dependencies: None,
+                    action_id: None,
                     intent_state: IntentStateShared::Created,
                 }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
@@ -334,6 +336,7 @@ impl LinkTestFixtureV3 {
                         dest_address: self.ctx.cashier_backend_principal,
                         dest_address_type: AddressTypeShared::Link,
                         dependencies: None,
+                        action_id: None,
                         intent_state: IntentStateShared::Created,
                     }),
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
