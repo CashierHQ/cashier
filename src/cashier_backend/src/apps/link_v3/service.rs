@@ -87,6 +87,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             .action
             .intents
             .iter()
+            .filter(|i| i.dest_address_type != AddressTypeShared::Treasury)
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
@@ -178,7 +179,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         };
 
         self.action_service.store_action_data(
-            link_action.clone(),
+            link_action,
             result.create_action_result.action.clone(),
             result.create_action_result.intents.clone(),
             result.create_action_result.intent_txs_map.clone(),

@@ -366,4 +366,17 @@ impl LinkTestFixtureV3 {
             intent_ids: None,
         })
     }
+
+    pub fn receive_action(&self, link_id: String, creator: Principal) -> ActionShared {
+        ActionShared {
+            id: "action_id".to_string(),
+            action_type: ActionTypeShared::Receive,
+            intents: vec![],
+            creator,
+            creator_address_type: AddressTypeShared::Creator,
+            action_state: ActionStateShared::Created,
+            link_id: Some(link_id),
+            intent_ids: None,
+        }
+    }
 }

@@ -29,7 +29,7 @@ async fn it_should_fail_activate_icp_token_tip_link_if_caller_anonymous() {
         let tip_amount = Nat::from(1_000_000u64);
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
-        let mut test_fixture = TipLinkV3Fixture::new(
+        let test_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
             token,

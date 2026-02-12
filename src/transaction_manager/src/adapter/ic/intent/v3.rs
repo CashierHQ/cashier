@@ -6,7 +6,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         asset::{v1::Asset, v3::TokenStandardV3},
-        common::Wallet,
+        common::{AddressTypeV3, Wallet},
         intent::v1::{TransferData, TransferFromData},
         intent::v3::IntentV3,
         transaction::v1::Transaction,
@@ -48,7 +48,21 @@ impl IntentAdapterTraitV3 for IcIntentAdapter {
             address: intent.asset.address,
         };
 
-        match token_standard {
+        let intent_standard: TokenStandardV3 = {
+            if intent.source_address_type == AddressTypeV3::Link {
+                Ok(TokenStandardV3::ICRC1)
+            } else if intent.source_address_type == AddressTypeV3::Creator
+                || intent.source_address_type == AddressTypeV3::User
+            {
+                Ok(token_standard)
+            } else {
+                Err(CanisterError::HandleLogicError(
+                    "Unsupported address type".to_string(),
+                ))
+            }
+        }?;
+
+        match intent_standard {
             TokenStandardV3::ICRC1 => {
                 let transfer_data = TransferData {
                     from: from_wallet,

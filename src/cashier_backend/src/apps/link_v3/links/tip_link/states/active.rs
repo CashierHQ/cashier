@@ -90,7 +90,7 @@ impl<M: TransactionManagerV3 + 'static> ActiveState<M> {
         if process_action_result.is_success {
             link.use_count += 1;
             if link.use_count >= link.max_use {
-                link.state = LinkState::Inactive;
+                link.state = LinkState::Ended;
             }
         }
 
