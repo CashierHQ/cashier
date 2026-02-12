@@ -3,7 +3,7 @@
 use candid::{self, Principal};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
-use token_storage_types::error::CanisterError;
+use token_storage_types::{error::CanisterError, token::SupportedStandardRecord};
 
 pub type Icrc1Tokens = candid::Nat;
 
@@ -42,6 +42,17 @@ impl Service {
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
+        parsed_res.map_err(CanisterError::from)
+    }
+
+    /// Query supported standards via ICRC-10 — optional, some tokens don't implement this
+    pub async fn icrc_10_supported_standards(
+        &self,
+    ) -> Result<Vec<SupportedStandardRecord>, CanisterError> {
+        let res = Call::bounded_wait(self.0, "icrc10_supported_standards")
+            .await
+            .map_err(CanisterError::from)?;
+        let parsed_res: Result<Vec<SupportedStandardRecord>, CandidDecodeFailed> = res.candid();
         parsed_res.map_err(CanisterError::from)
     }
 }
