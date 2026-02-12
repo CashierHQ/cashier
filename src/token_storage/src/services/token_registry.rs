@@ -180,7 +180,9 @@ impl<R: Repositories> TokenRegistryService<R> {
         supported_standards: Vec<IcrcStandard>,
     ) -> Result<(), String> {
         let Some(mut token) = self.registry_repository.get_token(&token_id) else {
-            return Err(format!("Token with id '{token_id:?}' not found in registry"));
+            return Err(format!(
+                "Token with id '{token_id:?}' not found in registry"
+            ));
         };
 
         match &mut token.details {
