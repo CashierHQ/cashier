@@ -9,6 +9,27 @@ use serde::{Deserialize, Serialize};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
 
+/// Supported ICRC standards for IC tokens
+#[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash)]
+#[storable]
+pub enum IcrcStandard {
+    ICRC1,
+    ICRC2,
+    ICRC3,
+}
+
+impl IcrcStandard {
+    /// Parse from standard name string (e.g. "ICRC-1")
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "ICRC-1" => Some(Self::ICRC1),
+            "ICRC-2" => Some(Self::ICRC2),
+            "ICRC-3" => Some(Self::ICRC3),
+            _ => None,
+        }
+    }
+}
+
 /// A token identifier
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash, Ord, PartialOrd)]
 #[storable]
@@ -43,8 +64,8 @@ pub enum ChainTokenDetails {
         ledger_id: LedgerId,
         index_id: Option<IndexId>,
         fee: candid::Nat,
+        supported_standards: Vec<IcrcStandard>,
     },
-    // Add more variants for other chains as needed
 }
 
 impl ChainTokenDetails {
@@ -70,6 +91,21 @@ impl ChainTokenDetails {
             },
         }
     }
+
+    /// Check if token supports a specific ICRC standard
+    pub fn supports_standard(&self, standard: &IcrcStandard) -> bool {
+        match self {
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => supported_standards.contains(standard),
+        }
+    }
+
+    /// Check if token supports ICRC-2 (approve/transfer_from)
+    pub fn supports_icrc2(&self) -> bool {
+        self.supports_standard(&IcrcStandard::ICRC2)
+    }
 }
 
 // Central registry token definition
@@ -83,20 +119,62 @@ pub struct RegistryToken {
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
 }
 
+/// V1 snapshot of ChainTokenDetails (before supported_standards)
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub enum ChainTokenDetailsV1 {
+    IC {
+        ledger_id: LedgerId,
+        index_id: Option<IndexId>,
+        fee: candid::Nat,
+    },
+}
+
+/// V1 snapshot of RegistryToken (before supported_standards)
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryTokenV1 {
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub details: ChainTokenDetailsV1,
+    pub enabled_by_default: bool,
+}
+
 #[storable]
 pub enum RegistryTokenCodec {
-    V1(RegistryToken),
+    V1(RegistryTokenV1),
+    V2(RegistryToken),
 }
 
 impl Codec<RegistryToken> for RegistryTokenCodec {
     fn decode(source: Self) -> RegistryToken {
         match source {
-            RegistryTokenCodec::V1(link) => link,
+            RegistryTokenCodec::V1(old) => {
+                let ChainTokenDetailsV1::IC {
+                    ledger_id,
+                    index_id,
+                    fee,
+                } = old.details;
+                RegistryToken {
+                    symbol: old.symbol,
+                    name: old.name,
+                    decimals: old.decimals,
+                    details: ChainTokenDetails::IC {
+                        ledger_id,
+                        index_id,
+                        fee,
+                        supported_standards: vec![IcrcStandard::ICRC1],
+                    },
+                    enabled_by_default: old.enabled_by_default,
+                }
+            }
+            RegistryTokenCodec::V2(token) => token,
         }
     }
 
     fn encode(dest: RegistryToken) -> Self {
-        RegistryTokenCodec::V1(dest)
+        RegistryTokenCodec::V2(dest)
     }
 }
 
@@ -290,6 +368,7 @@ mod tests {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             index_id: None,
             fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
         };
         assert_eq!(details.chain(), Chain::IC);
     }
@@ -300,6 +379,7 @@ mod tests {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             index_id: None,
             fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
         };
         assert_eq!(
             details.token_id(),
@@ -307,6 +387,34 @@ mod tests {
                 ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
             }
         );
+    }
+
+    #[test]
+    fn it_should_check_supports_icrc2() {
+        let details_with = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+        };
+        assert!(details_with.supports_icrc2());
+
+        let details_without = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
+        };
+        assert!(!details_without.supports_icrc2());
+    }
+
+    #[test]
+    fn it_should_parse_icrc_standard_from_name() {
+        assert_eq!(IcrcStandard::from_name("ICRC-1"), Some(IcrcStandard::ICRC1));
+        assert_eq!(IcrcStandard::from_name("ICRC-2"), Some(IcrcStandard::ICRC2));
+        assert_eq!(IcrcStandard::from_name("ICRC-3"), Some(IcrcStandard::ICRC3));
+        assert_eq!(IcrcStandard::from_name("ICRC-99"), None);
+        assert_eq!(IcrcStandard::from_name(""), None);
     }
 
     #[test]

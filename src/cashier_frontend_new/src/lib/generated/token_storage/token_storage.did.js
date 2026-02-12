@@ -1,10 +1,16 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterError = IDL.Rec();
+  const IcrcStandard = IDL.Variant({
+    'ICRC1' : IDL.Null,
+    'ICRC2' : IDL.Null,
+    'ICRC3' : IDL.Null,
+  });
   const ChainTokenDetails = IDL.Variant({
     'IC' : IDL.Record({
       'fee' : IDL.Nat,
       'ledger_id' : IDL.Principal,
       'index_id' : IDL.Opt(IDL.Principal),
+      'supported_standards' : IDL.Vec(IcrcStandard),
     }),
   });
   const RegistryToken = IDL.Record({
@@ -302,11 +308,17 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
+  const IcrcStandard = IDL.Variant({
+    'ICRC1' : IDL.Null,
+    'ICRC2' : IDL.Null,
+    'ICRC3' : IDL.Null,
+  });
   const ChainTokenDetails = IDL.Variant({
     'IC' : IDL.Record({
       'fee' : IDL.Nat,
       'ledger_id' : IDL.Principal,
       'index_id' : IDL.Opt(IDL.Principal),
+      'supported_standards' : IDL.Vec(IcrcStandard),
     }),
   });
   const RegistryToken = IDL.Record({

@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::ext::icrc::SupportedStandardRecord;
 use crate::repository::{
     Repositories, token_registry::TokenRegistryRepository,
     token_registry_metadata::TokenRegistryMetadataRepository,
@@ -8,8 +9,16 @@ use crate::repository::{
 use futures::try_join;
 use token_storage_types::{
     IndexId, TokenId,
-    token::{ChainTokenDetails, RegistryToken, TokenRegistryMetadata},
+    token::{ChainTokenDetails, IcrcStandard, RegistryToken, TokenRegistryMetadata},
 };
+
+/// Parse canister response into IcrcStandard vec, dropping unknown standards
+fn parse_supported_standards(records: Vec<SupportedStandardRecord>) -> Vec<IcrcStandard> {
+    records
+        .iter()
+        .filter_map(|r| IcrcStandard::from_name(&r.name))
+        .collect()
+}
 
 pub struct TokenRegistryService<R: Repositories> {
     registry_repository: TokenRegistryRepository<R::TokenRegistry>,
@@ -51,7 +60,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);
 
-                // Fetch name, fee, decimals, symbol concurrently
+                // Fetch required fields concurrently (these MUST succeed)
                 let (name, fee, decimals, symbol) = try_join!(
                     icrc_service.icrc_1_name(),
                     icrc_service.icrc_1_fee(),
@@ -59,6 +68,13 @@ impl<R: Repositories> TokenRegistryService<R> {
                     icrc_service.icrc_1_symbol()
                 )
                 .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
+
+                // Fetch standards separately — optional, default to [ICRC1] on failure
+                let supported_standards = icrc_service
+                    .icrc_1_supported_standards()
+                    .await
+                    .map(parse_supported_standards)
+                    .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
 
                 let registry_token = RegistryToken {
                     symbol,
@@ -68,6 +84,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                         ledger_id,
                         index_id,
                         fee,
+                        supported_standards,
                     },
                     enabled_by_default: false,
                 };
@@ -91,7 +108,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);
 
-                // Fetch name, fee, decimals, symbol concurrently
+                // Fetch required fields concurrently (these MUST succeed)
                 let (name, fee, decimals, symbol) = try_join!(
                     icrc_service.icrc_1_name(),
                     icrc_service.icrc_1_fee(),
@@ -100,6 +117,13 @@ impl<R: Repositories> TokenRegistryService<R> {
                 )
                 .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
 
+                // Fetch standards separately — optional, default to [ICRC1] on failure
+                let supported_standards = icrc_service
+                    .icrc_1_supported_standards()
+                    .await
+                    .map(parse_supported_standards)
+                    .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
+
                 current_record.symbol = symbol;
                 current_record.name = name;
                 current_record.decimals = decimals;
@@ -107,6 +131,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     ledger_id,
                     index_id: current_record.details.index_id(),
                     fee,
+                    supported_standards,
                 };
                 self.registry_repository
                     .register_token(current_record, &mut self.metadata_repository)

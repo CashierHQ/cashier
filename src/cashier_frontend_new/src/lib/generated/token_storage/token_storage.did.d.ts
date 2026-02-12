@@ -74,6 +74,7 @@ export type ChainTokenDetails = {
       'fee' : bigint,
       'ledger_id' : Principal,
       'index_id' : [] | [Principal],
+      'supported_standards' : Array<IcrcStandard>,
     }
   };
 export interface CreateBridgeTransactionInputArg {
@@ -95,6 +96,9 @@ export interface GetUserNftInput {
   'limit' : [] | [number],
   'start' : [] | [number],
 }
+export type IcrcStandard = { 'ICRC1' : null } |
+  { 'ICRC2' : null } |
+  { 'ICRC3' : null };
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
