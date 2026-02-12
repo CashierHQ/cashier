@@ -10,6 +10,8 @@ use cashier_backend_types::{
 use std::collections::HashMap;
 use std::pin::Pin;
 
+use crate::apps::link_v2::links::shared::receive_link::{actions::create, states::created};
+
 pub trait LinkV3Instance {
     /// Create an action associated with the link
     /// # Arguments
@@ -24,6 +26,7 @@ pub trait LinkV3Instance {
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
+        created_at: u64,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
 
     fn process_action(
@@ -49,6 +52,7 @@ pub trait LinkV3State {
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
+        created_at: u64,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
 
     fn process_action(

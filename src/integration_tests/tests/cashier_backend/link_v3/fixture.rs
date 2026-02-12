@@ -30,7 +30,7 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
-use cashier_common::constant::CREATE_LINK_FEE;
+use cashier_common::{constant::CREATE_LINK_FEE, fee_calculator::icrc2};
 use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
@@ -289,6 +289,7 @@ impl LinkTestFixtureV3 {
             dest_address: treasury_principal(),
             dest_address_type: AddressTypeShared::Treasury,
             dependencies: None,
+            action_id: None,
             intent_state: IntentStateShared::Created,
         };
 
@@ -306,14 +307,19 @@ impl LinkTestFixtureV3 {
                     },
                     intent_type: IntentTypeShared::Send,
                     amount: amount.clone(),
-                    total_amount: Some(amount.clone()),
-                    network_fee: Some(Nat::from(2u64) * token_fee.clone()),
+                    total_amount: Some(icrc2::total_amount_icrc2_send_intent(
+                        amount,
+                        token_fee.clone(),
+                        1,
+                    )),
+                    network_fee: Some(icrc2::network_fee_icrc2_send_intent(token_fee, 1)),
                     user_fee: None,
                     source_address: creator,
                     source_address_type: AddressTypeShared::Creator,
                     dest_address: self.ctx.cashier_backend_principal,
                     dest_address_type: AddressTypeShared::Link,
                     dependencies: None,
+                    action_id: None,
                     intent_state: IntentStateShared::Created,
                 }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
@@ -326,14 +332,19 @@ impl LinkTestFixtureV3 {
                         },
                         intent_type: IntentTypeShared::Send,
                         amount: amount.clone(),
-                        total_amount: Some(amount.clone()),
-                        network_fee: Some(Nat::from(2u64) * token_fee.clone()),
+                        total_amount: Some(icrc2::total_amount_icrc2_send_intent(
+                            amount,
+                            token_fee.clone(),
+                            1,
+                        )),
+                        network_fee: Some(icrc2::network_fee_icrc2_send_intent(token_fee, 1)),
                         user_fee: None,
                         source_address: creator,
                         source_address_type: AddressTypeShared::Creator,
                         dest_address: self.ctx.cashier_backend_principal,
                         dest_address_type: AddressTypeShared::Link,
                         dependencies: None,
+                        action_id: None,
                         intent_state: IntentStateShared::Created,
                     }),
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
@@ -354,5 +365,31 @@ impl LinkTestFixtureV3 {
             link_id: None,
             intent_ids: None,
         })
+    }
+
+    pub fn receive_action(&self, link_id: String, creator: Principal) -> ActionShared {
+        ActionShared {
+            id: "receive_action_id".to_string(),
+            action_type: ActionTypeShared::Receive,
+            intents: vec![],
+            creator,
+            creator_address_type: AddressTypeShared::User,
+            action_state: ActionStateShared::Created,
+            link_id: Some(link_id),
+            intent_ids: None,
+        }
+    }
+
+    pub fn withdraw_action(&self, link_id: String, creator: Principal) -> ActionShared {
+        ActionShared {
+            id: "withdraw_action_id".to_string(),
+            action_type: ActionTypeShared::Withdraw,
+            intents: vec![],
+            creator,
+            creator_address_type: AddressTypeShared::Creator,
+            action_state: ActionStateShared::Created,
+            link_id: Some(link_id),
+            intent_ids: None,
+        }
     }
 }

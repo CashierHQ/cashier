@@ -163,6 +163,8 @@ export interface Intent {
   dest_address_type: AddressType;
   /** IDs of intents this intent depends on */
   dependencies?: string[];
+  /** ID of the action this intent belongs to */
+  action_id?: string;
   intent_state: IntentState;
 }
 
@@ -232,9 +234,9 @@ export interface Link {
   /** List of assets associated with the link */
   asset_info: AssetInfo[];
   /** Maximum number of times the link can be used */
-  max_use: number;
+  max_use: bigint;
   /** Number of times the link has been used */
-  use_count: number;
+  use_count: bigint;
   link_state: LinkState;
   /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
   created_at_ts?: number;

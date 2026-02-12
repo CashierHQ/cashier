@@ -22,7 +22,7 @@ pub struct ActionV3 {
     pub state: ActionState,
     pub creator: Principal,
     pub creator_address_type: AddressTypeV3,
-    pub link_id: Option<String>,
+    pub link_id: String,
     pub intent_ids: Vec<String>,
 }
 
@@ -51,7 +51,7 @@ impl From<ActionShared> for ActionV3 {
             state: ActionState::from(action.action_state),
             creator: action.creator,
             creator_address_type: AddressTypeV3::from(action.creator_address_type),
-            link_id: action.link_id,
+            link_id: action.link_id.unwrap_or_default(),
             intent_ids: action.intents.iter().map(|i| i.id.clone()).collect(),
         }
     }
@@ -67,7 +67,7 @@ impl ActionV3 {
             action_state: self.state.to_shared(),
             creator: self.creator,
             creator_address_type: self.creator_address_type.to_shared(),
-            link_id: self.link_id.clone(),
+            link_id: Some(self.link_id.clone()),
             intent_ids: Some(self.intent_ids.clone()),
         }
     }

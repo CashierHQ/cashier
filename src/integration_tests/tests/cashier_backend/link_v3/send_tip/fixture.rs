@@ -100,6 +100,21 @@ impl TipLinkV3Fixture {
         })
     }
 
+    pub fn create_action_input(&self, link_id: &str) -> CreateActionInputV3 {
+        CreateActionInputV3 {
+            link_id: link_id.to_string(),
+            action: self
+                .link_fixture
+                .create_action_from_tokens_and_amount(
+                    self.caller,
+                    vec![self.token.to_string()],
+                    vec![self.amount.clone()],
+                    vec![self.token_fee.clone()],
+                )
+                .unwrap(),
+        }
+    }
+
     /// This function is used to airdrop ICP and the specified asset to the caller.
     /// # Returns
     /// * `()` - No return value
