@@ -14,6 +14,7 @@
   import { feeService } from "$modules/shared/services/feeService";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
   import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
+  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
 
   const {
     link,
@@ -69,16 +70,16 @@
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    // Use shared package calculations for TIP_SHARED_TEST template
+    // TIP_SHARED_TEST uses shared package calculations (separate path)
     if (link.createLinkData.linkType === "TIP_SHARED_TEST") {
-      return feeService.forecastLinkCreationFeesShared(
+      return forecastTipSharedFees(
         link.createLinkData.assets,
         link.createLinkData.maxUse,
         tokens,
       );
     }
 
-    // Use old frontend calculations for other link types
+    // All other link types use existing frontend-only calculations
     return feeService.forecastLinkCreationFees(
       link.createLinkData.assets,
       link.createLinkData.maxUse,

@@ -50,6 +50,10 @@ export type ActionSource = {
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
   onSuccess?: (result: ProcessActionResult) => void;
+  /** When set to TIP_SHARED_TEST, cart uses shared-package fee logic for consistency with preview */
+  linkType?: string;
+  /** Max use for the link; required when linkType is TIP_SHARED_TEST for fee calculation */
+  maxUse?: number;
 };
 
 /**

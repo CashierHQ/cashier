@@ -81,6 +81,8 @@
     source={{
       action: linkDetailStore.action,
       handleProcessAction,
+      linkType: link.createLinkData.linkType,
+      maxUse: link.createLinkData.maxUse,
     }}
     {onCloseDrawer}
     onFeeInfoDrawerClose={() => {

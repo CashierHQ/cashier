@@ -6,6 +6,8 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
+import { buildAssetAndFeeFromActionShared } from "$modules/creationLink/utils/buildAssetAndFeeFromActionShared";
+import { LinkType } from "$modules/links/types/link/linkType";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
@@ -62,11 +64,24 @@ export class LinkTxCartStore implements TxCartStore {
 
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
-    this.#assetAndFeeList = feeService.buildFromAction(
-      this.#source.action,
-      tokens,
-      walletPrincipal,
-    );
+
+    if (
+      this.#source.linkType === LinkType.TIP_SHARED_TEST &&
+      this.#source.maxUse != null
+    ) {
+      this.#assetAndFeeList = buildAssetAndFeeFromActionShared(
+        this.#source.action,
+        tokens,
+        walletPrincipal,
+        this.#source.maxUse,
+      );
+    } else {
+      this.#assetAndFeeList = feeService.buildFromAction(
+        this.#source.action,
+        tokens,
+        walletPrincipal,
+      );
+    }
   }
 
   /** Compute total fee in USD */

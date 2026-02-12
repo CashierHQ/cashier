@@ -12,6 +12,14 @@ import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "../types/action/actionType";
+import type {
+  CreateActionInputV3,
+  CreateActionResponseV3,
+  CreateLinkInputV3,
+  CreateLinkResponseV3,
+  ProcessActionInputV3,
+  ProcessActionResponseV3,
+} from "$modules/links/types/linkV3";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -98,6 +106,45 @@ class CanisterBackendService {
   }
 
   /**
+   * Creates a new link using the V3 API.
+   * Expects shared `Action` and `LinkType` structures from the `$shared` package.
+   * @param input V3 link creation payload
+   * @returns A Result containing CreateLinkResponseV3 or an Error.
+   */
+  async createLinkV3(
+    input: CreateLinkInputV3,
+  ): Promise<Result<CreateLinkResponseV3, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await (actor as unknown as {
+      user_create_link_v3: (input: {
+        title: string;
+        link_type: unknown;
+        max_use: bigint;
+        action: unknown;
+      }) => Promise<unknown>;
+    }).user_create_link_v3({
+      title: input.title,
+      link_type: input.link_type,
+      max_use: BigInt(input.max_use),
+      action: input.action,
+    });
+
+    return responseToResult(
+      response as
+        | { Ok: CreateLinkResponseV3 }
+        | { Err: cashierBackend.CanisterError },
+    )
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
    *  Process an action by its ID. This method calls the canister's `process_action_v2`
    *  @param actionId The ID of the action to process.
    *  @returns A Result containing LinkDto or an Error.
@@ -117,6 +164,39 @@ class CanisterBackendService {
     });
 
     return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Process an action using the V3 API.
+   * @param input V3 process action payload
+   * @returns A Result containing ProcessActionResponseV3 or an Error.
+   */
+  async processActionV3(
+    input: ProcessActionInputV3,
+  ): Promise<Result<ProcessActionResponseV3, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await (actor as unknown as {
+      user_process_action_v3: (
+        input: ProcessActionInputV3,
+      ) => Promise<unknown>;
+    }).user_process_action_v3({
+      link_id: input.link_id,
+      action_id: input.action_id,
+    });
+
+    return responseToResult(
+      response as
+        | { Ok: ProcessActionResponseV3 }
+        | { Err: cashierBackend.CanisterError },
+    )
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -165,6 +245,40 @@ class CanisterBackendService {
     });
 
     return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Create a new action using the V3 API.
+   * Expects shared `Action` from the `$shared` package.
+   * @param input V3 action creation payload
+   * @returns A Result containing CreateActionResponseV3 or an Error.
+   */
+  async createActionV3(
+    input: CreateActionInputV3,
+  ): Promise<Result<CreateActionResponseV3, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await (actor as unknown as {
+      user_create_action_v3: (
+        input: CreateActionInputV3,
+      ) => Promise<unknown>;
+    }).user_create_action_v3({
+      link_id: input.link_id,
+      action: input.action,
+    });
+
+    return responseToResult(
+      response as
+        | { Ok: CreateActionResponseV3 }
+        | { Err: cashierBackend.CanisterError },
+    )
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
