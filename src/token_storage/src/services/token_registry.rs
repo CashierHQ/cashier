@@ -8,7 +8,7 @@ use crate::repository::{
 use futures::try_join;
 use token_storage_types::{
     IndexId, TokenId,
-    token::{ChainTokenDetails, RegistryToken, TokenRegistryMetadata},
+    token::{ChainTokenDetails, IcrcStandard, IcrcStandards, RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService<R: Repositories> {
@@ -51,7 +51,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);
 
-                // Fetch name, fee, decimals, symbol concurrently
+                // Fetch required fields concurrently (these MUST succeed)
                 let (name, fee, decimals, symbol) = try_join!(
                     icrc_service.icrc_1_name(),
                     icrc_service.icrc_1_fee(),
@@ -59,6 +59,13 @@ impl<R: Repositories> TokenRegistryService<R> {
                     icrc_service.icrc_1_symbol()
                 )
                 .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
+
+                // Fetch standards separately — optional, default to [ICRC1] on failure
+                let supported_standards = icrc_service
+                    .icrc_10_supported_standards()
+                    .await
+                    .map(|r| IcrcStandards::from(r).0)
+                    .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
 
                 let registry_token = RegistryToken {
                     symbol,
@@ -68,6 +75,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                         ledger_id,
                         index_id,
                         fee,
+                        supported_standards,
                     },
                     enabled_by_default: false,
                 };
@@ -91,7 +99,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);
 
-                // Fetch name, fee, decimals, symbol concurrently
+                // Fetch required fields concurrently (these MUST succeed)
                 let (name, fee, decimals, symbol) = try_join!(
                     icrc_service.icrc_1_name(),
                     icrc_service.icrc_1_fee(),
@@ -100,6 +108,13 @@ impl<R: Repositories> TokenRegistryService<R> {
                 )
                 .map_err(|e| format!("Failed to fetch ICRC token info: {e:?}"))?;
 
+                // Fetch standards separately — optional, default to [ICRC1] on failure
+                let supported_standards = icrc_service
+                    .icrc_10_supported_standards()
+                    .await
+                    .map(|r| IcrcStandards::from(r).0)
+                    .unwrap_or_else(|_| vec![IcrcStandard::ICRC1]);
+
                 current_record.symbol = symbol;
                 current_record.name = name;
                 current_record.decimals = decimals;
@@ -107,6 +122,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     ledger_id,
                     index_id: current_record.details.index_id(),
                     fee,
+                    supported_standards,
                 };
                 self.registry_repository
                     .register_token(current_record, &mut self.metadata_repository)
@@ -146,6 +162,32 @@ impl<R: Repositories> TokenRegistryService<R> {
         }
 
         Ok(token_ids)
+    }
+
+    /// Update supported standards for a token (admin override)
+    pub fn update_token_standards(
+        &mut self,
+        token_id: TokenId,
+        supported_standards: Vec<IcrcStandard>,
+    ) -> Result<(), String> {
+        let Some(mut token) = self.registry_repository.get_token(&token_id) else {
+            return Err(format!(
+                "Token with id '{token_id:?}' not found in registry"
+            ));
+        };
+
+        match &mut token.details {
+            ChainTokenDetails::IC {
+                supported_standards: current,
+                ..
+            } => {
+                *current = supported_standards;
+            }
+        }
+
+        self.registry_repository
+            .register_token(token, &mut self.metadata_repository)?;
+        Ok(())
     }
 
     /// Delete all tokens from the registry
