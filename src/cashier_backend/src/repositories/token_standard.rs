@@ -5,7 +5,6 @@ use candid::Principal;
 use cashier_backend_types::repository::token_standard::CachedTokenStandard;
 use ic_mple_log::service::Storage;
 use std::collections::BTreeMap;
-use token_storage_types::token::IcrcStandard;
 
 /// Storage type for token fee cache - volatile BTreeMap
 pub type TokenStandardRepositoryStorage = BTreeMap<Principal, CachedTokenStandard>;
@@ -50,6 +49,7 @@ impl<S: Storage<TokenStandardRepositoryStorage>> TokenStandardRepository<S> {
 mod tests {
     use super::*;
     use crate::repositories::{Repositories, tests::TestRepositories};
+    use token_storage_types::token::IcrcStandard;
 
     #[test]
     fn it_should_store_and_retrieve_token_standard() {

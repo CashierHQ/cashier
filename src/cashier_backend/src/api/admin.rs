@@ -152,7 +152,7 @@ pub fn admin_fee_cache_clear_token(token_id: Principal) -> Result<(), CanisterEr
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    state.token_fee_service.clear_token(&token_id.to_text());
+    state.token_fee_service.clear_token(&token_id);
 
     Ok(())
 }

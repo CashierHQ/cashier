@@ -1,9 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v2::links::{
-    shared::receive_link::actions::withdraw::WithdrawAction, traits::LinkV2State,
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -15,21 +12,27 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::traits::TransactionManager;
 
-pub struct InactiveState<M: TransactionManager + 'static> {
+use crate::apps::{
+    link_v2::links::{
+        shared::receive_link::actions::withdraw::WithdrawAction, traits::LinkV2State,
+    },
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct InactiveState {
     pub link: Link,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> InactiveState<M> {
-    pub fn new(link: &Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
+impl InactiveState {
+    pub fn new(link: &Link, canister_id: Principal) -> Self {
         Self {
             link: link.clone(),
             canister_id,
-            transaction_manager,
         }
     }
 
@@ -41,12 +44,15 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
-    pub async fn create_withdraw_action(
+    pub async fn create_withdraw_action<M>(
         caller: Principal,
         link: Link,
         canister_id: Principal,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkCreateActionResult, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+    {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
                 "Only the creator can create WITHDRAW action on this link".to_string(),
@@ -75,14 +81,17 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the withdraw action
-    pub async fn withdraw(
+    pub async fn withdraw<M>(
         caller: Principal,
         link: Link,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkProcessActionResult, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+    {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
                 "Only the creator can process WITHDRAW action on this link".to_string(),
@@ -106,63 +115,65 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
     }
 }
 
-impl<M: TransactionManager + 'static> LinkV2State for InactiveState<M> {
-    fn create_action(
+impl LinkV2State for InactiveState {
+    async fn create_action<M, F, S>(
         &self,
         caller: Principal,
         action_type: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        _token_fee_service: F,
+        _token_standard_service: S,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action_type {
-                ActionType::Withdraw => {
-                    let create_action_result = Self::create_withdraw_action(
-                        caller,
-                        link,
-                        canister_id,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(create_action_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for InactiveState".to_string(),
-                )),
+        match action_type {
+            ActionType::Withdraw => {
+                let create_action_result =
+                    Self::create_withdraw_action(caller, link, canister_id, transaction_manager)
+                        .await?;
+                Ok(create_action_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for InactiveState".to_string(),
+            )),
+        }
     }
 
-    fn process_action(
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: std::collections::HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+    {
         let link = self.link.clone();
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action.r#type {
-                ActionType::Withdraw => {
-                    let withdraw_result = Self::withdraw(
-                        caller,
-                        link,
-                        action,
-                        intents,
-                        intent_txs_map,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(withdraw_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for InactiveState".to_string(),
-                )),
+        match action.r#type {
+            ActionType::Withdraw => {
+                let withdraw_result = Self::withdraw(
+                    caller,
+                    link,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                )
+                .await?;
+                Ok(withdraw_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for InactiveState".to_string(),
+            )),
+        }
     }
 }

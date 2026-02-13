@@ -1,10 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v2::links::{
-    airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
-    token_basket_link::TokenBasketLink, traits::LinkV2,
-};
 use candid::Principal;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput},
@@ -14,20 +10,15 @@ use cashier_backend_types::{
         link::v1::{Link, LinkType},
     },
 };
-use std::rc::Rc;
-use transaction_manager::traits::TransactionManager;
 
-pub struct LinkFactory<M: TransactionManager + 'static> {
-    pub transaction_manager: Rc<M>,
-}
+use crate::apps::link_v2::links::{
+    LinkV2Enum, airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
+    token_basket_link::TokenBasketLink,
+};
 
-impl<M: TransactionManager + 'static> LinkFactory<M> {
-    pub fn new(transaction_manager: Rc<M>) -> Self {
-        Self {
-            transaction_manager,
-        }
-    }
+pub struct LinkFactory;
 
+impl LinkFactory {
     /// Creates a new LinkV2 instance based on the provided input.
     /// # Arguments
     /// * `creator` - The principal of the user creating the link
@@ -36,7 +27,6 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
     /// # Returns
     /// * `Result<Box<dyn LinkV2>, CanisterError>` - The resulting LinkV2 instance or an error if the creation fails.
     pub fn create_link(
-        &self,
         creator: Principal,
         input: CreateLinkInput,
         created_at_ts: u64,
@@ -56,7 +46,6 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 input.link_use_action_max_count,
                 created_at_ts,
                 canister_id,
-                self.transaction_manager.clone(),
             )
             .link),
             LinkType::SendAirdrop => Ok(AirdropLink::create(
@@ -66,7 +55,6 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 input.link_use_action_max_count,
                 created_at_ts,
                 canister_id,
-                self.transaction_manager.clone(),
             )
             .link),
             LinkType::SendTokenBasket => Ok(TokenBasketLink::create(
@@ -76,7 +64,6 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 input.link_use_action_max_count,
                 created_at_ts,
                 canister_id,
-                self.transaction_manager.clone(),
             )
             .link),
             LinkType::ReceivePayment => Ok(PaymentLink::create(
@@ -86,7 +73,6 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 input.link_use_action_max_count,
                 created_at_ts,
                 canister_id,
-                self.transaction_manager.clone(),
             )
             .link),
         }
@@ -96,33 +82,23 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
     /// # Arguments
     /// * `link` - The Link model to convert.
     /// # Returns
-    /// * `Result<Box<dyn LinkV2>, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
-    pub fn create_from_link(
-        &self,
+    /// * `Result<LinkV2Enum, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
+    pub fn create_from_link_model(
         link: Link,
         canister_id: Principal,
-    ) -> Result<Box<dyn LinkV2>, CanisterError> {
+    ) -> Result<LinkV2Enum, CanisterError> {
         match link.link_type {
-            LinkType::SendTip => Ok(Box::new(TipLink::new(
+            LinkType::SendTip => Ok(LinkV2Enum::TipLink(TipLink::new(link, canister_id))),
+            LinkType::SendAirdrop => {
+                Ok(LinkV2Enum::AirdropLink(AirdropLink::new(link, canister_id)))
+            }
+            LinkType::SendTokenBasket => Ok(LinkV2Enum::TokenBasketLink(TokenBasketLink::new(
                 link,
                 canister_id,
-                self.transaction_manager.clone(),
             ))),
-            LinkType::SendAirdrop => Ok(Box::new(AirdropLink::new(
-                link,
-                canister_id,
-                self.transaction_manager.clone(),
-            ))),
-            LinkType::SendTokenBasket => Ok(Box::new(TokenBasketLink::new(
-                link,
-                canister_id,
-                self.transaction_manager.clone(),
-            ))),
-            LinkType::ReceivePayment => Ok(Box::new(PaymentLink::new(
-                link,
-                canister_id,
-                self.transaction_manager.clone(),
-            ))),
+            LinkType::ReceivePayment => {
+                Ok(LinkV2Enum::PaymentLink(PaymentLink::new(link, canister_id)))
+            }
         }
     }
 }

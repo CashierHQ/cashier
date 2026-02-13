@@ -13,7 +13,10 @@ use std::collections::HashMap;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::icrc_token::{service::IcrcService, types::Account};
 
-use crate::api::state::get_state;
+use crate::{
+    api::state::get_state,
+    apps::{token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache},
+};
 
 /// Retrieves token fees for a link's assets, ensuring ICP is included.
 /// # Arguments
@@ -33,11 +36,12 @@ use crate::api::state::get_state;
 pub async fn get_batch_tokens_fee_for_link(
     link: &Link,
 ) -> Result<HashMap<Principal, Nat>, CanisterError> {
+    let asset_principals = link_asset_principals(link);
     // Use TokenFeeService from CanisterState (with caching)
     let mut state = get_state();
     state
         .token_fee_service
-        .get_batch_tokens_fee(&link_assets(link))
+        .get_batch_tokens_fee(&asset_principals)
         .await
 }
 
@@ -190,4 +194,14 @@ pub fn link_assets(link: &Link) -> Vec<Asset> {
     }
 
     assets
+}
+
+pub fn link_asset_principals(link: &Link) -> Vec<Principal> {
+    let assets = link_assets(link);
+    assets
+        .iter()
+        .map(|asset| match asset {
+            Asset::IC { address, .. } => *address,
+        })
+        .collect()
 }

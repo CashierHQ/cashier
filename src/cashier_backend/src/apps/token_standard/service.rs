@@ -10,7 +10,7 @@ use std::{cell::RefCell, collections::HashMap};
 use token_storage_types::token::IcrcStandard;
 
 use crate::{
-    apps::token_storage::traits::TokenStorageClient,
+    apps::{token_standard::traits::TokenStandardCache, token_storage::traits::TokenStorageClient},
     repositories::{self, Repositories},
 };
 
@@ -93,13 +93,17 @@ impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardServ
 
         Ok(standards)
     }
+}
 
+impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardCache
+    for TokenStandardService<R, T, E>
+{
     /// Get token standards for a batch of token principals
     /// # Arguments
     /// * `token_principals` - The list of token principals to retrieve standards for
     /// # Returns
     /// * `HashMap<Principal, Vec<IcrcStandard>>` - A map of token principals to their respective standards
-    pub async fn get_batch_token_standards(
+    async fn get_batch_token_standards(
         &mut self,
         token_principals: &[Principal],
     ) -> Result<HashMap<Principal, Vec<IcrcStandard>>, CanisterError> {

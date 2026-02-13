@@ -1,15 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-//! Token fee caching service with TTL-based expiration.
-
-use super::TokenFetcher;
-use crate::repositories::{self, Repositories};
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::{error::CanisterError, repository::token_fee::CachedFee};
 use cashier_common::runtime::IcEnvironment;
 use std::{cell::RefCell, collections::HashMap};
+
+use crate::{
+    apps::token_fee::traits::{TokenFeeCache, TokenFetcher},
+    repositories::{self, Repositories},
+};
 
 thread_local! {
     /// Configured TTL for token fee cache (nanoseconds)
@@ -76,7 +76,7 @@ impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F
     /// * `token_key` - The token identifier (typically the principal as text) to clear from cache
     ///
     /// The next query for this token will fetch fresh data from its canister.
-    pub fn clear_token(&mut self, token_key: &str) {
+    pub fn clear_token(&mut self, token_key: &Principal) {
         self.token_fee_repo.remove(token_key);
     }
 
@@ -93,64 +93,44 @@ impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F
         self.ic_env.time().saturating_sub(cached.updated_at)
             < TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow())
     }
+}
 
-    /// Retrieves fees for multiple tokens, leveraging cache when available.
-    ///
-    /// For each asset:
-    /// 1. Checks if a valid (non-expired) cached fee exists
-    /// 2. If cached and valid, returns the cached fee
-    /// 3. If not cached or expired, fetches fresh fee from the token canister via the fetcher
-    /// 4. Stores the newly fetched fee in the cache with current timestamp
-    ///
-    /// # Arguments
-    ///
-    /// * `assets` - Slice of assets to retrieve fees for
-    ///
-    /// # Returns
-    ///
-    /// Returns a `HashMap` mapping each token's `Principal` to its transfer fee as `Nat`.
-    ///
-    /// # Errors
-    ///
-    /// Returns a `CanisterError` if:
-    /// * Any token canister fails to respond
-    /// * The fetcher encounters a network or communication error
-    /// * Fee data cannot be retrieved or decoded
-    pub async fn get_batch_tokens_fee(
+impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeCache
+    for TokenFeeService<R, E, F>
+{
+    async fn get_batch_tokens_fee(
         &mut self,
-        assets: &[Asset],
+        token_addresses: &[Principal],
     ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-        let mut fee_map_result = HashMap::with_capacity(assets.len());
+        let mut fee_map_result = HashMap::with_capacity(token_addresses.len());
 
-        for asset in assets {
-            let address = match asset {
-                Asset::IC { address, .. } => *address,
-            };
-            let key = address.to_text();
-
+        for address in token_addresses {
             // Check cache first
-            if let Some(cached) = self.token_fee_repo.get(&key)
+            if let Some(cached) = self.token_fee_repo.get(address)
                 && self.is_valid(&cached)
             {
-                fee_map_result.insert(address, cached.fee);
+                fee_map_result.insert(*address, cached.fee.clone());
                 continue;
             }
 
             // Cache miss or expired - fetch fresh via injected fetcher
-            let fee = self.fetcher.fetch_fee(address).await.map_err(|e| {
-                CanisterError::CallCanisterFailed(format!("Failed to get fee for {}: {:?}", key, e))
+            let fee = self.fetcher.fetch_fee(*address).await.map_err(|e| {
+                CanisterError::CallCanisterFailed(format!(
+                    "Failed to get fee for {}: {:?}",
+                    address, e
+                ))
             })?;
 
             // Cache the fetched fee
             let updated_at = self.ic_env.time();
             self.token_fee_repo.insert(
-                &key,
+                address,
                 CachedFee {
                     fee: fee.clone(),
                     updated_at,
                 },
             );
-            fee_map_result.insert(address, fee);
+            fee_map_result.insert(*address, fee);
         }
 
         Ok(fee_map_result)
@@ -165,7 +145,7 @@ mod tests {
         apps::shared::utils::tests::MockIcEnvironment, repositories::tests::TestRepositories,
     };
     use candid::Nat;
-    use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
+    use cashier_common::{constant::DEFAULT_TOKEN_FEE_TTL_NS, test_utils::random_principal_id};
 
     fn setup_ttl(ttl: u64) {
         TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl);
@@ -185,27 +165,23 @@ mod tests {
         TokenFeeService::new(&repos, env, fetcher)
     }
 
-    fn create_test_asset(principal_text: &str) -> Asset {
-        Asset::IC {
-            address: Principal::from_text(principal_text).unwrap(),
-        }
-    }
-
     #[test]
-    fn should_success_clear_all_cached_fees() {
+    fn it_should_success_clear_all_cached_fees() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
         let mut service = create_service(1000);
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
 
         // Insert some fees directly via repo
         service.token_fee_repo.insert(
-            "token1",
+            &ledger_id1,
             CachedFee {
                 fee: Nat::from(100u64),
                 updated_at: 1000,
             },
         );
         service.token_fee_repo.insert(
-            "token2",
+            &ledger_id2,
             CachedFee {
                 fee: Nat::from(200u64),
                 updated_at: 1000,
@@ -215,80 +191,78 @@ mod tests {
         service.clear_all();
 
         // Verify cache is empty
-        assert!(service.token_fee_repo.get("token1").is_none());
-        assert!(service.token_fee_repo.get("token2").is_none());
+        assert!(service.token_fee_repo.get(&ledger_id1).is_none());
+        assert!(service.token_fee_repo.get(&ledger_id2).is_none());
     }
 
     #[test]
-    fn should_success_clear_only_specific_token() {
+    fn it_should_success_clear_only_specific_token() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
         let mut service = create_service(1000);
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
 
         service.token_fee_repo.insert(
-            "token1",
+            &ledger_id1,
             CachedFee {
                 fee: Nat::from(100u64),
                 updated_at: 1000,
             },
         );
         service.token_fee_repo.insert(
-            "token2",
+            &ledger_id2,
             CachedFee {
                 fee: Nat::from(200u64),
                 updated_at: 1000,
             },
         );
 
-        service.clear_token("token1");
+        service.clear_token(&ledger_id1);
 
-        assert!(service.token_fee_repo.get("token1").is_none());
-        assert!(service.token_fee_repo.get("token2").is_some());
+        assert!(service.token_fee_repo.get(&ledger_id1).is_none());
+        assert!(service.token_fee_repo.get(&ledger_id2).is_some());
     }
 
     #[tokio::test]
-    async fn should_success_fetch_all_tokens_on_cache_miss() {
+    async fn it_should_success_fetch_all_tokens_on_cache_miss() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
 
         let fetcher = MockTokenFetcher::new();
-        let p1 = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-        let p2 = Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap();
-        fetcher.set_fee(p1, Nat::from(1000u64));
-        fetcher.set_fee(p2, Nat::from(2000u64));
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        fetcher.set_fee(ledger_id1, Nat::from(1000u64));
+        fetcher.set_fee(ledger_id2, Nat::from(2000u64));
 
         let mut service = create_service_with_fetcher(1768451390000000300, fetcher.clone());
-        let assets = vec![
-            create_test_asset("ryjl3-tyaaa-aaaaa-aaaba-cai"),
-            create_test_asset("mxzaz-hqaaa-aaaar-qaada-cai"),
-        ];
+        let assets = vec![ledger_id1, ledger_id2];
 
         let result: HashMap<Principal, Nat> = service.get_batch_tokens_fee(&assets).await.unwrap();
 
-        assert_eq!(result.get(&p1), Some(&Nat::from(1000u64)));
-        assert_eq!(result.get(&p2), Some(&Nat::from(2000u64)));
-        assert_eq!(fetcher.get_call_count(&p1), 1);
-        assert_eq!(fetcher.get_call_count(&p2), 1);
+        assert_eq!(result.get(&ledger_id1), Some(&Nat::from(1000u64)));
+        assert_eq!(result.get(&ledger_id2), Some(&Nat::from(2000u64)));
+        assert_eq!(fetcher.get_call_count(&ledger_id1), 1);
+        assert_eq!(fetcher.get_call_count(&ledger_id2), 1);
     }
 
     #[tokio::test]
-    async fn should_success_return_empty_map_for_empty_assets() {
+    async fn it_should_success_return_empty_map_for_empty_assets() {
         let mut service = create_service(1768451390000000300);
         let result: HashMap<Principal, Nat> = service.get_batch_tokens_fee(&[]).await.unwrap();
         assert!(result.is_empty());
     }
 
     #[tokio::test]
-    async fn should_error_propagate_fetch_error() {
+    async fn it_should_error_propagate_fetch_error() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
 
         let fetcher = MockTokenFetcher::new();
-        let p1 = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-        fetcher.set_error(p1, "canister unavailable");
+        let ledger_id = random_principal_id();
+        fetcher.set_error(ledger_id, "canister unavailable");
 
         let mut service = create_service_with_fetcher(1768451390000000300, fetcher);
-        let assets = vec![create_test_asset("ryjl3-tyaaa-aaaaa-aaaba-cai")];
 
         let result: Result<HashMap<Principal, Nat>, CanisterError> =
-            service.get_batch_tokens_fee(&assets).await;
+            service.get_batch_tokens_fee(&vec![ledger_id]).await;
         assert!(result.is_err());
     }
 }

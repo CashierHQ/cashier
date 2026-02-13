@@ -2,3 +2,4 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod service;
+pub mod traits;

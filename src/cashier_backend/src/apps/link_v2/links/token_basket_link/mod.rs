@@ -1,12 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v2::links::{
-    shared::send_link::states::{
-        active::ActiveState, created::CreatedState, inactive::InactiveState,
-    },
-    traits::{LinkV2, LinkV2State},
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -19,23 +13,29 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::{collections::HashMap, future::Future, pin::Pin};
 use transaction_manager::traits::TransactionManager;
 use uuid::Uuid;
 
-pub struct TokenBasketLink<M: TransactionManager + 'static> {
+use crate::apps::{
+    link_v2::links::{
+        shared::send_link::states::{
+            active::ActiveState, created::CreatedState, inactive::InactiveState,
+        },
+        traits::{LinkV2, LinkV2State},
+    },
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct TokenBasketLink {
     pub link: Link,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> TokenBasketLink<M> {
-    pub fn new(link: Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
-        Self {
-            link,
-            canister_id,
-            transaction_manager,
-        }
+impl TokenBasketLink {
+    pub fn new(link: Link, canister_id: Principal) -> Self {
+        Self { link, canister_id }
     }
 
     /// Create a new TokenBasketLink instance
@@ -54,7 +54,6 @@ impl<M: TransactionManager + 'static> TokenBasketLink<M> {
         max_use: u64,
         created_at_ts: u64,
         canister_id: Principal,
-        transaction_manager: Rc<M>,
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
@@ -68,86 +67,112 @@ impl<M: TransactionManager + 'static> TokenBasketLink<M> {
             create_at: created_at_ts,
         };
 
-        Self::new(new_link, canister_id, transaction_manager)
-    }
-
-    /// Get the appropriate state handler for the current link state
-    /// # Arguments
-    /// * `link` - The Link model
-    /// * `canister_id` - The canister ID of the token contract
-    /// * `fee_map` - A map of canister principals to their corresponding fees
-    /// # Returns
-    /// * `Result<Box<dyn LinkV2State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
-    pub fn get_state_handler(
-        link: &Link,
-        canister_id: Principal,
-        transaction_manager: Rc<M>,
-    ) -> Result<Box<dyn LinkV2State>, CanisterError> {
-        match link.state {
-            LinkState::CreateLink => Ok(Box::new(CreatedState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkState::Active => Ok(Box::new(ActiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkState::Inactive => Ok(Box::new(InactiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            _ => Err(CanisterError::ValidationErrors(
-                "Unsupported link state".to_string(),
-            )),
-        }
+        Self::new(new_link, canister_id)
     }
 }
 
-impl<M: TransactionManager + 'static> LinkV2 for TokenBasketLink<M> {
+impl LinkV2 for TokenBasketLink {
     /// Creates an action for the TokenBasketLink.
     /// # Arguments
     /// * `canister_id` - The canister ID of the token contract.
     /// * `action_type` - The type of action to be created.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
-    fn create_action(
+    async fn create_action<M, F, S>(
         &self,
         caller: Principal,
         action_type: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state =
-                TokenBasketLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let create_action_result = state.create_action(caller, action_type).await?;
-            Ok(create_action_result)
-        })
+        match link.state {
+            LinkState::CreateLink => {
+                let state_handler = CreatedState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                    )
+                    .await
+            }
+            LinkState::Active => {
+                let state_handler = ActiveState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                    )
+                    .await
+            }
+            LinkState::Inactive => {
+                let state_handler = InactiveState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                    )
+                    .await
+            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for current link state".to_string(),
+            )),
+        }
     }
 
-    fn process_action(
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state =
-                TokenBasketLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let process_action_result = state
-                .process_action(caller, action, intents, intent_txs_map)
-                .await?;
-            Ok(process_action_result)
-        })
+        match link.state {
+            LinkState::CreateLink => {
+                let state_handler = CreatedState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            LinkState::Active => {
+                let state_handler = ActiveState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            LinkState::Inactive => {
+                let state_handler = InactiveState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for current link state".to_string(),
+            )),
+        }
     }
 }
