@@ -18,6 +18,14 @@ impl TokenStorageService {
     }
 }
 
+impl Default for TokenStorageService {
+    fn default() -> Self {
+        Self {
+            canister_id: Principal::anonymous(),
+        }
+    }
+}
+
 impl TokenStorageClient for TokenStorageService {
     async fn get_token_standards(
         &self,
@@ -41,6 +49,10 @@ impl TokenStorageClient for TokenStorageService {
                 supported_standards,
             } => Ok(supported_standards),
         }
+    }
+
+    fn set_canister_id(&mut self, canister_id: Principal) {
+        self.canister_id = canister_id;
     }
 }
 
@@ -87,6 +99,10 @@ pub mod tests {
                     &token_principal.to_string(),
                 )),
             }
+        }
+
+        fn set_canister_id(&mut self, _canister_id: Principal) {
+            // No-op for mock
         }
     }
 }

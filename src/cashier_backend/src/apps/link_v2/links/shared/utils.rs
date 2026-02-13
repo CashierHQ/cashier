@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::api::state::get_state;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
+    dto::link,
     error::CanisterError,
     repository::{common::Asset, link::v1::Link},
 };
@@ -11,7 +11,10 @@ use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
 use futures::future;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
+use token_storage_types::token::IcrcStandard;
 use transaction_manager::icrc_token::{service::IcrcService, types::Account};
+
+use crate::api::state::get_state;
 
 /// Retrieves token fees for a link's assets, ensuring ICP is included.
 /// # Arguments
@@ -31,24 +34,12 @@ use transaction_manager::icrc_token::{service::IcrcService, types::Account};
 pub async fn get_batch_tokens_fee_for_link(
     link: &Link,
 ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let mut assets: Vec<Asset> = link
-        .asset_info
-        .iter()
-        .map(|info| info.asset.clone())
-        .collect();
-
-    // if ICP is missing in assets, add it
-    if !assets.iter().any(|asset| match asset {
-        Asset::IC { address, .. } => *address == ICP_CANISTER_PRINCIPAL,
-    }) {
-        assets.push(Asset::IC {
-            address: ICP_CANISTER_PRINCIPAL,
-        });
-    }
-
     // Use TokenFeeService from CanisterState (with caching)
     let mut state = get_state();
-    state.token_fee_service.get_batch_tokens_fee(&assets).await
+    state
+        .token_fee_service
+        .get_batch_tokens_fee(&link_assets(link))
+        .await
 }
 
 /// Retrieves token balances for a collection of assets in parallel.
@@ -154,4 +145,50 @@ pub async fn get_batch_tokens_balance_for_link(
     };
 
     get_batch_tokens_balance(&assets, &link_account).await
+}
+
+/// Retrieves token standards for a link's assets from the TokenStandardService.
+/// # Arguments
+/// * `link` - The link to retrieve token standards for
+/// # Returns
+/// * `HashMap<Principal, Vec<IcrcStandard>>` - A map of token principals to their respective standards
+pub async fn get_batch_token_standards_for_link(
+    link: &Link,
+) -> Result<HashMap<Principal, Vec<IcrcStandard>>, CanisterError> {
+    let mut state = get_state();
+    let token_principals: Vec<Principal> = link_assets(link)
+        .iter()
+        .map(|asset| match asset {
+            Asset::IC { address, .. } => *address,
+        })
+        .collect();
+
+    state
+        .token_standard_service
+        .get_batch_token_standards(&token_principals)
+        .await
+}
+
+/// Extracts assets from link
+/// # Arguments
+/// * `link` - The link to extract assets from
+/// # Returns
+/// * `Vec<Asset>` - The list of assets in the link, including ICP if
+pub fn link_assets(link: &Link) -> Vec<Asset> {
+    let mut assets: Vec<Asset> = link
+        .asset_info
+        .iter()
+        .map(|info| info.asset.clone())
+        .collect();
+
+    // if ICP is missing in assets, add it
+    if !assets.iter().any(|asset| match asset {
+        Asset::IC { address, .. } => *address == ICP_CANISTER_PRINCIPAL,
+    }) {
+        assets.push(Asset::IC {
+            address: ICP_CANISTER_PRINCIPAL,
+        });
+    }
+
+    assets
 }

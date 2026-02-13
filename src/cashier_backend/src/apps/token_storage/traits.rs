@@ -15,4 +15,7 @@ pub trait TokenStorageClient {
         &self,
         token_principal: &Principal,
     ) -> Result<Vec<IcrcStandard>, CanisterError>;
+
+    /// Set the canister ID for the token storage client
+    fn set_canister_id(&mut self, canister_id: Principal);
 }

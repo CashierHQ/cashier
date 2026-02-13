@@ -35,6 +35,8 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
     pub token_fee_service: TokenFeeService<ThreadlocalRepositories, E, IcrcTokenFetcher>,
+    pub token_standard_service:
+        TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
     pub env: E,
 }
 
@@ -47,6 +49,8 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let link_v2_service = LinkV2Service::new(&*repo, Rc::new(transaction_manager_v2));
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
+        let token_standard_service =
+            TokenStandardService::new(&*repo, TokenStorageService::default(), env.clone());
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -55,6 +59,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
             token_fee_service,
+            token_standard_service,
             env,
         }
     }
@@ -62,17 +67,20 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     /// Sets the token storage canister ID
     /// # Arguments
     /// * `canister_id` - The principal ID of the token storage canister
-    pub fn set_token_storage_canister_id(&self, canister_id: Principal) {
+    pub fn set_token_storage_canister_id(&mut self, canister_id: Principal) {
         TOKEN_STORAGE_CANISTER_ID.with(|id| {
             *id.borrow_mut() = canister_id;
         });
+
+        self.token_standard_service
+            .set_token_storage_canister_id(canister_id);
     }
 
     /// Gets the token storage canister ID
     /// # Returns
     /// * `Principal` - The principal ID of the token storage canister
     pub fn get_token_storage_canister_id(&self) -> Principal {
-        TOKEN_STORAGE_CANISTER_ID.with(|id| id.borrow().clone())
+        TOKEN_STORAGE_CANISTER_ID.with(|id| *id.borrow())
     }
 }
 

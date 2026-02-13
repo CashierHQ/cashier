@@ -14,6 +14,7 @@ use cashier_backend_types::{
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
 use icrc_ledger_types::icrc1::account::Account;
+use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
     intents::{
         transfer_wallet_to_link::TransferWalletToLinkIntent,
@@ -21,9 +22,11 @@ use transaction_manager::{
     },
     utils::calculator::{calculate_create_link_fee, calculate_icrc2_transfer_intent_amount},
 };
-
-use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
+
+use crate::apps::link_v2::links::shared::utils::{
+    get_batch_token_standards_for_link, get_batch_tokens_fee_for_link,
+};
 
 #[derive(Debug)]
 pub struct CreateAction {
@@ -53,38 +56,69 @@ impl CreateAction {
 
         let link_account = get_link_account(&link.id, canister_id)?;
 
-        // token_fee_map
+        // lookup token fees and standards from caching services
         let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+        let token_standards_map = get_batch_token_standards_for_link(link).await?;
 
         // intents
         let deposit_intents = link
             .asset_info
             .iter()
             .map(|asset_info| {
-                let spender_account = Account {
-                    owner: canister_id,
-                    subaccount: None,
-                };
+                let asset_address = asset_info.get_asset_address();
+                let token_standards = token_standards_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token standards for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
 
-                let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
-                    link.link_use_action_max_count,
-                    &asset_info.amount_per_link_use_action,
-                    &asset_info.asset,
-                    &token_fee_map,
-                )?;
+                if token_standards.contains(IcrcStandard::ICRC2) {
+                    let spender_account = Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    };
 
-                let input = CreateIcrc2WalletToLinkIntentArgs {
-                    label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-                    asset: asset_info.asset.clone(),
-                    actual_amount,
-                    approval_amount,
-                    sender_id: link.creator,
-                    link_account,
-                    spender_account,
-                    created_at_ts: link.create_at,
-                };
+                    let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
+                        link.link_use_action_max_count,
+                        &asset_info.amount_per_link_use_action,
+                        &asset_info.asset,
+                        &token_fee_map,
+                    )?;
 
-                TransferWalletToLinkIntent::create_icrc2(input)
+                    let input = CreateIcrc2WalletToLinkIntentArgs {
+                        label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                        asset: asset_info.asset.clone(),
+                        actual_amount,
+                        approval_amount,
+                        sender_id: link.creator,
+                        link_account,
+                        spender_account,
+                        created_at_ts: link.create_at,
+                    };
+
+                    TransferWalletToLinkIntent::create_icrc2(input)
+                } else {
+                    let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
+                        link.link_use_action_max_count,
+                        &asset_info.amount_per_link_use_action,
+                        &asset_info.asset,
+                        &token_fee_map,
+                    )?;
+
+                    let input = CreateIcrc2WalletToLinkIntentArgs {
+                        label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                        asset: asset_info.asset.clone(),
+                        actual_amount,
+                        approval_amount,
+                        sender_id: link.creator,
+                        link_account,
+                        spender_account,
+                        created_at_ts: link.create_at,
+                    };
+
+                    TransferWalletToLinkIntent::create_icrc1(input)
+                }
             })
             .collect::<Result<Vec<TransferWalletToLinkIntent>, CanisterError>>()?;
 
