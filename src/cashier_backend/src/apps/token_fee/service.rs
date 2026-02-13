@@ -27,9 +27,9 @@ thread_local! {
 /// Cached fees are automatically invalidated when they exceed the configured TTL,
 /// triggering fresh fetches as needed.
 pub struct TokenFeeService<R: Repositories, E: IcEnvironment, F: TokenFetcher> {
-    token_fee_repo: repositories::token_fee::TokenFeeRepository<R::TokenFee>,
-    ic_env: E,
-    fetcher: F,
+    pub token_fee_repo: repositories::token_fee::TokenFeeRepository<R::TokenFee>,
+    pub ic_env: E,
+    pub fetcher: F,
 }
 
 impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F> {
@@ -138,7 +138,7 @@ impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeCache
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::super::MockTokenFetcher;
     use super::*;
     use crate::{
@@ -151,15 +151,19 @@ mod tests {
         TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl);
     }
 
-    type TestService = TokenFeeService<TestRepositories, MockIcEnvironment, MockTokenFetcher>;
+    pub type MockTokenFeeService =
+        TokenFeeService<TestRepositories, MockIcEnvironment, MockTokenFetcher>;
 
-    fn create_service(current_time: u64) -> TestService {
+    pub fn create_mock_service(current_time: u64) -> MockTokenFeeService {
         let repos = TestRepositories::new();
         let env = MockIcEnvironment::new(current_time);
         TokenFeeService::new(&repos, env, MockTokenFetcher::new())
     }
 
-    fn create_service_with_fetcher(current_time: u64, fetcher: MockTokenFetcher) -> TestService {
+    fn create_mock_service_with_fetcher(
+        current_time: u64,
+        fetcher: MockTokenFetcher,
+    ) -> MockTokenFeeService {
         let repos = TestRepositories::new();
         let env = MockIcEnvironment::new(current_time);
         TokenFeeService::new(&repos, env, fetcher)
@@ -168,7 +172,7 @@ mod tests {
     #[test]
     fn it_should_success_clear_all_cached_fees() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
-        let mut service = create_service(1000);
+        let mut service = create_mock_service(1000);
         let ledger_id1 = random_principal_id();
         let ledger_id2 = random_principal_id();
 
@@ -198,7 +202,7 @@ mod tests {
     #[test]
     fn it_should_success_clear_only_specific_token() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
-        let mut service = create_service(1000);
+        let mut service = create_mock_service(1000);
         let ledger_id1 = random_principal_id();
         let ledger_id2 = random_principal_id();
 
@@ -233,7 +237,7 @@ mod tests {
         fetcher.set_fee(ledger_id1, Nat::from(1000u64));
         fetcher.set_fee(ledger_id2, Nat::from(2000u64));
 
-        let mut service = create_service_with_fetcher(1768451390000000300, fetcher.clone());
+        let mut service = create_mock_service_with_fetcher(1768451390000000300, fetcher.clone());
         let assets = vec![ledger_id1, ledger_id2];
 
         let result: HashMap<Principal, Nat> = service.get_batch_tokens_fee(&assets).await.unwrap();
@@ -246,7 +250,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_success_return_empty_map_for_empty_assets() {
-        let mut service = create_service(1768451390000000300);
+        let mut service = create_mock_service(1768451390000000300);
         let result: HashMap<Principal, Nat> = service.get_batch_tokens_fee(&[]).await.unwrap();
         assert!(result.is_empty());
     }
@@ -259,7 +263,7 @@ mod tests {
         let ledger_id = random_principal_id();
         fetcher.set_error(ledger_id, "canister unavailable");
 
-        let mut service = create_service_with_fetcher(1768451390000000300, fetcher);
+        let mut service = create_mock_service_with_fetcher(1768451390000000300, fetcher);
 
         let result: Result<HashMap<Principal, Nat>, CanisterError> =
             service.get_batch_tokens_fee(&vec![ledger_id]).await;

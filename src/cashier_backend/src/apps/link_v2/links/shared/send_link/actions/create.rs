@@ -32,6 +32,7 @@ use crate::apps::{
     token_standard::traits::TokenStandardCache,
 };
 
+#[derive(Debug)]
 pub struct CreateAction {
     pub action: Action,
     pub intents: Vec<Intent>,
@@ -157,5 +158,188 @@ impl CreateAction {
         intents.push(fee_intent.intent);
 
         Ok(Self::new(action, intents))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apps::{
+        token_fee::service::tests::{
+            MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
+        },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
+    };
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        asset_info::AssetInfo,
+        intent::v1::{IntentTask, IntentType},
+        link::v1::{LinkState, LinkType},
+    };
+    use cashier_common::test_utils::random_principal_id;
+    use uuid::Uuid;
+
+    fn fixture(
+        ledger_ids: Vec<Principal>,
+        max_use: u64,
+        current_ts: u64,
+    ) -> (
+        Link,
+        Principal,
+        MockTokenFeeService,
+        MockTokenStandardService,
+    ) {
+        let asset_info = ledger_ids
+            .into_iter()
+            .map(|id| AssetInfo {
+                asset: Asset::IC { address: id },
+                amount_per_link_use_action: Nat::from(100u64),
+                label: "asset".to_string(),
+            })
+            .collect::<Vec<AssetInfo>>();
+
+        let link = Link {
+            id: Uuid::new_v4().to_string(),
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            creator: random_principal_id(),
+            asset_info,
+            link_use_action_max_count: max_use,
+            link_use_action_counter: 0,
+            state: LinkState::CreateLink,
+            create_at: 1_000_000,
+        };
+        let canister_id = random_principal_id();
+        let token_fee_service = create_mock_token_fee_service(current_ts);
+        let mut token_standard_service = create_mock_token_standard_service(current_ts);
+
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(
+                ICP_CANISTER_PRINCIPAL,
+                vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            );
+
+        (link, canister_id, token_fee_service, token_standard_service)
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_if_token_fee_unavailable() {
+        // Arrange
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        let current_ts = 1_000_000_000;
+        let (link, canister_id, mut token_fee_service, mut token_standard_service) =
+            fixture(vec![ledger_id1, ledger_id2], 3, current_ts);
+
+        token_fee_service
+            .fetcher
+            .set_error(ledger_id1, "canister unavailable");
+
+        // Act
+        let result = CreateAction::create(
+            &link,
+            canister_id,
+            &mut token_fee_service,
+            &mut token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_err());
+        let err = result.err().unwrap();
+        if let CanisterError::CallCanisterFailed(err_msg) = err {
+            assert!(err_msg.contains("Failed to get fee"));
+        } else {
+            panic!("Unexpected error type: {:?}", err);
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_if_token_standard_unavailable() {
+        // Arrange
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        let current_ts = 1_000_000_000;
+        let (link, canister_id, mut token_fee_service, mut token_standard_service) =
+            fixture(vec![ledger_id1, ledger_id2], 3, current_ts);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id1, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id2, Nat::from(200u64));
+
+        // Act
+        let result = CreateAction::create(
+            &link,
+            canister_id,
+            &mut token_fee_service,
+            &mut token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_err());
+        let err = result.err().unwrap();
+        if let CanisterError::NotFound(err_msg) = err {
+            assert!(err_msg.contains("Token standards"));
+        } else {
+            panic!("Unexpected error type: {:?}", err);
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_success_create_action_with_icrc1_intent_if_token_standard_icrc1() {
+        // Arrange
+        let ledger_id1 = random_principal_id();
+        let current_ts = 1_000_000_000;
+        let (link, canister_id, mut token_fee_service, mut token_standard_service) =
+            fixture(vec![ledger_id1], 3, current_ts);
+
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id1, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id1, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = CreateAction::create(
+            &link,
+            canister_id,
+            &mut token_fee_service,
+            &mut token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let create_action = result.ok().unwrap();
+        assert_eq!(create_action.intents.len(), 2); // 1 deposit + 1 fee intent
+
+        let wallet_to_link_intent = &create_action
+            .intents
+            .iter()
+            .find(|intent| matches!(intent.task, IntentTask::TransferWalletToLink));
+        assert!(wallet_to_link_intent.is_some());
+        let wallet_to_link_intent = wallet_to_link_intent.unwrap();
+        println!("Wallet to Link Intent: {:?}", wallet_to_link_intent);
+
+        match &wallet_to_link_intent.r#type {
+            IntentType::Transfer(transfer_data) => {
+                assert_eq!(transfer_data.amount, Nat::from(300u64)); // 3 actions * 100 per action
+            }
+            _ => {
+                panic!("Unexpected intent type: {:?}", wallet_to_link_intent.r#type);
+            }
+        }
+
+        panic!("Tests for ICRC1 intent creation not yet implemented");
     }
 }

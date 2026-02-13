@@ -119,7 +119,7 @@ impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardCach
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use crate::apps::shared::utils::tests::MockIcEnvironment;
     use crate::apps::token_storage::service::tests::MockTokenStorageClient;
@@ -127,9 +127,10 @@ mod tests {
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::token::IcrcStandard;
 
-    fn service_fixture(
-        current_ts: u64,
-    ) -> TokenStandardService<TestRepositories, MockTokenStorageClient, MockIcEnvironment> {
+    pub type MockTokenStandardService =
+        TokenStandardService<TestRepositories, MockTokenStorageClient, MockIcEnvironment>;
+
+    pub fn create_mock_service(current_ts: u64) -> MockTokenStandardService {
         let token_storage_client = MockTokenStorageClient::new();
         let repositories = TestRepositories::new();
         let ic_env = MockIcEnvironment::new(current_ts);
@@ -141,7 +142,7 @@ mod tests {
     async fn it_should_get_token_standards_from_token_storage_and_cache_them() {
         // Arrange
         let current_ts = 1_000_000_000u64; // 1 second
-        let service = &mut service_fixture(current_ts);
+        let service = &mut create_mock_service(current_ts);
         service.init(500_000_000_000); // 500 seconds TTL
         let ledger_id = random_principal_id();
         let standards = vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2];
@@ -170,7 +171,7 @@ mod tests {
     async fn it_should_get_token_standards_from_cache_if_not_expired() {
         // Arrange
         let current_ts = 1_000_000_000_000u64; // 1000 second
-        let service = &mut service_fixture(current_ts);
+        let service = &mut create_mock_service(current_ts);
         service.init(500_000_000_000); // 500 seconds TTL
         let ledger_id = random_principal_id();
         let standards = vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2];
@@ -206,7 +207,7 @@ mod tests {
     async fn it_should_refresh_cache_if_expired() {
         // Arrange
         let current_ts = 2_000_000_000_000u64; // 2000 second
-        let service = &mut service_fixture(current_ts);
+        let service = &mut create_mock_service(current_ts);
         service.init(500_000_000_000); // 500 seconds TTL
         let ledger_id = random_principal_id();
         let old_standards = vec![IcrcStandard::ICRC1];
@@ -244,7 +245,7 @@ mod tests {
     async fn it_should_get_batch_token_standards() {
         // Arrange
         let current_ts = 3_000_000_000_000u64; // 3000 second
-        let service = &mut service_fixture(current_ts);
+        let service = &mut create_mock_service(current_ts);
         service.init(500_000_000_000); // 500 seconds TTL
         let ledger_id_1 = random_principal_id();
         let standards_1 = vec![IcrcStandard::ICRC1];
