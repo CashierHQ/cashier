@@ -161,53 +161,11 @@ impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F
 mod tests {
     use super::super::MockTokenFetcher;
     use super::*;
-    use crate::repositories::tests::TestRepositories;
+    use crate::{
+        apps::shared::utils::tests::MockIcEnvironment, repositories::tests::TestRepositories,
+    };
     use candid::Nat;
     use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
-    use ic_cdk_timers::TimerId;
-    use std::cell::RefCell;
-    use std::time::Duration;
-
-    /// Mock IC environment for testing
-    #[derive(Clone)]
-    struct MockIcEnvironment {
-        current_time: u64,
-        spawned: RefCell<Vec<String>>,
-        timers: RefCell<Vec<Duration>>,
-    }
-
-    impl Default for MockIcEnvironment {
-        fn default() -> Self {
-            Self {
-                current_time: 0,
-                spawned: RefCell::new(Vec::new()),
-                timers: RefCell::new(Vec::new()),
-            }
-        }
-    }
-
-    impl IcEnvironment for MockIcEnvironment {
-        fn time(&self) -> u64 {
-            self.current_time
-        }
-
-        fn id(&self) -> Principal {
-            Principal::anonymous()
-        }
-
-        fn spawn<F>(&self, _future: F)
-        where
-            F: std::future::Future<Output = ()> + 'static,
-        {
-            self.spawned.borrow_mut().push("spawned".to_string());
-        }
-
-        fn set_timer(&self, delay: Duration, _f: impl FnOnce() + 'static) -> TimerId {
-            self.timers.borrow_mut().push(delay);
-            // Return a dummy timer ID for testing
-            ic_cdk_timers::set_timer(Duration::from_secs(1), || {})
-        }
-    }
 
     fn setup_ttl(ttl: u64) {
         TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl);
@@ -217,19 +175,13 @@ mod tests {
 
     fn create_service(current_time: u64) -> TestService {
         let repos = TestRepositories::new();
-        let env = MockIcEnvironment {
-            current_time,
-            ..Default::default()
-        };
+        let env = MockIcEnvironment::new(current_time);
         TokenFeeService::new(&repos, env, MockTokenFetcher::new())
     }
 
     fn create_service_with_fetcher(current_time: u64, fetcher: MockTokenFetcher) -> TestService {
         let repos = TestRepositories::new();
-        let env = MockIcEnvironment {
-            current_time,
-            ..Default::default()
-        };
+        let env = MockIcEnvironment::new(current_time);
         TokenFeeService::new(&repos, env, fetcher)
     }
 
