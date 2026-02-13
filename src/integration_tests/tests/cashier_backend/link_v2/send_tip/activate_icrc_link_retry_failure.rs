@@ -72,8 +72,8 @@ async fn it_should_fail_activate_icrc_link_when_approve_fails_due_to_insufficien
             .balance_of(&caller_account)
             .await
             .unwrap();
-        assert_eq!(icp_after, Nat::from(0u64), "ICP should be drained");
-        assert_eq!(ckbtc_after, Nat::from(0u64), "ckBTC should be drained");
+        assert_eq!(icp_after, 0u64, "ICP should be drained");
+        assert_eq!(ckbtc_after, 0u64, "ckBTC should be drained");
 
         // Act: Execute ICRC-112 requests → approve calls should fail (InsufficientFunds)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -218,14 +218,14 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
 
         // Verify ICP is drained but ckBTC remains
         let icp_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        assert_eq!(icp_after, Nat::from(0u64), "ICP should be drained");
+        assert_eq!(icp_after, 0u64, "ICP should be drained");
 
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
         let ckbtc_after = ckbtc_ledger_client
             .balance_of(&caller_account)
             .await
             .unwrap();
-        assert!(ckbtc_after > Nat::from(0u64), "ckBTC should remain");
+        assert!(ckbtc_after > 0u64, "ckBTC should remain");
 
         // Act: Execute ICRC-112 requests
         // ckBTC approve should succeed, ICP approve should fail (InsufficientFunds)
@@ -294,19 +294,26 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
         );
         let retry_icrc112 = result.action.icrc_112_requests.unwrap();
         println!("retry_icrc112 {:?}", retry_icrc112);
-        assert_eq!(retry_icrc112.len(), 1, "Should have 1 group of retry requests");
+        assert_eq!(
+            retry_icrc112.len(),
+            1,
+            "Should have 1 group of retry requests"
+        );
         let retry_requests = &retry_icrc112[0];
 
         // Check which approve requests are in the retry
         let has_icp_approve = retry_requests
             .iter()
             .any(|req| req.canister_id == icp_ledger_canister && req.method == "icrc2_approve");
-        let has_ckbtc_approve = retry_requests
-            .iter()
-            .any(|req| req.canister_id == ckbtc_ledger_canister.unwrap() && req.method == "icrc2_approve");
+        let has_ckbtc_approve = retry_requests.iter().any(|req| {
+            req.canister_id == ckbtc_ledger_canister.unwrap() && req.method == "icrc2_approve"
+        });
 
         assert!(has_icp_approve, "Retry should contain ICP approve request");
-        assert!(!has_ckbtc_approve, "Retry should NOT contain ckBTC approve request (already succeeded)");
+        assert!(
+            !has_ckbtc_approve,
+            "Retry should NOT contain ckBTC approve request (already succeeded)"
+        );
 
         // Act: Retry activation (process_action again without executing ICRC-112)
         // This simulates user retrying with empty balance after partial success
@@ -315,7 +322,10 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
         // Assert: Retry activation still fails (ICP still has no balance)
         assert!(retry_activate_result.is_ok());
         let retry_result = retry_activate_result.unwrap();
-        assert!(!retry_result.is_success, "Retry activation should still fail");
+        assert!(
+            !retry_result.is_success,
+            "Retry activation should still fail"
+        );
 
         // Assert: Verify ckBTC approve transaction preserved SUCCESS state on retry
         let ckbtc_approve_tx = retry_result
@@ -326,11 +336,9 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
             .find(|tx| {
                 if let Some(IcTransaction::Icrc2Approve(approve)) = tx.protocol.as_ic_transaction()
                 {
-                    if let cashier_backend_types::repository::common::Asset::IC { address } =
-                        &approve.asset
-                    {
-                        return address == &ckbtc_ledger_canister.unwrap();
-                    }
+                    let cashier_backend_types::repository::common::Asset::IC { address } =
+                        &approve.asset;
+                    return address == &ckbtc_ledger_canister.unwrap();
                 }
                 false
             });
@@ -434,8 +442,8 @@ async fn it_should_fail_activate_icrc_link_when_transfer_fails_and_retry_returns
             .balance_of(&caller_account)
             .await
             .unwrap();
-        assert_eq!(icp_after, Nat::from(0u64), "ICP should be drained");
-        assert_eq!(ckbtc_after, Nat::from(0u64), "ckBTC should be drained");
+        assert_eq!(icp_after, 0u64, "ICP should be drained");
+        assert_eq!(ckbtc_after, 0u64, "ckBTC should be drained");
 
         // Act: Activate the link (process action) → transfer_from fails
         let action_id = create_link_result.action.id.clone();
