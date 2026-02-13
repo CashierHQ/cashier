@@ -391,6 +391,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "thiserror 2.0.17",
+ "token_storage_types",
  "tokio",
  "transaction_manager",
  "uuid",
@@ -427,6 +428,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.17",
+ "token_storage_types",
 ]
 
 [[package]]

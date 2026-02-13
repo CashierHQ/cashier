@@ -5,6 +5,7 @@ use candid::Principal;
 use cashier_backend_types::repository::token_standard::CachedTokenStandard;
 use ic_mple_log::service::Storage;
 use std::collections::BTreeMap;
+use token_storage_types::token::IcrcStandard;
 
 /// Storage type for token fee cache - volatile BTreeMap
 pub type TokenStandardRepositoryStorage = BTreeMap<Principal, CachedTokenStandard>;
@@ -26,9 +27,9 @@ impl<S: Storage<TokenStandardRepositoryStorage>> TokenStandardRepository<S> {
     }
 
     /// Insert or update cached fee
-    pub fn insert(&mut self, key: &Principal, fee: CachedTokenStandard) {
+    pub fn insert(&mut self, key: &Principal, cached_standard: CachedTokenStandard) {
         self.storage.with_borrow_mut(|s| {
-            s.insert(key.clone(), fee);
+            s.insert(key.clone(), cached_standard);
         });
     }
 
@@ -56,14 +57,17 @@ mod tests {
         let mut repo = TestRepositories::new().token_standard();
 
         let token_principal = Principal::from_text("aaaaa-aa").unwrap();
-        let standard = CachedTokenStandard::ICRC1;
+        let cached_standards = CachedTokenStandard {
+            standards: vec![IcrcStandard::ICRC1],
+            updated_at: 0,
+        };
 
         // Act
-        repo.insert(&token_principal, standard.clone());
+        repo.insert(&token_principal, cached_standards.clone());
 
         // Assert
         let retrieved = repo.get(&token_principal);
-        assert_eq!(retrieved, Some(standard));
+        assert_eq!(retrieved, Some(cached_standards));
 
         // Act
         repo.remove(&token_principal);
