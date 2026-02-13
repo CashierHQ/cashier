@@ -56,9 +56,13 @@ impl<E: TransactionExecutor + Clone> ExecutorService<E> {
                 .collect::<Result<Vec<_>, _>>()?;
 
             // filter only Canister call type transactions for execution
+            // skip Success transactions to avoid re-execution on retry
             let level_txs = level_txs
                 .iter()
-                .filter(|tx| tx.from_call_type == FromCallType::Canister)
+                .filter(|tx| {
+                    tx.from_call_type == FromCallType::Canister
+                        && tx.state != TransactionState::Success
+                })
                 .cloned()
                 .collect::<Vec<_>>();
 
