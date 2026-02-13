@@ -13,6 +13,7 @@ pub mod link_action;
 pub mod processing_transaction;
 pub mod request_lock;
 pub mod token_fee;
+pub mod token_standard;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
