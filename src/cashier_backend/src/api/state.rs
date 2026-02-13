@@ -1,3 +1,12 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use candid::Principal;
+use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
+use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
+use std::{cell::RefCell, rc::Rc, thread::LocalKey};
+use transaction_manager::ic_transaction_manager::IcTransactionManager;
+
 use crate::{
     apps::{
         auth::AuthService,
@@ -5,15 +14,18 @@ use crate::{
         request_lock::RequestLockService,
         settings::SettingsService,
         token_fee::{IcrcTokenFetcher, TokenFeeService},
+        token_standard::service::TokenStandardService,
+        token_storage::service::TokenStorageService,
     },
     repositories::{
         AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
     },
 };
-use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
-use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
-use std::{cell::RefCell, rc::Rc, thread::LocalKey};
-use transaction_manager::ic_transaction_manager::IcTransactionManager;
+
+thread_local! {
+    static TOKEN_STORAGE_CANISTER_ID: RefCell<Principal> =
+        const { RefCell::new(Principal::anonymous()) };
+}
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
@@ -45,6 +57,22 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             token_fee_service,
             env,
         }
+    }
+
+    /// Sets the token storage canister ID
+    /// # Arguments
+    /// * `canister_id` - The principal ID of the token storage canister
+    pub fn set_token_storage_canister_id(&self, canister_id: Principal) {
+        TOKEN_STORAGE_CANISTER_ID.with(|id| {
+            *id.borrow_mut() = canister_id;
+        });
+    }
+
+    /// Gets the token storage canister ID
+    /// # Returns
+    /// * `Principal` - The principal ID of the token storage canister
+    pub fn get_token_storage_canister_id(&self) -> Principal {
+        TOKEN_STORAGE_CANISTER_ID.with(|id| id.borrow().clone())
     }
 }
 
