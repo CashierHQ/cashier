@@ -3,7 +3,6 @@
 
 use candid::{Nat, Principal};
 use cashier_backend_types::{
-    dto::link,
     error::CanisterError,
     repository::{common::Asset, link::v1::Link},
 };

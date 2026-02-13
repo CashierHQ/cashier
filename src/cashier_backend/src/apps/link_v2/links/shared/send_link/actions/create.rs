@@ -8,7 +8,10 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v1::{CreateIcrc2WalletToLinkIntentArgs, CreateWalletToTreasuryIntentArgs, Intent},
+        intent::v1::{
+            CreateIcrc1WalletToLinkIntentArgs, CreateIcrc2WalletToLinkIntentArgs,
+            CreateWalletToTreasuryIntentArgs, Intent,
+        },
         link::v1::Link,
     },
 };
@@ -73,7 +76,7 @@ impl CreateAction {
                     )
                 })?;
 
-                if token_standards.contains(IcrcStandard::ICRC2) {
+                if token_standards.contains(&IcrcStandard::ICRC2) {
                     let spender_account = Account {
                         owner: canister_id,
                         subaccount: None,
@@ -99,21 +102,12 @@ impl CreateAction {
 
                     TransferWalletToLinkIntent::create_icrc2(input)
                 } else {
-                    let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
-                        link.link_use_action_max_count,
-                        &asset_info.amount_per_link_use_action,
-                        &asset_info.asset,
-                        &token_fee_map,
-                    )?;
-
-                    let input = CreateIcrc2WalletToLinkIntentArgs {
+                    let input = CreateIcrc1WalletToLinkIntentArgs {
                         label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                         asset: asset_info.asset.clone(),
-                        actual_amount,
-                        approval_amount,
+                        sending_amount: asset_info.amount_per_link_use_action.clone(),
                         sender_id: link.creator,
                         link_account,
-                        spender_account,
                         created_at_ts: link.create_at,
                     };
 
