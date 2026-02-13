@@ -15,7 +15,9 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
+use cashier_common::{
+    constant::ICP_CANISTER_PRINCIPAL, runtime::IcEnvironment, utils::get_link_account,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
@@ -27,19 +29,40 @@ use transaction_manager::{
 };
 use uuid::Uuid;
 
-use crate::apps::link_v2::links::shared::utils::{
-    get_batch_token_standards_for_link, get_batch_tokens_fee_for_link,
+use crate::{
+    apps::{
+        link_v2::links::shared::utils::{
+            get_batch_token_standards_for_link, get_batch_tokens_fee_for_link, link_assets,
+        },
+        token_fee::{TokenFeeService, TokenFetcher},
+        token_standard::service::TokenStandardService,
+        token_storage::traits::TokenStorageClient,
+    },
+    repositories::{self, Repositories},
 };
 
-#[derive(Debug)]
-pub struct CreateAction {
+pub struct CreateAction<R: Repositories, E: IcEnvironment, F: TokenFetcher, S: TokenStorageClient> {
     pub action: Action,
     pub intents: Vec<Intent>,
+    pub token_fee_service: TokenFeeService<R, E, F>,
+    pub token_standard_service: TokenStandardService<R, S, E>,
 }
 
-impl CreateAction {
-    pub fn new(action: Action, intents: Vec<Intent>) -> Self {
-        Self { action, intents }
+impl<R: Repositories, E: IcEnvironment, F: TokenFetcher, S: TokenStorageClient>
+    CreateAction<R, E, F, S>
+{
+    pub fn new(
+        action: Action,
+        intents: Vec<Intent>,
+        token_fee_service: TokenFeeService<R, E, F>,
+        token_standard_service: TokenStandardService<R, S, E>,
+    ) -> Self {
+        Self {
+            action,
+            intents,
+            token_fee_service,
+            token_standard_service,
+        }
     }
 
     /// Creates a new CreateAction for a given Link.
@@ -48,7 +71,7 @@ impl CreateAction {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
+    pub async fn create(&self, link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::CreateLink,
@@ -60,8 +83,18 @@ impl CreateAction {
         let link_account = get_link_account(&link.id, canister_id)?;
 
         // lookup token fees and standards from caching services
-        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
-        let token_standards_map = get_batch_token_standards_for_link(link).await?;
+        let assets = link_assets(link);
+        let asset_principals: Vec<Principal> = assets
+            .iter()
+            .map(|asset| match asset {
+                Asset::IC { address, .. } => *address,
+            })
+            .collect();
+        let token_fee_map = self.token_fee_service.get_batch_tokens_fee(&assets).await?;
+        let token_standards_map = self
+            .token_standard_service
+            .get_batch_token_standards(&asset_principals)
+            .await?;
 
         // intents
         let deposit_intents = link
