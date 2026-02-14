@@ -130,6 +130,16 @@ mod tests {
     };
     use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, test_utils::random_principal_id};
 
+    /// Helper function to create a test fixture for WithdrawAction tests
+    /// # Arguments:
+    /// * `creator` - The principal of the user creating the link
+    /// * `canister_id` - The canister ID of the backend canister
+    /// * `ledger_ids` - A vector of ledger IDs for the assets
+    /// * `amounts` - A vector of amounts corresponding to each ledger ID
+    /// * `max_use` - The maximum number of times the link can be used
+    /// * `current_ts` - The current timestamp for setting up the token fee service
+    /// # Returns:
+    /// * `(Link, Principal, MockTokenFeeService, MockTokenBalanceService)` - A tuple containing the created Link, canister ID, mock token fee service, and mock token balance service for testing
     fn test_fixture(
         creator: Principal,
         canister_id: Principal,

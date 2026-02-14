@@ -121,7 +121,7 @@ impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardCach
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::apps::shared::utils::tests::MockIcEnvironment;
+    use crate::apps::shared::test_utils::tests::MockIcEnvironment;
     use crate::apps::token_storage::service::tests::MockTokenStorageClient;
     use crate::repositories::tests::TestRepositories;
     use cashier_common::test_utils::random_principal_id;

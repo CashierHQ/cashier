@@ -142,7 +142,7 @@ pub mod tests {
     use super::super::MockTokenFetcher;
     use super::*;
     use crate::{
-        apps::shared::utils::tests::MockIcEnvironment, repositories::tests::TestRepositories,
+        apps::shared::test_utils::tests::MockIcEnvironment, repositories::tests::TestRepositories,
     };
     use candid::Nat;
     use cashier_common::{constant::DEFAULT_TOKEN_FEE_TTL_NS, test_utils::random_principal_id};
