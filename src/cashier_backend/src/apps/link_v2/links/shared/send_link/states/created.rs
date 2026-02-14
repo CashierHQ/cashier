@@ -216,6 +216,16 @@ mod tests {
     use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
 
+    /// Test fixture to create a link and the necessary services for testing
+    /// # Arguments
+    /// * `link_type` - The type of the link to be created
+    /// * `ledger_ids` - A vector of ledger IDs for the assets in the link
+    /// * `amounts` - A vector of amounts corresponding to each ledger ID
+    /// * `max_use` - The maximum number of times the link can be used
+    /// * `creator` - The principal of the link creator
+    /// * `current_ts` - The current timestamp for setting up the services
+    /// # Returns
+    /// A tuple containing the created link and the necessary mock services for testing
     fn test_fixture(
         link_type: LinkType,
         ledger_ids: Vec<Principal>,
@@ -433,8 +443,6 @@ mod tests {
                 token_balance_service,
             )
             .await;
-
-        println!("Result: {:?}", result);
 
         // Assert
         assert!(result.is_err());
