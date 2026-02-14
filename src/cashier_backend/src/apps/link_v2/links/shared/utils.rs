@@ -1,183 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use cashier_backend_types::{
     constant::{
         INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
         INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     },
-    error::CanisterError,
     repository::{
         common::Asset,
         link::v1::{Link, LinkType},
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
-use futures::future;
-use serde_bytes::ByteBuf;
-use std::collections::HashMap;
-use token_storage_types::token::IcrcStandard;
-use transaction_manager::icrc_token::{service::IcrcService, types::Account};
-
-use crate::{
-    api::state::get_state,
-    apps::{token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache},
-};
-
-/// Retrieves token fees for a link's assets, ensuring ICP is included.
-/// # Arguments
-///
-/// * `link` - A reference to the link whose asset fees should be retrieved
-/// # Returns
-///
-/// Returns a `HashMap` mapping each asset's `Principal` to its fee as a `Nat`.
-/// The returned map will always include ICP's fee.
-///
-/// # Errors
-///
-/// Returns a `CanisterError` if:
-/// * The fee service fails to retrieve fees for any asset
-/// * Network calls to token canisters fail
-///
-pub async fn get_batch_tokens_fee_for_link(
-    link: &Link,
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let asset_principals = link_asset_principals(link);
-    // Use TokenFeeService from CanisterState (with caching)
-    let mut state = get_state();
-    state
-        .token_fee_service
-        .get_batch_tokens_fee(&asset_principals)
-        .await
-}
-
-/// Retrieves token balances for a collection of assets in parallel.
-///
-/// This helper function queries multiple token canisters concurrently to fetch
-/// balances for the specified account. All balance queries are executed in parallel
-/// using `future::join_all` for optimal performance.
-///
-/// # Arguments
-///
-/// * `assets` - Slice of assets to query balances for
-/// * `account` - The ICRC account (owner + subaccount) to check balances for
-///
-/// # Returns
-///
-/// Returns a `HashMap` mapping each token's `Principal` to its balance as a `Nat`.
-///
-/// # Errors
-///
-/// Returns a `CanisterError` if:
-/// * Any token canister fails to respond
-/// * The ICRC-1 balance query returns an error
-/// * Network or inter-canister communication fails
-async fn get_batch_tokens_balance(
-    assets: &[Asset],
-    account: &Account,
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let mut balance_map = HashMap::new();
-    let get_balance_tasks = assets
-        .iter()
-        .map(|asset| {
-            let address = match asset {
-                Asset::IC { address, .. } => *address,
-            };
-            let account = account.clone();
-            async move {
-                let service = IcrcService::new(address);
-                let service_account = Account {
-                    owner: account.owner,
-                    subaccount: account.subaccount,
-                };
-                let balance_res = service.icrc_1_balance_of(&service_account).await;
-                (address, balance_res)
-            }
-        })
-        .collect::<Vec<_>>();
-
-    let results = future::join_all(get_balance_tasks).await;
-
-    for (address, result) in results {
-        match result {
-            Ok(balance) => {
-                balance_map.insert(address, balance);
-            }
-            Err(err) => {
-                return Err(CanisterError::CallCanisterFailed(format!(
-                    "Failed to get balance for asset {}: {:?}",
-                    address.to_text(),
-                    err,
-                )));
-            }
-        }
-    }
-
-    Ok(balance_map)
-}
-
-/// Retrieves token balances for a link's assets from their respective token canisters.
-///
-/// This function extracts all assets from the link's `asset_info`, derives the link's
-/// subaccount from its ID, and queries the balance for each asset at that account.
-///
-/// # Arguments
-///
-/// * `link` - A reference to the link whose asset balances should be retrieved
-/// * `canister_id` - The principal of the canister that owns the link account
-///
-/// # Returns
-///
-/// Returns a `HashMap` mapping each asset's `Principal` to its current balance as a `Nat`.
-///
-/// # Errors
-///
-/// Returns a `CanisterError` if:
-/// * Subaccount derivation from the link ID fails
-/// * Network calls to token canisters fail
-/// * Any token canister query returns an error
-pub async fn get_batch_tokens_balance_for_link(
-    link: &Link,
-    canister_id: Principal,
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let assets: Vec<Asset> = link
-        .asset_info
-        .iter()
-        .map(|info| info.asset.clone())
-        .collect();
-
-    let subaccount = to_subaccount(&link.id)?;
-
-    let link_account = Account {
-        owner: canister_id,
-        subaccount: Some(ByteBuf::from(subaccount.to_vec())),
-    };
-
-    get_batch_tokens_balance(&assets, &link_account).await
-}
-
-/// Retrieves token standards for a link's assets from the TokenStandardService.
-/// # Arguments
-/// * `link` - The link to retrieve token standards for
-/// # Returns
-/// * `HashMap<Principal, Vec<IcrcStandard>>` - A map of token principals to their respective standards
-pub async fn get_batch_token_standards_for_link(
-    link: &Link,
-) -> Result<HashMap<Principal, Vec<IcrcStandard>>, CanisterError> {
-    let mut state = get_state();
-    let token_principals: Vec<Principal> = link_assets(link)
-        .iter()
-        .map(|asset| match asset {
-            Asset::IC { address, .. } => *address,
-        })
-        .collect();
-
-    state
-        .token_standard_service
-        .get_batch_token_standards(&token_principals)
-        .await
-}
+use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
 
 /// Extracts assets from link
 /// # Arguments
@@ -256,6 +91,11 @@ pub fn generate_intent_asset_label(link_type: LinkType, asset: &Asset) -> String
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        asset_info::AssetInfo,
+        link::v1::{LinkState, LinkType},
+    };
     use cashier_common::test_utils::random_principal_id;
 
     #[test]
@@ -282,5 +122,89 @@ mod tests {
             let expected_label = format!("{}_{}", expected_prefix, ledger_id.to_text());
             assert_eq!(label, expected_label);
         }
+    }
+
+    #[test]
+    fn it_should_extract_link_assets() {
+        // Arrange
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        let asset_info1 = AssetInfo {
+            asset: Asset::IC {
+                address: ledger_id1,
+            },
+            label: "Test Asset1".to_string(),
+            amount_per_link_use_action: Nat::from(100u64),
+        };
+        let asset_info2 = AssetInfo {
+            asset: Asset::IC {
+                address: ledger_id2,
+            },
+            label: "Test Asset2".to_string(),
+            amount_per_link_use_action: Nat::from(200u64),
+        };
+        let link = Link {
+            id: "test-link-id".to_string(),
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            creator: random_principal_id(),
+            asset_info: vec![asset_info1, asset_info2],
+            link_use_action_max_count: 3,
+            link_use_action_counter: 0,
+            state: LinkState::Active,
+            create_at: 0,
+        };
+
+        // Act
+        let assets = link_assets(&link);
+
+        // Assert
+        assert_eq!(assets.len(), 3); // 2 from asset_info + 1 ICP
+        assert!(assets.contains(&Asset::IC {
+            address: ledger_id1
+        }));
+        assert!(assets.contains(&Asset::IC {
+            address: ledger_id2
+        }));
+    }
+
+    #[test]
+    fn it_should_extract_link_asset_principals() {
+        // Arrange
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        let asset_info1 = AssetInfo {
+            asset: Asset::IC {
+                address: ledger_id1,
+            },
+            label: "Test Asset1".to_string(),
+            amount_per_link_use_action: Nat::from(100u64),
+        };
+        let asset_info2 = AssetInfo {
+            asset: Asset::IC {
+                address: ledger_id2,
+            },
+            label: "Test Asset2".to_string(),
+            amount_per_link_use_action: Nat::from(200u64),
+        };
+        let link = Link {
+            id: "test-link-id".to_string(),
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            creator: random_principal_id(),
+            asset_info: vec![asset_info1, asset_info2],
+            link_use_action_max_count: 3,
+            link_use_action_counter: 0,
+            state: LinkState::Active,
+            create_at: 0,
+        };
+
+        // Act
+        let asset_principals = link_asset_principals(&link);
+
+        // Assert
+        assert_eq!(asset_principals.len(), 3); // 2 from asset_info + 1 ICP
+        assert!(asset_principals.contains(&ledger_id1));
+        assert!(asset_principals.contains(&ledger_id2));
     }
 }

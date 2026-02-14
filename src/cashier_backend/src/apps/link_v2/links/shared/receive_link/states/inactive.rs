@@ -45,14 +45,18 @@ impl InactiveState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
-    pub async fn create_withdraw_action<M>(
+    pub async fn create_withdraw_action<M, F, B>(
         caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: M,
+        token_fee_service: F,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
@@ -60,7 +64,9 @@ impl InactiveState {
             ));
         }
 
-        let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
+        let withdraw_action =
+            WithdrawAction::create(&link, canister_id, token_fee_service, token_balance_service)
+                .await?;
         let create_action_result = transaction_manager.create_action(
             withdraw_action.action,
             withdraw_action.intents,
@@ -122,9 +128,9 @@ impl LinkV2State for InactiveState {
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
-        _token_fee_service: F,
+        token_fee_service: F,
         _token_standard_service: S,
-        _token_balance_service: B,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
@@ -137,9 +143,15 @@ impl LinkV2State for InactiveState {
 
         match action_type {
             ActionType::Withdraw => {
-                let create_action_result =
-                    Self::create_withdraw_action(caller, link, canister_id, transaction_manager)
-                        .await?;
+                let create_action_result = Self::create_withdraw_action(
+                    caller,
+                    link,
+                    canister_id,
+                    transaction_manager,
+                    token_fee_service,
+                    token_balance_service,
+                )
+                .await?;
                 Ok(create_action_result)
             }
             _ => Err(CanisterError::ValidationErrors(

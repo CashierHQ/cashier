@@ -43,14 +43,16 @@ impl CreatedState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
-    pub async fn create_create_action<M>(
+    pub async fn create_create_action<M, F>(
         caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: M,
+        token_fee_service: F,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
     {
         // validate caller is the link creator
         if caller != link.creator {
@@ -59,7 +61,7 @@ impl CreatedState {
             ));
         }
 
-        let create_action = CreateAction::create(&link, canister_id).await?;
+        let create_action = CreateAction::create(&link, canister_id, token_fee_service).await?;
         let create_action_result =
             transaction_manager.create_action(create_action.action, create_action.intents, None)?;
 
@@ -120,7 +122,7 @@ impl LinkV2State for CreatedState {
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
-        _token_fee_service: F,
+        token_fee_service: F,
         _token_standard_service: S,
         _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
@@ -135,9 +137,14 @@ impl LinkV2State for CreatedState {
 
         match action_type {
             ActionType::CreateLink => {
-                let create_action_result =
-                    Self::create_create_action(caller, link, canister_id, transaction_manager)
-                        .await?;
+                let create_action_result = Self::create_create_action(
+                    caller,
+                    link,
+                    canister_id,
+                    transaction_manager,
+                    token_fee_service,
+                )
+                .await?;
                 Ok(create_action_result)
             }
             _ => Err(CanisterError::ValidationErrors(

@@ -43,16 +43,18 @@ impl ActiveState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the SEND action
-    pub async fn create_send_action<M>(
+    pub async fn create_send_action<M, F>(
         caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: M,
+        token_fee_service: F,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
     {
-        let send_action = SendAction::create(&link, caller, canister_id).await?;
+        let send_action = SendAction::create(&link, caller, canister_id, token_fee_service).await?;
         let create_action_result =
             transaction_manager.create_action(send_action.action, send_action.intents, None)?;
 
@@ -98,7 +100,7 @@ impl LinkV2State for ActiveState {
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
-        _token_fee_service: F,
+        token_fee_service: F,
         _token_standard_service: S,
         _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
@@ -113,9 +115,14 @@ impl LinkV2State for ActiveState {
 
         match action_type {
             ActionType::Send => {
-                let create_action_result =
-                    Self::create_send_action(caller, link, canister_id, transaction_manager)
-                        .await?;
+                let create_action_result = Self::create_send_action(
+                    caller,
+                    link,
+                    canister_id,
+                    transaction_manager,
+                    token_fee_service,
+                )
+                .await?;
                 Ok(create_action_result)
             }
             _ => Err(CanisterError::ValidationErrors(
