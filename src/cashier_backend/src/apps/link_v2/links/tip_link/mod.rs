@@ -182,3 +182,47 @@ impl LinkV2 for TipLink {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::common::Asset;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn it_should_create_tip_link() {
+        // Arrange
+        let creator = random_principal_id();
+        let ledger_id = random_principal_id();
+        let title = "Test Tip Link".to_string();
+        let asset = Asset::IC { address: ledger_id };
+        let asset_info = vec![AssetInfo {
+            asset,
+            label: "IC Token".to_string(),
+            amount_per_link_use_action: Nat::from(1000u64),
+        }];
+        let max_use = 5;
+        let created_at_ts = 1_700_000_000;
+        let canister_id = random_principal_id();
+
+        // Act
+        let tip_link = TipLink::create(
+            creator,
+            title.clone(),
+            asset_info.clone(),
+            max_use,
+            created_at_ts,
+            canister_id,
+        );
+
+        // Assert
+        assert_eq!(tip_link.link.link_type, LinkType::SendTip);
+        assert_eq!(tip_link.link.title, title);
+        assert_eq!(tip_link.link.asset_info, asset_info);
+        assert_eq!(tip_link.link.link_use_action_max_count, max_use);
+        assert_eq!(tip_link.link.creator, creator);
+        assert_eq!(tip_link.link.state, LinkState::CreateLink);
+        assert_eq!(tip_link.link.create_at, created_at_ts);
+    }
+}

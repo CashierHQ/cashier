@@ -196,10 +196,8 @@ mod tests {
         common::Wallet,
         intent::v1::{IntentTask, IntentType},
         link::v1::{LinkState, LinkType},
-        token_fee,
     };
     use cashier_common::test_utils::random_principal_id;
-    use transaction_manager::intents;
     use uuid::Uuid;
 
     /// Test fixture to create a Link and its dependencies for testing CreateAction
