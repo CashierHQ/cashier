@@ -54,6 +54,7 @@ impl<R: Repositories> LinkV2Service<R> {
     /// * `GetLinkResp` - The response containing the created link and action details
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_link<M, F, S, B>(
         &mut self,
         creator_id: Principal,
@@ -113,6 +114,7 @@ impl<R: Repositories> LinkV2Service<R> {
     /// # Returns
     /// * `Ok(ActionDto)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_action<M, F, S, B>(
         &mut self,
         caller: Principal,
