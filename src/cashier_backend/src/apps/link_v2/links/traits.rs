@@ -14,7 +14,10 @@ use cashier_backend_types::{
 use std::collections::HashMap;
 use transaction_manager::traits::TransactionManager;
 
-use crate::apps::{token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache};
+use crate::apps::{
+    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
 
 pub trait LinkV2 {
     /// Create an action associated with the link
@@ -25,18 +28,20 @@ pub trait LinkV2 {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    async fn create_action<M, F, S>(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action: ActionType,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
-        S: TokenStandardCache + 'static;
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
     /// Process an action associated with the link
     /// # Arguments
@@ -69,18 +74,20 @@ pub trait LinkV2State {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    async fn create_action<M, F, S>(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action: ActionType,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
-        S: TokenStandardCache + 'static;
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
     /// Process an action associated with the link
     /// # Arguments

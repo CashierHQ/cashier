@@ -199,6 +199,7 @@ mod tests {
         token_fee,
     };
     use cashier_common::test_utils::random_principal_id;
+    use transaction_manager::intents;
     use uuid::Uuid;
 
     /// Test fixture to create a Link and its dependencies for testing CreateAction
@@ -388,11 +389,20 @@ mod tests {
         // Assert
         assert!(result.is_ok());
         let create_action = result.ok().unwrap();
-        assert_eq!(create_action.intents.len(), 2); // 1 deposit + 1 fee intent
+
+        let action = create_action.action;
+        let intents = create_action.intents;
+
+        // Assert action
+        assert_eq!(action.r#type, ActionType::CreateLink);
+        assert_eq!(action.creator, creator);
+        assert_eq!(action.state, ActionState::Created);
+
+        // Assert intents
+        assert_eq!(intents.len(), 2); // 1 deposit + 1 fee intent
 
         // Assert deposit intent
-        let wallet_to_link_intent = &create_action
-            .intents
+        let wallet_to_link_intent = &intents
             .iter()
             .find(|intent| matches!(intent.task, IntentTask::TransferWalletToLink));
         assert!(wallet_to_link_intent.is_some());
@@ -424,8 +434,7 @@ mod tests {
         }
 
         // Assert fee intent
-        let fee_intent = &create_action
-            .intents
+        let fee_intent = &intents
             .iter()
             .find(|intent| matches!(intent.task, IntentTask::TransferWalletToTreasury));
         assert!(fee_intent.is_some());
@@ -486,7 +495,7 @@ mod tests {
             .get_batch_tokens_fee(&[ledger_id1, ICP_CANISTER_PRINCIPAL])
             .await
             .unwrap();
-        let link_token_balance_map =
+        let _link_token_balance_map =
             calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
 
         // Act
@@ -501,11 +510,20 @@ mod tests {
         // Assert
         assert!(result.is_ok());
         let create_action = result.ok().unwrap();
-        assert_eq!(create_action.intents.len(), 2); // 1 deposit + 1 fee intent
+
+        let action = create_action.action;
+        let intents = create_action.intents;
+
+        // Assert action
+        assert_eq!(action.r#type, ActionType::CreateLink);
+        assert_eq!(action.creator, creator);
+        assert_eq!(action.state, ActionState::Created);
+
+        // Assert intents
+        assert_eq!(intents.len(), 2); // 1 deposit + 1 fee intent
 
         // Assert deposit intent
-        let wallet_to_link_intent = &create_action
-            .intents
+        let wallet_to_link_intent = &intents
             .iter()
             .find(|intent| matches!(intent.task, IntentTask::TransferWalletToLink));
         assert!(wallet_to_link_intent.is_some());
@@ -544,8 +562,7 @@ mod tests {
         }
 
         // Assert fee intent
-        let fee_intent = &create_action
-            .intents
+        let fee_intent = &intents
             .iter()
             .find(|intent| matches!(intent.task, IntentTask::TransferWalletToTreasury));
         assert!(fee_intent.is_some());
@@ -629,10 +646,19 @@ mod tests {
         // Assert
         assert!(result.is_ok());
         let create_action = result.ok().unwrap();
-        assert_eq!(create_action.intents.len(), 3); // 2 deposit + 1 fee intent
+        let action = create_action.action;
+        let intents = create_action.intents;
+
+        // Assert action
+        assert_eq!(action.r#type, ActionType::CreateLink);
+        assert_eq!(action.creator, creator);
+        assert_eq!(action.state, ActionState::Created);
+
+        // Assert intents
+        assert_eq!(intents.len(), 3); // 2 deposit + 1 fee intent
 
         // Assert leger_id1 intent (ICRC1)
-        let intent1 = &create_action.intents.iter().find(|intent| {
+        let intent1 = &intents.iter().find(|intent| {
             matches!(intent.task, IntentTask::TransferWalletToLink)
                 && intent.label
                     == generate_intent_asset_label(
@@ -671,7 +697,7 @@ mod tests {
         }
 
         // Assert leger_id2 intent (ICRC2)
-        let intent2 = &create_action.intents.iter().find(|intent| {
+        let intent2 = &intents.iter().find(|intent| {
             matches!(intent.task, IntentTask::TransferWalletToLink)
                 && intent.label
                     == generate_intent_asset_label(
@@ -716,8 +742,7 @@ mod tests {
         }
 
         // Assert fee intent
-        let fee_intent = &create_action
-            .intents
+        let fee_intent = &intents
             .iter()
             .find(|intent| matches!(intent.task, IntentTask::TransferWalletToTreasury));
         assert!(fee_intent.is_some());

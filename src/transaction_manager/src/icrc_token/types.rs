@@ -3,6 +3,7 @@
 
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_backend_types::repository::common::Wallet;
+use icrc_ledger_types::icrc1::account::Account as IcrcAccount;
 
 pub type SubAccount = serde_bytes::ByteBuf;
 
@@ -31,6 +32,17 @@ impl From<Wallet> for Account {
                 owner: address,
                 subaccount: subaccount.map(|s| serde_bytes::ByteBuf::from(s.to_vec())),
             },
+        }
+    }
+}
+
+impl From<IcrcAccount> for Account {
+    fn from(icrc_account: IcrcAccount) -> Self {
+        Account {
+            owner: icrc_account.owner,
+            subaccount: icrc_account
+                .subaccount
+                .map(|s| serde_bytes::ByteBuf::from(s.to_vec())),
         }
     }
 }

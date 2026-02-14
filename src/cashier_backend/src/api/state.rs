@@ -13,6 +13,7 @@ use crate::{
         link_v2::service::LinkV2Service,
         request_lock::RequestLockService,
         settings::SettingsService,
+        token_balance::service::TokenBalanceService,
         token_fee::{fetcher::IcrcTokenFetcher, service::TokenFeeService},
         token_standard::service::TokenStandardService,
         token_storage::service::TokenStorageService,
@@ -38,6 +39,7 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub token_fee_service: TokenFeeService<ThreadlocalRepositories, E, IcrcTokenFetcher>,
     pub token_standard_service:
         TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
+    pub token_balance_service: TokenBalanceService,
     pub env: E,
 }
 
@@ -52,6 +54,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
         let token_standard_service =
             TokenStandardService::new(&*repo, TokenStorageService::default(), env.clone());
+        let token_balance_service = TokenBalanceService;
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -62,6 +65,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             transaction_manager_v2,
             token_fee_service,
             token_standard_service,
+            token_balance_service,
             env,
         }
     }

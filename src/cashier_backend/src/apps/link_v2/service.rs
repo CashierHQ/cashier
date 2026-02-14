@@ -20,7 +20,8 @@ use transaction_manager::traits::TransactionManager;
 use crate::{
     apps::{
         action::ActionService, link_v2::links::factory::LinkFactory,
-        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
+        token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+        token_standard::traits::TokenStandardCache,
     },
     repositories::{self, Repositories},
 };
@@ -53,7 +54,7 @@ impl<R: Repositories> LinkV2Service<R> {
     /// * `GetLinkResp` - The response containing the created link and action details
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
-    pub async fn create_link<M, F, S>(
+    pub async fn create_link<M, F, S, B>(
         &mut self,
         creator_id: Principal,
         canister_id: Principal,
@@ -62,11 +63,13 @@ impl<R: Repositories> LinkV2Service<R> {
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        token_balance_service: B,
     ) -> Result<CreateLinkDto, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         let link_model = LinkFactory::create_link(creator_id, input, created_at_ts, canister_id)?;
 
@@ -89,6 +92,7 @@ impl<R: Repositories> LinkV2Service<R> {
                 transaction_manager,
                 token_fee_service,
                 token_standard_service,
+                token_balance_service,
             )
             .await?;
 
@@ -109,7 +113,7 @@ impl<R: Repositories> LinkV2Service<R> {
     /// # Returns
     /// * `Ok(ActionDto)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
-    pub async fn create_action<M, F, S>(
+    pub async fn create_action<M, F, S, B>(
         &mut self,
         caller: Principal,
         canister_id: Principal,
@@ -118,11 +122,13 @@ impl<R: Repositories> LinkV2Service<R> {
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        token_balance_service: B,
     ) -> Result<ActionDto, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         // Check if action already exists for this user, link, and action type
         self.action_service
@@ -141,6 +147,7 @@ impl<R: Repositories> LinkV2Service<R> {
                 transaction_manager,
                 token_fee_service,
                 token_standard_service,
+                token_balance_service,
             )
             .await?;
 

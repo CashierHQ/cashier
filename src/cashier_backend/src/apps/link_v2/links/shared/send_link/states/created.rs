@@ -17,6 +17,7 @@ use transaction_manager::traits::TransactionManager;
 
 use crate::apps::{
     link_v2::links::{shared::send_link::actions::create::CreateAction, traits::LinkV2State},
+    token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
@@ -124,18 +125,20 @@ impl CreatedState {
 }
 
 impl LinkV2State for CreatedState {
-    async fn create_action<M, F, S>(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         let link = self.link.clone();
         let canister_id = self.canister_id;

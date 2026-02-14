@@ -13,7 +13,7 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::traits::TransactionManager;
 use uuid::Uuid;
 
@@ -24,6 +24,7 @@ use crate::apps::{
         },
         traits::{LinkV2, LinkV2State},
     },
+    token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
@@ -80,18 +81,20 @@ impl LinkV2 for AirdropLink {
     /// * `action_type` - The type of action to be created.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
-    async fn create_action<M, F, S>(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
+        _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         let link = self.link.clone();
         let canister_id = self.canister_id;
@@ -106,6 +109,7 @@ impl LinkV2 for AirdropLink {
                         transaction_manager,
                         token_fee_service,
                         token_standard_service,
+                        _token_balance_service,
                     )
                     .await
             }
@@ -118,6 +122,7 @@ impl LinkV2 for AirdropLink {
                         transaction_manager,
                         token_fee_service,
                         token_standard_service,
+                        _token_balance_service,
                     )
                     .await
             }
@@ -130,6 +135,7 @@ impl LinkV2 for AirdropLink {
                         transaction_manager,
                         token_fee_service,
                         token_standard_service,
+                        _token_balance_service,
                     )
                     .await
             }

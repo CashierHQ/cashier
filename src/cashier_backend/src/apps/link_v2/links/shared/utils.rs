@@ -220,8 +220,7 @@ pub fn link_asset_principals(link: &Link) -> Vec<Principal> {
 
 /// Generate the label for an intent based on the link type and asset
 /// # Arguments
-/// * `link_type` - The type of the link (e.g. SendTip,
-/// SendAirdrop, SendTokenBasket, ReceivePayment)
+/// * `link_type` - The type of the link (e.g. SendTip, SendAirdrop, SendTokenBasket, ReceivePayment)
 /// * `asset` - The asset associated with the intent
 /// # Returns
 /// * `String` - The generated intent label in the format of "{INTENT_LABEL}_{ASSET_PRINCIPAL}"

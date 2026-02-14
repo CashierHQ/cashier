@@ -12,7 +12,7 @@ use cashier_backend_types::{
 };
 
 use crate::apps::link_v2::links::{
-    LinkV2Enum, airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
+    LinkV2Types, airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
     token_basket_link::TokenBasketLink,
 };
 
@@ -82,23 +82,25 @@ impl LinkFactory {
     /// # Arguments
     /// * `link` - The Link model to convert.
     /// # Returns
-    /// * `Result<LinkV2Enum, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
+    /// * `Result<LinkV2Types, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
     pub fn create_from_link_model(
         link: Link,
         canister_id: Principal,
-    ) -> Result<LinkV2Enum, CanisterError> {
+    ) -> Result<LinkV2Types, CanisterError> {
         match link.link_type {
-            LinkType::SendTip => Ok(LinkV2Enum::TipLink(TipLink::new(link, canister_id))),
-            LinkType::SendAirdrop => {
-                Ok(LinkV2Enum::AirdropLink(AirdropLink::new(link, canister_id)))
-            }
-            LinkType::SendTokenBasket => Ok(LinkV2Enum::TokenBasketLink(TokenBasketLink::new(
+            LinkType::SendTip => Ok(LinkV2Types::TipLink(TipLink::new(link, canister_id))),
+            LinkType::SendAirdrop => Ok(LinkV2Types::AirdropLink(AirdropLink::new(
                 link,
                 canister_id,
             ))),
-            LinkType::ReceivePayment => {
-                Ok(LinkV2Enum::PaymentLink(PaymentLink::new(link, canister_id)))
-            }
+            LinkType::SendTokenBasket => Ok(LinkV2Types::TokenBasketLink(TokenBasketLink::new(
+                link,
+                canister_id,
+            ))),
+            LinkType::ReceivePayment => Ok(LinkV2Types::PaymentLink(PaymentLink::new(
+                link,
+                canister_id,
+            ))),
         }
     }
 }

@@ -32,6 +32,7 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
     let transaction_manager = get_state().transaction_manager_v2;
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
 
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
@@ -50,6 +51,7 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
             transaction_manager,
             token_fee_service,
             token_standard_service,
+            token_balance_service,
         )
         .await;
     let _ = request_lock_service.drop(&RequestLockKey::CreateLink {
@@ -75,6 +77,7 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
     let transaction_manager = get_state().transaction_manager_v2;
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -94,6 +97,7 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
             transaction_manager,
             token_fee_service,
             token_standard_service,
+            token_balance_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);

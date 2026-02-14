@@ -17,6 +17,7 @@ use transaction_manager::traits::TransactionManager;
 
 use crate::apps::{
     link_v2::links::{shared::send_link::actions::withdraw::WithdrawAction, traits::LinkV2State},
+    token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
@@ -42,14 +43,18 @@ impl InactiveState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
-    pub async fn create_withdraw_action<M>(
+    pub async fn create_withdraw_action<M, F, B>(
         caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: M,
+        token_fee_service: F,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
@@ -57,7 +62,9 @@ impl InactiveState {
             ));
         }
 
-        let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
+        let withdraw_action =
+            WithdrawAction::create(&link, canister_id, token_fee_service, token_balance_service)
+                .await?;
         let create_action_result = transaction_manager.create_action(
             withdraw_action.action,
             withdraw_action.intents,
@@ -114,27 +121,35 @@ impl InactiveState {
 }
 
 impl LinkV2State for InactiveState {
-    async fn create_action<M, F, S>(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action_type: ActionType,
         transaction_manager: M,
-        _token_fee_service: F,
+        token_fee_service: F,
         _token_standard_service: S,
+        token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManager + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
     {
         let link = self.link.clone();
         let canister_id = self.canister_id;
 
         match action_type {
             ActionType::Withdraw => {
-                let create_action_result =
-                    Self::create_withdraw_action(caller, link, canister_id, transaction_manager)
-                        .await?;
+                let create_action_result = Self::create_withdraw_action(
+                    caller,
+                    link,
+                    canister_id,
+                    transaction_manager,
+                    token_fee_service,
+                    token_balance_service,
+                )
+                .await?;
                 Ok(create_action_result)
             }
             _ => Err(CanisterError::ValidationErrors(

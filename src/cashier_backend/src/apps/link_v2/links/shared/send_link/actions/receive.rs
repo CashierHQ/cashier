@@ -134,15 +134,21 @@ mod tests {
         // Assert
         assert!(result.is_ok());
         let receive_action = result.unwrap();
-        assert_eq!(receive_action.action.r#type, ActionType::Receive);
-        assert_eq!(receive_action.action.creator, receiver_id);
-        assert_eq!(receive_action.intents.len(), 2);
+        let action = receive_action.action;
+        let intents = receive_action.intents;
+
+        // Assert action
+        assert_eq!(action.r#type, ActionType::Receive);
+        assert_eq!(action.creator, receiver_id);
+        assert_eq!(action.state, ActionState::Created);
+
+        // Assert intents
+        assert_eq!(intents.len(), 2);
 
         let link_account = get_link_account(&link.id, canister_id).unwrap();
 
         // Assert ledger1 intent
-        let intent1 = receive_action
-            .intents
+        let intent1 = intents
             .iter()
             .find(|intent| {
                 intent.label == generate_intent_asset_label(link.link_type, &asset_info1.asset)
@@ -159,8 +165,7 @@ mod tests {
         }
 
         // Assert ledger2 intent
-        let intent2 = receive_action
-            .intents
+        let intent2 = intents
             .iter()
             .find(|intent| {
                 intent.label == generate_intent_asset_label(link.link_type, &asset_info2.asset)
