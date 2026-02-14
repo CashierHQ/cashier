@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
+    constant::INTENT_LABEL_LINK_CREATION_FEE,
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
@@ -31,7 +31,8 @@ use transaction_manager::{
 use uuid::Uuid;
 
 use crate::apps::{
-    link_v2::links::shared::utils::link_asset_principals, token_fee::traits::TokenFeeCache,
+    link_v2::links::shared::utils::{generate_intent_asset_label, link_asset_principals},
+    token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
 
@@ -115,7 +116,7 @@ impl CreateAction {
                     )?;
 
                     let input = CreateIcrc2WalletToLinkIntentArgs {
-                        label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                        label: generate_intent_asset_label(link.link_type, &asset_info.asset),
                         asset: asset_info.asset.clone(),
                         actual_amount,
                         approval_amount,
@@ -135,7 +136,7 @@ impl CreateAction {
                         })?;
 
                     let input = CreateIcrc1WalletToLinkIntentArgs {
-                        label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+                        label: generate_intent_asset_label(link.link_type, &asset_info.asset),
                         asset: asset_info.asset.clone(),
                         sending_amount: sending_amount.clone(),
                         sender_id: link.creator,
@@ -562,6 +563,178 @@ mod tests {
                     calculate_create_link_fee(
                         &token_fee_service
                             .get_batch_tokens_fee(&[ledger_id1, ICP_CANISTER_PRINCIPAL])
+                            .await
+                            .unwrap()
+                    )
+                    .0,
+                    "Fee transfer amount incorrect"
+                );
+            }
+            _ => {
+                panic!("Unexpected intent type: {:?}", fee_intent.r#type);
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_success_create_action_with_assets_with_different_standards() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id1 = random_principal_id();
+        let ledger_id2 = random_principal_id();
+        let ledger_fee = Nat::from(100u64);
+        let amount1 = Nat::from(10_000u64);
+        let amount2 = Nat::from(20_000u64);
+        let max_use = 3;
+        let current_ts = 1_000_000_000;
+        let (link, canister_id, mut token_fee_service, mut token_standard_service) = test_fixture(
+            creator,
+            canister_id,
+            vec![ledger_id1, ledger_id2],
+            vec![amount1.clone(), amount2.clone()],
+            max_use,
+            current_ts,
+        );
+
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id1, ledger_fee.clone());
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id2, ledger_fee.clone());
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id1, vec![IcrcStandard::ICRC1]);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id2, vec![IcrcStandard::ICRC2]);
+
+        let token_fee_map = token_fee_service
+            .get_batch_tokens_fee(&[ledger_id1, ledger_id2, ICP_CANISTER_PRINCIPAL])
+            .await
+            .unwrap();
+        let link_token_balance_map =
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+
+        // Act
+        let result = CreateAction::create(
+            &link,
+            canister_id,
+            &mut token_fee_service,
+            &mut token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let create_action = result.ok().unwrap();
+        assert_eq!(create_action.intents.len(), 3); // 2 deposit + 1 fee intent
+
+        // Assert leger_id1 intent (ICRC1)
+        let intent1 = &create_action.intents.iter().find(|intent| {
+            matches!(intent.task, IntentTask::TransferWalletToLink)
+                && intent.label
+                    == generate_intent_asset_label(
+                        link.link_type,
+                        &Asset::IC {
+                            address: ledger_id1,
+                        },
+                    )
+        });
+        assert!(intent1.is_some());
+        let intent1 = intent1.unwrap();
+        let link_account = get_link_account(&link.id, canister_id).unwrap();
+
+        match &intent1.r#type {
+            IntentType::Transfer(transfer_data) => {
+                assert_eq!(transfer_data.from, Wallet::new(creator));
+                assert_eq!(transfer_data.to, link_account.into());
+                assert_eq!(
+                    transfer_data.asset,
+                    Asset::IC {
+                        address: ledger_id1
+                    }
+                );
+                assert_eq!(
+                    transfer_data.amount,
+                    link_token_balance_map
+                        .get(&ledger_id1)
+                        .cloned()
+                        .unwrap_or_default(),
+                    "Transfer amount incorrect for ledger_id1"
+                );
+            }
+            _ => {
+                panic!("Unexpected intent type: {:?}", intent1.r#type);
+            }
+        }
+
+        // Assert leger_id2 intent (ICRC2)
+        let intent2 = &create_action.intents.iter().find(|intent| {
+            matches!(intent.task, IntentTask::TransferWalletToLink)
+                && intent.label
+                    == generate_intent_asset_label(
+                        link.link_type,
+                        &Asset::IC {
+                            address: ledger_id2,
+                        },
+                    )
+        });
+        assert!(intent2.is_some());
+        let intent2 = intent2.unwrap();
+        let spender_account = Account {
+            owner: canister_id,
+            subaccount: None,
+        };
+        let asset = Asset::IC {
+            address: ledger_id2,
+        };
+
+        match &intent2.r#type {
+            IntentType::TransferFrom(transfer_from_data) => {
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(transfer_from_data.to, link_account.into());
+                assert_eq!(transfer_from_data.spender, spender_account.into());
+                assert_eq!(transfer_from_data.asset, asset);
+                assert_eq!(
+                    transfer_from_data.amount,
+                    calculate_icrc2_transfer_intent_amount(
+                        max_use,
+                        &amount2,
+                        &asset,
+                        &token_fee_map,
+                    )
+                    .unwrap()
+                    .0,
+                    "Asset transfer amount incorrect for ledger_id2"
+                );
+            }
+            _ => {
+                panic!("Unexpected intent type: {:?}", intent2.r#type);
+            }
+        }
+
+        // Assert fee intent
+        let fee_intent = &create_action
+            .intents
+            .iter()
+            .find(|intent| matches!(intent.task, IntentTask::TransferWalletToTreasury));
+        assert!(fee_intent.is_some());
+        let fee_intent = fee_intent.unwrap();
+        match &fee_intent.r#type {
+            IntentType::TransferFrom(transfer_from_data) => {
+                assert_eq!(
+                    transfer_from_data.asset,
+                    Asset::IC {
+                        address: ICP_CANISTER_PRINCIPAL,
+                    },
+                );
+                assert_eq!(
+                    transfer_from_data.amount,
+                    calculate_create_link_fee(
+                        &token_fee_service
+                            .get_batch_tokens_fee(&[ledger_id1, ledger_id2, ICP_CANISTER_PRINCIPAL])
                             .await
                             .unwrap()
                     )
