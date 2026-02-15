@@ -58,7 +58,7 @@ impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardServ
     }
 
     /// Clear the token standard cache
-    pub fn clear_cache(&mut self) {
+    pub fn flush_cache(&mut self) {
         self.token_standard_repository.clear();
     }
 

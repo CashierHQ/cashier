@@ -138,13 +138,14 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
+  const Result_7 = IDL.Variant({ 'Ok' : TokenDto, 'Err' : IDL.Text });
   const Nft = IDL.Record({
     'token_id' : IDL.Nat,
     'collection_id' : IDL.Principal,
   });
   const AddUserNftInput = IDL.Record({ 'nft' : Nft });
   const UserNftDto = IDL.Record({ 'nft' : Nft, 'user' : IDL.Principal });
-  const Result_7 = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
+  const Result_8 = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
   const AddTokenInput = IDL.Record({
     'token_id' : TokenId,
     'index_id' : IDL.Opt(IDL.Text),
@@ -199,7 +200,7 @@ export const idlFactory = ({ IDL }) => {
     'bridge_type' : BridgeType,
     'deposit_fee' : IDL.Opt(IDL.Nat),
   });
-  const Result_8 = IDL.Variant({
+  const Result_9 = IDL.Variant({
     'Ok' : UserBridgeTransactionDto,
     'Err' : CanisterError,
   });
@@ -208,7 +209,7 @@ export const idlFactory = ({ IDL }) => {
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
   });
-  const Result_9 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
+  const Result_10 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const GetUserNftInput = IDL.Record({
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
@@ -274,14 +275,15 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
+    'get_token_by_id' : IDL.Func([IDL.Principal], [Result_7], ['query']),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
     'list_tokens' : IDL.Func([], [Result_5], ['query']),
-    'user_add_nft' : IDL.Func([AddUserNftInput], [Result_7], []),
+    'user_add_nft' : IDL.Func([AddUserNftInput], [Result_8], []),
     'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
     'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
     'user_create_bridge_transaction' : IDL.Func(
         [CreateBridgeTransactionInputArg],
-        [Result_8],
+        [Result_9],
         [],
       ),
     'user_get_bridge_transaction_by_id' : IDL.Func(
@@ -294,12 +296,12 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(UserBridgeTransactionDto)],
         ['query'],
       ),
-    'user_get_btc_address' : IDL.Func([], [Result_9], []),
+    'user_get_btc_address' : IDL.Func([], [Result_10], []),
     'user_get_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
     'user_sync_token_list' : IDL.Func([], [Result_3], []),
     'user_update_bridge_transaction' : IDL.Func(
         [UpdateBridgeTransactionInputArg],
-        [Result_8],
+        [Result_9],
         [],
       ),
     'user_update_token_balance' : IDL.Func(

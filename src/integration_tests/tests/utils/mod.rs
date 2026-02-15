@@ -231,6 +231,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
             owner: TestUser::CashierBackendAdmin.get_principal(),
             token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
             token_storage_canister_id: Some(token_storage_principal),
+            token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
         }),
     )
     .await;

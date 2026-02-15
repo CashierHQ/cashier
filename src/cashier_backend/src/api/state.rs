@@ -16,7 +16,7 @@ use crate::{
         token_balance::service::TokenBalanceService,
         token_fee::{fetcher::IcrcTokenFetcher, service::TokenFeeService},
         token_standard::service::TokenStandardService,
-        token_storage::{self, service::TokenStorageService},
+        token_storage::service::TokenStorageService,
     },
     repositories::{
         AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,

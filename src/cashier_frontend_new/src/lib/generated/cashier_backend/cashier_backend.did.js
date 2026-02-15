@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'token_storage_canister_id' : IDL.Opt(IDL.Principal),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   CanisterError.fill(
@@ -386,6 +387,7 @@ export const init = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'token_storage_canister_id' : IDL.Opt(IDL.Principal),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   return [CashierBackendInitData];
