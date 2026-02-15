@@ -11,7 +11,9 @@ use token_storage_types::{
         nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
     },
     error::CanisterError,
-    token::{AddTokenInput, TokenListResponse, UpdateTokenInput, UpdateTokenStandardsInput},
+    token::{
+        AddTokenInput, TokenDto, TokenListResponse, UpdateTokenInput, UpdateTokenStandardsInput,
+    },
 };
 
 /// A TokenStorage canister client.
@@ -188,5 +190,17 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         self.client
             .update("admin_update_token_standards", (input,))
             .await
+    }
+
+    /// Get token details by ledger canister id
+    /// # Arguments
+    /// * `ledger_id` - The principal of the ledger canister
+    /// # Returns
+    /// * `TokenDto` - The token details, or an error message
+    pub async fn get_token_by_id(
+        self,
+        ledger_id: Principal,
+    ) -> CanisterClientResult<Result<TokenDto, String>> {
+        self.client.query("get_token_by_id", (ledger_id,)).await
     }
 }

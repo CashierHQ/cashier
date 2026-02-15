@@ -1,7 +1,9 @@
 use crate::{
     ckbtc,
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
-    constants,
+    constant::{
+        self, CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICP_PRINCIPAL,
+        ICRC7_NFT_PRINCIPAL, TESTICP_PRINCIPAL,
+    },
     icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
@@ -125,15 +127,15 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
-        Principal::from_text(constants::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
-        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
     )
     .await;
 
     let ckbtc_minter_principal = ckbtc::minter::deploy_ckbtc_minter_canister(
         &client,
-        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
-        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constant::ckbtc::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
         Some(ckbtc_kyt_principal),
     )
     .await;
@@ -148,7 +150,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
             tokens: Some(vec![
                 RegistryToken {
                     details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+                        ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
                         index_id: Some(
                             Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
                         ),
@@ -162,7 +164,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+                        ledger_id: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
                         index_id: Some(
                             Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
                         ),
@@ -176,7 +178,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap(),
+                        ledger_id: Principal::from_text(CK_ETH_PRINCIPAL).unwrap(),
                         index_id: Some(
                             Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap(),
                         ),
@@ -190,7 +192,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
+                        ledger_id: Principal::from_text(CK_USDC_PRINCIPAL).unwrap(),
                         index_id: Some(
                             Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
                         ),
@@ -204,10 +206,10 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap(),
+                        ledger_id: Principal::from_text(TESTICP_PRINCIPAL).unwrap(),
                         index_id: None,
                         fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+                        supported_standards: vec![IcrcStandard::ICRC1],
                     },
                     symbol: "tICP".to_string(),
                     name: "Test Internet Computer".to_string(),
@@ -281,6 +283,16 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
+    let test_icp_principal = token_icrc::deploy_single_icrc_ledger_canister(
+        &client,
+        "Test Internet Computer".to_string(),
+        "tICP".to_string(),
+        8,
+        10000,
+        Some(Principal::from_text(TESTICP_PRINCIPAL).unwrap()),
+    )
+    .await;
+
     let doge_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Test Token".to_string(),
@@ -294,6 +306,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     icrc_token_map.insert("ckBTC".to_string(), ck_btc_principal);
     icrc_token_map.insert("ckETH".to_string(), ck_eth_principal);
     icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
+    icrc_token_map.insert("tICP".to_string(), test_icp_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
 
     let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
