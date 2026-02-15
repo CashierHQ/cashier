@@ -157,7 +157,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         fee: Nat::from(10_000u64),
                         supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
-                    symbol: "ICP".to_string(),
+                    symbol: constant::ICP_TOKEN.to_string(),
                     name: "Internet Computer".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
@@ -171,7 +171,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         fee: Nat::from(10u64),
                         supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
-                    symbol: "ckBTC".to_string(),
+                    symbol: constant::CKBTC_ICRC_TOKEN.to_string(),
                     name: "Chain Key Bitcoin".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
@@ -185,7 +185,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         fee: Nat::from(2_000_000_000_000u64),
                         supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
-                    symbol: "ckETH".to_string(),
+                    symbol: constant::CKETH_ICRC_TOKEN.to_string(),
                     name: "Chain Key Ethereum".to_string(),
                     decimals: 18,
                     enabled_by_default: true,
@@ -199,7 +199,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         fee: Nat::from(10_000u64),
                         supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
                     },
-                    symbol: "ckUSDC".to_string(),
+                    symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
                     name: "Chain Key USD Coin".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
@@ -211,7 +211,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                         fee: Nat::from(10_000u64),
                         supported_standards: vec![IcrcStandard::ICRC1],
                     },
-                    symbol: "tICP".to_string(),
+                    symbol: constant::TESTICP_ICRC_TOKEN.to_string(),
                     name: "Test Internet Computer".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
@@ -256,7 +256,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Chain Key Bitcoin".to_string(),
-        "ckBTC".to_string(),
+        constant::CKBTC_ICRC_TOKEN.to_string(),
         8,
         100,
         Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
@@ -266,7 +266,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let ck_eth_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Chain Key Ethereum".to_string(),
-        "ckETH".to_string(),
+        constant::CKETH_ICRC_TOKEN.to_string(),
         18,
         2000000000000000000,
         Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
@@ -276,7 +276,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let ck_usdc_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Chain Key USD Coin".to_string(),
-        "ckUSDC".to_string(),
+        constant::CKUSDC_ICRC_TOKEN.to_string(),
         8,
         10000,
         Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
@@ -286,7 +286,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let test_icp_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Test Internet Computer".to_string(),
-        "tICP".to_string(),
+        constant::TESTICP_ICRC_TOKEN.to_string(),
         8,
         10000,
         Some(Principal::from_text(TESTICP_PRINCIPAL).unwrap()),
@@ -303,10 +303,10 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
-    icrc_token_map.insert("ckBTC".to_string(), ck_btc_principal);
-    icrc_token_map.insert("ckETH".to_string(), ck_eth_principal);
-    icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
-    icrc_token_map.insert("tICP".to_string(), test_icp_principal);
+    icrc_token_map.insert(constant::CKBTC_ICRC_TOKEN.to_string(), ck_btc_principal);
+    icrc_token_map.insert(constant::CKETH_ICRC_TOKEN.to_string(), ck_eth_principal);
+    icrc_token_map.insert(constant::CKUSDC_ICRC_TOKEN.to_string(), ck_usdc_principal);
+    icrc_token_map.insert(constant::TESTICP_ICRC_TOKEN.to_string(), test_icp_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
 
     let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
