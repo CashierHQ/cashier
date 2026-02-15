@@ -11,6 +11,7 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'token_storage_canister_id' : IDL.Opt(IDL.Principal),
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
   CanisterError.fill(
     IDL.Variant({
@@ -331,6 +332,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'admin_fee_cache_clear' : IDL.Func([], [Result], []),
     'admin_fee_cache_clear_token' : IDL.Func([IDL.Principal], [Result], []),
+    'admin_flush_token_standard_cache' : IDL.Func([], [Result], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
@@ -389,6 +391,7 @@ export const init = ({ IDL }) => {
     'owner' : IDL.Principal,
     'token_storage_canister_id' : IDL.Opt(IDL.Principal),
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
   return [CashierBackendInitData];
 };
