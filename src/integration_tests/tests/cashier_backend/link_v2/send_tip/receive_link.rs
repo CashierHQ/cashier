@@ -23,7 +23,7 @@ use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
+async fn it_should_fail_receive_icp_token_tip_link_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -62,7 +62,7 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once() {
+async fn it_should_fail_receive_icp_token_tip_link_if_requested_more_than_once() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token = ICP_TOKEN;
@@ -103,7 +103,10 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once
         assert!(create_action_result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert_eq!(msg, "Unsupported link state", "Error message mismatch");
+            assert_eq!(
+                msg, "Unsupported action type for current link state",
+                "Error message mismatch"
+            );
         } else {
             panic!("Expected ValidationErrors error");
         }
@@ -115,7 +118,7 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icp_token_tip_linkv2() {
+async fn it_should_succeed_receive_icp_token_tip_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token = ICP_TOKEN;
@@ -242,7 +245,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
+async fn it_should_succeed_receive_icrc_token_tip_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token = CKBTC_ICRC_TOKEN;
