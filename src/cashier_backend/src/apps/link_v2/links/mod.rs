@@ -28,6 +28,7 @@ pub mod token_basket_link;
 pub mod traits;
 
 /// Enum representing the different types of links in LinkV2
+#[allow(clippy::enum_variant_names)]
 pub enum LinkV2Types {
     TipLink(tip_link::TipLink),
     AirdropLink(airdrop_link::AirdropLink),

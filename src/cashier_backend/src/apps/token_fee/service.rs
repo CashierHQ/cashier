@@ -266,7 +266,7 @@ pub mod tests {
         let mut service = create_mock_service_with_fetcher(1768451390000000300, fetcher);
 
         let result: Result<HashMap<Principal, Nat>, CanisterError> =
-            service.get_batch_tokens_fee(&vec![ledger_id]).await;
+            service.get_batch_tokens_fee(&[ledger_id]).await;
         assert!(result.is_err());
     }
 }

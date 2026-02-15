@@ -25,10 +25,6 @@ pub mod tests {
                 current_time: start_time,
             }
         }
-
-        pub fn advance_time(&mut self, delta: u64) {
-            self.current_time += delta;
-        }
     }
 
     impl IcEnvironment for MockIcEnvironment {

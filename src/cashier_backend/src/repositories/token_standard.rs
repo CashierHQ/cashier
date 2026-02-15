@@ -28,14 +28,7 @@ impl<S: Storage<TokenStandardRepositoryStorage>> TokenStandardRepository<S> {
     /// Insert or update cached fee
     pub fn insert(&mut self, key: &Principal, cached_standard: CachedTokenStandard) {
         self.storage.with_borrow_mut(|s| {
-            s.insert(key.clone(), cached_standard);
-        });
-    }
-
-    /// Remove cached fee for specific token
-    pub fn remove(&mut self, key: &Principal) {
-        self.storage.with_borrow_mut(|s| {
-            s.remove(key);
+            s.insert(*key, cached_standard);
         });
     }
 
@@ -70,7 +63,7 @@ mod tests {
         assert_eq!(retrieved, Some(cached_standards));
 
         // Act
-        repo.remove(&token_principal);
+        repo.clear();
 
         // Assert
         let retrieved_after_removal = repo.get(&token_principal);
