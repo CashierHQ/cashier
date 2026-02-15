@@ -4,6 +4,7 @@
 use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 use ic_cdk::call::{Call, CandidDecodeFailed};
+use log::info;
 use token_storage_types::token::{ChainTokenDetails, IcrcStandard, TokenDto};
 
 use crate::apps::token_storage::traits::TokenStorageClient;

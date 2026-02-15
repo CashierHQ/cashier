@@ -16,7 +16,7 @@ use crate::{
         token_balance::service::TokenBalanceService,
         token_fee::{fetcher::IcrcTokenFetcher, service::TokenFeeService},
         token_standard::service::TokenStandardService,
-        token_storage::service::TokenStorageService,
+        token_storage::{self, service::TokenStorageService},
     },
     repositories::{
         AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
@@ -52,8 +52,13 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let link_v2_service = LinkV2Service::new(&*repo);
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
-        let token_standard_service =
-            TokenStandardService::new(&*repo, TokenStorageService::default(), env.clone());
+
+        let token_storage_canister_id = TOKEN_STORAGE_CANISTER_ID.with(|id| *id.borrow());
+        let token_standard_service = TokenStandardService::new(
+            &*repo,
+            TokenStorageService::new(token_storage_canister_id),
+            env.clone(),
+        );
         let token_balance_service = TokenBalanceService;
 
         CanisterState {
@@ -80,13 +85,6 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
         self.token_standard_service
             .set_token_storage_canister_id(canister_id);
-    }
-
-    /// Gets the token storage canister ID
-    /// # Returns
-    /// * `Principal` - The principal ID of the token storage canister
-    pub fn get_token_storage_canister_id(&self) -> Principal {
-        TOKEN_STORAGE_CANISTER_ID.with(|id| *id.borrow())
     }
 }
 

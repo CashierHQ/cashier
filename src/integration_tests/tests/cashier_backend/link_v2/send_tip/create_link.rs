@@ -565,17 +565,17 @@ async fn it_should_create_icrc1_token_tip_link_successfully() {
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
 
         let asset = Asset::IC {
-            address: Principal::from_text(constant::TESTICP_ICRC_TOKEN).unwrap(),
+            address: Principal::from_text(constant::TESTICP_PRINCIPAL).unwrap(),
         };
         let fee_map = {
             let mut map = HashMap::new();
             map.insert(
-                Principal::from_text(constant::TESTICP_ICRC_TOKEN).unwrap(),
+                Principal::from_text(constant::TESTICP_PRINCIPAL).unwrap(),
                 icrc_ledger_fee.clone(),
             );
             map
         };
-        let (actual_amount, total_amount) =
+        let (actual_amount, _total_amount) =
             calculate_icrc1_transfer_intent_amount(1, &tip_amount, &asset, &fee_map).unwrap();
         match intent1.r#type {
             IntentType::Transfer(ref transfer_data) => {
@@ -605,78 +605,84 @@ async fn it_should_create_icrc1_token_tip_link_successfully() {
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        // let intent2 = action
-        //     .intents
-        //     .iter()
-        //     .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
-        //     .expect("TransferWalletToTreasury intent not found");
-        // assert_eq!(intent2.task, IntentTask::TransferWalletToTreasury);
-        // match intent2.r#type {
-        //     IntentType::TransferFrom(ref transfer_from) => {
-        //         assert_eq!(transfer_from.from, Wallet::new(caller));
-        //         assert_eq!(transfer_from.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
-        //         assert_eq!(
-        //             transfer_from.spender,
-        //             Wallet::new(ctx.cashier_backend_principal)
-        //         );
-        //         assert_eq!(
-        //             transfer_from.approve_amount,
-        //             Some(
-        //                 test_utils::calculate_approval_amount_for_create_link(&icp_ledger_fee)
-        //                     .into()
-        //             )
-        //         );
-        //     }
-        //     _ => panic!("Expected TransferFrom intent type"),
-        // }
-        // assert_eq!(intent2.transactions.len(), 2);
-        // let tx1 = &intent2.transactions[0];
-        // match tx1.protocol {
-        //     Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
-        //         assert_eq!(data.from, Wallet::new(caller));
-        //         assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
-        //         assert_eq!(
-        //             data.amount,
-        //             Nat::from(test_utils::calculate_approval_amount_for_create_link(
-        //                 &icp_ledger_fee
-        //             ))
-        //         );
-        //         assert!(data.memo.is_some());
-        //         assert!(data.ts.is_some());
-        //     }
-        //     _ => panic!("Expected Icrc2Approve transaction"),
-        // }
-        // let tx2 = &intent2.transactions[1];
-        // match tx2.protocol {
-        //     Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
-        //         assert_eq!(data.from, Wallet::new(caller));
-        //         assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
-        //         assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
-        //         assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
-        //         assert!(data.memo.is_some());
-        //         assert!(data.ts.is_some());
-        //     }
-        //     _ => panic!("Expected Icrc2TransferFrom transaction"),
-        // }
+        let intent2 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
+        assert_eq!(intent2.task, IntentTask::TransferWalletToTreasury);
+        match intent2.r#type {
+            IntentType::TransferFrom(ref transfer_from) => {
+                assert_eq!(transfer_from.from, Wallet::new(caller));
+                assert_eq!(transfer_from.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
+                assert_eq!(
+                    transfer_from.spender,
+                    Wallet::new(ctx.cashier_backend_principal)
+                );
+                assert_eq!(
+                    transfer_from.approve_amount,
+                    Some(
+                        test_utils::calculate_approval_amount_for_create_link(&icp_ledger_fee)
+                            .into()
+                    )
+                );
+            }
+            _ => panic!("Expected TransferFrom intent type"),
+        }
+        assert_eq!(intent2.transactions.len(), 2);
+        let tx1 = &intent2.transactions[0];
+        match tx1.protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(
+                    data.amount,
+                    Nat::from(test_utils::calculate_approval_amount_for_create_link(
+                        &icp_ledger_fee
+                    ))
+                );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc2Approve transaction"),
+        }
+        let tx2 = &intent2.transactions[1];
+        match tx2.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc2TransferFrom transaction"),
+        }
 
-        // // Assert ICRC-112 requests
-        // assert!(action.icrc_112_requests.is_some());
-        // let icrc112_requests = action.icrc_112_requests.unwrap();
-        // assert_eq!(icrc112_requests.len(), 1);
-        // let requests = &icrc112_requests[0];
+        // Assert ICRC-112 requests
+        assert!(action.icrc_112_requests.is_some());
+        let icrc112_requests = action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
 
-        // assert_eq!(requests.len(), 2);
-        // for req in requests {
-        //     match req.method.as_str() {
-        //         "icrc2_approve" => {
-        //             assert!(
-        //                 req.canister_id == Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
-        //                     || req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap()
-        //             );
-        //         }
-        //         _ => panic!("Unexpected method in ICRC-112 request"),
-        //     }
-        // }
+        assert_eq!(requests.len(), 2);
+        for req in requests {
+            match req.method.as_str() {
+                "icrc1_transfer" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(constant::TESTICP_PRINCIPAL).unwrap()
+                    );
+                }
+                "icrc2_approve" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
+                }
+                _ => panic!("Unexpected method in ICRC-112 request"),
+            }
+        }
 
         Ok(())
     })

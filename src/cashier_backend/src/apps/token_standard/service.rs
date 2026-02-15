@@ -6,6 +6,7 @@ use cashier_backend_types::{
     error::CanisterError, repository::token_standard::CachedTokenStandard,
 };
 use cashier_common::runtime::IcEnvironment;
+use log::info;
 use std::{cell::RefCell, collections::HashMap};
 use token_storage_types::token::IcrcStandard;
 
@@ -49,6 +50,10 @@ impl<R: Repositories, T: TokenStorageClient, E: IcEnvironment> TokenStandardServ
     /// # Arguments
     /// * `canister_id` - The principal of the token storage canister
     pub fn set_token_storage_canister_id(&mut self, canister_id: Principal) {
+        info!(
+            "Setting token storage canister ID to {} in TokenStandardService",
+            canister_id
+        );
         self.token_storage_client.set_canister_id(canister_id);
     }
 
