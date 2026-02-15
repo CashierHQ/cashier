@@ -5,6 +5,13 @@ pub const CK_ETH_PRINCIPAL: &str = "ss2fx-dyaaa-aaaar-qacoq-cai";
 pub const CK_USDC_PRINCIPAL: &str = "xevnm-gaaaa-aaaar-qafnq-cai";
 pub const TESTICP_PRINCIPAL: &str = "x5qut-viaaa-aaaar-qajda-cai";
 
+pub const ICP_TOKEN: &str = "ICP";
+pub const CKBTC_ICRC_TOKEN: &str = "ckBTC";
+pub const CKUSDC_ICRC_TOKEN: &str = "ckUSDC";
+pub const CKETH_ICRC_TOKEN: &str = "ckETH";
+pub const TESTICP_ICRC_TOKEN: &str = "tICP";
+pub const DOGE_ICRC_TOKEN: &str = "DOGE";
+
 pub const FEE_TREASURY_PRINCIPAL: &str =
     "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae";
 pub const ICRC7_NFT_PRINCIPAL: &str = "cvvmr-dyaaa-aaaai-q32oq-cai";
