@@ -19,7 +19,7 @@ use cashier_common::test_utils::random_principal_id;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
+async fn it_should_withdraw_icp_token_payment_link_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -60,7 +60,7 @@ async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_payment_linkv2_successfully() {
+async fn it_should_withdraw_icp_token_payment_link_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();

@@ -293,7 +293,6 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
             "Should return ICRC-112 retry requests"
         );
         let retry_icrc112 = result.action.icrc_112_requests.unwrap();
-        println!("retry_icrc112 {:?}", retry_icrc112);
         assert_eq!(
             retry_icrc112.len(),
             1,
@@ -342,8 +341,6 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
                 }
                 false
             });
-
-        println!("ckbtc_approve_tx {:?}", ckbtc_approve_tx.unwrap());
 
         assert!(
             ckbtc_approve_tx.is_some(),

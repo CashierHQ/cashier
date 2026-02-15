@@ -105,7 +105,10 @@ async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_requested_more_than_
         assert!(create_action_result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert_eq!(msg, "Unsupported link state", "Error message mismatch");
+            assert_eq!(
+                msg, "Unsupported action type for current link state",
+                "Error message mismatch"
+            );
         } else {
             panic!("Expected ValidationErrors error");
         }

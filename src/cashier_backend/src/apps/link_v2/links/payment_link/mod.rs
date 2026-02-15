@@ -126,7 +126,7 @@ impl LinkV2 for PaymentLink {
                     )
                     .await
             }
-            LinkState::InactiveEnded => {
+            LinkState::Inactive => {
                 let state_handler = InactiveState::new(&link, canister_id);
                 state_handler
                     .create_action(
@@ -180,7 +180,7 @@ impl LinkV2 for PaymentLink {
                     .process_action(caller, action, intents, intent_txs_map, transaction_manager)
                     .await
             }
-            LinkState::InactiveEnded => {
+            LinkState::Inactive => {
                 let state_handler = InactiveState::new(&link, canister_id);
                 state_handler
                     .process_action(caller, action, intents, intent_txs_map, transaction_manager)
