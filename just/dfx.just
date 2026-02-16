@@ -31,6 +31,7 @@ dfx_local_stop:
 [group('dfx')]
 dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
+  set -e
   just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
@@ -217,6 +218,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
               ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
               index_id = opt principal \"qhbym-qaaaa-aaaaa-aaafq-cai\";
               fee = 10000 : nat;
+              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
             }
           };
           symbol = \"ICP\";
@@ -229,6 +231,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
               ledger_id = principal \"{{CKBTC_LEDGER_ID}}\";
               index_id = opt principal \"{{CKBTC_INDEXER_ID}}\";
               fee = 10 : nat;
+              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
             }
           };
           symbol = \"ckBTC\";
@@ -241,6 +244,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
               ledger_id = principal \"ss2fx-dyaaa-aaaar-qacoq-cai\";
               index_id = opt principal \"s3zol-vqaaa-aaaar-qacpa-cai\";
               fee = 2_000_000_000_000 : nat;
+              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
             }
           };
           symbol = \"ckETH\";
@@ -253,6 +257,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
               ledger_id = principal \"xevnm-gaaaa-aaaar-qafnq-cai\";
               index_id = opt principal \"xrs4b-hiaaa-aaaar-qafoa-cai\";
               fee = 10_000 : nat;
+              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
             }
           };
           symbol = \"ckUSDC\";

@@ -20,10 +20,7 @@ use cashier_backend_types::{
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };
-use cashier_shared::types::{
-    Action as ActionShared, ActionState as ActionStateShared, Intent as IntentShared,
-    IntentState as IntentStateShared,
-};
+use log::info;
 use std::collections::HashMap;
 
 use crate::{
@@ -136,6 +133,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
     /// # Arguments
     /// * `transactions` - A mutable slice of transactions to be rolled up
     pub fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]) {
+        info!("[rollup_icrc2_wallet_transaction_state] {:?}", transactions);
         // Build dependent_map with immutable borrows
         let mut dependent_map: HashMap<String, Vec<TransactionState>> = HashMap::new();
 
@@ -151,9 +149,11 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
         }
 
         // Now mutably iterate and update
+        // Skip Success transactions to preserve validated state on retry
         for tx in transactions.iter_mut() {
             if tx.is_icrc2_approve()
                 && tx.from_call_type == FromCallType::Wallet
+                && tx.state != TransactionState::Success
                 && let Some(dependent_states) = dependent_map.get(&tx.id)
             {
                 if dependent_states.contains(&TransactionState::Fail) {
