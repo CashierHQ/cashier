@@ -1,6 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
+import { ONBOARDING_DISMISSED_KEY } from "../constants";
 import { Link, LinkMapper } from "../types/link/link";
 import type { UnifiedLinkList } from "../types/linkList";
 import { UnifiedLinkItemMapper } from "../types/linkList";
@@ -13,6 +14,13 @@ import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkR
  */
 export class LinkListStore {
   #linkListQuery;
+
+  /** Persisted state for onboarding dismissal */
+  #isOnboardingDismissed = $state(
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem(ONBOARDING_DISMISSED_KEY) === "true"
+      : false,
+  );
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
@@ -33,8 +41,20 @@ export class LinkListStore {
       storageType: "localStorage",
       serde: LinkMapper.serde,
     });
-  }
 
+    // Auto refresh/reset based on auth state changes
+    $effect.root(() => {
+      $effect(() => {
+        // Reset the data when user logs out
+        if (authState.account == null) {
+          this.#linkListQuery.reset();
+          return;
+        }
+        // Refresh the data when user logs in
+        this.#linkListQuery.refresh();
+      });
+    });
+  }
   /** Get the underlying query state */
   get query() {
     return this.#linkListQuery;
@@ -45,6 +65,19 @@ export class LinkListStore {
    */
   refresh() {
     this.#linkListQuery.refresh();
+  }
+
+  /** Whether onboarding has been dismissed */
+  get isOnboardingDismissed() {
+    return this.#isOnboardingDismissed;
+  }
+
+  /** Dismiss onboarding and persist to localStorage */
+  dismissOnboarding() {
+    this.#isOnboardingDismissed = true;
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(ONBOARDING_DISMISSED_KEY, "true");
+    }
   }
 
   /**
@@ -62,12 +95,6 @@ export class LinkListStore {
     );
     return [...persisted, ...temps];
   }
-
-  /**
-   * Groups links by day and sorts them by descending date (most recent first)
-   * Supports both persisted links and temporary links
-   */
-  // groupAndSortByDate moved to utils/groupAndSortByDate.ts as a pure helper
 }
 
 export const linkListStore = new LinkListStore();

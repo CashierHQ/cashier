@@ -7,6 +7,7 @@
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
   import { MOCK_NETWORKS } from "$modules/wallet/mock/mock";
+  import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
   type Props = {
     onNavigateBack: () => void;
@@ -24,22 +25,54 @@
   let failedImageLoads: Set<string> = $state(new Set());
   let failedNetworkIconLoads: Set<string> = $state(new Set());
   let isRefreshing: boolean = $state(false);
+  let optimisticUpdates = new SvelteMap<string, boolean>();
+  let pendingToggleAddresses = new SvelteSet<string>();
+  let updateTrigger = $state(0);
 
-  async function handleToggle(token: TokenWithPriceAndBalance) {
-    if (token.is_default) return;
+  // Keep parent-bound global loader in sync (WalletDrawer overlay).
+  $effect(() => {
+    isToggling =
+      pendingToggleAddresses.size > 0 ||
+      walletStore.query.isLoading ||
+      optimisticUpdates.size > 0;
+  });
 
-    isToggling = true;
+  $effect(() => {
+    if (!walletStore.query.data) return;
 
-    try {
-      await walletStore.toggleToken(token.address, !token.enabled);
-      await walletStore.query.refresh();
-
-      toast.success(locale.t("wallet.manage.toggleSuccess"));
-    } catch (error) {
-      toast.error(locale.t("wallet.manage.toggleError") + ": " + error);
-    } finally {
-      isToggling = false;
+    for (const [address, optimisticEnabled] of optimisticUpdates) {
+      const serverToken = walletStore.query.data.find(
+        (t) => t.address === address,
+      );
+      if (serverToken && serverToken.enabled === optimisticEnabled) {
+        optimisticUpdates.delete(address);
+      }
     }
+  });
+
+  function handleToggle(token: TokenWithPriceAndBalance) {
+    if (token.is_default) return;
+    if (pendingToggleAddresses.has(token.address)) return;
+
+    const originalEnabled = token.enabled;
+    const newEnabled = !token.enabled;
+
+    optimisticUpdates.set(token.address, newEnabled);
+    pendingToggleAddresses.add(token.address);
+    updateTrigger++;
+
+    walletStore
+      .toggleToken(token.address, newEnabled)
+      .then(() => walletStore.query.refresh())
+      .catch(async (error) => {
+        optimisticUpdates.set(token.address, originalEnabled);
+        toast.error(locale.t("wallet.manage.toggleError") + ": " + error);
+        await walletStore.query.refresh();
+      })
+      .finally(() => {
+        pendingToggleAddresses.delete(token.address);
+        updateTrigger++;
+      });
   }
 
   async function handleRefresh() {
@@ -76,14 +109,24 @@
       : MOCK_NETWORKS[0];
   }
 
-  const filteredTokens = $derived.by(
-    () =>
-      walletStore.query.data?.filter(
-        (token) =>
-          token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
-      ) || [],
-  );
+  const filteredTokens = $derived.by(() => {
+    void updateTrigger;
+    return (
+      walletStore.query.data
+        ?.map((token) => {
+          const optimisticEnabled = optimisticUpdates.get(token.address);
+          if (optimisticEnabled !== undefined) {
+            return { ...token, enabled: optimisticEnabled };
+          }
+          return token;
+        })
+        .filter(
+          (token) =>
+            token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+        ) || []
+    );
+  });
 </script>
 
 <div>
@@ -199,19 +242,22 @@
               </div>
               <button
                 onclick={() => handleToggle(token)}
-                disabled={token.is_default || isToggling}
+                disabled={token.is_default ||
+                  pendingToggleAddresses.has(token.address)}
                 class="relative inline-flex h-5 w-8 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed {token.enabled
                   ? 'bg-green'
                   : 'bg-lightgreen'}"
                 aria-label={locale
                   .t("wallet.manage.toggleAria")
                   .replace("{{token}}", token.name)}
+                aria-busy={pendingToggleAddresses.has(token.address)}
               >
                 <span
                   class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {token.enabled
                     ? 'translate-x-3.5'
                     : 'translate-x-0.5'}"
-                ></span>
+                >
+                </span>
               </button>
             </div>
           {/each}

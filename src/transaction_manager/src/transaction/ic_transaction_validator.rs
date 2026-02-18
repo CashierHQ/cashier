@@ -11,6 +11,7 @@ use cashier_backend_types::repository::{
 };
 use std::pin::Pin;
 
+#[derive(Clone)]
 pub struct IcTransactionValidator;
 
 impl IcTransactionValidator {

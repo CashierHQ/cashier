@@ -17,3 +17,9 @@ pub struct TokenStorageInitData {
     /// CKBTC minter canister id
     pub ckbtc_minter_id: Principal,
 }
+
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct TokenStorageUpgradeData {
+    /// CKBTC minter canister id
+    pub ckbtc_minter_id: Principal,
+}

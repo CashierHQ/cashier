@@ -9,6 +9,27 @@ use serde::{Deserialize, Serialize};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
 
+/// Supported ICRC standards for IC tokens
+#[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash)]
+#[storable]
+pub enum IcrcStandard {
+    ICRC1,
+    ICRC2,
+    ICRC3,
+}
+
+impl IcrcStandard {
+    /// Parse from standard name string (e.g. "ICRC-1")
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "ICRC-1" => Some(Self::ICRC1),
+            "ICRC-2" => Some(Self::ICRC2),
+            "ICRC-3" => Some(Self::ICRC3),
+            _ => None,
+        }
+    }
+}
+
 /// A token identifier
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash, Ord, PartialOrd)]
 #[storable]
@@ -43,9 +64,30 @@ pub enum ChainTokenDetails {
         ledger_id: LedgerId,
         index_id: Option<IndexId>,
         fee: candid::Nat,
+        supported_standards: Vec<IcrcStandard>,
     },
-    // Add more variants for other chains as needed
 }
+
+/// Record returned by icrc10_supported_standards query
+#[derive(CandidType, Deserialize, Clone, Debug)]
+pub struct SupportedStandardRecord {
+    pub name: String,
+    pub url: String,
+}
+
+impl From<Vec<SupportedStandardRecord>> for IcrcStandards {
+    fn from(records: Vec<SupportedStandardRecord>) -> Self {
+        IcrcStandards(
+            records
+                .iter()
+                .filter_map(|r| IcrcStandard::from_name(&r.name))
+                .collect(),
+        )
+    }
+}
+
+/// Newtype wrapper for `Vec<IcrcStandard>` to enable `From` trait implementations
+pub struct IcrcStandards(pub Vec<IcrcStandard>);
 
 impl ChainTokenDetails {
     pub fn index_id(&self) -> Option<IndexId> {
@@ -70,6 +112,21 @@ impl ChainTokenDetails {
             },
         }
     }
+
+    /// Check if token supports a specific ICRC standard
+    pub fn supports_standard(&self, standard: &IcrcStandard) -> bool {
+        match self {
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => supported_standards.contains(standard),
+        }
+    }
+
+    /// Check if token supports ICRC-2 (approve/transfer_from)
+    pub fn supports_icrc2(&self) -> bool {
+        self.supports_standard(&IcrcStandard::ICRC2)
+    }
 }
 
 // Central registry token definition
@@ -83,20 +140,62 @@ pub struct RegistryToken {
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
 }
 
+/// V1 snapshot of ChainTokenDetails (before supported_standards)
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub enum ChainTokenDetailsV1 {
+    IC {
+        ledger_id: LedgerId,
+        index_id: Option<IndexId>,
+        fee: candid::Nat,
+    },
+}
+
+/// V1 snapshot of RegistryToken (before supported_standards)
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryTokenV1 {
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub details: ChainTokenDetailsV1,
+    pub enabled_by_default: bool,
+}
+
 #[storable]
 pub enum RegistryTokenCodec {
-    V1(RegistryToken),
+    V1(RegistryTokenV1),
+    V2(RegistryToken),
 }
 
 impl Codec<RegistryToken> for RegistryTokenCodec {
     fn decode(source: Self) -> RegistryToken {
         match source {
-            RegistryTokenCodec::V1(link) => link,
+            RegistryTokenCodec::V1(old) => {
+                let ChainTokenDetailsV1::IC {
+                    ledger_id,
+                    index_id,
+                    fee,
+                } = old.details;
+                RegistryToken {
+                    symbol: old.symbol,
+                    name: old.name,
+                    decimals: old.decimals,
+                    details: ChainTokenDetails::IC {
+                        ledger_id,
+                        index_id,
+                        fee,
+                        supported_standards: vec![IcrcStandard::ICRC1],
+                    },
+                    enabled_by_default: old.enabled_by_default,
+                }
+            }
+            RegistryTokenCodec::V2(token) => token,
         }
     }
 
     fn encode(dest: RegistryToken) -> Self {
-        RegistryTokenCodec::V1(dest)
+        RegistryTokenCodec::V2(dest)
     }
 }
 
@@ -161,6 +260,13 @@ pub struct TokenListResponse {
     pub need_update_version: bool,
     // only exist if user is not anonymous
     pub perference: Option<UserPreference>,
+}
+
+/// The input for updating a token's supported standards
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct UpdateTokenStandardsInput {
+    pub token_id: TokenId,
+    pub supported_standards: Vec<IcrcStandard>,
 }
 
 /// The input for updating a token's status (enable/disable)
@@ -290,6 +396,7 @@ mod tests {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             index_id: None,
             fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
         };
         assert_eq!(details.chain(), Chain::IC);
     }
@@ -300,6 +407,7 @@ mod tests {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             index_id: None,
             fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
         };
         assert_eq!(
             details.token_id(),
@@ -307,6 +415,111 @@ mod tests {
                 ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
             }
         );
+    }
+
+    #[test]
+    fn it_should_check_supports_icrc2() {
+        let details_with = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+        };
+        assert!(details_with.supports_icrc2());
+
+        let details_without = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+            supported_standards: vec![IcrcStandard::ICRC1],
+        };
+        assert!(!details_without.supports_icrc2());
+    }
+
+    #[test]
+    fn it_should_parse_icrc_standard_from_name() {
+        assert_eq!(IcrcStandard::from_name("ICRC-1"), Some(IcrcStandard::ICRC1));
+        assert_eq!(IcrcStandard::from_name("ICRC-2"), Some(IcrcStandard::ICRC2));
+        assert_eq!(IcrcStandard::from_name("ICRC-3"), Some(IcrcStandard::ICRC3));
+        assert_eq!(IcrcStandard::from_name("ICRC-99"), None);
+        assert_eq!(IcrcStandard::from_name(""), None);
+    }
+
+    #[test]
+    fn it_should_decode_v1_codec_with_default_standards() {
+        use ic_mple_structures::Storable;
+
+        let v1 = RegistryTokenV1 {
+            symbol: "ICP".to_string(),
+            name: "Internet Computer".to_string(),
+            decimals: 8,
+            details: ChainTokenDetailsV1::IC {
+                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+                index_id: None,
+                fee: 10_000u64.into(),
+            },
+            enabled_by_default: true,
+        };
+
+        // Serialize as V1
+        let v1_codec = RegistryTokenCodec::V1(v1);
+        let bytes = v1_codec.to_bytes();
+
+        // Deserialize and decode
+        let decoded_codec = RegistryTokenCodec::from_bytes(bytes);
+        let token: RegistryToken = RegistryTokenCodec::decode(decoded_codec);
+
+        assert_eq!(token.symbol, "ICP");
+        assert_eq!(token.name, "Internet Computer");
+        assert_eq!(token.decimals, 8);
+        assert!(token.enabled_by_default);
+        match &token.details {
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => {
+                assert_eq!(*supported_standards, vec![IcrcStandard::ICRC1]);
+            }
+        }
+    }
+
+    #[test]
+    fn it_should_roundtrip_v2_codec() {
+        use ic_mple_structures::Storable;
+
+        let token = RegistryToken {
+            symbol: "ckBTC".to_string(),
+            name: "Chain-key Bitcoin".to_string(),
+            decimals: 8,
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+                index_id: None,
+                fee: 10u64.into(),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            enabled_by_default: false,
+        };
+
+        // Encode → serialize → deserialize → decode
+        let codec = RegistryTokenCodec::encode(token.clone());
+        let bytes = codec.to_bytes();
+        let decoded_codec = RegistryTokenCodec::from_bytes(bytes);
+        let result: RegistryToken = RegistryTokenCodec::decode(decoded_codec);
+
+        assert_eq!(result.symbol, "ckBTC");
+        assert_eq!(result.decimals, 8);
+        assert!(!result.enabled_by_default);
+        match &result.details {
+            ChainTokenDetails::IC {
+                supported_standards,
+                ..
+            } => {
+                assert_eq!(
+                    *supported_standards,
+                    vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2]
+                );
+            }
+        }
     }
 
     #[test]

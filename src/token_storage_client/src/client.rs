@@ -11,7 +11,7 @@ use token_storage_types::{
         nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
     },
     error::CanisterError,
-    token::{AddTokenInput, TokenListResponse, UpdateTokenInput},
+    token::{AddTokenInput, TokenListResponse, UpdateTokenInput, UpdateTokenStandardsInput},
 };
 
 /// A TokenStorage canister client.
@@ -177,6 +177,16 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     ) -> CanisterClientResult<Vec<UserBridgeTransactionDto>> {
         self.client
             .query("user_get_bridge_transactions", (input,))
+            .await
+    }
+
+    /// Admin override for a token's supported standards
+    pub async fn admin_update_token_standards(
+        &self,
+        input: UpdateTokenStandardsInput,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client
+            .update("admin_update_token_standards", (input,))
             .await
     }
 }

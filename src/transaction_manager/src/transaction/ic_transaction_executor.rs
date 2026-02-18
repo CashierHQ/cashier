@@ -16,6 +16,7 @@ use cashier_backend_types::{
 };
 use std::pin::Pin;
 
+#[derive(Clone)]
 pub struct IcTransactionExecutor;
 
 impl IcTransactionExecutor {

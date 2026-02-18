@@ -12,16 +12,20 @@
 </script>
 
 <div class="w-full">
-  <div class="pb-4">
-    <h1 class="text-2xl font-bold">{locale.t("links.page.title")}</h1>
-    <p class="text-sm text-grey mt-3">
-      {locale.t("links.page.description")}
-    </p>
-    <button
-      class="text-green text-sm font-bold mt-3 cursor-pointer"
-      type="button">{locale.t("links.page.gotItButton")}</button
-    >
-  </div>
+  <h1 class="text-2xl font-bold">{locale.t("links.page.title")}</h1>
+  {#if !linkListStore.isOnboardingDismissed}
+    <div class="pb-4">
+      <p class="text-sm text-grey mt-3">
+        {locale.t("links.page.description")}
+      </p>
+      <button
+        class="text-green text-sm font-bold mt-3 cursor-pointer"
+        type="button"
+        onclick={() => linkListStore.dismissOnboarding()}
+        >{locale.t("links.page.gotItButton")}</button
+      >
+    </div>
+  {/if}
 
   <AppLinksList groupedLinks={groupAndSortByDate(linkListStore.getLinks())} />
 </div>

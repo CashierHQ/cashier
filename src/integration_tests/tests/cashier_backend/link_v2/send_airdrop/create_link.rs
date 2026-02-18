@@ -163,7 +163,7 @@ async fn it_should_create_icp_token_airdrop_linkv2_successfully() {
         let intent1 = &action.intents[0];
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
         match intent1.r#type {
-            IntentType::Transfer(ref transfer) => {
+            IntentType::TransferFrom(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
@@ -178,25 +178,15 @@ async fn it_should_create_icp_token_airdrop_linkv2_successfully() {
             }
             _ => panic!("Expected Transfer intent type"),
         }
-        assert_eq!(intent1.transactions.len(), 1);
+        assert_eq!(intent1.transactions.len(), 2);
         let tx0 = &intent1.transactions[0];
         match tx0.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
-                assert_eq!(
-                    data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        icp_ledger_fee.clone(),
-                        max_use_count
-                    ),
-                    "Icrc1Transfer amount does not match"
-                );
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
             }
-            _ => panic!("Expected Icrc1Transfer transaction"),
+            _ => panic!("Expected Icrc2Approve transaction"),
         }
 
         // Assert Intent 2: TransferWalletToTreasury
@@ -259,15 +249,9 @@ async fn it_should_create_icp_token_airdrop_linkv2_successfully() {
         assert_eq!(icrc112_requests.len(), 1);
         let requests = &icrc112_requests[0];
 
-        assert_eq!(requests.len(), 2);
+        assert_eq!(requests.len(), 1);
         for req in requests {
             match req.method.as_str() {
-                "icrc1_transfer" => {
-                    assert_eq!(
-                        req.canister_id,
-                        Principal::from_text(ICP_PRINCIPAL).unwrap()
-                    );
-                }
                 "icrc2_approve" => {
                     assert_eq!(
                         req.canister_id,
@@ -357,7 +341,7 @@ async fn it_should_create_icrc_token_airdrop_linkv2_successfully() {
         let intent1 = &action.intents[0];
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
         match intent1.r#type {
-            IntentType::Transfer(ref transfer) => {
+            IntentType::TransferFrom(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
@@ -372,21 +356,11 @@ async fn it_should_create_icrc_token_airdrop_linkv2_successfully() {
             }
             _ => panic!("Expected Transfer intent type"),
         }
-        assert_eq!(intent1.transactions.len(), 1);
+        assert_eq!(intent1.transactions.len(), 2);
         let tx0 = &intent1.transactions[0];
         match tx0.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
-                assert_eq!(
-                    data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ckbtc_ledger_fee,
-                        max_use_count
-                    ),
-                    "Icrc1Transfer amount does not match"
-                );
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
             }
@@ -456,16 +430,10 @@ async fn it_should_create_icrc_token_airdrop_linkv2_successfully() {
         assert_eq!(requests.len(), 2);
         for req in requests {
             match req.method.as_str() {
-                "icrc1_transfer" => {
-                    assert_eq!(
-                        req.canister_id,
-                        Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
-                    );
-                }
                 "icrc2_approve" => {
-                    assert_eq!(
-                        req.canister_id,
-                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    assert!(
+                        req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap()
+                            || req.canister_id == Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
                     );
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),

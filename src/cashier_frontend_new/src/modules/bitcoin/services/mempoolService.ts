@@ -4,6 +4,11 @@ import {
   type BitcoinBlock,
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
+import type {
+  MempoolBlock,
+  MempoolTransaction,
+} from "$modules/bitcoin/types/mempool";
+import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -21,14 +26,20 @@ class MempoolService {
    * @returns array of transaction IDs
    */
   async getMempoolTxs(): Promise<Result<string[], string>> {
-    const response = await fetch(`${this.#baseUrl}/mempool/txids`);
-    if (!response.ok) {
+    try {
+      const response = await fetch(`${this.#baseUrl}/mempool/txids`);
+      if (!response.ok) {
+        return Err(
+          `Failed to fetch mempool transactions: ${response.statusText}`,
+        );
+      }
+      const data: string[] = await response.json();
+      return Ok(data);
+    } catch (error) {
       return Err(
-        `Failed to fetch mempool transactions: ${response.statusText}`,
+        `Error fetching mempool transactions: ${(error as Error).message}`,
       );
     }
-    const data: string[] = await response.json();
-    return Ok(data);
   }
 
   /**
@@ -39,14 +50,24 @@ class MempoolService {
   async getTransactionById(
     txid: string,
   ): Promise<Result<BitcoinTransaction, string>> {
-    const response = await fetch(`${this.#baseUrl}/tx/${txid}`);
-    if (!response.ok) {
-      return Err(`Failed to fetch transaction ${txid}: ${response.statusText}`);
+    try {
+      const response = await fetch(`${this.#baseUrl}/tx/${txid}`);
+      if (!response.ok) {
+        return Err(
+          `Failed to fetch transaction ${txid}: ${response.statusText}`,
+        );
+      }
+      const data: MempoolTransaction = await response.json();
+      const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(
+        data,
+        currentSecondTimestamp(),
+      );
+      return Ok(transaction);
+    } catch (error) {
+      return Err(
+        `Error fetching transaction ${txid}: ${(error as Error).message}`,
+      );
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await response.json();
-    const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(data);
-    return Ok(transaction);
   }
 
   /**
@@ -54,12 +75,16 @@ class MempoolService {
    * @returns tip height or error message
    */
   async getTipHeight(): Promise<Result<bigint, string>> {
-    const response = await fetch(`${this.#baseUrl}/blocks/tip/height`);
-    if (!response.ok) {
-      return Err(`Failed to fetch tip height: ${response.statusText}`);
+    try {
+      const response = await fetch(`${this.#baseUrl}/blocks/tip/height`);
+      if (!response.ok) {
+        return Err(`Failed to fetch tip height: ${response.statusText}`);
+      }
+      const data: bigint = BigInt(await response.json());
+      return Ok(data);
+    } catch (error) {
+      return Err(`Error fetching tip height: ${(error as Error).message}`);
     }
-    const data: bigint = BigInt(await response.json());
-    return Ok(data);
   }
 
   /**
@@ -71,29 +96,35 @@ class MempoolService {
     height: number,
     start_block: number,
   ): Promise<BitcoinBlock[] | []> {
-    // fetch latest 15 blocks from height
-    const response = await fetch(`${this.#baseUrl}/blocks/${height}`);
-    if (!response.ok) {
+    try {
+      // fetch latest 15 blocks from height
+      const response = await fetch(`${this.#baseUrl}/blocks/${height}`);
+      if (!response.ok) {
+        console.error(
+          `Failed to fetch block at height ${height}: ${response.statusText}`,
+        );
+        return [];
+      }
+      const data: MempoolBlock[] = await response.json();
+      const blocks: BitcoinBlock[] = [];
+      for (const block of data) {
+        if (block.height >= start_block) {
+          blocks.push({
+            block_id: BigInt(block.height),
+            block_timestamp: BigInt(block.timestamp),
+          });
+        }
+      }
+
+      // reverse to have oldest block first
+      blocks.reverse();
+      return blocks;
+    } catch (error) {
       console.error(
-        `Failed to fetch block at height ${height}: ${response.statusText}`,
+        `Error fetching block at height ${height}: ${(error as Error).message}`,
       );
       return [];
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await response.json();
-    const blocks: BitcoinBlock[] = [];
-    for (const block of data) {
-      if (block.height >= start_block) {
-        blocks.push({
-          block_id: BigInt(block.height),
-          block_timestamp: BigInt(block.timestamp),
-        });
-      }
-    }
-
-    // reverse to have oldest block first
-    blocks.reverse();
-    return blocks;
   }
 }
 
