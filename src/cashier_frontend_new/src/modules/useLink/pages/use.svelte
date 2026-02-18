@@ -208,6 +208,10 @@
             source={{
               action: userStore.action,
               handleProcessAction,
+              linkType: userStore.link?.link_type,
+              maxUse: userStore.link
+                ? Number(userStore.link.link_use_action_max_count)
+                : undefined,
             }}
             {onCloseDrawer}
           />

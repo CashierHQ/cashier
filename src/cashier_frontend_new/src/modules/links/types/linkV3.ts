@@ -48,10 +48,9 @@ export interface CreateActionResponseV3 {
 
 /**
  * V3 process action input.
- * Mirrors `ProcessActionInputV3` in `cashier_backend_types::link_v3::dto::action`.
+ * Backend expects only action_id (same shape as ProcessActionV2Input).
  */
 export interface ProcessActionInputV3 {
-  link_id: string;
   action_id: string;
 }
 

@@ -5,6 +5,7 @@ import { actionStore } from "$modules/creationLink/state/actionStore.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { mapV3ActionToFrontend } from "$modules/links/utils/actionV3Mapper";
 import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
@@ -30,6 +31,12 @@ export class PreviewState implements LinkCreationState {
   // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
     if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+      // Update both intents with calculated fees before sending to backend
+      actionStore.updateTipSharedIntentsWithFees(
+        this.#link.createLinkData,
+        walletStore.query.data ?? [],
+      );
+
       const inputResult = buildCreateLinkInputV3(
         this.#link.createLinkData,
         actionStore.action,

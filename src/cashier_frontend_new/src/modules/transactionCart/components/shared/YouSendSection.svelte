@@ -85,6 +85,8 @@
             <div
               class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
             ></div>
+          {:else if asset.state === AssetProcessState.SIGNED_PENDING}
+            <Check size={16} class="text-green-600/50" stroke-width={2.5} />
           {:else if asset.state === AssetProcessState.SUCCEED}
             <Check size={16} class="text-green-600" stroke-width={2.5} />
           {/if}
@@ -124,6 +126,8 @@
               <div
                 class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
               ></div>
+            {:else if linkCreationFeeItem.asset.state === AssetProcessState.SIGNED_PENDING}
+              <Check size={16} class="text-green-600/50" stroke-width={2.5} />
             {:else if linkCreationFeeItem.asset.state === AssetProcessState.SUCCEED}
               <Check size={16} class="text-green-600" stroke-width={2.5} />
             {/if}

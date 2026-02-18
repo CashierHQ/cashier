@@ -11,6 +11,8 @@ import type { FlowDirection } from "./transactionSource";
 export enum AssetProcessState {
   CREATED = "CREATED",
   PROCESSING = "PROCESSING",
+  /** ICRC-112 signed successfully, waiting for backend to process */
+  SIGNED_PENDING = "SIGNED_PENDING",
   SUCCEED = "SUCCEED",
   FAILED = "FAILED",
 }

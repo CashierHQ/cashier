@@ -35,8 +35,11 @@
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
+  import { LinkType } from "$modules/links/types/link/linkType";
+  import { buildAssetAndFeeFromActionShared } from "$modules/creationLink/utils/buildAssetAndFeeFromActionShared";
+  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
   import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
-  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -117,46 +120,67 @@
     );
   });
 
-  // Forecast link creation fees for Transfer Pending state
-  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
-    if (
-      !linkStore.link ||
-      linkStore.link.state !== LinkState.CREATE_LINK ||
-      !linkStore.link.asset_info ||
-      linkStore.link.asset_info.length === 0
-    ) {
-      return [];
-    }
-
-    // Convert asset_info to CreateLinkAsset format
-    const linkAssets = linkStore.link.asset_info
-      .map((assetInfo) => {
-        const assetAddress = assetInfo.asset.address?.toString();
-        if (!assetAddress) return null;
-        return new CreateLinkAsset(
-          assetAddress,
-          assetInfo.amount_per_link_use_action,
-        );
-      })
-      .filter((item): item is CreateLinkAsset => item !== null);
-
-    if (linkAssets.length === 0) {
+  // Build assetAndFee from action (from backend) for CREATE_LINK state.
+  // Same source as LinkTxCart - fees from backend action, not frontend forecast.
+  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
+  const assetAndFeeFromAction = $derived.by(() => {
+    if (!linkStore.link || linkStore.link.state !== LinkState.CREATE_LINK) {
       return [];
     }
 
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-
     const maxUse = Number(linkStore.link.link_use_action_max_count);
 
+    // Primary: use action from backend (logged-in user)
+    if (linkStore.action) {
+      const walletPrincipal = authState.account?.owner;
+      if (!walletPrincipal) return [];
+
+      if (linkStore.link.link_type === LinkType.TIP_SHARED_TEST) {
+        return buildAssetAndFeeFromActionShared(
+          linkStore.action,
+          tokens,
+          walletPrincipal,
+          maxUse,
+        );
+      }
+      return feeService.buildFromAction(
+        linkStore.action,
+        tokens,
+        walletPrincipal,
+      );
+    }
+
+    // Fallback: action missing (anonymous) - use forecast from link.asset_info
+    if (
+      !linkStore.link.asset_info ||
+      linkStore.link.asset_info.length === 0
+    ) {
+      return [];
+    }
+
+    const linkAssets: CreateLinkAsset[] = linkStore.link.asset_info
+      .map((ai) => {
+        const address = ai.asset.address?.toString();
+        if (!address) return null;
+        return new CreateLinkAsset(address, ai.amount_per_link_use_action);
+      })
+      .filter(
+        (a): a is CreateLinkAsset => a !== null,
+      );
+
+    if (linkStore.link.link_type === LinkType.TIP_SHARED_TEST) {
+      return forecastTipSharedFees(linkAssets, maxUse, tokens);
+    }
     return feeService.forecastLinkCreationFees(linkAssets, maxUse, tokens);
   });
 
-  // Calculate total fees in USD for Transfer Pending state
+  // Total fees in USD from backend action (CREATE_LINK state)
   const totalFeesUsd = $derived.by(() => {
-    return forecastLinkCreationFees.reduce(
-      (total, item) => total + (item.fee?.usdValue || 0),
+    return assetAndFeeFromAction.reduce(
+      (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
   });
@@ -279,7 +303,7 @@
       if (!linkStore.link) throw new Error("Link is missing");
       await linkStore.disableLink();
       // Refresh to get updated link state
-      await linkStore.query.refresh();
+      await linkStore.query.refreshAsync();
 
       const successMsg = locale.t(
         "links.linkForm.detail.messages.linkEndedSuccess",
@@ -315,12 +339,9 @@
         return;
       }
 
-      // Create withdraw action
       await linkStore.createAction(ActionType.WITHDRAW);
-      // Refresh query to get the newly created action
-      await linkStore.query.refresh();
+      await linkStore.query.refreshAsync();
 
-      // Open drawer if action exists (reactive update will handle it)
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
       }
@@ -335,7 +356,7 @@
         errorMessageText.includes("already exists")
       ) {
         // Refresh to get the existing action
-        await linkStore.query.refresh();
+        await linkStore.query.refreshAsync();
         // Open drawer - reactive update will handle showing the action
         showTxCart = true;
       } else {
@@ -367,7 +388,7 @@
         shouldShowCongratulations = true;
       }
 
-      await linkStore.query.refresh();
+      // Store already updated by processAction (e.g. setFromProcessResult for withdraw)
       toast.success(
         locale.t("links.linkForm.detail.messages.transactionSuccess"),
       );
@@ -539,6 +560,10 @@
     source={{
       action: linkStore.action,
       handleProcessAction,
+      linkType: linkStore.link?.link_type,
+      maxUse: linkStore.link
+        ? Number(linkStore.link.link_use_action_max_count)
+        : undefined,
     }}
     {onCloseDrawer}
   />

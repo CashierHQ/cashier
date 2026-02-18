@@ -24,10 +24,11 @@ export class DetailLinkService {
   private async fetchLinkDetailV3(
     id: string,
     anonymous: boolean,
+    options?: { action_type: { Withdraw: null } | { CreateLink: null } | { Receive: null } | { Send: null } },
   ): Promise<Result<LinkAction, Error>> {
     const resp = await cashierBackendService.getLinkDetailsV3(
       id,
-      undefined,
+      options ?? undefined,
       { anonymous },
     );
     if (resp.isErr()) return Err(resp.error);
@@ -89,6 +90,28 @@ export class DetailLinkService {
     return undefined;
   }
 
+  /**
+   * Fetch V3 link with action (two-step: get link, then fetch with action_type if needed).
+   * Used for TIP_SHARED_TEST and for V3 fallback when V2 returns NotFound.
+   */
+  private async fetchLinkDetailV3WithAction(
+    id: string,
+    anonymous: boolean,
+  ): Promise<Result<LinkAction, Error>> {
+    const initialV3 = await this.fetchLinkDetailV3(id, anonymous);
+    if (initialV3.isErr()) return initialV3;
+    const initialLink = initialV3.value.link;
+    const actionType = this.determineActionTypeFromLink(initialLink);
+    if (!actionType || anonymous) {
+      return initialV3;
+    }
+    const withAction = await this.fetchLinkDetailV3(id, anonymous, {
+      action_type: ActionTypeMapper.toBackendType(actionType),
+    });
+    if (withAction.isErr()) return withAction;
+    return withAction;
+  }
+
   async fetchLinkDetail({
     id,
     action,
@@ -102,7 +125,7 @@ export class DetailLinkService {
   }): Promise<Result<LinkAction, Error>> {
     try {
       if (linkType === LinkType.TIP_SHARED_TEST) {
-        return this.fetchLinkDetailV3(id, anonymous);
+        return this.fetchLinkDetailV3WithAction(id, anonymous);
       }
 
       const initialResp = action
@@ -120,7 +143,7 @@ export class DetailLinkService {
         const isNotFound =
           errMsg.includes("NotFound") || errMsg.includes("not found");
         if (isNotFound && !action) {
-          const v3Result = await this.fetchLinkDetailV3(id, anonymous);
+          const v3Result = await this.fetchLinkDetailV3WithAction(id, anonymous);
           if (v3Result.isOk()) return v3Result;
         }
         return Err(initialResp.error);

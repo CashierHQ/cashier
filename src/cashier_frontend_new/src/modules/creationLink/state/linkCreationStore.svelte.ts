@@ -12,6 +12,7 @@ import { TempLink } from "$modules/links/types/tempLink";
 import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
 import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
+import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
 import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
 import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
 import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
@@ -100,6 +101,8 @@ export class LinkCreationStore {
         // choose the correct add-asset state depending on the link type
         if (this.createLinkData.linkType === LinkType.TIP) {
           initialState = new AddAssetTipLinkState(this);
+        } else if (this.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+          initialState = new AddAssetTipSharedTestState(this);
         } else {
           initialState = new AddAssetState(this);
         }

@@ -152,8 +152,21 @@ export class LinkTxCartStore implements TxCartStore {
   }
 
   /**
+   * Set assets to SIGNED_PENDING (semi-transparent checkmark) after ICRC-112 succeeds.
+   */
+  setStatesToSignedPending(): void {
+    this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
+      ...item,
+      asset: {
+        ...item.asset,
+        state: AssetProcessState.SIGNED_PENDING,
+      },
+    }));
+  }
+
+  /**
    * Execute action transaction (ICRC-112 batch + processAction).
-   * Transitions asset states: CREATED → PROCESSING → SUCCESS|FAILED
+   * Transitions: CREATED → PROCESSING → [SIGNED_PENDING after ICRC-112] → SUCCEED after backend
    * @returns ProcessActionResult from handleProcessAction
    */
   async execute(): Promise<ProcessActionResult> {
@@ -173,17 +186,30 @@ export class LinkTxCartStore implements TxCartStore {
 
     try {
       if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
-        await this.#icrc112Service.sendBatchRequest(
+        const icrcResult = await this.#icrc112Service.sendBatchRequest(
           action.icrc_112_requests,
           authState.account!.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );
+        if (!icrcResult.isSuccess) {
+          this.setSourceState(IntentState.FAIL);
+          throw new Error(icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed");
+        }
+        // Show semi-transparent green checkmarks (ICRC-112 signed successfully)
+        this.setStatesToSignedPending();
       }
 
       const result = await handleProcessAction();
 
-      // Sync asset states from updated action (mirrors backend state)
-      this.syncStatesFromAction(result.action);
+      // When backend reports is_success: true, show full green checkmarks
+      if (result.isSuccess) {
+        this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
+          ...item,
+          asset: { ...item.asset, state: AssetProcessState.SUCCEED },
+        }));
+      } else {
+        this.syncStatesFromAction(result.action);
+      }
 
       return result;
     } catch (e) {

@@ -1,11 +1,11 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
-import { mapV3LinkToFrontend } from "../utils/linkV3Mapper";
 import { ONBOARDING_DISMISSED_KEY } from "../constants";
 import { Link, LinkMapper } from "../types/link/link";
 import type { UnifiedLinkList } from "../types/linkList";
 import { UnifiedLinkItemMapper } from "../types/linkList";
+import { mapV3LinkToFrontend } from "../utils/linkV3Mapper";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 /**
@@ -44,12 +44,7 @@ export class LinkListStore {
             ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
             : [];
 
-        const v2Ids = new Set(v2Links.map((l) => l.id));
-        const v3Only = v3Links.filter((l) => !v2Ids.has(l.id));
-        return [
-          // ...v2Links,
-          ...v3Only,
-        ];
+        return [...v2Links, ...v3Links];
       },
       watch: [() => authState.account],
       refetchInterval: 15 * 1000, // 15 seconds

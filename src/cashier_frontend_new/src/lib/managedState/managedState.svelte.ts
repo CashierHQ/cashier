@@ -339,6 +339,47 @@ export class ManagedState<T> {
   }
 
   /**
+   * Refetches the data and returns a Promise that resolves when the fetch completes.
+   * Use this when you need to wait for fresh data before proceeding (e.g. after a mutation).
+   */
+  refreshAsync(): Promise<void> {
+    this.#isLoading = true;
+    this.#isSuccess = false;
+    this.#error = undefined;
+    return this.#config
+      .queryFn()
+      .then((data) => {
+        this.#setData({
+          created_ts: Date.now(),
+          data,
+        });
+        this.#isLoading = false;
+        this.#error = undefined;
+        this.#isSuccess = true;
+      })
+      .catch((error) => {
+        this.#isLoading = false;
+        this.#error = error;
+        this.#isSuccess = false;
+        throw error;
+      });
+  }
+
+  /**
+   * Sets data directly without fetching.
+   * Use after a mutation that returns the updated resource (avoids stale reads from IC queries).
+   */
+  setData(data: T): void {
+    this.#setData({
+      created_ts: Date.now(),
+      data,
+    });
+    this.#isLoading = false;
+    this.#error = undefined;
+    this.#isSuccess = true;
+  }
+
+  /**
    * Resets the data state and storage.
    */
   reset(): void {

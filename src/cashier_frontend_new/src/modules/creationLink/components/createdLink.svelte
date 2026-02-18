@@ -40,7 +40,6 @@
     }
     if (link.id && link.action && link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
       const result = await cashierBackendService.processActionV3({
-        link_id: link.id,
         action_id: link.action.id,
       });
       if (result.isErr()) {
@@ -102,6 +101,11 @@
       handleProcessAction,
       linkType: link.createLinkData.linkType,
       maxUse: link.createLinkData.maxUse,
+      onSuccess: (result) => {
+        if (link.createLinkData.linkType === LinkType.TIP_SHARED_TEST && link.action) {
+          link.action = result.action;
+        }
+      },
     }}
     {onCloseDrawer}
     onFeeInfoDrawerClose={() => {

@@ -214,12 +214,10 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
+    // Backend expects ProcessActionV2Input { action_id } only - same as process_action_v2
     const response = await (actor as unknown as {
-      user_process_action_v3: (
-        input: ProcessActionInputV3,
-      ) => Promise<unknown>;
+      user_process_action_v3: (input: { action_id: string }) => Promise<unknown>;
     }).user_process_action_v3({
-      link_id: input.link_id,
       action_id: input.action_id,
     });
 

@@ -1,11 +1,15 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { mapV3ProcessActionResult } from "$modules/links/utils/actionV3Mapper";
-import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-import type Action from "$modules/links/types/action/action";
 import {
+  ActionMapper,
   ProcessActionResultMapper,
   type ProcessActionResult,
 } from "$modules/links/types/action/action";
+import { mapV3ActionToFrontend } from "$modules/links/utils/actionV3Mapper";
+import { mapV3ProcessActionResult } from "$modules/links/utils/actionV3Mapper";
+import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
+import { LinkMapper } from "$modules/links/types/link/link";
+import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import type Action from "$modules/links/types/action/action";
 import {
   ActionType,
   type ActionTypeValue,
@@ -51,24 +55,39 @@ export class LinkCreatedState implements LinkDetailState {
 
     if (this.#linkDetailStore.linkType === LinkType.TIP_SHARED_TEST) {
       const result = await cashierBackendService.processActionV3({
-        link_id: linkId,
         action_id: actionId,
       });
       if (result.isErr()) {
         throw new Error(`Failed to activate link: ${result.error}`);
       }
+      const v3Response = result.unwrap();
       linkListStore.refresh();
-      this.#linkDetailStore.query.refresh();
-      return mapV3ProcessActionResult(result.unwrap());
+      if (v3Response.is_success) {
+        const mappedLink = mapV3LinkToFrontend(v3Response.link as never);
+        const mappedAction = mapV3ActionToFrontend(
+          v3Response.action as never,
+          v3Response.icrc112_requests as never,
+        );
+        this.#linkDetailStore.setFromProcessResult(mappedLink, mappedAction);
+      } else {
+        this.#linkDetailStore.query.refresh();
+      }
+      return mapV3ProcessActionResult(v3Response as never);
     }
 
     const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }
-
+    const v2Response = result.unwrap();
     linkListStore.refresh();
-    this.#linkDetailStore.query.refresh();
-    return ProcessActionResultMapper.fromBackendType(result.unwrap());
+    if (v2Response.is_success) {
+      const mappedLink = LinkMapper.fromBackendType(v2Response.link);
+      const mappedAction = ActionMapper.fromBackendType(v2Response.action);
+      this.#linkDetailStore.setFromProcessResult(mappedLink, mappedAction);
+    } else {
+      this.#linkDetailStore.query.refresh();
+    }
+    return ProcessActionResultMapper.fromBackendType(v2Response);
   }
 }

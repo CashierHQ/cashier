@@ -3,17 +3,22 @@
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import Ended from "$modules/useLink/components/Ended.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
-  import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
 
   const {
     linkId,
     openLoginModal,
   }: { linkId: string; openLoginModal?: () => void } = $props();
 
-  const userStore = new UserLinkStore({ id: linkId });
+  const guardContext = getGuardContext();
+  const userStore = guardContext.userLinkStore;
+
+  if (!userStore) {
+    throw new Error("userLinkStore not found in context");
+  }
   const isEndedWithoutCompletion = $derived(
-    userStore.link?.state === LinkState.INACTIVE_ENDED &&
-      userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED,
+    userStore?.link?.state === LinkState.INACTIVE_ENDED &&
+      userStore?.query?.data?.link_user_state !== LinkUserState.COMPLETED,
   );
 </script>
 
