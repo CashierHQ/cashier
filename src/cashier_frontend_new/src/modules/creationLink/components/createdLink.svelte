@@ -7,6 +7,11 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { onMount } from "svelte";
+  import {
+    initAmplitude,
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
@@ -49,6 +54,8 @@
   });
 
   onMount(() => {
+    // Initialize Amplitude on first mount of creation flow step 4
+    initAmplitude();
     // Initialize LinkDetailStore with the created link ID
     if (link.id) {
       linkDetailStore = new LinkDetailStore({ id: link.id });
