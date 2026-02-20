@@ -361,7 +361,7 @@ describe("FeeService", () => {
       expect(p.fee).toBeDefined();
       if (p.fee) {
         expect(p.fee.amountFormattedStr).toBe(
-          parseBalanceUnits(10_000n, 8).toString(),
+          parseBalanceUnits(20_000n, 8).toString(),
         );
         expect(p.fee.symbol).toBe("N/A");
       }

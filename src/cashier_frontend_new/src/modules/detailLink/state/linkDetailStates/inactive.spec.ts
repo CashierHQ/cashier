@@ -178,6 +178,7 @@ describe("LinkInactiveState", () => {
         query: {
           data: { link: mockLink, action: mockAction },
           refresh: vi.fn(),
+          refreshAsync: vi.fn(),
         },
         link: mockLink,
         action: mockAction,

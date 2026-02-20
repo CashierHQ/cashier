@@ -99,7 +99,7 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     // Assert
     expect(res.isErr()).toBe(true);
     expect(res.unwrapErr().message).toContain(
-      "Only Tip, Airdrop, and Token Basket link types are supported currently",
+      "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
     );
   });
 });
