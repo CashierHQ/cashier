@@ -43,16 +43,7 @@
 	);
 </script>
 
-<!-- Shared Package Test Badge -->
-<div
-	class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4 flex items-center gap-2"
->
-	<span class="text-2xl">🧪</span>
-	<div>
-		<p class="text-sm font-semibold text-purple-900">Shared Package Test</p>
-		<p class="text-xs text-purple-700">Successfully completed!</p>
-	</div>
-</div>
+
 
 {#if linkDetail?.query.isLoading}
 	{locale.t("links.linkForm.detail.loading")}
