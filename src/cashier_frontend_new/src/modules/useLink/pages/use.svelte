@@ -17,7 +17,10 @@
     shouldRedirectTo404,
     shouldRedirectErrorTo404,
   } from "$modules/useLink/utils/errorHandler";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
@@ -159,7 +162,11 @@
       useLandingLoggedInTracked = true;
       trackEvent(AnalyticsEvent.USE_LANDING_LOGGED_IN, payload!);
     }
-    if (step === UserLinkStep.ADDRESS_LOCKED && payload && !useWalletLockedTracked) {
+    if (
+      step === UserLinkStep.ADDRESS_LOCKED &&
+      payload &&
+      !useWalletLockedTracked
+    ) {
       useWalletLockedTracked = true;
       trackEvent(AnalyticsEvent.USE_WALLET_PAGE_LOCKED, payload);
     }
@@ -167,7 +174,11 @@
       useGatePageTracked = true;
       trackEvent(AnalyticsEvent.USE_GATE_PAGE, payload);
     }
-    if (step === UserLinkStep.ADDRESS_UNLOCKED && payload && !useWalletUnlockedTracked) {
+    if (
+      step === UserLinkStep.ADDRESS_UNLOCKED &&
+      payload &&
+      !useWalletUnlockedTracked
+    ) {
       useWalletUnlockedTracked = true;
       trackEvent(AnalyticsEvent.USE_WALLET_PAGE_UNLOCKED, payload);
     }
@@ -249,7 +260,8 @@
     {:else if userStore.state.step === UserLinkStep.ADDRESS_LOCKED}
       <div class="py-4 flex flex-col gap-4 grow-1">
         <p class="text-sm text-muted-foreground">
-          {locale.t("links.linkForm.useLink.walletLocked") ?? "Connect wallet to continue"}
+          {locale.t("links.linkForm.useLink.walletLocked") ??
+            "Connect wallet to continue"}
         </p>
         <Button
           class="rounded-full mt-auto"

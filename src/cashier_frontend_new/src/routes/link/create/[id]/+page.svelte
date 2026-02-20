@@ -8,7 +8,10 @@
   import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
   import ProtectedLinkState from "$modules/guard/components/ProtectedLinkState.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
 
   const id = page.params.id!;
 

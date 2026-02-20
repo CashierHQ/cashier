@@ -2,7 +2,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";

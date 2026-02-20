@@ -11,12 +11,17 @@
   import ProtectedUserState from "$modules/guard/components/ProtectedUserState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
 
   const id = page.params.id!;
 
   let isLoginModalOpen = $state(false);
-  let loginPayload = $state<{ link_type: string; BE_link_id: string } | null>(null);
+  let loginPayload = $state<{ link_type: string; BE_link_id: string } | null>(
+    null,
+  );
 
   function openLoginModal(payload?: { link_type: string; BE_link_id: string }) {
     if (payload) loginPayload = payload;

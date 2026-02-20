@@ -17,7 +17,10 @@
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
 
   const {

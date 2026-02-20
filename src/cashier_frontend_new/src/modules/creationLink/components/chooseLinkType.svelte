@@ -11,7 +11,10 @@
   import { locale } from "$lib/i18n";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { onMount } from "svelte";
 

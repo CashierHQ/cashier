@@ -21,7 +21,10 @@
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
   import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
 
   const {

@@ -4,7 +4,10 @@
   import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
   import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
   import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { onMount } from "svelte";
 

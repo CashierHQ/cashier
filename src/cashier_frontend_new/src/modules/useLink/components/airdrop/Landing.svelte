@@ -7,7 +7,10 @@
   import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
@@ -15,7 +18,10 @@
     openLoginModal,
   }: {
     userLink: UserLinkStore;
-    openLoginModal?: (payload?: { link_type: string; BE_link_id: string }) => void;
+    openLoginModal?: (payload?: {
+      link_type: string;
+      BE_link_id: string;
+    }) => void;
   } = $props();
 
   // Get first asset from asset_info
@@ -115,7 +121,10 @@
             link_type: link.link_type,
             BE_link_id: userLink.linkDetail?.id ?? "",
           });
-          openLoginModal?.({ link_type: link.link_type, BE_link_id: userLink.linkDetail?.id ?? "" });
+          openLoginModal?.({
+            link_type: link.link_type,
+            BE_link_id: userLink.linkDetail?.id ?? "",
+          });
         } else {
           openLoginModal?.();
         }

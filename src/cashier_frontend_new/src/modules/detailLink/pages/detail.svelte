@@ -37,7 +37,10 @@
   import { feeService } from "$modules/shared/services/feeService";
   import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();

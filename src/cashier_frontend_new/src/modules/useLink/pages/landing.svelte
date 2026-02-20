@@ -4,14 +4,20 @@
   import Ended from "$modules/useLink/components/Ended.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
 
   const {
     linkId,
     openLoginModal,
   }: {
     linkId: string;
-    openLoginModal?: (payload?: { link_type: string; BE_link_id: string }) => void;
+    openLoginModal?: (payload?: {
+      link_type: string;
+      BE_link_id: string;
+    }) => void;
   } = $props();
 
   const userStore = new UserLinkStore({ id: linkId });
