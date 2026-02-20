@@ -6,6 +6,7 @@
   import Completed from "$modules/useLink/components/Completed.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { onDestroy, onMount } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -16,6 +17,8 @@
     shouldRedirectTo404,
     shouldRedirectErrorTo404,
   } from "$modules/useLink/utils/errorHandler";
+  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
     onIsLinkChange,
@@ -35,6 +38,10 @@
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isCreatingAction = $state(false);
+  let useLandingLoggedInTracked = $state(false);
+  let useWalletLockedTracked = $state(false);
+  let useGatePageTracked = $state(false);
+  let useWalletUnlockedTracked = $state(false);
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -47,6 +54,13 @@
   };
 
   const handleCreateUseAction = async () => {
+    if (userStore?.link) {
+      trackEvent(AnalyticsEvent.USE_WALLET_USE_UNLOCKED, {
+        user_id: authState.account?.owner ?? "",
+        link_type: userStore.link.link_type,
+        BE_link_id: userStore.linkDetail?.id ?? "",
+      });
+    }
     errorMessage = null;
     successMessage = null;
 
@@ -100,6 +114,14 @@
         return result;
       }
 
+      if (result.isSuccess && userStore?.link) {
+        trackEvent(AnalyticsEvent.USE_ACTION_SUCCESS, {
+          user_id: authState.account?.owner ?? "",
+          link_type: userStore.link.link_type,
+          BE_link_id: userStore.linkDetail?.id ?? "",
+        });
+      }
+
       return result;
     } catch (err) {
       // Check if error requires redirect to 404
@@ -120,6 +142,36 @@
       throw err;
     }
   };
+
+  // Use funnel: track landing (logged in), wallet locked, gate, wallet unlocked page loads
+  $effect(() => {
+    const step = userStore.state?.step ?? userStore.step;
+    const link = userStore.link;
+    const payload = link
+      ? {
+          user_id: authState.account?.owner ?? "",
+          link_type: link.link_type,
+          BE_link_id: userStore.linkDetail?.id ?? "",
+        }
+      : null;
+
+    if (step === UserLinkStep.LANDING && link && !useLandingLoggedInTracked) {
+      useLandingLoggedInTracked = true;
+      trackEvent(AnalyticsEvent.USE_LANDING_LOGGED_IN, payload!);
+    }
+    if (step === UserLinkStep.ADDRESS_LOCKED && payload && !useWalletLockedTracked) {
+      useWalletLockedTracked = true;
+      trackEvent(AnalyticsEvent.USE_WALLET_PAGE_LOCKED, payload);
+    }
+    if (step === UserLinkStep.GATE && payload && !useGatePageTracked) {
+      useGatePageTracked = true;
+      trackEvent(AnalyticsEvent.USE_GATE_PAGE, payload);
+    }
+    if (step === UserLinkStep.ADDRESS_UNLOCKED && payload && !useWalletUnlockedTracked) {
+      useWalletUnlockedTracked = true;
+      trackEvent(AnalyticsEvent.USE_WALLET_PAGE_UNLOCKED, payload);
+    }
+  });
 
   // Notify parent about isLink changes based on current step
   $effect(() => {
@@ -193,6 +245,48 @@
     {#if userStore.step === UserLinkStep.LANDING}
       <div class="py-4">
         <Landing userLink={userStore} />
+      </div>
+    {:else if userStore.state.step === UserLinkStep.ADDRESS_LOCKED}
+      <div class="py-4 flex flex-col gap-4 grow-1">
+        <p class="text-sm text-muted-foreground">
+          {locale.t("links.linkForm.useLink.walletLocked") ?? "Connect wallet to continue"}
+        </p>
+        <Button
+          class="rounded-full mt-auto"
+          onclick={async () => {
+            if (userStore?.link) {
+              trackEvent(AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED, {
+                user_id: authState.account?.owner ?? "",
+                link_type: userStore.link.link_type,
+                BE_link_id: userStore.linkDetail?.id ?? "",
+              });
+            }
+            await userStore.goNext();
+          }}
+        >
+          {locale.t("links.linkForm.useLink.continueButton")}
+        </Button>
+      </div>
+    {:else if userStore.state.step === UserLinkStep.GATE}
+      <div class="py-4 flex flex-col gap-4 grow-1">
+        <p class="text-sm text-muted-foreground">
+          {locale.t("links.linkForm.useLink.gate") ?? "Continue to claim"}
+        </p>
+        <Button
+          class="rounded-full mt-auto"
+          onclick={async () => {
+            if (userStore?.link) {
+              trackEvent(AnalyticsEvent.USE_GATE_CONTINUE, {
+                user_id: authState.account?.owner ?? "",
+                link_type: userStore.link.link_type,
+                BE_link_id: userStore.linkDetail?.id ?? "",
+              });
+            }
+            await userStore.goNext();
+          }}
+        >
+          {locale.t("links.linkForm.useLink.continueButton")}
+        </Button>
       </div>
     {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
       <div class="w-full grow-1 flex flex-col">

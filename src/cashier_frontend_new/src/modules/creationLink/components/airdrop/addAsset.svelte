@@ -21,6 +21,8 @@
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
   import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
+  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
     link,
@@ -388,6 +390,11 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE, {
+        user_id: authState.account?.owner ?? "",
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
       // Validate total amount before proceeding
       if (!isTotalAmountValid) {
         const maxTotal = maxTotalAmount;

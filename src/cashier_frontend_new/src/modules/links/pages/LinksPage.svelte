@@ -4,10 +4,10 @@
   import { groupAndSortByDate } from "$modules/links/utils/groupAndSortByDate";
   import { locale } from "$lib/i18n";
   import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
   // Track Link list landing on page load
   trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING, {
-    session_id: "TODO_session_id", // TODO: replace with real session id
-    user_id: "TODO_user_id", // TODO: replace with real user id
+    user_id: authState.account?.owner ?? "",
   });
 </script>
 

@@ -12,6 +12,7 @@
     trackEvent,
     AnalyticsEvent,
   } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
@@ -49,6 +50,11 @@
       linkDetailStore.link &&
       linkDetailStore.link.state === LinkState.ACTIVE
     ) {
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS, {
+        user_id: authState.account?.owner ?? "",
+        link_type: link.createLinkData.linkType,
+        BE_link_id: linkDetailStore.id ?? "",
+      });
       goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
     }
   });
@@ -56,6 +62,11 @@
   onMount(() => {
     // Initialize Amplitude on first mount of creation flow step 4
     initAmplitude();
+    trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_LANDING, {
+      user_id: authState.account?.owner ?? "",
+      link_type: link.createLinkData.linkType,
+      BE_link_id: link.id ?? "",
+    });
     // Initialize LinkDetailStore with the created link ID
     if (link.id) {
       linkDetailStore = new LinkDetailStore({ id: link.id });

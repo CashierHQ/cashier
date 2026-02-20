@@ -11,13 +11,23 @@
   import ProtectedUserState from "$modules/guard/components/ProtectedUserState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
 
   const id = page.params.id!;
 
   let isLoginModalOpen = $state(false);
+  let loginPayload = $state<{ link_type: string; BE_link_id: string } | null>(null);
 
-  function openLoginModal() {
+  function openLoginModal(payload?: { link_type: string; BE_link_id: string }) {
+    if (payload) loginPayload = payload;
     isLoginModalOpen = true;
+  }
+
+  function handleBeforeLogin() {
+    if (loginPayload) {
+      trackEvent(AnalyticsEvent.USE_LANDING_LOGIN_LOGGED_OUT, loginPayload);
+      loginPayload = null;
+    }
   }
 
   // Redirect logged in users to /link/[id]/use
@@ -43,4 +53,5 @@
 <LoginModal
   open={isLoginModalOpen}
   onOpenChange={(open) => (isLoginModalOpen = open)}
+  onBeforeLogin={handleBeforeLogin}
 />

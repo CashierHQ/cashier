@@ -13,9 +13,7 @@
   const id = page.params.id!;
 
   // Track Link creation landing (page load of landing page)
-  trackEvent(AnalyticsEvent.LINK_CREATION_LANDING, {
-    session_id: "TODO_session_id", // TODO: replace with real session id
-  });
+  trackEvent(AnalyticsEvent.LINK_CREATION_LANDING);
 </script>
 
 <RouteGuard tempLinkId={id}>

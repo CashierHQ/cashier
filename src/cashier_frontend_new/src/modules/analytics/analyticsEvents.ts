@@ -49,80 +49,65 @@ export enum AnalyticsEvent {
  */
 export type AnalyticsEventPayloadMap = {
   // Link creation funnel
-  [AnalyticsEvent.LINK_CREATION_LANDING]: {
-    session_id: string;
-  };
+  [AnalyticsEvent.LINK_CREATION_LANDING]: Record<string, never>;
   [AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING]: {
-    session_id: string;
     user_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS]: {
-    session_id: string;
     user_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_TEMPLATE_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_TEMPLATE_CONTINUE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_ASSET_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_GATE_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_GATE_CONTINUE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     FE_link_id: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
@@ -130,25 +115,21 @@ export type AnalyticsEventPayloadMap = {
 
   // Withdraw funnel
   [AnalyticsEvent.WITHDRAW_LINK_DETAILS]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_LINK_END]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_LANDING]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_ACTION_SUCCESS]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
@@ -156,70 +137,58 @@ export type AnalyticsEventPayloadMap = {
 
   // Use funnel
   [AnalyticsEvent.USE_LANDING_LOGGED_OUT]: {
-    session_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_LOGIN_LOGGED_OUT]: {
-    session_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_OUT]: {
-    session_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_LOGGED_IN]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_IN]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_PAGE_LOCKED]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_GATE_PAGE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_GATE_CONTINUE]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_PAGE_UNLOCKED]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_USE_UNLOCKED]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_ACTION_SUCCESS]: {
-    session_id: string;
     user_id: string;
     link_type: string;
     BE_link_id: string;

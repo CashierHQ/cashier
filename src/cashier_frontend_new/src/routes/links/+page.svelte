@@ -18,7 +18,6 @@
 
     // Track Link list plus (user pressed + button)
     trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {
-      session_id: "TODO_session_id", // TODO: replace with real session id
       user_id: authState.account.owner,
     });
     goto(resolve(`/link/create/${tempLink.id}`));

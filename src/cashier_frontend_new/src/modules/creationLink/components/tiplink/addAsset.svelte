@@ -17,6 +17,8 @@
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
+  import { trackEvent, AnalyticsEvent } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
     link,
@@ -328,6 +330,11 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE, {
+        user_id: authState.account?.owner ?? "",
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
       handleAmountChange(isUsd ? localUsdAmount : localTokenAmount, true);
       await link.goNext();
     } catch (e) {
