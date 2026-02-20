@@ -5,9 +5,7 @@
   import Landing from "$modules/useLink/components/Landing.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
 
-  const {
-    openLoginModal,
-  }: { linkId: string; openLoginModal?: () => void } = $props();
+  const { openLoginModal }: { openLoginModal?: () => void } = $props();
 
   const guardContext = getGuardContext();
   const userStore = guardContext.userLinkStore;

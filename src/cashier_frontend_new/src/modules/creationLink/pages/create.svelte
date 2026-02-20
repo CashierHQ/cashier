@@ -12,8 +12,6 @@
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
 
-  const {}: { tempLinkId: string } = $props();
-
   const context = getGuardContext();
   const linkStore = $derived.by(() => {
     const store = context.linkCreationStore;
