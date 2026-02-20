@@ -18,6 +18,7 @@ import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationSt
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
 import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
+import { Principal } from "@dfinity/principal";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -31,10 +32,19 @@ export class PreviewState implements LinkCreationState {
   // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
     if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
-      // Update both intents with calculated fees before sending to backend
-      actionStore.updateTipSharedIntentsWithFees(
+      const action = actionStore.action;
+      if (!action?.intents?.length) {
+        throw new Error("Action with intents is required for TIP_SHARED_TEST creation");
+      }
+      const creatorPrincipal = authState.account?.owner
+        ? Principal.fromText(authState.account.owner)
+        : Principal.fromText("aaaaa-aa");
+      actionStore.updateV3IntentsWithFees(
+        action.intents,
         this.#link.createLinkData,
         walletStore.query.data ?? [],
+        creatorPrincipal,
+        action.creator_address_type,
       );
 
       const inputResult = buildCreateLinkInputV3(

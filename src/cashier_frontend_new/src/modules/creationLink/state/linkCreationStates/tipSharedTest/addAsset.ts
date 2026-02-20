@@ -128,6 +128,8 @@ export class AddAssetTipSharedTestState implements LinkCreationState {
 			tokenStandard,
 			amount: useAmount,
 		});
+		const icpToken = tokens.find((t) => t.address === ICP_LEDGER_CANISTER_ID);
+		actionStore.updateFeeIntent(icpToken?.fee);
 
 		this.#link.state = new PreviewState(this.#link);
 	}

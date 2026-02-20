@@ -53,7 +53,7 @@ class ActionStore {
 
 	/**
 	 * Update the first (asset) intent with actual selected asset data.
-	 * Used on step 2 when user has chosen asset and amount.
+	 * Used on step ADD_ASSET for V3 (e.g. TIP_SHARED_TEST). Sets source=Creator, dest=Link.
 	 */
 	updateAssetIntent(params: {
 		assetAddress: Principal;
@@ -71,17 +71,48 @@ class ActionStore {
 		intent.amount = params.amount;
 		intent.source_address = this._action.creator;
 		intent.source_address_type = this._action.creator_address_type;
+		intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
+		intent.dest_address_type = AddressType.Link;
 	}
 
 	/**
-	 * Update both intents with calculated fees before sending to createLinkV3.
-	 * Used on step 3 (Preview) for TIP_SHARED_TEST.
+	 * Update the second (fee) intent with ICP asset and link creation fee.
+	 * Used on step ADD_ASSET for V3 (TIP_SHARED_TEST). total_amount/network_fee/user_fee
+	 * are filled on Preview via updateV3IntentsWithFees.
+	 * @param icpNetworkFee - optional; uses ICP_LEDGER_FEE if not provided (e.g. wallet not loaded)
 	 */
-	updateTipSharedIntentsWithFees(
+	updateFeeIntent(icpNetworkFee?: bigint): void {
+		if (!this._action || this._action.intents.length < 2) return;
+		const LINK_CREATION_FEE = 10_000n;
+		const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
+		const fee = icpNetworkFee ?? ICP_LEDGER_FEE;
+
+		const intent = this._action.intents[1];
+		intent.asset = {
+			address: icpPrincipal,
+			network_fee: fee,
+			token_standard: TokenStandard.ICRC2,
+		};
+		intent.amount = LINK_CREATION_FEE;
+		intent.source_address = this._action.creator;
+		intent.source_address_type = this._action.creator_address_type;
+		intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
+		intent.dest_address_type = AddressType.Treasury;
+	}
+
+	/**
+	 * Update intents with calculated fees before sending to createLinkV3.
+	 * Used on Preview step for all link types that use v3 API (e.g. TIP_SHARED_TEST).
+	 * Mutates the provided intents in place.
+	 */
+	updateV3IntentsWithFees(
+		intents: Intent[],
 		createLinkData: CreateLinkData,
 		tokens: TokenWithPriceAndBalance[],
+		creator: Principal,
+		creatorAddressType: (typeof AddressType)[keyof typeof AddressType],
 	): void {
-		if (!this._action || this._action.intents.length < 2) return;
+		if (intents.length < 2) return;
 
 		const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
 		const maxUse = createLinkData.maxUse ?? 1;
@@ -105,7 +136,7 @@ class ActionStore {
 			asset_network_fee: assetNetworkFee,
 		});
 
-		const intent0 = this._action.intents[0];
+		const intent0 = intents[0];
 		intent0.total_amount = BigInt(linkFees.intent_total_amount);
 		intent0.network_fee = BigInt(linkFees.intent_total_network_fee);
 		intent0.user_fee = BigInt(linkFees.intent_user_fee);
@@ -124,7 +155,7 @@ class ActionStore {
 			asset_network_fee: icpNetworkFee,
 		});
 
-		const intent1 = this._action.intents[1];
+		const intent1 = intents[1];
 		intent1.asset = {
 			address: Principal.fromText(ICP_LEDGER_CANISTER_ID),
 			network_fee: icpNetworkFee,
@@ -134,8 +165,8 @@ class ActionStore {
 		intent1.total_amount = BigInt(treasuryFees.intent_total_amount);
 		intent1.network_fee = BigInt(treasuryFees.intent_total_network_fee);
 		intent1.user_fee = BigInt(treasuryFees.intent_user_fee);
-		intent1.source_address = this._action.creator;
-		intent1.source_address_type = this._action.creator_address_type;
+		intent1.source_address = creator;
+		intent1.source_address_type = creatorAddressType;
 		intent1.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
 		intent1.dest_address_type = AddressType.Treasury;
 	}

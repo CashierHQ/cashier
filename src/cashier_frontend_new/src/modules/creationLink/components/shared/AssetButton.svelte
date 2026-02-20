@@ -177,7 +177,7 @@
   }
 
   const inputWidth = $derived(
-    `${Math.max((formatDisplayValue(displayValue) || "").length * 9, 30)}px`,
+    `${Math.max((formatDisplayValue(displayValue) || "").length * 11 + 16, 46)}px`,
   );
 
   const balanceDisplay = $derived(

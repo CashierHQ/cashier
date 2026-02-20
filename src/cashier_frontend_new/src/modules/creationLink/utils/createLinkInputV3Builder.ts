@@ -14,10 +14,14 @@ function toVariant(value: string): Record<string, null> {
   return { [value]: null } as Record<string, null>;
 }
 
+const LINK_CREATION_FEE = 10_000n;
+
 /**
  * Map shared Intent to Candid Intent format for createLinkV3.
  * Backend expects: action_id, user_fee, total_amount, network_fee, dependencies as Opt.
- * For Treasury intents, total_amount and network_fee MUST be set for ICRC2 approve_amount.
+ * For Treasury intents, total_amount and network_fee MUST be set for ICRC2 approve_amount
+ * (approve_amount = total_amount + network_fee). We always compute and send them for Treasury
+ * so backend never gets None and InsufficientAllowance is avoided.
  * Candid opt: use [] for None, [value] for Some - agent-js encodes [] | [T] for IDL.Opt.
  */
 function toCandidIntent(
@@ -39,6 +43,22 @@ function toCandidIntent(
   actionId: string,
 ): Record<string, unknown> {
   const { user_fee, total_amount, network_fee, dependencies: deps } = intent;
+  const destType = String(intent.dest_address_type ?? "");
+
+  // For Treasury intents, always send total_amount and network_fee from shared fee calculation
+  // so backend builds approve_amount = total_amount + network_fee (avoids InsufficientAllowance).
+  let sentTotalAmount = total_amount;
+  let sentNetworkFee = network_fee;
+  if (destType === "Treasury") {
+    const treasuryFees = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToTreasury,
+      token_standard: TokenStandard.ICRC2,
+      link_creation_fee: LINK_CREATION_FEE,
+      asset_network_fee: ICP_LEDGER_FEE,
+    });
+    sentTotalAmount = BigInt(treasuryFees.intent_total_amount);
+    sentNetworkFee = BigInt(treasuryFees.intent_total_network_fee);
+  }
 
   const asset = intent.asset as { address: unknown; token_standard?: string };
   const assetCandid = {
@@ -63,13 +83,11 @@ function toCandidIntent(
     dest_address: intent.dest_address,
     asset: assetCandid,
     user_fee: optNat(user_fee),
-    total_amount: optNat(total_amount),
-    network_fee: optNat(network_fee),
+    total_amount: optNat(sentTotalAmount),
+    network_fee: optNat(sentNetworkFee),
     dependencies: deps?.length ? [deps] : [],
   };
 }
-
-const LINK_CREATION_FEE = 10_000n;
 
 /**
  * Ensure CreatorToTreasury intent has total_amount and network_fee.
