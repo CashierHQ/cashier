@@ -24,7 +24,13 @@ export class DetailLinkService {
   private async fetchLinkDetailV3(
     id: string,
     anonymous: boolean,
-    options?: { action_type: { Withdraw: null } | { CreateLink: null } | { Receive: null } | { Send: null } },
+    options?: {
+      action_type:
+        | { Withdraw: null }
+        | { CreateLink: null }
+        | { Receive: null }
+        | { Send: null };
+    },
   ): Promise<Result<LinkAction, Error>> {
     const resp = await cashierBackendService.getLinkDetailsV3(
       id,
@@ -35,7 +41,9 @@ export class DetailLinkService {
     const v3 = resp.value;
     const link = mapV3LinkToFrontend(v3.link);
     const actionData =
-      Array.isArray(v3.action) && v3.action.length > 0 ? v3.action[0] : undefined;
+      Array.isArray(v3.action) && v3.action.length > 0
+        ? v3.action[0]
+        : undefined;
     const mappedAction = actionData
       ? mapV3ActionToFrontend(actionData, undefined)
       : undefined;
@@ -143,7 +151,10 @@ export class DetailLinkService {
         const isNotFound =
           errMsg.includes("NotFound") || errMsg.includes("not found");
         if (isNotFound && !action) {
-          const v3Result = await this.fetchLinkDetailV3WithAction(id, anonymous);
+          const v3Result = await this.fetchLinkDetailV3WithAction(
+            id,
+            anonymous,
+          );
           if (v3Result.isOk()) return v3Result;
         }
         return Err(initialResp.error);

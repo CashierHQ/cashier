@@ -43,8 +43,7 @@ export function mapV3LinkToFrontend(v3Link: cashierBackend.Link): Link {
   const createdAtTs = Array.isArray(raw.created_at_ts)
     ? raw.created_at_ts[0]
     : undefined;
-  const createAt =
-    createdAtTs !== undefined ? BigInt(createdAtTs) : 0n;
+  const createAt = createdAtTs !== undefined ? BigInt(createdAtTs) : 0n;
   return new Link(
     v3Link.id,
     v3Link.title,

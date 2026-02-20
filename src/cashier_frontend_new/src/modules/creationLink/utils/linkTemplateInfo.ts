@@ -53,7 +53,8 @@ export function getLinkTemplateInfo(type: LinkTypeValue) {
         label: "Tip (Shared Test)",
         image: "/icpLogo.png",
         title: "Test Shared Package",
-        description: "Temporary template to test shared package fee calculations",
+        description:
+          "Temporary template to test shared package fee calculations",
         buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
       };
   }

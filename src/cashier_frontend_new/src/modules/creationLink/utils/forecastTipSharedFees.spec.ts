@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { FeeType } from "$modules/links/types/fee";
-import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "$modules/token/constants";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
 import {
   calculateIntentFees,
   IntentParticipants,
@@ -104,7 +107,9 @@ describe("forecastTipSharedFees", () => {
       );
     }
 
-    const linkFeePair = result.find((p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE);
+    const linkFeePair = result.find(
+      (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+    );
     if (ICP_ID && linkFeePair?.fee) {
       expect(linkFeePair.asset.symbol).toBe("ICP");
       const linkCreationFeeAmount = 10_000n;
@@ -114,51 +119,50 @@ describe("forecastTipSharedFees", () => {
         link_creation_fee: linkCreationFeeAmount,
         asset_network_fee: ICP_LEDGER_FEE,
       });
-      expect(linkFeePair.fee.amount).toBe(
-        BigInt(treasuryFees.intent_user_fee),
-      );
+      expect(linkFeePair.fee.amount).toBe(BigInt(treasuryFees.intent_user_fee));
     }
   });
 
   it.skipIf(!ICP_ID)(
     "uses ICRC2 for ICP ledger asset when address matches ICP_LEDGER_CANISTER_ID",
     () => {
-    const icpToken = makeToken({
-      address: ICP_ID,
-      symbol: "ICP",
-      decimals: 8,
-      fee: ICP_LEDGER_FEE,
-    });
-    const tokens: Record<string, TokenWithPriceAndBalance> = {
-      [ICP_ID]: icpToken,
-    };
+      const icpToken = makeToken({
+        address: ICP_ID,
+        symbol: "ICP",
+        decimals: 8,
+        fee: ICP_LEDGER_FEE,
+      });
+      const tokens: Record<string, TokenWithPriceAndBalance> = {
+        [ICP_ID]: icpToken,
+      };
 
-    const useAmount = 100_000_000n; // 1 ICP
-    const maxUse = 1;
+      const useAmount = 100_000_000n; // 1 ICP
+      const maxUse = 1;
 
-    const result = forecastTipSharedFees(
-      [{ address: ICP_ID, useAmount }],
-      maxUse,
-      tokens,
-    );
+      const result = forecastTipSharedFees(
+        [{ address: ICP_ID, useAmount }],
+        maxUse,
+        tokens,
+      );
 
-    const assetPair = result.find(
-      (p) => p.asset.address === ICP_ID && p.fee?.feeType === FeeType.NETWORK_FEE,
-    );
-    expect(assetPair).toBeDefined();
+      const assetPair = result.find(
+        (p) =>
+          p.asset.address === ICP_ID && p.fee?.feeType === FeeType.NETWORK_FEE,
+      );
+      expect(assetPair).toBeDefined();
 
-    // Implementation uses ICRC2 for ICP ledger: inbound 2x + outbound maxUse
-    const expectedFees = calculateIntentFees({
-      intent_participants: IntentParticipants.CreatorToLink,
-      token_standard: SharedTokenStandard.ICRC2,
-      user_input_amount: useAmount,
-      max_use: maxUse,
-      asset_network_fee: ICP_LEDGER_FEE,
-    });
-    expect(assetPair!.fee!.amount).toBe(
-      BigInt(expectedFees.intent_total_network_fee),
-    );
-  },
+      // Implementation uses ICRC2 for ICP ledger: inbound 2x + outbound maxUse
+      const expectedFees = calculateIntentFees({
+        intent_participants: IntentParticipants.CreatorToLink,
+        token_standard: SharedTokenStandard.ICRC2,
+        user_input_amount: useAmount,
+        max_use: maxUse,
+        asset_network_fee: ICP_LEDGER_FEE,
+      });
+      expect(assetPair!.fee!.amount).toBe(
+        BigInt(expectedFees.intent_total_network_fee),
+      );
+    },
   );
 
   it("includes usdValueStr when token has priceUSD", () => {

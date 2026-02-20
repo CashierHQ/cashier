@@ -63,7 +63,9 @@ function toCandidIntent(
   const asset = intent.asset as { address: unknown; token_standard?: string };
   const assetCandid = {
     address: asset.address,
-    token_standard: asset.token_standard ? [{ [asset.token_standard]: null }] : [],
+    token_standard: asset.token_standard
+      ? [{ [asset.token_standard]: null }]
+      : [],
     network_fee: [] as unknown,
   };
 
@@ -75,10 +77,17 @@ function toCandidIntent(
     id: intent.id,
     action_id: actionId ? [actionId] : [],
     amount: intent.amount,
-    intent_type: intent.intent_type === "Receive" ? { Receive: null } : { Send: null },
+    intent_type:
+      intent.intent_type === "Receive" ? { Receive: null } : { Send: null },
     intent_state: { [intent.intent_state]: null } as Record<string, null>,
-    source_address_type: { [intent.source_address_type]: null } as Record<string, null>,
-    dest_address_type: { [intent.dest_address_type]: null } as Record<string, null>,
+    source_address_type: { [intent.source_address_type]: null } as Record<
+      string,
+      null
+    >,
+    dest_address_type: { [intent.dest_address_type]: null } as Record<
+      string,
+      null
+    >,
     source_address: intent.source_address,
     dest_address: intent.dest_address,
     asset: assetCandid,
@@ -161,12 +170,16 @@ export function buildCreateLinkInputV3(
 
   // Ensure CreatorToTreasury intent has network_fee - required for approve_amount (total_amount + network_fee)
   for (const intent of action.intents) {
-    ensureTreasuryIntentFees(intent as Parameters<typeof ensureTreasuryIntentFees>[0]);
+    ensureTreasuryIntentFees(
+      intent as Parameters<typeof ensureTreasuryIntentFees>[0],
+    );
   }
 
   // Validate before sending - prevents InsufficientAllowance if backend receives None for opt fields
   for (const intent of action.intents) {
-    validateTreasuryIntent(intent as Parameters<typeof validateTreasuryIntent>[0]);
+    validateTreasuryIntent(
+      intent as Parameters<typeof validateTreasuryIntent>[0],
+    );
   }
 
   const candidAction = {

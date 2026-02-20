@@ -34,7 +34,9 @@ export class PreviewState implements LinkCreationState {
     if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
       const action = actionStore.action;
       if (!action?.intents?.length) {
-        throw new Error("Action with intents is required for TIP_SHARED_TEST creation");
+        throw new Error(
+          "Action with intents is required for TIP_SHARED_TEST creation",
+        );
       }
       const creatorPrincipal = authState.account?.owner
         ? Principal.fromText(authState.account.owner)
@@ -54,7 +56,9 @@ export class PreviewState implements LinkCreationState {
       if (inputResult.isErr()) {
         throw new Error(inputResult.error.message);
       }
-      const result = await cashierBackendService.createLinkV3(inputResult.value);
+      const result = await cashierBackendService.createLinkV3(
+        inputResult.value,
+      );
       if (result.isErr()) {
         throw new Error(`Link creation failed: ${result.error.message}`);
       }
@@ -67,7 +71,10 @@ export class PreviewState implements LinkCreationState {
       this.#link.id = res.link.id;
       this.#link.state = new LinkCreatedState();
       this.#link.link = mapV3LinkToFrontend(res.link);
-      this.#link.action = mapV3ActionToFrontend(res.action, res.icrc112_requests);
+      this.#link.action = mapV3ActionToFrontend(
+        res.action,
+        res.icrc112_requests,
+      );
     } else {
       const result = await cashierBackendService.createLinkV2(
         this.#link.createLinkData,
@@ -94,7 +101,9 @@ export class PreviewState implements LinkCreationState {
   async goBack(): Promise<void> {
     if (this.#link.createLinkData.linkType === LinkType.TIP) {
       this.#link.state = new AddAssetTipLinkState(this.#link);
-    } else if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+    } else if (
+      this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST
+    ) {
       this.#link.state = new AddAssetTipSharedTestState(this.#link);
     } else if (this.#link.createLinkData.linkType === LinkType.AIRDROP) {
       this.#link.state = new AddAssetAirdropState(this.#link);

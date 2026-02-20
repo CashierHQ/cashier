@@ -71,8 +71,9 @@ class CanisterBackendService {
       }),
     );
 
-    return responseToResult(response)
-      .mapErr((err) => new Error(JSON.stringify(err)));
+    return responseToResult(response).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
   }
 
   /**
@@ -152,14 +153,16 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await (actor as unknown as {
-      user_create_link_v3: (input: {
-        title: string;
-        link_type: unknown;
-        max_use: bigint;
-        action: unknown;
-      }) => Promise<unknown>;
-    }).user_create_link_v3({
+    const response = await (
+      actor as unknown as {
+        user_create_link_v3: (input: {
+          title: string;
+          link_type: unknown;
+          max_use: bigint;
+          action: unknown;
+        }) => Promise<unknown>;
+      }
+    ).user_create_link_v3({
       title: input.title,
       link_type: input.link_type,
       max_use: BigInt(input.max_use),
@@ -215,9 +218,13 @@ class CanisterBackendService {
     }
 
     // Backend expects ProcessActionV2Input { action_id } only - same as process_action_v2
-    const response = await (actor as unknown as {
-      user_process_action_v3: (input: { action_id: string }) => Promise<unknown>;
-    }).user_process_action_v3({
+    const response = await (
+      actor as unknown as {
+        user_process_action_v3: (input: {
+          action_id: string;
+        }) => Promise<unknown>;
+      }
+    ).user_process_action_v3({
       action_id: input.action_id,
     });
 
@@ -269,8 +276,9 @@ class CanisterBackendService {
 
     const response = await actor.user_disable_link_v3(linkId);
 
-    return responseToResult(response)
-      .mapErr((err) => new Error(JSON.stringify(err)));
+    return responseToResult(response).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
   }
 
   /**
@@ -315,11 +323,11 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await (actor as unknown as {
-      user_create_action_v3: (
-        input: CreateActionInputV3,
-      ) => Promise<unknown>;
-    }).user_create_action_v3({
+    const response = await (
+      actor as unknown as {
+        user_create_action_v3: (input: CreateActionInputV3) => Promise<unknown>;
+      }
+    ).user_create_action_v3({
       link_id: input.link_id,
       action: input.action,
     });
@@ -355,8 +363,9 @@ class CanisterBackendService {
     }
     const response = await actor.get_link_details_v3(id, toNullable(options));
 
-    return responseToResult(response)
-      .mapErr((err) => new Error(JSON.stringify(err)));
+    return responseToResult(response).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
   }
 
   /**

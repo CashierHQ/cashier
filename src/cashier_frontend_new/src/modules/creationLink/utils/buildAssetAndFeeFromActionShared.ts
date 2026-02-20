@@ -14,10 +14,7 @@ import {
 import type { AssetAndFeeList } from "$modules/shared/types/feeService";
 import { FeeType } from "$modules/links/types/fee";
 import { feeService } from "$modules/shared/services/feeService";
-import {
-  FlowDirection,
-  type FlowDirectionValue,
-} from "$modules/transactionCart/types/transactionSource";
+import { type FlowDirectionValue } from "$modules/transactionCart/types/transactionSource";
 import {
   AssetProcessState,
   AssetProcessStateMapper,
@@ -35,9 +32,7 @@ const LINK_CREATION_FEE_AMOUNT = 10_000n;
 /**
  * Map IntentTask to IntentParticipants for shared fee calculation.
  */
-function intentTaskToParticipants(
-  task: string,
-): IntentParticipants | null {
+function intentTaskToParticipants(task: string): IntentParticipants | null {
   switch (task) {
     case IntentTask.TRANSFER_WALLET_TO_TREASURY:
       return IntentParticipants.CreatorToTreasury;

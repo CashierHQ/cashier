@@ -193,7 +193,9 @@ export class LinkTxCartStore implements TxCartStore {
         );
         if (!icrcResult.isSuccess) {
           this.setSourceState(IntentState.FAIL);
-          throw new Error(icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed");
+          throw new Error(
+            icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed",
+          );
         }
         // Show semi-transparent green checkmarks (ICRC-112 signed successfully)
         this.setStatesToSignedPending();

@@ -154,10 +154,7 @@
     }
 
     // Fallback: action missing (anonymous) - use forecast from link.asset_info
-    if (
-      !linkStore.link.asset_info ||
-      linkStore.link.asset_info.length === 0
-    ) {
+    if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
       return [];
     }
 
@@ -167,9 +164,7 @@
         if (!address) return null;
         return new CreateLinkAsset(address, ai.amount_per_link_use_action);
       })
-      .filter(
-        (a): a is CreateLinkAsset => a !== null,
-      );
+      .filter((a): a is CreateLinkAsset => a !== null);
 
     if (linkStore.link.link_type === LinkType.TIP_SHARED_TEST) {
       return forecastTipSharedFees(linkAssets, maxUse, tokens);

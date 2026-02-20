@@ -39,7 +39,9 @@
         // Do not clear store when link was successfully created (temp link was deleted)
         const existing = context.linkCreationStore;
         const isInCreatedState =
-          existing && "state" in existing && existing.state?.step === LinkStep.CREATED;
+          existing &&
+          "state" in existing &&
+          existing.state?.step === LinkStep.CREATED;
         if (!isInCreatedState) {
           context.linkCreationStore = null;
         }

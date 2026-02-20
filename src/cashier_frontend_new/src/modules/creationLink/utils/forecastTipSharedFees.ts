@@ -59,9 +59,7 @@ export function forecastTipSharedFees(
     });
 
     const totalAmount = BigInt(creatorToLinkFees.intent_total_amount);
-    const totalNetworkFees = BigInt(
-      creatorToLinkFees.intent_total_network_fee,
-    );
+    const totalNetworkFees = BigInt(creatorToLinkFees.intent_total_network_fee);
 
     // Creator sends: amount that user отримує + всі мережеві fee
     const totalSentByCreator = totalAmount + totalNetworkFees;
@@ -119,10 +117,7 @@ export function forecastTipSharedFees(
 
     const userFee = BigInt(treasuryFees.intent_user_fee);
 
-    const linkFeeFormatted = parseBalanceUnits(
-      userFee,
-      linkFeeToken.decimals,
-    );
+    const linkFeeFormatted = parseBalanceUnits(userFee, linkFeeToken.decimals);
     const linkFeeUsd = linkFeeToken.priceUSD
       ? linkFeeFormatted * linkFeeToken.priceUSD
       : undefined;
@@ -149,4 +144,3 @@ export function forecastTipSharedFees(
 
   return pairs;
 }
-

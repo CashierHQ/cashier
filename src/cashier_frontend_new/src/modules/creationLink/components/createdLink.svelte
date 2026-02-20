@@ -35,10 +35,18 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    if (linkDetailStore?.action && linkDetailStore?.link && link.createLinkData.linkType !== LinkType.TIP_SHARED_TEST) {
+    if (
+      linkDetailStore?.action &&
+      linkDetailStore?.link &&
+      link.createLinkData.linkType !== LinkType.TIP_SHARED_TEST
+    ) {
       return await linkDetailStore.processAction();
     }
-    if (link.id && link.action && link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+    if (
+      link.id &&
+      link.action &&
+      link.createLinkData.linkType === LinkType.TIP_SHARED_TEST
+    ) {
       const result = await cashierBackendService.processActionV3({
         action_id: link.action.id,
       });
@@ -102,7 +110,10 @@
       linkType: link.createLinkData.linkType,
       maxUse: link.createLinkData.maxUse,
       onSuccess: (result) => {
-        if (link.createLinkData.linkType === LinkType.TIP_SHARED_TEST && link.action) {
+        if (
+          link.createLinkData.linkType === LinkType.TIP_SHARED_TEST &&
+          link.action
+        ) {
           link.action = result.action;
         }
       },

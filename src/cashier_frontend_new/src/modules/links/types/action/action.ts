@@ -70,7 +70,6 @@ export class ProcessActionResultMapper {
       errors: result.errors,
     };
   }
-
 }
 
 export default Action;

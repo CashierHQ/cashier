@@ -321,7 +321,10 @@ export class FeeService {
           fee: {
             amount: totalNetworkFees,
             feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: parseBalanceUnits(totalNetworkFees, 8).toString(),
+            amountFormattedStr: parseBalanceUnits(
+              totalNetworkFees,
+              8,
+            ).toString(),
             symbol: "N/A",
           },
         });
@@ -335,7 +338,10 @@ export class FeeService {
           : undefined;
         // Total network fees = tokenFee * maxUse (for funding) + tokenFee (for claiming)
         const totalNetworkFees = tokenFee * BigInt(maxUse + 1);
-        const totalNetworkFeesUi = parseBalanceUnits(totalNetworkFees, token.decimals);
+        const totalNetworkFeesUi = parseBalanceUnits(
+          totalNetworkFees,
+          token.decimals,
+        );
         const totalNetworkFeesUsd = token.priceUSD
           ? totalNetworkFeesUi * token.priceUSD
           : undefined;
@@ -355,7 +361,9 @@ export class FeeService {
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: totalNetworkFeesUsd,
-            usdValueStr: totalNetworkFeesUsd ? formatUsdAmount(totalNetworkFeesUsd) : undefined,
+            usdValueStr: totalNetworkFeesUsd
+              ? formatUsdAmount(totalNetworkFeesUsd)
+              : undefined,
           },
         });
       }
@@ -499,8 +507,6 @@ export class FeeService {
 
       // For CreatorToTreasury: user pays link creation fee + network fees
       // intent_user_fee = intent_total_amount + intent_total_network_fee
-      const totalAmount = BigInt(treasuryFees.intent_total_amount);
-      const totalNetworkFee = BigInt(treasuryFees.intent_total_network_fee);
       const userFee = BigInt(treasuryFees.intent_user_fee);
 
       const linkFeeFormatted = parseBalanceUnits(

@@ -12,7 +12,7 @@
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
 
-  const { tempLinkId }: { tempLinkId: string } = $props();
+  const { tempLinkId: _tempLinkId }: { tempLinkId: string } = $props();
 
   const context = getGuardContext();
   const linkStore = $derived.by(() => {

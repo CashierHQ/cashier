@@ -112,7 +112,6 @@ export class LinkActiveState implements LinkDetailState {
     }
 
     const actionId = this.#linkDetailStore.action.id;
-    const linkId = this.#linkDetailStore.link.id;
 
     if (this.#linkDetailStore.linkType === LinkType.TIP_SHARED_TEST) {
       const result = await cashierBackendService.processActionV3({

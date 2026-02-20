@@ -18,7 +18,11 @@ import { rsMatch } from "$lib/rsMatch";
 function addressTypesToIntentTask(
   source: cashierBackend.AddressType,
   dest: cashierBackend.AddressType,
-): typeof IntentTask.TRANSFER_WALLET_TO_TREASURY | typeof IntentTask.TRANSFER_WALLET_TO_LINK | typeof IntentTask.TRANSFER_LINK_TO_WALLET | null {
+):
+  | typeof IntentTask.TRANSFER_WALLET_TO_TREASURY
+  | typeof IntentTask.TRANSFER_WALLET_TO_LINK
+  | typeof IntentTask.TRANSFER_LINK_TO_WALLET
+  | null {
   const src = rsMatch(source, {
     Creator: () => "Creator",
     User: () => "User",
@@ -35,7 +39,8 @@ function addressTypesToIntentTask(
     return IntentTask.TRANSFER_WALLET_TO_TREASURY;
   if (src === "Creator" && dst === "Link")
     return IntentTask.TRANSFER_WALLET_TO_LINK;
-  if (src === "Link" && dst === "User") return IntentTask.TRANSFER_LINK_TO_WALLET;
+  if (src === "Link" && dst === "User")
+    return IntentTask.TRANSFER_LINK_TO_WALLET;
   return null;
 }
 
@@ -122,18 +127,13 @@ export function mapV3ActionToFrontend(
  * Map ProcessActionResponseV3 to ProcessActionResult.
  * Used for TIP_SHARED_TEST when processActionV3 is called.
  */
-export function mapV3ProcessActionResult(
-  result: {
-    action: cashierBackend.Action;
-    is_success: boolean;
-    errors: string[];
-    /** Candid Opt from backend: [] | [Array<Array<Icrc112Request>>] */
-    icrc112_requests?:
-      | []
-      | [Array<Array<cashierBackend.Icrc112Request>>]
-      | null;
-  },
-): ProcessActionResult {
+export function mapV3ProcessActionResult(result: {
+  action: cashierBackend.Action;
+  is_success: boolean;
+  errors: string[];
+  /** Candid Opt from backend: [] | [Array<Array<Icrc112Request>>] */
+  icrc112_requests?: [] | [Array<Array<cashierBackend.Icrc112Request>>] | null;
+}): ProcessActionResult {
   const action = mapV3ActionToFrontend(result.action, result.icrc112_requests);
   return {
     action,

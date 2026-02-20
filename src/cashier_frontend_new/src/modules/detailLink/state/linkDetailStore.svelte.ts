@@ -132,11 +132,7 @@ export class LinkDetailStore {
    */
   setFromProcessResult(link: Link, action?: Action): void {
     const current = this.#linkDetailQuery.data;
-    const linkAction = new LinkAction(
-      link,
-      action,
-      current?.link_user_state,
-    );
+    const linkAction = new LinkAction(link, action, current?.link_user_state);
     this.#linkDetailQuery.setData(linkAction);
   }
 

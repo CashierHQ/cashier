@@ -65,4 +65,3 @@ export interface ProcessActionResponseV3 {
   is_success: boolean;
   errors: string[];
 }
-
