@@ -32,7 +32,7 @@ const LINK_CREATION_FEE_AMOUNT = 10_000n;
 /**
  * Map IntentTask to IntentParticipants for shared fee calculation.
  */
-function intentTaskToParticipants(task: string): IntentParticipants | null {
+function intentTaskToParticipants(task: IntentTask): IntentParticipants | null {
   switch (task) {
     case IntentTask.TRANSFER_WALLET_TO_TREASURY:
       return IntentParticipants.CreatorToTreasury;

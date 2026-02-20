@@ -5,6 +5,7 @@ import { actionStore } from "$modules/creationLink/state/actionStore.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { mapV3ActionToFrontend } from "$modules/links/utils/actionV3Mapper";
 import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
+import type * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
@@ -70,9 +71,11 @@ export class PreviewState implements LinkCreationState {
         );
       this.#link.id = res.link.id;
       this.#link.state = new LinkCreatedState();
-      this.#link.link = mapV3LinkToFrontend(res.link);
+      this.#link.link = mapV3LinkToFrontend(
+        res.link as unknown as cashierBackend.Link,
+      );
       this.#link.action = mapV3ActionToFrontend(
-        res.action,
+        res.action as unknown as cashierBackend.Action,
         res.icrc112_requests,
       );
     } else {
