@@ -17,8 +17,6 @@
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
-  import { actionStore } from "$modules/creationLink/state/actionStore.svelte";
-
   const {
     link,
   }: {
@@ -29,9 +27,6 @@
   let localTokenAmount = $state("");
   let localUsdAmount = $state("");
   let isUsd = $state(false);
-
-  // Access action reactively
-  const action = $derived(actionStore.action);
 
   // Auto-select the first token when wallet data becomes available and assets are empty
   $effect(() => {
@@ -78,15 +73,12 @@
     return selectedToken?.decimals || 8;
   });
 
-  // Track previous token address and amount to detect changes
+  // Track previous token address to detect changes
   let previousTokenAddress = $state<string | undefined>(undefined);
-  let previousUseAmount = $state<bigint | undefined>(undefined);
 
   // Sync form amount with local state and handle token changes
   $effect(() => {
     const currentAddress = selectedToken?.address;
-    const asset = link.createLinkData.assets[0];
-    const currentUseAmount = asset?.useAmount;
 
     const addressChanged =
       currentAddress && currentAddress !== previousTokenAddress;
@@ -95,10 +87,8 @@
       localTokenAmount = "";
       localUsdAmount = "";
       previousTokenAddress = currentAddress;
-      previousUseAmount = currentUseAmount;
     } else if (!currentAddress) {
       previousTokenAddress = undefined;
-      previousUseAmount = undefined;
     }
   });
 

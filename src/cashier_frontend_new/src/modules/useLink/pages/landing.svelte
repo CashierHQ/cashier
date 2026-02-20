@@ -6,7 +6,6 @@
   import { getGuardContext } from "$modules/guard/context.svelte";
 
   const {
-    linkId: _linkId,
     openLoginModal,
   }: { linkId: string; openLoginModal?: () => void } = $props();
 
