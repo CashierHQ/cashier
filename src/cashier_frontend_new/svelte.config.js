@@ -12,6 +12,10 @@ const config = {
       $modules: "./src/modules",
       $shared: "../shared/generated/ts",
       $sharedTemplates: "../shared/templates",
+      // Ensure @dfinity/principal resolves from the frontend's node_modules
+      // when TypeScript checks files in ../shared/generated/ts/ (which is
+      // outside the frontend's node_modules ancestor path).
+      "@dfinity/principal": "./node_modules/@dfinity/principal",
     },
   },
 };
