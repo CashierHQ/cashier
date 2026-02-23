@@ -14,7 +14,7 @@ use crate::repository::{
     asset::v3::AssetV3,
     asset_info::v3::AssetInfoV3,
     common::AddressTypeV3,
-    intent::v1::{Intent, IntentState, TransferData, TransferFromData},
+    intent::v1::{IntentState, TransferData, TransferFromData},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -136,6 +136,14 @@ pub enum IntentTransactionDataV3 {
     TransferFrom(TransferFromData),
 }
 
+/// Address information for intent source or destination
+#[derive(Debug, Clone)]
+pub struct AddressInfoV3 {
+    pub address: Principal,
+    pub account: Option<Account>,
+    pub address_type: AddressTypeV3,
+}
+
 impl IntentV3 {
     pub fn to_shared(&self) -> IntentShared {
         IntentShared {
@@ -159,12 +167,8 @@ impl IntentV3 {
     pub fn from_asset_info(
         asset_info: &AssetInfoV3,
         intent_type: IntentTypeV3,
-        source_address: Principal,
-        source_account: Option<Account>,
-        source_address_type: AddressTypeV3,
-        dest_address: Principal,
-        dest_account: Option<Account>,
-        dest_address_type: AddressTypeV3,
+        source: AddressInfoV3,
+        dest: AddressInfoV3,
         action_id: String,
         created_at: u64,
     ) -> Self {
@@ -177,12 +181,12 @@ impl IntentV3 {
             total_amount: Some(asset_info.amount.clone()),
             network_fee: None,
             user_fee: None,
-            source_address,
-            source_account,
-            source_address_type,
-            dest_address,
-            dest_account,
-            dest_address_type,
+            source_address: source.address,
+            source_account: source.account,
+            source_address_type: source.address_type,
+            dest_address: dest.address,
+            dest_account: dest.account,
+            dest_address_type: dest.address_type,
             intent_tx_data: None,
             dependencies: vec![],
             action_id,

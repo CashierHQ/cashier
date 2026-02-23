@@ -133,7 +133,7 @@ function convertExpression(node: Node, indent: string = ''): string {
 					const arg = convertExpression(args[0]);
 					// If the argument is already a Nat identifier, just use it
 					// Otherwise, wrap in Nat::from() with proper casting
-					return `Nat::from(${arg} as u64)`;
+					return `Nat::from(${arg})`;
 				}
 			}
 

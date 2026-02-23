@@ -6,8 +6,8 @@
 
 use candid::Nat;
 use cashier_shared::{
-    calculate_intent_total_amount, calculate_intent_total_network_fee, calculate_intent_user_fee,
-    IntentParticipants, TokenStandard,
+    IntentParticipants, TokenStandard, calculate_intent_total_amount,
+    calculate_intent_total_network_fee, calculate_intent_user_fee,
 };
 
 // ---------------------------------------------------------------------------

@@ -8,6 +8,7 @@ use crate::utils::with_pocket_ic_context;
 use candid::Nat;
 use cashier_backend_types::constant::CKBTC_ICRC_TOKEN;
 use cashier_backend_types::repository::action::v1::ActionState;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::intent::v1::IntentState;
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, TransactionState};
@@ -336,8 +337,7 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
             .find(|tx| {
                 if let Some(IcTransaction::Icrc2Approve(approve)) = tx.protocol.as_ic_transaction()
                 {
-                    let cashier_backend_types::repository::common::Asset::IC { address } =
-                        &approve.asset;
+                    let Asset::IC { address } = &approve.asset;
                     return address == &ckbtc_ledger_canister.unwrap();
                 }
                 false

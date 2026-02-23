@@ -35,9 +35,9 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let repo = Rc::new(ThreadlocalRepositories);
 
         let transaction_manager_v2 = Rc::new(IcTransactionManagerV2::new(env.clone()));
-        let link_v2_service = LinkV2Service::new(&*repo, transaction_manager_v2.clone());
+        let link_v2_service = LinkV2Service::new(&*repo, transaction_manager_v2);
         let transaction_manager_v3 = Rc::new(IcTransactionManagerV3::new(env.clone()));
-        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager_v3.clone());
+        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager_v3);
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
 

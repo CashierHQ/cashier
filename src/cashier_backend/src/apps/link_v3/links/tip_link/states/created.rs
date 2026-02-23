@@ -1,13 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::{
-    link_v2::links::shared::receive_link::actions::create,
-    link_v3::{
-        links::tip_link::actions::create::CreateActionV3,
-        traits::{LinkV3Instance, LinkV3State},
-    },
-};
+use crate::apps::link_v3::{links::tip_link::actions::create::CreateActionV3, traits::LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -108,7 +102,7 @@ impl<M: TransactionManagerV3 + 'static> LinkV3State for CreatedState<M> {
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
-        created_at: u64,
+        _created_at: u64,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;

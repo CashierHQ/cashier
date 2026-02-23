@@ -2,30 +2,21 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::asset::v1::Asset;
-use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
 use cashier_backend_types::repository::intent::v3::IntentTypeV3;
 use cashier_backend_types::{
-    constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
     repository::{
-        action::{
-            v1::{Action, ActionState, ActionType},
-            v3::ActionV3,
-        },
+        action::v3::ActionV3,
         common::AddressTypeV3,
-        intent::v3::IntentV3,
+        intent::v3::{AddressInfoV3, IntentV3},
         link::v3::LinkV3,
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::link_v2::links::shared::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_balance_for_link_v3,
-    get_batch_tokens_fee_for_link_v3,
+    get_batch_tokens_balance_for_link_v3, get_batch_tokens_fee_for_link_v3,
 };
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct WithdrawAction {
@@ -48,7 +39,7 @@ impl WithdrawAction {
         link: &LinkV3,
         canister_id: Principal,
         action: ActionV3,
-        intents: Vec<IntentV3>,
+        _intents: Vec<IntentV3>,
         created_at: u64,
     ) -> Result<Self, CanisterError> {
         let link_account = get_link_account(&link.id, canister_id)?;
@@ -88,12 +79,16 @@ impl WithdrawAction {
                 IntentV3::from_asset_info(
                     &asset_info,
                     IntentTypeV3::Receive,
-                    source_address,
-                    source_account,
-                    source_address_type.clone(),
-                    dest_address,
-                    dest_account,
-                    dest_address_type.clone(),
+                    AddressInfoV3 {
+                        address: source_address,
+                        account: source_account,
+                        address_type: source_address_type.clone(),
+                    },
+                    AddressInfoV3 {
+                        address: dest_address,
+                        account: dest_account,
+                        address_type: dest_address_type.clone(),
+                    },
                     action.id.clone(),
                     created_at,
                 )

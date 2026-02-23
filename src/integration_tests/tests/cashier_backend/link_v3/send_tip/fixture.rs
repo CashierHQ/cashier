@@ -5,14 +5,12 @@ use crate::{
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
-    dto::link::CreateLinkInput,
     link_v3::dto::{
-        action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
+        action::{CreateActionInputV3, ProcessActionResponseV3},
         link::{CreateLinkInputV3, CreateLinkResponseV3},
     },
-    repository::{link::v1::LinkType, token_fee},
 };
-use cashier_shared::types::{IntentType as IntentTypeShared, LinkType as LinkTypeShared};
+use cashier_shared::types::LinkType as LinkTypeShared;
 use std::sync::Arc;
 
 pub struct TipLinkV3Fixture {

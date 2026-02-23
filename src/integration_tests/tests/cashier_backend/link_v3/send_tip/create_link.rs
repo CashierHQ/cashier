@@ -4,27 +4,15 @@
 use crate::cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture;
 use crate::{
     constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL},
-    utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
+    utils::{principal::TestUser, with_pocket_ic_context},
 };
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::{
-    constant,
-    repository::link::v1::LinkType,
-    repository::{
-        action::v1::ActionType,
-        asset::v1::Asset,
-        common::Wallet,
-        intent::v1::{IntentTask, IntentType},
-        transaction::v1::{IcTransaction, Protocol},
-    },
-};
-use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
+use cashier_backend_types::constant;
 use cashier_shared::types::{AddressType as AddressTypeShared, LinkType as LinkTypeShared};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use std::{collections::HashMap, sync::Arc};
-use transaction_manager::utils::calculator::calculate_icrc2_transfer_intent_amount;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
@@ -160,7 +148,7 @@ async fn it_should_create_icp_token_tip_link_successfully() {
                         Principal::from_text(ICP_PRINCIPAL).unwrap()
                     );
 
-                    let approve_args: ApproveArgs =
+                    let _approve_args: ApproveArgs =
                         Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),

@@ -17,6 +17,17 @@ use cashier_backend_types::{
 use std::rc::Rc;
 use transaction_manager::v2::traits::TransactionManager;
 
+/// Parameters for creating a link V3
+pub struct CreateLinkParamsV3 {
+    pub link_type: LinkType,
+    pub title: String,
+    pub asset_info: Vec<AssetInfo>,
+    pub max_use_count: u64,
+    pub creator: Principal,
+    pub created_at_ts: u64,
+    pub canister_id: Principal,
+}
+
 pub struct LinkFactory<M: TransactionManager + 'static> {
     pub transaction_manager: Rc<M>,
 }
@@ -92,54 +103,45 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
         }
     }
 
-    pub fn create_link_v3(
-        &self,
-        link_type: LinkType,
-        title: String,
-        asset_info: Vec<AssetInfo>,
-        max_use_count: u64,
-        creator: Principal,
-        created_at_ts: u64,
-        canister_id: Principal,
-    ) -> Result<Link, CanisterError> {
-        match link_type {
+    pub fn create_link_v3(&self, params: CreateLinkParamsV3) -> Result<Link, CanisterError> {
+        match params.link_type {
             LinkType::SendTip => Ok(TipLink::create(
-                creator,
-                title,
-                asset_info,
-                max_use_count,
-                created_at_ts,
-                canister_id,
+                params.creator,
+                params.title,
+                params.asset_info,
+                params.max_use_count,
+                params.created_at_ts,
+                params.canister_id,
                 self.transaction_manager.clone(),
             )
             .link),
             LinkType::SendAirdrop => Ok(AirdropLink::create(
-                creator,
-                title,
-                asset_info,
-                max_use_count,
-                created_at_ts,
-                canister_id,
+                params.creator,
+                params.title,
+                params.asset_info,
+                params.max_use_count,
+                params.created_at_ts,
+                params.canister_id,
                 self.transaction_manager.clone(),
             )
             .link),
             LinkType::SendTokenBasket => Ok(TokenBasketLink::create(
-                creator,
-                title,
-                asset_info,
-                max_use_count,
-                created_at_ts,
-                canister_id,
+                params.creator,
+                params.title,
+                params.asset_info,
+                params.max_use_count,
+                params.created_at_ts,
+                params.canister_id,
                 self.transaction_manager.clone(),
             )
             .link),
             LinkType::ReceivePayment => Ok(PaymentLink::create(
-                creator,
-                title,
-                asset_info,
-                max_use_count,
-                created_at_ts,
-                canister_id,
+                params.creator,
+                params.title,
+                params.asset_info,
+                params.max_use_count,
+                params.created_at_ts,
+                params.canister_id,
                 self.transaction_manager.clone(),
             )
             .link),

@@ -9,16 +9,11 @@ use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3};
-use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
-use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
-use cashier_backend_types::repository::link::v1::LinkState;
-use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_common::test_utils;
 use cashier_shared::types::{
     ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, IntentState as IntentStateShared,
-    IntentType as IntentTypeShared, LinkState as LinkStateShared,
+    LinkState as LinkStateShared,
 };
 use icrc_ledger_types::icrc1::account::Account;
 

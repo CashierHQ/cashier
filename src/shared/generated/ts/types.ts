@@ -239,5 +239,5 @@ export interface Link {
   use_count: bigint;
   link_state: LinkState;
   /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
-  created_at_ts?: number;
+  created_at_ts?: bigint;
 }

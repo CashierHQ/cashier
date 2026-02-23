@@ -1,10 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::{
-    link_v2::links::{shared::receive_link::states::created, traits::LinkV2State},
-    link_v3::{links::tip_link::actions::receive::ReceiveAction, traits::LinkV3State},
-};
+use crate::apps::link_v3::{links::tip_link::actions::receive::ReceiveAction, traits::LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,

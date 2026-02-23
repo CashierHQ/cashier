@@ -4,30 +4,22 @@
 pub mod actions;
 pub mod states;
 
-use crate::apps::{
-    link_v2::links::shared::receive_link::actions::create,
-    link_v3::traits::{LinkV3Instance, LinkV3State},
-};
+use crate::apps::link_v3::traits::{LinkV3Instance, LinkV3State};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::{
-        action_result::CreateActionResult,
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
-    },
+    link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v3::ActionV3,
-        asset::v1::Asset,
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
         link::{
-            v1::{Link, LinkState, LinkType},
+            v1::LinkType,
             v3::{LinkState as LinkStateV3, LinkV3},
         },
         transaction::v1::Transaction,
     },
 };
-use cashier_shared::types::Action as ActionShared;
 use states::{active::ActiveState, created::CreatedState, inactive::InactiveState};
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::v3::traits::TransactionManagerV3;

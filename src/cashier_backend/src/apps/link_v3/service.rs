@@ -1,10 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::factory::LinkFactoryV3;
-use crate::apps::{
-    action::v3::ActionServiceV3, link_v2::links::shared::receive_link::actions::create,
-};
+use crate::apps::action::v3::ActionServiceV3;
+use crate::apps::link_v3::factory::{CreateLinkParamsV3, LinkFactoryV3};
 use crate::repositories;
 use crate::repositories::Repositories;
 use candid::Principal;
@@ -12,18 +10,13 @@ use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
-    link_v3::{
-        dto::{
-            action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
-            link::{
-                CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
-            },
+    link_v3::dto::{
+        action::{CreateActionResponseV3, ProcessActionResponseV3},
+        link::{
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
         },
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
     },
     repository::{
-        action::v3::ActionV3,
-        asset::v1::Asset,
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
         link::{v1::LinkType, v3::LinkState},
@@ -32,17 +25,14 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
-use cashier_shared::{
-    AddressType as AddressTypeShared, Asset as AssetShared, AssetInfo as AssetInfoShared,
-    types::Action as ActionShared,
-};
+use cashier_shared::{AddressType as AddressTypeShared, types::Action as ActionShared};
 use std::rc::Rc;
 use transaction_manager::v3::traits::TransactionManagerV3;
 
 pub struct LinkV3Service<R: Repositories, M: TransactionManagerV3 + 'static> {
     pub link_v3_repository: repositories::link::v3::LinkV3Repository<R::LinkV3>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
-    pub user_link_action_repository:
+    pub _user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     pub action_service: ActionServiceV3<R>,
     pub transaction_manager: Rc<M>,
@@ -53,7 +43,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         Self {
             link_v3_repository: repo.link_v3(),
             user_link_repository: repo.user_link(),
-            user_link_action_repository: repo.user_link_action(),
+            _user_link_action_repository: repo.user_link_action(),
             action_service: ActionServiceV3::new(repo),
             transaction_manager,
         }
@@ -92,15 +82,14 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             .collect();
 
         let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link_model = factory.create_link(
+        let link_model = factory.create_link(CreateLinkParamsV3 {
             link_type,
-            input.title,
+            title: input.title,
             asset_info,
-            input.max_use,
-            creator_id,
+            creator: creator_id,
             created_at_ts,
             canister_id,
-        )?;
+        })?;
 
         // save link & user_link to db
         self.link_v3_repository.create(link_model.clone());

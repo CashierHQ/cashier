@@ -10,14 +10,8 @@ use candid::{Nat, Principal};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
     constant,
-    dto::{
-        action::{ActionDto, CreateActionInput},
-        link::{
-            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
-        },
-    },
+    dto::link::GetLinkOptions,
     error::CanisterError,
-    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     link_v3::dto::{
         action::{
             CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
@@ -28,13 +22,13 @@ use cashier_backend_types::{
             GetLinksResponseV3,
         },
     },
-    service::link::{PaginateInput, PaginateResult},
+    service::link::PaginateInput,
 };
 use cashier_common::{constant::CREATE_LINK_FEE, fee_calculator::icrc2};
 use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
-    IntentState as IntentStateShared, IntentType as IntentTypeShared, LinkType as LinkTypeShared,
+    IntentState as IntentStateShared, IntentType as IntentTypeShared,
     TokenStandard as TokenStandardShared,
 };
 use ic_mple_client::PocketIcClient;

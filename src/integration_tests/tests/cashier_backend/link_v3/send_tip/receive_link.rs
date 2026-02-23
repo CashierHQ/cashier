@@ -11,22 +11,15 @@ use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3};
-use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
-use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
-use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
-use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
 use cashier_shared::types::{
     ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, IntentState as IntentStateShared,
     LinkState as LinkStateShared,
 };
 use icrc_ledger_types::icrc1::account::Account;
-use token_storage_types::bitcoin::ckbtc_ledger;
 
 #[tokio::test]
 async fn it_should_fail_receive_icp_token_tip_link_if_link_not_active() {

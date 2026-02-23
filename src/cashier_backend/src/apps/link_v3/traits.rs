@@ -1,16 +1,11 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::{
-        action_result::{CreateActionResult, ProcessActionResult},
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
-    },
+    link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
 };
 use std::collections::HashMap;
 use std::pin::Pin;
-
-use crate::apps::link_v2::links::shared::receive_link::{actions::create, states::created};
 
 pub trait LinkV3Instance {
     /// Create an action associated with the link

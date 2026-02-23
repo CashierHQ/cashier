@@ -3,18 +3,15 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
     repository::{
         action::v3::ActionV3,
         common::AddressTypeV3,
-        intent::v3::{IntentTypeV3, IntentV3},
+        intent::v3::{AddressInfoV3, IntentTypeV3, IntentV3},
         link::v3::LinkV3,
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct ReceiveAction {
@@ -39,7 +36,7 @@ impl ReceiveAction {
         receiver_id: Principal,
         canister_id: Principal,
         action: ActionV3,
-        intents: Vec<IntentV3>,
+        _intents: Vec<IntentV3>,
         created_at: u64,
     ) -> Result<Self, CanisterError> {
         let link_account = get_link_account(&link.id, canister_id)?;
@@ -58,12 +55,16 @@ impl ReceiveAction {
                 IntentV3::from_asset_info(
                     asset_info,
                     IntentTypeV3::Receive,
-                    source_address,
-                    source_account,
-                    source_address_type.clone(),
-                    dest_address,
-                    dest_account,
-                    dest_address_type.clone(),
+                    AddressInfoV3 {
+                        address: source_address,
+                        account: source_account,
+                        address_type: source_address_type.clone(),
+                    },
+                    AddressInfoV3 {
+                        address: dest_address,
+                        account: dest_account,
+                        address_type: dest_address_type.clone(),
+                    },
                     action.id.clone(),
                     created_at,
                 )

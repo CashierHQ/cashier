@@ -74,6 +74,7 @@ impl LinkV3 {
             use_count: self.use_count,
             creator: self.creator,
             link_state: self.state.to_shared(),
+            created_at_ts: Some(self.created_at),
         }
     }
 }

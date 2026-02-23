@@ -9,11 +9,8 @@ use cashier_backend_types::{
     error::CanisterError,
     link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
-        action::{
-            v1::{Action, ActionType},
-            v3::ActionV3,
-        },
-        intent::{v1::Intent, v3::IntentV3},
+        action::{v1::ActionType, v3::ActionV3},
+        intent::v3::IntentV3,
         link::v3::{LinkState, LinkV3},
         transaction::v1::Transaction,
     },

@@ -5,20 +5,23 @@ use crate::apps::link_v3::{links::tip_link::TipLink, traits::LinkV3Instance};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::dto::{
-        action::{CreateActionInputV3, CreateActionResponseV3},
-        link::{CreateLinkInputV3, CreateLinkResponseV3},
-    },
     repository::{
         asset_info::v3::AssetInfoV3,
-        link::{
-            v1::{Link, LinkType},
-            v3::LinkV3,
-        },
+        link::{v1::LinkType, v3::LinkV3},
     },
 };
 use std::rc::Rc;
 use transaction_manager::v3::traits::TransactionManagerV3;
+
+/// Parameters for creating a link V3
+pub struct CreateLinkParamsV3 {
+    pub link_type: LinkType,
+    pub title: String,
+    pub asset_info: Vec<AssetInfoV3>,
+    pub creator: Principal,
+    pub created_at_ts: u64,
+    pub canister_id: Principal,
+}
 
 pub struct LinkFactoryV3<M: TransactionManagerV3 + 'static> {
     pub transaction_manager: Rc<M>,
@@ -31,23 +34,14 @@ impl<M: TransactionManagerV3 + 'static> LinkFactoryV3<M> {
         }
     }
 
-    pub fn create_link(
-        &self,
-        link_type: LinkType,
-        title: String,
-        asset_info: Vec<AssetInfoV3>,
-        max_use: u64,
-        creator: Principal,
-        created_at_ts: u64,
-        canister_id: Principal,
-    ) -> Result<LinkV3, CanisterError> {
-        match link_type {
+    pub fn create_link(&self, params: CreateLinkParamsV3) -> Result<LinkV3, CanisterError> {
+        match params.link_type {
             LinkType::SendTip => Ok(TipLink::create(
-                creator,
-                title,
-                asset_info,
-                created_at_ts,
-                canister_id,
+                params.creator,
+                params.title,
+                params.asset_info,
+                params.created_at_ts,
+                params.canister_id,
                 self.transaction_manager.clone(),
             )
             .link),

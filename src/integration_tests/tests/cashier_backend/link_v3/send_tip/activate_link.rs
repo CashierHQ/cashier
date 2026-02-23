@@ -200,7 +200,8 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
         let icrc_112_requests = create_link_result.icrc112_requests.unwrap();
 
         let approval_req = &icrc_112_requests[0][0];
-        let approval_args: ApproveArgs = Decode!(approval_req.arg.as_slice(), ApproveArgs).unwrap();
+        let _approval_args: ApproveArgs =
+            Decode!(approval_req.arg.as_slice(), ApproveArgs).unwrap();
 
         let icrc112_execution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;

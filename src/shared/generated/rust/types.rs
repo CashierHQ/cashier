@@ -299,10 +299,10 @@ pub struct Link {
     /// List of assets associated with the link
     pub asset_info: Vec<AssetInfo>,
     /// Maximum number of times the link can be used
-    pub max_use: i64,
+    pub max_use: u64,
     /// Number of times the link has been used
-    pub use_count: i64,
+    pub use_count: u64,
     pub link_state: LinkState,
     /// Creation timestamp in nanoseconds since Unix epoch (IC time)
-    pub created_at_ts: Option<i64>,
+    pub created_at_ts: Option<u64>,
 }
