@@ -4,13 +4,13 @@ use token_storage_types::{auth::Permission, token::UpdateTokenStandardsInput};
 
 use crate::api::state::get_state;
 
-/// Admin override for a token's supported standards
+/// Override for a token's supported standards
 #[update]
 pub fn token_manager_update_token_standards(
     input: UpdateTokenStandardsInput,
 ) -> Result<(), String> {
-    info!("[admin_update_token_standards]");
-    debug!("[admin_update_token_standards] input: {input:?}");
+    info!("[token_manager_update_token_standards]");
+    debug!("[token_manager_update_token_standards] input: {input:?}");
 
     let state = get_state();
     let caller = msg_caller();
