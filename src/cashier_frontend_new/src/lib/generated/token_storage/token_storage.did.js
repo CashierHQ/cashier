@@ -117,14 +117,13 @@ export const idlFactory = ({ IDL }) => {
     'perference' : IDL.Opt(UserPreference),
   });
   const Result_5 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
-  const Permission = IDL.Variant({ 'Admin' : IDL.Null });
+  const Permission = IDL.Variant({
+    'TokenManager' : IDL.Null,
+    'Admin' : IDL.Null,
+  });
   const Result_6 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
-  });
-  const UpdateTokenStandardsInput = IDL.Record({
-    'token_id' : TokenId,
-    'supported_standards' : IDL.Vec(IcrcStandard),
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -137,6 +136,10 @@ export const idlFactory = ({ IDL }) => {
     'build_timestamp' : IDL.Text,
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
+  });
+  const UpdateTokenStandardsInput = IDL.Record({
+    'token_id' : TokenId,
+    'supported_standards' : IDL.Vec(IcrcStandard),
   });
   const Nft = IDL.Record({
     'token_id' : IDL.Nat,
@@ -268,14 +271,14 @@ export const idlFactory = ({ IDL }) => {
         [Result_6],
         [],
       ),
-    'admin_update_token_standards' : IDL.Func(
+    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
+    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
+    'list_tokens' : IDL.Func([], [Result_5], ['query']),
+    'token_manager_update_token_standards' : IDL.Func(
         [UpdateTokenStandardsInput],
         [Result_3],
         [],
       ),
-    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
-    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'list_tokens' : IDL.Func([], [Result_5], ['query']),
     'user_add_nft' : IDL.Func([AddUserNftInput], [Result_7], []),
     'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
     'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
