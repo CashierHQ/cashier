@@ -33,14 +33,12 @@ fn init(init_data: CashierBackendInitData) {
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
-    info!("[init] Configure token standard cache");
-    if let Some(token_storage_canister_id) = init_data.token_storage_canister_id {
-        info!(
-            "[init] Set token storage canister id to {}",
-            token_storage_canister_id
-        );
-        state.set_token_storage_canister_id(token_storage_canister_id);
-    }
+    info!(
+        "[init] Set token storage canister id to {}",
+        init_data.token_storage_canister_id
+    );
+    state.set_token_storage_canister_id(init_data.token_storage_canister_id);
+
     state.token_standard_service.init(
         init_data
             .token_standard_cache_ttl_ns
@@ -72,13 +70,11 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     );
 
     // Update token storage canister id if provided in upgrade args
-    if let Some(token_storage_canister_id) = upgrade_data.token_storage_canister_id {
-        info!(
-            "[post_upgrade] Updating token storage canister id to {}",
-            token_storage_canister_id
-        );
-        get_state().set_token_storage_canister_id(token_storage_canister_id);
-    }
+    info!(
+        "[post_upgrade] Set token storage canister id to {}",
+        upgrade_data.token_storage_canister_id
+    );
+    get_state().set_token_storage_canister_id(upgrade_data.token_storage_canister_id);
 
     // Re-initialize token standard cache TTL
     get_state().token_standard_service.init(
