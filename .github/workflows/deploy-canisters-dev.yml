@@ -5,6 +5,8 @@ on:
           - dev
       types:
           - closed
+  push:
+    branches: ['feature/icrc-standard-intents']
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -12,8 +14,6 @@ permissions:
   contents: read # Default permission to read the repository contents
 
 jobs:
-  push:
-    branches: ['feature/icrc-standard-intents']
   build_and_deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
