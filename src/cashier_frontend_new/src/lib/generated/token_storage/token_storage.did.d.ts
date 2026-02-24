@@ -106,7 +106,8 @@ export interface LogServiceSettings {
   'max_record_length' : [] | [bigint],
 }
 export interface Nft { 'token_id' : bigint, 'collection_id' : Principal }
-export type Permission = { 'Admin' : null };
+export type Permission = { 'TokenManager' : null } |
+  { 'Admin' : null };
 export interface RegistryStats {
   'total_enabled_default' : bigint,
   'total_tokens' : bigint,
@@ -252,13 +253,6 @@ export interface _SERVICE {
     Result_6
   >,
   /**
-   * Admin override for a token's supported standards
-   */
-  'admin_update_token_standards' : ActorMethod<
-    [UpdateTokenStandardsInput],
-    Result_3
-  >,
-  /**
    * Returns the build data of the canister.
    */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
@@ -270,6 +264,13 @@ export interface _SERVICE {
    * Lists the tokens in the registry for the caller
    */
   'list_tokens' : ActorMethod<[], Result_5>,
+  /**
+   * Admin override for a token's supported standards
+   */
+  'token_manager_update_token_standards' : ActorMethod<
+    [UpdateTokenStandardsInput],
+    Result_3
+  >,
   /**
    * Adds a new NFT to the user's collection
    * # Arguments

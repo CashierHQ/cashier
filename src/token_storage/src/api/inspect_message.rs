@@ -21,6 +21,9 @@ fn inspect_messages() {
         method if method.starts_with("admin_") => state
             .auth_service
             .check_has_permission(&caller, Permission::Admin),
+        method if method.starts_with("token_manager") => state
+            .auth_service
+            .check_has_any_permission(&caller, &[Permission::Admin, Permission::TokenManager]),
         method if method.starts_with("user_") => {
             if caller == Principal::anonymous() {
                 Err(AuthError::AnonimousUserNotAllowed)
