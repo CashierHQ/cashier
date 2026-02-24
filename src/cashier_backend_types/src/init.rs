@@ -12,6 +12,11 @@ pub struct CashierBackendInitData {
     /// Token fee cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_fee_ttl_ns: Option<u64>,
+    // Token storage canister id
+    pub token_storage_canister_id: Principal,
+    // Token standard cache TTL in nanoseconds (default: 168 hours / 7 days)
+    #[serde(default)]
+    pub token_standard_cache_ttl_ns: Option<u64>,
 }
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
@@ -20,4 +25,9 @@ pub struct CashierBackendUpgradeData {
     /// Token fee cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_fee_ttl_ns: Option<u64>,
+    // Token storage canister id
+    pub token_storage_canister_id: Principal,
+    // Token standard cache TTL in nanoseconds (default: 168 hours / 7 days)
+    #[serde(default)]
+    pub token_standard_cache_ttl_ns: Option<u64>,
 }

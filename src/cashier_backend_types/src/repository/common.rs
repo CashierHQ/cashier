@@ -10,6 +10,45 @@ use std::fmt::Display;
 pub type Chain = cashier_common::chain::Chain;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
+pub enum Asset {
+    IC { address: Principal },
+}
+
+impl Default for Asset {
+    fn default() -> Self {
+        Asset::IC {
+            address: Principal::anonymous(),
+        }
+    }
+}
+
+impl Asset {
+    /// Returns the chain of the asset
+    pub fn chain(&self) -> Chain {
+        match self {
+            Asset::IC { .. } => Chain::IC,
+        }
+    }
+
+    /// Returns the address of the asset
+    /// # Returns
+    /// * `Principal` - The principal address of the asset
+    pub fn get_address(&self) -> Principal {
+        match self {
+            Asset::IC { address } => *address,
+        }
+    }
+}
+
+impl Display for Asset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Asset::IC { address } => write!(f, "ic_asset_{}", address),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Wallet {
     IC {
         address: Principal,
@@ -109,5 +148,24 @@ impl AddressTypeV3 {
             AddressTypeV3::Treasury => AddressTypeShared::Treasury,
             AddressTypeV3::Link => AddressTypeShared::Link,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn it_should_get_asset_address() {
+        // Arrange
+        let ledger_id = random_principal_id();
+        let asset = Asset::IC { address: ledger_id };
+
+        // Act
+        let address = asset.get_address();
+
+        // Assert
+        assert_eq!(address, ledger_id);
     }
 }

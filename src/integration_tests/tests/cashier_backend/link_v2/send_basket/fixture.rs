@@ -3,11 +3,12 @@
 
 use crate::{
     cashier_backend::link_v2::fixture::LinkTestFixtureV2,
+    constant,
     utils::{PocketIcTestContext, icrc_112, principal::TestUser},
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::{
-    constant,
+    constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     dto::link::CreateLinkInput,
     link_v2::dto::{CreateLinkDto, ProcessActionDto},
     repository::link::v1::LinkType,
@@ -97,7 +98,7 @@ impl BasketLinkV2Fixture {
         let asset_info = self.link_fixture.asset_info_from_tokens_and_amount(
             tokens,
             amounts,
-            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+            INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
             true,
         )?;
 

@@ -5,10 +5,10 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_basket::fixture::{
     activate_basket_link_v2_fixture, create_basket_link_v2_fixture,
 };
+use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
@@ -103,7 +103,10 @@ async fn it_should_fail_receive_icp_token_basket_linkv2_if_requested_more_than_o
         assert!(create_action_result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert_eq!(msg, "Unsupported link state", "Error message mismatch");
+            assert_eq!(
+                msg, "Unsupported action type for current link state",
+                "Error message mismatch"
+            );
         } else {
             panic!("Expected ValidationErrors error");
         }

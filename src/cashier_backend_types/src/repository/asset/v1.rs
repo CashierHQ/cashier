@@ -27,6 +27,12 @@ impl Asset {
             Asset::IC { .. } => Chain::IC,
         }
     }
+
+    pub fn get_address(&self) -> Principal {
+        match self {
+            Asset::IC { address } => *address,
+        }
+    }
 }
 
 impl Display for Asset {

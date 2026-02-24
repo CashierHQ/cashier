@@ -60,6 +60,9 @@ use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
 };
 use crate::repositories::token_fee::{TokenFeeRepository, TokenFeeRepositoryStorage};
+use crate::repositories::token_standard::{
+    TokenStandardRepository, TokenStandardRepositoryStorage,
+};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -77,6 +80,7 @@ pub mod link_action;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
+pub mod token_standard;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
@@ -120,6 +124,7 @@ pub trait Repositories {
     type LinkV3: Storage<LinkV3RepositoryStorage>;
     type ActionV3: Storage<ActionV3RepositoryStorage>;
     type IntentV3: Storage<IntentV3RepositoryStorage>;
+    type TokenStandard: Storage<TokenStandardRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -137,6 +142,7 @@ pub trait Repositories {
     fn link_v3(&self) -> LinkV3Repository<Self::LinkV3>;
     fn action_v3(&self) -> ActionV3Repository<Self::ActionV3>;
     fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3>;
+    fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -159,6 +165,7 @@ impl Repositories for ThreadlocalRepositories {
     type LinkV3 = &'static LocalKey<RefCell<LinkV3RepositoryStorage>>;
     type ActionV3 = &'static LocalKey<RefCell<ActionV3RepositoryStorage>>;
     type IntentV3 = &'static LocalKey<RefCell<IntentV3RepositoryStorage>>;
+    type TokenStandard = &'static LocalKey<RefCell<TokenStandardRepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -222,6 +229,10 @@ impl Repositories for ThreadlocalRepositories {
 
     fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3> {
         IntentV3Repository::new(&INTENT_V3_STORE)
+    }
+
+    fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard> {
+        TokenStandardRepository::new(&TOKEN_STANDARD_STORE)
     }
 }
 
@@ -412,6 +423,9 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_V3_MEMORY_ID)),
         )
     );
+
+    static TOKEN_STANDARD_STORE: RefCell<TokenStandardRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
 #[cfg(test)]
@@ -438,6 +452,7 @@ pub mod tests {
         link_v3: Rc<RefCell<LinkV3RepositoryStorage>>,
         action_v3: Rc<RefCell<ActionV3RepositoryStorage>>,
         intent_v3: Rc<RefCell<IntentV3RepositoryStorage>>,
+        token_standard: Rc<RefCell<TokenStandardRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -495,6 +510,7 @@ pub mod tests {
                 intent_v3: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(INTENT_V3_MEMORY_ID),
                 ))),
+                token_standard: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
             }
         }
     }
@@ -516,6 +532,7 @@ pub mod tests {
         type LinkV3 = Rc<RefCell<LinkV3RepositoryStorage>>;
         type ActionV3 = Rc<RefCell<ActionV3RepositoryStorage>>;
         type IntentV3 = Rc<RefCell<IntentV3RepositoryStorage>>;
+        type TokenStandard = Rc<RefCell<TokenStandardRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -579,6 +596,10 @@ pub mod tests {
 
         fn intent_v3(&self) -> IntentV3Repository<Self::IntentV3> {
             IntentV3Repository::new(self.intent_v3.clone())
+        }
+
+        fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard> {
+            TokenStandardRepository::new(self.token_standard.clone())
         }
     }
 }

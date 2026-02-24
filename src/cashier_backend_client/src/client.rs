@@ -331,6 +331,15 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     ) -> CanisterClientResult<Result<DisableLinkResponseV3, CanisterError>> {
         self.client.update("user_disable_link_v3", (link_id,)).await
     }
+
+    /// Flushes the token standard cache.
+    pub async fn admin_flush_token_standard_cache(
+        &self,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_flush_token_standard_cache", ())
+            .await
+    }
 }
 
 #[cfg(feature = "pocket_ic")]

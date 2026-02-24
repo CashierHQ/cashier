@@ -1,12 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v2::links::{
-    shared::send_link::states::{
-        active::ActiveState, created::CreatedState, inactive::InactiveState,
-    },
-    traits::{LinkV2, LinkV2State},
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -23,19 +17,26 @@ use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
-pub struct AirdropLink<M: TransactionManager + 'static> {
+use crate::apps::{
+    link_v2::links::{
+        shared::send_link::states::{
+            active::ActiveState, created::CreatedState, inactive::InactiveState,
+        },
+        traits::{LinkV2, LinkV2State},
+    },
+    token_balance::traits::TokenBalanceFetcher,
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct AirdropLink {
     pub link: Link,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> AirdropLink<M> {
-    pub fn new(link: Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
-        Self {
-            link,
-            canister_id,
-            transaction_manager,
-        }
+impl AirdropLink {
+    pub fn new(link: Link, canister_id: Principal) -> Self {
+        Self { link, canister_id }
     }
 
     /// Create a new AirdropLink instance
@@ -56,7 +57,6 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
         max_use: u64,
         created_at_ts: u64,
         canister_id: Principal,
-        transaction_manager: Rc<M>,
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
@@ -70,65 +70,79 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
             create_at: created_at_ts,
         };
 
-        Self::new(new_link, canister_id, transaction_manager)
-    }
-
-    /// Get the appropriate state handler for the current link state
-    /// # Arguments
-    /// * `link` - The Link model
-    /// * `canister_id` - The canister ID of the backend canister
-    /// * `fee_map` - A map of canister principals to their corresponding fees
-    /// # Returns
-    /// * `Result<Box<dyn LinkV2State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
-    pub fn get_state_handler(
-        link: &Link,
-        canister_id: Principal,
-        transaction_manager: Rc<M>,
-    ) -> Result<Box<dyn LinkV2State>, CanisterError> {
-        match link.state {
-            LinkState::CreateLink => Ok(Box::new(CreatedState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkState::Active => Ok(Box::new(ActiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkState::Inactive => Ok(Box::new(InactiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            _ => Err(CanisterError::ValidationErrors(
-                "Unsupported link state".to_string(),
-            )),
-        }
+        Self::new(new_link, canister_id)
     }
 }
 
-impl<M: TransactionManager + 'static> LinkV2 for AirdropLink<M> {
+impl LinkV2 for AirdropLink {
     /// Creates an action for the AirdropLink.
     /// # Arguments
     /// * `caller` - The caller principal.
     /// * `action_type` - The type of action to be created.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action_type: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        _token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state = AirdropLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let create_action_result = state.create_action(caller, action_type).await?;
-            Ok(create_action_result)
-        })
+        match link.state {
+            LinkState::CreateLink => {
+                let state_handler = CreatedState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        _token_balance_service,
+                    )
+                    .await
+            }
+            LinkState::Active => {
+                let state_handler = ActiveState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        _token_balance_service,
+                    )
+                    .await
+            }
+            LinkState::Inactive => {
+                let state_handler = InactiveState::new(&link, canister_id);
+                state_handler
+                    .create_action(
+                        caller,
+                        action_type,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        _token_balance_service,
+                    )
+                    .await
+            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for current link state".to_string(),
+            )),
+        }
     }
 
     /// Processes an action for the AirdropLink.
@@ -139,23 +153,86 @@ impl<M: TransactionManager + 'static> LinkV2 for AirdropLink<M> {
     /// * `intent_txs_map` - A map of intent IDs to their corresponding transactions.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the processing fails.
-    fn process_action(
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state = AirdropLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let process_action_result = state
-                .process_action(caller, action, intents, intent_txs_map)
-                .await?;
-            Ok(process_action_result)
-        })
+        match link.state {
+            LinkState::CreateLink => {
+                let state_handler = CreatedState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            LinkState::Active => {
+                let state_handler = ActiveState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            LinkState::Inactive => {
+                let state_handler = InactiveState::new(&link, canister_id);
+                state_handler
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await
+            }
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for current link state".to_string(),
+            )),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::asset::v1::Asset;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn it_should_create_airdrop_link() {
+        // Arrange
+        let creator = random_principal_id();
+        let ledger_id = random_principal_id();
+        let title = "Test Airdrop Link".to_string();
+        let asset = Asset::IC { address: ledger_id };
+        let asset_info = vec![AssetInfo {
+            asset,
+            label: "IC Token".to_string(),
+            amount_per_link_use_action: Nat::from(1000u64),
+        }];
+        let max_use = 5;
+        let created_at_ts = 1_700_000_000;
+        let canister_id = random_principal_id();
+
+        // Act
+        let airdrop_link = AirdropLink::create(
+            creator,
+            title.clone(),
+            asset_info.clone(),
+            max_use,
+            created_at_ts,
+            canister_id,
+        );
+
+        // Assert
+        assert_eq!(airdrop_link.link.link_type, LinkType::SendAirdrop);
+        assert_eq!(airdrop_link.link.title, title);
+        assert_eq!(airdrop_link.link.asset_info, asset_info);
+        assert_eq!(airdrop_link.link.link_use_action_max_count, max_use);
+        assert_eq!(airdrop_link.link.creator, creator);
+        assert_eq!(airdrop_link.link.state, LinkState::CreateLink);
+        assert_eq!(airdrop_link.link.create_at, created_at_ts);
     }
 }

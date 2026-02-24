@@ -3,12 +3,12 @@
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_basket::fixture::BasketLinkV2Fixture;
+use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::link_id_to_account::fee_treasury_account;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Nat, Principal};
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::link::v1::LinkState;

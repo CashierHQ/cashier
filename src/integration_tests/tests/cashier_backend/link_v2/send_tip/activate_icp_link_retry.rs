@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
-use crate::constant::ICP_PRINCIPAL;
+use crate::constant::{ICP_PRINCIPAL, ICP_TOKEN};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::constant::{self, ICP_TOKEN};
+use cashier_backend_types::constant::{self};
 use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};

@@ -333,8 +333,8 @@
           "$ref": "#/definitions/LinkState"
         },
         "created_at_ts": {
-          "type": "integer",
-          "minimum": 0,
+          "type": "string",
+          "format": "rust-u64",
           "description": "Creation timestamp in nanoseconds since Unix epoch (IC time)"
         }
       },

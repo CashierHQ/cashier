@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
+use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_common::constant::CREATE_LINK_FEE;
 use icrc_ledger_types::icrc1::account::Account;
 use std::time::Duration;

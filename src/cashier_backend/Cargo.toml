@@ -36,6 +36,7 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 transaction_manager = { workspace = true }
+token_storage_types = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
