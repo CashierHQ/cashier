@@ -181,12 +181,12 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Admin override for a token's supported standards
-    pub async fn admin_update_token_standards(
+    pub async fn token_manager_update_token_standards(
         &self,
         input: UpdateTokenStandardsInput,
     ) -> CanisterClientResult<Result<(), String>> {
         self.client
-            .update("admin_update_token_standards", (input,))
+            .update("token_manager_update_token_standards", (input,))
             .await
     }
 }

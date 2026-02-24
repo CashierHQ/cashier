@@ -8,6 +8,7 @@ mod inspect_message;
 pub mod nft;
 mod state;
 pub mod token;
+pub mod token_manager;
 
 use candid::Principal;
 use cashier_common::build_data::BuildData;
