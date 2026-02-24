@@ -29,6 +29,11 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
+    let transaction_manager = get_state().transaction_manager_v2;
+    let token_fee_service = get_state().token_fee_service;
+    let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
+
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -38,28 +43,22 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
 
     let _ = request_lock_service.create(&key, created_at)?;
     let res = link_v2_service
-        .create_link(msg_caller(), canister_id, input, created_at)
+        .create_link(
+            msg_caller(),
+            canister_id,
+            input,
+            created_at,
+            transaction_manager,
+            token_fee_service,
+            token_standard_service,
+            token_balance_service,
+        )
         .await;
     let _ = request_lock_service.drop(&RequestLockKey::CreateLink {
         user_principal: caller,
     });
 
     res
-}
-
-/// Disables an existing link V2
-/// # Arguments
-/// * `link_id` - The ID of the link to disable
-/// # Returns
-/// * `Ok(LinkDto)` - The disabled link data
-/// * `Err(CanisterError)` - If disabling fails or unauthorized
-#[update(guard = "is_not_anonymous")]
-fn user_disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
-    info!("[disable_link_v2]");
-    debug!("[disable_link_v2] link_id: {link_id}");
-
-    let mut link_v2_service = get_state().link_v2_service;
-    link_v2_service.disable_link(msg_caller(), link_id)
 }
 
 /// Creates a new action V2.
@@ -75,6 +74,11 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
+    let transaction_manager = get_state().transaction_manager_v2;
+    let token_fee_service = get_state().token_fee_service;
+    let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
+
     let canister_id = get_state().env.id();
     let caller = msg_caller();
     let key = RequestLockKey::CreateAction {
@@ -85,7 +89,16 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v2_service
-        .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
+        .create_action(
+            msg_caller(),
+            canister_id,
+            &input.link_id,
+            input.action_type,
+            transaction_manager,
+            token_fee_service,
+            token_standard_service,
+            token_balance_service,
+        )
         .await;
     let _ = request_lock_service.drop(&key);
 
@@ -107,6 +120,8 @@ async fn user_process_action_v2(
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
+    let transaction_manager = get_state().transaction_manager_v2;
+
     let canister_id = get_state().env.id();
     let caller = msg_caller();
     let key = RequestLockKey::ProcessAction {
@@ -116,7 +131,12 @@ async fn user_process_action_v2(
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v2_service
-        .process_action(msg_caller(), canister_id, &input.action_id)
+        .process_action(
+            msg_caller(),
+            canister_id,
+            &input.action_id,
+            transaction_manager,
+        )
         .await;
     let _ = request_lock_service.drop(&key);
 
@@ -167,7 +187,24 @@ async fn get_link_details_v2(
     debug!("[get_link_details_v2] link_id: {link_id}, options: {options:?}");
 
     let link_v2_service = get_state().link_v2_service;
+    let transaction_manager = get_state().transaction_manager_v2;
+
     link_v2_service
-        .get_link_details(msg_caller(), link_id, options)
+        .get_link_details(msg_caller(), link_id, options, transaction_manager)
         .await
+}
+
+/// Disables an existing link V2
+/// # Arguments
+/// * `link_id` - The ID of the link to disable
+/// # Returns
+/// * `Ok(LinkDto)` - The disabled link data
+/// * `Err(CanisterError)` - If disabling fails or unauthorized
+#[update(guard = "is_not_anonymous")]
+fn user_disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[disable_link_v2]");
+    debug!("[disable_link_v2] link_id: {link_id}");
+
+    let mut link_v2_service = get_state().link_v2_service;
+    link_v2_service.disable_link(msg_caller(), link_id)
 }

@@ -18,7 +18,9 @@ use transaction_manager::{
     utils::calculator::calculate_link_balance_map,
 };
 
-use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
+use crate::apps::{
+    link_v2::links::shared::utils::link_asset_principals, token_fee::traits::TokenFeeCache,
+};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -39,11 +41,15 @@ impl SendAction {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<SendAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(
+    pub async fn create<F>(
         link: &Link,
         sender_id: Principal,
         canister_id: Principal,
-    ) -> Result<Self, CanisterError> {
+        mut token_fee_service: F,
+    ) -> Result<Self, CanisterError>
+    where
+        F: TokenFeeCache + 'static,
+    {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::Send,
@@ -55,7 +61,10 @@ impl SendAction {
         let link_account = get_link_account(&link.id, canister_id)?;
 
         // token_fee_map
-        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+        let asset_principals = link_asset_principals(link);
+        let token_fee_map = token_fee_service
+            .get_batch_tokens_fee(&asset_principals)
+            .await?;
 
         let link_token_balance_map = calculate_link_balance_map(
             &link.asset_info,

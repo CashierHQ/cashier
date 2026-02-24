@@ -309,3 +309,25 @@ pub fn user_update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<
 
     Ok(())
 }
+
+/// Get token from registry by token id
+/// # Arguments
+/// * `ledger_id` - The principal ID of the ledger associated with the token
+/// # Returns
+/// * Ok(TokenDto) - The token details if found
+/// * Err(String) - An error message if the token is not found
+#[query]
+pub fn get_token_by_id(ledger_id: Principal) -> Result<TokenDto, String> {
+    debug!("[get_token_registry] token_id: {ledger_id:?}");
+
+    let state = get_state();
+    let token_registry_service = state.token_registry;
+    let token_id = TokenId::IC { ledger_id };
+
+    match token_registry_service.get_token(&token_id) {
+        Some(registry_token) => Ok(TokenDto::from(registry_token)),
+        None => Err(format!(
+            "Token with id '{token_id:?}' not found in registry"
+        )),
+    }
+}

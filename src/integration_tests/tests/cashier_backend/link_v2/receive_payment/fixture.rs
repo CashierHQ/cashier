@@ -3,6 +3,7 @@
 
 use crate::{
     cashier_backend::link_v2::fixture::LinkTestFixtureV2,
+    constant::ICP_TOKEN,
     utils::{PocketIcTestContext, icrc_112, principal::TestUser},
 };
 use candid::{Nat, Principal};
@@ -110,7 +111,7 @@ impl PaymentLinkV2Fixture {
             .await;
 
         for token in self.tokens.iter() {
-            if token == constant::ICP_TOKEN {
+            if token == ICP_TOKEN {
                 continue;
             }
             link_fixture

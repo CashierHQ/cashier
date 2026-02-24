@@ -34,7 +34,6 @@ pub struct IcTransactionManager<E: IcEnvironment> {
     pub dependency_analyzer: DependencyAnalyzer,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
         let intent_adapter = IcIntentAdapter;
@@ -224,7 +223,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use candid::Nat;
     use candid::Principal;

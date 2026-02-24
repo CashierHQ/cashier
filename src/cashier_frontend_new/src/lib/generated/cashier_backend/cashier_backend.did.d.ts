@@ -63,7 +63,9 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
+  'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
+  'token_standard_cache_ttl_ns' : [] | [bigint],
 }
 export type Chain = { 'IC' : null };
 export interface CreateActionInput {
@@ -332,6 +334,12 @@ export interface _SERVICE {
    * Currently always returns `Ok(())` after clearing the token's cached fee.
    */
   'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
+  /**
+   * Flushes the token standard cache.
+   * This admin endpoint clears all cached token standard information, forcing subsequent queries
+   * to fetch fresh data from the token storage canister.
+   */
+  'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
   /**
    * Enables/disables the inspect message.
    */
