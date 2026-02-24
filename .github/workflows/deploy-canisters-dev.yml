@@ -6,7 +6,7 @@ on:
       types:
           - closed
   push:
-    branches: ['feature/icrc-standard-intents']
+    branches: ['fixbug/fix-deploy-issue']
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
