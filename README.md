@@ -154,7 +154,6 @@ To do
 - Wallet asset swaps.
 - ck tokens import export.
 - Additional chain support (BTC, ETH, SOL).
-- 
 - Backoffice (analytics, support solutions, etc).
 
 ## License
