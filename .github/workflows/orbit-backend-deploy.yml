@@ -155,7 +155,7 @@ jobs:
           owner=${{ vars.ORBIT_STATION_ID }}
           ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
           token_storage_canister_id=${{ vars.TOKEN_STORAGE_CANISTER_ID }}
-          just build_backend_args "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
+          just build_backend_args "$owner" "$token_storage_canister_id" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
           just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args.txt
           echo "Backend args:"
           cat backend_args.txt
