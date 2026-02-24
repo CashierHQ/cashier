@@ -11,7 +11,13 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin};
+use std::collections::HashMap;
+use transaction_manager::traits::TransactionManager;
+
+use crate::apps::{
+    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
 
 pub trait LinkV2 {
     /// Create an action associated with the link
@@ -22,11 +28,20 @@ pub trait LinkV2 {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
     /// Process an action associated with the link
     /// # Arguments
@@ -38,15 +53,16 @@ pub trait LinkV2 {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
-    fn process_action(
+    async fn process_action<M>(
         &self,
-        _caller: Principal,
-        _action: Action,
-        _intents: Vec<Intent>,
-        _intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
-    }
+        caller: Principal,
+        action: Action,
+        intents: Vec<Intent>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static;
 }
 
 pub trait LinkV2State {
@@ -58,13 +74,20 @@ pub trait LinkV2State {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
-        _caller: Principal,
-        _action: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
-    }
+        caller: Principal,
+        action: ActionType,
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
     /// Process an action associated with the link
     /// # Arguments
@@ -76,13 +99,14 @@ pub trait LinkV2State {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
-    fn process_action(
+    async fn process_action<M>(
         &self,
-        _caller: Principal,
-        _action: Action,
-        _intents: Vec<Intent>,
-        _intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
-    }
+        caller: Principal,
+        action: Action,
+        intents: Vec<Intent>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManager + 'static;
 }

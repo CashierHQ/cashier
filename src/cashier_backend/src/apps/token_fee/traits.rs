@@ -29,8 +29,18 @@ pub trait TokenFetcher: Clone + Send + Sync {
     /// * The canister does not support the fee query
     /// * The response cannot be decoded properly
     /// * Any network or inter-canister communication error occurs
-    fn fetch_fee(
-        &self,
-        address: Principal,
-    ) -> impl std::future::Future<Output = Result<Nat, CanisterError>> + Send;
+    async fn fetch_fee(&self, address: Principal) -> Result<Nat, CanisterError>;
+}
+
+pub trait TokenFeeCache {
+    /// Retrieves cached token fees for a list of token addresses.
+    /// # Arguments
+    /// * `token_addresses` - Slice of token canister principals to fetch fees for
+    /// # Returns
+    /// * `Ok(HashMap<Principal, Nat>)` - Mapping of token principals to their fees
+    /// * `Err(CanisterError)` - If fetching fees fails for any token
+    async fn get_batch_tokens_fee(
+        &mut self,
+        token_addresses: &[Principal],
+    ) -> Result<std::collections::HashMap<Principal, Nat>, CanisterError>;
 }

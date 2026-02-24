@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
-use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
+use crate::constant::{CK_BTC_PRINCIPAL, CKBTC_ICRC_TOKEN, ICP_PRINCIPAL};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::constant::{self, CKBTC_ICRC_TOKEN};
+use cashier_backend_types::constant::{self};
 use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
@@ -29,7 +29,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_return_same_icrc112_if_icrc
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
         let _ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
@@ -277,7 +277,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_icrc1
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
