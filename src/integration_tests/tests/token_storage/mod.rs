@@ -7,6 +7,7 @@ pub mod bitcoin;
 pub mod inspect_message;
 pub mod nft;
 pub mod token;
+pub mod token_manager;
 
 /// Tests that the token storage canister can be deployed.
 #[tokio::test]

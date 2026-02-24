@@ -1,7 +1,4 @@
-use token_storage_types::{
-    auth::Permission,
-    token::{ChainTokenDetails, IcrcStandard, UpdateTokenStandardsInput},
-};
+use token_storage_types::auth::Permission;
 
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
@@ -117,107 +114,6 @@ async fn should_not_allow_user_to_set_and_remove_permissions() {
                 .to_string()
                 .contains("NotAuthorized")
         );
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
-async fn should_allow_admin_to_update_token_standards() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
-        let admin = TestUser::TokenStorageAdmin.get_principal();
-        let admin_client = ctx.new_token_storage_client(admin);
-
-        // Get ICP token from registry
-        let tokens = admin_client.list_tokens().await.unwrap().unwrap();
-        let icp_token = tokens.tokens.iter().find(|t| t.symbol == "ICP").unwrap();
-        let token_id = icp_token.id.clone();
-
-        // Assert BEFORE: token should have default standards (ICRC1 + ICRC2 from fixture)
-        assert!(!icp_token.details.supports_standard(&IcrcStandard::ICRC3));
-
-        // Act: update standards to include ICRC-3
-        let input = UpdateTokenStandardsInput {
-            token_id: token_id.clone(),
-            supported_standards: vec![
-                IcrcStandard::ICRC1,
-                IcrcStandard::ICRC2,
-                IcrcStandard::ICRC3,
-            ],
-        };
-        admin_client
-            .admin_update_token_standards(input)
-            .await
-            .unwrap()
-            .unwrap();
-
-        // Assert AFTER: re-fetch and verify standards changed
-        let tokens_after = admin_client.list_tokens().await.unwrap().unwrap();
-        let icp_after = tokens_after
-            .tokens
-            .iter()
-            .find(|t| t.symbol == "ICP")
-            .unwrap();
-
-        // Verify the new standards are exactly what we set
-        match &icp_after.details {
-            ChainTokenDetails::IC {
-                supported_standards,
-                ..
-            } => {
-                assert_eq!(
-                    supported_standards,
-                    &vec![
-                        IcrcStandard::ICRC1,
-                        IcrcStandard::ICRC2,
-                        IcrcStandard::ICRC3
-                    ]
-                );
-            }
-        }
-
-        // Verify helper methods work correctly on updated token
-        assert!(icp_after.details.supports_icrc2());
-        assert!(icp_after.details.supports_standard(&IcrcStandard::ICRC3));
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
-async fn should_not_allow_user_to_update_token_standards() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
-        let admin = TestUser::TokenStorageAdmin.get_principal();
-        let admin_client = ctx.new_token_storage_client(admin);
-        let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_token_storage_client(user);
-
-        // Disable inspect message to test direct endpoint behavior
-        admin_client
-            .admin_inspect_message_enable(false)
-            .await
-            .unwrap()
-            .unwrap();
-
-        // Get ICP token
-        let tokens = admin_client.list_tokens().await.unwrap().unwrap();
-        let icp_token = tokens.tokens.iter().find(|t| t.symbol == "ICP").unwrap();
-
-        // Act: user tries to update standards
-        let input = UpdateTokenStandardsInput {
-            token_id: icp_token.id.clone(),
-            supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-        };
-        let result = user_client.admin_update_token_standards(input).await;
-
-        // Assert: should fail with NotAuthorized
-        assert!(result.unwrap_err().to_string().contains("NotAuthorized"));
 
         Ok(())
     })
