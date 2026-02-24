@@ -28,6 +28,15 @@ impl Asset {
             Asset::IC { .. } => Chain::IC,
         }
     }
+
+    /// Returns the address of the asset
+    /// # Returns
+    /// * `Principal` - The principal address of the asset
+    pub fn get_address(&self) -> Principal {
+        match self {
+            Asset::IC { address } => *address,
+        }
+    }
 }
 
 impl Display for Asset {
@@ -108,5 +117,24 @@ impl From<Account> for Wallet {
             address: value.owner,
             subaccount: value.subaccount,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn it_should_get_asset_address() {
+        // Arrange
+        let ledger_id = random_principal_id();
+        let asset = Asset::IC { address: ledger_id };
+
+        // Act
+        let address = asset.get_address();
+
+        // Assert
+        assert_eq!(address, ledger_id);
     }
 }

@@ -235,6 +235,15 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     pub async fn icrc114_validate(&self, args: Icrc114ValidateArgs) -> CanisterClientResult<bool> {
         self.client.update("icrc114_validate", (args,)).await
     }
+
+    /// Flushes the token standard cache.
+    pub async fn admin_flush_token_standard_cache(
+        &self,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_flush_token_standard_cache", ())
+            .await
+    }
 }
 
 #[cfg(feature = "pocket_ic")]

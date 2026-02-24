@@ -5,10 +5,10 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_tip::fixture::{
     activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
+use crate::constant::ICP_TOKEN;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::constant::ICP_TOKEN;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::link::v1::LinkState;
 

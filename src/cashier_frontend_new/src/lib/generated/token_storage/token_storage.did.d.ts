@@ -123,6 +123,8 @@ export type Result = { 'Ok' : RegistryStats } |
   { 'Err' : string };
 export type Result_1 = { 'Ok' : Array<[TokenId, bigint]> } |
   { 'Err' : string };
+export type Result_10 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : UserTokens } |
   { 'Err' : string };
 export type Result_3 = { 'Ok' : null } |
@@ -133,11 +135,11 @@ export type Result_5 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
 export type Result_6 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : UserNftDto } |
+export type Result_7 = { 'Ok' : TokenDto } |
+  { 'Err' : string };
+export type Result_8 = { 'Ok' : UserNftDto } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : UserBridgeTransactionDto } |
-  { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : string } |
+export type Result_9 = { 'Ok' : UserBridgeTransactionDto } |
   { 'Err' : CanisterError };
 export interface TokenDto {
   'id' : TokenId,
@@ -257,6 +259,15 @@ export interface _SERVICE {
    */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   /**
+   * Get token from registry by token id
+   * # Arguments
+   * * `ledger_id` - The principal ID of the ledger associated with the token
+   * # Returns
+   * * Ok(TokenDto) - The token details if found
+   * * Err(String) - An error message if the token is not found
+   */
+  'get_token_by_id' : ActorMethod<[Principal], Result_7>,
+  /**
    * Returns the inspect message status.
    */
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
@@ -265,7 +276,7 @@ export interface _SERVICE {
    */
   'list_tokens' : ActorMethod<[], Result_5>,
   /**
-   * Admin override for a token's supported standards
+   * Override for a token's supported standards
    */
   'token_manager_update_token_standards' : ActorMethod<
     [UpdateTokenStandardsInput],
@@ -278,7 +289,7 @@ export interface _SERVICE {
    * # Returns
    * * `UserNftDto` - The added NFT with user information
    */
-  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_7>,
+  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_8>,
   'user_add_token' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Add multiple tokens to the user's list
@@ -295,7 +306,7 @@ export interface _SERVICE {
    */
   'user_create_bridge_transaction' : ActorMethod<
     [CreateBridgeTransactionInputArg],
-    Result_8
+    Result_9
   >,
   'user_get_bridge_transaction_by_id' : ActorMethod<
     [string],
@@ -318,7 +329,7 @@ export interface _SERVICE {
    * # Returns
    * * `String` - The BTC address of the user, or a CanisterError
    */
-  'user_get_btc_address' : ActorMethod<[], Result_9>,
+  'user_get_btc_address' : ActorMethod<[], Result_10>,
   /**
    * Retrieves the NFTs owned by the calling user
    * # Arguments
@@ -337,7 +348,7 @@ export interface _SERVICE {
    */
   'user_update_bridge_transaction' : ActorMethod<
     [UpdateBridgeTransactionInputArg],
-    Result_8
+    Result_9
   >,
   'user_update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],

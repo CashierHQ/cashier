@@ -3,16 +3,17 @@
 
 use crate::cashier_backend::link_v2::receive_payment::fixture::PaymentLinkV2Fixture;
 use crate::{
-    constant::ICP_PRINCIPAL,
+    constant::{self, ICP_PRINCIPAL},
     utils::{principal::TestUser, with_pocket_ic_context},
 };
 use candid::{Nat, Principal};
+use cashier_backend_types::constant::FEE_TREASURY_PRINCIPAL;
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
+use cashier_backend_types::repository::link::v1::LinkType;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_backend_types::{constant, repository::link::v1::LinkType};
 use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
@@ -103,10 +104,7 @@ async fn it_should_create_icp_token_payment_linkv2_successfully() {
         match intent1.r#type {
             IntentType::TransferFrom(ref transfer_from) => {
                 assert_eq!(transfer_from.from, Wallet::new(caller));
-                assert_eq!(
-                    transfer_from.to,
-                    Wallet::new(constant::FEE_TREASURY_PRINCIPAL)
-                );
+                assert_eq!(transfer_from.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
                 assert_eq!(
                     transfer_from.spender,
                     Wallet::new(ctx.cashier_backend_principal)
@@ -142,7 +140,7 @@ async fn it_should_create_icp_token_payment_linkv2_successfully() {
         match tx2.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
+                assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
                 assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
                 assert!(data.memo.is_some());
@@ -283,10 +281,7 @@ async fn it_should_create_icrc_token_payment_linkv2_successfully() {
         match intent1.r#type {
             IntentType::TransferFrom(ref transfer_from) => {
                 assert_eq!(transfer_from.from, Wallet::new(caller));
-                assert_eq!(
-                    transfer_from.to,
-                    Wallet::new(constant::FEE_TREASURY_PRINCIPAL)
-                );
+                assert_eq!(transfer_from.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
                 assert_eq!(
                     transfer_from.spender,
                     Wallet::new(ctx.cashier_backend_principal)
@@ -322,7 +317,7 @@ async fn it_should_create_icrc_token_payment_linkv2_successfully() {
         match tx2.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
+                assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
                 assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
                 assert!(data.memo.is_some());

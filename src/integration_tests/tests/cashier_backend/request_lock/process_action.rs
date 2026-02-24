@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
+use crate::constant;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
 use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::{ProcessActionDto, ProcessActionV2Input};
 use cashier_backend_types::repository::action::v1::ActionType;
-use cashier_backend_types::{constant, error::CanisterError};
 
 #[tokio::test]
 async fn test_request_lock_for_process_action() {

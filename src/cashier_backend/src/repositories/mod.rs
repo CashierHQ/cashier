@@ -42,6 +42,9 @@ use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
 };
 use crate::repositories::token_fee::{TokenFeeRepository, TokenFeeRepositoryStorage};
+use crate::repositories::token_standard::{
+    TokenStandardRepository, TokenStandardRepositoryStorage,
+};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -59,6 +62,7 @@ pub mod link_action;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
+pub mod token_standard;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
@@ -96,6 +100,7 @@ pub trait Repositories {
     type UserAction: Storage<UserActionRepositoryStorage>;
     type UserLink: Storage<UserLinkRepositoryStorage>;
     type UserLinkAction: Storage<UserLinkActionRepositoryStorage>;
+    type TokenStandard: Storage<TokenStandardRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -110,6 +115,7 @@ pub trait Repositories {
     fn user_action(&self) -> UserActionRepository<Self::UserAction>;
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
     fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction>;
+    fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -129,6 +135,7 @@ impl Repositories for ThreadlocalRepositories {
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
     type UserLinkAction = &'static LocalKey<RefCell<UserLinkActionRepositoryStorage>>;
+    type TokenStandard = &'static LocalKey<RefCell<TokenStandardRepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -180,6 +187,10 @@ impl Repositories for ThreadlocalRepositories {
 
     fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction> {
         UserLinkActionRepository::new(&USER_LINK_ACTION_STORE)
+    }
+
+    fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard> {
+        TokenStandardRepository::new(&TOKEN_STANDARD_STORE)
     }
 }
 
@@ -337,6 +348,9 @@ thread_local! {
     /// Token fee cache - volatile BTreeMap (not persisted to stable memory)
     pub static TOKEN_FEE_CACHE_STORE: RefCell<TokenFeeRepositoryStorage> =
         const { RefCell::new(std::collections::BTreeMap::new()) };
+
+    static TOKEN_STANDARD_STORE: RefCell<TokenStandardRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
 #[cfg(test)]
@@ -361,6 +375,7 @@ pub mod tests {
         user_action: Rc<RefCell<UserActionRepositoryStorage>>,
         user_link: Rc<RefCell<UserLinkRepositoryStorage>>,
         user_link_action: Rc<RefCell<UserLinkActionRepositoryStorage>>,
+        token_standard: Rc<RefCell<TokenStandardRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -409,6 +424,7 @@ pub mod tests {
                 user_link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_LINK_ACTION_MEMORY_ID),
                 ))),
+                token_standard: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
             }
         }
     }
@@ -427,6 +443,7 @@ pub mod tests {
         type UserAction = Rc<RefCell<UserActionRepositoryStorage>>;
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
         type UserLinkAction = Rc<RefCell<UserLinkActionRepositoryStorage>>;
+        type TokenStandard = Rc<RefCell<TokenStandardRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -478,6 +495,10 @@ pub mod tests {
 
         fn user_link_action(&self) -> UserLinkActionRepository<Self::UserLinkAction> {
             UserLinkActionRepository::new(self.user_link_action.clone())
+        }
+
+        fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard> {
+            TokenStandardRepository::new(self.token_standard.clone())
         }
     }
 }
