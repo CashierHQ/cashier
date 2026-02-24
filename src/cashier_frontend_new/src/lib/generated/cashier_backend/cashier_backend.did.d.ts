@@ -63,7 +63,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
-  'token_storage_canister_id' : [] | [Principal],
+  'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
   'token_standard_cache_ttl_ns' : [] | [bigint],
 }
