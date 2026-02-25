@@ -7,11 +7,8 @@
     trackEvent,
     AnalyticsEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { authState } from "$modules/auth/state/auth.svelte";
   // Track Link list landing on page load
-  trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING, {
-    user_id: authState.account?.owner ?? "",
-  });
+  trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING, {});
 </script>
 
 <div class="w-full">

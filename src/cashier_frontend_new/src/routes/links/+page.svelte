@@ -20,9 +20,7 @@
     const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
 
     // Track Link list plus (user pressed + button)
-    trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {
-      user_id: authState.account.owner,
-    });
+    trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
     goto(resolve(`/link/create/${tempLink.id}`));
   }
 </script>

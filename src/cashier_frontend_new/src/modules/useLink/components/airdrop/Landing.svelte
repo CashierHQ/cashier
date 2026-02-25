@@ -11,7 +11,6 @@
     trackEvent,
     AnalyticsEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
     userLink,
@@ -98,7 +97,6 @@
         const link = userLink.linkDetail?.link;
         if (link) {
           trackEvent(AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_IN, {
-            user_id: authState.account?.owner ?? "",
             link_type: link.link_type,
             BE_link_id: userLink.linkDetail?.id ?? "",
           });

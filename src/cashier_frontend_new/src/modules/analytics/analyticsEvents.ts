@@ -44,93 +44,73 @@ export enum AnalyticsEvent {
 
 /**
  * Expected properties per analytics event (without timestamp).
- * This is a reference: trackEvent currently accepts a generic Record,
- * but this map defines which fields must be present for each event.
+ * user_id is set globally via amplitude.setUserId(), not per-event.
  */
 export type AnalyticsEventPayloadMap = {
   // Link creation funnel
   [AnalyticsEvent.LINK_CREATION_LANDING]: Record<string, never>;
-  [AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING]: {
-    user_id: string;
-  };
-  [AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS]: {
-    user_id: string;
-  };
+  [AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING]: Record<string, never>;
+  [AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS]: Record<string, never>;
   [AnalyticsEvent.LINK_CREATION_TEMPLATE_LANDING]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_TEMPLATE_CONTINUE]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_ASSET_LANDING]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_GATE_LANDING]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_GATE_CONTINUE]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED]: {
-    user_id: string;
     link_type: string;
     FE_link_id: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_LANDING]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
 
   // Withdraw funnel
   [AnalyticsEvent.WITHDRAW_LINK_DETAILS]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_LINK_END]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_LANDING]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.WITHDRAW_ACTION_SUCCESS]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
@@ -149,47 +129,38 @@ export type AnalyticsEventPayloadMap = {
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_LOGGED_IN]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_IN]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_PAGE_LOCKED]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_GATE_PAGE]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_GATE_CONTINUE]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_PAGE_UNLOCKED]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_WALLET_USE_UNLOCKED]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };
   [AnalyticsEvent.USE_ACTION_SUCCESS]: {
-    user_id: string;
     link_type: string;
     BE_link_id: string;
   };

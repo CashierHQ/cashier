@@ -8,7 +8,6 @@
     trackEvent,
     AnalyticsEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { authState } from "$modules/auth/state/auth.svelte";
   import { onMount } from "svelte";
 
   const {
@@ -23,7 +22,6 @@
 
   onMount(() => {
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING, {
-      user_id: authState.account?.owner ?? "",
       link_type: link.createLinkData.linkType,
       FE_link_id: link.id ?? "",
     });
@@ -36,7 +34,6 @@
     isCreating = true;
 
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE, {
-      user_id: authState.account?.owner ?? "",
       link_type: link.createLinkData.linkType,
       FE_link_id: link.id ?? "",
     });
@@ -44,7 +41,6 @@
     try {
       await link.goNext();
       trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED, {
-        user_id: authState.account?.owner ?? "",
         link_type: link.createLinkData.linkType,
         FE_link_id: link.id ?? "",
         BE_link_id: link.id ?? "",
