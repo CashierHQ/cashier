@@ -34,7 +34,7 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
   set -e
   just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
-  export TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage)
+  export TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
