@@ -11,9 +11,9 @@
   import { onMount } from "svelte";
 
   const {
-    link,
+    linkCreationStore,
   }: {
-    link: LinkCreationStore;
+    linkCreationStore: LinkCreationStore;
   } = $props();
 
   let errorMessage: string | null = $state(null);
@@ -22,31 +22,32 @@
 
   onMount(() => {
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING, {
-      link_type: link.createLinkData.linkType,
-      FE_link_id: link.id ?? "",
+      link_type: linkCreationStore.createLinkData.linkType,
+      FE_link_id: linkCreationStore.id ?? "",
     });
   });
 
-  // Create the link
   async function handleCreate() {
     errorMessage = null;
     successMessage = null;
     isCreating = true;
 
+    const feLinkId = linkCreationStore.id ?? "";
+
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE, {
-      link_type: link.createLinkData.linkType,
-      FE_link_id: link.id ?? "",
+      link_type: linkCreationStore.createLinkData.linkType,
+      FE_link_id: feLinkId,
     });
 
     try {
-      await link.goNext();
+      await linkCreationStore.goNext();
       trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED, {
-        link_type: link.createLinkData.linkType,
-        FE_link_id: link.id ?? "",
-        BE_link_id: link.id ?? "",
+        link_type: linkCreationStore.createLinkData.linkType,
+        FE_link_id: feLinkId,
+        BE_link_id: linkCreationStore.link?.id ?? "",
       });
       linkListStore.refresh();
-      successMessage = "Link created successfully: " + link.id;
+      successMessage = "Link created successfully: " + linkCreationStore.id;
     } catch (error) {
       errorMessage = "Failed to create link: " + error;
       return;
@@ -57,7 +58,7 @@
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  <LinkDetails link={linkCreationStore} {errorMessage} {successMessage} />
 
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
