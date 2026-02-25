@@ -65,7 +65,10 @@
       linkDetailStore = new LinkDetailStore({ id: linkCreationStore.id });
     }
 
-    if (linkCreationStore.action && linkCreationStore.action.state !== ActionState.SUCCESS) {
+    if (
+      linkCreationStore.action &&
+      linkCreationStore.action.state !== ActionState.SUCCESS
+    ) {
       showTxCart = true;
     }
   });
