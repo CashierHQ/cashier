@@ -47,9 +47,10 @@
         BE_link_id: linkCreationStore.link?.id ?? "",
       });
       linkListStore.refresh();
-      successMessage = "Link created successfully: " + linkCreationStore.id;
+      successMessage =
+        locale.t("links.linkForm.preview.createSuccess") + linkCreationStore.id;
     } catch (error) {
-      errorMessage = "Failed to create link: " + error;
+      errorMessage = locale.t("links.linkForm.preview.createError") + error;
       return;
     } finally {
       isCreating = false;

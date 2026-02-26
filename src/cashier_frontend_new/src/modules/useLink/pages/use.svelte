@@ -199,6 +199,26 @@
     }
   });
 
+  const handleWalletUnlockLocked = async () => {
+    if (userStore?.link) {
+      trackEvent(AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED, {
+        link_type: userStore.link.link_type,
+        BE_link_id: userStore.linkDetail?.id ?? "",
+      });
+    }
+    await userStore.goNext();
+  };
+
+  const handleGateContinue = async () => {
+    if (userStore?.link) {
+      trackEvent(AnalyticsEvent.USE_GATE_CONTINUE, {
+        link_type: userStore.link.link_type,
+        BE_link_id: userStore.linkDetail?.id ?? "",
+      });
+    }
+    await userStore.goNext();
+  };
+
   // Register back handler for AppHeader on the use flow
   const handleBack = async () => {
     if (userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
@@ -259,18 +279,7 @@
           {locale.t("links.linkForm.useLink.walletLocked") ??
             "Connect wallet to continue"}
         </p>
-        <Button
-          class="rounded-full mt-auto"
-          onclick={async () => {
-            if (userStore?.link) {
-              trackEvent(AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED, {
-                link_type: userStore.link.link_type,
-                BE_link_id: userStore.linkDetail?.id ?? "",
-              });
-            }
-            await userStore.goNext();
-          }}
-        >
+        <Button class="rounded-full mt-auto" onclick={handleWalletUnlockLocked}>
           {locale.t("links.linkForm.useLink.continueButton")}
         </Button>
       </div>
@@ -279,18 +288,7 @@
         <p class="text-sm text-muted-foreground">
           {locale.t("links.linkForm.useLink.gate") ?? "Continue to claim"}
         </p>
-        <Button
-          class="rounded-full mt-auto"
-          onclick={async () => {
-            if (userStore?.link) {
-              trackEvent(AnalyticsEvent.USE_GATE_CONTINUE, {
-                link_type: userStore.link.link_type,
-                BE_link_id: userStore.linkDetail?.id ?? "",
-              });
-            }
-            await userStore.goNext();
-          }}
-        >
+        <Button class="rounded-full mt-auto" onclick={handleGateContinue}>
           {locale.t("links.linkForm.useLink.continueButton")}
         </Button>
       </div>
