@@ -1,29 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::factory::LinkFactoryV3;
-use crate::apps::{
-    action::v3::ActionServiceV3, link_v2::links::shared::receive_link::actions::create,
-};
-use crate::repositories;
-use crate::repositories::Repositories;
 use candid::Principal;
 use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
-    link_v3::{
-        dto::{
-            action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
-            link::{
-                CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
-            },
+    link_v3::dto::{
+        action::{CreateActionResponseV3, ProcessActionResponseV3},
+        link::{
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
         },
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
     },
     repository::{
-        action::v3::ActionV3,
-        asset::v1::Asset,
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
         link::{v1::LinkType, v3::LinkState},
@@ -32,30 +21,33 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
-use cashier_shared::{
-    AddressType as AddressTypeShared, Asset as AssetShared, AssetInfo as AssetInfoShared,
-    types::Action as ActionShared,
-};
-use std::rc::Rc;
+use cashier_shared::{AddressType as AddressTypeShared, types::Action as ActionShared};
 use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct LinkV3Service<R: Repositories, M: TransactionManagerV3 + 'static> {
+use crate::{
+    apps::{
+        action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
+        token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+        token_standard::traits::TokenStandardCache,
+    },
+    repositories::{self, Repositories},
+};
+
+pub struct LinkV3Service<R: Repositories> {
     pub link_v3_repository: repositories::link::v3::LinkV3Repository<R::LinkV3>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     pub action_service: ActionServiceV3<R>,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
-    pub fn new(repo: &R, transaction_manager: Rc<M>) -> Self {
+impl<R: Repositories> LinkV3Service<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
             link_v3_repository: repo.link_v3(),
             user_link_repository: repo.user_link(),
             user_link_action_repository: repo.user_link_action(),
             action_service: ActionServiceV3::new(repo),
-            transaction_manager,
         }
     }
 
@@ -69,13 +61,23 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
     /// * `GetLinkResp` - The response containing the created link and action details
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
-    pub async fn create_link(
+    pub async fn create_link<M, F, S, B>(
         &mut self,
         input: CreateLinkInputV3,
         creator_id: Principal,
         canister_id: Principal,
         created_at: u64,
-    ) -> Result<CreateLinkResponseV3, CanisterError> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<CreateLinkResponseV3, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         if input.action.action_type != cashier_shared::types::ActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
                 "Only CREATE action can be created when creating a link".to_string(),
@@ -91,8 +93,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
-        let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link_model = factory.create_link(
+        let link_model = LinkFactoryV3::create_link(
             link_type,
             input.title,
             asset_info,
@@ -119,6 +120,10 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
                 creator_id,
                 canister_id,
                 created_at,
+                transaction_manager,
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
             )
             .await?;
 
@@ -138,14 +143,24 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
     /// # Returns
     /// * `Ok(ActionShared)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
-    pub async fn create_action(
+    pub async fn create_action<M, F, S, B>(
         &mut self,
         link_id: &str,
         action: ActionShared,
         creator: Principal,
         canister_id: Principal,
         created_at: u64,
-    ) -> Result<CreateActionResponseV3, CanisterError> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<CreateActionResponseV3, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let link_model = self
             .link_v3_repository
             .get(&link_id.to_string())
@@ -157,16 +172,23 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             creator,
         );
 
-        let intent_models: Vec<IntentV3> = action
+        let _intent_models: Vec<IntentV3> = action
             .intents
             .iter()
             .map(|i| IntentV3::from(i.clone()))
             .collect();
 
-        let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link_instance = factory.create_from_link_model(link_model, canister_id)?;
+        let link_instance = LinkFactoryV3::create_from_link_model(link_model, canister_id)?;
         let result = link_instance
-            .create_action(creator, action_model, intent_models, created_at)
+            .create_action(
+                creator,
+                action_model.action_type,
+                created_at,
+                transaction_manager,
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
             .await?;
 
         // save data to DB
@@ -200,12 +222,16 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         })
     }
 
-    pub async fn process_action(
+    pub async fn process_action<M>(
         &mut self,
         caller: Principal,
         canister_id: Principal,
         action_id: &str,
-    ) -> Result<ProcessActionResponseV3, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<ProcessActionResponseV3, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let action_data = self
             .action_service
             .get_action_data(action_id)
@@ -216,14 +242,14 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             .get(&action_data.action.link_id)
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        let factory = LinkFactoryV3::new(self.transaction_manager.clone());
-        let link = factory.create_from_link_model(link_model, canister_id)?;
+        let link = LinkFactoryV3::create_from_link_model(link_model, canister_id)?;
         let result = link
             .process_action(
                 caller,
                 action_data.action,
                 action_data.intents,
                 action_data.intent_txs,
+                transaction_manager,
             )
             .await?;
 
@@ -275,12 +301,16 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         Ok(paginate_result.map(|link| link.to_shared()))
     }
 
-    pub async fn get_link_details(
+    pub async fn get_link_details<M>(
         &self,
         caller: Principal,
         link_id: &str,
         options: Option<GetLinkOptions>,
-    ) -> Result<GetLinkResponseV3, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<GetLinkResponseV3, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let link_model = self
             .link_v3_repository
             .get(&link_id.to_string())
@@ -299,7 +329,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
                 .get_action_data(&action.id)
                 .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
-            let create_action_result = self.transaction_manager.create_action(
+            let create_action_result = transaction_manager.create_action(
                 action,
                 action_data.intents,
                 Some(action_data.intent_txs),

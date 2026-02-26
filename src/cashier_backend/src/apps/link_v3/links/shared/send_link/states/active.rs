@@ -1,9 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::{
-    link_v2::links::{shared::receive_link::states::created, traits::LinkV2State},
-    link_v3::{links::tip_link::actions::receive::ReceiveAction, traits::LinkV3State},
+use crate::apps::link_v3::{
+    links::shared::send_link::actions::receive::ReceiveAction, traits::LinkV3State,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -16,21 +15,24 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct ActiveState<M: TransactionManagerV3 + 'static> {
+use crate::apps::{
+    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct ActiveState {
     pub link: LinkV3,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManagerV3 + 'static> ActiveState<M> {
-    pub fn new(link: &LinkV3, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
+impl ActiveState {
+    pub fn new(link: &LinkV3, canister_id: Principal) -> Self {
         Self {
             link: link.clone(),
             canister_id,
-            transaction_manager,
         }
     }
 
@@ -42,17 +44,17 @@ impl<M: TransactionManagerV3 + 'static> ActiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the RECEIVE action
-    pub async fn create_receive_action(
+    pub async fn create_receive_action<M>(
         caller: Principal,
         canister_id: Principal,
         link: LinkV3,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
         created_at: u64,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkCreateActionResult, CanisterError> {
-        let receive_action =
-            ReceiveAction::create(&link, caller, canister_id, action, intents, created_at).await?;
+        transaction_manager: M,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
+        let receive_action = ReceiveAction::create(&link, caller, canister_id, created_at).await?;
         let create_action_result = transaction_manager.create_action(
             receive_action.action,
             receive_action.intents,
@@ -74,13 +76,16 @@ impl<M: TransactionManagerV3 + 'static> ActiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the receive action
-    pub async fn receive(
+    pub async fn receive<M>(
         link: &LinkV3,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkProcessActionResult, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
@@ -101,62 +106,67 @@ impl<M: TransactionManagerV3 + 'static> ActiveState<M> {
     }
 }
 
-impl<M: TransactionManagerV3 + 'static> LinkV3State for ActiveState<M> {
-    fn create_action(
+impl LinkV3State for ActiveState {
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        _token_fee_service: F,
+        _token_standard_service: S,
+        _token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action.action_type {
-                ActionType::Receive => {
-                    let create_action_result = Self::create_receive_action(
-                        caller,
-                        canister_id,
-                        link,
-                        action,
-                        intents,
-                        created_at,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(create_action_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for ActiveState".to_string(),
-                )),
+        match action_type {
+            ActionType::Receive => {
+                let create_action_result = Self::create_receive_action(
+                    caller,
+                    canister_id,
+                    link,
+                    created_at,
+                    transaction_manager,
+                )
+                .await?;
+                Ok(create_action_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for ActiveState".to_string(),
+            )),
+        }
     }
 
-    fn process_action(
+    async fn process_action<M>(
         &self,
         _caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let link = self.link.clone();
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action.action_type {
-                ActionType::Receive => {
-                    let receive_result =
-                        Self::receive(&link, action, intents, intent_txs_map, transaction_manager)
-                            .await?;
-                    Ok(receive_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for ActiveState".to_string(),
-                )),
+        match action.action_type {
+            ActionType::Receive => {
+                let receive_result =
+                    Self::receive(&link, action, intents, intent_txs_map, transaction_manager)
+                        .await?;
+                Ok(receive_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for ActiveState".to_string(),
+            )),
+        }
     }
 }

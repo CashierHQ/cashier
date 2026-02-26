@@ -5,7 +5,11 @@ use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
     link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
-    repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
+    repository::{
+        action::{v1::ActionType, v3::ActionV3},
+        intent::v3::IntentV3,
+        transaction::v1::Transaction,
+    },
 };
 use std::collections::HashMap;
 use transaction_manager::v3::traits::TransactionManagerV3;
@@ -27,8 +31,7 @@ pub trait LinkV3Instance {
     async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
         transaction_manager: M,
         token_fee_service: F,
@@ -75,8 +78,7 @@ pub trait LinkV3State {
     async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
         transaction_manager: M,
         token_fee_service: F,

@@ -1,9 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::{
-    links::tip_link::actions::withdraw::WithdrawAction, traits::LinkV3State,
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -19,20 +16,26 @@ use cashier_backend_types::{
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use token_storage_types::token;
 use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct InactiveState<M: TransactionManagerV3 + 'static> {
+use crate::apps::{
+    link_v3::{links::shared::send_link::actions::withdraw::WithdrawAction, traits::LinkV3State},
+    token_balance::traits::TokenBalanceFetcher,
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct InactiveState {
     pub link: LinkV3,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
-    pub fn new(link: &LinkV3, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
+impl InactiveState {
+    pub fn new(link: &LinkV3, canister_id: Principal) -> Self {
         Self {
             link: link.clone(),
             canister_id,
-            transaction_manager,
         }
     }
 
@@ -44,23 +47,34 @@ impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
-    pub async fn create_withdraw_action(
+    pub async fn create_withdraw_action<M, F, B>(
         caller: Principal,
         canister_id: Principal,
         link: LinkV3,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
         created_at: u64,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkCreateActionResult, CanisterError> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
                 "Only the creator can create WITHDRAW action on this link".to_string(),
             ));
         }
 
-        let withdraw_action =
-            WithdrawAction::create(&link, canister_id, action, intents, created_at).await?;
+        let withdraw_action = WithdrawAction::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_balance_service,
+        )
+        .await?;
         let create_action_result = transaction_manager.create_action(
             withdraw_action.action,
             withdraw_action.intents,
@@ -82,14 +96,17 @@ impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the withdraw action
-    pub async fn withdraw(
+    pub async fn withdraw<M>(
         caller: Principal,
         link: LinkV3,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-        transaction_manager: Rc<M>,
-    ) -> Result<LinkProcessActionResult, CanisterError> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
                 "Only the creator can process WITHDRAW action on this link".to_string(),
@@ -113,68 +130,75 @@ impl<M: TransactionManagerV3 + 'static> InactiveState<M> {
     }
 }
 
-impl<M: TransactionManagerV3 + 'static> LinkV3State for InactiveState<M> {
-    fn create_action(
+impl LinkV3State for InactiveState {
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action.action_type {
-                ActionType::Withdraw => {
-                    let create_action_result = Self::create_withdraw_action(
-                        caller,
-                        canister_id,
-                        link,
-                        action,
-                        intents,
-                        created_at,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(create_action_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for InactiveState".to_string(),
-                )),
+        match action_type {
+            ActionType::Withdraw => {
+                let create_action_result = Self::create_withdraw_action(
+                    caller,
+                    canister_id,
+                    link,
+                    created_at,
+                    transaction_manager,
+                    token_fee_service,
+                    token_balance_service,
+                )
+                .await?;
+                Ok(create_action_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for InactiveState".to_string(),
+            )),
+        }
     }
 
-    fn process_action(
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: std::collections::HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let link = self.link.clone();
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            match action.action_type {
-                ActionType::Withdraw => {
-                    let withdraw_result = Self::withdraw(
-                        caller,
-                        link,
-                        action,
-                        intents,
-                        intent_txs_map,
-                        transaction_manager,
-                    )
-                    .await?;
-                    Ok(withdraw_result)
-                }
-                _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for InactiveState".to_string(),
-                )),
+        match action.action_type {
+            ActionType::Withdraw => {
+                let withdraw_result = Self::withdraw(
+                    caller,
+                    link,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                )
+                .await?;
+                Ok(withdraw_result)
             }
-        })
+            _ => Err(CanisterError::ValidationErrors(
+                "Unsupported action type for InactiveState".to_string(),
+            )),
+        }
     }
 }

@@ -12,12 +12,13 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::v3::traits::TransactionManagerV3;
 
 use crate::apps::{
+    link_v2::links::shared::receive_link::states::created,
     link_v3::{
-        links::tip_link::actions::create::CreateActionV3,
+        links::shared::send_link::actions::create::CreateActionV3,
         traits::{LinkV3Instance, LinkV3State},
     },
     token_balance::traits::TokenBalanceFetcher,
@@ -46,16 +47,19 @@ impl CreatedState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
-    pub async fn create_action<M>(
+    pub async fn create_action<M, F, S>(
         caller: Principal,
         canister_id: Principal,
         link: LinkV3,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        created_at: u64,
         transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
     {
         // validate caller is the link creator
         if caller != link.creator {
@@ -64,7 +68,14 @@ impl CreatedState {
             ));
         }
 
-        let create_action = CreateActionV3::create(&link, canister_id, action, &intents)?;
+        let create_action = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await?;
         let create_action_result =
             transaction_manager.create_action(create_action.action, create_action.intents, None)?;
 
@@ -113,13 +124,12 @@ impl LinkV3State for CreatedState {
     async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
-        token_balance_service: B,
+        _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -130,15 +140,16 @@ impl LinkV3State for CreatedState {
         let link = self.link.clone();
         let canister_id = self.canister_id;
 
-        match action.action_type {
+        match action_type {
             ActionType::CreateLink => {
                 let create_action_result = Self::create_action(
                     caller,
                     canister_id,
                     link,
-                    action,
-                    intents,
+                    created_at,
                     transaction_manager,
+                    token_fee_service,
+                    token_standard_service,
                 )
                 .await?;
                 Ok(create_action_result)

@@ -10,14 +10,11 @@ use cashier_backend_types::{
             v1::{ActionState, ActionType},
             v3::ActionV3,
         },
-        asset::v1::Asset as AssetV1,
+        asset::v3::{AssetV3, TokenStandardV3},
         common::AddressTypeV3,
-        intent::{
-            v1::{
-                CreateIcrc1WalletToLinkIntentArgs, CreateIcrc2WalletToLinkIntentArgs,
-                CreateWalletToTreasuryIntentArgs, Intent,
-            },
-            v3::IntentV3,
+        intent::v3::{
+            CreateIcrc1WalletToLinkIntentArgs, CreateIcrc2WalletToLinkIntentArgs,
+            CreateWalletToTreasuryIntentArgs, IntentV3,
         },
         link::{v1::LinkType, v3::LinkV3},
     },
@@ -26,11 +23,14 @@ use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
-    intents::{
+    intents::v3::{
         transfer_wallet_to_link::TransferWalletToLinkIntent,
         transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     },
-    utils::calculator::{calculate_create_link_fee, calculate_icrc2_transfer_intent_amount},
+    utils::calculator::{
+        calculate_create_link_fee, calculate_icrc1_transfer_intent_amount,
+        calculate_icrc2_transfer_intent_amount,
+    },
 };
 use uuid::Uuid;
 
@@ -61,15 +61,14 @@ impl CreateActionV3 {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create<T, F, S>(
+    pub async fn create<F, S>(
         link: &LinkV3,
         canister_id: Principal,
-        template_loader: T,
-        token_fee_service: F,
-        token_standard_service: S,
+        created_at: u64,
+        mut token_fee_service: F,
+        mut token_standard_service: S,
     ) -> Result<Self, CanisterError>
     where
-        T: TemplateLoader,
         F: TokenFeeCache,
         S: TokenStandardCache,
     {
@@ -124,47 +123,47 @@ impl CreateActionV3 {
                             link.link_type,
                             asset_info.asset.address,
                         ),
-                        asset: AssetV1::IC {
-                            address: asset_info.asset.address,
-                        },
+                        asset: asset_info.asset.clone(),
                         actual_amount,
                         approval_amount,
                         sender_id: link.creator,
+                        receiver_id: canister_id,
                         link_account,
                         spender_account,
-                        created_at_ts: link.created_at,
+                        created_at_ts: created_at,
                     };
 
-                    TransferWalletToLinkIntent::create_icrc2(input)
+                    TransferWalletToLinkIntent::create_icrc2(&action.id, input)
                 } else {
-                    let sending_amount =
-                        link_token_balance_map.get(&asset_address).ok_or_else(|| {
-                            CanisterError::HandleLogicError(
-                                "Failed to get sending amount from balance map".to_string(),
-                            )
-                        })?;
+                    let (actual_amount, _total_amount) = calculate_icrc1_transfer_intent_amount(
+                        link.max_use,
+                        &asset_info.amount,
+                        asset_info.asset.address,
+                        &token_fee_map,
+                    )?;
 
                     let input = CreateIcrc1WalletToLinkIntentArgs {
                         label: generate_intent_asset_label(
                             link.link_type,
                             asset_info.asset.address,
                         ),
-                        asset: AssetV1::IC {
-                            address: asset_info.asset.address,
-                        },
-                        sending_amount: sending_amount.clone(),
+                        asset: asset_info.asset.clone(),
+                        sending_amount: actual_amount.clone(),
                         sender_id: link.creator,
+                        receiver_id: canister_id,
                         link_account,
-                        created_at_ts: link.created_at,
+                        created_at_ts: created_at,
                     };
 
-                    TransferWalletToLinkIntent::create_icrc1(input)
+                    TransferWalletToLinkIntent::create_icrc1(&action.id, input)
                 }
             })
             .collect::<Result<Vec<TransferWalletToLinkIntent>, CanisterError>>()?;
 
-        let fee_asset = AssetV1::IC {
+        let fee_asset = AssetV3 {
             address: ICP_CANISTER_PRINCIPAL,
+            network_fee: token_fee_map.get(&ICP_CANISTER_PRINCIPAL).cloned(),
+            token_standard: TokenStandardV3::ICRC2,
         };
         let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
         let spender_account = Account {
@@ -178,16 +177,21 @@ impl CreateActionV3 {
             approval_amount,
             sender_id: link.creator,
             spender_account,
+            receiver_id: canister_id,
             created_at_ts: link.created_at,
         };
 
-        let fee_intent = TransferWalletToTreasuryIntent::create(input)?;
+        let fee_intent = TransferWalletToTreasuryIntent::create(&action.id, input)?;
 
-        let mut intents = Vec::<Intent>::new();
+        let mut intents = Vec::<IntentV3>::new();
         deposit_intents.iter().for_each(|dintent| {
             intents.push(dintent.intent.clone());
         });
         intents.push(fee_intent.intent);
+
+        // enrich action with intent ids
+        let intent_ids = intents.iter().map(|intent| intent.id.clone()).collect();
+        action.intent_ids = intent_ids;
 
         Ok(Self::new(action, intents))
     }

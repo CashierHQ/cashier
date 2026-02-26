@@ -32,12 +32,12 @@ use crate::apps::{
     token_standard::traits::TokenStandardCache,
 };
 
-pub struct TipLink {
+pub struct TokenBasketLink {
     pub link: LinkV3,
     pub canister_id: Principal,
 }
 
-impl TipLink {
+impl TokenBasketLink {
     pub fn new(link: LinkV3, canister_id: Principal) -> Self {
         Self { link, canister_id }
     }
@@ -55,15 +55,16 @@ impl TipLink {
         creator: Principal,
         title: String,
         asset_info: Vec<AssetInfoV3>,
+        max_use: u64,
         created_at: u64,
         canister_id: Principal,
     ) -> Self {
         let new_link = LinkV3 {
             id: Uuid::new_v4().to_string(),
-            link_type: LinkType::SendTip,
+            link_type: LinkType::SendTokenBasket,
             title,
             asset_info,
-            max_use: 1,
+            max_use,
             use_count: 0,
             creator,
             state: LinkStateV3::Created,
@@ -74,7 +75,7 @@ impl TipLink {
     }
 }
 
-impl LinkV3Instance for TipLink {
+impl LinkV3Instance for TokenBasketLink {
     /// Creates an action for the TipLink.
     /// # Arguments
     /// * `canister_id` - The canister ID of the token contract.

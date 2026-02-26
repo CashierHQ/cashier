@@ -33,12 +33,13 @@ thread_local! {
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
-    pub link_v3_service: LinkV3Service<ThreadlocalRepositories, IcTransactionManagerV3<E>>,
+    pub link_v3_service: LinkV3Service<ThreadlocalRepositories>,
     pub link_v2_service: LinkV2Service<ThreadlocalRepositories>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
     pub transaction_manager_v2: IcTransactionManagerV2<E>,
+    pub transaction_manager_v3: IcTransactionManagerV3<E>,
     pub token_fee_service: TokenFeeService<ThreadlocalRepositories, E, IcrcTokenFetcher>,
     pub token_standard_service:
         TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
@@ -53,8 +54,8 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
         let transaction_manager_v2 = IcTransactionManagerV2::new(env.clone());
         let link_v2_service = LinkV2Service::new(&*repo);
-        let transaction_manager_v3 = Rc::new(IcTransactionManagerV3::new(env.clone()));
-        let link_v3_service = LinkV3Service::new(&*repo, transaction_manager_v3.clone());
+        let transaction_manager_v3 = IcTransactionManagerV3::new(env.clone());
+        let link_v3_service = LinkV3Service::new(&*repo);
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
 
@@ -74,6 +75,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
             transaction_manager_v2,
+            transaction_manager_v3,
             token_fee_service,
             token_standard_service,
             token_balance_service,
