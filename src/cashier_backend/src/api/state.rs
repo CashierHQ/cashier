@@ -5,6 +5,8 @@ use candid::Principal;
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
+use transaction_manager::v2::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV2;
+use transaction_manager::v3::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV3;
 
 use crate::{
     apps::{
@@ -22,8 +24,6 @@ use crate::{
         AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
     },
 };
-use transaction_manager::v2::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV2;
-use transaction_manager::v3::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV3;
 
 thread_local! {
     static TOKEN_STORAGE_CANISTER_ID: RefCell<Principal> =

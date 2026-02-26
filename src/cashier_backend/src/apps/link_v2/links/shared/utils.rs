@@ -38,12 +38,7 @@ pub fn link_assets(link: &Link) -> Vec<Asset> {
     assets
 }
 
-/// Retrieves token balances for a collection of assets in parallel.
-///
-/// This helper function queries multiple token canisters concurrently to fetch
-/// balances for the specified account. All balance queries are executed in parallel
-/// using `future::join_all` for optimal performance.
-///
+/// Extracts the principals of assets from a link
 /// # Arguments
 /// * `link` - The link to extract asset principals from
 /// # Returns

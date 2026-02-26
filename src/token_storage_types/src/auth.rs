@@ -8,4 +8,6 @@ use serde::Deserialize;
 pub enum Permission {
     /// Admin of the canister
     Admin,
+    /// Manager of token-related operations
+    TokenManager,
 }

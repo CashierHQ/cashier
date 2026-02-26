@@ -61,10 +61,11 @@ orbit_upgrade canister_name mode network arg_file:
 
 # Build the backend canister args and save to file
 [group('orbit')]
-build_backend_args owner log_filter file_name:
+build_backend_args owner token_storage_canister_id log_filter file_name:
   #!/usr/bin/env bash
   sed \
     -e 's/__OWNER__/{{owner}}/g' \
+    -e 's/__TOKEN_STORAGE_CANISTER_ID__/{{token_storage_canister_id}}/g' \
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     scripts/args/backend_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
