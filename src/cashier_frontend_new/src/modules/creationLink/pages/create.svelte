@@ -52,8 +52,8 @@
   {:else if linkStore.state.step === LinkStep.ADD_ASSET}
     <AddAsset link={linkStore} />
   {:else if linkStore.state.step === LinkStep.PREVIEW}
-    <Preview link={linkStore} />
+    <Preview linkCreationStore={linkStore} />
   {:else if linkStore.state.step === LinkStep.CREATED}
-    <CreatedLink link={linkStore} />
+    <CreatedLink linkCreationStore={linkStore} />
   {/if}
 </div>

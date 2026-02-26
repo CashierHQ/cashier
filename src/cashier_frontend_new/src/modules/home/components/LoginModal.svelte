@@ -8,9 +8,11 @@
   type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    /** Called when user presses login (e.g. wallet button). Use for analytics. */
+    onBeforeLogin?: () => void;
   };
 
-  let { open, onOpenChange }: Props = $props();
+  let { open, onOpenChange, onBeforeLogin }: Props = $props();
 
   let isConnecting = $state(false);
 
@@ -20,6 +22,8 @@
 
   async function handleWalletSelect(walletId: string) {
     if (isConnecting) return;
+
+    onBeforeLogin?.();
 
     try {
       isConnecting = true;

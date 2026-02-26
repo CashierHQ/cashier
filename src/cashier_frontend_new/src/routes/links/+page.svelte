@@ -2,6 +2,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
@@ -14,6 +18,9 @@
       throw new Error("Cannot create link: no account owner found");
     }
     const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
+
+    // Track Link list plus (user pressed + button)
+    trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
     goto(resolve(`/link/create/${tempLink.id}`));
   }
 </script>

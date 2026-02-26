@@ -4,12 +4,24 @@
   import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
   import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
   import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import { onMount } from "svelte";
 
   const {
     link,
   }: {
     link: LinkCreationStore;
   } = $props();
+
+  onMount(() => {
+    trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_LANDING, {
+      link_type: link.createLinkData.linkType,
+      FE_link_id: link.id ?? "",
+    });
+  });
 </script>
 
 {#if link.createLinkData}

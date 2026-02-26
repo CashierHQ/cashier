@@ -3,6 +3,12 @@
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { groupAndSortByDate } from "$modules/links/utils/groupAndSortByDate";
   import { locale } from "$lib/i18n";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
+  // Track Link list landing on page load
+  trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING, {});
 </script>
 
 <div class="w-full">

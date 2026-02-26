@@ -172,6 +172,8 @@
         "totalValue": "Total value"
       },
       "preview": {
+        "createSuccess": "Link created successfully: ",
+        "createError": "Failed to create link: ",
         "linkInfo": "Link info",
         "type": "Type",
         "userPays": "User pays",

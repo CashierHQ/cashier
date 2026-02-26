@@ -4,29 +4,53 @@
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import { onMount } from "svelte";
 
   const {
-    link,
+    linkCreationStore,
   }: {
-    link: LinkCreationStore;
+    linkCreationStore: LinkCreationStore;
   } = $props();
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isCreating = $state(false);
 
-  // Create the link
+  onMount(() => {
+    trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING, {
+      link_type: linkCreationStore.createLinkData.linkType,
+      FE_link_id: linkCreationStore.id ?? "",
+    });
+  });
+
   async function handleCreate() {
     errorMessage = null;
     successMessage = null;
     isCreating = true;
 
+    const feLinkId = linkCreationStore.id ?? "";
+
+    trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE, {
+      link_type: linkCreationStore.createLinkData.linkType,
+      FE_link_id: feLinkId,
+    });
+
     try {
-      await link.goNext();
+      await linkCreationStore.goNext();
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED, {
+        link_type: linkCreationStore.createLinkData.linkType,
+        FE_link_id: feLinkId,
+        BE_link_id: linkCreationStore.link?.id ?? "",
+      });
       linkListStore.refresh();
-      successMessage = "Link created successfully: " + link.id;
+      successMessage =
+        locale.t("links.linkForm.preview.createSuccess") + linkCreationStore.id;
     } catch (error) {
-      errorMessage = "Failed to create link: " + error;
+      errorMessage = locale.t("links.linkForm.preview.createError") + error;
       return;
     } finally {
       isCreating = false;
@@ -35,7 +59,7 @@
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  <LinkDetails link={linkCreationStore} {errorMessage} {successMessage} />
 
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
