@@ -11,12 +11,24 @@
   import { locale } from "$lib/i18n";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import { onMount } from "svelte";
 
   const {
     link,
   }: {
     link: LinkCreationStore;
   } = $props();
+
+  onMount(() => {
+    trackEvent(AnalyticsEvent.LINK_CREATION_TEMPLATE_LANDING, {
+      link_type: link.createLinkData.linkType,
+      FE_link_id: link.id ?? "",
+    });
+  });
 
   const linkTypes: LinkTypeValue[] = [
     LinkType.TIP,
@@ -113,6 +125,11 @@
 
   async function goNext() {
     try {
+      trackEvent(AnalyticsEvent.LINK_CREATION_TEMPLATE_CONTINUE, {
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
+
       const currentLinkType = link.createLinkData.linkType;
       const newLinkType = linkTypes[currentSlide];
 

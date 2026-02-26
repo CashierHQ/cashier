@@ -7,14 +7,18 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { onMount } from "svelte";
+  import {
+    trackEvent,
+    AnalyticsEvent,
+  } from "$modules/analytics/amplitudeStore";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   const {
-    link,
+    linkCreationStore,
   }: {
-    link: LinkCreationStore;
+    linkCreationStore: LinkCreationStore;
   } = $props();
 
   let linkDetailStore = $state<LinkDetailStore | null>(null);
@@ -44,24 +48,34 @@
       linkDetailStore.link &&
       linkDetailStore.link.state === LinkState.ACTIVE
     ) {
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS, {
+        link_type: linkCreationStore.createLinkData.linkType,
+        BE_link_id: linkDetailStore.id ?? "",
+      });
       goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
     }
   });
 
   onMount(() => {
-    // Initialize LinkDetailStore with the created link ID
-    if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
+    trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_LANDING, {
+      link_type: linkCreationStore.createLinkData.linkType,
+      BE_link_id: linkCreationStore.id ?? "",
+    });
+    if (linkCreationStore.id) {
+      linkDetailStore = new LinkDetailStore({ id: linkCreationStore.id });
     }
 
-    if (link.action && link.action.state !== ActionState.SUCCESS) {
+    if (
+      linkCreationStore.action &&
+      linkCreationStore.action.state !== ActionState.SUCCESS
+    ) {
       showTxCart = true;
     }
   });
 </script>
 
 <div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  <LinkDetails link={linkCreationStore} {errorMessage} {successMessage} />
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
