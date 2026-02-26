@@ -21,9 +21,8 @@ use cashier_backend_types::{
 use cashier_common::utils::get_link_account;
 use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
-use crate::apps::link_v2::links::shared::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_balance_for_link_v3,
-    get_batch_tokens_fee_for_link_v3,
+use crate::apps::link_v3::utils::{
+    get_batch_tokens_balance_for_link_v3, get_batch_tokens_fee_for_link_v3,
 };
 use uuid::Uuid;
 
