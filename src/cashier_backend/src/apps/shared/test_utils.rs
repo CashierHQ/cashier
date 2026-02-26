@@ -12,7 +12,7 @@ pub mod tests {
     use cashier_common::runtime::IcEnvironment;
     use ic_cdk_timers::TimerId;
     use std::{collections::HashMap, future::Future, pin::Pin, time::Duration};
-    use transaction_manager::traits::TransactionManager;
+    use transaction_manager::v2::traits::TransactionManager;
 
     /// Mock implementation of the IC environment for testing purposes
     pub struct MockIcEnvironment {

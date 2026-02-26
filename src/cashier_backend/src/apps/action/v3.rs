@@ -14,7 +14,6 @@ use cashier_backend_types::{
         action_intent::v1::ActionIntent,
         intent::v3::IntentV3,
         intent_transaction::v1::IntentTransaction,
-        link::v3::LinkV3,
         link_action::v1::{LinkAction, LinkUserState},
         transaction::v1::Transaction,
         user_action::v1::UserAction,

@@ -122,7 +122,7 @@ mod tests {
         },
     };
     use cashier_backend_types::repository::{
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         common::Wallet,
         intent::v1::IntentType,
         link::v1::{LinkState, LinkType},

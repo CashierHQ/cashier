@@ -10,8 +10,6 @@ use cashier_backend_types::{
         link::v1::{Link, LinkType},
     },
 };
-use std::rc::Rc;
-use transaction_manager::v2::traits::TransactionManager;
 
 use crate::apps::link_v2::links::{
     LinkV2Types, airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,

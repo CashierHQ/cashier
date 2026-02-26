@@ -12,13 +12,8 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-<<<<<<< HEAD
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::v2::traits::TransactionManager;
-=======
 use std::collections::HashMap;
-use transaction_manager::traits::TransactionManager;
->>>>>>> feature/icrc-standard-intents
+use transaction_manager::v2::traits::TransactionManager;
 
 use crate::apps::{
     link_v2::links::{shared::receive_link::actions::send::SendAction, traits::LinkV2State},

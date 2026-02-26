@@ -13,7 +13,7 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
@@ -187,7 +187,7 @@ impl LinkV2 for TokenBasketLink {
 mod tests {
     use super::*;
     use candid::Nat;
-    use cashier_backend_types::repository::common::Asset;
+    use cashier_backend_types::repository::asset::v1::Asset;
     use cashier_common::test_utils::random_principal_id;
 
     #[test]

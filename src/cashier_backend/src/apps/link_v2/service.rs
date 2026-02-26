@@ -19,7 +19,7 @@ use transaction_manager::v2::traits::TransactionManager;
 
 use crate::{
     apps::{
-        action::ActionService, link_v2::links::factory::LinkFactory,
+        action::v1::ActionService, link_v2::links::factory::LinkFactory,
         token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
         token_standard::traits::TokenStandardCache,
     },
@@ -27,7 +27,7 @@ use crate::{
 };
 
 pub struct LinkV2Service<R: Repositories> {
-    pub link_repository: repositories::link::LinkRepository<R::Link>,
+    pub link_repository: repositories::link::v1::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,

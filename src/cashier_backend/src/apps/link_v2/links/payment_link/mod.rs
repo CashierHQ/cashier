@@ -13,7 +13,7 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
