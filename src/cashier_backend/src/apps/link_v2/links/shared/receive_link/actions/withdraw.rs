@@ -14,7 +14,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
+use transaction_manager::intents::v2::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
 use crate::apps::{

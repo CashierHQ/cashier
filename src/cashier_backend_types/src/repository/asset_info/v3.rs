@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Nat;
+use candid::{Nat, Principal};
 use cashier_shared::types::AssetInfo as AssetInfoShared;
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +31,13 @@ impl AssetInfoV3 {
             label: self.label.clone(),
             amount: self.amount.clone(),
         }
+    }
+
+    /// Returns the address of the asset
+    /// # Returns
+    /// * `Principal` - The principal address of the asset
+    pub fn get_asset_address(&self) -> Principal {
+        self.asset.address
     }
 }
 

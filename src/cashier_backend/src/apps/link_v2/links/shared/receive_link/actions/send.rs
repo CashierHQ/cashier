@@ -14,7 +14,7 @@ use cashier_backend_types::{
 };
 use cashier_common::utils::get_link_account;
 use transaction_manager::{
-    intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
+    intents::v2::transfer_wallet_to_link::TransferWalletToLinkIntent,
     utils::calculator::calculate_link_balance_map,
 };
 

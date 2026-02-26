@@ -14,6 +14,12 @@ use crate::{
     apps::{token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache},
 };
 
+/// Fetching token fees for all assets in a LinkV3
+/// # Arguments
+/// * `link` - A reference to the LinkV3 for which to fetch token fees
+/// # Returns
+/// * Ok(HashMap<Principal, Nat>) - A mapping of asset principals to their corresponding fees
+/// * Err(CanisterError) - If there was an error fetching the token fees
 pub async fn get_batch_tokens_fee_for_link_v3(
     link: &LinkV3,
 ) -> Result<HashMap<Principal, Nat>, CanisterError> {
@@ -27,6 +33,13 @@ pub async fn get_batch_tokens_fee_for_link_v3(
         .await
 }
 
+/// Fetching token balances for all assets in a LinkV3
+/// # Arguments
+/// * `link` - A reference to the LinkV3 for which to fetch token balances
+/// * `canister_id` - The Principal of the canister for which to fetch the token balances (used to derive the link account)
+/// # Returns
+/// * Ok(HashMap<Principal, Nat>) - A mapping of asset principals to their corresponding balances
+/// * Err(CanisterError) - If there was an error fetching the token balances
 pub async fn get_batch_tokens_balance_for_link_v3(
     link: &LinkV3,
     canister_id: Principal,
@@ -41,6 +54,11 @@ pub async fn get_batch_tokens_balance_for_link_v3(
         .await
 }
 
+/// Helper function to extract asset principals from a LinkV3
+/// # Arguments
+/// * `link` - A reference to the LinkV3 from which to extract asset principals
+/// # Returns
+/// * Vec<Principal> - A vector of asset principals extracted from the LinkV3
 pub fn link_v3_asset_principals(link: &LinkV3) -> Vec<Principal> {
     let assets = link
         .asset_info

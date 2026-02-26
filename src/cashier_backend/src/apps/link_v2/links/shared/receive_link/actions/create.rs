@@ -15,7 +15,7 @@ use cashier_backend_types::{
 use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
-    intents::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
+    intents::v2::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     utils::calculator::calculate_create_link_fee,
 };
 

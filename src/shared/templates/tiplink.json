@@ -1,10 +1,9 @@
 [
   {
-    "link_type": "TipLink",
+    "action_type": "CreateLink",
     "id": "create_action_id",
     "creator": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
     "creator_address_type": "Creator",
-    "action_type": "CreateLink",
     "intents": [
       {
         "id": "asset_intent_id",
@@ -48,10 +47,10 @@
     "action_state": "Created"
   },
   {
+    "action_type": "Receive",
     "id": "receive_action_id",
     "creator": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
     "creator_address_type": "User",
-    "action_type": "Receive",
     "intents": [
       {
         "id": "asset_intent_id",
@@ -76,10 +75,10 @@
     "action_state": "Created"
   },
   {
+    "action_type": "Withdraw",
     "id": "withdraw_action_id",
     "creator": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
     "creator_address_type": "Creator",
-    "action_type": "Withdraw",
     "intents": [
       {
         "id": "asset_intent_id",

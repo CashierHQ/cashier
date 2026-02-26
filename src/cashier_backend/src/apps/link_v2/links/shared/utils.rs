@@ -59,31 +59,23 @@ pub fn link_asset_principals(link: &Link) -> Vec<Principal> {
 /// * `asset` - The asset associated with the intent
 /// # Returns
 /// * `String` - The generated intent label in the format of "{INTENT_LABEL}_{ASSET_PRINCIPAL}"
-pub fn generate_intent_asset_label(link_type: LinkType, asset: &Asset) -> String {
-    let asset_address = match asset {
-        Asset::IC { address } => address,
-    };
-
+pub fn generate_intent_asset_label(link_type: LinkType, ledger_id: Principal) -> String {
     match link_type {
-        LinkType::SendTip => format!(
-            "{}_{}",
-            INTENT_LABEL_SEND_TIP_ASSET,
-            asset_address.to_text()
-        ),
+        LinkType::SendTip => format!("{}_{}", INTENT_LABEL_SEND_TIP_ASSET, ledger_id.to_text()),
         LinkType::SendAirdrop => format!(
             "{}_{}",
             INTENT_LABEL_SEND_AIRDROP_ASSET,
-            asset_address.to_text()
+            ledger_id.to_text()
         ),
         LinkType::SendTokenBasket => format!(
             "{}_{}",
             INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-            asset_address.to_text()
+            ledger_id.to_text()
         ),
         LinkType::ReceivePayment => format!(
             "{}_{}",
             INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
-            asset_address.to_text()
+            ledger_id.to_text()
         ),
     }
 }
@@ -102,7 +94,6 @@ mod tests {
     fn it_should_generate_intent_asset_label() {
         // Arrange
         let ledger_id = random_principal_id();
-        let asset = Asset::IC { address: ledger_id };
         let link_types = vec![
             LinkType::SendTip,
             LinkType::SendAirdrop,
@@ -112,7 +103,7 @@ mod tests {
 
         // Act & Assert
         for link_type in link_types {
-            let label = generate_intent_asset_label(link_type, &asset);
+            let label = generate_intent_asset_label(link_type, ledger_id);
             let expected_prefix = match link_type {
                 LinkType::SendTip => INTENT_LABEL_SEND_TIP_ASSET,
                 LinkType::SendAirdrop => INTENT_LABEL_SEND_AIRDROP_ASSET,

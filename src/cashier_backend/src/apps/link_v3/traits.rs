@@ -1,16 +1,19 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::{
-        action_result::{CreateActionResult, ProcessActionResult},
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
-    },
+    link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
 };
 use std::collections::HashMap;
-use std::pin::Pin;
+use transaction_manager::v3::traits::TransactionManagerV3;
 
-use crate::apps::link_v2::links::shared::receive_link::{actions::create, states::created};
+use crate::apps::{
+    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
 
 pub trait LinkV3Instance {
     /// Create an action associated with the link
@@ -21,21 +24,43 @@ pub trait LinkV3Instance {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         created_at: u64,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
-    fn process_action(
+    /// Process an action associated with the link
+    /// # Arguments
+    /// * `caller` - The principal of the user processing the action
+    /// * `action` - The action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// # Returns
+    /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
+    /// # Errors
+    /// * `CanisterError` - If there is an error during action processing
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static;
 }
 
 pub trait LinkV3State {
@@ -47,19 +72,41 @@ pub trait LinkV3State {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         created_at: u64,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static;
 
-    fn process_action(
+    /// Process an action associated with the link
+    /// # Arguments
+    /// * `caller` - The principal of the user processing the action
+    /// * `action` - The action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// # Returns
+    /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
+    /// # Errors
+    /// * `CanisterError` - If there is an error during action processing
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>;
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static;
 }

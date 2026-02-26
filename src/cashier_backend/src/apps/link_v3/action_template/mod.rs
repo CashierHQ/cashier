@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod active;
-pub mod created;
-pub mod inactive;
+mod serde;
+pub mod template_loader;
 pub mod traits;

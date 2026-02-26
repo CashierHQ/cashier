@@ -74,7 +74,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
         input: CreateLinkInputV3,
         creator_id: Principal,
         canister_id: Principal,
-        created_at_ts: u64,
+        created_at: u64,
     ) -> Result<CreateLinkResponseV3, CanisterError> {
         if input.action.action_type != cashier_shared::types::ActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
@@ -98,7 +98,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
             asset_info,
             input.max_use,
             creator_id,
-            created_at_ts,
+            created_at,
             canister_id,
         )?;
 
@@ -118,7 +118,7 @@ impl<R: Repositories, M: TransactionManagerV3 + 'static> LinkV3Service<R, M> {
                 input.action.clone(),
                 creator_id,
                 canister_id,
-                created_at_ts,
+                created_at,
             )
             .await?;
 
