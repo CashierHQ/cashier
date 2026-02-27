@@ -39,7 +39,7 @@
 
     const baseTokens = walletStore.query.data.filter((token) => {
       if (token.address === selectedAddress) return true;
-      return !excludeSet.has(token.address);
+      return token.enabled && !excludeSet.has(token.address);
     });
 
     if (!searchQuery.trim()) return baseTokens;
