@@ -25,9 +25,15 @@ export class PreviewState implements LinkCreationState {
 
   // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
-    if (this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+    console.log("Creating link with data:", this.#link.createLinkData);
+
+    if (
+      this.#link.createLinkData.linkType === LinkType.TIP_SHARED_TEST ||
+      this.#link.createLinkData.linkType === LinkType.AIRDROP_SHARED_TEST ||
+      this.#link.createLinkData.linkType === LinkType.TOKEN_BASKET_SHARED_TEST
+    ) {
       if (!this.#link.action_shared) {
-        throw new Error("Action must be initialized for TIP_SHARED_TEST link");
+        throw new Error("Action must be initialized for link");
       }
 
       const result = await cashierBackendService.createLinkV3(
@@ -59,8 +65,6 @@ export class PreviewState implements LinkCreationState {
       if (result.isErr()) {
         throw new Error(`Link creation failed: ${result.error.message}`);
       }
-
-      console.log("Link created successfully with V2 API:", result.value);
 
       if (this.#link.id)
         tempLinkRepository.delete(

@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import {
-    getLinkTypeText,
-    isSendLinkType,
-    isPaymentLinkType,
-  } from "$modules/links/utils/linkItemHelpers";
-  import { toast } from "svelte-sonner";
-  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import {
+    getLinkTypeText,
+    isPaymentLinkType,
+    isSendLinkType,
+  } from "$modules/links/utils/linkItemHelpers";
+  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
-  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { toast } from "svelte-sonner";
 
   const {
     link,

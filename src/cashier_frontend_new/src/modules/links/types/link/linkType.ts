@@ -10,6 +10,8 @@ export class LinkType {
   static readonly TOKEN_BASKET = "TOKEN_BASKET";
   static readonly RECEIVE_PAYMENT = "RECEIVE_PAYMENT";
   static readonly TIP_SHARED_TEST = "TIP_SHARED_TEST";
+  static readonly AIRDROP_SHARED_TEST = "AIRDROP_SHARED_TEST";
+  static readonly TOKEN_BASKET_SHARED_TEST = "TOKEN_BASKET_SHARED_TEST";
 }
 
 export type LinkTypeValue =
@@ -17,7 +19,9 @@ export type LinkTypeValue =
   | typeof LinkType.AIRDROP
   | typeof LinkType.TOKEN_BASKET
   | typeof LinkType.RECEIVE_PAYMENT
-  | typeof LinkType.TIP_SHARED_TEST;
+  | typeof LinkType.TIP_SHARED_TEST
+  | typeof LinkType.AIRDROP_SHARED_TEST
+  | typeof LinkType.TOKEN_BASKET_SHARED_TEST;
 
 export class LinkTypeMapper {
   /**
@@ -35,7 +39,11 @@ export class LinkTypeMapper {
       case LinkType.RECEIVE_PAYMENT:
         return { ReceivePayment: null };
       case LinkType.TIP_SHARED_TEST:
-        return { SendTip: null }; // Maps to same backend type as TIP
+        return { SendTip: null };
+      case LinkType.AIRDROP_SHARED_TEST:
+        return { SendAirdrop: null };
+      case LinkType.TOKEN_BASKET_SHARED_TEST:
+        return { SendTokenBasket: null };
       default:
         return assertUnreachable(value);
     }

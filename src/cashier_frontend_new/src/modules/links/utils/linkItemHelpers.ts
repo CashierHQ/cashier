@@ -60,6 +60,10 @@ export function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
       return "/receive-payment-default.svg";
     case LinkType.TIP_SHARED_TEST:
       return "/tip-link-default.svg";
+    case LinkType.AIRDROP_SHARED_TEST:
+      return "/airdrop-default.svg";
+    case LinkType.TOKEN_BASKET_SHARED_TEST:
+      return "/token-basket-default.svg";
     default:
       assertUnreachable(linkType);
   }
@@ -77,6 +81,10 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
       return "Send Token Basket";
     case LinkType.TIP_SHARED_TEST:
       return "Send Tip (Test)";
+    case LinkType.AIRDROP_SHARED_TEST:
+      return "Send Airdrop (Test)";
+    case LinkType.TOKEN_BASKET_SHARED_TEST:
+      return "Send Token Basket (Test)";
     default:
       assertUnreachable(linkType);
   }
@@ -92,7 +100,9 @@ export function isSendLinkType(linkType: LinkTypeValue): boolean {
     linkType === LinkType.TIP ||
     linkType === LinkType.AIRDROP ||
     linkType === LinkType.TOKEN_BASKET ||
-    linkType === LinkType.TIP_SHARED_TEST
+    linkType === LinkType.TIP_SHARED_TEST ||
+    linkType === LinkType.AIRDROP_SHARED_TEST ||
+    linkType === LinkType.TOKEN_BASKET_SHARED_TEST
   );
 }
 

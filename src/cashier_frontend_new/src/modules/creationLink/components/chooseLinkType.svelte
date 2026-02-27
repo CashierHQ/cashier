@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
@@ -8,7 +9,6 @@
     LinkType,
     type LinkTypeValue,
   } from "$modules/links/types/link/linkType";
-  import { locale } from "$lib/i18n";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -23,6 +23,8 @@
     LinkType.AIRDROP,
     LinkType.TOKEN_BASKET,
     LinkType.TIP_SHARED_TEST,
+    LinkType.AIRDROP_SHARED_TEST,
+    LinkType.TOKEN_BASKET_SHARED_TEST,
     // TODO: Uncomment this when we have a receive payment link type
     // LinkType.RECEIVE_PAYMENT,
   ];

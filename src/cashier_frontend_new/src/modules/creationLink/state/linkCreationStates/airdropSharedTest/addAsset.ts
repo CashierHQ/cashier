@@ -18,8 +18,8 @@ import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$shared";
 import { Principal } from "@dfinity/principal";
 
-// State when the user is adding asset details for the tip link (shared package test)
-export class AddAssetTipSharedTestState implements LinkCreationState {
+// State when the user is adding asset details for the airdrop shared test link
+export class AddAssetAirdropSharedTestState implements LinkCreationState {
   readonly step = LinkStep.ADD_ASSET;
   #link: LinkCreationStore;
 
@@ -55,19 +55,30 @@ export class AddAssetTipSharedTestState implements LinkCreationState {
       !this.#link.createLinkData.assets ||
       this.#link.createLinkData.assets?.length === 0
     ) {
-      throw new Error("Asset is required to proceed");
-    }
-    if (this.#link.createLinkData.assets.length > 1) {
-      throw new Error("Only one asset is supported for tip links");
-    }
-    if (this.#link.createLinkData.assets[0].address.trim() === "") {
-      throw new Error("Address is required to proceed");
-    }
-    if (this.#link.createLinkData.assets[0].useAmount <= 0n) {
-      throw new Error("Amount must be greater than zero to proceed");
+      throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
     }
 
-    // validate required amounts
+    // Airdrop links support only one asset
+    if (this.#link.createLinkData.assets.length > 1) {
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
+      );
+    }
+
+    // Validate the asset
+    const asset = this.#link.createLinkData.assets[0];
+    if (asset.address.trim() === "") {
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.addressRequired"),
+      );
+    }
+    if (asset.useAmount <= 0n) {
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"),
+      );
+    }
+
+    // Validate required amounts (for airdrop, this checks totalAmount = useAmount * maxUse)
     const validationResult = validationService.validateRequiredAmount(
       this.#link.createLinkData,
       walletStore.query.data || [],
@@ -110,7 +121,6 @@ export class AddAssetTipSharedTestState implements LinkCreationState {
       throw new Error(`Validation failed: ${errorMessage}`);
     }
 
-    // Update first (asset) intent with actual selected asset data
     const tokens = walletStore.query.data ?? [];
     const assetAddressStr = this.#link.createLinkData.assets[0].address;
     const useAmount = this.#link.createLinkData.assets[0].useAmount;
@@ -128,6 +138,8 @@ export class AddAssetTipSharedTestState implements LinkCreationState {
     });
     const icpToken = tokens.find((t) => t.address === ICP_LEDGER_CANISTER_ID);
     this.#link.updateFeeIntent(icpToken?.fee);
+
+    console.log("Link assets", this.#link.createLinkData.assets);
 
     this.#link.state = new PreviewState(this.#link);
   }

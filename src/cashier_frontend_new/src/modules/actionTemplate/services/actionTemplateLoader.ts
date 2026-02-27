@@ -12,10 +12,15 @@ import { Principal } from "@dfinity/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
 import { type ActionTemplateJson } from "$modules/actionTemplate/types";
-import actionsTemplates from "$sharedTemplates/tiplink.json";
+import airdropLinkTemplates from "$sharedTemplates/airdroplink.json";
+import tipLinkTemplates from "$sharedTemplates/tiplink.json";
+import tokenBasketLinkTemplates from "$sharedTemplates/tokenbasketlink.json";
 
 const TEMPLATE_LINK_TYPE_MAP: Record<string, ActionTemplateJson[]> = {
-  [LinkType.TIP_SHARED_TEST]: actionsTemplates as ActionTemplateJson[],
+  [LinkType.TIP_SHARED_TEST]: tipLinkTemplates as ActionTemplateJson[],
+  [LinkType.AIRDROP_SHARED_TEST]: airdropLinkTemplates as ActionTemplateJson[],
+  [LinkType.TOKEN_BASKET_SHARED_TEST]:
+    tokenBasketLinkTemplates as ActionTemplateJson[],
 };
 
 /**

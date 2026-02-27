@@ -24,7 +24,9 @@ export class CreateLinkInputDtoV3 {
       input.linkType !== LinkType.TIP &&
       input.linkType !== LinkType.AIRDROP &&
       input.linkType !== LinkType.TOKEN_BASKET &&
-      input.linkType !== LinkType.TIP_SHARED_TEST
+      input.linkType !== LinkType.TIP_SHARED_TEST &&
+      input.linkType !== LinkType.AIRDROP_SHARED_TEST &&
+      input.linkType !== LinkType.TOKEN_BASKET_SHARED_TEST
     ) {
       return Err(
         new Error(

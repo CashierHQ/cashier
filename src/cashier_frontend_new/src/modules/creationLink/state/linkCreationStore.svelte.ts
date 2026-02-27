@@ -240,6 +240,8 @@ export class LinkCreationStore {
     );
     if (!loaded_action) return false;
     this.action_shared = loaded_action;
+
+    console.log("Initialized action from template", loaded_action);
     return true;
   }
 
