@@ -11,6 +11,7 @@ import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationSt
 import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { createTempLinkFromPrincipalId } from "$modules/creationLink/utils/tempLink";
+import Action from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import {
   LinkState,
@@ -27,7 +28,11 @@ import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
-import { type Action, AddressType, TokenStandard } from "$shared";
+import {
+  type Action as SharedAction,
+  AddressType as SharedAddressType,
+  TokenStandard as SharedTokenStandard,
+} from "$shared";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -50,13 +55,14 @@ export class LinkCreationStore {
   public link = $state<Link | undefined>();
   // Only existed if the link state == Created
   public action = $state<Action | undefined>();
+  public action_shared = $state<SharedAction | undefined>();
   #id = $state<string>();
 
   constructor(tempLink: TempLink) {
     this.#id = tempLink.id;
     this.createLinkData = tempLink.createLinkData;
     this.#state = this.stateFromValue(tempLink.state);
-    this.action = undefined;
+    this.action_shared = undefined;
     this.link = undefined;
 
     $effect(() => {
@@ -88,6 +94,7 @@ export class LinkCreationStore {
   reset(): void {
     this.link = undefined;
     this.action = undefined;
+    this.action_shared = undefined;
   }
 
   // Move to the next state
@@ -218,13 +225,13 @@ export class LinkCreationStore {
     actionType: string,
     creator: Principal,
   ): boolean {
-    const loaded_action: Action | undefined = createActionFromTemplate(
+    const loaded_action: SharedAction | undefined = createActionFromTemplate(
       linkType,
       actionType,
       creator,
     );
     if (!loaded_action) return false;
-    this.action = loaded_action;
+    this.action_shared = loaded_action;
     return true;
   }
 
@@ -235,21 +242,21 @@ export class LinkCreationStore {
   updateAssetIntent(params: {
     assetAddress: Principal;
     networkFee: bigint;
-    tokenStandard: (typeof TokenStandard)[keyof typeof TokenStandard];
+    tokenStandard: (typeof SharedTokenStandard)[keyof typeof SharedTokenStandard];
     amount: bigint;
   }): void {
-    if (!this.action || this.action.intents.length === 0) return;
-    const intent = this.action.intents[0];
+    if (!this.action_shared || this.action_shared.intents.length === 0) return;
+    const intent = this.action_shared.intents[0];
     intent.asset = {
       address: params.assetAddress,
       network_fee: params.networkFee,
       token_standard: params.tokenStandard,
     };
     intent.amount = params.amount;
-    intent.source_address = this.action.creator;
-    intent.source_address_type = this.action.creator_address_type;
+    intent.source_address = this.action_shared.creator;
+    intent.source_address_type = this.action_shared.creator_address_type;
     intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
-    intent.dest_address_type = AddressType.Link;
+    intent.dest_address_type = SharedAddressType.Link;
   }
 
   /**
@@ -259,21 +266,21 @@ export class LinkCreationStore {
    * @param icpNetworkFee - optional; uses ICP_LEDGER_FEE if not provided (e.g. wallet not loaded)
    */
   updateFeeIntent(icpNetworkFee?: bigint): void {
-    if (!this.action || this.action.intents.length < 2) return;
+    if (!this.action_shared || this.action_shared.intents.length < 2) return;
     const LINK_CREATION_FEE = 10_000n;
     const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
     const fee = icpNetworkFee ?? ICP_LEDGER_FEE;
 
-    const intent = this.action.intents[1];
+    const intent = this.action_shared.intents[1];
     intent.asset = {
       address: icpPrincipal,
       network_fee: fee,
-      token_standard: TokenStandard.ICRC2,
+      token_standard: SharedTokenStandard.ICRC2,
     };
     intent.amount = LINK_CREATION_FEE;
-    intent.source_address = this.action.creator;
-    intent.source_address_type = this.action.creator_address_type;
+    intent.source_address = this.action_shared.creator;
+    intent.source_address_type = this.action_shared.creator_address_type;
     intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
-    intent.dest_address_type = AddressType.Treasury;
+    intent.dest_address_type = SharedAddressType.Treasury;
   }
 }

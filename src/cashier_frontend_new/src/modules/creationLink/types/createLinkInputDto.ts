@@ -9,10 +9,14 @@ import {
 import { LinkType, LinkTypeMapper } from "$modules/links/types/link/linkType";
 import { Err, Ok, Result } from "ts-results-es";
 
+/**
+ * Mapper for converting CreateLinkData to CreateLinkInput argument for BE API calls.
+ */
 export class CreateLinkInputDto {
   /**
-   *  Convert CreateLinkData to CreateLinkInput for backend consumption
-   * @returns Result wrapping CreateLinkInput or Error if validation fails
+   * Convert CreateLinkData to CreateLinkInput argument for backend API calls
+   * @param input
+   * @returns
    */
   static toCreateLinkInputArg(
     input: CreateLinkData,

@@ -1,25 +1,24 @@
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
-import {
-  CreateLinkData,
-  CreateLinkDataMapper,
-} from "$modules/creationLink/types/createLinkData";
-import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { toNullable } from "@dfinity/utils";
-import { Err, type Result } from "ts-results-es";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import { CreateLinkInputDto } from "$modules/creationLink/types/createLinkInputDto";
+import { CreateLinkInputDtoV3 } from "$modules/creationLink/types/createLinkInputDtoV3";
 import {
   ActionTypeMapper,
   type ActionTypeValue,
-} from "../types/action/actionType";
+} from "$modules/links/types/action/actionType";
 import type {
   CreateActionInputV3,
   CreateActionResponseV3,
-  CreateLinkInputV3,
   CreateLinkResponseV3,
   ProcessActionInputV3,
   ProcessActionResponseV3,
 } from "$modules/links/types/linkV3";
+import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
+import { type Action as SharedAction } from "$shared";
+import { toNullable } from "@dfinity/utils";
+import { Err, type Result } from "ts-results-es";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -125,7 +124,7 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = CreateLinkDataMapper.toCreateLinkInput(input);
+    const request = CreateLinkInputDto.toCreateLinkInputArg(input);
     if (request.isErr()) {
       return Err(request.unwrapErr());
     }
@@ -144,7 +143,8 @@ class CanisterBackendService {
    * @returns A Result containing CreateLinkResponseV3 or an Error.
    */
   async createLinkV3(
-    input: CreateLinkInputV3,
+    input: CreateLinkData,
+    action: SharedAction,
   ): Promise<Result<CreateLinkResponseV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
@@ -153,12 +153,12 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await actor.user_create_link_v3({
-      title: input.title,
-      link_type: input.link_type,
-      max_use: BigInt(input.max_use),
-      action: input.action,
-    });
+    const request = CreateLinkInputDtoV3.toCreateLinkInputArgV3(input, action);
+    if (request.isErr()) {
+      return Err(request.unwrapErr());
+    }
+
+    const response = await actor.user_create_link_v3(request.unwrap());
 
     return responseToResult(
       response as
