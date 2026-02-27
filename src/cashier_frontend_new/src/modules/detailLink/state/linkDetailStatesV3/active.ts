@@ -1,42 +1,41 @@
+import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
+import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+import type {
+  CreateActionResultV3,
+  ProcessActionResultV3,
+} from "$modules/detailLink/types/v3/action";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-import type Action from "$modules/links/types/action/action";
-import {
-  ActionMapper,
-  ProcessActionResultMapper,
-  type ProcessActionResult,
-} from "$modules/links/types/action/action";
-import {
-  ActionType,
-  type ActionTypeValue,
-} from "$modules/links/types/action/actionType";
+import { ActionType } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkDetailState } from ".";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
+import type { Action as SharedAction } from "$shared";
 
 // State when the link active and ready for use
-export class LinkActiveState implements LinkDetailState {
+export class LinkActiveStateV3 implements LinkDetailStateV3 {
   readonly step = LinkStep.ACTIVE;
-  #linkDetailStore: LinkDetailStore;
+  #linkDetailStore: LinkDetailStoreV3;
 
-  constructor(link: LinkDetailStore) {
+  constructor(link: LinkDetailStoreV3) {
     this.#linkDetailStore = link;
   }
 
   // create action for using link
-  async createAction(actionType: ActionTypeValue): Promise<Action> {
+  async createAction(action: SharedAction): Promise<CreateActionResultV3> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
     }
 
-    if (actionType !== ActionType.RECEIVE && actionType !== ActionType.SEND) {
+    if (
+      action.action_type !== ActionType.RECEIVE &&
+      action.action_type !== ActionType.SEND
+    ) {
       throw new Error("Invalid action type for Active state");
     }
 
-    const actionRes = await cashierBackendService.createActionV2({
-      linkId: link.id,
-      actionType,
+    const actionRes = await cashierBackendService.createActionV3({
+      link_id: link.id,
+      action,
     });
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
@@ -44,11 +43,11 @@ export class LinkActiveState implements LinkDetailState {
 
     // Refresh link detail to get the new action
     this.#linkDetailStore.query.refresh();
-    return ActionMapper.fromBackendType(actionRes.unwrap());
+    return actionRes.unwrap();
   }
 
   // process the action for use link
-  async processAction(): Promise<ProcessActionResult> {
+  async processAction(): Promise<ProcessActionResultV3> {
     if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }
@@ -57,19 +56,19 @@ export class LinkActiveState implements LinkDetailState {
       throw new Error("Action is missing");
     }
 
-    const actionType = this.#linkDetailStore.action.type;
+    const actionType = this.#linkDetailStore.action.action_type;
     if (actionType !== ActionType.RECEIVE && actionType !== ActionType.SEND) {
       throw new Error("Invalid action type for Active state");
     }
 
     const actionId = this.#linkDetailStore.action.id;
-    const result = await cashierBackendService.processActionV2(actionId);
+    const result = await cashierBackendService.processActionV3(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to process action: ${result.error}`);
     }
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
-    return ProcessActionResultMapper.fromBackendType(result.unwrap());
+    return result.unwrap();
   }
 }

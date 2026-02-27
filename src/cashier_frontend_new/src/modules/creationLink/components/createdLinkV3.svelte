@@ -5,19 +5,20 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+  import type { ProcessActionResultV3 } from "$modules/detailLink/types/v3/action";
   import { ActionState } from "$modules/links/types/action/actionState";
-  import { LinkState } from "$modules/links/types/link/linkState";
-  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
+  import LinkTxCartV3 from "$modules/transactionCart/components/LinkTxCartV3.svelte";
+  import { LinkState as SharedLinkState } from "$shared";
   import { onMount } from "svelte";
+
   const {
     link,
   }: {
     link: LinkCreationStore;
   } = $props();
 
-  let linkDetailStore = $state<LinkDetailStore | null>(null);
+  let linkDetailStore = $state<LinkDetailStoreV3 | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -30,7 +31,7 @@
     showTxCart = false;
   }
 
-  async function handleProcessAction(): Promise<ProcessActionResult> {
+  async function handleProcessAction(): Promise<ProcessActionResultV3> {
     if (!linkDetailStore) {
       throw new Error("LinkDetailStore is not initialized");
     }
@@ -42,7 +43,7 @@
     if (
       linkDetailStore &&
       linkDetailStore.link &&
-      linkDetailStore.link.state === LinkState.ACTIVE
+      linkDetailStore.link.link_state === SharedLinkState.Active
     ) {
       goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
     }
@@ -51,7 +52,7 @@
   onMount(() => {
     // Initialize LinkDetailStore with the created link ID
     if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
+      linkDetailStore = new LinkDetailStoreV3({ id: link.id });
     }
 
     if (link.action && link.action.state !== ActionState.SUCCESS) {
@@ -76,10 +77,11 @@
 </div>
 
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
-  <LinkTxCart
+  <LinkTxCartV3
     bind:isOpen={showTxCart}
     source={{
       action: linkDetailStore.action,
+      icrc112Requests: linkDetailStore.icrc112Requests,
       handleProcessAction,
     }}
     {onCloseDrawer}

@@ -1,35 +1,33 @@
 import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { buildAssetAndFeeFromActionShared } from "$modules/creationLink/utils/buildAssetAndFeeFromActionShared";
+import { type ProcessActionResultV3 } from "$modules/detailLink/types/v3/action";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
-import { LinkType } from "$modules/links/types/link/linkType";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
+import type { ActionSourceV3 } from "$modules/transactionCart/types/transactionSource";
 import {
   AssetProcessState,
   AssetProcessStateMapper,
 } from "$modules/transactionCart/types/txCart";
 import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
+import type { Action as SharedAction } from "$shared";
 import type { Signer } from "@slide-computer/signer";
 
 /**
  * Transaction cart store for Action-based (ICRC-112) transactions.
  * Handles link transactions with batch execution and intent state sync.
  */
-export class LinkTxCartStore implements TxCartStore {
-  #source: ActionSource;
+export class LinkTxCartStoreV3 implements TxCartStore {
+  #source: ActionSourceV3;
   #icrc112Service: Icrc112Service<IITransport> | null = null;
   #assetAndFeeList = $state<AssetAndFee[]>([]);
 
-  constructor(source: ActionSource) {
+  constructor(source: ActionSourceV3) {
     this.#source = source;
   }
 
@@ -37,7 +35,7 @@ export class LinkTxCartStore implements TxCartStore {
    * Update the source reference for reactive updates.
    * Call this from $effect when source prop changes.
    */
-  updateSource(newSource: ActionSource): void {
+  updateSource(newSource: ActionSourceV3): void {
     this.#source = newSource;
   }
 
@@ -65,23 +63,11 @@ export class LinkTxCartStore implements TxCartStore {
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
 
-    if (
-      this.#source.linkType === LinkType.TIP_SHARED_TEST &&
-      this.#source.maxUse != null
-    ) {
-      this.#assetAndFeeList = buildAssetAndFeeFromActionShared(
-        this.#source.action,
-        tokens,
-        walletPrincipal,
-        this.#source.maxUse,
-      );
-    } else {
-      this.#assetAndFeeList = feeService.buildFromAction(
-        this.#source.action,
-        tokens,
-        walletPrincipal,
-      );
-    }
+    this.#assetAndFeeList = feeService.buildFromSharedAction(
+      this.#source.action,
+      tokens,
+      this.#source.maxUse,
+    );
   }
 
   /** Compute total fee in USD */
@@ -97,14 +83,14 @@ export class LinkTxCartStore implements TxCartStore {
    * Matches assets by intentId and updates state from corresponding intent.
    * @param action - Updated action with latest intent states
    */
-  syncStatesFromAction(action: Action): void {
+  syncStatesFromAction(action: SharedAction): void {
     if (!action.intents?.length) return;
 
     // Build lookup object of intentId -> IntentState from action intents
     const intentStateById: Record<string, IntentStateValue> = {};
     for (const intent of action.intents) {
-      if (intent.id && intent.state) {
-        intentStateById[intent.id] = intent.state as IntentStateValue;
+      if (intent.id && intent.intent_type) {
+        intentStateById[intent.id] = intent.intent_state as IntentStateValue;
       }
     }
 
@@ -169,7 +155,7 @@ export class LinkTxCartStore implements TxCartStore {
    * Transitions: CREATED → PROCESSING → [SIGNED_PENDING after ICRC-112] → SUCCEED after backend
    * @returns ProcessActionResult from handleProcessAction
    */
-  async execute(): Promise<ProcessActionResult> {
+  async execute(): Promise<ProcessActionResultV3> {
     if (!authState.account?.owner) {
       throw new Error("User is not authenticated.");
     }
@@ -182,12 +168,12 @@ export class LinkTxCartStore implements TxCartStore {
     // Transition to PROCESSING before execution
     this.setSourceState(IntentState.PROCESSING);
 
-    const { action, handleProcessAction } = this.#source;
+    const { action, icrc112Requests, handleProcessAction } = this.#source;
 
     try {
-      if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
+      if (icrc112Requests && icrc112Requests.length > 0) {
         const icrcResult = await this.#icrc112Service.sendBatchRequest(
-          action.icrc_112_requests,
+          icrc112Requests,
           authState.account!.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );

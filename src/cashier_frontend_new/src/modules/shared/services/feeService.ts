@@ -8,8 +8,8 @@ import {
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
 import {
-  ICP_LEDGER_FEE,
   ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
 } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import {
@@ -23,25 +23,30 @@ import {
 } from "$modules/transactionCart/types/txCart";
 
 import { assertUnreachable } from "$lib/rsMatch";
+import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import {
   FeeType,
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
   type FeeItem,
 } from "$modules/links/types/fee";
-import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import {
+  calculateIntentFees,
+  IntentParticipants,
+  ActionType as SharedActionType,
+  IntentType as SharedIntentType,
+  TokenStandard as SharedTokenStandard,
+  TokenStandard,
+  type Action as SharedAction,
+  type Intent as SharedIntent,
+} from "$shared";
 import type {
   AssetAndFeeList,
   ForecastAssetAndFee,
   WalletAssetInput,
 } from "../types/feeService";
-import {
-  calculateIntentFees,
-  IntentParticipants,
-  TokenStandard as SharedTokenStandard,
-} from "$shared";
 
 export class FeeService {
   /**
@@ -59,6 +64,20 @@ export class FeeService {
     const fromAddress = payload.from.address.toText();
     if (fromAddress === currentWalletPrincipal) return FlowDirection.OUTGOING;
     if (toAddress === currentWalletPrincipal) return FlowDirection.INCOMING;
+    throw new Error("User is neither sender nor receiver");
+  }
+
+  /**
+   * Determine flow direction from shared Intent.
+   * @param intent
+   * @returns
+   */
+  getFlowDirectionFromSharedIntent(intent: SharedIntent): FlowDirectionValue {
+    if (intent.intent_type === SharedIntentType.Send) {
+      return FlowDirection.OUTGOING;
+    } else if (intent.intent_type === SharedIntentType.Receive) {
+      return FlowDirection.INCOMING;
+    }
     throw new Error("User is neither sender nor receiver");
   }
 
@@ -179,6 +198,79 @@ export class FeeService {
         fee = {
           feeType,
           amount: feeRaw,
+          amountFormattedStr: token ? formatNumber(feeUi) : feeUi.toString(),
+          symbol,
+          price: token?.priceUSD,
+          usdValue: feeUsd,
+          usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+        };
+      }
+
+      return { asset, fee };
+    });
+  }
+
+  buildFromSharedAction(
+    action: SharedAction,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+    max_use?: number,
+  ): AssetAndFeeList {
+    return action.intents.map((intent) => {
+      const address = intent.asset.address.toString();
+      const token = tokens[address];
+      const direction = this.getFlowDirectionFromSharedIntent(intent);
+
+      let feeType = FeeType.NETWORK_FEE;
+      if (action.action_type === SharedActionType.CreateLink) {
+        feeType = FeeType.CREATE_LINK_FEE;
+      }
+
+      const label = "Create link fee";
+
+      const intentFees = calculateIntentFees({
+        intent_participants: IntentParticipants.CreatorToLink,
+        token_standard: TokenStandard.ICRC2, // TODO
+        user_input_amount: intent.amount,
+        max_use,
+        asset_network_fee: token?.fee ?? ICP_LEDGER_FEE,
+      });
+
+      const decimals = token?.decimals ?? 8;
+      const symbol = token?.symbol ?? "N/A";
+      const amountUi = parseBalanceUnits(
+        BigInt(intentFees.intent_total_amount),
+        decimals,
+      );
+      const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
+
+      const asset: AssetItem = {
+        state: token
+          ? AssetProcessStateMapper.fromIntentState(
+              intent.intent_state as IntentStateValue,
+            )
+          : AssetProcessState.PROCESSING,
+        label,
+        symbol,
+        address,
+        amount: BigInt(intentFees.intent_total_amount),
+        amountFormattedStr: token
+          ? formatNumber(amountUi)
+          : amountUi.toString(),
+        usdValueStr: amountUsd ? formatUsdAmount(amountUsd) : undefined,
+        direction,
+        intentId: intent.id,
+      };
+
+      let fee: FeeItem | undefined;
+      if (BigInt(intentFees.intent_total_network_fee) > 0) {
+        const feeUi = parseBalanceUnits(
+          BigInt(intentFees.intent_total_network_fee),
+          decimals,
+        );
+        const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
+        fee = {
+          feeType,
+          amount: BigInt(intentFees.intent_total_network_fee),
           amountFormattedStr: token ? formatNumber(feeUi) : feeUi.toString(),
           symbol,
           price: token?.priceUSD,

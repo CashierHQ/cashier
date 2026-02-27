@@ -4,16 +4,17 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { CreateLinkInputDto } from "$modules/creationLink/types/createLinkInputDto";
 import { CreateLinkInputDtoV3 } from "$modules/creationLink/types/createLinkInputDtoV3";
+import type {
+  CreateActionResultV3,
+  ProcessActionResultV3,
+} from "$modules/detailLink/types/v3/action";
 import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "$modules/links/types/action/actionType";
 import type {
   CreateActionInputV3,
-  CreateActionResponseV3,
   CreateLinkResponseV3,
-  ProcessActionInputV3,
-  ProcessActionResponseV3,
 } from "$modules/links/types/linkV3";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { type Action as SharedAction } from "$shared";
@@ -196,11 +197,11 @@ class CanisterBackendService {
   /**
    * Process an action using the V3 API.
    * @param input V3 process action payload
-   * @returns A Result containing ProcessActionResponseV3 or an Error.
+   * @returns A Result containing ProcessActionResultV3 or an Error.
    */
   async processActionV3(
-    input: ProcessActionInputV3,
-  ): Promise<Result<ProcessActionResponseV3, Error>> {
+    actionId: string,
+  ): Promise<Result<ProcessActionResultV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });
@@ -208,20 +209,13 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    // Backend expects ProcessActionV2Input { action_id } only - same as process_action_v2
-    const response = await (
-      actor as unknown as {
-        user_process_action_v3: (input: {
-          action_id: string;
-        }) => Promise<unknown>;
-      }
-    ).user_process_action_v3({
-      action_id: input.action_id,
+    const response = await actor.user_process_action_v3({
+      action_id: actionId,
     });
 
     return responseToResult(
       response as
-        | { Ok: ProcessActionResponseV3 }
+        | { Ok: ProcessActionResultV3 }
         | { Err: cashierBackend.CanisterError },
     )
       .map((res) => res)
@@ -306,7 +300,7 @@ class CanisterBackendService {
    */
   async createActionV3(
     input: CreateActionInputV3,
-  ): Promise<Result<CreateActionResponseV3, Error>> {
+  ): Promise<Result<CreateActionResultV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });
@@ -325,7 +319,7 @@ class CanisterBackendService {
 
     return responseToResult(
       response as
-        | { Ok: CreateActionResponseV3 }
+        | { Ok: CreateActionResultV3 }
         | { Err: cashierBackend.CanisterError },
     )
       .map((res) => res)
@@ -339,18 +333,20 @@ class CanisterBackendService {
    * @param actorOptions Optional { anonymous?: boolean } for unauthenticated reads.
    * @returns A Result containing GetLinkResponseV3 or an Error.
    */
-  async getLinkDetailsV3(
+  async getLinkV3(
     id: string,
     options?: cashierBackend.GetLinkOptions,
-    actorOptions?: {
-      anonymous?: boolean;
-    },
+    anonymous?: boolean,
   ): Promise<Result<cashierBackend.GetLinkResponseV3, Error>> {
-    const actor = this.#getActor({
-      anonymous: actorOptions?.anonymous,
-    });
+    const actor = anonymous
+      ? this.#getActor({
+          anonymous,
+        })
+      : this.#getActor({
+          anonymous: false,
+        });
     if (!actor) {
-      return Err(new Error("User not logged in"));
+      return Err(new Error("Actor creation failed"));
     }
     const response = await actor.get_link_details_v3(id, toNullable(options));
 
@@ -383,7 +379,7 @@ class CanisterBackendService {
       anonymous: actorOptions?.anonymous,
     });
     if (!actor) {
-      return Err(new Error("User not logged in"));
+      return Err(new Error("Actor creation failed"));
     }
     const response = await actor.get_link_details_v2(id, toNullable(options));
 
