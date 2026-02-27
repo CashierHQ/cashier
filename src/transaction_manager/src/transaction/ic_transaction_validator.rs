@@ -33,7 +33,10 @@ impl IcTransactionValidator {
             .map_err(|e| format!("Query icrc1 balance failed for canister {}: {}", address, e))?;
 
         if balance_res < transaction.amount {
-            return Err(format!("Insufficient balance for {} asset", address));
+            return Err(format!(
+                "Insufficient balance for {} asset, required {}, got {}",
+                address, transaction.amount, balance_res
+            ));
         }
 
         Ok(())
