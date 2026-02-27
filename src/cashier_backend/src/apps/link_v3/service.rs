@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
-    dto::link::GetLinkOptions,
+    dto::{action::Icrc112Requests, link::GetLinkOptions},
     error::CanisterError,
     link_v3::dto::{
         action::{CreateActionResponseV3, ProcessActionResponseV3},
@@ -323,30 +323,33 @@ impl<R: Repositories> LinkV3Service<R> {
 
         // build response dto
         let link_shared = link_model.to_shared();
-        let action_shared: Option<ActionShared> = if let Some(action) = action {
-            let action_data = self
-                .action_service
-                .get_action_data(&action.id)
-                .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+        let (action_shared, icrc112_requests): (Option<ActionShared>, Option<Icrc112Requests>) =
+            if let Some(action) = action {
+                let action_data = self
+                    .action_service
+                    .get_action_data(&action.id)
+                    .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
-            let create_action_result = transaction_manager.create_action(
-                action,
-                action_data.intents,
-                Some(action_data.intent_txs),
-            )?;
+                let create_action_result = transaction_manager.create_action(
+                    action,
+                    action_data.intents,
+                    Some(action_data.intent_txs),
+                )?;
 
-            let action_shared = create_action_result
-                .action
-                .to_shared(create_action_result.intents);
+                let action_shared = create_action_result
+                    .action
+                    .to_shared(create_action_result.intents);
+                let icrc112_requests = create_action_result.icrc112_requests;
 
-            Some(action_shared)
-        } else {
-            None
-        };
+                (Some(action_shared), icrc112_requests)
+            } else {
+                (None, None)
+            };
 
         Ok(GetLinkResponseV3 {
             link: link_shared,
             action: action_shared,
+            icrc112_requests,
             link_user_state,
         })
     }

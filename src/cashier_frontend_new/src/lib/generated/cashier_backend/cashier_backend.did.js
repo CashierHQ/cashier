@@ -297,6 +297,7 @@ export const idlFactory = ({ IDL }) => {
     'action' : IDL.Opt(Action),
     'link_user_state' : IDL.Opt(LinkUserState),
     'link' : Link,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
   const Result_3 = IDL.Variant({
     'Ok' : GetLinkResponseV3,

@@ -137,6 +137,7 @@ export interface GetLinkResponseV3 {
   'action' : [] | [Action],
   'link_user_state' : [] | [LinkUserState],
   'link' : Link,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
   { 'Icrc1Transfer' : Icrc1Transfer } |
