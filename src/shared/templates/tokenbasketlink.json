@@ -32,7 +32,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -51,7 +51,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -70,7 +70,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -89,7 +89,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -108,7 +108,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -127,7 +127,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -146,7 +146,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -165,7 +165,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",
@@ -184,7 +184,7 @@
           "network_fee": "10000000000",
           "token_standard": "ICRC2"
         },
-        "amount": "10000000000",
+        "amount": "0",
         "total_network_fee": "10000000000",
         "user_fee": "10000000000",
         "total_amount": "10000000000",

@@ -15,7 +15,11 @@ export class SharedActionMapper {
    * @returns
    */
   static toBackendType(action: SharedAction): BackendSharedAction {
-    const intentIds = action.intents.map((intent) => intent.id);
+    let filterIntents = action.intents.filter(
+      (intent) => intent.amount > BigInt(0),
+    );
+
+    const intentIds = filterIntents.map((intent) => intent.id);
     return {
       id: action.id,
       creator: action.creator,
@@ -23,7 +27,7 @@ export class SharedActionMapper {
         action.creator_address_type,
       ),
       action_type: SharedActionTypeMapper.toBackendType(action.action_type),
-      intents: action.intents.map((intent) =>
+      intents: filterIntents.map((intent) =>
         SharedIntentMapper.toBackendType(intent),
       ),
       intent_ids: [intentIds],

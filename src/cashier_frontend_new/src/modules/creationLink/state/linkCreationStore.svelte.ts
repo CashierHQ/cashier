@@ -249,24 +249,39 @@ export class LinkCreationStore {
    * Update the first (asset) intent with actual selected asset data.
    * Used on step ADD_ASSET for V3 (e.g. TIP_SHARED_TEST). Sets source=Creator, dest=Link.
    */
-  updateAssetIntent(params: {
-    assetAddress: Principal;
-    networkFee: bigint;
-    tokenStandard: (typeof SharedTokenStandard)[keyof typeof SharedTokenStandard];
-    amount: bigint;
-  }): void {
+  updateAssetIntent(
+    params: {
+      assetAddress: Principal;
+      networkFee: bigint;
+      tokenStandard: (typeof SharedTokenStandard)[keyof typeof SharedTokenStandard];
+      amount: bigint;
+    }[],
+  ): void {
     if (!this.action_shared || this.action_shared.intents.length === 0) return;
-    const intent = this.action_shared.intents[0];
-    intent.asset = {
-      address: params.assetAddress,
-      network_fee: params.networkFee,
-      token_standard: params.tokenStandard,
-    };
-    intent.amount = params.amount;
-    intent.source_address = this.action_shared.creator;
-    intent.source_address_type = this.action_shared.creator_address_type;
-    intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
-    intent.dest_address_type = SharedAddressType.Link;
+
+    const intents = this.action_shared.intents.filter(
+      (i) =>
+        i.source_address_type === SharedAddressType.Creator &&
+        i.dest_address_type === SharedAddressType.Link,
+    );
+    if (intents.length === 0) {
+      throw new Error("Asset intent not found in action intents");
+    }
+
+    for (let i = 0; i < params.length; i++) {
+      const intent = intents[i];
+      const param = params[i];
+      intent.asset = {
+        address: param.assetAddress,
+        network_fee: param.networkFee,
+        token_standard: param.tokenStandard,
+      };
+      intent.amount = param.amount;
+      intent.source_address = this.action_shared.creator;
+      intent.source_address_type = this.action_shared.creator_address_type;
+      intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
+      intent.dest_address_type = SharedAddressType.Link;
+    }
   }
 
   /**
@@ -281,7 +296,15 @@ export class LinkCreationStore {
     const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
     const fee = icpNetworkFee ?? ICP_LEDGER_FEE;
 
-    const intent = this.action_shared.intents[1];
+    const intent = this.action_shared.intents.filter(
+      (i) =>
+        i.source_address_type === SharedAddressType.Creator &&
+        i.dest_address_type === SharedAddressType.Treasury,
+    )[0];
+    if (!intent) {
+      throw new Error("Fee intent not found in action intents");
+    }
+
     intent.asset = {
       address: icpPrincipal,
       network_fee: fee,

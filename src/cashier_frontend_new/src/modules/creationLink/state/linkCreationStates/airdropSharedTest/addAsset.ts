@@ -37,13 +37,13 @@ export class AddAssetAirdropSharedTestState implements LinkCreationState {
 
       const creatorPrincipal = Principal.fromText(authState.account.owner);
       const ok = this.#link.initializeActionFromTemplate(
-        LinkType.TIP_SHARED_TEST,
+        LinkType.AIRDROP_SHARED_TEST,
         ActionType.CREATE_LINK,
         creatorPrincipal,
       );
       if (!ok) {
         throw new Error(
-          "Failed to initialize action from template for AddAssetTipSharedTestState",
+          "Failed to initialize action from template for AddAssetAirdropSharedTestState",
         );
       }
     }
@@ -130,16 +130,16 @@ export class AddAssetAirdropSharedTestState implements LinkCreationState {
     // TODO: need to determine token standard by looking up in the registry
     const tokenStandard = TokenStandard.ICRC2;
 
-    this.#link.updateAssetIntent({
-      assetAddress: Principal.fromText(assetAddressStr),
-      networkFee: assetNetworkFee,
-      tokenStandard,
-      amount: useAmount,
-    });
+    this.#link.updateAssetIntent([
+      {
+        assetAddress: Principal.fromText(assetAddressStr),
+        networkFee: assetNetworkFee,
+        tokenStandard,
+        amount: useAmount,
+      },
+    ]);
     const icpToken = tokens.find((t) => t.address === ICP_LEDGER_CANISTER_ID);
     this.#link.updateFeeIntent(icpToken?.fee);
-
-    console.log("Link assets", this.#link.createLinkData.assets);
 
     this.#link.state = new PreviewState(this.#link);
   }

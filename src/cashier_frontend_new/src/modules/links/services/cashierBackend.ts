@@ -159,7 +159,9 @@ class CanisterBackendService {
       return Err(request.unwrapErr());
     }
 
+    console.log("Create Link V3 Request:", request.unwrap());
     const response = await actor.user_create_link_v3(request.unwrap());
+    console.log("Create Link V3 Response:", response);
 
     return responseToResult(
       response as
