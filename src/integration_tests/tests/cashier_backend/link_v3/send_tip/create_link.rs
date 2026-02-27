@@ -3,7 +3,10 @@
 
 use crate::cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture;
 use crate::{
-    constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL},
+    constant::{
+        CK_BTC_PRINCIPAL, CKBTC_ICRC_TOKEN, CKETH_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_PRINCIPAL,
+        ICP_TOKEN,
+    },
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
 };
 use candid::{Decode, Nat, Principal};
@@ -33,7 +36,7 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
         let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
 
         let caller = TestUser::User1.get_principal();
-        let token = constant::ICP_TOKEN;
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
@@ -69,7 +72,7 @@ async fn it_should_create_icp_token_tip_link_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = constant::ICP_TOKEN;
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
@@ -110,6 +113,9 @@ async fn it_should_create_icp_token_tip_link_successfully() {
         let link = create_link_result.link;
         let action = create_link_result.action;
 
+        println!("Created link {:?}", link);
+        println!("Create action: {:?}", action);
+
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkTypeShared::SendTip);
         assert_eq!(action.intents.len(), 2);
@@ -143,7 +149,7 @@ async fn it_should_create_icp_token_tip_link_successfully() {
             asset_intent.asset.address,
             Principal::from_text(ICP_PRINCIPAL).unwrap()
         );
-        assert_eq!(asset_intent.amount, tip_amount);
+        assert_eq!(asset_intent.amount, tip_amount.clone() + token_fee);
 
         // Assert ICRC-112 requests
         assert!(create_link_result.icrc112_requests.is_some());
@@ -162,6 +168,15 @@ async fn it_should_create_icp_token_tip_link_successfully() {
 
                     let approve_args: ApproveArgs =
                         Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
+
+                    assert_eq!(
+                        approve_args.spender,
+                        Account {
+                            owner: ctx.cashier_backend_principal,
+                            subaccount: None,
+                        }
+                    );
+                    assert!(approve_args.amount > tip_amount.clone());
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
             }
@@ -178,22 +193,21 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = constant::CKBTC_ICRC_TOKEN;
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(5_000_000u64);
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
         let mut test_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
             token,
             tip_amount.clone(),
-            token_fee.clone(),
-            token_fee.clone(),
+            icp_fee.clone(),
+            icp_fee.clone(),
         )
         .await;
-
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
 
         let icp_initial_balance = Nat::from(1_000_000u64);
         let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
@@ -209,11 +223,7 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
             .await;
         test_fixture
             .link_fixture
-            .airdrop_icrc(
-                constant::CKBTC_ICRC_TOKEN,
-                ckbtc_initial_balance.clone(),
-                &caller,
-            )
+            .airdrop_icrc(CKBTC_ICRC_TOKEN, ckbtc_initial_balance.clone(), &caller)
             .await;
 
         // Assert
@@ -264,7 +274,7 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
             asset_intent.asset.address,
             Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
         );
-        assert_eq!(asset_intent.amount, tip_amount);
+        assert_eq!(asset_intent.amount, tip_amount.clone() + token_fee);
 
         // Assert ICRC-112 requests
         assert!(create_link_result.icrc112_requests.is_some());
@@ -280,6 +290,23 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
                         req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap()
                             || req.canister_id == Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
                     );
+
+                    let approve_args: ApproveArgs =
+                        Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
+
+                    assert_eq!(
+                        approve_args.spender,
+                        Account {
+                            owner: ctx.cashier_backend_principal,
+                            subaccount: None,
+                        }
+                    );
+
+                    if req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap() {
+                        assert!(approve_args.amount > icp_fee.clone());
+                    } else {
+                        assert!(approve_args.amount > tip_amount.clone());
+                    }
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
             }

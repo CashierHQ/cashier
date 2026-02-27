@@ -60,6 +60,8 @@ export class PreviewState implements LinkCreationState {
         throw new Error(`Link creation failed: ${result.error.message}`);
       }
 
+      console.log("Link created successfully with V2 API:", result.value);
+
       if (this.#link.id)
         tempLinkRepository.delete(
           this.#link.id,

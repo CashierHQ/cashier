@@ -5,10 +5,10 @@ use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
 use crate::cashier_backend::link_v3::send_tip::fixture::{
     activate_tip_link_v3_fixture, create_tip_linkv3_fixture,
 };
+use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
@@ -127,6 +127,9 @@ async fn it_should_succeed_receive_icp_token_tip_link() {
         // Assert: action created successfully
         assert!(create_action_result.is_ok());
         let create_action_result = create_action_result.unwrap();
+
+        println!("Create action result: {:?}", create_action_result);
+
         assert!(!create_action_result.action.id.is_empty());
         assert_eq!(
             create_action_result.action.action_type,
@@ -154,6 +157,9 @@ async fn it_should_succeed_receive_icp_token_tip_link() {
         // Assert: action processed successfully
         assert!(process_action_result.is_ok());
         let process_action_result = process_action_result.unwrap();
+
+        println!("Process action result: {:?}", process_action_result);
+
         let link = process_action_result.link;
         assert_eq!(link.max_use, 1);
         assert_eq!(link.use_count, 1);

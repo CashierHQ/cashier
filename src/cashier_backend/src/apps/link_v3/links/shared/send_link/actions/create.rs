@@ -21,6 +21,7 @@ use cashier_backend_types::{
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
 use icrc_ledger_types::icrc1::account::Account;
+use log::debug;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
     intents::v3::{
@@ -148,7 +149,7 @@ impl CreateActionV3 {
                             asset_info.asset.address,
                         ),
                         asset: asset_info.asset.clone(),
-                        sending_amount: actual_amount.clone(),
+                        sending_amount: actual_amount,
                         sender_id: link.creator,
                         receiver_id: canister_id,
                         link_account,
@@ -182,6 +183,8 @@ impl CreateActionV3 {
         };
 
         let fee_intent = TransferWalletToTreasuryIntent::create(&action.id, input)?;
+
+        debug!("!!!Fee intent {:?}", fee_intent);
 
         let mut intents = Vec::<IntentV3>::new();
         deposit_intents.iter().for_each(|dintent| {

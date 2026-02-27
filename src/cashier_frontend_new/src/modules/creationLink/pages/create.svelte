@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { LinkStep } from "$modules/links/types/linkStep";
   import AddAsset from "$modules/creationLink/components/addAsset.svelte";
   import ChooseLinkType from "$modules/creationLink/components/chooseLinkType.svelte";
   import CreatedLink from "$modules/creationLink/components/createdLink.svelte";
+  import CreatedLinkV3 from "$modules/creationLink/components/createdLinkV3.svelte";
   import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
   import Preview from "$modules/creationLink/components/preview.svelte";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import { LinkStep } from "$modules/links/types/linkStep";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
 
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -55,7 +56,11 @@
     {:else if linkStore.state.step === LinkStep.PREVIEW}
       <Preview link={linkStore} />
     {:else if linkStore.state.step === LinkStep.CREATED}
-      <CreatedLink link={linkStore} />
+      {#if linkStore.link_shared}
+        <CreatedLinkV3 link={linkStore} />
+      {:else}
+        <CreatedLink link={linkStore} />
+      {/if}
     {/if}
   </div>
 {/if}

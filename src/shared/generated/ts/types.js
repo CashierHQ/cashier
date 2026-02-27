@@ -21,10 +21,11 @@ export const AddressType = {
     Link: 'Link',
 };
 /**
- * Type of intent (Transfer can be Send or Receive based on context)
+ * Type of intent
  */
 export const IntentType = {
-    Transfer: 'Transfer',
+    Send: 'Send',
+    Receive: 'Receive',
 };
 /**
  * Current state of an intent
@@ -33,7 +34,7 @@ export const IntentState = {
     Created: 'Created',
     Processing: 'Processing',
     Success: 'Success',
-    Failed: 'Failed',
+    Fail: 'Fail',
 };
 /**
  * Combination of source and destination for fee calculation
@@ -61,6 +62,24 @@ export const ActionState = {
     Created: 'Created',
     Processing: 'Processing',
     Success: 'Success',
-    Failed: 'Failed',
+    Fail: 'Fail',
+};
+/**
+ * Type of link
+ */
+export const LinkType = {
+    SendTip: 'SendTip',
+    SendAirdrop: 'SendAirdrop',
+    SendTokenBasket: 'SendTokenBasket',
+    ReceivePayment: 'ReceivePayment',
+};
+/**
+ * Current state of the link
+ */
+export const LinkState = {
+    Created: 'Created',
+    Active: 'Active',
+    Inactive: 'Inactive',
+    Ended: 'Ended',
 };
 //# sourceMappingURL=types.js.map

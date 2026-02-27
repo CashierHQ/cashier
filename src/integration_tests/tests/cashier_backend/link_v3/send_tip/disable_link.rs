@@ -1,14 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
-use crate::cashier_backend::link_v3::send_tip::fixture::{
-    activate_tip_link_v3_fixture, create_tip_linkv3_fixture,
+use crate::{
+    cashier_backend::link_v3::{
+        fixture::LinkTestFixtureV3,
+        send_tip::fixture::{activate_tip_link_v3_fixture, create_tip_linkv3_fixture},
+    },
+    constant::ICP_TOKEN,
+    utils::{principal::TestUser, with_pocket_ic_context},
 };
-use crate::utils::principal::TestUser;
-use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::constant::ICP_TOKEN;
 use cashier_backend_types::error::CanisterError;
 use cashier_shared::types::LinkState as LinkStateShared;
 

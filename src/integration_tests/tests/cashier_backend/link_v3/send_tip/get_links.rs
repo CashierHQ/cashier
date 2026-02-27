@@ -3,10 +3,10 @@
 
 use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
 use crate::cashier_backend::link_v3::send_tip::fixture::activate_tip_link_v3_fixture;
+use crate::constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::service::link::PaginateInput;
 use cashier_shared::types::LinkState as LinkStateShared;
 use std::sync::Arc;

@@ -35,7 +35,7 @@ import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import {
   calculateIntentFees,
   IntentParticipants,
-  ActionType as SharedActionType,
+  AddressType as SharedAddressType,
   IntentType as SharedIntentType,
   TokenStandard as SharedTokenStandard,
   TokenStandard,
@@ -221,12 +221,16 @@ export class FeeService {
       const direction = this.getFlowDirectionFromSharedIntent(intent);
 
       let feeType = FeeType.NETWORK_FEE;
-      if (action.action_type === SharedActionType.CreateLink) {
+      if (intent.dest_address_type === SharedAddressType.Treasury) {
         feeType = FeeType.CREATE_LINK_FEE;
       }
 
-      const label = "Create link fee";
+      const label =
+        intent.dest_address_type === SharedAddressType.Treasury
+          ? "Create link fee"
+          : "";
 
+      console.log("intent amount ", intent.amount);
       const intentFees = calculateIntentFees({
         intent_participants: IntentParticipants.CreatorToLink,
         token_standard: TokenStandard.ICRC2, // TODO
@@ -238,21 +242,22 @@ export class FeeService {
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
       const amountUi = parseBalanceUnits(
-        BigInt(intentFees.intent_total_amount),
+        BigInt(intentFees.intent_total_amount) +
+          BigInt(intentFees.intent_total_network_fee),
         decimals,
       );
       const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
 
       const asset: AssetItem = {
         state: token
-          ? AssetProcessStateMapper.fromIntentState(
-              intent.intent_state as IntentStateValue,
-            )
+          ? AssetProcessStateMapper.fromSharedIntentState(intent.intent_state)
           : AssetProcessState.PROCESSING,
         label,
         symbol,
         address,
-        amount: BigInt(intentFees.intent_total_amount),
+        amount:
+          BigInt(intentFees.intent_total_amount) +
+          BigInt(intentFees.intent_total_network_fee),
         amountFormattedStr: token
           ? formatNumber(amountUi)
           : amountUi.toString(),

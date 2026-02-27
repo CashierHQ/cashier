@@ -60,7 +60,7 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
         &Nat::from(CREATE_LINK_FEE),
         &Nat::from(0u64),
     );
-    let default_fee = Nat::from(0u64);
+    let default_fee = Nat::from(10_000u64);
     let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).unwrap_or(&default_fee);
     (actual_amount.clone(), actual_amount + fee_in_nat.clone())
 }

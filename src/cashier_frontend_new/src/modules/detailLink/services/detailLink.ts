@@ -168,6 +168,8 @@ export class DetailLinkService {
     anonymous?: boolean;
   }): Promise<Result<LinkActionV3, Error>> {
     try {
+      console.log("anonymous", anonymous);
+
       const options = actionTypeValue
         ? { action_type: ActionTypeMapper.toBackendType(actionTypeValue) }
         : undefined;
@@ -181,6 +183,8 @@ export class DetailLinkService {
       if (initialResp.isErr()) return Err(initialResp.error);
 
       const initialRes = initialResp.unwrap();
+      console.log("Initial link detail response:", initialRes);
+
       const sharedLink = SharedLinkMapper.toLocalType(initialRes.link);
 
       if (actionTypeValue) {
@@ -189,6 +193,7 @@ export class DetailLinkService {
       }
 
       const actionType = this.determineActionTypeFromLinkV3(sharedLink);
+      console.log("Determined action type:", actionType);
 
       if (!actionType) return Ok({ link: sharedLink });
 
@@ -204,6 +209,8 @@ export class DetailLinkService {
       if (getLinkResp.isErr()) return Err(getLinkResp.error);
 
       const res = getLinkResp.unwrap();
+      console.log("Link detail response with action type:", res);
+
       const linkActionV3 = LinkActionV3Mapper.fromBackendResponse(res);
 
       return Ok(linkActionV3);

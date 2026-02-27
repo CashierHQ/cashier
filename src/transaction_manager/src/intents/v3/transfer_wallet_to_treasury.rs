@@ -18,6 +18,7 @@ use cashier_common::constant::FEE_TREASURY_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct TransferWalletToTreasuryIntent {
     pub intent: IntentV3,
 }
@@ -47,7 +48,7 @@ impl TransferWalletToTreasuryIntent {
             user_fee: None,
             source_address: input.sender_id,
             source_account: None,
-            source_address_type: AddressTypeV3::User,
+            source_address_type: AddressTypeV3::Creator,
             dest_address: input.receiver_id,
             dest_account: None,
             dest_address_type: AddressTypeV3::Treasury,

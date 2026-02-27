@@ -18,10 +18,11 @@ export declare const AddressType: {
 };
 export type AddressType = typeof AddressType[keyof typeof AddressType];
 /**
- * Type of intent (Transfer can be Send or Receive based on context)
+ * Type of intent
  */
 export declare const IntentType: {
-    readonly Transfer: "Transfer";
+    readonly Send: "Send";
+    readonly Receive: "Receive";
 };
 export type IntentType = typeof IntentType[keyof typeof IntentType];
 /**
@@ -31,7 +32,7 @@ export declare const IntentState: {
     readonly Created: "Created";
     readonly Processing: "Processing";
     readonly Success: "Success";
-    readonly Failed: "Failed";
+    readonly Fail: "Fail";
 };
 export type IntentState = typeof IntentState[keyof typeof IntentState];
 /**
@@ -62,16 +63,38 @@ export declare const ActionState: {
     readonly Created: "Created";
     readonly Processing: "Processing";
     readonly Success: "Success";
-    readonly Failed: "Failed";
+    readonly Fail: "Fail";
 };
 export type ActionState = typeof ActionState[keyof typeof ActionState];
+/**
+ * Type of link
+ */
+export declare const LinkType: {
+    readonly SendTip: "SendTip";
+    readonly SendAirdrop: "SendAirdrop";
+    readonly SendTokenBasket: "SendTokenBasket";
+    readonly ReceivePayment: "ReceivePayment";
+};
+export type LinkType = typeof LinkType[keyof typeof LinkType];
+/**
+ * Current state of the link
+ */
+export declare const LinkState: {
+    readonly Created: "Created";
+    readonly Active: "Active";
+    readonly Inactive: "Inactive";
+    readonly Ended: "Ended";
+};
+export type LinkState = typeof LinkState[keyof typeof LinkState];
 /**
  * Asset/Token reference
  */
 export interface Asset {
     /** Canister ID of the token */
     address: Principal;
-    token_standard: TokenStandard;
+    /** Network fee for this asset in base units (Nat) */
+    network_fee?: bigint;
+    token_standard?: TokenStandard;
 }
 /**
  * Asset information with amount and label
@@ -93,15 +116,22 @@ export interface Intent {
     asset: Asset;
     /** Amount to transfer */
     amount: bigint;
+    /** Total amount to transfer */
+    total_amount?: bigint;
+    /** Network fee amount */
+    network_fee?: bigint;
+    /** User fee amount */
+    user_fee?: bigint;
     /** Source address (Principal) */
     source_address: Principal;
     source_address_type: AddressType;
     /** Destination address (Principal) */
     dest_address: Principal;
     dest_address_type: AddressType;
-    intent_token_standard: TokenStandard;
     /** IDs of intents this intent depends on */
     dependencies?: string[];
+    /** ID of the action this intent belongs to */
+    action_id?: string;
     intent_state: IntentState;
 }
 /**
@@ -148,5 +178,30 @@ export interface Action {
     intents: Intent[];
     /** Current state of the action */
     action_state: ActionState;
+    /** ID of the link associated with this action, if any */
+    link_id?: string;
+    /** List of intent IDs associated with this action */
+    intent_ids?: string[];
+}
+/**
+ * Represents a link
+ */
+export interface Link {
+    /** Unique identifier for the link */
+    id: string;
+    /** Principal of the link creator */
+    creator: Principal;
+    /** Title of the link */
+    title: string;
+    link_type: LinkType;
+    /** List of assets associated with the link */
+    asset_info: AssetInfo[];
+    /** Maximum number of times the link can be used */
+    max_use: bigint;
+    /** Number of times the link has been used */
+    use_count: bigint;
+    link_state: LinkState;
+    /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
+    created_at_ts?: bigint;
 }
 //# sourceMappingURL=types.d.ts.map

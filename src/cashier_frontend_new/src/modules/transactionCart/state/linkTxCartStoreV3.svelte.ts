@@ -169,6 +169,7 @@ export class LinkTxCartStoreV3 implements TxCartStore {
     this.setSourceState(IntentState.PROCESSING);
 
     const { action, icrc112Requests, handleProcessAction } = this.#source;
+    console.log("Executing action with ICRC-112 requests:", icrc112Requests);
 
     try {
       if (icrc112Requests && icrc112Requests.length > 0) {
@@ -183,11 +184,14 @@ export class LinkTxCartStoreV3 implements TxCartStore {
             icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed",
           );
         }
+
+        console.log("ICRC-112 batch executed successfully:", icrcResult);
         // Show semi-transparent green checkmarks (ICRC-112 signed successfully)
         this.setStatesToSignedPending();
       }
 
       const result = await handleProcessAction();
+      console.log("Process action result:", result);
 
       // When backend reports is_success: true, show full green checkmarks
       if (result.isSuccess) {

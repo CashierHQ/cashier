@@ -76,7 +76,7 @@
   </div>
 </div>
 
-{#if showTxCart && linkDetailStore && linkDetailStore.action}
+{#if showTxCart && linkDetailStore && linkDetailStore.action && linkDetailStore.icrc112Requests}
   <LinkTxCartV3
     bind:isOpen={showTxCart}
     source={{

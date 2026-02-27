@@ -298,7 +298,7 @@ impl LinkTestFixtureV3 {
             .zip(amounts)
             .zip(token_fees)
             .map(|((token, amount), token_fee)| match token.as_str() {
-                constant::ICP_TOKEN => Ok(IntentShared {
+                crate::constant::ICP_TOKEN => Ok(IntentShared {
                     id: "intent_id".to_string(),
                     asset: AssetShared {
                         address: self.ctx.icp_ledger_principal,
