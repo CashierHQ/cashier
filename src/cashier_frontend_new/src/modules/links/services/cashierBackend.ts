@@ -153,16 +153,7 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await (
-      actor as unknown as {
-        user_create_link_v3: (input: {
-          title: string;
-          link_type: unknown;
-          max_use: bigint;
-          action: unknown;
-        }) => Promise<unknown>;
-      }
-    ).user_create_link_v3({
+    const response = await actor.user_create_link_v3({
       title: input.title,
       link_type: input.link_type,
       max_use: BigInt(input.max_use),

@@ -11,31 +11,8 @@ import {
 import { Principal } from "@dfinity/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
+import { type ActionTemplateJson } from "$modules/actionTemplate/types";
 import actionsTemplates from "$sharedTemplates/tiplink.json";
-
-type ActionTemplateJson = {
-  link_type?: string;
-  id: string;
-  creator: string;
-  creator_address_type: string;
-  action_type: string;
-  intents: Array<{
-    id: string;
-    intent_type: string;
-    asset: { address: string; network_fee?: string; token_standard?: string };
-    amount: string;
-    total_network_fee?: string;
-    user_fee?: string;
-    total_amount?: string;
-    source_address: string;
-    source_address_type: string;
-    dest_address: string;
-    dest_address_type: string;
-    dependencies?: string[];
-    intent_state: string;
-  }>;
-  action_state: string;
-};
 
 const TEMPLATE_LINK_TYPE_MAP: Record<string, ActionTemplateJson[]> = {
   [LinkType.TIP_SHARED_TEST]: actionsTemplates as ActionTemplateJson[],
@@ -70,10 +47,10 @@ export function createActionFromTemplate(
   linkType: string,
   actionType: string,
   creator: Principal,
-): Action | null {
+): Action | undefined {
   const template = getTemplateForActionType(linkType, actionType);
   if (!template || !template.intents || template.intents.length < 2) {
-    return null;
+    return undefined;
   }
 
   // Use template structure but with our id, creator, and placeholder intents

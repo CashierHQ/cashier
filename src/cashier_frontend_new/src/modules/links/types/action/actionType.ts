@@ -6,10 +6,10 @@ import { LinkType, type LinkTypeValue } from "../link/linkType";
 export class ActionType {
   private constructor() {}
 
-  static readonly CREATE_LINK = "CREATE_LINK";
-  static readonly WITHDRAW = "WITHDRAW";
-  static readonly RECEIVE = "RECEIVE";
-  static readonly SEND = "SEND";
+  static readonly CREATE_LINK = "CreateLink";
+  static readonly WITHDRAW = "Withdraw";
+  static readonly RECEIVE = "Receive";
+  static readonly SEND = "Send";
 }
 
 export type ActionTypeValue =

@@ -1,17 +1,5 @@
-import type { Action, Intent } from "$shared";
-import {
-  ActionType,
-  ActionState,
-  IntentState,
-  AddressType,
-  TokenStandard,
-  IntentParticipants,
-  calculateIntentFees,
-} from "$shared";
-import { Principal } from "@dfinity/principal";
-import { createActionFromTemplate } from "$modules/creationLink/utils/actionTemplateLoader";
 import type { CreateLinkData } from "$modules/creationLink/types/createLinkData";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { createActionFromTemplate } from "$modules/creationLink/utils/actionTemplateLoader";
 import {
   CASHIER_BACKEND_CANISTER_ID,
   FEE_TREASURY_PRINCIPAL,
@@ -20,6 +8,18 @@ import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import type { Action, Intent } from "$shared";
+import {
+  ActionState,
+  ActionType,
+  AddressType,
+  IntentParticipants,
+  IntentState,
+  TokenStandard,
+  calculateIntentFees,
+} from "$shared";
+import { Principal } from "@dfinity/principal";
 
 class ActionStore {
   private _action = $state<Action | null>(null);
@@ -44,8 +44,12 @@ class ActionStore {
    * Initialize Action from template (actions.json) for V3 create flow.
    * Used for TIP_SHARED_TEST: creates action with 2 placeholder intents.
    */
-  initializeFromTemplate(linkType: string, creator: Principal): boolean {
-    const action = createActionFromTemplate(linkType, creator);
+  initializeFromTemplate(
+    linkType: string,
+    actionType: string,
+    creator: Principal,
+  ): boolean {
+    const action = createActionFromTemplate(linkType, actionType, creator);
     if (!action) return false;
     this._action = action;
     return true;
