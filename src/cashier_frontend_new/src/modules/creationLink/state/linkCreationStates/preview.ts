@@ -1,4 +1,3 @@
-import type * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
@@ -14,7 +13,6 @@ import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -39,21 +37,20 @@ export class PreviewState implements LinkCreationState {
       if (result.isErr()) {
         throw new Error(`Link creation failed: ${result.error.message}`);
       }
+
+      console.log("Link created successfully with V3 API:", result.value);
+
       const res = result.value;
       if (this.#link.id)
         tempLinkRepository.delete(
           this.#link.id,
           authState.account?.owner ?? "anon",
         );
+
       this.#link.id = res.link.id;
       this.#link.state = new LinkCreatedState();
-      this.#link.link = mapV3LinkToFrontend(
-        res.link as unknown as cashierBackend.Link,
-      );
-      // this.#link.action = mapV3ActionToFrontend(
-      //   res.action as unknown as cashierBackend.Action,
-      //   res.icrc112_requests,
-      // );
+      this.#link.link_shared = res.link;
+      this.#link.action_shared = res.action;
     } else {
       const result = await cashierBackendService.createLinkV2(
         this.#link.createLinkData,

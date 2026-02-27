@@ -29,9 +29,10 @@ import {
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
 import {
-  type Action as SharedAction,
   AddressType as SharedAddressType,
   TokenStandard as SharedTokenStandard,
+  type Action as SharedAction,
+  type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
@@ -55,6 +56,8 @@ export class LinkCreationStore {
   public link = $state<Link | undefined>();
   // Only existed if the link state == Created
   public action = $state<Action | undefined>();
+
+  public link_shared = $state<SharedLink | undefined>();
   public action_shared = $state<SharedAction | undefined>();
   #id = $state<string>();
 
@@ -62,8 +65,12 @@ export class LinkCreationStore {
     this.#id = tempLink.id;
     this.createLinkData = tempLink.createLinkData;
     this.#state = this.stateFromValue(tempLink.state);
-    this.action_shared = undefined;
+
     this.link = undefined;
+    this.action = undefined;
+
+    this.link_shared = undefined;
+    this.action_shared = undefined;
 
     $effect(() => {
       // Access reactive state to track changes
@@ -94,6 +101,7 @@ export class LinkCreationStore {
   reset(): void {
     this.link = undefined;
     this.action = undefined;
+    this.link_shared = undefined;
     this.action_shared = undefined;
   }
 
