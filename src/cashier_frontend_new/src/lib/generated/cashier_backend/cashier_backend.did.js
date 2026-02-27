@@ -9,7 +9,7 @@ export const idlFactory = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
-    'token_storage_canister_id' : IDL.Opt(IDL.Principal),
+    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
@@ -289,9 +289,9 @@ export const idlFactory = ({ IDL }) => {
     'asset_info' : IDL.Vec(AssetInfo),
     'link_state' : LinkState_1,
     'link_type' : LinkType_1,
+    'created_at_ts' : IDL.Opt(IDL.Nat64),
     'use_count' : IDL.Nat64,
     'max_use' : IDL.Nat64,
-    'created_at_ts' : IDL.Opt(IDL.Nat64),
   });
   const GetLinkResponseV3 = IDL.Record({
     'action' : IDL.Opt(Action),
@@ -539,7 +539,7 @@ export const init = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
-    'token_storage_canister_id' : IDL.Opt(IDL.Principal),
+    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });

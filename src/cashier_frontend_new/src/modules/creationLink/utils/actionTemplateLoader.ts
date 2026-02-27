@@ -1,17 +1,17 @@
+import { LinkType } from "$modules/links/types/link/linkType";
 import type { Action } from "$shared";
 import {
-  ActionType,
   ActionState,
-  IntentType,
-  IntentState,
+  ActionType,
   AddressType,
+  IntentState,
+  IntentType,
   TokenStandard,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
-import { LinkType } from "$modules/links/types/link/linkType";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
-import actionsTemplates from "$sharedTemplates/actions.json";
+import actionsTemplates from "$sharedTemplates/tiplink.json";
 
 type ActionTemplateJson = {
   link_type?: string;

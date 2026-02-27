@@ -91,7 +91,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
-  'token_storage_canister_id' : [] | [Principal],
+  'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
   'token_standard_cache_ttl_ns' : [] | [bigint],
 }
@@ -266,9 +266,9 @@ export interface Link {
   'asset_info' : Array<AssetInfo>,
   'link_state' : LinkState_1,
   'link_type' : LinkType_1,
+  'created_at_ts' : [] | [bigint],
   'use_count' : bigint,
   'max_use' : bigint,
-  'created_at_ts'?: bigint,
 }
 export interface LinkDto {
   'id' : string,
