@@ -199,23 +199,50 @@ async fn it_should_withdraw_multi_token_basket_linkv2_successfully() {
         let ckbtc_fee = ckbtc_ledger_client.fee().await.unwrap();
         let ckusdc_fee = ckusdc_ledger_client.fee().await.unwrap();
 
-        let caller_account = Account { owner: caller, subaccount: None };
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
         let link_id = create_link_result.link.id.clone();
         let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
 
         // Record balances before withdraw
-        let ticp_caller_before = ticp_ledger_client.balance_of(&caller_account).await.unwrap();
-        let ckbtc_caller_before = ckbtc_ledger_client.balance_of(&caller_account).await.unwrap();
-        let ckusdc_caller_before = ckusdc_ledger_client.balance_of(&caller_account).await.unwrap();
+        let ticp_caller_before = ticp_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        let ckbtc_caller_before = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        let ckusdc_caller_before = ckusdc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
 
         let ticp_link_before = ticp_ledger_client.balance_of(&link_account).await.unwrap();
         let ckbtc_link_before = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
-        let ckusdc_link_before = ckusdc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckusdc_link_before = ckusdc_ledger_client
+            .balance_of(&link_account)
+            .await
+            .unwrap();
 
         // Calculate expected withdraw amounts (link_balance - fee)
-        let ticp_withdraw = if ticp_link_before > ticp_fee { ticp_link_before.clone() - ticp_fee } else { Nat::from(0u64) };
-        let ckbtc_withdraw = if ckbtc_link_before > ckbtc_fee { ckbtc_link_before.clone() - ckbtc_fee } else { Nat::from(0u64) };
-        let ckusdc_withdraw = if ckusdc_link_before > ckusdc_fee { ckusdc_link_before.clone() - ckusdc_fee } else { Nat::from(0u64) };
+        let ticp_withdraw = if ticp_link_before > ticp_fee {
+            ticp_link_before.clone() - ticp_fee
+        } else {
+            Nat::from(0u64)
+        };
+        let ckbtc_withdraw = if ckbtc_link_before > ckbtc_fee {
+            ckbtc_link_before.clone() - ckbtc_fee
+        } else {
+            Nat::from(0u64)
+        };
+        let ckusdc_withdraw = if ckusdc_link_before > ckusdc_fee {
+            ckusdc_link_before.clone() - ckusdc_fee
+        } else {
+            Nat::from(0u64)
+        };
 
         // Act: disable link (required before withdraw)
         let disable_result = test_fixture.disable_link_v2(&link_id).await;
@@ -233,14 +260,20 @@ async fn it_should_withdraw_multi_token_basket_linkv2_successfully() {
         assert!(create_action_result.is_ok());
         let action_dto = create_action_result.unwrap();
         assert_eq!(action_dto.r#type, ActionType::Withdraw);
-        assert_eq!(action_dto.intents.len(), 3, "Should have 3 intents for 3 tokens");
+        assert_eq!(
+            action_dto.intents.len(),
+            3,
+            "Should have 3 intents for 3 tokens"
+        );
         for intent in &action_dto.intents {
             assert_eq!(intent.task, IntentTask::TransferLinkToWallet);
         }
 
         // Act: process WITHDRAW action
         let process_action_result = test_fixture
-            .process_action_v2(ProcessActionV2Input { action_id: action_dto.id.clone() })
+            .process_action_v2(ProcessActionV2Input {
+                action_id: action_dto.id.clone(),
+            })
             .await;
 
         // Assert: processed successfully, link ended
@@ -250,18 +283,54 @@ async fn it_should_withdraw_multi_token_basket_linkv2_successfully() {
         assert_eq!(process_result.action.state, ActionState::Success);
 
         // Assert: creator balances increased by withdraw amounts
-        let ticp_caller_after = ticp_ledger_client.balance_of(&caller_account).await.unwrap();
-        let ckbtc_caller_after = ckbtc_ledger_client.balance_of(&caller_account).await.unwrap();
-        let ckusdc_caller_after = ckusdc_ledger_client.balance_of(&caller_account).await.unwrap();
+        let ticp_caller_after = ticp_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        let ckbtc_caller_after = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        let ckusdc_caller_after = ckusdc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
 
-        assert_eq!(ticp_caller_after, ticp_caller_before + ticp_withdraw, "tICP creator balance incorrect after withdraw");
-        assert_eq!(ckbtc_caller_after, ckbtc_caller_before + ckbtc_withdraw, "ckBTC creator balance incorrect after withdraw");
-        assert_eq!(ckusdc_caller_after, ckusdc_caller_before + ckusdc_withdraw, "ckUSDC creator balance incorrect after withdraw");
+        assert_eq!(
+            ticp_caller_after,
+            ticp_caller_before + ticp_withdraw,
+            "tICP creator balance incorrect after withdraw"
+        );
+        assert_eq!(
+            ckbtc_caller_after,
+            ckbtc_caller_before + ckbtc_withdraw,
+            "ckBTC creator balance incorrect after withdraw"
+        );
+        assert_eq!(
+            ckusdc_caller_after,
+            ckusdc_caller_before + ckusdc_withdraw,
+            "ckUSDC creator balance incorrect after withdraw"
+        );
 
         // Assert: all link balances zero
-        assert_eq!(ticp_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "tICP link balance should be zero");
-        assert_eq!(ckbtc_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "ckBTC link balance should be zero");
-        assert_eq!(ckusdc_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "ckUSDC link balance should be zero");
+        assert_eq!(
+            ticp_ledger_client.balance_of(&link_account).await.unwrap(),
+            Nat::from(0u64),
+            "tICP link balance should be zero"
+        );
+        assert_eq!(
+            ckbtc_ledger_client.balance_of(&link_account).await.unwrap(),
+            Nat::from(0u64),
+            "ckBTC link balance should be zero"
+        );
+        assert_eq!(
+            ckusdc_ledger_client
+                .balance_of(&link_account)
+                .await
+                .unwrap(),
+            Nat::from(0u64),
+            "ckUSDC link balance should be zero"
+        );
 
         Ok(())
     })

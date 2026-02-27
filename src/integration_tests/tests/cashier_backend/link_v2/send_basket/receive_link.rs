@@ -264,7 +264,10 @@ async fn it_should_succeed_receive_multi_token_basket_linkv2() {
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
-        let receiver_account = Account { owner: receiver, subaccount: None };
+        let receiver_account = Account {
+            owner: receiver,
+            subaccount: None,
+        };
 
         // Create ledger clients for all 3 tokens
         let ticp_ledger_client = ctx.new_icrc_ledger_client(TESTICP_ICRC_TOKEN, receiver);
@@ -272,9 +275,18 @@ async fn it_should_succeed_receive_multi_token_basket_linkv2() {
         let ckusdc_ledger_client = ctx.new_icrc_ledger_client(CKUSDC_ICRC_TOKEN, receiver);
 
         // Record balances before
-        let ticp_before = ticp_ledger_client.balance_of(&receiver_account).await.unwrap();
-        let ckbtc_before = ckbtc_ledger_client.balance_of(&receiver_account).await.unwrap();
-        let ckusdc_before = ckusdc_ledger_client.balance_of(&receiver_account).await.unwrap();
+        let ticp_before = ticp_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
+        let ckbtc_before = ckbtc_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
+        let ckusdc_before = ckusdc_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
 
         // Act: create RECEIVE action
         let link_id = create_link_result.link.id.clone();
@@ -288,7 +300,11 @@ async fn it_should_succeed_receive_multi_token_basket_linkv2() {
         assert!(create_action_result.is_ok());
         let action_dto = create_action_result.unwrap();
         assert_eq!(action_dto.r#type, ActionType::Receive);
-        assert_eq!(action_dto.intents.len(), 3, "Should have 3 intents for 3 tokens");
+        assert_eq!(
+            action_dto.intents.len(),
+            3,
+            "Should have 3 intents for 3 tokens"
+        );
         assert_eq!(action_dto.creator, receiver);
         for intent in &action_dto.intents {
             assert_eq!(intent.task, IntentTask::TransferLinkToWallet);
@@ -296,7 +312,9 @@ async fn it_should_succeed_receive_multi_token_basket_linkv2() {
 
         // Act: process RECEIVE action
         let process_action_result = receiver_fixture
-            .process_action_v2(ProcessActionV2Input { action_id: action_dto.id.clone() })
+            .process_action_v2(ProcessActionV2Input {
+                action_id: action_dto.id.clone(),
+            })
             .await;
 
         // Assert: processed successfully, link exhausted
@@ -312,18 +330,54 @@ async fn it_should_succeed_receive_multi_token_basket_linkv2() {
         }
 
         // Assert: all 3 receiver balances increased by exact amounts (canister pays fee from link balance)
-        let ticp_after = ticp_ledger_client.balance_of(&receiver_account).await.unwrap();
-        let ckbtc_after = ckbtc_ledger_client.balance_of(&receiver_account).await.unwrap();
-        let ckusdc_after = ckusdc_ledger_client.balance_of(&receiver_account).await.unwrap();
-        assert_eq!(ticp_after, ticp_before + amounts[0].clone(), "tICP balance should increase by amounts[0]");
-        assert_eq!(ckbtc_after, ckbtc_before + amounts[1].clone(), "ckBTC balance should increase by amounts[1]");
-        assert_eq!(ckusdc_after, ckusdc_before + amounts[2].clone(), "ckUSDC balance should increase by amounts[2]");
+        let ticp_after = ticp_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
+        let ckbtc_after = ckbtc_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
+        let ckusdc_after = ckusdc_ledger_client
+            .balance_of(&receiver_account)
+            .await
+            .unwrap();
+        assert_eq!(
+            ticp_after,
+            ticp_before + amounts[0].clone(),
+            "tICP balance should increase by amounts[0]"
+        );
+        assert_eq!(
+            ckbtc_after,
+            ckbtc_before + amounts[1].clone(),
+            "ckBTC balance should increase by amounts[1]"
+        );
+        assert_eq!(
+            ckusdc_after,
+            ckusdc_before + amounts[2].clone(),
+            "ckUSDC balance should increase by amounts[2]"
+        );
 
         // Assert: all link token balances are zero
         let link_account = link_id_to_account(&receiver_fixture.ctx, &link_id);
-        assert_eq!(ticp_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "tICP link balance should be zero");
-        assert_eq!(ckbtc_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "ckBTC link balance should be zero");
-        assert_eq!(ckusdc_ledger_client.balance_of(&link_account).await.unwrap(), Nat::from(0u64), "ckUSDC link balance should be zero");
+        assert_eq!(
+            ticp_ledger_client.balance_of(&link_account).await.unwrap(),
+            Nat::from(0u64),
+            "tICP link balance should be zero"
+        );
+        assert_eq!(
+            ckbtc_ledger_client.balance_of(&link_account).await.unwrap(),
+            Nat::from(0u64),
+            "ckBTC link balance should be zero"
+        );
+        assert_eq!(
+            ckusdc_ledger_client
+                .balance_of(&link_account)
+                .await
+                .unwrap(),
+            Nat::from(0u64),
+            "ckUSDC link balance should be zero"
+        );
 
         Ok(())
     })

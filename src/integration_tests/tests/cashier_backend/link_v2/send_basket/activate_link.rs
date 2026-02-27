@@ -354,7 +354,10 @@ async fn it_should_succeed_activate_mixed_icrc1_icrc2_token_basket_linkv2() {
         );
 
         // ckUSDC (ICRC2): canister executed icrc2_transfer_from after approval
-        let ckusdc_link_balance = ckusdc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckusdc_link_balance = ckusdc_ledger_client
+            .balance_of(&link_account)
+            .await
+            .unwrap();
         let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
         assert_eq!(
             ckusdc_link_balance,
@@ -414,10 +417,19 @@ async fn it_should_fail_activate_mixed_basket_if_no_icrc112_executed() {
         let activate_link_result = test_fixture.link_fixture.activate_link_v2(&action_id).await;
 
         // Assert: canister returns Ok but is_success=false with errors
-        assert!(activate_link_result.is_ok(), "Expected Ok result from canister");
+        assert!(
+            activate_link_result.is_ok(),
+            "Expected Ok result from canister"
+        );
         let result = activate_link_result.unwrap();
-        assert!(!result.is_success, "Expected is_success=false when no ICRC112 executed");
-        assert!(!result.errors.is_empty(), "Expected errors when no ICRC112 executed");
+        assert!(
+            !result.is_success,
+            "Expected is_success=false when no ICRC112 executed"
+        );
+        assert!(
+            !result.errors.is_empty(),
+            "Expected errors when no ICRC112 executed"
+        );
 
         Ok(())
     })
@@ -470,9 +482,15 @@ async fn it_should_fail_activate_mixed_basket_if_icrc2_approve_not_done() {
         let activate_link_result = test_fixture.link_fixture.activate_link_v2(&action_id).await;
 
         // Assert: canister returns Ok but is_success=false with allowance errors
-        assert!(activate_link_result.is_ok(), "Expected Ok result from canister");
+        assert!(
+            activate_link_result.is_ok(),
+            "Expected Ok result from canister"
+        );
         let result = activate_link_result.unwrap();
-        assert!(!result.is_success, "Expected is_success=false when icrc2_approve not done");
+        assert!(
+            !result.is_success,
+            "Expected is_success=false when icrc2_approve not done"
+        );
         let errors_str = result.errors.join(", ");
         assert!(
             errors_str.contains("InsufficientAllowance"),
