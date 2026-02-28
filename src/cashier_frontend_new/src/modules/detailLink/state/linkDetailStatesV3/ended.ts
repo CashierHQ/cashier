@@ -1,24 +1,20 @@
 import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
-import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import type {
   CreateActionResultV3,
   ProcessActionResultV3,
 } from "$modules/detailLink/types/v3/action";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { Action as SharedAction } from "$shared";
+import type { ActionType as SharedActionType } from "$shared";
 
 // State when the link ended
 export class LinkEndedStateV3 implements LinkDetailStateV3 {
   readonly step = LinkStep.INACTIVE;
-  #linkDetailStore: LinkDetailStoreV3;
 
-  constructor(link: LinkDetailStoreV3) {
-    this.#linkDetailStore = link;
-  }
-
-  async createAction(action: SharedAction): Promise<CreateActionResultV3> {
+  async createAction(
+    actionType: SharedActionType,
+  ): Promise<CreateActionResultV3> {
     throw new Error(
-      `Creating ${action.action_type} action is not supported in Ended state`,
+      `Creating ${actionType} action is not supported in Ended state`,
     );
   }
 

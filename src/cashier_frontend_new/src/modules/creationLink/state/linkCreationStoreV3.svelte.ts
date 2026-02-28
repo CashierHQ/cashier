@@ -1,14 +1,14 @@
 import { assertUnreachable } from "$lib/rsMatch";
+import { createActionFromTemplate } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
 import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
-import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
 import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
 import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
-import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
+import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStatesV3/tipSharedTest/addAsset";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { createTempLinkFromPrincipalId } from "$modules/creationLink/utils/tempLink";
 import Action from "$modules/links/types/action/action";
@@ -20,13 +20,27 @@ import {
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { TempLink } from "$modules/links/types/tempLink";
-import { type Action as SharedAction, type Link as SharedLink } from "$shared";
+import {
+  CASHIER_BACKEND_CANISTER_ID,
+  FEE_TREASURY_PRINCIPAL,
+} from "$modules/shared/constants";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
+import {
+  AddressType as SharedAddressType,
+  TokenStandard as SharedTokenStandard,
+  type Action as SharedAction,
+  type Link as SharedLink,
+} from "$shared";
+import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
  * Store for draft link state management
  */
-export class LinkCreationStore {
+export class LinkCreationStoreV3 {
   // Private state variables - declare with $state at class level
   #state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
   // draft holds partial data used for creation/edit flows
@@ -117,10 +131,8 @@ export class LinkCreationStore {
         // choose the correct add-asset state depending on the link type
         if (this.createLinkData.linkType === LinkType.TIP) {
           initialState = new AddAssetTipLinkState(this);
-        } else if (this.createLinkData.linkType === LinkType.AIRDROP) {
-          initialState = new AddAssetAirdropState(this);
-        } else if (this.createLinkData.linkType === LinkType.TOKEN_BASKET) {
-          initialState = new AddAssetTokenBasketState(this);
+        } else if (this.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
+          initialState = new AddAssetTipSharedTestState(this);
         } else {
           initialState = new AddAssetState(this);
         }
@@ -210,5 +222,98 @@ export class LinkCreationStore {
         owner: authState.account.owner,
       });
     }
+  }
+
+  /**
+   * Initialize Action from template (actions.json) for V3 create flow.
+   * Used for TIP_SHARED_TEST: creates action with 2 placeholder intents.
+   */
+  initializeActionFromTemplate(
+    linkType: string,
+    actionType: string,
+    creator: Principal,
+  ): boolean {
+    const loaded_action: SharedAction | undefined = createActionFromTemplate(
+      linkType,
+      actionType,
+      creator,
+    );
+    if (!loaded_action) return false;
+    this.action_shared = loaded_action;
+
+    console.log("Initialized action from template", loaded_action);
+    return true;
+  }
+
+  /**
+   * Update the first (asset) intent with actual selected asset data.
+   * Used on step ADD_ASSET for V3 (e.g. TIP_SHARED_TEST). Sets source=Creator, dest=Link.
+   */
+  updateAssetIntent(
+    params: {
+      assetAddress: Principal;
+      networkFee: bigint;
+      tokenStandard: (typeof SharedTokenStandard)[keyof typeof SharedTokenStandard];
+      amount: bigint;
+    }[],
+  ): void {
+    if (!this.action_shared || this.action_shared.intents.length === 0) return;
+
+    const intents = this.action_shared.intents.filter(
+      (i) =>
+        i.source_address_type === SharedAddressType.Creator &&
+        i.dest_address_type === SharedAddressType.Link,
+    );
+    if (intents.length === 0) {
+      throw new Error("Asset intent not found in action intents");
+    }
+
+    for (let i = 0; i < params.length; i++) {
+      const intent = intents[i];
+      const param = params[i];
+      intent.asset = {
+        address: param.assetAddress,
+        network_fee: param.networkFee,
+        token_standard: param.tokenStandard,
+      };
+      intent.amount = param.amount;
+      intent.source_address = this.action_shared.creator;
+      intent.source_address_type = this.action_shared.creator_address_type;
+      intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
+      intent.dest_address_type = SharedAddressType.Link;
+    }
+  }
+
+  /**
+   * Update the second (fee) intent with ICP asset and link creation fee.
+   * Used on step ADD_ASSET for V3 (TIP_SHARED_TEST). total_amount/network_fee/user_fee
+   * are filled on Preview via updateV3IntentsWithFees.
+   * @param icpNetworkFee - optional; uses ICP_LEDGER_FEE if not provided (e.g. wallet not loaded)
+   */
+  updateFeeIntent(icpNetworkFee?: bigint): void {
+    if (!this.action_shared || this.action_shared.intents.length < 2) return;
+    const LINK_CREATION_FEE = 10_000n;
+    const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
+    const fee = icpNetworkFee ?? ICP_LEDGER_FEE;
+
+    const intent = this.action_shared.intents.filter(
+      (i) =>
+        i.source_address_type === SharedAddressType.Creator &&
+        i.dest_address_type === SharedAddressType.Treasury,
+    )[0];
+    if (!intent) {
+      throw new Error("Fee intent not found in action intents");
+    }
+
+    intent.asset = {
+      address: icpPrincipal,
+      network_fee: fee,
+      token_standard: SharedTokenStandard.ICRC2,
+    };
+    intent.amount = LINK_CREATION_FEE;
+    intent.source_address = this.action_shared.creator;
+    intent.source_address_type = this.action_shared.creator_address_type;
+    intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
+    intent.dest_address_type = SharedAddressType.Treasury;
   }
 }

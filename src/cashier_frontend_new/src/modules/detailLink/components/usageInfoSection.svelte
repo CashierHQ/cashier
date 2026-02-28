@@ -1,31 +1,36 @@
 <script lang="ts">
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { TokenIcon } from "$modules/imageCache";
+  import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     formatNumber,
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
-  import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
-  import type { Link } from "$modules/links/types/link/link";
-  import { TokenIcon } from "$modules/imageCache";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    link?: Link;
+    maxUse?: number;
+    useCount?: number;
   };
 
-  let { assetsWithTokenInfo, failedImageLoads, onImageError, link }: Props =
-    $props();
+  let {
+    assetsWithTokenInfo,
+    failedImageLoads,
+    onImageError,
+    maxUse,
+    useCount,
+  }: Props = $props();
 
-  const linkUseActionCounter = $derived(link?.link_use_action_counter ?? 0n);
+  const linkUseActionCounter = $derived(useCount ?? 0n);
 
-  const maxUse = $derived(link ? Number(link.link_use_action_max_count) : 1);
+  const maxUseValue = $derived(maxUse ? Number(maxUse) : 1);
 
   // Calculate remaining uses
   const remainingUses: number = $derived(
-    Math.max(0, (maxUse || 1) - Number(linkUseActionCounter)),
+    Math.max(0, (maxUseValue || 1) - Number(linkUseActionCounter)),
   );
 </script>
 

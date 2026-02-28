@@ -1,4 +1,3 @@
-import { LinkType } from "$modules/links/types/link/linkType";
 import type { Action } from "$shared";
 import {
   ActionState,
@@ -12,15 +11,21 @@ import { Principal } from "@dfinity/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
 import { type ActionTemplateJson } from "$modules/actionTemplate/types";
+import {
+  ActionType as SharedActionType,
+  LinkType as SharedLinkType,
+} from "$shared";
 import airdropLinkTemplates from "$sharedTemplates/airdroplink.json";
 import tipLinkTemplates from "$sharedTemplates/tiplink.json";
 import tokenBasketLinkTemplates from "$sharedTemplates/tokenbasketlink.json";
+import { Err, Ok, Result } from "ts-results-es";
 
-const TEMPLATE_LINK_TYPE_MAP: Record<string, ActionTemplateJson[]> = {
-  [LinkType.TIP_SHARED_TEST]: tipLinkTemplates as ActionTemplateJson[],
-  [LinkType.AIRDROP_SHARED_TEST]: airdropLinkTemplates as ActionTemplateJson[],
-  [LinkType.TOKEN_BASKET_SHARED_TEST]:
+const TEMPLATE_LINK_TYPE_MAP: Record<SharedLinkType, ActionTemplateJson[]> = {
+  [SharedLinkType.SendTip]: tipLinkTemplates as ActionTemplateJson[],
+  [SharedLinkType.SendAirdrop]: airdropLinkTemplates as ActionTemplateJson[],
+  [SharedLinkType.SendTokenBasket]:
     tokenBasketLinkTemplates as ActionTemplateJson[],
+  [SharedLinkType.ReceivePayment]: [],
 };
 
 /**
@@ -28,15 +33,20 @@ const TEMPLATE_LINK_TYPE_MAP: Record<string, ActionTemplateJson[]> = {
  * Returns the first matching template or null if not found.
  */
 function getTemplateForActionType(
-  linkType: string,
-  actionType: string,
-): ActionTemplateJson | null {
+  linkType: SharedLinkType,
+  actionType: SharedActionType,
+): Result<ActionTemplateJson, Error> {
   const templatesLinkType = TEMPLATE_LINK_TYPE_MAP[linkType];
-  if (!templatesLinkType) return null;
+  if (!templatesLinkType)
+    return Err(new Error("No templates found for link type"));
 
-  return templatesLinkType.find((t) => t.action_type === actionType) ?? null;
+  const template = templatesLinkType.find((t) => t.action_type === actionType);
+  if (!template) return Err(new Error("No template found for action type"));
+
+  return Ok(template);
 }
 
+// TODO
 function parseTokenStandard(
   val?: string,
 ): (typeof TokenStandard)[keyof typeof TokenStandard] {
@@ -49,17 +59,22 @@ function parseTokenStandard(
  * Intents use placeholder data where actual values are not yet known.
  */
 export function createActionFromTemplate(
-  linkType: string,
-  actionType: string,
+  linkType: SharedLinkType,
+  actionType: SharedActionType,
   creator: Principal,
-): Action | undefined {
+): Result<Action, Error> {
   const template = getTemplateForActionType(linkType, actionType);
-  if (!template || !template.intents || template.intents.length < 2) {
-    return undefined;
+  if (
+    template.isErr() ||
+    !template.value.intents ||
+    template.value.intents.length < 2
+  ) {
+    return Err(new Error("Invalid template or intents"));
   }
+  const templateValue = template.unwrap();
 
   // Use template structure but with our id, creator, and placeholder intents
-  const intents = template.intents.map((tIntent) => ({
+  const intents = templateValue.intents.map((tIntent) => ({
     id: crypto.randomUUID(),
     intent_type: IntentType.Send,
     asset: {
@@ -78,7 +93,7 @@ export function createActionFromTemplate(
       ? BigInt(tIntent.total_amount)
       : undefined,
     source_address: Principal.fromText(
-      tIntent.source_address ?? template.creator,
+      tIntent.source_address ?? templateValue.creator,
     ),
     source_address_type:
       tIntent.source_address_type === "Creator"
@@ -88,7 +103,9 @@ export function createActionFromTemplate(
           : tIntent.source_address_type === "User"
             ? AddressType.User
             : AddressType.Link,
-    dest_address: Principal.fromText(tIntent.dest_address ?? template.creator),
+    dest_address: Principal.fromText(
+      tIntent.dest_address ?? templateValue.creator,
+    ),
     dest_address_type:
       tIntent.dest_address_type === "Link"
         ? AddressType.Link
@@ -101,18 +118,18 @@ export function createActionFromTemplate(
     intent_state: IntentState.Created,
   }));
 
-  return {
+  return Ok({
     id: crypto.randomUUID(),
     creator,
     creator_address_type:
-      template.creator_address_type === "Creator"
+      templateValue.creator_address_type === "Creator"
         ? AddressType.Creator
         : AddressType.User,
     action_type:
-      template.action_type === "CreateLink"
+      templateValue.action_type === "CreateLink"
         ? ActionType.CreateLink
         : ActionType.Receive,
     intents,
     action_state: ActionState.Created,
-  };
+  });
 }

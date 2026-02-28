@@ -5,8 +5,8 @@ import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/ad
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
-import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
 import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
+import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStatesV3/tipSharedTest/addAsset";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { ActionMapper } from "$modules/links/types/action/action";

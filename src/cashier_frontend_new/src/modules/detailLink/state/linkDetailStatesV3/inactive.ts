@@ -8,9 +8,9 @@ import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 import { ActionType } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { Action as SharedAction } from "$shared";
+import type { ActionType as SharedActionType } from "$shared";
 
-// State when the link inactive
+// State handler for the link inactive
 export class LinkInactiveStateV3 implements LinkDetailStateV3 {
   readonly step = LinkStep.INACTIVE;
   #linkDetailStore: LinkDetailStoreV3;
@@ -20,19 +20,31 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
   }
 
   // inactive only create withdraw action
-  async createAction(action: SharedAction): Promise<CreateActionResultV3> {
+  async createAction(
+    actionType: SharedActionType,
+  ): Promise<CreateActionResultV3> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
     }
 
-    if (action.action_type !== ActionType.WITHDRAW) {
+    if (actionType !== ActionType.WITHDRAW) {
       throw new Error("Invalid action type for Inactive state");
     }
 
+    const withdrawActionRes = this.#linkDetailStore.getDraftingAction(
+      ActionType.WITHDRAW,
+    );
+    if (withdrawActionRes.isErr()) {
+      throw new Error(
+        `Failed to get drafting withdraw action: ${withdrawActionRes.error}`,
+      );
+    }
+
+    const withdrawAction = withdrawActionRes.unwrap();
     const actionRes = await cashierBackendService.createActionV3({
       link_id: link.id,
-      action,
+      action: withdrawAction,
     });
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
@@ -48,16 +60,16 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
       throw new Error("Link is missing");
     }
 
-    if (!this.#linkDetailStore.action) {
+    if (!this.#linkDetailStore.backendAction) {
       throw new Error("Action is missing");
     }
 
-    const actionType = this.#linkDetailStore.action.action_type;
+    const actionType = this.#linkDetailStore.backendAction.action_type;
     if (actionType !== ActionType.WITHDRAW) {
       throw new Error("Invalid action type for Inactive state");
     }
 
-    const actionId = this.#linkDetailStore.action.id;
+    const actionId = this.#linkDetailStore.backendAction.id;
     const result = await cashierBackendService.processActionV3(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to process action: ${result.error}`);

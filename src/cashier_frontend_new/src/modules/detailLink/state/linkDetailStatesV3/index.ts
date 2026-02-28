@@ -3,7 +3,7 @@ import type {
   ProcessActionResultV3,
 } from "$modules/detailLink/types/v3/action";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { Action as SharedAction } from "$shared";
+import type { ActionType as SharedActionType } from "$shared";
 
 /**
  * State pattern interface for managing the different steps in the link detail.
@@ -18,7 +18,7 @@ export interface LinkDetailStateV3 {
    * @returns The created action
    */
 
-  createAction(action: SharedAction): Promise<CreateActionResultV3>;
+  createAction(actionType: SharedActionType): Promise<CreateActionResultV3>;
   /**
    * Method to process action in the current state
    * @returns The result of processing the action

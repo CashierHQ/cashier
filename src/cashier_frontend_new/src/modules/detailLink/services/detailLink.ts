@@ -41,8 +41,6 @@ export class DetailLinkService {
           return ActionType.RECEIVE;
         case LinkType.RECEIVE_PAYMENT:
           return ActionType.SEND;
-        case LinkType.TIP_SHARED_TEST:
-          return undefined;
         default:
           return assertUnreachable(initialLink.link_type);
       }
@@ -53,14 +51,16 @@ export class DetailLinkService {
     return undefined;
   }
 
-  determineActionTypeFromLinkV3(
-    initialLink: SharedLink,
-  ): ActionTypeValue | undefined {
-    if (initialLink.link_state === SharedLinkState.Created)
+  /**
+   * Determine the action type based on the Link type and Link state
+   * @param link
+   * @returns
+   */
+  determineActionTypeFromLinkV3(link: SharedLink): ActionTypeValue | undefined {
+    if (link.link_state === SharedLinkState.Created) {
       return ActionType.CREATE_LINK;
-
-    if (initialLink.link_state === SharedLinkState.Active) {
-      switch (initialLink.link_type) {
+    } else if (link.link_state === SharedLinkState.Active) {
+      switch (link.link_type) {
         case SharedLinkType.SendTip:
         case SharedLinkType.SendAirdrop:
         case SharedLinkType.SendTokenBasket:
@@ -68,16 +68,24 @@ export class DetailLinkService {
         case SharedLinkType.ReceivePayment:
           return ActionType.SEND;
         default:
-          return assertUnreachable(initialLink.link_type);
+          return assertUnreachable(link.link_type);
       }
-    }
-
-    if (initialLink.link_state === SharedLinkState.Inactive)
+    } else if (link.link_state === SharedLinkState.Inactive) {
       return ActionType.WITHDRAW;
+    }
 
     return undefined;
   }
 
+  /**
+   * Fetch link detail with optional action type. If action type is not provided, will determine the action type based on the link state and type, and fetch the action accordingly (if not anonymous).
+   * @param id link id
+   * @param action optional action type to fetch specific action, if not provided, will determine based on the link state and type
+   * @param anonymous whether the request is made in anonymous mode, which may skip fetching action if true since actions may require auth
+   * @returns
+   * - Ok(LinkAction) if fetch link detail successfully
+   * - Err(Error) if any error occurs during the process
+   */
   async fetchLinkDetail({
     id,
     action,
@@ -168,8 +176,6 @@ export class DetailLinkService {
     anonymous?: boolean;
   }): Promise<Result<LinkActionV3, Error>> {
     try {
-      console.log("anonymous", anonymous);
-
       const options = actionTypeValue
         ? { action_type: ActionTypeMapper.toBackendType(actionTypeValue) }
         : undefined;
@@ -183,8 +189,6 @@ export class DetailLinkService {
       if (initialResp.isErr()) return Err(initialResp.error);
 
       const initialRes = initialResp.unwrap();
-      console.log("Initial link detail response:", initialRes);
-
       const sharedLink = SharedLinkMapper.toLocalType(initialRes.link);
 
       if (actionTypeValue) {
@@ -193,7 +197,6 @@ export class DetailLinkService {
       }
 
       const actionType = this.determineActionTypeFromLinkV3(sharedLink);
-      console.log("Determined action type:", actionType);
 
       if (!actionType) return Ok({ link: sharedLink });
 

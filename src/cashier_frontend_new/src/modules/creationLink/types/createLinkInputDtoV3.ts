@@ -23,14 +23,11 @@ export class CreateLinkInputDtoV3 {
     if (
       input.linkType !== LinkType.TIP &&
       input.linkType !== LinkType.AIRDROP &&
-      input.linkType !== LinkType.TOKEN_BASKET &&
-      input.linkType !== LinkType.TIP_SHARED_TEST &&
-      input.linkType !== LinkType.AIRDROP_SHARED_TEST &&
-      input.linkType !== LinkType.TOKEN_BASKET_SHARED_TEST
+      input.linkType !== LinkType.TOKEN_BASKET
     ) {
       return Err(
         new Error(
-          "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
+          "Only Tip, Airdrop, and Token Basket link types are supported currently",
         ),
       );
     }
