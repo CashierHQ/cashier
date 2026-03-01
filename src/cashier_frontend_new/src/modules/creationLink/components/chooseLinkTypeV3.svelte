@@ -3,23 +3,26 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
-  import { type LinkTypeValue } from "$modules/links/types/link/linkType";
-  import { LinkType as SharedLinkType } from "$shared";
+  import {
+    LinkType,
+    LinkTypeMapper,
+    type LinkTypeValue,
+  } from "$modules/links/types/link/linkType";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   const {
-    link,
+    linkStore,
   }: {
-    link: LinkCreationStore;
+    linkStore: LinkCreationStoreV3;
   } = $props();
 
-  const linkTypes: SharedLinkType[] = [
-    SharedLinkType.SendTip,
-    SharedLinkType.SendAirdrop,
-    SharedLinkType.SendTokenBasket,
+  const linkTypes: LinkTypeValue[] = [
+    LinkType.TIP,
+    LinkType.AIRDROP,
+    LinkType.TOKEN_BASKET,
     // TODO: Uncomment this when we have a receive payment link type
     // LinkType.RECEIVE_PAYMENT,
   ];
@@ -27,8 +30,10 @@
   let currentSlide = $state(0);
 
   $effect(() => {
-    const linkType = link.createLinkData.linkType;
-    const index = linkTypes.indexOf(linkType);
+    const linkType = linkStore.draftLink.link_type;
+    const index = linkTypes.indexOf(
+      LinkTypeMapper.fromSharedLinkType(linkType),
+    );
     currentSlide = index >= 0 ? index : 0;
   });
 
@@ -76,9 +81,9 @@
 
   function handleSlideChange(index: number) {
     if (index >= 0 && index < linkTypes.length) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        linkType: linkTypes[index],
+      linkStore.draftLink = {
+        ...linkStore.draftLink,
+        link_type: LinkTypeMapper.toSharedLinkType(linkTypes[index]),
       };
       currentSlide = index;
     }
@@ -87,14 +92,16 @@
   function handleOnInput(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
   ) {
-    link.createLinkData = {
-      ...link.createLinkData,
+    linkStore.draftLink = {
+      ...linkStore.draftLink,
       title: e.currentTarget.value,
     };
   }
 
   function goToPrevious() {
-    const currentIndex = linkTypes.indexOf(link.createLinkData.linkType);
+    const currentIndex = linkTypes.indexOf(
+      LinkTypeMapper.fromSharedLinkType(linkStore.draftLink.link_type),
+    );
     const actualCurrent = currentIndex >= 0 ? currentIndex : 0;
     if (actualCurrent > 0) {
       handleSlideChange(actualCurrent - 1);
@@ -102,7 +109,9 @@
   }
 
   function goToNext() {
-    const currentIndex = linkTypes.indexOf(link.createLinkData.linkType);
+    const currentIndex = linkTypes.indexOf(
+      LinkTypeMapper.fromSharedLinkType(linkStore.draftLink.link_type),
+    );
     const actualCurrent = currentIndex >= 0 ? currentIndex : 0;
     if (actualCurrent < linkTypes.length - 1) {
       handleSlideChange(actualCurrent + 1);
@@ -111,21 +120,23 @@
 
   async function goNext() {
     try {
-      const currentLinkType = link.createLinkData.linkType;
+      const currentLinkType = LinkTypeMapper.fromSharedLinkType(
+        linkStore.draftLink.link_type,
+      );
       const newLinkType = linkTypes[currentSlide];
 
       // If selecting link type is different than existing link type in store,
       // reset the link data (assets and maxUse)
       if (currentLinkType !== newLinkType) {
-        link.createLinkData = {
-          ...link.createLinkData,
-          linkType: newLinkType,
-          assets: [],
-          maxUse: 1,
+        linkStore.draftLink = {
+          ...linkStore.draftLink,
+          link_type: LinkTypeMapper.toSharedLinkType(newLinkType),
+          asset_info: [],
+          max_use: 1n,
         };
       }
 
-      await link.goNext();
+      await linkStore.goNext();
     } catch (e) {
       toast.error(
         locale.t("links.linkForm.chooseType.failedToProceed") + ": " + e,
@@ -141,7 +152,7 @@
     >
     <Input
       id="title"
-      value={link.createLinkData.title}
+      value={linkStore.draftLink.title}
       oninput={handleOnInput}
       placeholder={locale.t("links.linkForm.chooseType.titlePlaceholder")}
     />

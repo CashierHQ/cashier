@@ -1,10 +1,6 @@
 <script lang="ts">
-  import AddAsset from "$modules/creationLink/components/addAsset.svelte";
-  import ChooseLinkType from "$modules/creationLink/components/chooseLinkType.svelte";
-  import CreatedLink from "$modules/creationLink/components/createdLink.svelte";
-  import CreatedLinkV3 from "$modules/creationLink/components/createdLinkV3.svelte";
+  import ChooseLinkTypeV3 from "$modules/creationLink/components/chooseLinkTypeV3.svelte";
   import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
-  import Preview from "$modules/creationLink/components/preview.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -15,7 +11,7 @@
 
   const context = getGuardContext();
   const linkStore = $derived.by(() => {
-    const store = context.linkCreationStore;
+    const store = context.linkCreationStoreV3;
     if (!store) return null;
     return store;
   });
@@ -50,17 +46,7 @@
     <CreateLinkHeader linkStep={linkStore.state.step} onBack={handleBack} />
 
     {#if linkStore.state.step === LinkStep.CHOOSE_TYPE}
-      <ChooseLinkType link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.ADD_ASSET}
-      <AddAsset link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.PREVIEW}
-      <Preview link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.CREATED}
-      {#if linkStore.link_shared}
-        <CreatedLinkV3 link={linkStore} />
-      {:else}
-        <CreatedLink link={linkStore} />
-      {/if}
+      <ChooseLinkTypeV3 {linkStore} />
     {/if}
   </div>
 {/if}

@@ -35,7 +35,17 @@ export class LinkCreationStoreV3 {
   // Private state variables - declare with $state at class level
   #state = $state<LinkCreationStateV3>(new ChooseLinkTypeStateV3(this));
 
-  #draftLink = $state<SharedLink>();
+  #draftLink = $state<SharedLink>({
+    id: "",
+    title: "",
+    link_type: SharedLinkType.SendTip,
+    link_state: SharedLinkState.ChooseType,
+    creator: Principal.anonymous(),
+    asset_info: [],
+    max_use: 1n,
+    use_count: 0n,
+  });
+
   #draftAction = $state<SharedAction | undefined>();
   #backendLink = $state<SharedLink | undefined>();
   #backendAction = $state<SharedAction | undefined>();
@@ -77,11 +87,11 @@ export class LinkCreationStoreV3 {
     this.#id = id;
   }
 
-  get draftLink(): SharedLink | undefined {
+  get draftLink(): SharedLink {
     return this.#draftLink;
   }
 
-  set draftLink(link: SharedLink | undefined) {
+  set draftLink(link: SharedLink) {
     this.#draftLink = link;
   }
 

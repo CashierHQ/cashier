@@ -1,5 +1,6 @@
 import type { LinkType as BackendLinkType } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
+import { LinkType as SharedLinkType } from "$shared";
 
 /** Frontend LinkType as a class with built-in mapping to backend union */
 export class LinkType {
@@ -44,5 +45,35 @@ export class LinkTypeMapper {
       SendTokenBasket: () => LinkType.TOKEN_BASKET,
       ReceivePayment: () => LinkType.RECEIVE_PAYMENT,
     });
+  }
+
+  static fromSharedLinkType(value: SharedLinkType): LinkTypeValue {
+    switch (value) {
+      case SharedLinkType.SendTip:
+        return LinkType.TIP;
+      case SharedLinkType.SendAirdrop:
+        return LinkType.AIRDROP;
+      case SharedLinkType.SendTokenBasket:
+        return LinkType.TOKEN_BASKET;
+      case SharedLinkType.ReceivePayment:
+        return LinkType.RECEIVE_PAYMENT;
+      default:
+        return assertUnreachable(value);
+    }
+  }
+
+  static toSharedLinkType(value: LinkTypeValue): SharedLinkType {
+    switch (value) {
+      case LinkType.TIP:
+        return SharedLinkType.SendTip;
+      case LinkType.AIRDROP:
+        return SharedLinkType.SendAirdrop;
+      case LinkType.TOKEN_BASKET:
+        return SharedLinkType.SendTokenBasket;
+      case LinkType.RECEIVE_PAYMENT:
+        return SharedLinkType.ReceivePayment;
+      default:
+        return assertUnreachable(value);
+    }
   }
 }

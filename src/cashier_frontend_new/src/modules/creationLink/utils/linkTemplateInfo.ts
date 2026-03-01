@@ -48,32 +48,5 @@ export function getLinkTemplateInfo(type: LinkTypeValue) {
         ),
         buttonText: locale.t("links.linkForm.chooseType.preview.payButton"),
       };
-    case LinkType.TIP_SHARED_TEST:
-      return {
-        label: "Tip (Shared Test)",
-        image: "/icpLogo.png",
-        title: "TipLink Shared Package",
-        description:
-          "Temporary template to test shared package fee calculations",
-        buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-      };
-    case LinkType.AIRDROP_SHARED_TEST:
-      return {
-        label: "Airdrop (Shared Test)",
-        image: "/chatToken.png",
-        title: "Airdop Shared Package",
-        description:
-          "Temporary template to test shared package fee calculations",
-        buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-      };
-    case LinkType.TOKEN_BASKET_SHARED_TEST:
-      return {
-        label: "Token Basket (Shared Test)",
-        image: "/tokenBasket.png",
-        title: "Token Basket Shared Package",
-        description:
-          "Temporary template to test shared package fee calculations",
-        buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-      };
   }
 }

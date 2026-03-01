@@ -22,9 +22,6 @@
     LinkType.TIP,
     LinkType.AIRDROP,
     LinkType.TOKEN_BASKET,
-    LinkType.TIP_SHARED_TEST,
-    LinkType.AIRDROP_SHARED_TEST,
-    LinkType.TOKEN_BASKET_SHARED_TEST,
     // TODO: Uncomment this when we have a receive payment link type
     // LinkType.RECEIVE_PAYMENT,
   ];

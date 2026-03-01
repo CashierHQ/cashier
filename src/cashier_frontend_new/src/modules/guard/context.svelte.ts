@@ -1,9 +1,10 @@
-import { getContext, setContext } from "svelte";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { userProfile } from "$modules/shared/services/userProfile.svelte";
-import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
+import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { userProfile } from "$modules/shared/services/userProfile.svelte";
+import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import { getContext, setContext } from "svelte";
 
 const GUARD_CONTEXT_KEY = Symbol("guardContext");
 
@@ -13,15 +14,19 @@ export class GuardContext {
   linkDetailStore = $state<LinkDetailStore | null>(null);
   userLinkStore = $state<UserLinkStore | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
+  linkCreationStoreV3 = $state<LinkCreationStoreV3 | null>(null);
   // Indicates whether the guard check process has completed
   isGuardCheckComplete = $state(false);
   // Indicates whether an attempt to load a temporary link has been made
   hasTempLinkLoadAttempted = $state(false);
+  // Indicates whether an attempt to load a draft link has been made
+  hasDraftLinkLoadAttempted = $state(false);
 
   constructor(config?: {
     linkDetailStore?: LinkDetailStore;
     userLinkStore?: UserLinkStore;
     linkCreationStore?: LinkCreationStore;
+    linkCreationStoreV3?: LinkCreationStoreV3;
   }) {
     if (config?.linkDetailStore) {
       this.linkDetailStore = config.linkDetailStore;
@@ -31,6 +36,9 @@ export class GuardContext {
     }
     if (config?.linkCreationStore) {
       this.linkCreationStore = config.linkCreationStore;
+    }
+    if (config?.linkCreationStoreV3) {
+      this.linkCreationStoreV3 = config.linkCreationStoreV3;
     }
   }
 
@@ -46,6 +54,10 @@ export class GuardContext {
     this.linkCreationStore = store;
   }
 
+  setLinkCreationStoreV3(store: LinkCreationStoreV3) {
+    this.linkCreationStoreV3 = store;
+  }
+
   setGuardCheckComplete(complete: boolean) {
     this.isGuardCheckComplete = complete;
   }
@@ -54,15 +66,20 @@ export class GuardContext {
     this.hasTempLinkLoadAttempted = attempted;
   }
 
+  setHasDraftLinkLoadAttempted(attempted: boolean) {
+    this.hasDraftLinkLoadAttempted = attempted;
+  }
+
   /**
    * Get the first available link store
-   * @returns LinkDetailStore | UserLinkStore | LinkCreationStore | null
+   * @returns LinkDetailStore | UserLinkStore | LinkCreationStore | LinkCreationStoreV3 | null
    */
   getLinkStore() {
     return (
       this.linkDetailStore ||
       this.userLinkStore ||
       this.linkCreationStore ||
+      this.linkCreationStoreV3 ||
       null
     );
   }
@@ -116,6 +133,7 @@ export class GuardContext {
   isOwner() {
     // always return if link creation store exists
     if (this.linkCreationStore) return true;
+    if (this.linkCreationStoreV3) return true;
 
     // else check ownership for other stores
     if (!this.authState.account) return false;
@@ -133,6 +151,7 @@ export class GuardContext {
     if (!store) return false;
 
     if (this.linkCreationStore) return true;
+    if (this.linkCreationStoreV3) return true;
 
     if (this.linkDetailStore) {
       return (

@@ -82,7 +82,20 @@ export class SharedLinkMapper {
     serialize: {
       SharedLink: (t: unknown) => {
         const link = t as SharedLink | undefined;
-        if (!link || typeof link !== "object") return false;
+        if (!link || typeof link !== "object" || Array.isArray(link)) {
+          return false;
+        }
+        if (
+          !("creator" in link) ||
+          typeof link.creator !== "object" ||
+          link.creator === null ||
+          typeof link.creator.toText !== "function"
+        ) {
+          return false;
+        }
+        if (!("asset_info" in link) || !Array.isArray(link.asset_info)) {
+          return false;
+        }
 
         return {
           id: link.id,

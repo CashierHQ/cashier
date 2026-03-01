@@ -1,3 +1,4 @@
+import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 import {
   LinkState as SharedLinkState,
@@ -20,9 +21,15 @@ export class DraftLinkService {
   createAndPersistDraftLink(principalId: Principal): Result<SharedLink, Error> {
     const createResult = this.createDraftLinkFromPrincipalId(principalId);
     if (createResult.isErr()) {
-      return Err(createResult.error);
+      return Err(
+        new Error("Create draft link failed: " + createResult.unwrapErr()),
+      );
     }
-    draftLinkRepository.save([createResult.unwrap()], principalId.toText());
+    try {
+      draftLinkRepository.save([createResult.unwrap()], principalId.toText());
+    } catch (error) {
+      return Err(new Error("Failed to save draft link: " + error));
+    }
     return createResult;
   }
 
@@ -58,8 +65,9 @@ export class DraftLinkService {
    * @param id
    * @returns
    */
-  getDraftLink(principalId: Principal, id: string): SharedLink | undefined {
-    const links = draftLinkRepository.get(principalId.toText());
+  getDraftLink(id: string): SharedLink | undefined {
+    if (!authState.account) return undefined;
+    const links = draftLinkRepository.get(authState.account.owner);
     return links.find((x) => String(x.id) === id);
   }
 
