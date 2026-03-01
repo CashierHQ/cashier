@@ -80,6 +80,9 @@ export type LinkType = typeof LinkType[keyof typeof LinkType];
  * Current state of the link
  */
 export declare const LinkState: {
+    readonly ChooseType: "ChooseType";
+    readonly AddAsset: "AddAsset";
+    readonly Preview: "Preview";
     readonly Created: "Created";
     readonly Active: "Active";
     readonly Inactive: "Inactive";
@@ -202,6 +205,6 @@ export interface Link {
     use_count: bigint;
     link_state: LinkState;
     /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
-    created_at_ts?: bigint;
+    created_at?: bigint;
 }
 //# sourceMappingURL=types.d.ts.map

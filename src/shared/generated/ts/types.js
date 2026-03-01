@@ -77,6 +77,9 @@ export const LinkType = {
  * Current state of the link
  */
 export const LinkState = {
+    ChooseType: 'ChooseType',
+    AddAsset: 'AddAsset',
+    Preview: 'Preview',
     Created: 'Created',
     Active: 'Active',
     Inactive: 'Inactive',
