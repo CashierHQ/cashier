@@ -1,18 +1,18 @@
 <script lang="ts">
   import { page } from "$app/state";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
-  import PageLayout from "$modules/shared/components/PageLayout.svelte";
-  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
-  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
   import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
   import ProtectedLinkState from "$modules/guard/components/ProtectedLinkState.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import PageLayout from "$modules/shared/components/PageLayout.svelte";
 
   const id = page.params.id!;
 </script>
 
-<RouteGuard tempLinkId={id}>
+<RouteGuard draftLinkId={id}>
   <ProtectedAuth>
     <ProtectedValidLink redirectTo="/links">
       <ProtectedLinkOwner>

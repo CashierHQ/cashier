@@ -1,30 +1,34 @@
 <script lang="ts">
-  import AddAsset from "$modules/creationLink/components/addAsset.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import ChooseLinkType from "$modules/creationLink/components/chooseLinkType.svelte";
-  import CreatedLink from "$modules/creationLink/components/createdLink.svelte";
-  import CreatedLinkV3 from "$modules/creationLink/components/createdLinkV3.svelte";
   import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
-  import Preview from "$modules/creationLink/components/preview.svelte";
+  import { CreationStoreChooseLinkTypeAdapter } from "$modules/creationLink/state/adapters/storeChooseLinkTypeAdapter";
+  import { CreationStoreV3ChooseLinkTypeAdapter } from "$modules/creationLink/state/adapters/storeV3ChooseLinkTypeAdapter";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
-
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { onMount } from "svelte";
 
   const context = getGuardContext();
   const linkStore = $derived.by(() => {
+    const storeV3 = context.linkCreationStoreV3;
+    if (storeV3) {
+      return new CreationStoreV3ChooseLinkTypeAdapter(storeV3);
+    }
     const store = context.linkCreationStore;
-    if (!store) return null;
-    return store;
+    if (store) {
+      return new CreationStoreChooseLinkTypeAdapter(store);
+    }
+
+    return null;
   });
 
   const handleBack = async () => {
     if (!linkStore) return;
     if (
-      linkStore.state.step === LinkStep.CHOOSE_TYPE ||
-      linkStore.state.step === LinkStep.CREATED
+      linkStore.step === LinkStep.CHOOSE_TYPE ||
+      linkStore.step === LinkStep.CREATED
     ) {
       goto(resolve("/links"));
     } else {
@@ -47,20 +51,15 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader linkStep={linkStore.state.step} onBack={handleBack} />
-
-    {#if linkStore.state.step === LinkStep.CHOOSE_TYPE}
+    <CreateLinkHeader linkStep={linkStore.step} onBack={handleBack} />
+    {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.ADD_ASSET}
+      <!-- {:else if linkStore.step === LinkStep.ADD_ASSET}
       <AddAsset link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.PREVIEW}
+    {:else if linkStore.step === LinkStep.PREVIEW}
       <Preview link={linkStore} />
-    {:else if linkStore.state.step === LinkStep.CREATED}
-      {#if linkStore.link_shared}
-        <CreatedLinkV3 link={linkStore} />
-      {:else}
-        <CreatedLink link={linkStore} />
-      {/if}
+    {:else if linkStore.step === LinkStep.CREATED}
+      <CreatedLink link={linkStore} /> -->
     {/if}
   </div>
 {/if}

@@ -3,7 +3,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkType";
+  import type { GenericLinkStore } from "$modules/creationLink/types/genericLinkStore";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
   import {
     LinkType,
@@ -15,7 +16,7 @@
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: ChooseLinkTypeVM & GenericLinkStore;
   } = $props();
 
   const linkTypes: LinkTypeValue[] = [
@@ -29,7 +30,7 @@
   let currentSlide = $state(0);
 
   $effect(() => {
-    const linkType = link.createLinkData.linkType;
+    const linkType = link.linkType;
     const index = linkTypes.indexOf(linkType);
     currentSlide = index >= 0 ? index : 0;
   });
@@ -78,10 +79,7 @@
 
   function handleSlideChange(index: number) {
     if (index >= 0 && index < linkTypes.length) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        linkType: linkTypes[index],
-      };
+      link.setLinkType(linkTypes[index]);
       currentSlide = index;
     }
   }
@@ -89,14 +87,11 @@
   function handleOnInput(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
   ) {
-    link.createLinkData = {
-      ...link.createLinkData,
-      title: e.currentTarget.value,
-    };
+    link.setTitle(e.currentTarget.value);
   }
 
   function goToPrevious() {
-    const currentIndex = linkTypes.indexOf(link.createLinkData.linkType);
+    const currentIndex = linkTypes.indexOf(link.linkType);
     const actualCurrent = currentIndex >= 0 ? currentIndex : 0;
     if (actualCurrent > 0) {
       handleSlideChange(actualCurrent - 1);
@@ -104,7 +99,7 @@
   }
 
   function goToNext() {
-    const currentIndex = linkTypes.indexOf(link.createLinkData.linkType);
+    const currentIndex = linkTypes.indexOf(link.linkType);
     const actualCurrent = currentIndex >= 0 ? currentIndex : 0;
     if (actualCurrent < linkTypes.length - 1) {
       handleSlideChange(actualCurrent + 1);
@@ -113,18 +108,13 @@
 
   async function goNext() {
     try {
-      const currentLinkType = link.createLinkData.linkType;
+      const currentLinkType = link.linkType;
       const newLinkType = linkTypes[currentSlide];
 
       // If selecting link type is different than existing link type in store,
       // reset the link data (assets and maxUse)
       if (currentLinkType !== newLinkType) {
-        link.createLinkData = {
-          ...link.createLinkData,
-          linkType: newLinkType,
-          assets: [],
-          maxUse: 1,
-        };
+        link.resetForTypeChange(newLinkType);
       }
 
       await link.goNext();
@@ -143,7 +133,7 @@
     >
     <Input
       id="title"
-      value={link.createLinkData.title}
+      value={link.title}
       oninput={handleOnInput}
       placeholder={locale.t("links.linkForm.chooseType.titlePlaceholder")}
     />

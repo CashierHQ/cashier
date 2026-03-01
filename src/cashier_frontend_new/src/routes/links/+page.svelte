@@ -27,7 +27,7 @@
         throw new Error("Failed to create draft link");
       }
       const draftLink = draftLinkResult.unwrap();
-      goto(resolve(`/link/create-v3/${draftLink.id}`));
+      goto(resolve(`/link/create/${draftLink.id}`));
     } catch (error) {
       toast.error(locale.t("links.createLinkError"));
     }

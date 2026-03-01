@@ -10,13 +10,11 @@
 
   let {
     linkId,
-    tempLinkId,
     draftLinkId,
     storeType,
     children,
   }: {
     linkId?: string;
-    tempLinkId?: string;
     draftLinkId?: string;
     storeType?: "userLink" | "linkDetail";
     children: Snippet;
@@ -33,45 +31,43 @@
   }
 
   $effect(() => {
-    if (tempLinkId && context.authState.isReady) {
-      const tempLinkResult = LinkCreationStore.getTempLink(tempLinkId);
-      if (tempLinkResult.isOk()) {
-        context.setLinkCreationStore(
-          new LinkCreationStore(tempLinkResult.value),
-        );
-      } else {
-        // Do not clear store when link was successfully created (temp link was deleted)
-        const existing = context.linkCreationStore;
-        const isInCreatedState =
-          existing &&
-          "state" in existing &&
-          existing.state?.step === LinkStep.CREATED;
-        if (!isInCreatedState) {
-          context.linkCreationStore = null;
-        }
-      }
-      context.setHasTempLinkLoadAttempted(true);
-    } else if (!tempLinkId) {
-      context.setHasTempLinkLoadAttempted(true);
-    }
-
     if (draftLinkId && context.authState.isReady) {
       const draftLink = draftLinkService.getDraftLink(draftLinkId);
       if (draftLink) {
         context.setLinkCreationStoreV3(new LinkCreationStoreV3(draftLink));
       } else {
-        // Do not clear store when link was successfully created (draft link was deleted)
-        const existing = context.linkCreationStoreV3;
-        const isInCreatedState =
-          existing &&
-          "state" in existing &&
-          existing.state?.step === LinkStep.CREATED;
-        if (!isInCreatedState) {
-          context.linkCreationStoreV3 = null;
+        // lookup for temp link v2
+        const tempLinkResult = LinkCreationStore.getTempLink(draftLinkId);
+        if (tempLinkResult.isOk()) {
+          context.setLinkCreationStore(
+            new LinkCreationStore(tempLinkResult.value),
+          );
+        } else {
+          // Do not clear store when link was successfully created (draft link was deleted)
+          const existingV3 = context.linkCreationStoreV3;
+          const isInCreatedStateV3 =
+            existingV3 &&
+            "state" in existingV3 &&
+            existingV3.state?.step === LinkStep.CREATED;
+          if (!isInCreatedStateV3) {
+            context.linkCreationStoreV3 = null;
+          }
+
+          // Do not clear store when link was successfully created (temp link was deleted)
+          const existing = context.linkCreationStore;
+          const isInCreatedState =
+            existing &&
+            "state" in existing &&
+            existing.state?.step === LinkStep.CREATED;
+          if (!isInCreatedState) {
+            context.linkCreationStore = null;
+          }
         }
       }
       context.setHasDraftLinkLoadAttempted(true);
+      context.setHasTempLinkLoadAttempted(true);
     } else if (!draftLinkId) {
+      context.setHasTempLinkLoadAttempted(true);
       context.setHasDraftLinkLoadAttempted(true);
     }
   });
