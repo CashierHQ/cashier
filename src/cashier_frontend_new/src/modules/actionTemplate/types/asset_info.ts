@@ -1,5 +1,8 @@
 import { type AssetInfo as BackendSharedAssetInfo } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { SharedAssetMapper } from "$modules/actionTemplate/types/asset";
+import {
+  SharedAssetMapper,
+  type SerializedSharedAsset,
+} from "$modules/actionTemplate/types/asset";
 import { type AssetInfo as SharedAssetInfo } from "$shared";
 
 /**
@@ -31,4 +34,39 @@ export class SharedAssetInfoMapper {
       amount: assetInfo.amount,
     };
   }
+
+  /**
+   * Convert frontend SharedAssetInfo to serialized storage shape
+   * @param assetInfo
+   * @returns
+   */
+  static toStorageType(assetInfo: SharedAssetInfo): SerializedSharedAssetInfo {
+    return {
+      asset: SharedAssetMapper.toStorageType(assetInfo.asset),
+      label: assetInfo.label,
+      amount: assetInfo.amount,
+    };
+  }
+
+  /**
+   * Convert serialized storage shape to frontend SharedAssetInfo
+   * @param assetInfo
+   * @returns
+   */
+  static fromStorageType(assetInfo: SerializedSharedAssetInfo): SharedAssetInfo {
+    return {
+      asset: SharedAssetMapper.fromStorageType(assetInfo.asset),
+      label: assetInfo.label,
+      amount: assetInfo.amount,
+    };
+  }
 }
+
+/**
+ * Serialized form of SharedAssetInfo for local storage
+ */
+export type SerializedSharedAssetInfo = {
+  asset: SerializedSharedAsset;
+  label: string;
+  amount: bigint;
+};

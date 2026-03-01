@@ -332,7 +332,7 @@
         "link_state": {
           "$ref": "#/definitions/LinkState"
         },
-        "created_at_ts": {
+        "created_at": {
           "type": "string",
           "format": "rust-u64",
           "description": "Creation timestamp in nanoseconds since Unix epoch (IC time)"
@@ -356,7 +356,15 @@
     },
     "LinkState": {
       "type": "string",
-      "enum": ["Created", "Active", "Inactive", "Ended"],
+      "enum": [
+        "ChooseType",
+        "AddAsset",
+        "Preview",
+        "Created",
+        "Active",
+        "Inactive",
+        "Ended"
+      ],
       "description": "Current state of the link"
     }
   }

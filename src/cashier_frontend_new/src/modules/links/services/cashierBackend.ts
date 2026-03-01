@@ -17,7 +17,7 @@ import type {
   CreateLinkResponseV3,
 } from "$modules/links/types/linkV3";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { type Action as SharedAction } from "$shared";
+import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 import { toNullable } from "@dfinity/utils";
 import { Err, type Result } from "ts-results-es";
 
@@ -144,7 +144,7 @@ class CanisterBackendService {
    * @returns A Result containing CreateLinkResponseV3 or an Error.
    */
   async createLinkV3(
-    input: CreateLinkData,
+    link: SharedLink,
     action: SharedAction,
   ): Promise<Result<CreateLinkResponseV3, Error>> {
     const actor = this.#getActor({
@@ -154,7 +154,7 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = CreateLinkInputDtoV3.toCreateLinkInputArgV3(input, action);
+    const request = CreateLinkInputDtoV3.toCreateLinkInputArgV3(link, action);
     if (request.isErr()) {
       return Err(request.unwrapErr());
     }

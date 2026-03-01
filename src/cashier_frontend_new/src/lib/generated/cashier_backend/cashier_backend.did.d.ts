@@ -267,7 +267,7 @@ export interface Link {
   'asset_info' : Array<AssetInfo>,
   'link_state' : LinkState_1,
   'link_type' : LinkType_1,
-  'created_at_ts' : [] | [bigint],
+  'created_at' : [] | [bigint],
   'use_count' : bigint,
   'max_use' : bigint,
 }
@@ -287,8 +287,11 @@ export type LinkState = { 'Inactive' : null } |
   { 'CreateLink' : null } |
   { 'InactiveEnded' : null };
 export type LinkState_1 = { 'Ended' : null } |
+  { 'Preview' : null } |
+  { 'ChooseType' : null } |
   { 'Inactive' : null } |
   { 'Active' : null } |
+  { 'AddAsset' : null } |
   { 'Created' : null };
 export type LinkType = { 'SendAirdrop' : null } |
   { 'SendTip' : null } |

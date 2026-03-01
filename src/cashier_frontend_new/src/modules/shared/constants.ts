@@ -38,9 +38,13 @@ export const FEATURE_FLAGS = {
 export const FEE_TREASURY_PRINCIPAL =
   "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae";
 
+export const LINK_CREATION_FEE = 10_000n;
+
 // Prefix for temporary links storage in localStorage
 export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
 
 export const USD_DISPLAY_DECIMALS = 6;
 
 export const II_SIGNER_WALLET_ID = "iiSigner";
+
+export const DRAFT_LINKS_STORAGE_KEY_PREFIX = "draftLinks";

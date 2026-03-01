@@ -278,8 +278,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const LinkState_1 = IDL.Variant({
     'Ended' : IDL.Null,
+    'Preview' : IDL.Null,
+    'ChooseType' : IDL.Null,
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'Created' : IDL.Null,
   });
   const Link = IDL.Record({
@@ -289,7 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'asset_info' : IDL.Vec(AssetInfo),
     'link_state' : LinkState_1,
     'link_type' : LinkType_1,
-    'created_at_ts' : IDL.Opt(IDL.Nat64),
+    'created_at' : IDL.Opt(IDL.Nat64),
     'use_count' : IDL.Nat64,
     'max_use' : IDL.Nat64,
   });

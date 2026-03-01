@@ -1,92 +1,71 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { createActionFromTemplate } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
-import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
-import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
-import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
-import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
-import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
-import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
-import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStatesV3/tipSharedTest/addAsset";
-import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
-import { createTempLinkFromPrincipalId } from "$modules/creationLink/utils/tempLink";
-import Action from "$modules/links/types/action/action";
-import type { Link } from "$modules/links/types/link/link";
-import {
-  LinkState,
-  type LinkStateValue,
-} from "$modules/links/types/link/linkState";
-import { LinkType } from "$modules/links/types/link/linkType";
+import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
+import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
+import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { TempLink } from "$modules/links/types/tempLink";
 import {
   CASHIER_BACKEND_CANISTER_ID,
   FEE_TREASURY_PRINCIPAL,
+  LINK_CREATION_FEE,
 } from "$modules/shared/constants";
 import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
 import {
+  ActionType as SharedActionType,
   AddressType as SharedAddressType,
+  LinkState as SharedLinkState,
+  LinkType as SharedLinkType,
   TokenStandard as SharedTokenStandard,
   type Action as SharedAction,
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
-import { Err, Ok, type Result } from "ts-results-es";
+import { draftLinkService } from "../services/draftLink";
 
 /**
  * Store for draft link state management
  */
 export class LinkCreationStoreV3 {
   // Private state variables - declare with $state at class level
-  #state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
-  // draft holds partial data used for creation/edit flows
-  public createLinkData = $state<CreateLinkData>(
-    new CreateLinkData({
-      title: "",
-      linkType: LinkType.TIP,
-      assets: [],
-      maxUse: 1,
-    }),
-  );
+  #state = $state<LinkCreationStateV3>(new ChooseLinkTypeStateV3(this));
 
-  public link = $state<Link | undefined>();
-  // Only existed if the link state == Created
-  public action = $state<Action | undefined>();
-
-  public link_shared = $state<SharedLink | undefined>();
-  public action_shared = $state<SharedAction | undefined>();
+  #draftLink = $state<SharedLink>();
+  #draftAction = $state<SharedAction | undefined>();
+  #backendLink = $state<SharedLink | undefined>();
+  #backendAction = $state<SharedAction | undefined>();
   #id = $state<string>();
 
-  constructor(tempLink: TempLink) {
-    this.#id = tempLink.id;
-    this.createLinkData = tempLink.createLinkData;
-    this.#state = this.stateFromValue(tempLink.state);
+  constructor(draftLink: SharedLink) {
+    this.#id = draftLink.id;
+    this.#state = this.getStateHandler(draftLink.link_state);
 
-    this.link = undefined;
-    this.action = undefined;
+    this.#draftLink = draftLink;
+    this.#draftAction = undefined;
 
-    this.link_shared = undefined;
-    this.action_shared = undefined;
+    this.#backendLink = undefined;
+    this.#backendAction = undefined;
 
     $effect(() => {
       // Access reactive state to track changes
-      void this.createLinkData;
+      void this.#draftLink;
       void this.#state;
 
       // Sync on changes (async, no await needed in effect)
-      this.syncTempLink();
+      this.syncDraftLinkToStorage();
     });
   }
 
-  get state(): LinkCreationState {
+  get state(): LinkCreationStateV3 {
     return this.#state;
   }
 
-  set state(state: LinkCreationState) {
+  set state(state: LinkCreationStateV3) {
     this.#state = state;
   }
 
@@ -98,11 +77,36 @@ export class LinkCreationStoreV3 {
     this.#id = id;
   }
 
-  reset(): void {
-    this.link = undefined;
-    this.action = undefined;
-    this.link_shared = undefined;
-    this.action_shared = undefined;
+  get draftLink(): SharedLink | undefined {
+    return this.#draftLink;
+  }
+
+  set draftLink(link: SharedLink | undefined) {
+    this.#draftLink = link;
+  }
+
+  get draftAction(): SharedAction | undefined {
+    return this.#draftAction;
+  }
+
+  set draftAction(action: SharedAction | undefined) {
+    this.#draftAction = action;
+  }
+
+  get backendLink(): SharedLink | undefined {
+    return this.#backendLink;
+  }
+
+  set backendLink(link: SharedLink | undefined) {
+    this.#backendLink = link;
+  }
+
+  get backendAction(): SharedAction | undefined {
+    return this.#backendAction;
+  }
+
+  set backendAction(action: SharedAction | undefined) {
+    this.#backendAction = action;
   }
 
   // Move to the next state
@@ -120,87 +124,53 @@ export class LinkCreationStoreV3 {
    * @param state LinkStateValue to initialize from
    * @returns LinkCreationState corresponding to the given state
    */
-  private stateFromValue(state: LinkStateValue): LinkCreationState {
-    let initialState: LinkCreationState;
+  private getStateHandler(state: SharedLinkState): LinkCreationStateV3 {
+    let initialState: LinkCreationStateV3;
 
     switch (state) {
-      case LinkState.CHOOSING_TYPE:
-        initialState = new ChooseLinkTypeState(this);
+      case SharedLinkState.ChooseType:
+        initialState = new ChooseLinkTypeStateV3(this);
         break;
-      case LinkState.ADDING_ASSET:
-        // choose the correct add-asset state depending on the link type
-        if (this.createLinkData.linkType === LinkType.TIP) {
-          initialState = new AddAssetTipLinkState(this);
-        } else if (this.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
-          initialState = new AddAssetTipSharedTestState(this);
-        } else {
-          initialState = new AddAssetState(this);
-        }
+      case SharedLinkState.AddAsset:
+        initialState = new AddAssetStateV3(this);
         break;
-      case LinkState.PREVIEW:
-        initialState = new PreviewState(this);
+      case SharedLinkState.Preview:
+        initialState = new PreviewStateV3(this);
         break;
-      case LinkState.CREATE_LINK:
-        initialState = new LinkCreatedState();
+      case SharedLinkState.Created:
+        initialState = new LinkCreatedStateV3();
         break;
       default:
-        initialState = new ChooseLinkTypeState(this);
+        initialState = new ChooseLinkTypeStateV3(this);
     }
 
     return initialState;
   }
 
   /**
-   * Create and store a new temporary link for the given principal
-   * @param principalId owner principal identifier
-   * @returns the created TempLink object
-   */
-  static createTempLink(principalId: string): TempLink {
-    const tempLink = createTempLinkFromPrincipalId(principalId);
-
-    tempLinkRepository.create({
-      id: tempLink.id,
-      owner: principalId,
-      tempLink: tempLink,
-    });
-
-    return tempLink;
-  }
-
-  /**
-   * Get a temporary link by id for the current authenticated user
-   * @param id string identifier of the temp link
-   * @returns the TempLink object or undefined if not found
-   */
-  static getTempLink(id: string): Result<TempLink, Error> {
-    const owner = authState.account?.owner;
-    if (!owner) return Err(new Error("User not authenticated"));
-    const tempLink = tempLinkRepository.getOne(owner, id);
-    if (!tempLink) {
-      return Err(new Error(`Temp link with id ${id} not found`));
-    }
-    return Ok(tempLink);
-  }
-
-  /**
-   * Persist the current state of the draft link state to the local storage using tempLinkRepository
+   * Update and persist the draft link in the local storage
    * @returns
    */
-  syncTempLink(): void {
+  syncDraftLinkToStorage(): void {
     if (this.#state.step === LinkStep.CREATED) {
       return;
     }
 
-    let currentLinkState: LinkStateValue;
+    let title = this.#draftLink?.title ?? "Draft Link";
+    let linkType = this.#draftLink?.link_type ?? SharedLinkType.SendTip;
+    let assetInfo = this.#draftLink?.asset_info ?? [];
+    let maxUse = this.#draftLink?.max_use ?? 1n;
+
+    let linkState: SharedLinkState;
     switch (this.#state.step) {
       case LinkStep.CHOOSE_TYPE:
-        currentLinkState = LinkState.CHOOSING_TYPE;
+        linkState = SharedLinkState.ChooseType;
         break;
       case LinkStep.ADD_ASSET:
-        currentLinkState = LinkState.ADDING_ASSET;
+        linkState = SharedLinkState.AddAsset;
         break;
       case LinkStep.PREVIEW:
-        currentLinkState = LinkState.PREVIEW;
+        linkState = SharedLinkState.Preview;
         break;
       case LinkStep.ACTIVE:
       case LinkStep.INACTIVE:
@@ -212,12 +182,15 @@ export class LinkCreationStoreV3 {
         assertUnreachable(this.#state.step);
     }
 
-    if (this.#id && currentLinkState && authState.account) {
-      tempLinkRepository.update({
+    if (this.#id && authState.account) {
+      draftLinkService.update({
         id: this.#id,
-        updateTempLink: {
-          state: currentLinkState,
-          createLinkData: this.createLinkData,
+        updateData: {
+          title,
+          linkType,
+          assetInfo,
+          maxUse,
+          state: linkState,
         },
         owner: authState.account.owner,
       });
@@ -228,38 +201,38 @@ export class LinkCreationStoreV3 {
    * Initialize Action from template (actions.json) for V3 create flow.
    * Used for TIP_SHARED_TEST: creates action with 2 placeholder intents.
    */
-  initializeActionFromTemplate(
-    linkType: string,
-    actionType: string,
-    creator: Principal,
-  ): boolean {
-    const loaded_action: SharedAction | undefined = createActionFromTemplate(
+  initializeCreateActionFromTemplate(linkType: SharedLinkType): boolean {
+    if (authState.account?.owner === undefined) {
+      throw new Error(
+        "User must be authenticated to initialize action from template",
+      );
+    }
+
+    const creator = Principal.fromText(authState.account.owner);
+    const loadedActionResult = createActionFromTemplate(
       linkType,
-      actionType,
+      SharedActionType.CreateLink,
       creator,
     );
-    if (!loaded_action) return false;
-    this.action_shared = loaded_action;
+    if (loadedActionResult.isErr()) {
+      throw new Error("Failed to initialize action from template");
+    }
+    const loadedAction = loadedActionResult.unwrap();
+    this.#draftAction = loadedAction;
 
-    console.log("Initialized action from template", loaded_action);
     return true;
   }
 
   /**
-   * Update the first (asset) intent with actual selected asset data.
-   * Used on step ADD_ASSET for V3 (e.g. TIP_SHARED_TEST). Sets source=Creator, dest=Link.
+   * Populate the asset intents with the asset info from the draft link
+   * @returns
    */
-  updateAssetIntent(
-    params: {
-      assetAddress: Principal;
-      networkFee: bigint;
-      tokenStandard: (typeof SharedTokenStandard)[keyof typeof SharedTokenStandard];
-      amount: bigint;
-    }[],
-  ): void {
-    if (!this.action_shared || this.action_shared.intents.length === 0) return;
+  populateAssetIntent(): void {
+    if (!this.#draftAction || this.#draftAction.intents.length === 0) {
+      throw new Error("Asset intent not found in action intents");
+    }
 
-    const intents = this.action_shared.intents.filter(
+    const intents = this.#draftAction.intents.filter(
       (i) =>
         i.source_address_type === SharedAddressType.Creator &&
         i.dest_address_type === SharedAddressType.Link,
@@ -268,35 +241,40 @@ export class LinkCreationStoreV3 {
       throw new Error("Asset intent not found in action intents");
     }
 
-    for (let i = 0; i < params.length; i++) {
+    const assetInfo = this.#draftLink?.asset_info ?? [];
+    if (assetInfo.length === 0) return;
+
+    const action = this.#draftAction;
+    const linkAddress = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
+
+    for (let i = 0; i < intents.length && i < assetInfo.length; i++) {
+      const linkAssetInfo = assetInfo[i];
       const intent = intents[i];
-      const param = params[i];
       intent.asset = {
-        address: param.assetAddress,
-        network_fee: param.networkFee,
-        token_standard: param.tokenStandard,
+        address: linkAssetInfo.asset.address,
+        network_fee: linkAssetInfo.asset.network_fee,
+        token_standard: linkAssetInfo.asset.token_standard,
       };
-      intent.amount = param.amount;
-      intent.source_address = this.action_shared.creator;
-      intent.source_address_type = this.action_shared.creator_address_type;
-      intent.dest_address = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
+      intent.amount = linkAssetInfo.amount;
+      intent.source_address = action.creator;
+      intent.source_address_type = action.creator_address_type;
+      intent.dest_address = linkAddress;
       intent.dest_address_type = SharedAddressType.Link;
     }
   }
 
   /**
-   * Update the second (fee) intent with ICP asset and link creation fee.
-   * Used on step ADD_ASSET for V3 (TIP_SHARED_TEST). total_amount/network_fee/user_fee
-   * are filled on Preview via updateV3IntentsWithFees.
-   * @param icpNetworkFee - optional; uses ICP_LEDGER_FEE if not provided (e.g. wallet not loaded)
+   * Populate the fee intent with the fee information for link creation (10_000 ICP to fee treasury)
+   * @returns
    */
-  updateFeeIntent(icpNetworkFee?: bigint): void {
-    if (!this.action_shared || this.action_shared.intents.length < 2) return;
-    const LINK_CREATION_FEE = 10_000n;
-    const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
-    const fee = icpNetworkFee ?? ICP_LEDGER_FEE;
+  populateFeeIntent(): void {
+    if (!this.#draftAction || this.#draftAction.intents.length < 2) {
+      throw new Error("Fee intent not found in action intents");
+    }
 
-    const intent = this.action_shared.intents.filter(
+    const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
+
+    const intent = this.#draftAction.intents.filter(
       (i) =>
         i.source_address_type === SharedAddressType.Creator &&
         i.dest_address_type === SharedAddressType.Treasury,
@@ -307,12 +285,12 @@ export class LinkCreationStoreV3 {
 
     intent.asset = {
       address: icpPrincipal,
-      network_fee: fee,
+      network_fee: ICP_LEDGER_FEE,
       token_standard: SharedTokenStandard.ICRC2,
     };
     intent.amount = LINK_CREATION_FEE;
-    intent.source_address = this.action_shared.creator;
-    intent.source_address_type = this.action_shared.creator_address_type;
+    intent.source_address = this.#draftAction.creator;
+    intent.source_address_type = this.#draftAction.creator_address_type;
     intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
     intent.dest_address_type = SharedAddressType.Treasury;
   }

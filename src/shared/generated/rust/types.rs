@@ -168,6 +168,9 @@ impl std::fmt::Display for LinkType {
 /// Current state of the link
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LinkState {
+    ChooseType,
+    AddAsset,
+    Preview,
     Created,
     Active,
     Inactive,
@@ -177,6 +180,9 @@ pub enum LinkState {
 impl std::fmt::Display for LinkState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            LinkState::ChooseType => write!(f, "ChooseType"),
+            LinkState::AddAsset => write!(f, "AddAsset"),
+            LinkState::Preview => write!(f, "Preview"),
             LinkState::Created => write!(f, "Created"),
             LinkState::Active => write!(f, "Active"),
             LinkState::Inactive => write!(f, "Inactive"),
@@ -304,5 +310,5 @@ pub struct Link {
     pub use_count: u64,
     pub link_state: LinkState,
     /// Creation timestamp in nanoseconds since Unix epoch (IC time)
-    pub created_at_ts: Option<u64>,
+    pub created_at: Option<u64>,
 }

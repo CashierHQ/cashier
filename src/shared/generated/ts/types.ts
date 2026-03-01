@@ -105,6 +105,9 @@ export type LinkType = typeof LinkType[keyof typeof LinkType];
  * Current state of the link
  */
 export const LinkState = {
+  ChooseType: 'ChooseType',
+  AddAsset: 'AddAsset',
+  Preview: 'Preview',
   Created: 'Created',
   Active: 'Active',
   Inactive: 'Inactive',
@@ -239,5 +242,5 @@ export interface Link {
   use_count: bigint;
   link_state: LinkState;
   /** Creation timestamp in nanoseconds since Unix epoch (IC time) */
-  created_at_ts?: bigint;
+  created_at?: bigint;
 }
