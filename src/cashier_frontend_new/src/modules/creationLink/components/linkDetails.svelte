@@ -2,8 +2,7 @@
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,
@@ -21,7 +20,7 @@
     errorMessage,
     successMessage,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStore;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
@@ -69,15 +68,6 @@
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-
-    // TIP_SHARED_TEST uses shared package calculations (separate path)
-    if (link.createLinkData.linkType === "TIP_SHARED_TEST") {
-      return forecastTipSharedFees(
-        link.createLinkData.assets,
-        link.createLinkData.maxUse,
-        tokens,
-      );
-    }
 
     // All other link types use existing frontend-only calculations
     return feeService.forecastLinkCreationFees(

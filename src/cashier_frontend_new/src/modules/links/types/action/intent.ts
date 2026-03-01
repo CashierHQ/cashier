@@ -1,4 +1,5 @@
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { type Intent as SharedIntent } from "$shared";
 import type IntentStateValue from "./intentState";
 import { IntentStateMapper } from "./intentState";
 import type IntentTask from "./intentTask";
@@ -28,6 +29,13 @@ export class IntentMapper {
     const type = IntentTypeMapper.fromBackendType(dto.type);
     const state = IntentStateMapper.fromBackendType(dto.state);
     return new Intent(dto.id, task, type, dto.created_at, state);
+  }
+
+  static fromSharedType(intent: SharedIntent): Intent {
+    const task = IntentTaskMapper.fromSharedType(intent);
+    const type = IntentTypeMapper.fromSharedType(intent);
+    const state = IntentStateMapper.fromSharedType(intent.intent_state);
+    return new Intent(intent.id, task, type, 0n, state);
   }
 }
 

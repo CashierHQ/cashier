@@ -4,7 +4,7 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkType";
-  import type { GenericLinkStore } from "$modules/creationLink/types/genericLinkStore";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
   import {
     LinkType,
@@ -16,7 +16,7 @@
   const {
     link,
   }: {
-    link: ChooseLinkTypeVM & GenericLinkStore;
+    link: ChooseLinkTypeVM & GenericCreationLinkStore;
   } = $props();
 
   const linkTypes: LinkTypeValue[] = [

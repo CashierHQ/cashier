@@ -118,6 +118,12 @@ export class LinkDetailStoreV3 {
         return new LinkInactiveStateV3(this);
       case SharedLinkState.Ended:
         return new LinkEndedStateV3();
+      case SharedLinkState.ChooseType:
+      case SharedLinkState.AddAsset:
+      case SharedLinkState.Preview:
+        throw new Error(
+          `Link in state ${link.link_state} should not be handled in LinkDetailStoreV3`,
+        );
       default:
         assertUnreachable(link.link_state);
     }

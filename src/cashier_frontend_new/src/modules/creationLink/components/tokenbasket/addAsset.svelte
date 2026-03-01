@@ -1,29 +1,30 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import {
-    parseBalanceUnits,
-    formatBalanceUnits,
-  } from "$modules/shared/utils/converter";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
+  import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
+  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
   import {
     calculateMaxAmountForAsset,
     calculateTotalAssetAmount,
   } from "$modules/links/utils/amountCalculator";
-  import { locale } from "$lib/i18n";
-  import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
-  import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
-  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import { toast } from "svelte-sonner";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { Plus, Trash2 } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: AddAssetVM & GenericCreationLinkStore;
   } = $props();
 
   let showAssetDrawer = $state(false);
@@ -39,9 +40,7 @@
     const allTokenAddresses = walletStore.query.data.map(
       (token) => token.address,
     );
-    const usedAddresses = new Set(
-      link.createLinkData.assets.map((asset) => asset.address),
-    );
+    const usedAddresses = new Set(link.assets.map((asset) => asset.address));
 
     const unused = allTokenAddresses.find(
       (address) => !usedAddresses.has(address),
@@ -57,17 +56,14 @@
     if (
       walletStore.query.data &&
       walletStore.query.data.length > 0 &&
-      link.createLinkData.assets.length === 0
+      link.assets.length === 0
     ) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: walletStore.query.data[0].address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: walletStore.query.data[0].address,
+          useAmount: 0n,
+        },
+      ]);
     }
   });
 
@@ -84,18 +80,12 @@
       useAmount: 0n,
     };
 
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [...link.createLinkData.assets, newAsset],
-    };
+    link.setAssets([...link.assets, newAsset]);
   }
 
   function handleRemoveAsset(index: number) {
-    const newAssets = link.createLinkData.assets.filter((_, i) => i !== index);
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: newAssets,
-    };
+    const newAssets = link.assets.filter((_, i) => i !== index);
+    link.setAssets(newAssets);
 
     const nextStates = [...isUsdStates];
     nextStates.splice(index, 1);
@@ -103,23 +93,20 @@
   }
 
   function handleSelectToken(address: string, index: number) {
-    const newAssets = [...link.createLinkData.assets];
+    const newAssets = [...link.assets];
     newAssets[index] = {
       address,
       useAmount: newAssets[index]?.useAmount || 0n,
     };
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: newAssets,
-    };
+    link.setAssets(newAssets);
     showAssetDrawer = false;
     selectedAssetIndex = null;
   }
 
   function getExcludedAddressesForIndex(index: number): string[] {
-    const currentAddress = link.createLinkData.assets[index]?.address;
+    const currentAddress = link.assets[index]?.address;
 
-    const addresses = link.createLinkData.assets
+    const addresses = link.assets
       .map((asset) => asset.address)
       .filter((address) => address && address !== currentAddress);
 
@@ -131,7 +118,7 @@
     const num = parseFloat(value);
 
     const tokenResult = walletStore.findTokenByAddress(
-      link.createLinkData.assets[index].address,
+      link.assets[index].address,
     );
     if (tokenResult.isErr()) return;
 
@@ -140,15 +127,12 @@
 
     // If input is invalid or non-positive, reset amount
     if (isNaN(num) || num <= 0) {
-      const newAssets = [...link.createLinkData.assets];
+      const newAssets = [...link.assets];
       newAssets[index] = {
         ...newAssets[index],
         useAmount: 0n,
       };
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: newAssets,
-      };
+      link.setAssets(newAssets);
       return;
     }
 
@@ -164,15 +148,12 @@
 
     const amount = formatBalanceUnits(tokenAmountNumber, decimals);
 
-    const newAssets = [...link.createLinkData.assets];
+    const newAssets = [...link.assets];
     newAssets[index] = {
       ...newAssets[index],
       useAmount: amount,
     };
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: newAssets,
-    };
+    link.setAssets(newAssets);
   }
 
   function handleToggleUsd(value: boolean, index: number) {
@@ -182,7 +163,7 @@
   }
 
   function getTokenForAsset(index: number): TokenWithPriceAndBalance | null {
-    const asset = link.createLinkData.assets[index];
+    const asset = link.assets[index];
     if (!asset || !walletStore.query.data) return null;
 
     const token = walletStore.findTokenByAddress(asset.address);
@@ -191,7 +172,7 @@
   }
 
   function getAmountForAsset(index: number): string {
-    const asset = link.createLinkData.assets[index];
+    const asset = link.assets[index];
     if (!asset || asset.useAmount === 0n) return "";
 
     const token = getTokenForAsset(index);
@@ -199,10 +180,7 @@
 
     // Calculate total amount using calculateTotalAssetAmount for link calculation
     // This uses the same logic as calculateRequiredAssetAmount (useAmount * maxUse)
-    const totalAmountResult = calculateTotalAssetAmount(
-      [asset],
-      link.createLinkData.maxUse,
-    );
+    const totalAmountResult = calculateTotalAssetAmount([asset], link.maxUse);
 
     if (totalAmountResult.isErr()) return "";
 
@@ -224,7 +202,7 @@
 
     const maxAmountResult = calculateMaxAmountForAsset(
       token.address,
-      link.createLinkData.maxUse,
+      link.maxUse,
       walletStore.query.data,
     );
 
@@ -261,15 +239,12 @@
     // Update the amount for this asset
     const amount = formatBalanceUnits(maxTokenAmount, decimals);
 
-    const newAssets = [...link.createLinkData.assets];
+    const newAssets = [...link.assets];
     newAssets[index] = {
       ...newAssets[index],
       useAmount: amount,
     };
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: newAssets,
-    };
+    link.setAssets(newAssets);
   }
 
   function canAddMoreAssets(): boolean {
@@ -280,9 +255,7 @@
     );
     const uniqueWalletAddresses = new Set(allTokenAddresses);
 
-    const usedAddresses = new Set(
-      link.createLinkData.assets.map((asset) => asset.address),
-    );
+    const usedAddresses = new Set(link.assets.map((asset) => asset.address));
 
     return usedAddresses.size < uniqueWalletAddresses.size;
   }
@@ -300,7 +273,7 @@
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
   <div class="input-label-field-container space-y-4">
     <!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-    {#each link.createLinkData.assets as _asset, index (index)}
+    {#each link.assets as _asset, index (index)}
       {@const token = getTokenForAsset(index)}
       {@const amount = getAmountForAsset(index)}
       {@const usdAmount =
@@ -366,7 +339,7 @@
           </AssetButton>
         </div>
       </div>
-      {#if index < link.createLinkData.assets.length - 1}
+      {#if index < link.assets.length - 1}
         <div class="border-t border-[#F2F2F2] my-4"></div>
       {/if}
     {/each}
@@ -391,7 +364,7 @@
     <TokenSelectorDrawer
       bind:open={showAssetDrawer}
       selectedAddress={selectedAssetIndex !== null
-        ? link.createLinkData.assets[selectedAssetIndex]?.address
+        ? link.assets[selectedAssetIndex]?.address
         : undefined}
       excludeAddresses={selectedAssetIndex !== null
         ? getExcludedAddressesForIndex(selectedAssetIndex)

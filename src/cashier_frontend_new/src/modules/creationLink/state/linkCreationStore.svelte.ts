@@ -55,9 +55,6 @@ export class LinkCreationStore {
     this.link = undefined;
     this.action = undefined;
 
-    this.link_shared = undefined;
-    this.action_shared = undefined;
-
     $effect(() => {
       // Access reactive state to track changes
       void this.createLinkData;

@@ -1,27 +1,30 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatBalanceUnits } from "$modules/shared/utils/converter";
-  import {
-    formatUsdAmount,
-    formatNumber,
-  } from "$modules/shared/utils/formatNumber";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
-  import { locale } from "$lib/i18n";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import { toast } from "svelte-sonner";
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
+  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
+  import {
+    formatNumber,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { toast } from "svelte-sonner";
 
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: AddAssetVM & GenericCreationLinkStore;
   } = $props();
 
   let showAssetDrawer = $state(false);
@@ -34,22 +37,19 @@
     if (
       walletStore.query.data &&
       walletStore.query.data.length > 0 &&
-      link.createLinkData.assets.length === 0
+      link.assets.length === 0
     ) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: walletStore.query.data[0].address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: walletStore.query.data[0].address,
+          useAmount: 0n,
+        },
+      ]);
     }
   });
 
   let selectedAddress: string | undefined = $derived.by(() => {
-    const assets = link.createLinkData?.assets;
+    const assets = link.assets;
     if (assets && assets.length > 0) return assets[0].address;
     return undefined;
   });
@@ -81,7 +81,7 @@
   // Sync form amount with local state and handle token changes
   $effect(() => {
     const currentAddress = selectedToken?.address;
-    const asset = link.createLinkData.assets[0];
+    const asset = link.assets[0];
     const currentUseAmount = asset?.useAmount;
 
     const addressChanged =
@@ -99,7 +99,7 @@
       previousUseAmount = undefined;
     }
 
-    if (selectedToken && link.createLinkData.assets.length > 0 && asset) {
+    if (selectedToken && link.assets.length > 0 && asset) {
       if (asset.useAmount !== undefined && asset.useAmount !== 0n) {
         const tokenAmountNumber = parseBalanceUnits(asset.useAmount, decimals);
 
@@ -132,15 +132,12 @@
   });
 
   function handleSelectToken(address: string) {
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address,
-          useAmount: 0n,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address,
+        useAmount: 0n,
+      },
+    ]);
     showAssetDrawer = false;
   }
 
@@ -175,28 +172,22 @@
 
     const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: 0n,
+        },
+      ]);
       return;
     }
 
     const amount = formatBalanceUnits(num, decimals);
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address: selectedToken.address,
-          useAmount: amount,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address: selectedToken.address,
+        useAmount: amount,
+      },
+    ]);
   }
 
   function setUsdAmount(value: string) {
@@ -204,29 +195,23 @@
 
     const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: 0n,
+        },
+      ]);
       return;
     }
 
     const tokenValue = num / tokenUsdPrice;
     const amount = formatBalanceUnits(tokenValue, decimals);
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address: selectedToken.address,
-          useAmount: amount,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address: selectedToken.address,
+        useAmount: amount,
+      },
+    ]);
   }
 
   function handleToggleUsd(value: boolean) {
@@ -239,7 +224,7 @@
 
     const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
-      link.createLinkData.maxUse,
+      link.maxUse,
       walletStore.query.data,
     );
 
@@ -292,7 +277,7 @@
 
     const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
-      link.createLinkData.maxUse,
+      link.maxUse,
       walletStore.query.data,
     );
 

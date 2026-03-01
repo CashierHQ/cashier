@@ -4,20 +4,24 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import type {
+    GenericDetailStoreVM,
+    ProcessActionResult,
+  } from "$modules/detailLink/types/genericDetailStoreVM";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   import { onMount } from "svelte";
+
   const {
     link,
+    detailStore,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStore;
+    detailStore: GenericDetailStoreVM;
   } = $props();
 
-  let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -31,29 +35,21 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    if (!linkDetailStore) {
-      throw new Error("LinkDetailStore is not initialized");
-    }
-    return await linkDetailStore.processAction();
+    return await detailStore.processAction();
   }
 
   $effect(() => {
     // Redirect to detail page if the link is active
     if (
-      linkDetailStore &&
-      linkDetailStore.link &&
-      linkDetailStore.link.state === LinkState.ACTIVE
+      link.backendId &&
+      detailStore &&
+      detailStore.state === LinkState.ACTIVE
     ) {
-      goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
+      goto(resolve(`/link/detail/${link.backendId}?created=true`));
     }
   });
 
   onMount(() => {
-    // Initialize LinkDetailStore with the created link ID
-    if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
-    }
-
     if (link.action && link.action.state !== ActionState.SUCCESS) {
       showTxCart = true;
     }
@@ -75,11 +71,11 @@
   </div>
 </div>
 
-{#if showTxCart && linkDetailStore && linkDetailStore.action}
+{#if showTxCart && detailStore && detailStore.action}
   <LinkTxCart
     bind:isOpen={showTxCart}
     source={{
-      action: linkDetailStore.action,
+      action: detailStore.action,
       handleProcessAction,
     }}
     {onCloseDrawer}

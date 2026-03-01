@@ -1,11 +1,13 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { createActionFromTemplate } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
+import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
 import {
   CASHIER_BACKEND_CANISTER_ID,
@@ -26,7 +28,6 @@ import {
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
-import { draftLinkService } from "../services/draftLink";
 
 /**
  * Store for draft link state management
@@ -49,6 +50,7 @@ export class LinkCreationStoreV3 {
   #draftAction = $state<SharedAction | undefined>();
   #backendLink = $state<SharedLink | undefined>();
   #backendAction = $state<SharedAction | undefined>();
+  #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
 
   constructor(draftLink: SharedLink) {
@@ -56,10 +58,6 @@ export class LinkCreationStoreV3 {
     this.#state = this.getStateHandler(draftLink.link_state);
 
     this.#draftLink = draftLink;
-    this.#draftAction = undefined;
-
-    this.#backendLink = undefined;
-    this.#backendAction = undefined;
 
     $effect(() => {
       // Access reactive state to track changes
@@ -117,6 +115,14 @@ export class LinkCreationStoreV3 {
 
   set backendAction(action: SharedAction | undefined) {
     this.#backendAction = action;
+  }
+
+  get icrc112Requests(): Icrc112Requests | undefined {
+    return this.#icrc112Requests;
+  }
+
+  set icrc112Requests(requests: Icrc112Requests | undefined) {
+    this.#icrc112Requests = requests;
   }
 
   // Move to the next state

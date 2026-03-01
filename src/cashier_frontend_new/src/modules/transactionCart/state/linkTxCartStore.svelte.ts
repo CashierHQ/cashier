@@ -1,13 +1,11 @@
 import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { buildAssetAndFeeFromActionShared } from "$modules/creationLink/utils/buildAssetAndFeeFromActionShared";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
 import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
-import { LinkType } from "$modules/links/types/link/linkType";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
@@ -65,23 +63,11 @@ export class LinkTxCartStore implements TxCartStore {
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
 
-    if (
-      this.#source.linkType === LinkType.TIP_SHARED_TEST &&
-      this.#source.maxUse != null
-    ) {
-      this.#assetAndFeeList = buildAssetAndFeeFromActionShared(
-        this.#source.action,
-        tokens,
-        walletPrincipal,
-        this.#source.maxUse,
-      );
-    } else {
-      this.#assetAndFeeList = feeService.buildFromAction(
-        this.#source.action,
-        tokens,
-        walletPrincipal,
-      );
-    }
+    this.#assetAndFeeList = feeService.buildFromAction(
+      this.#source.action,
+      tokens,
+      walletPrincipal,
+    );
   }
 
   /** Compute total fee in USD */
@@ -209,7 +195,7 @@ export class LinkTxCartStore implements TxCartStore {
           ...item,
           asset: { ...item.asset, state: AssetProcessState.SUCCEED },
         }));
-      } else {
+      } else if (result.action) {
         this.syncStatesFromAction(result.action);
       }
 
