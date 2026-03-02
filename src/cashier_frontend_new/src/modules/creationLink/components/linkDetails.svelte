@@ -2,6 +2,7 @@
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
+  import { type AddAssetVM } from "$modules/creationLink/types/addAsset";
   import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
@@ -20,7 +21,7 @@
     errorMessage,
     successMessage,
   }: {
-    link: GenericCreationLinkStore;
+    link: GenericCreationLinkStore & AddAssetVM;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
@@ -42,14 +43,11 @@
 
   // Get assets with token info
   const assetsWithTokenInfo = $derived.by(() => {
-    if (
-      !link.createLinkData.assets ||
-      link.createLinkData.assets.length === 0
-    ) {
+    if (!link.assets || link.assets.length === 0) {
       return [];
     }
 
-    const assets = link.createLinkData.assets.map((asset) => ({
+    const assets = link.assets.map((asset) => ({
       address: asset.address,
       amount: asset.useAmount,
     }));
@@ -62,19 +60,27 @@
 
   // Forecast link creation fees for preview
   const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
-    if (!link.createLinkData.assets || link.createLinkData.assets.length === 0)
-      return [];
+    if (!link.assets || link.assets.length === 0) return [];
 
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    // All other link types use existing frontend-only calculations
-    return feeService.forecastLinkCreationFees(
-      link.createLinkData.assets,
-      link.createLinkData.maxUse,
+    const forcastResult = feeService.forecastLinkCreationFees(
+      link.assets,
+      link.maxUse,
       tokens,
     );
+
+    if (forcastResult.isErr()) {
+      console.error(
+        "Error forecasting link creation fees:",
+        forcastResult.unwrapErr(),
+      );
+      return [];
+    }
+
+    return forcastResult.unwrap();
   });
 
   // Calculate total fees in USD

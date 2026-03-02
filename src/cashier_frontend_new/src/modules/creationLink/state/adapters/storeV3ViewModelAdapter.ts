@@ -70,13 +70,7 @@ export class CreationStoreV3ViewModelAdapter
   }
 
   setAssets(assets: AddAssetItem[]) {
-    const assetInfo = assets.map((asset) =>
-      AddAssetItemMapper.toSharedAssetInfo(asset),
-    );
-    this.linkStore.draftLink = {
-      ...this.linkStore.draftLink,
-      asset_info: assetInfo,
-    };
+    this.linkStore.setAssets(assets);
   }
 
   setFirstAsset(asset: AddAssetItem) {

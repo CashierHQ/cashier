@@ -24,14 +24,6 @@ export class AddAssetStateV3 implements LinkCreationStateV3 {
       throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
     }
 
-    // Only one asset is supported for default AddAssetState
-    // (TOKEN_BASKET uses AddAssetTokenBasketState instead)
-    if (this.#linkStore.draftLink.asset_info.length > 1) {
-      throw new Error(
-        locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
-      );
-    }
-
     // Validate each asset
     for (let i = 0; i < this.#linkStore.draftLink.asset_info.length; i++) {
       const asset_info = this.#linkStore.draftLink.asset_info[i];

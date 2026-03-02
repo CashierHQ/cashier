@@ -18,6 +18,8 @@ import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
   ActionType as SharedActionType,
   AddressType as SharedAddressType,
@@ -28,6 +30,7 @@ import {
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
+import type { AddAssetItem } from "../types/genericCreationLinkStore";
 
 /**
  * Store for draft link state management
@@ -211,6 +214,38 @@ export class LinkCreationStoreV3 {
         owner: authState.account.owner,
       });
     }
+  }
+
+  setAssets(assets: AddAssetItem[]) {
+    const assetInfo = assets.map((asset) => {
+      const tokenMetadataRes = walletStore.findTokenByAddress(asset.address);
+      let networkFee = 0n;
+      let tokenStandard: SharedTokenStandard = SharedTokenStandard.ICRC2;
+      if (tokenMetadataRes.isOk()) {
+        const tokenMetadata = tokenMetadataRes.unwrap();
+        networkFee = tokenMetadata.fee;
+        if (
+          tokenMetadata.tokenStandards &&
+          !tokenMetadata.tokenStandards.includes(TokenStandard.ICRC2)
+        ) {
+          tokenStandard = SharedTokenStandard.ICRC1;
+        }
+      }
+      return {
+        asset: {
+          address: Principal.fromText(asset.address),
+          network_fee: networkFee,
+          token_standard: tokenStandard,
+        },
+        amount: asset.useAmount,
+        label: asset.address,
+      };
+    });
+
+    this.#draftLink = {
+      ...this.#draftLink,
+      asset_info: assetInfo,
+    };
   }
 
   /**

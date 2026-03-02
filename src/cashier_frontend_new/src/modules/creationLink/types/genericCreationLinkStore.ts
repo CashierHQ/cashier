@@ -1,13 +1,14 @@
 import Action from "$modules/links/types/action/action";
 import { type LinkTypeValue } from "$modules/links/types/link/linkType";
 import type { LinkStep } from "$modules/links/types/linkStep";
-import type { AssetInfo as SharedAssetInfo, TokenStandard } from "$shared";
+import type {
+  AssetInfo as SharedAssetInfo,
+  TokenStandard as SharedTokenStandard,
+} from "$shared";
 import { Principal } from "@dfinity/principal";
 
 export type AddAssetItem = {
   address: string;
-  networkFee?: bigint;
-  tokenStandard?: TokenStandard;
   useAmount: bigint;
 };
 
@@ -38,12 +39,16 @@ export class AddAssetItemMapper {
     };
   }
 
-  static toSharedAssetInfo(asset: AddAssetItem): SharedAssetInfo {
+  static toSharedAssetInfo(
+    asset: AddAssetItem,
+    networkFee: bigint,
+    tokenStandard: SharedTokenStandard,
+  ): SharedAssetInfo {
     return {
       asset: {
         address: Principal.fromText(asset.address),
-        network_fee: asset.networkFee,
-        token_standard: asset.tokenStandard,
+        network_fee: networkFee,
+        token_standard: tokenStandard,
       },
       amount: asset.useAmount,
       label: asset.address,

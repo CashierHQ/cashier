@@ -6,7 +6,10 @@
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import type {
+    AddAssetItem,
+    GenericCreationLinkStore,
+  } from "$modules/creationLink/types/genericCreationLinkStore";
   import {
     calculateMaxAmountForAsset,
     calculateTotalAssetAmount,
@@ -75,7 +78,13 @@
     const address = getFirstUnusedTokenAddress();
     if (!address) return;
 
-    const newAsset = {
+    const tokenMetadataRes = walletStore.findTokenByAddress(address);
+    if (tokenMetadataRes.isErr()) {
+      return;
+    }
+    const tokenMetadata = tokenMetadataRes.unwrap();
+
+    const newAsset: AddAssetItem = {
       address,
       useAmount: 0n,
     };
