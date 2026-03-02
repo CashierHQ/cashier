@@ -3,8 +3,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkTypeVM";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
   import {
     LinkType,
@@ -16,7 +16,7 @@
   const {
     link,
   }: {
-    link: ChooseLinkTypeVM & GenericCreationLinkStore;
+    link: GenericCreationLinkStoreVM & ChooseLinkTypeVM;
   } = $props();
 
   const linkTypes: LinkTypeValue[] = [

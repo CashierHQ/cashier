@@ -226,6 +226,8 @@ export class LinkCreationStoreV3 {
    * @param assets
    */
   setAssets(assets: AddAssetItem[]) {
+    console.log("Setting assets in store with", assets);
+
     const assetInfo = assets.map((asset) => {
       const tokenMetadataRes = walletStore.findTokenByAddress(asset.address);
       let networkFee = 0n;
@@ -255,6 +257,8 @@ export class LinkCreationStoreV3 {
       ...this.#draftLink,
       asset_info: assetInfo,
     };
+
+    console.log("Updated draft link in store to", this.#draftLink);
   }
 
   /**

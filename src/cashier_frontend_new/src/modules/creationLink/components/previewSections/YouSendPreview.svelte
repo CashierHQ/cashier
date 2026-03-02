@@ -2,7 +2,7 @@
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { getTokenLogo, TokenIcon } from "$modules/imageCache";
   import { FeeType } from "$modules/links/types/fee";
   import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
@@ -18,7 +18,7 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    link?: GenericCreationLinkStore;
+    link?: GenericCreationLinkStoreVM;
   };
 
   let {

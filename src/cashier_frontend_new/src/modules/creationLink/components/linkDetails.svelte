@@ -3,7 +3,7 @@
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,
@@ -21,7 +21,7 @@
     errorMessage,
     successMessage,
   }: {
-    link: GenericCreationLinkStore & AddAssetVM;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
@@ -66,21 +66,21 @@
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    const forcastResult = feeService.forecastLinkCreationFees(
+    const forecastResult = feeService.forecastLinkCreationFees(
       link.assets,
       link.maxUse,
       tokens,
     );
 
-    if (forcastResult.isErr()) {
+    if (forecastResult.isErr()) {
       console.error(
         "Error forecasting link creation fees:",
-        forcastResult.unwrapErr(),
+        forecastResult.unwrapErr(),
       );
       return [];
     }
 
-    return forcastResult.unwrap();
+    return forecastResult.unwrap();
   });
 
   // Calculate total fees in USD

@@ -3,13 +3,13 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 
   const {
     link,
   }: {
-    link: GenericCreationLinkStore & AddAssetVM;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let errorMessage: string | null = $state(null);

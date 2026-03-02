@@ -3,13 +3,13 @@
   import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
   import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { LinkType } from "$modules/links/types/link/linkType";
 
   const {
     link,
   }: {
-    link: AddAssetVM & GenericCreationLinkStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 </script>
 

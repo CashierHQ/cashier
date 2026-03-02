@@ -397,6 +397,13 @@ export class FeeService {
   ): Result<ForecastAssetAndFee[], Error> {
     const pairs: ForecastAssetAndFee[] = [];
 
+    console.log(
+      "Forecasting fees for link creation with assets:",
+      linkAssets,
+      "and maxUse:",
+      maxUse,
+    );
+
     for (const assetData of linkAssets) {
       const token = tokens[assetData.address];
 
@@ -416,6 +423,13 @@ export class FeeService {
           max_use: maxUse,
           asset_network_fee: tokenFee,
         });
+
+        console.log(
+          "Calculated intent fees for asset",
+          assetData,
+          ":",
+          intentFees,
+        );
 
         const assetAmount =
           BigInt(intentFees.intent_total_amount) +

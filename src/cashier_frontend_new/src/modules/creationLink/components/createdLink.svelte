@@ -5,7 +5,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import type {
     GenericDetailStoreVM,
     ProcessActionResult,
@@ -19,7 +19,7 @@
     link,
     detailStore,
   }: {
-    link: GenericCreationLinkStore & AddAssetVM;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
     detailStore: GenericDetailStoreVM;
   } = $props();
 

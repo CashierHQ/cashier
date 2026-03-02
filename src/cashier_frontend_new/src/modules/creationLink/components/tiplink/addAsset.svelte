@@ -6,8 +6,8 @@
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
-  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/genericCreationLinkStoreVM";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import {
     formatBalanceUnits,
