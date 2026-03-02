@@ -1,47 +1,45 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
-  import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionType } from "$modules/links/types/action/actionType";
-  import { LinkState } from "$modules/links/types/link/linkState";
-  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
-  import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
-  import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
-  import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
-  import {
-    getLinkTypeText,
-    isSendLinkType,
-    isPaymentLinkType,
-  } from "$modules/links/utils/linkItemHelpers";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { locale } from "$lib/i18n";
-  import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
     Dialog,
     DialogContent,
-    DialogHeader,
-    DialogTitle,
     DialogDescription,
+    DialogHeader,
     DialogPortal,
+    DialogTitle,
   } from "$lib/shadcn/components/ui/dialog";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
+  import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
+  import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
+  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+  import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
+  import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
+  import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
+  import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
+  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import { LinkState } from "$modules/links/types/link/linkState";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import {
+    getLinkTypeText,
+    isPaymentLinkType,
+    isSendLinkType,
+  } from "$modules/links/utils/linkItemHelpers";
   import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
-  import { LinkType } from "$modules/links/types/link/linkType";
-  import { buildAssetAndFeeFromActionShared } from "$modules/creationLink/utils/buildAssetAndFeeFromActionShared";
-  import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
-  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
-  import { authState } from "$modules/auth/state/auth.svelte";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
+  import { toast } from "svelte-sonner";
 
-  //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
     id,
     onBack,
@@ -50,7 +48,19 @@
     onBack: () => Promise<void>;
   } = $props();
 
-  let linkStore = new LinkDetailStore({ id });
+  const context = getGuardContext();
+  const isV3 = $state(context.linkDetailStoreV3 !== null);
+  const linkStore = $derived.by(() => {
+    const storeV3 = context.linkDetailStoreV3;
+    if (storeV3) {
+      return new DetailStoreV3ViewModelAdapter(storeV3);
+    }
+    const store = context.linkDetailStore;
+    if (store) {
+      return new DetailStoreViewModelAdapter(store);
+    }
+    return null;
+  });
 
   let showCopied: boolean = $state(false);
   let errorMessage: string | null = $state(null);
@@ -82,6 +92,7 @@
   // Watch for link state change from CREATE_LINK to ACTIVE to show congratulations drawer
   $effect(() => {
     if (
+      linkStore &&
       shouldShowCongratulations &&
       linkStore.link &&
       linkStore.link.state === LinkState.ACTIVE
@@ -97,7 +108,11 @@
 
   // Convert link.asset_info to assetsWithTokenInfo format
   const assetsWithTokenInfo = $derived.by(() => {
-    if (!linkStore.link?.asset_info || linkStore.link.asset_info.length === 0) {
+    if (
+      !linkStore ||
+      !linkStore.link?.asset_info ||
+      linkStore.link.asset_info.length === 0
+    ) {
       return [];
     }
 
@@ -124,7 +139,11 @@
   // Same source as LinkTxCart - fees from backend action, not frontend forecast.
   // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
   const assetAndFeeFromAction = $derived.by(() => {
-    if (!linkStore.link || linkStore.link.state !== LinkState.CREATE_LINK) {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK
+    ) {
       return [];
     }
 
@@ -138,16 +157,9 @@
       const walletPrincipal = authState.account?.owner;
       if (!walletPrincipal) return [];
 
-      if (linkStore.link.link_type === LinkType.TIP_SHARED_TEST) {
-        return buildAssetAndFeeFromActionShared(
-          linkStore.action,
-          tokens,
-          walletPrincipal,
-          maxUse,
-        );
-      }
       return feeService.buildFromAction(
         linkStore.action,
+        Number(linkStore.link.link_use_action_max_count),
         tokens,
         walletPrincipal,
       );
@@ -166,10 +178,15 @@
       })
       .filter((a): a is CreateLinkAsset => a !== null);
 
-    if (linkStore.link.link_type === LinkType.TIP_SHARED_TEST) {
-      return forecastTipSharedFees(linkAssets, maxUse, tokens);
+    const result = feeService.forecastLinkCreationFees(
+      linkAssets,
+      maxUse,
+      tokens,
+    );
+    if (result.isErr()) {
+      return [];
     }
-    return feeService.forecastLinkCreationFees(linkAssets, maxUse, tokens);
+    return result.unwrap();
   });
 
   // Total fees in USD from backend action (CREATE_LINK state)
@@ -182,25 +199,25 @@
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
-    if (!linkStore.link) return false;
+    if (!linkStore || !linkStore.link) return false;
     return isSendLinkType(linkStore.link.link_type);
   });
 
   // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
-    if (!linkStore.link) return false;
+    if (!linkStore || !linkStore.link) return false;
     return isPaymentLinkType(linkStore.link.link_type);
   });
 
   // Get link type text
   const linkTypeText = $derived.by(() => {
-    if (!linkStore.link) return "";
+    if (!linkStore || !linkStore.link) return "";
     return getLinkTypeText(linkStore.link.link_type);
   });
 
   // Keep mobile AppHeader title in sync with detail header
   $effect(() => {
-    if (linkStore.link) {
+    if (linkStore && linkStore.link) {
       const name =
         linkStore.link.title?.trim() ||
         locale.t("links.linkForm.header.linkName");
@@ -215,7 +232,7 @@
   // INACTIVE -> Lock (can withdraw)
   // CREATE_LINK -> Unlock (can create)
   const transactionLockStatus = $derived.by(() => {
-    if (!linkStore.link)
+    if (!linkStore || !linkStore.link)
       return locale.t("links.linkForm.preview.transactionLockUnlock");
 
     switch (linkStore.link.state) {
@@ -233,10 +250,12 @@
   });
 
   const isTransactionLockEnded = $derived.by(() => {
-    return linkStore.link?.state === LinkState.INACTIVE_ENDED;
+    return linkStore?.link?.state === LinkState.INACTIVE_ENDED;
   });
 
-  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
+  const link = $derived(
+    `${window.location.origin}/link/${linkStore?.link?.id}`,
+  );
 
   async function copyLink(closeDialog?: boolean) {
     try {
@@ -295,10 +314,10 @@
     isEndingLink = true;
 
     try {
-      if (!linkStore.link) throw new Error("Link is missing");
+      if (!linkStore || !linkStore.link) throw new Error("Link is missing");
       await linkStore.disableLink();
       // Refresh to get updated link state
-      await linkStore.query.refreshAsync();
+      await linkStore.refreshAsync();
 
       const successMsg = locale.t(
         "links.linkForm.detail.messages.linkEndedSuccess",
@@ -324,18 +343,22 @@
   }
 
   async function createWithdrawAction() {
+    if (!linkStore) throw new Error("Link store is missing");
     errorMessage = null;
     isCreatingWithdraw = true;
 
     try {
-      // Check if action already exists
-      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+      if (
+        linkStore &&
+        linkStore.action &&
+        linkStore.action.type === ActionType.WITHDRAW
+      ) {
         showTxCart = true;
         return;
       }
 
       await linkStore.createAction(ActionType.WITHDRAW);
-      await linkStore.query.refreshAsync();
+      await linkStore.refreshAsync();
 
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
@@ -351,7 +374,7 @@
         errorMessageText.includes("already exists")
       ) {
         // Refresh to get the existing action
-        await linkStore.query.refreshAsync();
+        await linkStore.refreshAsync();
         // Open drawer - reactive update will handle showing the action
         showTxCart = true;
       } else {
@@ -373,6 +396,8 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
+    if (!linkStore) throw new Error("Link store is missing");
+
     // Store previous state to check if it was CREATE_LINK
     const wasCreateLink = linkStore.link?.state === LinkState.CREATE_LINK;
 
@@ -418,14 +443,9 @@
   });
 </script>
 
-{#if linkStore.query.isLoading && !linkStore.query.data}
-  {locale.t("links.linkForm.detail.loading")}
-{:else if !linkStore.link}
-  <!-- `DetailFlowProtected` will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
-  {locale.t("links.linkForm.detail.loading")}
-{:else if linkStore.link}
+{#if linkStore && linkStore.link}
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
-    <DetailLinkHeader {linkStore} {onBack} />
+    <DetailLinkHeader linkTitle={linkStore.link.title} {onBack} />
     {#if errorMessage}
       <div
         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -457,7 +477,8 @@
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
-        link={linkStore.link}
+        maxUse={Number(linkStore.link.link_use_action_max_count)}
+        useCount={Number(linkStore.link.link_use_action_counter)}
       />
 
       <!-- Block 6: Share Link or Fees Breakdown -->
@@ -549,7 +570,7 @@
   </div>
 {/if}
 
-{#if showTxCart && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
+{#if showTxCart && linkStore && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
   <LinkTxCart
     isOpen={showTxCart}
     source={{
@@ -564,7 +585,7 @@
   />
 {/if}
 
-{#if linkStore.link}
+{#if linkStore && linkStore.link}
   <ConfirmDrawer
     bind:open={showFirstEndLinkConfirm}
     title={locale.t("links.linkForm.detail.endLinkConfirm.title")}

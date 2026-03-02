@@ -2,8 +2,12 @@ import type {
   Asset as BackendAsset,
   AssetInfoDto as BackendAssetInfoDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import type { Principal } from "@dfinity/principal";
 import { rsMatch } from "$lib/rsMatch";
+import type {
+  Asset as SharedAsset,
+  AssetInfo as SharedAssetInfo,
+} from "$shared";
+import type { Principal } from "@dfinity/principal";
 
 export class Asset {
   // Currently only IC is modeled in the backend union. Keep wrapper for future extensibility.
@@ -31,6 +35,10 @@ class AssetMapper {
     return rsMatch(b, {
       IC: (v) => Asset.IC(v.address),
     });
+  }
+
+  static fromSharedType(a: SharedAsset): Asset {
+    return Asset.IC(a.address);
   }
 }
 
@@ -60,6 +68,14 @@ export class AssetInfoMapper {
       AssetMapper.fromBackendType(b.asset),
       b.amount_per_link_use_action,
       b.label,
+    );
+  }
+
+  static fromSharedType(a: SharedAssetInfo): AssetInfo {
+    return new AssetInfo(
+      AssetMapper.fromSharedType(a.asset),
+      a.amount,
+      a.label,
     );
   }
 }

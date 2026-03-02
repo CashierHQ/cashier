@@ -27,7 +27,8 @@
   const context = getGuardContext();
 
   const linkStore = $derived(
-    context.linkDetailStore ||
+    context.linkDetailStoreV3 ||
+      context.linkDetailStore ||
       context.linkCreationStore ||
       context.linkCreationStoreV3,
   );
@@ -39,6 +40,10 @@
   const isLoading = $derived(
     linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
+
+  $effect(() => {
+    console.log("isloading in linkstate", $state.snapshot(isLoading));
+  });
 
   const isStateValid = $derived(
     currentStep !== null && allowedStates.includes(currentStep),

@@ -2,7 +2,7 @@
   import { draftLinkService } from "$modules/creationLink/services/draftLink";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import { GuardContext, setGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
@@ -26,7 +26,9 @@
     if (storeType === "userLink") {
       context.setUserLinkStore(new UserLinkStore({ id: linkId }));
     } else if (storeType === "linkDetail") {
-      context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
+      // TODO: switch version by global config
+      //context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
+      context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
     }
   }
 

@@ -2,6 +2,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { userProfile } from "$modules/shared/services/userProfile.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import { getContext, setContext } from "svelte";
@@ -12,6 +13,7 @@ export class GuardContext {
   authState = authState;
   userProfile = userProfile;
   linkDetailStore = $state<LinkDetailStore | null>(null);
+  linkDetailStoreV3 = $state<LinkDetailStoreV3 | null>(null);
   userLinkStore = $state<UserLinkStore | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
   linkCreationStoreV3 = $state<LinkCreationStoreV3 | null>(null);
@@ -24,12 +26,16 @@ export class GuardContext {
 
   constructor(config?: {
     linkDetailStore?: LinkDetailStore;
+    linkDetailStoreV3?: LinkDetailStoreV3;
     userLinkStore?: UserLinkStore;
     linkCreationStore?: LinkCreationStore;
     linkCreationStoreV3?: LinkCreationStoreV3;
   }) {
     if (config?.linkDetailStore) {
       this.linkDetailStore = config.linkDetailStore;
+    }
+    if (config?.linkDetailStoreV3) {
+      this.linkDetailStoreV3 = config.linkDetailStoreV3;
     }
     if (config?.userLinkStore) {
       this.userLinkStore = config.userLinkStore;
@@ -44,6 +50,10 @@ export class GuardContext {
 
   setLinkDetailStore(store: LinkDetailStore) {
     this.linkDetailStore = store;
+  }
+
+  setLinkDetailStoreV3(store: LinkDetailStoreV3) {
+    this.linkDetailStoreV3 = store;
   }
 
   setUserLinkStore(store: UserLinkStore) {
@@ -77,6 +87,7 @@ export class GuardContext {
   getLinkStore() {
     return (
       this.linkDetailStore ||
+      this.linkDetailStoreV3 ||
       this.userLinkStore ||
       this.linkCreationStore ||
       this.linkCreationStoreV3 ||
@@ -91,6 +102,9 @@ export class GuardContext {
   getLink() {
     if (this.linkDetailStore) {
       return this.linkDetailStore.link;
+    }
+    if (this.linkDetailStoreV3) {
+      return this.linkDetailStoreV3.link;
     }
     if (this.userLinkStore) {
       return this.userLinkStore.link;
@@ -109,6 +123,10 @@ export class GuardContext {
    */
   isLoading(options?: { checkTempLinkLoad?: boolean }) {
     const checkTempLinkLoad = options?.checkTempLinkLoad ?? true;
+
+    if (this.linkDetailStoreV3) {
+      return this.linkDetailStoreV3.query.isLoading;
+    }
 
     if (this.linkDetailStore) {
       return this.linkDetailStore.query.isLoading;
@@ -152,6 +170,13 @@ export class GuardContext {
 
     if (this.linkCreationStore) return true;
     if (this.linkCreationStoreV3) return true;
+
+    if (this.linkDetailStoreV3) {
+      return (
+        this.linkDetailStoreV3.link !== null &&
+        this.linkDetailStoreV3.link !== undefined
+      );
+    }
 
     if (this.linkDetailStore) {
       return (

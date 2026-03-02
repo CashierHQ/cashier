@@ -80,4 +80,19 @@ export class ActionTypeMapper {
         return assertUnreachable(a);
     }
   }
+
+  static toSharedType(a: ActionTypeValue): SharedActionType {
+    switch (a) {
+      case ActionType.CREATE_LINK:
+        return SharedActionType.CreateLink;
+      case ActionType.WITHDRAW:
+        return SharedActionType.Withdraw;
+      case ActionType.RECEIVE:
+        return SharedActionType.Receive;
+      case ActionType.SEND:
+        return SharedActionType.Send;
+      default:
+        return assertUnreachable(a);
+    }
+  }
 }

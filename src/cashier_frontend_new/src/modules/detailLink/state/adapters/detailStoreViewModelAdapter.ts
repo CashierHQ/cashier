@@ -1,9 +1,14 @@
 import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import { type GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
+import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 
 export class DetailStoreViewModelAdapter implements GenericDetailStoreVM {
   constructor(private detailStore: LinkDetailStore) {}
+
+  get link() {
+    return this.detailStore.link;
+  }
 
   get action() {
     return this.detailStore.action;
@@ -14,6 +19,10 @@ export class DetailStoreViewModelAdapter implements GenericDetailStoreVM {
       return LinkState.CREATE_LINK;
     }
     return this.detailStore.link?.state;
+  }
+
+  async createAction(actionType: ActionTypeValue) {
+    return this.detailStore.createAction(actionType);
   }
 
   async processAction() {
@@ -38,5 +47,13 @@ export class DetailStoreViewModelAdapter implements GenericDetailStoreVM {
         errors: ["An error occurred"],
       };
     }
+  }
+
+  async disableLink() {
+    await this.detailStore.disableLink();
+  }
+
+  async refreshAsync() {
+    await this.detailStore.query.refreshAsync();
   }
 }

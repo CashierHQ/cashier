@@ -14,6 +14,7 @@ import type {
 } from "$modules/detailLink/types/v3/action";
 import { type LinkActionV3 } from "$modules/detailLink/types/v3/link_action";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { LinkMapper } from "$modules/links/types/link/link";
 import type { Action as SharedAction } from "$shared";
 import {
   ActionType as SharedActionType,
@@ -51,9 +52,9 @@ export class LinkDetailStoreV3 {
    * Initialize the withdraw action from template
    */
   getDraftingAction(actionType: SharedActionType): Result<SharedAction, Error> {
-    if (this.link && authState.account?.owner) {
+    if (this.sharedLink && authState.account?.owner) {
       const actionResult = createActionFromTemplate(
-        this.link?.link_type,
+        this.sharedLink?.link_type,
         actionType,
         Principal.fromText(authState.account.owner),
       );
@@ -83,6 +84,13 @@ export class LinkDetailStoreV3 {
    * Get link from the query result
    */
   get link() {
+    if (!this.#linkDetailQuery.data?.link) {
+      return undefined;
+    }
+    return LinkMapper.fromSharedLink(this.#linkDetailQuery.data?.link);
+  }
+
+  get sharedLink() {
     return this.#linkDetailQuery.data?.link;
   }
 
@@ -104,7 +112,7 @@ export class LinkDetailStoreV3 {
    * Get state handler based on the link state
    */
   get state(): LinkDetailStateV3 {
-    const link = this.link;
+    const link = this.sharedLink;
     if (!link) {
       throw new Error("Link is missing");
     }
@@ -161,15 +169,17 @@ export class LinkDetailStoreV3 {
    * @throws Error when link is missing or not active and backend call fails
    */
   async disableLink() {
-    if (!this.link) {
+    if (!this.sharedLink) {
       throw new Error("Link is missing");
     }
 
-    if (this.link.link_state !== SharedLinkState.Active) {
+    if (this.sharedLink.link_state !== SharedLinkState.Active) {
       throw new Error("Only active links can be disabled");
     }
 
-    const result = await cashierBackendService.disableLinkV2(this.link.id);
+    const result = await cashierBackendService.disableLinkV3(
+      this.sharedLink.id,
+    );
     if (result.isErr()) {
       throw new Error(`Failed to active link: ${result.error}`);
     }

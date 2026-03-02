@@ -2,12 +2,20 @@ import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.s
 import { type GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
 import { ActionMapper } from "$modules/links/types/action/action";
 import {
+  ActionTypeMapper,
+  type ActionTypeValue,
+} from "$modules/links/types/action/actionType";
+import {
   LinkState,
   LinkStateMapper,
 } from "$modules/links/types/link/linkState";
 
 export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
   constructor(private detailStore: LinkDetailStoreV3) {}
+
+  get link() {
+    return this.detailStore.link;
+  }
 
   get action() {
     if (!this.detailStore.backendAction) {
@@ -20,11 +28,21 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
   }
 
   get state() {
-    if (!this.detailStore.link) {
+    if (!this.detailStore.sharedLink) {
       return LinkState.CREATE_LINK;
     }
     return LinkStateMapper.fromSharedLinkState(
-      this.detailStore.link?.link_state,
+      this.detailStore.sharedLink?.link_state,
+    );
+  }
+
+  async createAction(actionType: ActionTypeValue) {
+    const result = await this.detailStore.createAction(
+      ActionTypeMapper.toSharedType(actionType),
+    );
+    return ActionMapper.fromSharedAction(
+      result.action,
+      result.icrc112_requests,
     );
   }
 
@@ -53,5 +71,13 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
         errors: ["An error occurred"],
       };
     }
+  }
+
+  async disableLink() {
+    await this.detailStore.disableLink();
+  }
+
+  async refreshAsync() {
+    await this.detailStore.query.refreshAsync();
   }
 }
