@@ -1,6 +1,6 @@
 import {
   type Icrc112Request as BackendIcrc112Request,
-  type ProcessActionResponseV3,
+  type ProcessActionResponseV3 as BackendProcessActionResponseV3,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
@@ -8,13 +8,7 @@ import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
 import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 
-export type CreateActionResultV3 = {
-  link: SharedLink;
-  action: SharedAction;
-  icrc112_requests?: Icrc112Request[][];
-};
-
-export type ProcessActionResultV3 = {
+export type ProcessActionResponseV3 = {
   link: SharedLink;
   action: SharedAction;
   icrc112_requests?: Icrc112Request[][];
@@ -22,10 +16,10 @@ export type ProcessActionResultV3 = {
   errors: string[];
 };
 
-export class ProcessActionResultV3Mapper {
+export class ProcessActionResponseV3Mapper {
   static fromBackendResponse(
-    response: ProcessActionResponseV3,
-  ): ProcessActionResultV3 {
+    response: BackendProcessActionResponseV3,
+  ): ProcessActionResponseV3 {
     const link = SharedLinkMapper.toLocalType(response.link);
     const action = SharedActionMapper.toLocalType(response.action);
     let icrc112_requests: Icrc112Request[][] | undefined = undefined;

@@ -8,10 +8,16 @@ import {
   CreateLinkResponseV3Mapper,
   type CreateLinkResponseV3,
 } from "$modules/creationLink/types/dto/create_link_v3";
-import type {
-  CreateActionResultV3,
-  ProcessActionResultV3,
-} from "$modules/detailLink/types/v3/action";
+import {
+  CreateActionInputV3Mapper,
+  CreateActionResponseV3Mapper,
+  type CreateActionInputV3,
+  type CreateActionResponseV3,
+} from "$modules/detailLink/types/dto/create_action_v3";
+import {
+  ProcessActionResponseV3Mapper,
+  type ProcessActionResponseV3,
+} from "$modules/detailLink/types/dto/process_action_v3";
 import {
   ActionTypeMapper,
   type ActionTypeValue,
@@ -20,7 +26,6 @@ import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 import { toNullable } from "@dfinity/utils";
 import { Err, type Result } from "ts-results-es";
-import { type CreateActionInputV3 } from "../types/linkV3";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -201,7 +206,7 @@ class CanisterBackendService {
    */
   async processActionV3(
     actionId: string,
-  ): Promise<Result<ProcessActionResultV3, Error>> {
+  ): Promise<Result<ProcessActionResponseV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });
@@ -215,10 +220,10 @@ class CanisterBackendService {
 
     return responseToResult(
       response as
-        | { Ok: ProcessActionResultV3 }
+        | { Ok: cashierBackend.ProcessActionResponseV3 }
         | { Err: cashierBackend.CanisterError },
     )
-      .map((res) => res)
+      .map((res) => ProcessActionResponseV3Mapper.fromBackendResponse(res))
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 
@@ -300,7 +305,7 @@ class CanisterBackendService {
    */
   async createActionV3(
     input: CreateActionInputV3,
-  ): Promise<Result<CreateActionResultV3, Error>> {
+  ): Promise<Result<CreateActionResponseV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });
@@ -308,21 +313,18 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await (
-      actor as unknown as {
-        user_create_action_v3: (input: CreateActionInputV3) => Promise<unknown>;
-      }
-    ).user_create_action_v3({
-      link_id: input.link_id,
-      action: input.action,
-    });
+    const backendInput =
+      CreateActionInputV3Mapper.toBackendCreateActionInputV3(input);
+    const response = await actor.user_create_action_v3(backendInput);
 
     return responseToResult(
       response as
-        | { Ok: CreateActionResultV3 }
+        | { Ok: cashierBackend.CreateActionResponseV3 }
         | { Err: cashierBackend.CanisterError },
     )
-      .map((res) => res)
+      .map((res) =>
+        CreateActionResponseV3Mapper.fromBackendCreateActionResponseV3(res),
+      )
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 

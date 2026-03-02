@@ -95,4 +95,19 @@ export class ActionTypeMapper {
         return assertUnreachable(a);
     }
   }
+
+  static fromSharedTypeString(a: string): ActionTypeValue {
+    switch (a) {
+      case SharedActionType.CreateLink:
+        return ActionType.CREATE_LINK;
+      case SharedActionType.Withdraw:
+        return ActionType.WITHDRAW;
+      case SharedActionType.Receive:
+        return ActionType.RECEIVE;
+      case SharedActionType.Send:
+        return ActionType.SEND;
+      default:
+        throw new Error(`Unknown action type string: ${a}`);
+    }
+  }
 }

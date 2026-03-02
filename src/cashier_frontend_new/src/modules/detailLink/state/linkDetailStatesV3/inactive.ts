@@ -1,9 +1,7 @@
 import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
 import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
-import type {
-  CreateActionResultV3,
-  ProcessActionResultV3,
-} from "$modules/detailLink/types/v3/action";
+import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
+import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 import { ActionType } from "$modules/links/types/action/actionType";
@@ -22,7 +20,7 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
   // inactive only create withdraw action
   async createAction(
     actionType: SharedActionType,
-  ): Promise<CreateActionResultV3> {
+  ): Promise<CreateActionResponseV3> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
@@ -42,10 +40,13 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
     }
 
     const withdrawAction = withdrawActionRes.unwrap();
+    console.log("Withdraw action to call be: ", withdrawAction);
     const actionRes = await cashierBackendService.createActionV3({
       link_id: link.id,
       action: withdrawAction,
     });
+
+    console.log("Created action V3 result: ", actionRes);
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
     }
@@ -55,7 +56,7 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
   }
 
   // process withdraw action
-  async processAction(): Promise<ProcessActionResultV3> {
+  async processAction(): Promise<ProcessActionResponseV3> {
     if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }
@@ -71,6 +72,8 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
 
     const actionId = this.#linkDetailStore.backendAction.id;
     const result = await cashierBackendService.processActionV3(actionId);
+
+    console.log("Process action V3 result:", result);
     if (result.isErr()) {
       throw new Error(`Failed to process action: ${result.error}`);
     }

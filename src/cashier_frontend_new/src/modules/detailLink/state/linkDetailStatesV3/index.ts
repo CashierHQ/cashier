@@ -1,7 +1,5 @@
-import type {
-  CreateActionResultV3,
-  ProcessActionResultV3,
-} from "$modules/detailLink/types/v3/action";
+import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
+import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { ActionType as SharedActionType } from "$shared";
 
@@ -18,10 +16,10 @@ export interface LinkDetailStateV3 {
    * @returns The created action
    */
 
-  createAction(actionType: SharedActionType): Promise<CreateActionResultV3>;
+  createAction(actionType: SharedActionType): Promise<CreateActionResponseV3>;
   /**
    * Method to process action in the current state
    * @returns The result of processing the action
    */
-  processAction(): Promise<ProcessActionResultV3>;
+  processAction(): Promise<ProcessActionResponseV3>;
 }

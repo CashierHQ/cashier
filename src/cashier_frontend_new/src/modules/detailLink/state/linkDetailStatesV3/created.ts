@@ -1,9 +1,7 @@
 import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
 import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
-import type {
-  CreateActionResultV3,
-  ProcessActionResultV3,
-} from "$modules/detailLink/types/v3/action";
+import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
+import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -21,14 +19,14 @@ export class LinkCreatedStateV3 implements LinkDetailStateV3 {
   // Creating action is not supported in created state
   async createAction(
     actionType: SharedActionType,
-  ): Promise<CreateActionResultV3> {
+  ): Promise<CreateActionResponseV3> {
     throw new Error(
       `Creating ${actionType} action is not supported in Created state`,
     );
   }
 
   // Process the action to activate the link
-  async processAction(): Promise<ProcessActionResultV3> {
+  async processAction(): Promise<ProcessActionResponseV3> {
     if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }

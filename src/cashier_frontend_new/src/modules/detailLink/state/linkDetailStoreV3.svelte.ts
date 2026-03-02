@@ -8,10 +8,8 @@ import { LinkActiveStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/
 import { LinkCreatedStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/created";
 import { LinkEndedStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/ended";
 import { LinkInactiveStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/inactive";
-import type {
-  CreateActionResultV3,
-  ProcessActionResultV3,
-} from "$modules/detailLink/types/v3/action";
+import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
+import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { type LinkActionV3 } from "$modules/detailLink/types/v3/link_action";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkMapper } from "$modules/links/types/link/link";
@@ -151,7 +149,7 @@ export class LinkDetailStoreV3 {
    */
   async createAction(
     actionType: SharedActionType,
-  ): Promise<CreateActionResultV3> {
+  ): Promise<CreateActionResponseV3> {
     return this.state.createAction(actionType);
   }
 
@@ -159,7 +157,7 @@ export class LinkDetailStoreV3 {
    * Process the current action in the store
    * @returns The result of processing the action
    */
-  async processAction(): Promise<ProcessActionResultV3> {
+  async processAction(): Promise<ProcessActionResponseV3> {
     return this.state.processAction();
   }
 

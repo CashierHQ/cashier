@@ -1,7 +1,6 @@
 import type { Action } from "$shared";
 import {
   ActionState,
-  ActionType,
   AddressType,
   IntentState,
   IntentType,
@@ -11,6 +10,7 @@ import { Principal } from "@dfinity/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
 import { type ActionTemplateJson } from "$modules/actionTemplate/types";
+import { ActionTypeMapper } from "$modules/links/types/action/actionType";
 import {
   ActionType as SharedActionType,
   LinkType as SharedLinkType,
@@ -40,6 +40,8 @@ function getTemplateForActionType(
   if (!templatesLinkType)
     return Err(new Error("No templates found for link type"));
 
+  console.log("Templates for link type", linkType, ": ", templatesLinkType);
+  console.log("Action type to match: ", actionType);
   const template = templatesLinkType.find((t) => t.action_type === actionType);
   if (!template) return Err(new Error("No template found for action type"));
 
@@ -64,14 +66,16 @@ export function createActionFromTemplate(
   creator: Principal,
 ): Result<Action, Error> {
   const template = getTemplateForActionType(linkType, actionType);
+  console.log("Loaded template: ", template);
   if (
     template.isErr() ||
     !template.value.intents ||
-    template.value.intents.length < 2
+    template.value.intents.length === 0
   ) {
     return Err(new Error("Invalid template or intents"));
   }
   const templateValue = template.unwrap();
+  console.log("Using template value: ", templateValue);
 
   // Use template structure but with our id, creator, and placeholder intents
   const intents = templateValue.intents.map((tIntent) => ({
@@ -125,10 +129,9 @@ export function createActionFromTemplate(
       templateValue.creator_address_type === "Creator"
         ? AddressType.Creator
         : AddressType.User,
-    action_type:
-      templateValue.action_type === "CreateLink"
-        ? ActionType.CreateLink
-        : ActionType.Receive,
+    action_type: ActionTypeMapper.fromSharedTypeString(
+      templateValue.action_type,
+    ),
     intents,
     action_state: ActionState.Created,
   });
