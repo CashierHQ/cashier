@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  import type { Link } from "$modules/links/types/link/link";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
-  const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
+  const { link }: { link?: Link } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived(linkDetail?.link?.asset_info?.[0] ?? null);
+  const firstAsset = $derived(link?.asset_info?.[0] ?? null);
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -42,10 +42,6 @@
     ),
   );
 </script>
-
-{#if linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.detail.loading")}
-{/if}
 
 {#if displayInfo}
   <TokenRewardDisplay

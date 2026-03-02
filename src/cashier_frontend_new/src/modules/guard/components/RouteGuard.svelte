@@ -5,7 +5,7 @@
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import { GuardContext, setGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+  import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
   import type { Snippet } from "svelte";
 
   let {
@@ -24,7 +24,9 @@
 
   if (linkId) {
     if (storeType === "userLink") {
-      context.setUserLinkStore(new UserLinkStore({ id: linkId }));
+      // TODO: switch version by global config
+      //context.setUserLinkStore(new UserLinkStore({ id: linkId }));
+      context.setUserLinkStoreV3(new UserLinkStoreV3({ id: linkId }));
     } else if (storeType === "linkDetail") {
       // TODO: switch version by global config
       //context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));

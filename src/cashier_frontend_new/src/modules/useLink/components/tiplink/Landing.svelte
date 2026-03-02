@@ -1,24 +1,24 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: () => void;
   } = $props();
 
   // Get first asset from asset_info
   const firstAsset = $derived.by(() => {
-    return userLink.linkDetail?.link?.asset_info?.[0];
+    return userLink.link?.asset_info?.[0];
   });
 
   // Get token from wallet store
@@ -53,10 +53,6 @@
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
-
-{#if userLink.linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.useLink.loading")}
-{/if}
 
 {#if displayInfo}
   <TokenRewardDisplay

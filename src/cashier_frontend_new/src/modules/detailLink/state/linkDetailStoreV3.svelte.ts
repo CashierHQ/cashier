@@ -12,6 +12,7 @@ import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/creat
 import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { type LinkActionV3 } from "$modules/detailLink/types/v3/link_action";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import type { Action as SharedAction } from "$shared";
 import {
@@ -92,6 +93,16 @@ export class LinkDetailStoreV3 {
     return this.#linkDetailQuery.data?.link;
   }
 
+  get action() {
+    if (!this.backendAction) {
+      return undefined;
+    }
+    return ActionMapper.fromSharedAction(
+      this.backendAction,
+      this.icrc112Requests,
+    );
+  }
+
   /**
    * Get action from the query result
    */
@@ -150,6 +161,7 @@ export class LinkDetailStoreV3 {
   async createAction(
     actionType: SharedActionType,
   ): Promise<CreateActionResponseV3> {
+    console.log("Creating action of type", actionType, "for link", this.id);
     return this.state.createAction(actionType);
   }
 

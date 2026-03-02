@@ -40,10 +40,9 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
     const result = await this.detailStore.createAction(
       ActionTypeMapper.toSharedType(actionType),
     );
-    return ActionMapper.fromSharedAction(
-      result.action,
-      result.icrc112_requests,
-    );
+
+    const icrc112_requests = result.icrc112_requests ?? [];
+    return ActionMapper.fromSharedAction(result.action, icrc112_requests);
   }
 
   async processAction() {

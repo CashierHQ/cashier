@@ -1,27 +1,30 @@
 import { authState } from "$modules/auth/state/auth.svelte";
-import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
-import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
+import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
+import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { userLinkRepository } from "../repositories/userLinkRepository";
 import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
-import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
-import type { UserActionCapableState, UserLinkState } from "./useLinkStates";
+import { userLinkStateFromStepV3 } from "../utils/userLinkStateFromStep";
+import type { UserLinkState } from "./useLinkStates";
 import { CompletedState } from "./useLinkStates/completed";
-import { LandingState } from "./useLinkStates/landing";
+import type {
+  UserActionCapableStateV3,
+  UserLinkStateV3,
+} from "./useLinkStatesV3";
+import { LandingStateV3 } from "./useLinkStatesV3/landing";
 
 /**
  * Store for user link state management
  */
-export class UserLinkStore {
-  #state = $state<UserLinkState>(new LandingState(this));
-  public linkDetail: LinkDetailStoreType;
+export class UserLinkStoreV3 {
+  #state = $state<UserLinkStateV3>(new LandingStateV3(this));
+  public linkDetail: LinkDetailStoreV3;
 
   constructor({ id }: { id: string }) {
-    this.linkDetail = new LinkDetailStore({ id });
+    this.linkDetail = new LinkDetailStoreV3({ id });
 
     // initialize from persisted per-user state if present
     $effect(() => {
@@ -30,7 +33,7 @@ export class UserLinkStore {
       const persisted = userLinkRepository.getOne(owner, id);
       if (!persisted) return;
       if (persisted.step) {
-        this.#state = userLinkStateFromStep(persisted.step, this);
+        this.#state = userLinkStateFromStepV3(persisted.step, this);
       }
     });
 
@@ -142,13 +145,14 @@ export class UserLinkStore {
    * @param actionType The type of action to create
    * @returns The action created
    */
-  async createAction(actionType: ActionTypeValue): Promise<Action> {
+  async createAction(
+    actionType: ActionTypeValue,
+  ): Promise<CreateActionResponseV3> {
     if (!this.isActionCapable(this.#state)) {
       throw new Error(
         `Current state ${this.#state.step} does not support user actions`,
       );
     }
-
     return await this.#state.createAction(actionType);
   }
 
@@ -156,7 +160,7 @@ export class UserLinkStore {
    * Process an action
    * @returns The result of processing the action
    */
-  async processAction(): Promise<ProcessActionResult> {
+  async processAction(): Promise<ProcessActionResponseV3> {
     if (!this.isActionCapable(this.#state)) {
       throw new Error(
         `Current state ${this.#state.step} does not support user actions`,
@@ -171,8 +175,8 @@ export class UserLinkStore {
    * @returns True if the current state supports user actions, false otherwise
    */
   private isActionCapable(
-    state: UserLinkState,
-  ): state is UserActionCapableState {
+    state: UserLinkStateV3,
+  ): state is UserActionCapableStateV3 {
     return "createAction" in state && "processAction" in state;
   }
 

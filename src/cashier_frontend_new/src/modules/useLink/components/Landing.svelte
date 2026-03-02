@@ -1,21 +1,24 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
   import AirdropLanding from "$modules/useLink/components/airdrop/Landing.svelte";
+  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
   import BasketLanding from "$modules/useLink/components/tokenbasket/Landing.svelte";
-  import TipSharedTestLanding from "$modules/useLink/components/tipSharedTest/Landing.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: () => void;
   } = $props();
 
   const linkType = $derived.by(() => {
-    return userLink.linkDetail?.link?.link_type;
+    return userLink.link?.link_type;
+  });
+
+  $effect(() => {
+    console.log("Rendering Landing with linkType:", linkType);
   });
 </script>
 
@@ -31,9 +34,7 @@
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketLanding {userLink} {openLoginModal} />
   {/if}
-  {#if linkType === LinkType.TIP_SHARED_TEST}
-    <TipSharedTestLanding {userLink} {openLoginModal} />
-  {/if}
+
   <!-- TODO: Other link types will be added here -->
   <!-- 
   {#if linkType === LinkType.RECEIVE_PAYMENT}

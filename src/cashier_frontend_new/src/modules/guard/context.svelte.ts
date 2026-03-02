@@ -5,6 +5,7 @@ import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.
 import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { userProfile } from "$modules/shared/services/userProfile.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import { getContext, setContext } from "svelte";
 
 const GUARD_CONTEXT_KEY = Symbol("guardContext");
@@ -15,6 +16,7 @@ export class GuardContext {
   linkDetailStore = $state<LinkDetailStore | null>(null);
   linkDetailStoreV3 = $state<LinkDetailStoreV3 | null>(null);
   userLinkStore = $state<UserLinkStore | null>(null);
+  userLinkStoreV3 = $state<UserLinkStoreV3 | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
   linkCreationStoreV3 = $state<LinkCreationStoreV3 | null>(null);
   // Indicates whether the guard check process has completed
@@ -28,6 +30,7 @@ export class GuardContext {
     linkDetailStore?: LinkDetailStore;
     linkDetailStoreV3?: LinkDetailStoreV3;
     userLinkStore?: UserLinkStore;
+    userLinkStoreV3?: UserLinkStoreV3;
     linkCreationStore?: LinkCreationStore;
     linkCreationStoreV3?: LinkCreationStoreV3;
   }) {
@@ -39,6 +42,9 @@ export class GuardContext {
     }
     if (config?.userLinkStore) {
       this.userLinkStore = config.userLinkStore;
+    }
+    if (config?.userLinkStoreV3) {
+      this.userLinkStoreV3 = config.userLinkStoreV3;
     }
     if (config?.linkCreationStore) {
       this.linkCreationStore = config.linkCreationStore;
@@ -58,6 +64,10 @@ export class GuardContext {
 
   setUserLinkStore(store: UserLinkStore) {
     this.userLinkStore = store;
+  }
+
+  setUserLinkStoreV3(store: UserLinkStoreV3) {
+    this.userLinkStoreV3 = store;
   }
 
   setLinkCreationStore(store: LinkCreationStore) {
@@ -89,6 +99,7 @@ export class GuardContext {
       this.linkDetailStore ||
       this.linkDetailStoreV3 ||
       this.userLinkStore ||
+      this.userLinkStoreV3 ||
       this.linkCreationStore ||
       this.linkCreationStoreV3 ||
       null
@@ -108,6 +119,9 @@ export class GuardContext {
     }
     if (this.userLinkStore) {
       return this.userLinkStore.link;
+    }
+    if (this.userLinkStoreV3) {
+      return this.userLinkStoreV3.link;
     }
     if (this.linkCreationStore) {
       return this.linkCreationStore.link;
@@ -132,8 +146,12 @@ export class GuardContext {
       return this.linkDetailStore.query.isLoading;
     }
 
+    if (this.userLinkStoreV3) {
+      return this.userLinkStoreV3.isLoading;
+    }
+
     if (this.userLinkStore) {
-      return this.userLinkStore.linkDetail?.query?.isLoading ?? false;
+      return this.userLinkStore.isLoading;
     }
 
     if (this.linkCreationStore) {
@@ -189,6 +207,13 @@ export class GuardContext {
       return (
         this.userLinkStore.link !== null &&
         this.userLinkStore.link !== undefined
+      );
+    }
+
+    if (this.userLinkStoreV3) {
+      return (
+        this.userLinkStoreV3.link !== null &&
+        this.userLinkStoreV3.link !== undefined
       );
     }
     return false;

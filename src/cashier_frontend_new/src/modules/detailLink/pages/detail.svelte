@@ -49,7 +49,6 @@
   } = $props();
 
   const context = getGuardContext();
-  const isV3 = $state(context.linkDetailStoreV3 !== null);
   const linkStore = $derived.by(() => {
     const storeV3 = context.linkDetailStoreV3;
     if (storeV3) {

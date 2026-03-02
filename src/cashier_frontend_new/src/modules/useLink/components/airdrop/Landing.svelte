@@ -1,23 +1,23 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: () => void;
   } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived(userLink.linkDetail?.link?.asset_info?.[0]);
+  const firstAsset = $derived(userLink.link?.asset_info?.[0]);
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -51,23 +51,19 @@
 
   // Get airdrop progress info
   const claimedCount = $derived(
-    userLink.linkDetail?.link
-      ? Number(userLink.linkDetail.link.link_use_action_counter ?? 0n)
+    userLink.link?.link_use_action_counter
+      ? Number(userLink.link.link_use_action_counter ?? 0n)
       : undefined,
   );
 
   const totalCount = $derived(
-    userLink.linkDetail?.link
-      ? Number(userLink.linkDetail.link.link_use_action_max_count ?? 1n)
+    userLink.link?.link_use_action_max_count
+      ? Number(userLink.link.link_use_action_max_count ?? 1n)
       : undefined,
   );
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
-
-{#if userLink.linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.useLink.loading")}
-{/if}
 
 {#if displayInfo}
   <TokenRewardDisplay

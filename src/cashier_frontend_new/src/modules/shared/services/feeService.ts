@@ -145,6 +145,8 @@ export class FeeService {
     const pairs: AssetAndFee[] = [];
     const feeConfig = this.getLinkCreationFee();
 
+    console.log("Building asset and fee list from action:", action);
+
     for (const intent of action.intents) {
       const address = intent.type.payload.asset.address.toString();
       const token = tokens[address];
@@ -157,6 +159,8 @@ export class FeeService {
         intent.type.payload,
         currentWalletPrincipal,
       );
+
+      console.log("direction for intent", intent.id, "is", direction);
 
       let feeType = FeeType.NETWORK_FEE;
       if (
@@ -182,13 +186,19 @@ export class FeeService {
           intentParticipants = IntentParticipants.CreatorToLink;
           break;
         case IntentTask.TRANSFER_LINK_TO_WALLET:
-          if (direction === FlowDirection.INCOMING) {
+          if (action.type === ActionType.RECEIVE) {
             intentParticipants = IntentParticipants.LinkToUser;
-          } else {
-            intentParticipants = IntentParticipants.UserToLink;
+          } else if (action.type === ActionType.WITHDRAW) {
+            intentParticipants = IntentParticipants.LinkToCreator;
           }
           break;
       }
+      console.log(
+        "Intent participants for intent",
+        intent.id,
+        "is",
+        intentParticipants,
+      );
 
       const intentFees = calculateIntentFees({
         intent_participants: intentParticipants,
@@ -201,11 +211,22 @@ export class FeeService {
         max_use: maxUse,
       });
 
+      console.log(
+        "Calculated intent fees for intent",
+        intent.id,
+        "is",
+        intentFees,
+      );
+
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
       const assetAmount =
-        BigInt(intentFees.intent_total_amount) +
-        BigInt(intentFees.intent_total_network_fee);
+        direction === FlowDirection.OUTGOING
+          ? BigInt(intentFees.intent_total_amount) +
+            BigInt(intentFees.intent_total_network_fee)
+          : BigInt(intentFees.intent_total_amount) -
+            BigInt(intentFees.intent_user_fee);
+
       const amountUi = parseBalanceUnits(assetAmount, decimals);
       const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
 
@@ -227,7 +248,7 @@ export class FeeService {
         intentId: intent.id,
       };
 
-      const feeAmount = BigInt(intentFees.intent_total_network_fee);
+      const feeAmount = BigInt(intentFees.intent_user_fee);
       const feeUi = parseBalanceUnits(feeAmount, decimals);
       const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
       const fee: FeeItem = {
