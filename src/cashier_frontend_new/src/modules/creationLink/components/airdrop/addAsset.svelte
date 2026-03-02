@@ -5,8 +5,8 @@
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/genericCreationLinkStoreVM";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
@@ -442,12 +442,12 @@
 
   function handleDecreaseUses() {
     if (link.maxUse > 1) {
-      link.maxUse = link.maxUse - 1;
+      link.decreaseMaxUse();
     }
   }
 
   function handleIncreaseUses() {
-    link.maxUse = link.maxUse + 1;
+    link.increaseMaxUse();
   }
 
   function handleMaxUseInput(
@@ -459,7 +459,7 @@
 
     if (cleaned === "") {
       // Set to 1 if empty
-      link.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
       return;
     }
@@ -467,10 +467,10 @@
     // Only allow positive integers
     const numValue = parseInt(cleaned, 10);
     if (isNaN(numValue) || numValue < 1) {
-      link.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
     } else {
-      link.maxUse = numValue;
+      link.setMaxUse(numValue);
     }
   }
 
@@ -480,10 +480,10 @@
     // Ensure value is valid integer on blur
     const numValue = parseInt(e.currentTarget.value, 10);
     if (isNaN(numValue) || numValue < 1) {
-      link.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
     } else {
-      link.maxUse = numValue;
+      link.setMaxUse(numValue);
       e.currentTarget.value = numValue.toString();
     }
   }
@@ -556,7 +556,7 @@
             min="1"
             step="1"
             class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            bind:value={link.maxUse}
+            value={link.maxUse}
             oninput={handleMaxUseInput}
             onblur={handleMaxUseBlur}
           />

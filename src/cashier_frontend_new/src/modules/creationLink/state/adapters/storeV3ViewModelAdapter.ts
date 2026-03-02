@@ -1,7 +1,7 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
 import { type ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
-import type { GenericCreationLinkStore } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import {
   AddAssetItemMapper,
   type AddAssetItem,
@@ -14,7 +14,7 @@ import {
 import type { LinkStep } from "$modules/links/types/linkStep";
 
 export class CreationStoreV3ViewModelAdapter
-  implements ChooseLinkTypeVM, GenericCreationLinkStore, AddAssetVM
+  implements ChooseLinkTypeVM, GenericCreationLinkStoreVM, AddAssetVM
 {
   constructor(private linkStore: LinkCreationStoreV3) {}
 

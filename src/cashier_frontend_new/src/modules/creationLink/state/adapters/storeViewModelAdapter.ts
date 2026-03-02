@@ -2,12 +2,12 @@ import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore
 import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
 import { type ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
 import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-import { type GenericCreationLinkStore } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import { type GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import type { LinkTypeValue } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 
 export class CreationStoreViewModelAdapter
-  implements ChooseLinkTypeVM, GenericCreationLinkStore, AddAssetVM
+  implements ChooseLinkTypeVM, GenericCreationLinkStoreVM, AddAssetVM
 {
   constructor(private linkStore: LinkCreationStore) {}
 
