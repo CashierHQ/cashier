@@ -1,27 +1,23 @@
 <script lang="ts">
-  import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import TokenBasketDisplay from "$modules/useLink/components/tokenbasket/TokenBasketDisplay.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: () => void;
   } = $props();
 
   // Get all assets from asset_info
-  const assets = $derived(userLink.linkDetail?.link?.asset_info ?? []);
+  const assets = $derived(userLink.link?.asset_info ?? []);
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
-
-{#if userLink.linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.useLink.loading")}
-{/if}
 
 {#if assets && assets.length > 0}
   <TokenBasketDisplay {assets} />

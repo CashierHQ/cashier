@@ -1,10 +1,10 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import type { Snippet } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import type { Snippet } from "svelte";
+  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   const allStates = [
     LinkStep.CHOOSE_TYPE,
@@ -27,7 +27,10 @@
   const context = getGuardContext();
 
   const linkStore = $derived(
-    context.linkDetailStore || context.linkCreationStore,
+    context.linkDetailStoreV3 ||
+      context.linkDetailStore ||
+      context.linkCreationStore ||
+      context.linkCreationStoreV3,
   );
 
   const currentStep = $derived(
@@ -37,6 +40,10 @@
   const isLoading = $derived(
     linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
+
+  $effect(() => {
+    console.log("isloading in linkstate", $state.snapshot(isLoading));
+  });
 
   const isStateValid = $derived(
     currentStep !== null && allowedStates.includes(currentStep),

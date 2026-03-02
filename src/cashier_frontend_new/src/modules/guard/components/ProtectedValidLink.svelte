@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import type { Snippet } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import type { Snippet } from "svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   let {
@@ -20,6 +20,10 @@
   const isLoading = $derived.by(() =>
     context.isLoading({ checkTempLinkLoad: true }),
   );
+
+  $effect(() => {
+    console.log("isloading in validlink", $state.snapshot(isLoading));
+  });
 
   const hasLink = $derived(() => context.hasLink());
 

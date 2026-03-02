@@ -223,7 +223,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use candid::Nat;
     use candid::Principal;

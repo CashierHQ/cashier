@@ -15,11 +15,13 @@ use cashier_backend_types::{
 use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
-    intents::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
+    intents::v2::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     utils::calculator::calculate_create_link_fee,
 };
 
-use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
+use crate::apps::{
+    link_v2::links::shared::utils::link_asset_principals, token_fee::traits::TokenFeeCache,
+};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -39,7 +41,14 @@ impl CreateAction {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
+    pub async fn create<F>(
+        link: &Link,
+        canister_id: Principal,
+        mut token_fee_service: F,
+    ) -> Result<Self, CanisterError>
+    where
+        F: TokenFeeCache + 'static,
+    {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::CreateLink,
@@ -49,7 +58,10 @@ impl CreateAction {
         };
 
         // token_fee_map
-        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+        let asset_principals = link_asset_principals(link);
+        let token_fee_map = token_fee_service
+            .get_batch_tokens_fee(&asset_principals)
+            .await?;
 
         // intents
         let fee_asset = Asset::IC {

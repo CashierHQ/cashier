@@ -38,5 +38,6 @@ pub type GetLinksResponseV3 = PaginateResult<LinkShared>;
 pub struct GetLinkResponseV3 {
     pub link: LinkShared,
     pub action: Option<ActionShared>,
+    pub icrc112_requests: Option<Icrc112Requests>,
     pub link_user_state: Option<LinkUserState>,
 }

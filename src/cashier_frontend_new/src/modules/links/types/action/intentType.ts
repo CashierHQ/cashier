@@ -4,8 +4,9 @@ import type {
   TransferFromData as BackendTransferFromData,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
-import Asset from "../asset";
-import Wallet from "../wallet";
+import Asset from "$modules/links/types/asset";
+import Wallet from "$modules/links/types/wallet";
+import { type Intent as SharedIntent } from "$shared";
 
 // Frontend representation of TransferData for IntentType
 export class TransferData {
@@ -78,6 +79,16 @@ export class IntentTypeMapper {
         return new IntentType(transferFromData);
       },
     });
+  }
+
+  static fromSharedType(intent: SharedIntent): IntentType {
+    const transferData = new TransferData(
+      new Wallet(intent.dest_address, null),
+      new Asset(intent.asset.address),
+      new Wallet(intent.source_address, null),
+      intent.amount,
+    );
+    return new IntentType(transferData);
   }
 }
 

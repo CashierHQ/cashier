@@ -89,7 +89,6 @@ async fn it_should_get_bridge_transactions_for_valid_user() {
             "Expected successful bridge transactions retrieval"
         );
 
-        println!("Result1: {:?}", result1);
         let bridge_transactions = result1.unwrap();
         assert_eq!(
             bridge_transactions.len(),

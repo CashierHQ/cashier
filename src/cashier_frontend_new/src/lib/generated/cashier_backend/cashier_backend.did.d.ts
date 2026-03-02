@@ -91,7 +91,9 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
+  'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
+  'token_standard_cache_ttl_ns' : [] | [bigint],
 }
 export type Chain = { 'IC' : null };
 export interface CreateActionInput {
@@ -135,6 +137,7 @@ export interface GetLinkResponseV3 {
   'action' : [] | [Action],
   'link_user_state' : [] | [LinkUserState],
   'link' : Link,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
   { 'Icrc1Transfer' : Icrc1Transfer } |
@@ -264,9 +267,9 @@ export interface Link {
   'asset_info' : Array<AssetInfo>,
   'link_state' : LinkState_1,
   'link_type' : LinkType_1,
+  'created_at' : [] | [bigint],
   'use_count' : bigint,
   'max_use' : bigint,
-  'created_at_ts'?: bigint,
 }
 export interface LinkDto {
   'id' : string,
@@ -284,8 +287,11 @@ export type LinkState = { 'Inactive' : null } |
   { 'CreateLink' : null } |
   { 'InactiveEnded' : null };
 export type LinkState_1 = { 'Ended' : null } |
+  { 'Preview' : null } |
+  { 'ChooseType' : null } |
   { 'Inactive' : null } |
   { 'Active' : null } |
+  { 'AddAsset' : null } |
   { 'Created' : null };
 export type LinkType = { 'SendAirdrop' : null } |
   { 'SendTip' : null } |
@@ -449,6 +455,12 @@ export interface _SERVICE {
    * Currently always returns `Ok(())` after clearing the token's cached fee.
    */
   'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
+  /**
+   * Flushes the token standard cache.
+   * This admin endpoint clears all cached token standard information, forcing subsequent queries
+   * to fetch fresh data from the token storage canister.
+   */
+  'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
   /**
    * Enables/disables the inspect message.
    */

@@ -74,6 +74,7 @@ impl LinkV3 {
             use_count: self.use_count,
             creator: self.creator,
             link_state: self.state.to_shared(),
+            created_at: Some(self.created_at),
         }
     }
 }
@@ -115,6 +116,7 @@ impl From<LinkStateShared> for LinkState {
             LinkStateShared::Active => LinkState::Active,
             LinkStateShared::Inactive => LinkState::Inactive,
             LinkStateShared::Ended => LinkState::Ended,
+            _ => LinkState::Created,
         }
     }
 }

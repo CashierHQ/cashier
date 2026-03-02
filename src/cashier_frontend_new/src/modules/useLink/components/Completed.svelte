@@ -1,15 +1,14 @@
 <script lang="ts">
+  import { type Link } from "$modules/links/types/link/link";
   import { LinkType } from "$modules/links/types/link/linkType";
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import TipCompleted from "$modules/useLink/components/tiplink/Completed.svelte";
   import AirdropCompleted from "$modules/useLink/components/airdrop/Completed.svelte";
+  import TipCompleted from "$modules/useLink/components/tiplink/Completed.svelte";
   import BasketCompleted from "$modules/useLink/components/tokenbasket/Completed.svelte";
-  import TipSharedTestCompleted from "$modules/useLink/components/tipSharedTest/Completed.svelte";
 
-  const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
+  const { link }: { link?: Link } = $props();
 
   const linkType = $derived.by(() => {
-    return linkDetail?.link?.link_type;
+    return link?.link_type;
   });
 </script>
 
@@ -17,20 +16,17 @@
   class="mx-auto w-[400px] max-w-full p-5 rounded-[13px] bg-lightgreen relative flex flex-col items-center justify-center overflow-hidden my-3"
 >
   {#if linkType === LinkType.TIP}
-    <TipCompleted {linkDetail} />
+    <TipCompleted {link} />
   {/if}
   {#if linkType === LinkType.AIRDROP}
-    <AirdropCompleted {linkDetail} />
+    <AirdropCompleted {link} />
   {/if}
   {#if linkType === LinkType.TOKEN_BASKET}
-    <BasketCompleted {linkDetail} />
-  {/if}
-  {#if linkType === LinkType.TIP_SHARED_TEST}
-    <TipSharedTestCompleted {linkDetail} />
+    <BasketCompleted {link} />
   {/if}
   <!-- TODO: Other link types will be added here -->
   <!-- 
   {#if linkType === LinkType.RECEIVE_PAYMENT}
-    <PaymentCompleted {linkDetail} />
+    <PaymentCompleted {link} />
   {/if} -->
 </div>

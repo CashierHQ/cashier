@@ -1,27 +1,27 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import type { Link } from "$modules/links/types/link/link";
   import Actions from "./Actions.svelte";
   import AssetList from "./AssetList.svelte";
 
   const {
-    linkDetail,
+    link,
     onCreateUseAction,
     isCreatingAction = false,
     hasAction = false,
   }: {
-    linkDetail: LinkDetailStore;
+    link: Link;
     onCreateUseAction?: () => Promise<void>;
     isCreatingAction?: boolean;
     hasAction?: boolean;
   } = $props();
 </script>
 
-{#if linkDetail?.link}
+{#if link}
   <div class="w-full grow-1 flex flex-col justify-between">
-    <AssetList assetInfo={linkDetail.link.asset_info} />
+    <AssetList assetInfo={link.asset_info} />
 
     <Actions
-      link={linkDetail.link}
+      {link}
       {onCreateUseAction}
       disabled={isCreatingAction && !hasAction}
     />

@@ -152,7 +152,24 @@ pub fn admin_fee_cache_clear_token(token_id: Principal) -> Result<(), CanisterEr
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    state.token_fee_service.clear_token(&token_id.to_text());
+    state.token_fee_service.clear_token(&token_id);
+
+    Ok(())
+}
+
+/// Flushes the token standard cache.
+/// This admin endpoint clears all cached token standard information, forcing subsequent queries
+/// to fetch fresh data from the token storage canister.
+#[update]
+pub async fn admin_flush_token_standard_cache() -> Result<(), CanisterError> {
+    debug!("[admin_flush_token_standard_cache]");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.token_standard_service.flush_cache();
 
     Ok(())
 }

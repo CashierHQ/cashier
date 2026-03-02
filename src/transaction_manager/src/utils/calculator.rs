@@ -60,7 +60,7 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
         &Nat::from(CREATE_LINK_FEE),
         &Nat::from(0u64),
     );
-    let default_fee = Nat::from(0u64);
+    let default_fee = Nat::from(10_000u64);
     let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).unwrap_or(&default_fee);
     (actual_amount.clone(), actual_amount + fee_in_nat.clone())
 }
@@ -76,10 +76,11 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
 pub fn calculate_icrc2_transfer_intent_amount(
     max_use: u64,
     amount_per_use: &Nat,
-    asset: &Asset,
+    ledger_id: Principal,
     fee_map: &HashMap<Principal, Nat>,
 ) -> Result<(Nat, Nat), CanisterError> {
-    let (inbound_fee, outbound_fee) = calculate_icrc2_transfer_intent_fee(max_use, asset, fee_map)?;
+    let (inbound_fee, outbound_fee) =
+        calculate_icrc2_transfer_intent_fee(max_use, ledger_id, fee_map)?;
     let actual_amount = amount_per_use.clone() * Nat::from(max_use) + outbound_fee;
     let approval_amount = actual_amount.clone() + inbound_fee.clone();
     Ok((actual_amount, approval_amount))
@@ -94,17 +95,60 @@ pub fn calculate_icrc2_transfer_intent_amount(
 /// * `Result<(Nat, Nat), CanisterError>` - A tuple containing the inbound and outbound fee, or an error if the calculation fails
 pub fn calculate_icrc2_transfer_intent_fee(
     max_use: u64,
-    asset: &Asset,
+    ledger_id: Principal,
     fee_map: &HashMap<Principal, Nat>,
 ) -> Result<(Nat, Nat), CanisterError> {
-    let fee = match asset {
-        Asset::IC { address } => fee_map.get(address),
-    };
+    let fee = fee_map.get(&ledger_id);
+
     let fee = fee.ok_or_else(|| {
         CanisterError::HandleLogicError("Fee not found for the given asset in link".to_string())
     })?;
 
     let inbound_fee = Nat::from(2u32) * fee.clone();
+    let outbound_fee = fee.clone() * Nat::from(max_use);
+    Ok((inbound_fee, outbound_fee))
+}
+
+/// Calculate the actual and total amount for an ICRC1 transfer intent
+/// # Arguments
+/// * `max_use` - The maximum number of uses for the link
+/// * `amount_per_use` - The amount to be sent per use
+/// * `asset` - The asset being transferred
+/// * `fee_map` - A map of token principal to its corresponding fee
+/// # Returns
+/// * `Result<(Nat, Nat), CanisterError>` - A tuple containing the actual amount and the total amount, or an error if the calculation fails
+pub fn calculate_icrc1_transfer_intent_amount(
+    max_use: u64,
+    amount_per_use: &Nat,
+    ledger_id: Principal,
+    fee_map: &HashMap<Principal, Nat>,
+) -> Result<(Nat, Nat), CanisterError> {
+    let (inbound_fee, outbound_fee) =
+        calculate_icrc1_transfer_intent_fee(max_use, ledger_id, fee_map)?;
+    let actual_amount = amount_per_use.clone() * Nat::from(max_use) + outbound_fee;
+    let total_amount = actual_amount.clone() + inbound_fee.clone();
+    Ok((actual_amount, total_amount))
+}
+
+/// Calculate the inbound and outbound fee for an ICRC1 transfer intent
+/// # Arguments
+/// * `max_use` - The maximum number of uses for the link
+/// * `asset` - The asset being transferred
+/// * `fee_map` - A map of token principal to its corresponding fee
+/// # Returns
+/// * `Result<(Nat, Nat), CanisterError>` - A tuple containing the inbound and outbound fee, or an error if the calculation fails
+pub fn calculate_icrc1_transfer_intent_fee(
+    max_use: u64,
+    ledger_id: Principal,
+    fee_map: &HashMap<Principal, Nat>,
+) -> Result<(Nat, Nat), CanisterError> {
+    let fee = fee_map.get(&ledger_id);
+
+    let fee = fee.ok_or_else(|| {
+        CanisterError::HandleLogicError("Fee not found for the given asset in link".to_string())
+    })?;
+
+    let inbound_fee = fee.clone();
     let outbound_fee = fee.clone() * Nat::from(max_use);
     Ok((inbound_fee, outbound_fee))
 }
@@ -166,17 +210,19 @@ mod tests {
         // Arrange
         let max_use = 4u64;
         let amount_per_use = Nat::from(20u64);
-        let asset = Asset::IC {
-            address: ICP_CANISTER_PRINCIPAL,
-        };
+
         let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(3u64))]
             .into_iter()
             .collect();
 
         // Act
-        let (actual_amount, approval_amount) =
-            calculate_icrc2_transfer_intent_amount(max_use, &amount_per_use, &asset, &fee_map)
-                .unwrap();
+        let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
+            max_use,
+            &amount_per_use,
+            ICP_CANISTER_PRINCIPAL,
+            &fee_map,
+        )
+        .unwrap();
 
         // Assert
         let expected_outbound_fee = Nat::from(3u64) * Nat::from(max_use);
@@ -192,20 +238,64 @@ mod tests {
     fn it_should_calculate_icrc2_transfer_intent_fee() {
         // Arrange
         let max_use = 5u64;
-        let asset = Asset::IC {
-            address: ICP_CANISTER_PRINCIPAL,
-        };
         let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(4u64))]
             .into_iter()
             .collect();
 
         // Act
         let (inbound_fee, outbound_fee) =
-            calculate_icrc2_transfer_intent_fee(max_use, &asset, &fee_map).unwrap();
+            calculate_icrc2_transfer_intent_fee(max_use, ICP_CANISTER_PRINCIPAL, &fee_map).unwrap();
 
         // Assert
         let expected_inbound_fee = Nat::from(2u32) * Nat::from(4u64);
         let expected_outbound_fee = Nat::from(4u64) * Nat::from(max_use);
+        assert_eq!(inbound_fee, expected_inbound_fee);
+        assert_eq!(outbound_fee, expected_outbound_fee);
+    }
+
+    #[test]
+    fn it_should_calculate_icrc1_transfer_intent_amount() {
+        // Arrange
+        let max_use = 3u64;
+        let amount_per_use = Nat::from(15u64);
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(2u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, total_amount) = calculate_icrc1_transfer_intent_amount(
+            max_use,
+            &amount_per_use,
+            ICP_CANISTER_PRINCIPAL,
+            &fee_map,
+        )
+        .unwrap();
+
+        // Assert
+        let expected_outbound_fee = Nat::from(2u64) * Nat::from(max_use);
+        let expected_inbound_fee = Nat::from(2u64);
+        let expected_actual_amount =
+            amount_per_use.clone() * Nat::from(max_use) + expected_outbound_fee;
+        let expected_total_amount = expected_actual_amount.clone() + expected_inbound_fee;
+        assert_eq!(actual_amount, expected_actual_amount);
+        assert_eq!(total_amount, expected_total_amount);
+    }
+
+    #[test]
+    fn it_should_calculate_icrc1_transfer_intent_fee() {
+        // Arrange
+        let max_use = 6u64;
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(5u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (inbound_fee, outbound_fee) =
+            calculate_icrc1_transfer_intent_fee(max_use, ICP_CANISTER_PRINCIPAL, &fee_map).unwrap();
+
+        // Assert
+        let expected_inbound_fee = Nat::from(5u64);
+        let expected_outbound_fee = Nat::from(5u64) * Nat::from(max_use);
         assert_eq!(inbound_fee, expected_inbound_fee);
         assert_eq!(outbound_fee, expected_outbound_fee);
     }

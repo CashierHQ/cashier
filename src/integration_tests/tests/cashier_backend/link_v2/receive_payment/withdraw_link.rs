@@ -3,10 +3,10 @@
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::receive_payment::fixture::send_payment_link_v2_fixture;
+use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
@@ -19,7 +19,7 @@ use cashier_common::test_utils::random_principal_id;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
+async fn it_should_withdraw_icp_token_payment_link_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -60,7 +60,7 @@ async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_payment_linkv2_successfully() {
+async fn it_should_withdraw_icp_token_payment_link_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();

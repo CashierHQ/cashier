@@ -1,6 +1,17 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
-import type Action from "$modules/links/types/action/action";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
+import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
+import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
+import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
+import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
+import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
+import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import { createTempLinkFromPrincipalId } from "$modules/creationLink/utils/tempLink";
+import Action from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import {
   LinkState,
@@ -9,17 +20,8 @@ import {
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { TempLink } from "$modules/links/types/tempLink";
+import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 import { Err, Ok, type Result } from "ts-results-es";
-import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
-import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
-import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
-import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
-import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
-import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
-import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
-import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
-import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
-import { createTempLinkFromPrincipalId } from "$modules/creationLink/utils/tempLink";
 
 /**
  * Store for draft link state management
@@ -40,14 +42,18 @@ export class LinkCreationStore {
   public link = $state<Link | undefined>();
   // Only existed if the link state == Created
   public action = $state<Action | undefined>();
+
+  public link_shared = $state<SharedLink | undefined>();
+  public action_shared = $state<SharedAction | undefined>();
   #id = $state<string>();
 
   constructor(tempLink: TempLink) {
     this.#id = tempLink.id;
     this.createLinkData = tempLink.createLinkData;
     this.#state = this.stateFromValue(tempLink.state);
-    this.action = undefined;
+
     this.link = undefined;
+    this.action = undefined;
 
     $effect(() => {
       // Access reactive state to track changes
@@ -73,6 +79,13 @@ export class LinkCreationStore {
 
   set id(id: string) {
     this.#id = id;
+  }
+
+  reset(): void {
+    this.link = undefined;
+    this.action = undefined;
+    this.link_shared = undefined;
+    this.action_shared = undefined;
   }
 
   // Move to the next state
@@ -101,8 +114,10 @@ export class LinkCreationStore {
         // choose the correct add-asset state depending on the link type
         if (this.createLinkData.linkType === LinkType.TIP) {
           initialState = new AddAssetTipLinkState(this);
-        } else if (this.createLinkData.linkType === LinkType.TIP_SHARED_TEST) {
-          initialState = new AddAssetTipSharedTestState(this);
+        } else if (this.createLinkData.linkType === LinkType.AIRDROP) {
+          initialState = new AddAssetAirdropState(this);
+        } else if (this.createLinkData.linkType === LinkType.TOKEN_BASKET) {
+          initialState = new AddAssetTokenBasketState(this);
         } else {
           initialState = new AddAssetState(this);
         }

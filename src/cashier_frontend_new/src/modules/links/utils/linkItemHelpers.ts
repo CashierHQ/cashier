@@ -7,6 +7,7 @@ import {
   LinkType,
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
+import { LinkType as SharedLinkType } from "$shared";
 
 export function getStatusLabel(
   state: LinkStateValue,
@@ -58,8 +59,6 @@ export function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
       return "/token-basket-default.svg";
     case LinkType.RECEIVE_PAYMENT:
       return "/receive-payment-default.svg";
-    case LinkType.TIP_SHARED_TEST:
-      return "/tip-link-default.svg";
     default:
       assertUnreachable(linkType);
   }
@@ -75,8 +74,21 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
       return "Receive Payment";
     case LinkType.TOKEN_BASKET:
       return "Send Token Basket";
-    case LinkType.TIP_SHARED_TEST:
-      return "Send Tip (Test)";
+    default:
+      assertUnreachable(linkType);
+  }
+}
+
+export function getLinkTypeTextV3(linkType: SharedLinkType): string {
+  switch (linkType) {
+    case SharedLinkType.SendTip:
+      return "Send Tip";
+    case SharedLinkType.SendAirdrop:
+      return "Send Airdrop";
+    case SharedLinkType.ReceivePayment:
+      return "Receive Payment";
+    case SharedLinkType.SendTokenBasket:
+      return "Send Token Basket";
     default:
       assertUnreachable(linkType);
   }
@@ -91,8 +103,7 @@ export function isSendLinkType(linkType: LinkTypeValue): boolean {
   return (
     linkType === LinkType.TIP ||
     linkType === LinkType.AIRDROP ||
-    linkType === LinkType.TOKEN_BASKET ||
-    linkType === LinkType.TIP_SHARED_TEST
+    linkType === LinkType.TOKEN_BASKET
   );
 }
 

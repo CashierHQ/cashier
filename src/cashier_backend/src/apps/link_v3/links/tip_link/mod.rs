@@ -1,51 +1,45 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod actions;
-pub mod states;
-
-use crate::apps::{
-    link_v2::links::shared::receive_link::actions::create,
-    link_v3::traits::{LinkV3Instance, LinkV3State},
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::{
-        action_result::CreateActionResult,
-        link_result::{LinkCreateActionResult, LinkProcessActionResult},
-    },
+    link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
-        action::v3::ActionV3,
-        asset::v1::Asset,
+        action::{v1::ActionType, v3::ActionV3},
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
         link::{
-            v1::{Link, LinkState, LinkType},
+            v1::LinkType,
             v3::{LinkState as LinkStateV3, LinkV3},
         },
         transaction::v1::Transaction,
     },
 };
-use cashier_shared::types::Action as ActionShared;
-use states::{active::ActiveState, created::CreatedState, inactive::InactiveState};
-use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use std::collections::HashMap;
 use transaction_manager::v3::traits::TransactionManagerV3;
 use uuid::Uuid;
 
-pub struct TipLink<M: TransactionManagerV3 + 'static> {
+use crate::apps::{
+    link_v3::{
+        links::shared::send_link::states::{
+            active::ActiveState, created::CreatedState, inactive::InactiveState,
+        },
+        traits::{LinkV3Instance, LinkV3State},
+    },
+    token_balance::traits::TokenBalanceFetcher,
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
+
+pub struct TipLink {
     pub link: LinkV3,
     pub canister_id: Principal,
-    pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManagerV3 + 'static> TipLink<M> {
-    pub fn new(link: LinkV3, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
-        Self {
-            link,
-            canister_id,
-            transaction_manager,
-        }
+impl TipLink {
+    pub fn new(link: LinkV3, canister_id: Principal) -> Self {
+        Self { link, canister_id }
     }
 
     /// Create a new TipLink instance
@@ -61,9 +55,8 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
         creator: Principal,
         title: String,
         asset_info: Vec<AssetInfoV3>,
-        created_at_ts: u64,
+        created_at: u64,
         canister_id: Principal,
-        transaction_manager: Rc<M>,
     ) -> Self {
         let new_link = LinkV3 {
             id: Uuid::new_v4().to_string(),
@@ -74,91 +67,131 @@ impl<M: TransactionManagerV3 + 'static> TipLink<M> {
             use_count: 0,
             creator,
             state: LinkStateV3::Created,
-            created_at: created_at_ts,
+            created_at,
         };
 
-        Self::new(new_link, canister_id, transaction_manager)
-    }
-
-    /// Get the appropriate state handler for the current link state
-    /// # Arguments
-    /// * `link` - The Link model
-    /// * `canister_id` - The canister ID of the token contract
-    /// * `fee_map` - A map of canister principals to their corresponding fees
-    /// # Returns
-    /// * `Result<Box<dyn LinkV3State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
-    pub fn get_state_handler(
-        link: &LinkV3,
-        canister_id: Principal,
-        transaction_manager: Rc<M>,
-    ) -> Result<Box<dyn LinkV3State>, CanisterError> {
-        match link.state {
-            LinkStateV3::Created => Ok(Box::new(CreatedState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkStateV3::Active => Ok(Box::new(ActiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            LinkStateV3::Inactive => Ok(Box::new(InactiveState::new(
-                link,
-                canister_id,
-                transaction_manager,
-            ))),
-            _ => Err(CanisterError::HandleLogicError(
-                "Unsupported link state".to_string(),
-            )),
-        }
+        Self::new(new_link, canister_id)
     }
 }
 
-impl<M: TransactionManagerV3 + 'static> LinkV3Instance for TipLink<M> {
+impl LinkV3Instance for TipLink {
     /// Creates an action for the TipLink.
     /// # Arguments
     /// * `canister_id` - The canister ID of the token contract.
     /// * `action_type` - The type of action to be created.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
-    fn create_action(
+    async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
-        action: ActionV3,
-        intents: Vec<IntentV3>,
+        action_type: ActionType,
         created_at: u64,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
+        token_balance_service: B,
+    ) -> Result<LinkCreateActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let create_action_result = state
-                .create_action(caller, action, intents, created_at)
-                .await?;
-            Ok(create_action_result)
-        })
+        match link.state {
+            LinkStateV3::Created => {
+                let state = CreatedState::new(&link, canister_id);
+                state
+                    .create_action(
+                        caller,
+                        action_type,
+                        created_at,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        token_balance_service,
+                    )
+                    .await
+            }
+            LinkStateV3::Active => {
+                let state = ActiveState::new(&link, canister_id);
+                state
+                    .create_action(
+                        caller,
+                        action_type,
+                        created_at,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        token_balance_service,
+                    )
+                    .await
+            }
+            LinkStateV3::Inactive => {
+                let state = InactiveState::new(&link, canister_id);
+                state
+                    .create_action(
+                        caller,
+                        action_type,
+                        created_at,
+                        transaction_manager,
+                        token_fee_service,
+                        token_standard_service,
+                        token_balance_service,
+                    )
+                    .await
+            }
+            _ => Err(CanisterError::HandleLogicError(format!(
+                "Cannot create action for link in state {:?}",
+                link.state
+            ))),
+        }
     }
 
-    fn process_action(
+    async fn process_action<M>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
+        transaction_manager: M,
+    ) -> Result<LinkProcessActionResult, CanisterError>
+    where
+        M: TransactionManagerV3 + 'static,
+    {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let transaction_manager = self.transaction_manager.clone();
 
-        Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
-            let process_action_result = state
-                .process_action(caller, action, intents, intent_txs_map)
-                .await?;
-            Ok(process_action_result)
-        })
+        match link.state {
+            LinkStateV3::Created => {
+                let state = CreatedState::new(&link, canister_id);
+                let process_action_result = state
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await?;
+                return Ok(process_action_result);
+            }
+            LinkStateV3::Active => {
+                let state = ActiveState::new(&link, canister_id);
+                let process_action_result = state
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await?;
+                return Ok(process_action_result);
+            }
+            LinkStateV3::Inactive => {
+                let state = InactiveState::new(&link, canister_id);
+                let process_action_result = state
+                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .await?;
+                return Ok(process_action_result);
+            }
+            _ => {
+                return Err(CanisterError::HandleLogicError(format!(
+                    "Cannot process action for link in state {:?}",
+                    link.state
+                )));
+            }
+        }
     }
 }

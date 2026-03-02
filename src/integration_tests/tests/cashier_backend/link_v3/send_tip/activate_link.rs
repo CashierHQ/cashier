@@ -1,24 +1,22 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v3::{
-    fixture::LinkTestFixtureV3, send_tip::fixture::TipLinkV3Fixture,
-};
-use crate::utils::{
-    icrc_112::execute_icrc112_request, link_id_to_account::fee_treasury_account,
-    link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
-};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::{
-    constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN},
-    error::CanisterError,
-    link_v3::dto::action::ProcessActionInputV3,
-};
+use cashier_backend_types::{error::CanisterError, link_v3::dto::action::ProcessActionInputV3};
 use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use cashier_shared::types::LinkState as LinkStateShared;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use std::sync::Arc;
+
+use crate::{
+    cashier_backend::link_v3::{fixture::LinkTestFixtureV3, send_tip::fixture::TipLinkV3Fixture},
+    constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN},
+    utils::{
+        icrc_112::execute_icrc112_request, link_id_to_account::fee_treasury_account,
+        link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
+    },
+};
 
 #[tokio::test]
 async fn it_should_fail_activate_icp_token_tip_link_if_caller_anonymous() {
@@ -217,6 +215,8 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
 
+        println!("Activated link result: {:?}", result);
+
         assert_eq!(result.link.link_state, LinkStateShared::Active);
 
         // Assert: Link account balance
@@ -292,6 +292,9 @@ async fn it_should_succeed_activate_icrc_token_tip_link() {
         // Assert: Activated link result
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
+
+        println!("Activated link result: {:?}", result);
+
         assert_eq!(result.link.link_state, LinkStateShared::Active);
 
         // Assert: Link balance after activation

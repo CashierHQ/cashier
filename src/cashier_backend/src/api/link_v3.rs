@@ -37,6 +37,11 @@ async fn user_create_link_v3(
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+    let token_fee_service = get_state().token_fee_service;
+    let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
+
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -46,7 +51,16 @@ async fn user_create_link_v3(
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
-        .create_link(input, caller, canister_id, created_at)
+        .create_link(
+            input,
+            caller,
+            canister_id,
+            created_at,
+            transaction_manager_v3,
+            token_fee_service,
+            token_standard_service,
+            token_balance_service,
+        )
         .await;
     let _ = request_lock_service.drop(&key);
 
@@ -68,9 +82,14 @@ async fn user_create_action_v3(
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+    let token_fee_service = get_state().token_fee_service;
+    let token_standard_service = get_state().token_standard_service;
+    let token_balance_service = get_state().token_balance_service;
+
     let canister_id = get_state().env.id();
     let caller = msg_caller();
-    let created_at_ts = get_state().env.time();
+    let created_at = get_state().env.time();
     let key = RequestLockKey::CreateAction {
         user_principal: caller,
         link_id: input.link_id.clone(),
@@ -84,7 +103,11 @@ async fn user_create_action_v3(
             input.action,
             caller,
             canister_id,
-            created_at_ts,
+            created_at,
+            transaction_manager_v3,
+            token_fee_service,
+            token_standard_service,
+            token_balance_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -101,6 +124,8 @@ async fn user_process_action_v3(
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+
     let canister_id = get_state().env.id();
     let caller = msg_caller();
     let key = RequestLockKey::ProcessAction {
@@ -110,7 +135,12 @@ async fn user_process_action_v3(
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
-        .process_action(msg_caller(), canister_id, &input.action_id)
+        .process_action(
+            msg_caller(),
+            canister_id,
+            &input.action_id,
+            transaction_manager_v3,
+        )
         .await;
     let _ = request_lock_service.drop(&key);
 
@@ -136,8 +166,10 @@ async fn get_link_details_v3(
     debug!("[get_link_details_v3] link_id: {link_id}, options: {options:?}");
 
     let link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+
     link_v3_service
-        .get_link_details(msg_caller(), link_id, options)
+        .get_link_details(msg_caller(), link_id, options, transaction_manager_v3)
         .await
 }
 

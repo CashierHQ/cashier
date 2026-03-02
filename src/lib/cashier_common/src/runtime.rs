@@ -1,9 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::{future::Future, time::Duration};
-
 use candid::Principal;
+use std::{future::Future, time::Duration};
 
 pub trait IcEnvironment {
     fn id(&self) -> Principal;

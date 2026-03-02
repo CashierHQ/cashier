@@ -1,6 +1,6 @@
 import type { BridgeTransaction } from "$modules/bitcoin/types/bridge_transaction";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
 import type { ReceiveAddressType } from "$modules/wallet/types";
 import type { Principal } from "@dfinity/principal";

@@ -34,6 +34,8 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
   set -e
   just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
+  export TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
+
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend_new {{network}}
@@ -197,6 +199,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
+      token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
   })" {{network}}
 
 # Deploys the token_storage canister

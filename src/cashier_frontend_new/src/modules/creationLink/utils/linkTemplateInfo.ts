@@ -1,8 +1,8 @@
+import { locale } from "$lib/i18n";
 import {
   LinkType,
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
-import { locale } from "$lib/i18n";
 
 export function getLinkTemplateInfo(type: LinkTypeValue) {
   switch (type) {
@@ -47,15 +47,6 @@ export function getLinkTemplateInfo(type: LinkTypeValue) {
           "links.linkForm.chooseType.preview.receivePayment.description",
         ),
         buttonText: locale.t("links.linkForm.chooseType.preview.payButton"),
-      };
-    case LinkType.TIP_SHARED_TEST:
-      return {
-        label: "Tip (Shared Test)",
-        image: "/icpLogo.png",
-        title: "Test Shared Package",
-        description:
-          "Temporary template to test shared package fee calculations",
-        buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
       };
   }
 }

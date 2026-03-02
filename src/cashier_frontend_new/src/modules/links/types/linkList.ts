@@ -1,7 +1,14 @@
-import type { Link } from "./link/link";
-import type { LinkStateValue } from "./link/linkState";
-import type { LinkTypeValue } from "./link/linkType";
-import type { TempLink } from "./tempLink";
+import type { Link } from "$modules/links/types/link/link";
+import {
+  type LinkStateValue,
+  LinkStateMapper,
+} from "$modules/links/types/link/linkState";
+import {
+  type LinkTypeValue,
+  LinkTypeMapper,
+} from "$modules/links/types/link/linkType";
+import type { TempLink } from "$modules/links/types/tempLink";
+import type { Link as SharedLink } from "$shared";
 
 export type GroupedLink = {
   date: bigint;
@@ -37,6 +44,17 @@ export class UnifiedLinkItemMapper {
       state: tempLink.state,
       linkType: tempLink.createLinkData.linkType,
       linkCreateAt: tempLink.create_at,
+      isCreated: false,
+    };
+  }
+
+  static fromDraftLink(draftLink: SharedLink): UnifiedLinkItem {
+    return {
+      id: draftLink.id,
+      title: draftLink.title,
+      state: LinkStateMapper.fromSharedLinkState(draftLink.link_state),
+      linkType: LinkTypeMapper.fromSharedLinkType(draftLink.link_type),
+      linkCreateAt: draftLink.created_at ?? 0n,
       isCreated: false,
     };
   }

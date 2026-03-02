@@ -14,12 +14,13 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
-
-use crate::apps::link_v2::links::shared::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link,
-};
+use transaction_manager::intents::v2::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
+
+use crate::apps::{
+    link_v2::links::shared::utils::link_asset_principals,
+    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+};
 
 #[derive(Debug)]
 pub struct WithdrawAction {
@@ -38,7 +39,16 @@ impl WithdrawAction {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<WithdrawAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
+    pub async fn create<F, B>(
+        link: &Link,
+        canister_id: Principal,
+        mut token_fee_service: F,
+        token_balance_service: B,
+    ) -> Result<Self, CanisterError>
+    where
+        F: TokenFeeCache + 'static,
+        B: TokenBalanceFetcher + 'static,
+    {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::Withdraw,
@@ -48,8 +58,14 @@ impl WithdrawAction {
         };
 
         let link_account = get_link_account(&link.id, canister_id)?;
-        let actual_token_balance_map = get_batch_tokens_balance_for_link(link, canister_id).await?;
-        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+        let asset_principals = link_asset_principals(link);
+        let token_fee_map = token_fee_service
+            .get_batch_tokens_fee(&asset_principals)
+            .await?;
+
+        let actual_token_balance_map = token_balance_service
+            .get_batch_token_balances(&link_account.into(), &asset_principals)
+            .await?;
 
         // intents
         let link_to_wallet_intents = link

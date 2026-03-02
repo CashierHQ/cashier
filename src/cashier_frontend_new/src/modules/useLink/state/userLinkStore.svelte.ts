@@ -111,6 +111,10 @@ export class UserLinkStore {
     return this.linkDetail?.query;
   }
 
+  refreshAsync(): Promise<void> {
+    return this.linkDetail?.query?.refreshAsync() ?? Promise.resolve();
+  }
+
   /**
    * Method to transition to the next state
    */

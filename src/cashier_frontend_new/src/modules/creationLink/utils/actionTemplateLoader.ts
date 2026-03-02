@@ -1,17 +1,17 @@
+import { LinkType } from "$modules/links/types/link/linkType";
 import type { Action } from "$shared";
 import {
-  ActionType,
   ActionState,
-  IntentType,
-  IntentState,
+  ActionType,
   AddressType,
+  IntentState,
+  IntentType,
   TokenStandard,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
-import { LinkType } from "$modules/links/types/link/linkType";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
-import actionsTemplates from "$sharedTemplates/actions.json";
+import actionsTemplates from "$sharedTemplates/tiplink.json";
 
 type ActionTemplateJson = {
   link_type?: string;
@@ -37,20 +37,22 @@ type ActionTemplateJson = {
   action_state: string;
 };
 
-const TEMPLATE_LINK_TYPE_MAP: Record<string, string> = {
-  [LinkType.TIP_SHARED_TEST]: "TipLink",
+const TEMPLATE_LINK_TYPE_MAP: Record<string, ActionTemplateJson[]> = {
+  [LinkType.TIP_SHARED_TEST]: actionsTemplates as ActionTemplateJson[],
 };
 
 /**
  * Load action template for the given link type from actions.json.
  * Returns the first matching template or null if not found.
  */
-function getTemplateForLinkType(linkType: string): ActionTemplateJson | null {
-  const templateLinkType = TEMPLATE_LINK_TYPE_MAP[linkType];
-  if (!templateLinkType) return null;
+function getTemplateForActionType(
+  linkType: string,
+  actionType: string,
+): ActionTemplateJson | null {
+  const templatesLinkType = TEMPLATE_LINK_TYPE_MAP[linkType];
+  if (!templatesLinkType) return null;
 
-  const templates = actionsTemplates as ActionTemplateJson[];
-  return templates.find((t) => t.link_type === templateLinkType) ?? null;
+  return templatesLinkType.find((t) => t.action_type === actionType) ?? null;
 }
 
 function parseTokenStandard(
@@ -66,9 +68,10 @@ function parseTokenStandard(
  */
 export function createActionFromTemplate(
   linkType: string,
+  actionType: string,
   creator: Principal,
 ): Action | null {
-  const template = getTemplateForLinkType(linkType);
+  const template = getTemplateForActionType(linkType, actionType);
   if (!template || !template.intents || template.intents.length < 2) {
     return null;
   }

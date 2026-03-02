@@ -14,7 +14,7 @@ use crate::repository::{
     asset::v3::AssetV3,
     asset_info::v3::AssetInfoV3,
     common::AddressTypeV3,
-    intent::v1::{Intent, IntentState, TransferData, TransferFromData},
+    intent::v1::{IntentState, IntentType, TransferData, TransferFromData},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -190,4 +190,55 @@ impl IntentV3 {
             created_at,
         }
     }
+}
+
+/// Arguments for creating a TransferWalletToLink intent using ICRC2
+pub struct CreateIcrc2WalletToLinkIntentArgs {
+    pub label: String,
+    pub asset: AssetV3,
+    pub user_ui_input_asset_amount: Nat,
+    pub max_use: u64,
+    pub actual_amount: Nat,
+    pub approval_amount: Nat,
+    pub sender_id: Principal,
+    pub spender_account: Account,
+    pub receiver_id: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferWalletToLink intent using ICRC1
+pub struct CreateIcrc1WalletToLinkIntentArgs {
+    pub label: String,
+    pub asset: AssetV3,
+    pub user_ui_input_asset_amount: Nat,
+    pub max_use: u64,
+    pub sending_amount: Nat,
+    pub sender_id: Principal,
+    pub receiver_id: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferWalletToTreasury intent using ICRC2
+pub struct CreateWalletToTreasuryIntentArgs {
+    pub label: String,
+    pub asset: AssetV3,
+    pub actual_amount: Nat,
+    pub approval_amount: Nat,
+    pub sender_id: Principal,
+    pub spender_account: Account,
+    pub receiver_id: Principal,
+    pub created_at_ts: u64,
+}
+
+/// Arguments for creating a TransferLinkToWallet intent
+pub struct CreateLinkToWalletIntentArgs {
+    pub label: String,
+    pub asset: AssetV3,
+    pub sending_amount: Nat,
+    pub receiver_id: Principal,
+    pub source_address: Principal,
+    pub link_account: Account,
+    pub created_at_ts: u64,
 }

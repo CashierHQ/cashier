@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
   import { FeeType } from "$modules/links/types/fee";
-  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { SvelteMap } from "svelte/reactivity";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
+  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import { Info } from "lucide-svelte";
+  import { SvelteMap } from "svelte/reactivity";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -18,7 +18,7 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    link?: LinkCreationStore;
+    link?: GenericCreationLinkStoreVM;
   };
 
   let {

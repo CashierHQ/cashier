@@ -2,15 +2,18 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
+use crate::constant::CKBTC_ICRC_TOKEN;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::constant::CKBTC_ICRC_TOKEN;
-use cashier_backend_types::repository::action::v1::ActionState;
-use cashier_backend_types::repository::intent::v1::IntentState;
-use cashier_backend_types::repository::link::v1::LinkState;
-use cashier_backend_types::repository::transaction::v1::{IcTransaction, TransactionState};
+use cashier_backend_types::repository::{
+    action::v1::ActionState,
+    asset::v1::Asset,
+    intent::v1::IntentState,
+    link::v1::LinkState,
+    transaction::v1::{IcTransaction, TransactionState},
+};
 use icrc_ledger_types::icrc1::account::Account;
 
 /// Test scenario: Approve FAILED because tokens were drained before executing ICRC-112.
@@ -293,7 +296,6 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
             "Should return ICRC-112 retry requests"
         );
         let retry_icrc112 = result.action.icrc_112_requests.unwrap();
-        println!("retry_icrc112 {:?}", retry_icrc112);
         assert_eq!(
             retry_icrc112.len(),
             1,
@@ -336,14 +338,11 @@ async fn it_should_fail_activate_icrc_link_when_icp_fee_approve_fails_but_token_
             .find(|tx| {
                 if let Some(IcTransaction::Icrc2Approve(approve)) = tx.protocol.as_ic_transaction()
                 {
-                    let cashier_backend_types::repository::common::Asset::IC { address } =
-                        &approve.asset;
+                    let Asset::IC { address } = &approve.asset;
                     return address == &ckbtc_ledger_canister.unwrap();
                 }
                 false
             });
-
-        println!("ckbtc_approve_tx {:?}", ckbtc_approve_tx.unwrap());
 
         assert!(
             ckbtc_approve_tx.is_some(),

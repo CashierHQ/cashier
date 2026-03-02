@@ -9,7 +9,9 @@ export const idlFactory = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
   CanisterError.fill(
     IDL.Variant({
@@ -276,8 +278,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const LinkState_1 = IDL.Variant({
     'Ended' : IDL.Null,
+    'Preview' : IDL.Null,
+    'ChooseType' : IDL.Null,
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'Created' : IDL.Null,
   });
   const Link = IDL.Record({
@@ -287,14 +292,15 @@ export const idlFactory = ({ IDL }) => {
     'asset_info' : IDL.Vec(AssetInfo),
     'link_state' : LinkState_1,
     'link_type' : LinkType_1,
+    'created_at' : IDL.Opt(IDL.Nat64),
     'use_count' : IDL.Nat64,
     'max_use' : IDL.Nat64,
-    'created_at_ts' : IDL.Opt(IDL.Nat64),
   });
   const GetLinkResponseV3 = IDL.Record({
     'action' : IDL.Opt(Action),
     'link_user_state' : IDL.Opt(LinkUserState),
     'link' : Link,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
   const Result_3 = IDL.Variant({
     'Ok' : GetLinkResponseV3,
@@ -458,6 +464,7 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'admin_fee_cache_clear' : IDL.Func([], [Result], []),
     'admin_fee_cache_clear_token' : IDL.Func([IDL.Principal], [Result], []),
+    'admin_flush_token_standard_cache' : IDL.Func([], [Result], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
@@ -536,7 +543,9 @@ export const init = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
   return [CashierBackendInitData];
 };

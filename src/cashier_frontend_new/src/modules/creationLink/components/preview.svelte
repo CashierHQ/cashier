@@ -1,14 +1,15 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let errorMessage: string | null = $state(null);

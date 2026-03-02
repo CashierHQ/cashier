@@ -1,8 +1,9 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { rsMatch } from "$lib/rsMatch";
+import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import type { TokenMetadata } from "$modules/token/types";
+import { TokenStandardMapper } from "$modules/token/types/tokenStandard";
 import { fromNullable } from "@dfinity/utils";
-import { CKBTC_CANISTER_ID } from "../constants";
 
 /**
  * Parse the list of tokens from the Token Storage canister response.
@@ -26,6 +27,12 @@ export function parseListTokens(
           const tokenAddress = data.ledger_id.toText();
           const tokenSymbol =
             tokenAddress === CKBTC_CANISTER_ID ? "BTC" : token.symbol;
+          const tokenStandards = token.details.IC.supported_standards.map(
+            (standard) => {
+              return TokenStandardMapper.fromBackendType(standard);
+            },
+          );
+
           return {
             address: tokenAddress,
             name: token.name,
@@ -35,6 +42,7 @@ export function parseListTokens(
             fee: token.details.IC.fee,
             is_default: token.is_default,
             indexId,
+            tokenStandards,
           };
         },
       });

@@ -1,5 +1,6 @@
 use crate::{
     cashier_backend::link_v3::fixture::LinkTestFixtureV3,
+    constant::ICP_TOKEN,
     utils::{PocketIcTestContext, icrc_112, principal::TestUser},
 };
 use candid::{Nat, Principal};
@@ -126,7 +127,7 @@ impl TipLinkV3Fixture {
             .airdrop_icp(initial_balance.clone(), &self.caller)
             .await;
 
-        if self.token != constant::ICP_TOKEN {
+        if self.token != ICP_TOKEN {
             link_fixture
                 .airdrop_icrc(&self.token, initial_balance.clone(), &self.caller)
                 .await;

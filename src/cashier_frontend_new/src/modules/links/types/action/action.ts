@@ -5,6 +5,7 @@ import type {
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
+import type { Action as SharedAction } from "$shared";
 import type { Principal } from "@dfinity/principal";
 import type { ActionState } from "./actionState";
 import { ActionStateMapper } from "./actionState";
@@ -50,6 +51,25 @@ export class ActionMapper {
     }
 
     return new Action(action.id, action.creator, type, state, intents, icrc);
+  }
+
+  static fromSharedAction(
+    action: SharedAction,
+    icrc112Requests: Icrc112Request[][] | undefined,
+  ): Action {
+    const type = ActionTypeMapper.fromSharedType(action.action_type);
+    const state = ActionStateMapper.fromSharedType(action.action_state);
+    const intents = action.intents.map((intent) =>
+      IntentMapper.fromSharedType(intent),
+    );
+    return new Action(
+      action.id,
+      action.creator,
+      type,
+      state,
+      intents,
+      icrc112Requests,
+    );
   }
 }
 

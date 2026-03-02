@@ -1,14 +1,13 @@
 <script lang="ts">
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Check, Info, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { getTokenLogo } from "$modules/imageCache";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
   import { FeeType } from "$modules/links/types/fee";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import { TokenIcon } from "$modules/imageCache";
+  import { Check, Info, X } from "lucide-svelte";
 
   type Props = {
     assets: AssetAndFee[];
@@ -149,13 +148,13 @@
           <div class="flex flex-col items-end">
             <div class="flex items-center gap-1">
               <p class="text-[14px] font-normal">
-                {linkCreationFeeItem.fee.amountFormattedStr}
+                {linkCreationFeeItem.asset.amountFormattedStr}
               </p>
             </div>
-            {#if linkCreationFeeItem.fee.usdValueStr}
+            {#if linkCreationFeeItem.asset.usdValueStr}
               <p class="text-[10px] font-normal text-[#b6b6b6]">
                 ~${formatUsdAmount(
-                  parseFloat(linkCreationFeeItem.fee.usdValueStr),
+                  parseFloat(linkCreationFeeItem.asset.usdValueStr),
                 )}
               </p>
             {/if}

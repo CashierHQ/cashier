@@ -6,9 +6,8 @@ import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
-import { LinkAction } from "$modules/links/types/linkAndAction";
-import type { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
+import { type LinkAction } from "$modules/links/types/linkAndAction";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
@@ -20,27 +19,19 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
 export class LinkDetailStore {
   #linkDetailQuery;
   #id: string;
-  #linkType?: string;
 
-  constructor({ id, linkType }: { id: string; linkType?: string }) {
+  constructor({ id }: { id: string }) {
     this.#id = id;
-    this.#linkType = linkType;
     this.#linkDetailQuery = managedState<LinkAction>({
       queryFn: async () => {
         const linkDetail = await detailLinkService.fetchLinkDetail({
           id,
           anonymous: !authState.isLoggedIn,
-          linkType: this.#linkType,
         });
         if (linkDetail.isErr()) {
           throw linkDetail.error;
         }
-        const result = linkDetail.value;
-        // Persist linkType from fetch so subsequent refreshes use correct API (v3 for TIP_SHARED_TEST)
-        if (result.link && this.#linkType === undefined) {
-          this.#linkType = result.link.link_type;
-        }
-        return result;
+        return linkDetail.value;
       },
       watch: true,
     });
@@ -102,14 +93,6 @@ export class LinkDetailStore {
   }
 
   /**
-   * Get link type (e.g. TIP_SHARED_TEST) from fetched link or constructor.
-   * Used to select V2 vs V3 API for processAction.
-   */
-  get linkType() {
-    return this.link?.link_type ?? this.#linkType;
-  }
-
-  /**
    * Create an action based on the current state
    * @param actionType The type of action to create
    * @returns The action created
@@ -127,16 +110,6 @@ export class LinkDetailStore {
   }
 
   /**
-   * Update store with link and action from process_action response.
-   * Avoids stale reads from IC query (get_link_details) due to eventual consistency.
-   */
-  setFromProcessResult(link: Link, action?: Action): void {
-    const current = this.#linkDetailQuery.data;
-    const linkAction = new LinkAction(link, action, current?.link_user_state);
-    this.#linkDetailQuery.setData(linkAction);
-  }
-
-  /**
    * Disable the link from active -> inactive state
    * @returns void
    * @throws Error when link is missing or not active and backend call fails
@@ -150,24 +123,9 @@ export class LinkDetailStore {
       throw new Error("Only active links can be disabled");
     }
 
-    // Try V2 first; if not found (V3-stored link), fallback to V3
-    const v2Result = await cashierBackendService.disableLinkV2(this.link.id);
-    if (v2Result.isErr()) {
-      const errStr = String(
-        v2Result.error instanceof Error
-          ? v2Result.error.message
-          : v2Result.error,
-      );
-      if (errStr.includes("NotFound") || errStr.includes("not found")) {
-        const v3Result = await cashierBackendService.disableLinkV3(
-          this.link.id,
-        );
-        if (v3Result.isErr()) {
-          throw new Error(`Failed to disable link: ${v3Result.error}`);
-        }
-      } else {
-        throw new Error(`Failed to disable link: ${v2Result.error}`);
-      }
+    const result = await cashierBackendService.disableLinkV2(this.link.id);
+    if (result.isErr()) {
+      throw new Error(`Failed to active link: ${result.error}`);
     }
 
     this.query.refresh();

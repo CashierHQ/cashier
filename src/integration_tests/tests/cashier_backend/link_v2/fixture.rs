@@ -1,8 +1,8 @@
+use crate::constant;
 use crate::utils::{PocketIcTestContext, principal::TestUser};
 use candid::{Nat, Principal};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
-    constant,
     dto::{
         action::{ActionDto, CreateActionInput},
         link::{

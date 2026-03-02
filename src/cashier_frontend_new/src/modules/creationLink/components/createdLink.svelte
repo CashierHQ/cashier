@@ -1,27 +1,28 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import type {
+    GenericDetailStoreVM,
+    ProcessActionResult,
+  } from "$modules/detailLink/types/genericDetailStoreVM";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkType } from "$modules/links/types/link/linkType";
-  import { cashierBackendService } from "$modules/links/services/cashierBackend";
-  import { mapV3ProcessActionResult } from "$modules/links/utils/actionV3Mapper";
-  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import { onMount } from "svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
-  import { locale } from "$lib/i18n";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
+  import { onMount } from "svelte";
+
   const {
     link,
+    detailStore,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
+    detailStore: GenericDetailStoreVM;
   } = $props();
 
-  let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -35,51 +36,21 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    if (
-      linkDetailStore?.action &&
-      linkDetailStore?.link &&
-      link.createLinkData.linkType !== LinkType.TIP_SHARED_TEST
-    ) {
-      return await linkDetailStore.processAction();
-    }
-    if (
-      link.id &&
-      link.action &&
-      link.createLinkData.linkType === LinkType.TIP_SHARED_TEST
-    ) {
-      const result = await cashierBackendService.processActionV3({
-        action_id: link.action.id,
-      });
-      if (result.isErr()) {
-        throw new Error(`Failed to activate link: ${result.error.message}`);
-      }
-      linkListStore.refresh();
-      linkDetailStore?.query.refresh();
-      return mapV3ProcessActionResult(result.unwrap() as never);
-    }
-    throw new Error("LinkDetailStore or link data is not ready");
+    return await detailStore.processAction();
   }
 
   $effect(() => {
     // Redirect to detail page if the link is active
     if (
-      linkDetailStore &&
-      linkDetailStore.link &&
-      linkDetailStore.link.state === LinkState.ACTIVE
+      link.backendId &&
+      detailStore &&
+      detailStore.state === LinkState.ACTIVE
     ) {
-      goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
+      goto(resolve(`/link/detail/${link.backendId}?created=true`));
     }
   });
 
   onMount(() => {
-    // Initialize LinkDetailStore with the created link ID
-    if (link.id) {
-      linkDetailStore = new LinkDetailStore({
-        id: link.id,
-        linkType: link.createLinkData.linkType,
-      });
-    }
-
     if (link.action && link.action.state !== ActionState.SUCCESS) {
       showTxCart = true;
     }
@@ -101,22 +72,13 @@
   </div>
 </div>
 
-{#if showTxCart && linkDetailStore && (linkDetailStore.action ?? link.action)}
+{#if showTxCart && detailStore && detailStore.action}
   <LinkTxCart
     bind:isOpen={showTxCart}
     source={{
-      action: linkDetailStore.action ?? link.action!,
+      action: detailStore.action,
+      maxUse: link.maxUse,
       handleProcessAction,
-      linkType: link.createLinkData.linkType,
-      maxUse: link.createLinkData.maxUse,
-      onSuccess: (result) => {
-        if (
-          link.createLinkData.linkType === LinkType.TIP_SHARED_TEST &&
-          link.action
-        ) {
-          link.action = result.action;
-        }
-      },
     }}
     {onCloseDrawer}
     onFeeInfoDrawerClose={() => {

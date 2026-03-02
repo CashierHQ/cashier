@@ -1,10 +1,10 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import type { Snippet } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import type { Snippet } from "svelte";
+  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   const allStates = [
     UserLinkStep.LANDING,
@@ -24,7 +24,9 @@
 
   const context = getGuardContext();
 
-  const userLinkStore = $derived(context.userLinkStore);
+  const userLinkStore = $derived(
+    context.userLinkStoreV3 || context.userLinkStore,
+  );
 
   const currentStep = $derived(
     userLinkStore && "step" in userLinkStore ? userLinkStore.step : null,

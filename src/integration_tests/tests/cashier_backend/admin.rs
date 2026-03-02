@@ -41,6 +41,26 @@ async fn should_not_allow_user_to_get_permissions() {
 }
 
 #[tokio::test]
+async fn it_should_admin_flush_token_standard_cache() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let admin = TestUser::CashierBackendAdmin.get_principal();
+        let admin_client = ctx.new_cashier_backend_client(admin);
+
+        // Act
+        let result = admin_client.admin_flush_token_standard_cache().await;
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_ok());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn should_allow_admin_to_set_and_remove_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange

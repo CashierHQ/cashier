@@ -1,38 +1,23 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::{links::tip_link::TipLink, traits::LinkV3Instance};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v3::dto::{
-        action::{CreateActionInputV3, CreateActionResponseV3},
-        link::{CreateLinkInputV3, CreateLinkResponseV3},
-    },
     repository::{
         asset_info::v3::AssetInfoV3,
-        link::{
-            v1::{Link, LinkType},
-            v3::LinkV3,
-        },
+        link::{v1::LinkType, v3::LinkV3},
     },
 };
-use std::rc::Rc;
-use transaction_manager::v3::traits::TransactionManagerV3;
 
-pub struct LinkFactoryV3<M: TransactionManagerV3 + 'static> {
-    pub transaction_manager: Rc<M>,
-}
+use crate::apps::link_v3::links::{
+    LinkV3Types, airdrop_link::AirdropLink, tip_link::TipLink, token_basket_link::TokenBasketLink,
+};
 
-impl<M: TransactionManagerV3 + 'static> LinkFactoryV3<M> {
-    pub fn new(transaction_manager: Rc<M>) -> Self {
-        Self {
-            transaction_manager,
-        }
-    }
+pub struct LinkFactoryV3;
 
+impl LinkFactoryV3 {
     pub fn create_link(
-        &self,
         link_type: LinkType,
         title: String,
         asset_info: Vec<AssetInfoV3>,
@@ -42,13 +27,25 @@ impl<M: TransactionManagerV3 + 'static> LinkFactoryV3<M> {
         canister_id: Principal,
     ) -> Result<LinkV3, CanisterError> {
         match link_type {
-            LinkType::SendTip => Ok(TipLink::create(
+            LinkType::SendTip => {
+                Ok(TipLink::create(creator, title, asset_info, created_at_ts, canister_id).link)
+            }
+            LinkType::SendAirdrop => Ok(AirdropLink::create(
                 creator,
                 title,
                 asset_info,
+                max_use,
                 created_at_ts,
                 canister_id,
-                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::SendTokenBasket => Ok(TokenBasketLink::create(
+                creator,
+                title,
+                asset_info,
+                max_use,
+                created_at_ts,
+                canister_id,
             )
             .link),
             _ => Err(CanisterError::InvalidInput(
@@ -63,15 +60,18 @@ impl<M: TransactionManagerV3 + 'static> LinkFactoryV3<M> {
     /// # Returns
     /// * `Result<Box<dyn LinkV3>, CanisterError>` - The resulting LinkV3 instance or an error if the conversion fails.
     pub fn create_from_link_model(
-        &self,
         link: LinkV3,
         canister_id: Principal,
-    ) -> Result<Box<dyn LinkV3Instance>, CanisterError> {
+    ) -> Result<LinkV3Types, CanisterError> {
         match link.link_type {
-            LinkType::SendTip => Ok(Box::new(TipLink::new(
+            LinkType::SendTip => Ok(LinkV3Types::TipLink(TipLink::new(link, canister_id))),
+            LinkType::SendAirdrop => Ok(LinkV3Types::AirdropLink(AirdropLink::new(
                 link,
                 canister_id,
-                self.transaction_manager.clone(),
+            ))),
+            LinkType::SendTokenBasket => Ok(LinkV3Types::TokenBasketLink(TokenBasketLink::new(
+                link,
+                canister_id,
             ))),
             _ => Err(CanisterError::InvalidInput(
                 "Unsupported link type".to_string(),

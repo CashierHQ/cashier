@@ -1,18 +1,14 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  import type { Link } from "$modules/links/types/link/link";
   import TokenBasketDisplay from "$modules/useLink/components/tokenbasket/TokenBasketDisplay.svelte";
 
-  const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
+  const { link }: { link?: Link } = $props();
 
   // Get all assets from asset_info
-  const assets = $derived(linkDetail?.link?.asset_info ?? []);
+  const assets = $derived(link?.asset_info ?? []);
 </script>
-
-{#if linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.detail.loading")}
-{/if}
 
 {#if assets && assets.length > 0}
   <TokenBasketDisplay {assets} />

@@ -5,11 +5,12 @@ use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
 use crate::cashier_backend::link_v3::send_tip::fixture::{
     activate_tip_link_v3_fixture, create_tip_linkv3_fixture,
 };
+use crate::constant::ICP_TOKEN;
 use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::constant::{FEE_TREASURY_PRINCIPAL, ICP_TOKEN};
+use cashier_backend_types::constant::FEE_TREASURY_PRINCIPAL;
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;

@@ -5,7 +5,6 @@ import type { LinkCreationStore } from "$modules/creationLink/state/linkCreation
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
-import { AddAssetTipSharedTestState } from "$modules/creationLink/state/linkCreationStates/tipSharedTest/addAsset";
 
 // State when the user is choosing the type of link to create
 export class ChooseLinkTypeState implements LinkCreationState {
@@ -25,15 +24,14 @@ export class ChooseLinkTypeState implements LinkCreationState {
 
     const currentType = this.#link.createLinkData.linkType;
 
-    // TIP, AIRDROP, TOKEN_BASKET, and TIP_SHARED_TEST are supported
+    // TIP, AIRDROP, and TOKEN_BASKET are supported
     if (
       currentType !== LinkType.TIP &&
       currentType !== LinkType.AIRDROP &&
-      currentType !== LinkType.TOKEN_BASKET &&
-      currentType !== LinkType.TIP_SHARED_TEST
+      currentType !== LinkType.TOKEN_BASKET
     ) {
       throw new Error(
-        "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
+        "Only Tip, Airdrop, and Token Basket link types are supported currently",
       );
     }
 
@@ -43,8 +41,6 @@ export class ChooseLinkTypeState implements LinkCreationState {
       this.#link.state = new AddAssetAirdropState(this.#link);
     } else if (currentType === LinkType.TOKEN_BASKET) {
       this.#link.state = new AddAssetTokenBasketState(this.#link);
-    } else if (currentType === LinkType.TIP_SHARED_TEST) {
-      this.#link.state = new AddAssetTipSharedTestState(this.#link);
     }
   }
 

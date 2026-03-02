@@ -14,6 +14,16 @@ pub struct AssetV3 {
     pub token_standard: TokenStandardV3,
 }
 
+impl Default for AssetV3 {
+    fn default() -> Self {
+        AssetV3 {
+            address: Principal::anonymous(),
+            network_fee: None,
+            token_standard: TokenStandardV3::default(),
+        }
+    }
+}
+
 impl From<AssetShared> for AssetV3 {
     fn from(asset: AssetShared) -> Self {
         let token_standard = asset.token_standard.unwrap_or(TokenStandardShared::ICRC2);

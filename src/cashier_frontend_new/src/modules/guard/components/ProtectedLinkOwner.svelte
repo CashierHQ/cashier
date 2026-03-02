@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import type { Snippet } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import type { Snippet } from "svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   let {
@@ -24,6 +24,10 @@
   const isLoading = $derived.by(() =>
     context.isLoading({ checkTempLinkLoad: false }),
   );
+
+  $effect(() => {
+    console.log("isloading in linkowner", $state.snapshot(isLoading));
+  });
 
   const isReady = $derived(
     !context.authState.isReady || !linkStore
