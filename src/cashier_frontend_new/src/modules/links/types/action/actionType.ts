@@ -67,7 +67,6 @@ export class ActionTypeMapper {
   }
 
   static fromSharedType(a: SharedActionType): ActionTypeValue {
-    console.log("Mapping shared action type to frontend action type:", { a });
     switch (a) {
       case SharedActionType.CreateLink:
         return ActionType.CREATE_LINK;

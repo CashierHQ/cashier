@@ -1,6 +1,6 @@
 import {
+  type GetLinkResponseV3 as BackendGetLinkResponseV3,
   type Icrc112Request as BackendIcrc112Request,
-  type GetLinkResponseV3,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
@@ -33,7 +33,7 @@ export class LinkActionV3 {
 }
 
 export class LinkActionV3Mapper {
-  static fromBackendResponse(response: GetLinkResponseV3): LinkActionV3 {
+  static fromBackendResponse(response: BackendGetLinkResponseV3): LinkActionV3 {
     const link = SharedLinkMapper.toLocalType(response.link);
     const actionBE =
       response.action.length > 0 && response.action[0] !== undefined

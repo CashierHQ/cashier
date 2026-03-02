@@ -34,12 +34,12 @@
   const linkStep = $derived.by(() => linkStore?.step ?? LinkStep.CHOOSE_TYPE);
 
   const detailStore = $derived.by(() => {
-    if (!linkStore || !linkStore.id) return null;
+    if (!linkStore || !linkStore.backendId) return null;
     if (isV3) {
-      const detailStoreV3 = new LinkDetailStoreV3({ id: linkStore.id });
+      const detailStoreV3 = new LinkDetailStoreV3({ id: linkStore.backendId });
       return new DetailStoreV3ViewModelAdapter(detailStoreV3);
     } else {
-      const detailStore = new LinkDetailStore({ id: linkStore.id });
+      const detailStore = new LinkDetailStore({ id: linkStore.backendId });
       return new DetailStoreViewModelAdapter(detailStore);
     }
   });
