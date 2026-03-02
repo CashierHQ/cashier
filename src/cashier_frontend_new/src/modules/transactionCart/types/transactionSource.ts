@@ -1,11 +1,8 @@
 import type { BridgeTransaction } from "$modules/bitcoin/types/bridge_transaction";
 import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-import type { ProcessActionResultV3 } from "$modules/detailLink/types/v3/action";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import type Action from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
 import type { ReceiveAddressType } from "$modules/wallet/types";
-import type { Action as SharedAction } from "$shared";
 import type { Principal } from "@dfinity/principal";
 import type { Result } from "ts-results-es";
 
@@ -53,21 +50,6 @@ export type ActionSource = {
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
   onSuccess?: (result: ProcessActionResult) => void;
-  /** When set to TIP_SHARED_TEST, cart uses shared-package fee logic for consistency with preview */
-  linkType?: string;
-  /** Max use for the link; required when linkType is TIP_SHARED_TEST for fee calculation */
-  maxUse?: number;
-};
-
-/**
- * Action-based transaction source (ICRC-112 batch execution) with V3 shared-package integration.
- * Uses SharedAction and ProcessActionResultV3 for compatibility with the new link creation flow.
- */
-export type ActionSourceV3 = {
-  action: SharedAction;
-  icrc112Requests?: Icrc112Request[][];
-  handleProcessAction: () => Promise<ProcessActionResultV3>;
-  onSuccess?: (result: ProcessActionResultV3) => void;
   /** When set to TIP_SHARED_TEST, cart uses shared-package fee logic for consistency with preview */
   linkType?: string;
   /** Max use for the link; required when linkType is TIP_SHARED_TEST for fee calculation */

@@ -1,21 +1,21 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
+  import { feeService } from "$modules/shared/services/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { onMount } from "svelte";
+  import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
+  import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
   import {
     FlowDirection,
     type ActionSource,
   } from "$modules/transactionCart/types/transactionSource";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
-  import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
-  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
-  import { locale } from "$lib/i18n";
-  import { feeService } from "$modules/shared/services/feeService";
+  import { onMount } from "svelte";
 
   let {
     source,

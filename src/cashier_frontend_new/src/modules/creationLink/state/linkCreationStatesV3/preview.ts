@@ -1,4 +1,5 @@
 import { authState } from "$modules/auth/state/auth.svelte";
+import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
@@ -41,6 +42,8 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       this.#linkStore.draftAction,
     );
 
+    console.log("Create link V3 result:", result);
+
     if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
     }
@@ -48,11 +51,17 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     const createLinkResponse = result.unwrap();
 
     // delete draft link from local storage
-    if (this.#linkStore.id)
+    if (this.#linkStore.id) {
+      draftLinkRepository.delete(
+        this.#linkStore.id,
+        authState.account?.owner ?? "anon",
+      );
+
       tempLinkRepository.delete(
         this.#linkStore.id,
         authState.account?.owner ?? "anon",
       );
+    }
 
     this.#linkStore.id = createLinkResponse.link.id;
     this.#linkStore.state = new LinkCreatedStateV3();

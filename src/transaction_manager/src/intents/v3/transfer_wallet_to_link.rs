@@ -89,7 +89,7 @@ impl TransferWalletToLinkIntent {
             label: input.label,
             intent_type: IntentTypeV3::Send,
             asset: input.asset.clone(),
-            amount: input.actual_amount.clone(),
+            amount: input.user_ui_input_asset_amount.clone(),
             total_amount: Some(input.actual_amount.clone()),
             network_fee: None,
             user_fee: None,
@@ -154,6 +154,8 @@ mod tests {
         let input_arg = CreateIcrc1WalletToLinkIntentArgs {
             label: label.clone(),
             asset: asset.clone(),
+            user_ui_input_asset_amount: amount.clone(),
+            max_use: 1,
             sending_amount: amount.clone(),
             sender_id,
             receiver_id,
@@ -206,6 +208,8 @@ mod tests {
         let input_arg = CreateIcrc2WalletToLinkIntentArgs {
             label: label.clone(),
             asset: asset.clone(),
+            user_ui_input_asset_amount: actual_amount.clone(),
+            max_use: 1,
             actual_amount: actual_amount.clone(),
             approval_amount: approval_amount.clone(),
             sender_id,

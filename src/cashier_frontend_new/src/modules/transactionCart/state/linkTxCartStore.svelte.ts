@@ -63,11 +63,16 @@ export class LinkTxCartStore implements TxCartStore {
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
 
+    const maxUse = this.#source.maxUse ?? 1;
+
     this.#assetAndFeeList = feeService.buildFromAction(
       this.#source.action,
+      maxUse,
       tokens,
       walletPrincipal,
     );
+
+    console.log("Initialized asset and fee list:", this.#assetAndFeeList);
   }
 
   /** Compute total fee in USD */

@@ -196,6 +196,8 @@ impl IntentV3 {
 pub struct CreateIcrc2WalletToLinkIntentArgs {
     pub label: String,
     pub asset: AssetV3,
+    pub user_ui_input_asset_amount: Nat,
+    pub max_use: u64,
     pub actual_amount: Nat,
     pub approval_amount: Nat,
     pub sender_id: Principal,
@@ -209,6 +211,8 @@ pub struct CreateIcrc2WalletToLinkIntentArgs {
 pub struct CreateIcrc1WalletToLinkIntentArgs {
     pub label: String,
     pub asset: AssetV3,
+    pub user_ui_input_asset_amount: Nat,
+    pub max_use: u64,
     pub sending_amount: Nat,
     pub sender_id: Principal,
     pub receiver_id: Principal,

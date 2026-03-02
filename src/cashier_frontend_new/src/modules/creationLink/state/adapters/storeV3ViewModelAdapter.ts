@@ -132,8 +132,6 @@ export class CreationStoreV3ViewModelAdapter
 
   get action() {
     if (!this.linkStore.backendAction) return undefined;
-
-    console.log("backend action", this.linkStore.backendAction);
     return ActionMapper.fromSharedAction(
       this.linkStore.backendAction,
       this.linkStore.icrc112Requests,

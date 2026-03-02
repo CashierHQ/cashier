@@ -77,6 +77,7 @@
     bind:isOpen={showTxCart}
     source={{
       action: detailStore.action,
+      maxUse: link.maxUse,
       handleProcessAction,
     }}
     {onCloseDrawer}

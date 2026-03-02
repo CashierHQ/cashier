@@ -3,7 +3,6 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
     repository::{
         action::{
@@ -11,7 +10,7 @@ use cashier_backend_types::{
             v3::ActionV3,
         },
         common::AddressTypeV3,
-        intent::v3::{CreateLinkToWalletIntentArgs, IntentTypeV3, IntentV3},
+        intent::v3::{CreateLinkToWalletIntentArgs, IntentV3},
         link::v3::LinkV3,
     },
 };
@@ -19,9 +18,7 @@ use cashier_common::utils::get_link_account;
 use transaction_manager::intents::v3::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
-use crate::{
-    apps::link_v2::links::shared::utils::generate_intent_asset_label, repositories::intent,
-};
+use crate::apps::link_v2::links::shared::utils::generate_intent_asset_label;
 
 #[derive(Debug)]
 pub struct ReceiveAction {
