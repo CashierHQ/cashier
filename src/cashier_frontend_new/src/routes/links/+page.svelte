@@ -2,6 +2,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { draftLinkService } from "$modules/creationLink/services/draftLink";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
@@ -27,6 +31,8 @@
         throw new Error("Failed to create draft link");
       }
       const draftLink = draftLinkResult.unwrap();
+      // Track Link list plus (user pressed + button)
+      trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
       goto(resolve(`/link/create/${draftLink.id}`));
     } catch (error) {
       toast.error(locale.t("links.createLinkError"));

@@ -1,5 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
@@ -10,6 +14,9 @@
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
 
   const id = page.params.id!;
+
+  // Track Link creation landing (page load of landing page)
+  trackEvent(AnalyticsEvent.LINK_CREATION_LANDING);
 </script>
 
 <RouteGuard draftLinkId={id}>

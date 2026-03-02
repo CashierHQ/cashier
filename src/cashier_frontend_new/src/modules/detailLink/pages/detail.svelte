@@ -12,6 +12,10 @@
     DialogPortal,
     DialogTitle,
   } from "$lib/shadcn/components/ui/dialog";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
@@ -72,6 +76,18 @@
   let showCongratulationsDrawer = $state(false);
   let lastClickWasOnButton = $state(false);
   let shouldShowCongratulations = $state(false);
+  let detailsLandingTracked = $state(false);
+
+  // Track Link details page load (Withdraw funnel)
+  $effect(() => {
+    if (linkStore && linkStore.link && !detailsLandingTracked) {
+      detailsLandingTracked = true;
+      trackEvent(AnalyticsEvent.WITHDRAW_LINK_DETAILS, {
+        link_type: linkStore.link.link_type,
+        BE_link_id: linkStore.link.id ?? "",
+      });
+    }
+  });
 
   // Check if we should show congratulations drawer on mount
   $effect(() => {
@@ -295,6 +311,12 @@
   }
 
   function openEndLinkConfirm() {
+    if (linkStore && linkStore.link) {
+      trackEvent(AnalyticsEvent.WITHDRAW_LINK_END, {
+        link_type: linkStore.link.link_type,
+        BE_link_id: linkStore.link.id ?? "",
+      });
+    }
     showFirstEndLinkConfirm = true;
   }
 
@@ -343,6 +365,12 @@
 
   async function createWithdrawAction() {
     if (!linkStore) throw new Error("Link store is missing");
+    if (linkStore.link) {
+      trackEvent(AnalyticsEvent.WITHDRAW_LANDING, {
+        link_type: linkStore.link.link_type,
+        BE_link_id: linkStore.link.id ?? "",
+      });
+    }
     errorMessage = null;
     isCreatingWithdraw = true;
 
@@ -399,9 +427,17 @@
 
     // Store previous state to check if it was CREATE_LINK
     const wasCreateLink = linkStore.link?.state === LinkState.CREATE_LINK;
+    const wasWithdraw =
+      linkStore.action?.type === ActionType.WITHDRAW && linkStore.link;
 
     const result = await linkStore.processAction();
     if (result.isSuccess) {
+      if (wasWithdraw) {
+        trackEvent(AnalyticsEvent.WITHDRAW_ACTION_SUCCESS, {
+          link_type: wasWithdraw.link_type,
+          BE_link_id: linkStore.link.id ?? "",
+        });
+      }
       // Set flag to show congratulations if link was in CREATE_LINK state
       if (wasCreateLink) {
         shouldShowCongratulations = true;

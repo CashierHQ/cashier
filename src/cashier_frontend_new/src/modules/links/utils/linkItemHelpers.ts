@@ -60,7 +60,8 @@ export function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
     case LinkType.RECEIVE_PAYMENT:
       return "/receive-payment-default.svg";
     default:
-      assertUnreachable(linkType);
+      // Fallback for unknown or future link types (e.g. from stored state or new backend)
+      return "/tip-link-default.svg";
   }
 }
 
@@ -75,7 +76,8 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
     case LinkType.TOKEN_BASKET:
       return "Send Token Basket";
     default:
-      assertUnreachable(linkType);
+      // Fallback for unknown or future link types
+      return "Link";
   }
 }
 

@@ -25,6 +25,10 @@
   import { Minus, Plus } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   const {
     link,
   }: {
@@ -367,6 +371,10 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE, {
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
       // Validate total amount before proceeding
       if (!isTotalAmountValid) {
         const maxTotal = maxTotalAmount;

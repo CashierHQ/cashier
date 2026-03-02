@@ -3,6 +3,10 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import type { ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
@@ -11,6 +15,7 @@
     type LinkTypeValue,
   } from "$modules/links/types/link/linkType";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
+  import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
 
   const {
@@ -18,6 +23,13 @@
   }: {
     link: GenericCreationLinkStoreVM & ChooseLinkTypeVM;
   } = $props();
+
+  onMount(() => {
+    trackEvent(AnalyticsEvent.LINK_CREATION_TEMPLATE_LANDING, {
+      link_type: link.createLinkData.linkType,
+      FE_link_id: link.id ?? "",
+    });
+  });
 
   const linkTypes: LinkTypeValue[] = [
     LinkType.TIP,
@@ -109,6 +121,11 @@
   async function goNext() {
     try {
       const currentLinkType = link.linkType;
+      trackEvent(AnalyticsEvent.LINK_CREATION_TEMPLATE_CONTINUE, {
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
+
       const newLinkType = linkTypes[currentSlide];
 
       // If selecting link type is different than existing link type in store,

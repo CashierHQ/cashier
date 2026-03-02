@@ -2,6 +2,10 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
@@ -272,6 +276,10 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE, {
+        link_type: link.createLinkData.linkType,
+        FE_link_id: link.id ?? "",
+      });
       await link.goNext();
     } catch (e) {
       toast.error(String(e));

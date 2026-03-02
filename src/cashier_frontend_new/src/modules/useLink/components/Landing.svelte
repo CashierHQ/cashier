@@ -10,7 +10,10 @@
     openLoginModal,
   }: {
     userLink: GenericUserLinkStoreVM;
-    openLoginModal?: () => void;
+    openLoginModal?: (payload?: {
+      link_type: string;
+      BE_link_id: string;
+    }) => void;
   } = $props();
 
   const linkType = $derived.by(() => {

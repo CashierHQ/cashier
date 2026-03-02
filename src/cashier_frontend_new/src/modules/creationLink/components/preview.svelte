@@ -1,10 +1,15 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+  import { onMount } from "svelte";
 
   const {
     link,
@@ -16,18 +21,37 @@
   let successMessage: string | null = $state(null);
   let isCreating = $state(false);
 
-  // Create the link
+  onMount(() => {
+    trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING, {
+      link_type: link.createLinkData.linkType,
+      FE_link_id: link.id ?? "",
+    });
+  });
+
   async function handleCreate() {
     errorMessage = null;
     successMessage = null;
     isCreating = true;
 
+    const feLinkId = link.id ?? "";
+
+    trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE, {
+      link_type: link.createLinkData.linkType,
+      FE_link_id: feLinkId,
+    });
+
     try {
       await link.goNext();
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED, {
+        link_type: link.createLinkData.linkType,
+        FE_link_id: feLinkId,
+        BE_link_id: link.backendId ?? "",
+      });
       linkListStore.refresh();
-      successMessage = "Link created successfully: " + link.id;
+      successMessage =
+        locale.t("links.linkForm.preview.createSuccess") + link.id;
     } catch (error) {
-      errorMessage = "Failed to create link: " + error;
+      errorMessage = locale.t("links.linkForm.preview.createError") + error;
       return;
     } finally {
       isCreating = false;

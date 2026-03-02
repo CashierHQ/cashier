@@ -3,6 +3,10 @@
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
@@ -46,12 +50,21 @@
       detailStore &&
       detailStore.state === LinkState.ACTIVE
     ) {
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS, {
+        link_type: link.createLinkData.linkType,
+        BE_link_id: link.backendId ?? "",
+      });
       goto(resolve(`/link/detail/${link.backendId}?created=true`));
     }
   });
 
   onMount(() => {
     if (link.action && link.action.state !== ActionState.SUCCESS) {
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_LANDING, {
+        link_type: link.createLinkData.linkType,
+        BE_link_id: link.backendId ?? "",
+      });
+
       showTxCart = true;
     }
   });
