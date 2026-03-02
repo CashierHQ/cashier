@@ -19,10 +19,6 @@
   const linkType = $derived.by(() => {
     return userLink.link?.link_type;
   });
-
-  $effect(() => {
-    console.log("Rendering Landing with linkType:", linkType);
-  });
 </script>
 
 <div

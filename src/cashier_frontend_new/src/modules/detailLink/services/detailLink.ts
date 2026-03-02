@@ -212,11 +212,7 @@ export class DetailLinkService {
       if (getLinkResp.isErr()) return Err(getLinkResp.error);
 
       const res = getLinkResp.unwrap();
-      console.log("link details response", res);
-
       const linkActionV3 = LinkActionV3Mapper.fromBackendResponse(res);
-      console.log("mapped link action", linkActionV3);
-
       return Ok(linkActionV3);
     } catch (e) {
       return Err(e as Error);

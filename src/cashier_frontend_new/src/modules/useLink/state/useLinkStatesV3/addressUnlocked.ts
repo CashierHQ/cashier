@@ -40,8 +40,6 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
   async createAction(
     actionType: ActionTypeValue,
   ): Promise<CreateActionResponseV3> {
-    console.log("Creating action of type", actionType);
-
     if (actionType !== ActionType.RECEIVE) {
       throw new Error(
         `Action type ${actionType} not supported in AddressUnlocked state.`,
@@ -57,18 +55,12 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
     }
 
     const receiveAction = receiveActionRes.unwrap();
-    console.log(
-      "Receive action to call be: ",
-      receiveAction,
-      "link id",
-      this.#store.linkDetail.id,
-    );
+
     const actionRes = await cashierBackendService.createActionV3({
       link_id: this.#store.linkDetail.id,
       action: receiveAction,
     });
 
-    console.log("Created action V3 result: ", actionRes);
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
     }
@@ -81,10 +73,6 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
     if (!this.#store.action) {
       throw new Error("Action is not created");
     }
-    console.log(
-      "Processing action in AddressUnlockedStateV3, action:",
-      this.#store.action,
-    );
 
     if (this.#store.action.type !== ActionType.RECEIVE) {
       throw new Error(
@@ -95,7 +83,6 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
     const actionId = this.#store.action.id;
     const result = await cashierBackendService.processActionV3(actionId);
 
-    console.log("Process action V3 result:", result);
     if (result.isErr()) {
       throw new Error(`Failed to process action: ${result.error}`);
     }

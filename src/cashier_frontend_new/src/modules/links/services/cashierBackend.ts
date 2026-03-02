@@ -162,7 +162,6 @@ class CanisterBackendService {
       action,
     );
     const response = await actor.user_create_link_v3(input);
-    console.log("Create Link V3 Response:", response);
 
     return responseToResult(
       response as

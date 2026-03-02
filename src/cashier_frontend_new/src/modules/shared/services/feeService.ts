@@ -145,8 +145,6 @@ export class FeeService {
     const pairs: AssetAndFee[] = [];
     const feeConfig = this.getLinkCreationFee();
 
-    console.log("Building asset and fee list from action:", action);
-
     for (const intent of action.intents) {
       const address = intent.type.payload.asset.address.toString();
       const token = tokens[address];
@@ -160,7 +158,6 @@ export class FeeService {
         currentWalletPrincipal,
       );
 
-      console.log("direction for intent", intent.id, "is", direction);
 
       let feeType = FeeType.NETWORK_FEE;
       if (
@@ -193,12 +190,7 @@ export class FeeService {
           }
           break;
       }
-      console.log(
-        "Intent participants for intent",
-        intent.id,
-        "is",
-        intentParticipants,
-      );
+      
 
       const intentFees = calculateIntentFees({
         intent_participants: intentParticipants,
@@ -211,12 +203,7 @@ export class FeeService {
         max_use: maxUse,
       });
 
-      console.log(
-        "Calculated intent fees for intent",
-        intent.id,
-        "is",
-        intentFees,
-      );
+      
 
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";

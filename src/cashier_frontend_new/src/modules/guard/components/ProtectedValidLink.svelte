@@ -21,10 +21,6 @@
     context.isLoading({ checkTempLinkLoad: true }),
   );
 
-  $effect(() => {
-    console.log("isloading in validlink", $state.snapshot(isLoading));
-  });
-
   const hasLink = $derived(() => context.hasLink());
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);

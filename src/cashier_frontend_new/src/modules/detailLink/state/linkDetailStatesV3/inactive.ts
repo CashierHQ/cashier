@@ -40,13 +40,11 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
     }
 
     const withdrawAction = withdrawActionRes.unwrap();
-    console.log("Withdraw action to call be: ", withdrawAction);
     const actionRes = await cashierBackendService.createActionV3({
       link_id: link.id,
       action: withdrawAction,
     });
 
-    console.log("Created action V3 result: ", actionRes);
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
     }
@@ -73,7 +71,6 @@ export class LinkInactiveStateV3 implements LinkDetailStateV3 {
     const actionId = this.#linkDetailStore.backendAction.id;
     const result = await cashierBackendService.processActionV3(actionId);
 
-    console.log("Process action V3 result:", result);
     if (result.isErr()) {
       throw new Error(`Failed to process action: ${result.error}`);
     }

@@ -161,7 +161,6 @@ export class LinkDetailStoreV3 {
   async createAction(
     actionType: SharedActionType,
   ): Promise<CreateActionResponseV3> {
-    console.log("Creating action of type", actionType, "for link", this.id);
     return this.state.createAction(actionType);
   }
 

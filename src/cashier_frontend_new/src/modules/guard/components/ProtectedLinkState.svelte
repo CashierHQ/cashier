@@ -41,10 +41,6 @@
     linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
 
-  $effect(() => {
-    console.log("isloading in linkstate", $state.snapshot(isLoading));
-  });
-
   const isStateValid = $derived(
     currentStep !== null && allowedStates.includes(currentStep),
   );

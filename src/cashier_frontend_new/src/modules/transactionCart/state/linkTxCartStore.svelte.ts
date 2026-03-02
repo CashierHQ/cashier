@@ -71,8 +71,6 @@ export class LinkTxCartStore implements TxCartStore {
       tokens,
       walletPrincipal,
     );
-
-    console.log("Initialized asset and fee list:", this.#assetAndFeeList);
   }
 
   /** Compute total fee in USD */

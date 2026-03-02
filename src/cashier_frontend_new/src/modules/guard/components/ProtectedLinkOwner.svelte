@@ -25,10 +25,6 @@
     context.isLoading({ checkTempLinkLoad: false }),
   );
 
-  $effect(() => {
-    console.log("isloading in linkowner", $state.snapshot(isLoading));
-  });
-
   const isReady = $derived(
     !context.authState.isReady || !linkStore
       ? false

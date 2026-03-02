@@ -40,8 +40,6 @@ function getTemplateForActionType(
   if (!templatesLinkType)
     return Err(new Error("No templates found for link type"));
 
-  console.log("Templates for link type", linkType, ": ", templatesLinkType);
-  console.log("Action type to match: ", actionType);
   const template = templatesLinkType.find((t) => t.action_type === actionType);
   if (!template) return Err(new Error("No template found for action type"));
 
@@ -66,7 +64,6 @@ export function createActionFromTemplate(
   creator: Principal,
 ): Result<Action, Error> {
   const template = getTemplateForActionType(linkType, actionType);
-  console.log("Loaded template: ", template);
   if (
     template.isErr() ||
     !template.value.intents ||
@@ -75,7 +72,6 @@ export function createActionFromTemplate(
     return Err(new Error("Invalid template or intents"));
   }
   const templateValue = template.unwrap();
-  console.log("Using template value: ", templateValue);
 
   // Use template structure but with our id, creator, and placeholder intents
   const intents = templateValue.intents.map((tIntent) => ({
