@@ -158,7 +158,6 @@ export class FeeService {
         currentWalletPrincipal,
       );
 
-
       let feeType = FeeType.NETWORK_FEE;
       if (
         action.type === ActionType.CREATE_LINK &&
@@ -190,7 +189,6 @@ export class FeeService {
           }
           break;
       }
-      
 
       const intentFees = calculateIntentFees({
         intent_participants: intentParticipants,
@@ -200,10 +198,9 @@ export class FeeService {
         user_input_amount: intent.type.payload.amount,
         asset_network_fee: ledgerFee,
         link_creation_fee: feeConfig.amount,
+        link_max_asset_amount: intent.type.payload.amount,
         max_use: maxUse,
       });
-
-      
 
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
