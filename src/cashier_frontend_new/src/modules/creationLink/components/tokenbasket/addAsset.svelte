@@ -5,11 +5,11 @@
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
   import type {
     AddAssetItem,
-    GenericCreationLinkStore,
-  } from "$modules/creationLink/types/genericCreationLinkStore";
+    GenericCreationLinkStoreVM,
+  } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import {
     calculateMaxAmountForAsset,
     calculateTotalAssetAmount,
@@ -27,7 +27,7 @@
   const {
     link,
   }: {
-    link: AddAssetVM & GenericCreationLinkStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let showAssetDrawer = $state(false);

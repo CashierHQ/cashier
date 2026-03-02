@@ -1,10 +1,7 @@
-import { describe, expect, it } from "vitest";
-import {
-  CreateLinkAsset,
-  CreateLinkData,
-  CreateLinkDataMapper,
-} from "./createLinkData";
 import { LinkType } from "$modules/links/types/link/linkType";
+import { describe, expect, it } from "vitest";
+import { CreateLinkAsset, CreateLinkData } from "./createLinkData";
+import { CreateLinkInputMapper } from "./dto/create_link";
 
 describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {
@@ -18,10 +15,9 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     });
 
     // Act
-    const res = CreateLinkDataMapper.toCreateLinkInput(data);
+    const input = CreateLinkInputMapper.toBackendCreateLinkInputArg(data);
 
     // Assert
-    const input = res.unwrap();
     expect(input.title).toEqual("My tip");
     expect(input.asset_info).toHaveLength(1);
     expect(input.asset_info[0].label).toEqual("SEND_TIP_ASSET");
@@ -40,10 +36,9 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     });
 
     // Act
-    const res = CreateLinkDataMapper.toCreateLinkInput(data);
+    const input = CreateLinkInputMapper.toBackendCreateLinkInputArg(data);
 
     // Assert
-    const input = res.unwrap();
     expect(input.title).toEqual("My airdrop");
     expect(input.asset_info).toHaveLength(1);
     expect(input.asset_info[0].label).toEqual("SEND_AIRDROP_ASSET");
@@ -66,10 +61,9 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     });
 
     // Act
-    const res = CreateLinkDataMapper.toCreateLinkInput(data);
+    const input = CreateLinkInputMapper.toBackendCreateLinkInputArg(data);
 
     // Assert
-    const input = res.unwrap();
     expect(input.title).toEqual("My token basket");
     expect(input.asset_info).toHaveLength(2);
     expect(input.asset_info[0].label).toEqual(
@@ -93,12 +87,10 @@ describe("CreateLinkData.toCreateLinkInput", () => {
       maxUse: 1,
     });
 
-    // Act
-    const res = CreateLinkDataMapper.toCreateLinkInput(data);
-
-    // Assert
-    expect(res.isErr()).toBe(true);
-    expect(res.unwrapErr().message).toContain(
+    // Act & Assert
+    expect(() =>
+      CreateLinkInputMapper.toBackendCreateLinkInputArg(data),
+    ).toThrow(
       "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
     );
   });

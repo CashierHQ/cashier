@@ -1,8 +1,8 @@
 import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
-import { type ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkType";
-import type { AddAssetItem } from "$modules/creationLink/types/genericCreationLinkStore";
-import { type GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+import { type ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
+import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import { type GenericCreationLinkStore } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import type { LinkTypeValue } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 

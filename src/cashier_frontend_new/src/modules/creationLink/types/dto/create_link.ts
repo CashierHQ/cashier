@@ -1,91 +1,71 @@
 import type {
-  CreateLinkInputV3 as BackendCreateLinkInputV3,
-  CreateLinkResponseV3 as BackendCreateLinkResponseV3,
-  Icrc112Request as BackendIcrc112Request,
+  AssetInfoDto,
+  CreateLinkInput as BackendCreateLinkInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { SharedActionMapper } from "$modules/actionTemplate/types/action";
-import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
-import { SharedLinkTypeMapper } from "$modules/actionTemplate/types/link_type";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import {
-  Icrc112RequestMapper,
-  type Icrc112Requests,
-} from "$modules/icrc112/types/icrc112Request";
-import type { LinkType as SharedLinkType } from "$shared";
-import { type Action as SharedAction, type Link as SharedLink } from "$shared";
+  type CreateLinkData,
+  CreateLinkAssetMapper,
+} from "$modules/creationLink/types/createLinkData";
+import { LinkType, LinkTypeMapper } from "$modules/links/types/link/linkType";
 
 /**
- * FE representation of CreateLinkInputV3 expected by the backend.
+ * Mapper for converting CreateLinkData to CreateLinkInput argument for BE API calls.
  */
-export type CreateLinkInputV3 = {
-  title: string;
-  link_type: SharedLinkType;
-  max_use: number;
-  action: SharedAction;
-};
-
-/**
- * FE representation of CreateLinkResponseV3 returned by the backend.
- */
-export type CreateLinkResponseV3 = {
-  link: SharedLink;
-  action: SharedAction;
-  icrc112_requests?: Icrc112Requests | null;
-};
-
-/**
- * Mapper for converting CreateLinkData and SharedAction to CreateLinkInputV3 argument for BE API calls.
- */
-export class CreateLinkInputV3Mapper {
+export class CreateLinkInputMapper {
   /**
-   * Convert CreateLinkData and SharedAction to CreateLinkInputV3 argument for backend API calls
-   * @param link - the SharedLink containing link details
-   * @param action - the SharedAction containing action details
-   * @returns Result containing CreateLinkInputV3 or an Error if conversion fails
+   * Convert CreateLinkData to CreateLinkInput argument for backend API calls
+   * @param input
+   * @returns
    */
-  static toBackendCreateLinkInputArgV3(
-    link: SharedLink,
-    action: SharedAction,
-  ): BackendCreateLinkInputV3 {
-    const beLinkType = SharedLinkTypeMapper.toBackendType(link.link_type);
-    const beAction = SharedActionMapper.toBackendType(action);
+  static toBackendCreateLinkInputArg(
+    input: CreateLinkData,
+  ): BackendCreateLinkInput {
+    const link_type = LinkTypeMapper.toBackendType(input.linkType);
 
-    const inputDto: BackendCreateLinkInputV3 = {
-      title: link.title,
-      link_type: beLinkType,
-      max_use: BigInt(link.max_use || 1),
-      action: beAction,
-    };
-
-    return inputDto;
-  }
-}
-
-export class CreateLinkResponseV3Mapper {
-  /**
-   * Map CreateLinkResponseV3 from backend to frontend SharedLink and SharedAction
-   * @param response - the CreateLinkResponseV3 from the backend
-   * @returns Result containing an object with SharedLink and SharedAction or an Error if mapping fails
-   */
-  static fromBackendCreateLinkResponseV3(
-    response: BackendCreateLinkResponseV3,
-  ): CreateLinkResponseV3 {
-    const link = SharedLinkMapper.toLocalType(response.link);
-    const action = SharedActionMapper.toLocalType(response.action);
-    let icrc112_requests: Icrc112Request[][] | undefined = undefined;
-    if (response.icrc112_requests && response.icrc112_requests.length === 1) {
-      const outer = response.icrc112_requests[0];
-      icrc112_requests = outer.map((innerArr) =>
-        innerArr.map((r: BackendIcrc112Request) =>
-          Icrc112RequestMapper.fromBackendType(r),
-        ),
+    // Validate link type is supported
+    if (
+      input.linkType !== LinkType.TIP &&
+      input.linkType !== LinkType.AIRDROP &&
+      input.linkType !== LinkType.TOKEN_BASKET
+    ) {
+      throw new Error(
+        "Only Tip, Airdrop, and Token Basket link types are supported currently",
       );
     }
 
-    return {
-      link,
-      action,
-      icrc112_requests,
+    if (!input.assets) {
+      throw new Error("Asset is missing");
+    }
+
+    if (input.assets.length === 0) {
+      throw new Error("Link asset data is missing");
+    }
+
+    // Determine the correct label based on link type
+    // For Token Basket, each asset needs a label with its address
+    const assetInfo: Array<AssetInfoDto> = input.assets.map((a) => {
+      let assetLabel: string;
+      if (input.linkType === LinkType.TIP) {
+        assetLabel = "SEND_TIP_ASSET";
+      } else if (input.linkType === LinkType.AIRDROP) {
+        assetLabel = "SEND_AIRDROP_ASSET";
+      } else if (input.linkType === LinkType.TOKEN_BASKET) {
+        // Token Basket requires address in the label
+        assetLabel = `SEND_TOKEN_BASKET_ASSET_${a.address}`;
+      } else {
+        // This should never happen due to validation above, but TypeScript needs it
+        throw new Error(`Unsupported link type: ${input.linkType}`);
+      }
+      return CreateLinkAssetMapper.toBackendWithLabel(a, assetLabel);
+    });
+
+    const inputDto: BackendCreateLinkInput = {
+      title: input.title,
+      asset_info: assetInfo,
+      link_type: link_type,
+      link_use_action_max_count: BigInt(input.maxUse || 1),
     };
+
+    return inputDto;
   }
 }

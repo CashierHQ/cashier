@@ -2,12 +2,12 @@ import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
-import { CreateLinkInputDto } from "$modules/creationLink/types/createLinkInputDto";
+import { CreateLinkInputMapper } from "$modules/creationLink/types/dto/create_link";
 import {
   CreateLinkInputV3Mapper,
   CreateLinkResponseV3Mapper,
   type CreateLinkResponseV3,
-} from "$modules/creationLink/types/dto/create_link";
+} from "$modules/creationLink/types/dto/create_link_v3";
 import type {
   CreateActionResultV3,
   ProcessActionResultV3,
@@ -126,12 +126,9 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = CreateLinkInputDto.toCreateLinkInputArg(input);
-    if (request.isErr()) {
-      return Err(request.unwrapErr());
-    }
-
-    const response = await actor.user_create_link_v2(request.unwrap());
+    const backendInput =
+      CreateLinkInputMapper.toBackendCreateLinkInputArg(input);
+    const response = await actor.user_create_link_v2(backendInput);
 
     return responseToResult(response)
       .map((res) => res)

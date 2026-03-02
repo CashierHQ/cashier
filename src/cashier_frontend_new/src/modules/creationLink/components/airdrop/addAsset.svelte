@@ -5,8 +5,8 @@
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/genericCreationLinkStoreVM";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
@@ -28,7 +28,7 @@
   const {
     link,
   }: {
-    link: AddAssetVM & GenericCreationLinkStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let showAssetDrawer = $state(false);

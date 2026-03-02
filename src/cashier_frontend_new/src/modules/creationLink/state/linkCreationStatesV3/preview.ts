@@ -35,11 +35,6 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       throw new Error("Action must be initialized to create link");
     }
 
-    console.log("Creating link with draft link and action:", {
-      draftLink: this.#linkStore.draftLink,
-      draftAction: this.#linkStore.draftAction,
-    });
-
     // call backend API to create the link
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,
@@ -49,8 +44,6 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
     }
-
-    console.log("Link created successfully with V3 API:", result.value);
 
     const createLinkResponse = result.unwrap();
 

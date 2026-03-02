@@ -2,8 +2,8 @@
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
-  import { type AddAssetVM } from "$modules/creationLink/types/addAsset";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,

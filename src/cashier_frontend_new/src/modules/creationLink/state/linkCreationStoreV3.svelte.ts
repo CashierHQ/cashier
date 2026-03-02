@@ -31,7 +31,7 @@ import {
 } from "$shared";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, Result } from "ts-results-es";
-import type { AddAssetItem } from "../types/genericCreationLinkStore";
+import type { AddAssetItem } from "../types/viewModels/genericCreationLinkStoreVM";
 
 /**
  * Store for draft link state management

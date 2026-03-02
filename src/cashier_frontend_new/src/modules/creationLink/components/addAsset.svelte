@@ -2,8 +2,8 @@
   import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
   import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
   import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
-  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
   import { LinkType } from "$modules/links/types/link/linkType";
 
   const {

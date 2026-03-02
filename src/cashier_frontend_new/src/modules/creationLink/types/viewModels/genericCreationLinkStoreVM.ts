@@ -19,7 +19,10 @@ export type CreateLinkData = {
   maxUse: number;
 };
 
-export type GenericCreationLinkStore = {
+/**
+ * GenericCreationLinkStore view model
+ */
+export type GenericCreationLinkStoreVM = {
   id: string | undefined;
   backendId: string | undefined;
   step: LinkStep;

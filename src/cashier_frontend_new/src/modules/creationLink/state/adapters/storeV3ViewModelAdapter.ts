@@ -1,11 +1,11 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
-import { type AddAssetVM } from "$modules/creationLink/types/addAsset";
-import { type ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkType";
-import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+import { type ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
+import type { GenericCreationLinkStore } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import {
   AddAssetItemMapper,
   type AddAssetItem,
-} from "$modules/creationLink/types/genericCreationLinkStore";
+} from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import { ActionMapper } from "$modules/links/types/action/action";
 import {
   LinkTypeMapper,

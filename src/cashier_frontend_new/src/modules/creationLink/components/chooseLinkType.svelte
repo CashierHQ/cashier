@@ -3,8 +3,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkType";
-  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
+  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/chooseLinkTypeVM";
+  import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStoreVM";
   import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
   import {
     LinkType,

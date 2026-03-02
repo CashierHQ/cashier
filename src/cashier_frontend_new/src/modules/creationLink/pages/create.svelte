@@ -8,10 +8,10 @@
   import Preview from "$modules/creationLink/components/preview.svelte";
   import { CreationStoreV3ViewModelAdapter } from "$modules/creationLink/state/adapters/storeV3ViewModelAdapter";
   import { CreationStoreViewModelAdapter } from "$modules/creationLink/state/adapters/storeViewModelAdapter";
+  import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
+  import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
-  import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/types/adapters/detailStoreV3ViewModelAdapter";
-  import { DetailStoreViewModelAdapter } from "$modules/detailLink/types/adapters/detailStoreViewModelAdapter";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";

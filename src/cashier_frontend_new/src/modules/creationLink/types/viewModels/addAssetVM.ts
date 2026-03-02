@@ -1,5 +1,8 @@
-import type { AddAssetItem } from "$modules/creationLink/types/genericCreationLinkStore";
+import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
+/**
+ * AddAsset view model
+ */
 export type AddAssetVM = {
   assets: AddAssetItem[];
   maxUse: number;
