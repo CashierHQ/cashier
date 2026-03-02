@@ -186,8 +186,8 @@ export class LinkTxCartStore implements TxCartStore {
             icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed",
           );
         }
-        // Show semi-transparent green checkmarks (ICRC-112 signed successfully)
-        this.setStatesToSignedPending();
+        // TODO: Show semi-transparent green checkmarks (ICRC-112 signed successfully)
+        //this.setStatesToSignedPending();
       }
 
       const result = await handleProcessAction();

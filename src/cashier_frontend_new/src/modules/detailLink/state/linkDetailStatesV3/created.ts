@@ -45,6 +45,7 @@ export class LinkCreatedStateV3 implements LinkDetailStateV3 {
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }
+
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
     return result.unwrap();

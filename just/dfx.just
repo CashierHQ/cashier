@@ -606,4 +606,5 @@ dfx_mainnet_deploy_backend:
   set -e
 
   export OWNER=$(dfx identity get-principal)
+  export TOKEN_STORAGE_CANISTER_ID=hmrnm-pqaaa-aaaam-aenea-cai
   just dfx_deploy_backend "${OWNER}" --network=ic --mode=upgrage

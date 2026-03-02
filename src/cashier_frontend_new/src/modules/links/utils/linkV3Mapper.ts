@@ -1,9 +1,9 @@
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Link } from "$modules/links/types/link/link";
-import { AssetInfoMapper } from "$modules/links/types/link/asset";
-import { LinkTypeMapper } from "$modules/links/types/link/linkType";
-import { LinkState } from "$modules/links/types/link/linkState";
 import { rsMatch } from "$lib/rsMatch";
+import { AssetInfoMapper } from "$modules/links/types/link/asset";
+import { Link } from "$modules/links/types/link/link";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkTypeMapper } from "$modules/links/types/link/linkType";
 
 /**
  * Map V3 backend LinkState_1 (Created|Active|Inactive|Ended) to frontend LinkState.
@@ -16,6 +16,9 @@ function mapV3LinkStateToFrontend(
     Active: () => LinkState.ACTIVE,
     Inactive: () => LinkState.INACTIVE,
     Ended: () => LinkState.INACTIVE_ENDED,
+    ChooseType: () => LinkState.INACTIVE,
+    AddAsset: () => LinkState.INACTIVE,
+    Preview: () => LinkState.INACTIVE,
   });
 }
 
@@ -36,14 +39,14 @@ function mapV3AssetInfo(
 /**
  * Convert V3 backend Link to frontend Link.
  * V3 has use_count, max_use - maps to link_use_action_counter, link_use_action_max_count.
- * created_at_ts (nanoseconds, Candid Opt) maps to create_at for date display.
+ * created_at (nanoseconds, Candid Opt) maps to create_at for date display.
  */
 export function mapV3LinkToFrontend(v3Link: cashierBackend.Link): Link {
-  const raw = v3Link as { created_at_ts?: [] | [bigint] };
-  const createdAtTs = Array.isArray(raw.created_at_ts)
-    ? raw.created_at_ts[0]
+  const raw = v3Link as { created_at?: [] | [bigint] };
+  const createdAt = Array.isArray(raw.created_at)
+    ? raw.created_at[0]
     : undefined;
-  const createAt = createdAtTs !== undefined ? BigInt(createdAtTs) : 0n;
+  const createAt = createdAt !== undefined ? BigInt(createdAt) : 0n;
   return new Link(
     v3Link.id,
     v3Link.title,
