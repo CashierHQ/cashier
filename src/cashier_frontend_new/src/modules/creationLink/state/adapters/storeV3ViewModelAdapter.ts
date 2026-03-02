@@ -16,11 +16,7 @@ import type { LinkStep } from "$modules/links/types/linkStep";
 export class CreationStoreV3ViewModelAdapter
   implements ChooseLinkTypeVM, GenericCreationLinkStore, AddAssetVM
 {
-  private linkStore: LinkCreationStoreV3;
-
-  constructor(store: LinkCreationStoreV3) {
-    this.linkStore = store;
-  }
+  constructor(private linkStore: LinkCreationStoreV3) {}
 
   // choose link type methods
   get title(): string {
@@ -137,6 +133,7 @@ export class CreationStoreV3ViewModelAdapter
   get action() {
     if (!this.linkStore.backendAction) return undefined;
 
+    console.log("backend action", this.linkStore.backendAction);
     return ActionMapper.fromSharedAction(
       this.linkStore.backendAction,
       this.linkStore.icrc112Requests,

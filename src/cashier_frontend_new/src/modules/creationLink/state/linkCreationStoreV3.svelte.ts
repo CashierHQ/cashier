@@ -30,6 +30,7 @@ import {
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@dfinity/principal";
+import { Err, Ok, Result } from "ts-results-es";
 import type { AddAssetItem } from "../types/genericCreationLinkStore";
 
 /**
@@ -128,6 +129,10 @@ export class LinkCreationStoreV3 {
     this.#icrc112Requests = requests;
   }
 
+  get linkType(): SharedLinkType {
+    return this.#draftLink.link_type;
+  }
+
   // Move to the next state
   async goNext(): Promise<void> {
     await this.#state.goNext();
@@ -216,6 +221,10 @@ export class LinkCreationStoreV3 {
     }
   }
 
+  /**
+   * Set the asset information in the draft link based on the given assets from Add Asset step
+   * @param assets
+   */
   setAssets(assets: AddAssetItem[]) {
     const assetInfo = assets.map((asset) => {
       const tokenMetadataRes = walletStore.findTokenByAddress(asset.address);
@@ -249,29 +258,42 @@ export class LinkCreationStoreV3 {
   }
 
   /**
-   * Initialize Action from template (actions.json) for V3 create flow.
-   * Used for TIP_SHARED_TEST: creates action with 2 placeholder intents.
+   * Initialize Action from template
    */
-  initializeCreateActionFromTemplate(linkType: SharedLinkType): boolean {
+  initializeCreateLinkActionFromTemplate(): Result<boolean, Error> {
     if (authState.account?.owner === undefined) {
-      throw new Error(
-        "User must be authenticated to initialize action from template",
+      return Err(
+        new Error(
+          "User must be authenticated to initialize action from template",
+        ),
       );
     }
 
     const creator = Principal.fromText(authState.account.owner);
     const loadedActionResult = createActionFromTemplate(
-      linkType,
+      this.linkType,
       SharedActionType.CreateLink,
       creator,
     );
     if (loadedActionResult.isErr()) {
-      throw new Error("Failed to initialize action from template");
+      return Err(new Error("Failed to load action from template"));
     }
     const loadedAction = loadedActionResult.unwrap();
     this.#draftAction = loadedAction;
 
-    return true;
+    // populate the asset intents with the asset info from the draft link
+    try {
+      this.populateAssetIntent();
+      this.populateFeeIntent();
+    } catch (error) {
+      return Err(
+        error instanceof Error
+          ? error
+          : new Error("Unknown error populating asset intent"),
+      );
+    }
+
+    return Ok(true);
   }
 
   /**

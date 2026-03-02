@@ -3,7 +3,11 @@ import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { CreateLinkInputDto } from "$modules/creationLink/types/createLinkInputDto";
-import { CreateLinkInputDtoV3 } from "$modules/creationLink/types/createLinkInputDtoV3";
+import {
+  CreateLinkInputV3Mapper,
+  CreateLinkResponseV3Mapper,
+  type CreateLinkResponseV3,
+} from "$modules/creationLink/types/dto/create_link";
 import type {
   CreateActionResultV3,
   ProcessActionResultV3,
@@ -12,14 +16,11 @@ import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "$modules/links/types/action/actionType";
-import type {
-  CreateActionInputV3,
-  CreateLinkResponseV3,
-} from "$modules/links/types/linkV3";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 import { toNullable } from "@dfinity/utils";
 import { Err, type Result } from "ts-results-es";
+import { type CreateActionInputV3 } from "../types/linkV3";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -154,21 +155,21 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = CreateLinkInputDtoV3.toCreateLinkInputArgV3(link, action);
-    if (request.isErr()) {
-      return Err(request.unwrapErr());
-    }
-
-    console.log("Create Link V3 Request:", request.unwrap());
-    const response = await actor.user_create_link_v3(request.unwrap());
+    const input = CreateLinkInputV3Mapper.toBackendCreateLinkInputArgV3(
+      link,
+      action,
+    );
+    const response = await actor.user_create_link_v3(input);
     console.log("Create Link V3 Response:", response);
 
     return responseToResult(
       response as
-        | { Ok: CreateLinkResponseV3 }
+        | { Ok: cashierBackend.CreateLinkResponseV3 }
         | { Err: cashierBackend.CanisterError },
     )
-      .map((res) => res)
+      .map((res) =>
+        CreateLinkResponseV3Mapper.fromBackendCreateLinkResponseV3(res),
+      )
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 

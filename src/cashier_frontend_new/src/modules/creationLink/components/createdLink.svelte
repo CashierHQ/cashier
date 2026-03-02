@@ -4,6 +4,7 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/addAsset";
   import type { GenericCreationLinkStore } from "$modules/creationLink/types/genericCreationLinkStore";
   import type {
     GenericDetailStoreVM,
@@ -18,7 +19,7 @@
     link,
     detailStore,
   }: {
-    link: GenericCreationLinkStore;
+    link: GenericCreationLinkStore & AddAssetVM;
     detailStore: GenericDetailStoreVM;
   } = $props();
 

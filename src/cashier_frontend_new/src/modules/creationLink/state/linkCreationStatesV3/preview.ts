@@ -22,10 +22,25 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       throw new Error("Link must be initialized to create");
     }
 
-    if (!this.#linkStore.draftAction) {
-      throw new Error("Action must be initialized for link");
+    const initializeActionResult =
+      this.#linkStore.initializeCreateLinkActionFromTemplate();
+
+    if (initializeActionResult.isErr()) {
+      throw new Error(
+        `Failed to initialize action from template: ${initializeActionResult.error.message}`,
+      );
     }
 
+    if (!this.#linkStore.draftAction) {
+      throw new Error("Action must be initialized to create link");
+    }
+
+    console.log("Creating link with draft link and action:", {
+      draftLink: this.#linkStore.draftLink,
+      draftAction: this.#linkStore.draftAction,
+    });
+
+    // call backend API to create the link
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,
       this.#linkStore.draftAction,

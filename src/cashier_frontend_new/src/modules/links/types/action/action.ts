@@ -57,6 +57,11 @@ export class ActionMapper {
     action: SharedAction,
     icrc112Requests: Icrc112Request[][] | undefined,
   ): Action {
+    console.log("Mapping shared action to frontend action:", {
+      action,
+      icrc112Requests,
+    });
+
     const type = ActionTypeMapper.fromSharedType(action.action_type);
     const state = ActionStateMapper.fromSharedType(action.action_state);
     const intents = action.intents.map((intent) =>
