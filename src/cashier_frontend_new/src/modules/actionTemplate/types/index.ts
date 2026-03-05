@@ -1,26 +1,25 @@
+import type { Principal } from "@dfinity/principal";
+import type { Action, Intent, LinkType } from "$shared";
+
+type TemplateJsonValue<T> = T extends bigint
+  ? string
+  : T extends Principal
+    ? string
+    : T extends (infer U)[]
+      ? TemplateJsonValue<U>[]
+      : T extends object
+        ? { [K in keyof T]: TemplateJsonValue<T[K]> }
+        : T;
+
+type IntentTemplateJson = Omit<TemplateJsonValue<Intent>, "network_fee"> & {
+  total_network_fee?: string;
+};
+
 /**
- * Types for ActionTemplate
+ * JSON template payload based on shared Action shape.
+ * Keeps template-only fields (`link_type`, `total_network_fee`) without redefining Action by hand.
  */
-export type ActionTemplateJson = {
-  link_type?: string;
-  id: string;
-  creator: string;
-  creator_address_type: string;
-  action_type: string;
-  intents: Array<{
-    id: string;
-    intent_type: string;
-    asset: { address: string; network_fee?: string; token_standard?: string };
-    amount: string;
-    total_network_fee?: string;
-    user_fee?: string;
-    total_amount?: string;
-    source_address: string;
-    source_address_type: string;
-    dest_address: string;
-    dest_address_type: string;
-    dependencies?: string[];
-    intent_state: string;
-  }>;
-  action_state: string;
+export type ActionTemplateJson = Omit<TemplateJsonValue<Action>, "intents"> & {
+  link_type?: LinkType;
+  intents: IntentTemplateJson[];
 };

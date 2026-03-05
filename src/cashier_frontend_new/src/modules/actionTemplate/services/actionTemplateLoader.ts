@@ -1,16 +1,10 @@
 import type { Action } from "$shared";
-import {
-  ActionState,
-  AddressType,
-  IntentState,
-  IntentType,
-  TokenStandard,
-} from "$shared";
+import { ActionState, IntentState } from "$shared";
 import { Principal } from "@dfinity/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
+import { deserializeActionTemplate } from "$modules/actionTemplate/services/actionTemplateSerde";
 import { type ActionTemplateJson } from "$modules/actionTemplate/types";
-import { ActionTypeMapper } from "$modules/links/types/action/actionType";
 import {
   ActionType as SharedActionType,
   LinkType as SharedLinkType,
@@ -46,14 +40,6 @@ function getTemplateForActionType(
   return Ok(template);
 }
 
-// TODO
-function parseTokenStandard(
-  val?: string,
-): (typeof TokenStandard)[keyof typeof TokenStandard] {
-  if (val === "ICRC2") return TokenStandard.ICRC2;
-  return TokenStandard.ICRC1;
-}
-
 /**
  * Create an Action instance from template, with our id and creator.
  * Intents use placeholder data where actual values are not yet known.
@@ -72,63 +58,22 @@ export function createActionFromTemplate(
     return Err(new Error("Invalid template or intents"));
   }
   const templateValue = template.unwrap();
-
-  // Use template structure but with our id, creator, and placeholder intents
-  const intents = templateValue.intents.map((tIntent) => ({
-    id: crypto.randomUUID(),
-    intent_type: IntentType.Send,
-    asset: {
-      address: Principal.fromText(tIntent.asset?.address ?? "aaaaa-aa"),
-      network_fee: tIntent.asset?.network_fee
-        ? BigInt(tIntent.asset.network_fee)
-        : undefined,
-      token_standard: parseTokenStandard(tIntent.asset?.token_standard),
-    },
-    amount: BigInt(tIntent.amount ?? "0"),
-    total_network_fee: tIntent.total_network_fee
-      ? BigInt(tIntent.total_network_fee)
-      : undefined,
-    user_fee: tIntent.user_fee ? BigInt(tIntent.user_fee) : undefined,
-    total_amount: tIntent.total_amount
-      ? BigInt(tIntent.total_amount)
-      : undefined,
-    source_address: Principal.fromText(
-      tIntent.source_address ?? templateValue.creator,
-    ),
-    source_address_type:
-      tIntent.source_address_type === "Creator"
-        ? AddressType.Creator
-        : tIntent.source_address_type === "Treasury"
-          ? AddressType.Treasury
-          : tIntent.source_address_type === "User"
-            ? AddressType.User
-            : AddressType.Link,
-    dest_address: Principal.fromText(
-      tIntent.dest_address ?? templateValue.creator,
-    ),
-    dest_address_type:
-      tIntent.dest_address_type === "Link"
-        ? AddressType.Link
-        : tIntent.dest_address_type === "Treasury"
-          ? AddressType.Treasury
-          : tIntent.dest_address_type === "User"
-            ? AddressType.User
-            : AddressType.Creator,
-    dependencies: tIntent.dependencies ?? [],
-    intent_state: IntentState.Created,
-  }));
+  const deserializedAction = deserializeActionTemplate(templateValue);
+  if (deserializedAction.isErr()) {
+    return Err(deserializedAction.error);
+  }
+  const action = deserializedAction.value;
 
   return Ok({
     id: crypto.randomUUID(),
     creator,
-    creator_address_type:
-      templateValue.creator_address_type === "Creator"
-        ? AddressType.Creator
-        : AddressType.User,
-    action_type: ActionTypeMapper.fromSharedTypeString(
-      templateValue.action_type,
-    ),
-    intents,
+    creator_address_type: action.creator_address_type,
+    action_type: action.action_type,
+    intents: action.intents.map((intent) => ({
+      ...intent,
+      id: crypto.randomUUID(),
+      intent_state: IntentState.Created,
+    })),
     action_state: ActionState.Created,
   });
 }
