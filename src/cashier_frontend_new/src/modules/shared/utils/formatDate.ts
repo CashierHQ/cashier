@@ -1,3 +1,9 @@
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 /**
  * Formats a timestamp in nanoseconds to a human-readable date string.
  * @param ts - The timestamp in nanoseconds as a bigint
@@ -8,9 +14,5 @@ export function formatDate(ts: bigint) {
   const ms = Number(ts / 1000000n);
   const d = new Date(ms);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return DATE_FORMATTER.format(d);
 }

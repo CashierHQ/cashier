@@ -1,53 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-function getPrettyWhole(whole: string, separator: string) {
-  let prettyWhole = "";
-
-  for (let i = 0; i < whole.length; i++) {
-    const char = whole[whole.length - 1 - i];
-
-    if (i % 3 === 0 && i !== 0) {
-      prettyWhole = separator + prettyWhole;
-    }
-
-    prettyWhole = char + prettyWhole;
-  }
-
-  return prettyWhole;
-}
-
-function getPrettyDecimal(
-  decimal: string | undefined,
-  maxDigits: number | undefined,
-  wantPad: boolean,
-) {
-  let prettyDecimal = decimal ?? "";
-
-  if (maxDigits !== undefined) {
-    prettyDecimal = prettyDecimal.slice(0, maxDigits);
-
-    if (wantPad) {
-      prettyDecimal = prettyDecimal.padEnd(maxDigits, "0");
-    }
-  }
-
-  return prettyDecimal;
-}
-
-function buildPrettyNumber(whole: string, decimal: string, separator: string) {
-  if (!decimal) {
-    return whole;
-  } else {
-    return whole + separator + decimal;
-  }
-}
-
 type PrettyNumberOptions = {
-  decimals?: number; // number of decimals after comm
-  pad?: boolean; // if true, pad decimal part with 0s
-  decimalSeparator?: string; // separator between whole and decimal parts, '.' by default.
-  readabilitySeparator?: string; // separator between hundreds, thousands, millions and so on. ' ' by default.
+  decimals?: number;
+  pad?: boolean;
+  decimalSeparator?: string;
+  readabilitySeparator?: string;
 };
 
 export function prettyNumber(num: number, options: PrettyNumberOptions = {}) {
@@ -58,9 +16,29 @@ export function prettyNumber(num: number, options: PrettyNumberOptions = {}) {
     readabilitySeparator = ",",
   } = options;
 
-  const [whole, decimal] = num.toString().split(".");
-  const prettyWhole = getPrettyWhole(whole, readabilitySeparator);
-  const prettyDecimal = getPrettyDecimal(decimal, maxDecimalDigits, wantPad);
+  // Truncate decimal places via string slicing to avoid floating-point rounding
+  let value = num;
+  if (maxDecimalDigits !== undefined) {
+    const [intPart, fracPart = ""] = String(Math.abs(num)).split(".");
+    const truncated = fracPart ? `${intPart}.${fracPart.slice(0, maxDecimalDigits)}` : intPart;
+    value = num < 0 ? -Number(truncated) : Number(truncated);
+  }
 
-  return buildPrettyNumber(prettyWhole, prettyDecimal, decimalSeparator);
+  const formatter = new Intl.NumberFormat("en-US", {
+    useGrouping: true,
+    minimumFractionDigits: wantPad ? (maxDecimalDigits ?? 0) : 0,
+    maximumFractionDigits: maxDecimalDigits ?? 20,
+  });
+
+  let result = formatter.format(value);
+
+  // Replace default separators if custom ones provided
+  if (readabilitySeparator !== ",") {
+    result = result.replace(/,/g, readabilitySeparator);
+  }
+  if (decimalSeparator !== ".") {
+    result = result.replace(".", decimalSeparator);
+  }
+
+  return result;
 }
