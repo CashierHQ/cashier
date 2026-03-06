@@ -29,3 +29,13 @@ export type WalletAssetInput = {
   amount: bigint;
   tokenAddress: string;
 };
+
+/**
+ * Type for global fee configuration
+ */
+export type FeeConfig = {
+  amount: bigint;
+  tokenAddress: string;
+  symbol: string;
+  decimals: number;
+};

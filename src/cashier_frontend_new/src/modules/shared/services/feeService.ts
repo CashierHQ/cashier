@@ -34,6 +34,7 @@ import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type {
   AssetAndFee,
   AssetAndFeeList,
+  FeeConfig,
   ForecastAssetAndFee,
   WalletAssetInput,
 } from "$modules/shared/types/feeService";
@@ -344,9 +345,9 @@ export class FeeService {
   /**
    * Get link creation fee information.
    */
-  getLinkCreationFee() {
+  getLinkCreationFee(): FeeConfig {
     return {
-      amount: 10_000n, // 0.0001 ICP in e8s
+      amount: 10_000n,
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
