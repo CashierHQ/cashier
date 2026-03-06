@@ -2,13 +2,28 @@ import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
+import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { LinkState, LinkType, TokenStandard, type AssetInfo } from "$shared";
 import { Principal } from "@dfinity/principal";
-import { describe, expect, it, vi } from "vitest";
+import { Err, Ok } from "ts-results-es";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/i18n", () => ({
   locale: { t: vi.fn((key: string) => key) },
+}));
+
+vi.mock("$modules/links/services/validationService", () => ({
+  validationService: { validateRequiredAssetAmountV3: vi.fn() },
+}));
+
+const mockWalletStore = vi.hoisted(() => ({
+  query: { data: undefined as TokenWithPriceAndBalance[] | undefined },
+}));
+
+vi.mock("$modules/token/state/walletStore.svelte", () => ({
+  walletStore: mockWalletStore,
 }));
 
 const VALID_PRINCIPAL = Principal.fromText("aaaaa-aa");
@@ -68,6 +83,14 @@ describe("AddAssetStateV3", () => {
   });
 
   describe("goNext", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockWalletStore.query.data = [];
+      vi.mocked(validationService.validateRequiredAssetAmountV3).mockReturnValue(
+        Ok(true),
+      );
+    });
+
     it("it_should_fail_go_next_due_to_undefined_draft_link", async () => {
       const store = makeStore(undefined, true);
       const state = new AddAssetStateV3(store);
@@ -136,6 +159,67 @@ describe("AddAssetStateV3", () => {
       await expect(state.goNext()).rejects.toThrow(
         "links.linkForm.addAsset.errors.amountMustBeGreaterThanZero",
       );
+    });
+
+    it("it_should_fail_go_next_due_to_validation_error", async () => {
+      vi.mocked(
+        validationService.validateRequiredAssetAmountV3,
+      ).mockReturnValue(Err(new Error("Wallet tokens data is not available")));
+      const store = makeStore(VALID_ASSET_INFO);
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow(
+        "Validation failed: Wallet tokens data is not available",
+      );
+    });
+
+    it("it_should_fail_go_next_due_to_insufficient_balance_formats_error_with_token_info", async () => {
+      // Error matches the regex → code looks up token in walletStore and formats message via locale
+      // locale.t is mocked to return the key, so the thrown message is the i18n key
+      const tokenAddress = VALID_PRINCIPAL.toText();
+      mockWalletStore.query.data = [
+        {
+          name: "Token",
+          symbol: "TKN",
+          address: tokenAddress,
+          decimals: 8,
+          enabled: true,
+          fee: 100n,
+          is_default: false,
+          balance: 500_000n,
+          priceUSD: 1.0,
+        },
+      ];
+      vi.mocked(
+        validationService.validateRequiredAssetAmountV3,
+      ).mockReturnValue(
+        Err(
+          new Error(
+            `Insufficient amount for asset ${tokenAddress}, required: 530000, available: 500000`,
+          ),
+        ),
+      );
+      const store = makeStore(VALID_ASSET_INFO);
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow(
+        "links.linkForm.addAsset.errors.insufficientBalance",
+      );
+    });
+
+    it("it_should_fail_go_next_due_to_insufficient_balance_falls_back_to_generic_error_when_token_not_in_wallet", async () => {
+      // Error matches the regex but token is NOT in walletStore → falls through to generic error
+      vi.mocked(
+        validationService.validateRequiredAssetAmountV3,
+      ).mockReturnValue(
+        Err(
+          new Error(
+            `Insufficient amount for asset ${VALID_PRINCIPAL.toText()}, required: 530000, available: 500000`,
+          ),
+        ),
+      );
+      mockWalletStore.query.data = []; // token not found
+      const store = makeStore(VALID_ASSET_INFO);
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow("Validation failed:");
     });
 
     it("it_should_succeed_go_next_for_send_tip_link_type", async () => {
