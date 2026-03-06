@@ -34,31 +34,31 @@ import { IntentParticipants, TokenStandard } from './types.js';
  * - LinkToCreator: link_max_asset_amount (withdrawal/refund)
  */
 export function calculateIntentTotalAmount(
-	participants: IntentParticipants,
-	userInputAmount: bigint = 0n,
-	maxUse: number = 1,
-	linkCreationFee: bigint = 0n,
-	linkMaxAssetAmount: bigint = 0n,
+  participants: IntentParticipants,
+  userInputAmount: bigint = 0n,
+  maxUse: number = 1,
+  linkCreationFee: bigint = 0n,
+  linkMaxAssetAmount: bigint = 0n
 ): bigint {
-	switch (participants) {
-		case IntentParticipants.CreatorToTreasury:
-			return linkCreationFee;
+  switch (participants) {
+    case IntentParticipants.CreatorToTreasury:
+      return linkCreationFee;
 
-		case IntentParticipants.CreatorToLink:
-			return userInputAmount * BigInt(maxUse);
+    case IntentParticipants.CreatorToLink:
+      return userInputAmount * BigInt(maxUse);
 
-		case IntentParticipants.UserToLink:
-			return userInputAmount;
+    case IntentParticipants.UserToLink:
+      return userInputAmount;
 
-		case IntentParticipants.LinkToUser:
-			return userInputAmount;
+    case IntentParticipants.LinkToUser:
+      return userInputAmount;
 
-		case IntentParticipants.LinkToCreator:
-			return linkMaxAssetAmount;
+    case IntentParticipants.LinkToCreator:
+      return linkMaxAssetAmount;
 
-		default:
-			return 0n;
-	}
+    default:
+      return 0n;
+  }
 }
 
 /**
@@ -77,40 +77,40 @@ export function calculateIntentTotalAmount(
  * - LinkToCreator: no inbound + 1x outbound
  */
 export function calculateIntentTotalNetworkFee(
-	participants: IntentParticipants,
-	tokenStandard: TokenStandard,
-	assetNetworkFee: bigint,
-	maxUse: number = 1,
+  participants: IntentParticipants,
+  tokenStandard: TokenStandard,
+  assetNetworkFee: bigint,
+  maxUse: number = 1
 ): bigint {
-	// ICRC2 requires 2x fee for inbound (approve + transfer_from)
-	const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
+  // ICRC2 requires 2x fee for inbound (approve + transfer_from)
+  const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
 
-	switch (participants) {
-		case IntentParticipants.CreatorToTreasury:
-			// Inbound only, treasury holds (no outbound)
-			return assetNetworkFee * inboundMultiplier;
+  switch (participants) {
+    case IntentParticipants.CreatorToTreasury:
+      // Inbound only, treasury holds (no outbound)
+      return assetNetworkFee * inboundMultiplier;
 
-		case IntentParticipants.CreatorToLink:
-			// Inbound + outbound per use
-			return (
-				assetNetworkFee * inboundMultiplier + assetNetworkFee * BigInt(maxUse)
-			);
+    case IntentParticipants.CreatorToLink:
+      // Inbound + outbound per use
+      return (
+        assetNetworkFee * inboundMultiplier + assetNetworkFee * BigInt(maxUse)
+      );
 
-		case IntentParticipants.UserToLink:
-			// Inbound + 1x outbound
-			return assetNetworkFee * inboundMultiplier + assetNetworkFee;
+    case IntentParticipants.UserToLink:
+      // Inbound + 1x outbound
+      return assetNetworkFee * inboundMultiplier + assetNetworkFee;
 
-		case IntentParticipants.LinkToUser:
-			// No inbound (already in link) + 1x outbound
-			return assetNetworkFee;
+    case IntentParticipants.LinkToUser:
+      // No inbound (already in link) + 1x outbound
+      return assetNetworkFee;
 
-		case IntentParticipants.LinkToCreator:
-			// No inbound + 1x outbound
-			return assetNetworkFee;
+    case IntentParticipants.LinkToCreator:
+      // No inbound + 1x outbound
+      return assetNetworkFee;
 
-		default:
-			return 0n;
-	}
+    default:
+      return 0n;
+  }
 }
 
 /**
@@ -126,56 +126,56 @@ export function calculateIntentTotalNetworkFee(
  * - LinkToCreator: network_fee (pays withdrawal fee)
  */
 export function calculateIntentUserFee(
-	participants: IntentParticipants,
-	intentTotalAmount: bigint,
-	intentTotalNetworkFee: bigint,
+  participants: IntentParticipants,
+  intentTotalAmount: bigint,
+  intentTotalNetworkFee: bigint
 ): bigint {
-	switch (participants) {
-		case IntentParticipants.CreatorToTreasury:
-			// User pays amount + network fee
-			return intentTotalAmount + intentTotalNetworkFee;
+  switch (participants) {
+    case IntentParticipants.CreatorToTreasury:
+      // User pays amount + network fee
+      return intentTotalAmount + intentTotalNetworkFee;
 
-		case IntentParticipants.CreatorToLink:
-			// User pays only network fee
-			return intentTotalNetworkFee;
+    case IntentParticipants.CreatorToLink:
+      // User pays only network fee
+      return intentTotalNetworkFee;
 
-		case IntentParticipants.UserToLink:
-			// User pays only network fee
-			return intentTotalNetworkFee;
+    case IntentParticipants.UserToLink:
+      // User pays only network fee
+      return intentTotalNetworkFee;
 
-		case IntentParticipants.LinkToUser:
-			// User pays nothing to receive
-			return 0n;
+    case IntentParticipants.LinkToUser:
+      // User pays nothing to receive
+      return 0n;
 
-		case IntentParticipants.LinkToCreator:
-			// Creator pays withdrawal network fee
-			return intentTotalNetworkFee;
+    case IntentParticipants.LinkToCreator:
+      // Creator pays withdrawal network fee
+      return intentTotalNetworkFee;
 
-		default:
-			return 0n;
-	}
+    default:
+      return 0n;
+  }
 }
 
 /**
  * Input parameters for fee calculation.
  */
 export interface FeeInput {
-	intent_participants: IntentParticipants;
-	token_standard: TokenStandard;
-	user_input_amount?: bigint | string;
-	max_use?: number;
-	link_creation_fee?: bigint | string;
-	asset_network_fee: bigint | string;
-	link_max_asset_amount?: bigint | string;
+  intent_participants: IntentParticipants;
+  token_standard: TokenStandard;
+  user_input_amount?: bigint | string;
+  max_use?: number;
+  link_creation_fee?: bigint | string;
+  asset_network_fee: bigint | string;
+  link_max_asset_amount?: bigint | string;
 }
 
 /**
  * Result of fee calculation.
  */
 export interface FeeResult {
-	intent_total_amount: string;
-	intent_total_network_fee: string;
-	intent_user_fee: string;
+  intent_total_amount: string;
+  intent_total_network_fee: string;
+  intent_user_fee: string;
 }
 
 /**
@@ -183,49 +183,109 @@ export interface FeeResult {
  * This is a convenience function that combines all fee calculations.
  */
 export function calculateIntentFees(input: FeeInput): FeeResult {
-	// Parse bigint values if they're strings
-	const userInputAmount =
-		typeof input.user_input_amount === 'string'
-			? BigInt(input.user_input_amount)
-			: (input.user_input_amount ?? 0n);
-	const linkCreationFee =
-		typeof input.link_creation_fee === 'string'
-			? BigInt(input.link_creation_fee)
-			: (input.link_creation_fee ?? 0n);
-	const assetNetworkFee =
-		typeof input.asset_network_fee === 'string'
-			? BigInt(input.asset_network_fee)
-			: input.asset_network_fee;
-	const linkMaxAssetAmount =
-		typeof input.link_max_asset_amount === 'string'
-			? BigInt(input.link_max_asset_amount)
-			: (input.link_max_asset_amount ?? 0n);
-	const maxUse = input.max_use ?? 1;
+  // Parse bigint values if they're strings
+  const userInputAmount =
+    typeof input.user_input_amount === 'string'
+      ? BigInt(input.user_input_amount)
+      : (input.user_input_amount ?? 0n);
+  const linkCreationFee =
+    typeof input.link_creation_fee === 'string'
+      ? BigInt(input.link_creation_fee)
+      : (input.link_creation_fee ?? 0n);
+  const assetNetworkFee =
+    typeof input.asset_network_fee === 'string'
+      ? BigInt(input.asset_network_fee)
+      : input.asset_network_fee;
+  const linkMaxAssetAmount =
+    typeof input.link_max_asset_amount === 'string'
+      ? BigInt(input.link_max_asset_amount)
+      : (input.link_max_asset_amount ?? 0n);
+  const maxUse = input.max_use ?? 1;
 
-	const totalAmount = calculateIntentTotalAmount(
-		input.intent_participants,
-		userInputAmount,
-		maxUse,
-		linkCreationFee,
-		linkMaxAssetAmount,
-	);
+  const totalAmount = calculateIntentTotalAmount(
+    input.intent_participants,
+    userInputAmount,
+    maxUse,
+    linkCreationFee,
+    linkMaxAssetAmount
+  );
 
-	const totalNetworkFee = calculateIntentTotalNetworkFee(
-		input.intent_participants,
-		input.token_standard,
-		assetNetworkFee,
-		maxUse,
-	);
+  const totalNetworkFee = calculateIntentTotalNetworkFee(
+    input.intent_participants,
+    input.token_standard,
+    assetNetworkFee,
+    maxUse
+  );
 
-	const userFee = calculateIntentUserFee(
-		input.intent_participants,
-		totalAmount,
-		totalNetworkFee,
-	);
+  const userFee = calculateIntentUserFee(
+    input.intent_participants,
+    totalAmount,
+    totalNetworkFee
+  );
 
-	return {
-		intent_total_amount: totalAmount.toString(),
-		intent_total_network_fee: totalNetworkFee.toString(),
-		intent_user_fee: userFee.toString(),
-	};
+  return {
+    intent_total_amount: totalAmount.toString(),
+    intent_total_network_fee: totalNetworkFee.toString(),
+    intent_user_fee: userFee.toString(),
+  };
+}
+
+/**
+ * Type for calculating the maximum asset amount a user can input based on their balance and the fees involved.
+ */
+export interface MaxAssetAmountInput {
+  token_balance: bigint;
+  token_standard: TokenStandard;
+  ledger_fee: bigint;
+  max_use: number;
+  link_creation_fee?: bigint;
+  fee_token_standard?: TokenStandard;
+  is_fee_token?: boolean;
+}
+
+/**
+ * Calculate the maximum asset amount a user can input based on their balance and the fees involved.
+ *
+ * The calculation considers:
+ * - The user's token balance
+ * - The network fees for both inbound and outbound transactions
+ * - The link creation fee if the token is also used to pay the fee
+ *
+ * This ensures that when the user inputs the maximum amount, they will still have enough balance to cover all fees and the transaction will not fail due to insufficient funds.
+ * @param input
+ * @returns
+ */
+export function calculateMaxAssetAmount(input: MaxAssetAmountInput): bigint {
+  const inboundMultiplier =
+    input.token_standard === TokenStandard.ICRC2 ? 2n : 1n;
+  const outboundMultiplier = BigInt(input.max_use);
+
+  if (
+    input.is_fee_token &&
+    input.fee_token_standard &&
+    input.link_creation_fee
+  ) {
+    const intentFees = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToTreasury,
+      token_standard: input.fee_token_standard,
+      user_input_amount: 0n,
+      max_use: 1,
+      link_creation_fee: input.link_creation_fee,
+      asset_network_fee: input.ledger_fee,
+    });
+
+    return (
+      input.token_balance -
+      BigInt(intentFees.intent_total_amount) -
+      BigInt(intentFees.intent_total_network_fee) -
+      inboundMultiplier * input.ledger_fee -
+      outboundMultiplier * input.ledger_fee
+    );
+  }
+
+  return (
+    input.token_balance -
+    inboundMultiplier * input.ledger_fee -
+    outboundMultiplier * input.ledger_fee
+  );
 }

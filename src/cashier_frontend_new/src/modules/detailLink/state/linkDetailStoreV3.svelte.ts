@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
-import { createActionFromTemplate } from "$modules/actionTemplate/services/actionTemplateLoader";
+import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { detailLinkService } from "$modules/detailLink/services/detailLink";
 import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
@@ -52,7 +52,7 @@ export class LinkDetailStoreV3 {
    */
   getDraftingAction(actionType: SharedActionType): Result<SharedAction, Error> {
     if (this.sharedLink && authState.account?.owner) {
-      const actionResult = createActionFromTemplate(
+      const actionResult = actionTemplateLoader.createActionFromTemplate(
         this.sharedLink?.link_type,
         actionType,
         Principal.fromText(authState.account.owner),

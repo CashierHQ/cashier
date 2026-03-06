@@ -117,8 +117,6 @@ class ValidationService {
     draftLink: SharedLink,
     walletTokens: TokenWithPriceAndBalance[],
   ): Result<boolean, Error> {
-    const feeConfig = feeService.getLinkCreationFee();
-
     // sanity check to ensure we have the necessary data to perform validation
     if (!draftLink.asset_info || draftLink.asset_info.length === 0) {
       return Err(new Error("No assets provided for validation"));
@@ -177,6 +175,7 @@ class ValidationService {
     }
 
     // validate fee amount
+    const feeConfig = feeService.getLinkCreationFee();
     const feeAmount = feeConfig.amount;
     const feeToken = walletTokens.find(
       (t) => t.address.toLowerCase() === feeConfig.tokenAddress.toLowerCase(),
@@ -284,6 +283,46 @@ class ValidationService {
       BigInt(intentFees.intent_total_amount) +
         BigInt(intentFees.intent_total_network_fee),
     );
+  }
+
+  calculateMaxAmountForAssetV3(
+    tokenAddress: string,
+    maxUse: number,
+    walletTokens: TokenWithPriceAndBalance[],
+  ): Result<bigint, Error> {
+    const feeConfig = feeService.getLinkCreationFee();
+    const feeAmount = feeConfig.amount;
+    const feeToken = walletTokens.find(
+      (t) => t.address.toLowerCase() === feeConfig.tokenAddress.toLowerCase(),
+    );
+    if (!feeToken) {
+      return Err(
+        new Error(
+          `Fee token with address ${feeConfig.tokenAddress} not found in wallet`,
+        ),
+      );
+    }
+    const isICRC2 =
+      !feeToken.tokenStandards ||
+      feeToken.tokenStandards.includes(TokenStandard.ICRC2);
+
+    const requiredFeeAmountResult = this.calculateRequiredFeeAmountV3(
+      feeAmount,
+      feeToken.fee,
+      isICRC2 ? SharedTokenStandard.ICRC2 : SharedTokenStandard.ICRC1,
+    );
+
+    if (requiredFeeAmountResult.isErr()) {
+      return Err(
+        new Error(
+          `Failed to calculate required fee amount: ${requiredFeeAmountResult.error.message}`,
+        ),
+      );
+    }
+
+    const requiredFeeAmount = requiredFeeAmountResult.unwrap();
+
+    return Ok(requiredFeeAmount);
   }
 }
 

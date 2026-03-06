@@ -25,7 +25,7 @@ pub fn calculate_intent_total_amount(participants: &IntentParticipants, user_inp
             link_creation_fee.clone()
         }
         IntentParticipants::CreatorToLink => {
-            user_input_amount.clone() * Nat::from(max_use as u64)
+            user_input_amount.clone() * Nat::from(max_use)
         }
         IntentParticipants::UserToLink => {
             user_input_amount.clone()
@@ -62,7 +62,7 @@ pub fn calculate_intent_total_network_fee(participants: &IntentParticipants, tok
             asset_network_fee.clone() * inbound_multiplier.clone()
         }
         IntentParticipants::CreatorToLink => {
-            (asset_network_fee.clone() * inbound_multiplier.clone() + asset_network_fee.clone() * Nat::from(max_use as u64))
+            (asset_network_fee.clone() * inbound_multiplier.clone() + asset_network_fee.clone() * Nat::from(max_use))
         }
         IntentParticipants::UserToLink => {
             asset_network_fee.clone() * inbound_multiplier.clone() + asset_network_fee.clone()

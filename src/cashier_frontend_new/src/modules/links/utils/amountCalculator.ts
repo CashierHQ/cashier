@@ -1,4 +1,5 @@
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+import { feeService } from "$modules/shared/services/feeService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -56,6 +57,12 @@ export function calculateMaxAmountForAsset(
     return Err(
       new Error(`Token with address ${tokenAddress} not found in wallet`),
     );
+  }
+
+  // fetch global fee config
+  const feeConfig = feeService.getLinkCreationFee();
+
+  if (tokenAddress.toLowerCase() === feeConfig.tokenAddress.toLowerCase()) {
   }
 
   // Inverse of calculateRequiredAssetAmount formula:

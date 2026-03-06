@@ -146,4 +146,40 @@ export function calculateIntentFees(input) {
         intent_user_fee: userFee.toString(),
     };
 }
+/**
+ * Calculate the maximum asset amount a user can input based on their balance and the fees involved.
+ *
+ * The calculation considers:
+ * - The user's token balance
+ * - The network fees for both inbound and outbound transactions
+ * - The link creation fee if the token is also used to pay the fee
+ *
+ * This ensures that when the user inputs the maximum amount, they will still have enough balance to cover all fees and the transaction will not fail due to insufficient funds.
+ * @param input
+ * @returns
+ */
+export function calculateMaxAssetAmount(input) {
+    const inboundMultiplier = input.token_standard === TokenStandard.ICRC2 ? 2n : 1n;
+    const outboundMultiplier = BigInt(input.max_use);
+    if (input.is_fee_token &&
+        input.fee_token_standard &&
+        input.link_creation_fee) {
+        const intentFees = calculateIntentFees({
+            intent_participants: IntentParticipants.CreatorToTreasury,
+            token_standard: input.fee_token_standard,
+            user_input_amount: 0n,
+            max_use: 1,
+            link_creation_fee: input.link_creation_fee,
+            asset_network_fee: input.ledger_fee,
+        });
+        return (input.token_balance -
+            BigInt(intentFees.intent_total_amount) -
+            BigInt(intentFees.intent_total_network_fee) -
+            inboundMultiplier * input.ledger_fee -
+            outboundMultiplier * input.ledger_fee);
+    }
+    return (input.token_balance -
+        inboundMultiplier * input.ledger_fee -
+        outboundMultiplier * input.ledger_fee);
+}
 //# sourceMappingURL=functions.js.map

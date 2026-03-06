@@ -82,4 +82,29 @@ export interface FeeResult {
  * This is a convenience function that combines all fee calculations.
  */
 export declare function calculateIntentFees(input: FeeInput): FeeResult;
+/**
+ * Type for calculating the maximum asset amount a user can input based on their balance and the fees involved.
+ */
+export interface MaxAssetAmountInput {
+    token_balance: bigint;
+    token_standard: TokenStandard;
+    ledger_fee: bigint;
+    max_use: number;
+    link_creation_fee?: bigint;
+    fee_token_standard?: TokenStandard;
+    is_fee_token?: boolean;
+}
+/**
+ * Calculate the maximum asset amount a user can input based on their balance and the fees involved.
+ *
+ * The calculation considers:
+ * - The user's token balance
+ * - The network fees for both inbound and outbound transactions
+ * - The link creation fee if the token is also used to pay the fee
+ *
+ * This ensures that when the user inputs the maximum amount, they will still have enough balance to cover all fees and the transaction will not fail due to insufficient funds.
+ * @param input
+ * @returns
+ */
+export declare function calculateMaxAssetAmount(input: MaxAssetAmountInput): bigint;
 //# sourceMappingURL=functions.d.ts.map

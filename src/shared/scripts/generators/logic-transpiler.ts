@@ -31,7 +31,6 @@ import {
 	VariableStatement,
 	Block,
 	CallExpression,
-	TypeOfExpression,
 } from 'ts-morph';
 
 // Convert camelCase to snake_case
@@ -95,13 +94,13 @@ function convertJsDoc(func: FunctionDeclaration): string {
 }
 
 // Convert an expression node to Rust
-function convertExpression(node: Node, indent: string = ''): string {
+function convertExpression(node: Node): string {
 	const kind = node.getKind();
 
 	switch (kind) {
 		case SyntaxKind.BigIntLiteral: {
 			const literal = node as BigIntLiteral;
-			const value = literal.getLiteralValue().toString();
+			const value = String(literal.getLiteralValue());
 			return `Nat::from(${value}u64)`;
 		}
 
@@ -133,7 +132,7 @@ function convertExpression(node: Node, indent: string = ''): string {
 					const arg = convertExpression(args[0]);
 					// If the argument is already a Nat identifier, just use it
 					// Otherwise, wrap in Nat::from() with proper casting
-					return `Nat::from(${arg} as u64)`;
+					return `Nat::from(${arg})`;
 				}
 			}
 
@@ -429,7 +428,7 @@ export function transpileToRust(sourceFile: string): string {
 	// Filter out TypeScript-only functions
 	// These functions use TypeScript-specific features (typeof, ??, union types)
 	// that don't have direct Rust equivalents
-	const TYPESCRIPT_ONLY_FUNCTIONS = ['calculateIntentFees'];
+	const TYPESCRIPT_ONLY_FUNCTIONS = ['calculateIntentFees', 'calculateMaxAssetAmount'];
 
 	const functions = source
 		.getFunctions()
