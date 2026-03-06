@@ -1,5 +1,5 @@
 import { assertUnreachable } from "$lib/rsMatch";
-import { createActionFromTemplate } from "$modules/actionTemplate/services/actionTemplateLoader";
+import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
@@ -270,7 +270,7 @@ export class LinkCreationStoreV3 {
     }
 
     const creator = Principal.fromText(authState.account.owner);
-    const loadedActionResult = createActionFromTemplate(
+    const loadedActionResult = actionTemplateLoader.createActionFromTemplate(
       this.linkType,
       SharedActionType.CreateLink,
       creator,
