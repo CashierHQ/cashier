@@ -466,8 +466,10 @@ describe("validateRequiredAssetAmountV3", () => {
   });
 
   it("it_should_fail_validate_due_to_insufficient_combined_balance_when_fee_token_is_also_asset_token", () => {
-    // asset uses fee token address; required_asset=530_000, required_fee=30_000, total=560_000
-    // balance = 550_000 (enough for each separately, not combined)
+    // shared logic subtracts one duplicated ledger fee in combined requirement:
+    // required_total = required_asset + required_fee - ledger_fee
+    // required_total = 530_000 + 30_000 - 10_000 = 550_000
+    // balance = 549_000 -> should fail
     const draftLink = makeDraftLink({
       asset_info: [
         {
@@ -482,11 +484,11 @@ describe("validateRequiredAssetAmountV3", () => {
       ],
     });
     const result = validationService.validateRequiredAssetAmountV3(draftLink, [
-      makeFeeToken(550_000n),
+      makeFeeToken(549_000n),
     ]);
     expect(result.isErr()).toBe(true);
     expect(result.isErr() && result.error.message).toBe(
-      `Insufficient amount for fee token ${FEE_TOKEN_ADDRESS}, required: 560000 (including both asset amount and fee), available: 550000`,
+      `Insufficient amount for fee token ${FEE_TOKEN_ADDRESS}, required: 550000 (including both asset amount and fee), available: 549000`,
     );
   });
 
@@ -519,46 +521,6 @@ describe("validateRequiredAssetAmountV3", () => {
       makeFeeToken(600_000n),
     ]);
     expect(result.isOk()).toBe(true);
-  });
-});
-
-describe("maxAmountForAsset", () => {
-  it("should return the maximum amount available for an asset", () => {
-    const fee = 10_000n;
-
-    const mockWalletTokens: TokenWithPriceAndBalance[] = [
-      {
-        name: "token1",
-        symbol: "TKN1",
-        address: "0xtoken1",
-        decimals: 8,
-        enabled: true,
-        fee: fee,
-        is_default: false,
-        balance: 1_000_000_000n,
-        priceUSD: 1.0,
-      },
-    ];
-
-    const maxAmountResult = validationService.maxAmountForAsset(
-      "0xtoken1",
-      1,
-      mockWalletTokens,
-    );
-    expect(maxAmountResult.isOk()).toBe(true);
-    const maxAmount = maxAmountResult.unwrap();
-    expect(maxAmount).toBe(1_000_000_000n - 2n * fee);
-  });
-
-  it("should return error if token is not found", () => {
-    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
-
-    const maxAmountResult = validationService.maxAmountForAsset(
-      "nonexistentToken",
-      1,
-      mockWalletTokens,
-    );
-    expect(maxAmountResult.isErr()).toBe(true);
   });
 });
 
@@ -642,7 +604,8 @@ describe("calculateMaxAssetAmountV3", () => {
     // creatorToTreasury = 10_000 + 20_000
     // inbound = 2*10_000
     // outbound = 2*10_000
-    // max = 1_000_000 - 30_000 - 20_000 - 20_000 = 930_000
+    // new shared logic adds back one ledger fee:
+    // max = 1_000_000 - 30_000 - 20_000 - 20_000 + 10_000 = 940_000
     const result = validationService.calculateMaxAssetAmountV3(
       FEE_TOKEN_ADDRESS,
       2,
@@ -650,16 +613,16 @@ describe("calculateMaxAssetAmountV3", () => {
     );
 
     expect(result.isOk()).toBe(true);
-    expect(result.isOk() && result.value).toBe(930_000n);
+    expect(result.isOk() && result.value).toBe(940_000n);
   });
 
   it("should return error when computed max amount is negative", () => {
     const feeTokenLowBalance: TokenWithPriceAndBalance = {
-      ...makeFeeToken(60_000n),
+      ...makeFeeToken(50_000n),
       tokenStandards: undefined,
     };
 
-    // expected max = 60_000 - 30_000 - 20_000 - 20_000 = -10_000 => error
+    // expected max = 50_000 - 30_000 - 20_000 - 20_000 + 10_000 = -10_000 => error
     const result = validationService.calculateMaxAssetAmountV3(
       FEE_TOKEN_ADDRESS,
       2,

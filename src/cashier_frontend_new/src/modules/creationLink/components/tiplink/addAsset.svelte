@@ -12,7 +12,7 @@
   import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { validationService } from "$modules/links/services/validationService";
   import {
     formatBalanceUnits,
     parseBalanceUnits,
@@ -226,7 +226,7 @@
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
+    const maxAmountResult = validationService.calculateMaxAssetAmountV3(
       selectedToken.address,
       link.maxUse,
       walletStore.query.data,
@@ -279,19 +279,7 @@
     )
       return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
-      selectedToken.address,
-      link.maxUse,
-      walletStore.query.data,
-    );
-
-    if (maxAmountResult.isErr()) {
-      return 0;
-    }
-
-    const maxAmountBigInt = maxAmountResult.unwrap();
-    const maxTokenAmount = parseBalanceUnits(maxAmountBigInt, decimals);
-    return maxTokenAmount * tokenUsdPrice;
+    return maxTokenBalance * tokenUsdPrice;
   });
 
   function isUsdAmountAvailable(usdAmount: number): boolean {

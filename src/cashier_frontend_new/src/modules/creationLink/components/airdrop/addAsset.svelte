@@ -2,6 +2,10 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
@@ -11,7 +15,6 @@
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
   import { validationService } from "$modules/links/services/validationService";
-  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import {
     formatBalanceUnits,
     parseBalanceUnits,
@@ -25,10 +28,6 @@
   import { Minus, Plus } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
-  import {
-    AnalyticsEvent,
-    trackEvent,
-  } from "$modules/analytics/amplitudeStore";
   const {
     link,
   }: {
@@ -285,7 +284,7 @@
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
+    const maxAmountResult = validationService.calculateMaxAssetAmountV3(
       selectedToken.address,
       link.maxUse,
       walletStore.query.data,
@@ -355,7 +354,6 @@
   });
 
   // Calculate max total amount (max per use * uses)
-  // maxTokenBalance uses calculateMaxAmountForAsset (same logic as validationService.maxAmountForAsset)
   const maxTotalAmount = $derived.by(() => {
     const uses = link.maxUse || 0;
     if (uses <= 0) return 0;

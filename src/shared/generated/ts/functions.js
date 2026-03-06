@@ -176,7 +176,9 @@ export function calculateMaxAssetAmount(input) {
             BigInt(intentFees.intent_total_amount) -
             BigInt(intentFees.intent_total_network_fee) -
             inboundMultiplier * input.ledger_fee -
-            outboundMultiplier * input.ledger_fee);
+            outboundMultiplier * input.ledger_fee +
+            input.ledger_fee // add back one ledger fee because it is already included in the required fee amount calculation
+        );
     }
     return (input.token_balance -
         inboundMultiplier * input.ledger_fee -

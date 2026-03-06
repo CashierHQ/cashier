@@ -14,10 +14,8 @@
     AddAssetItem,
     GenericCreationLinkStoreVM,
   } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import {
-    calculateMaxAmountForAsset,
-    calculateTotalAssetAmount,
-  } from "$modules/links/utils/amountCalculator";
+  import { validationService } from "$modules/links/services/validationService";
+  import { calculateTotalAssetAmount } from "$modules/links/utils/amountCalculator";
   import {
     formatBalanceUnits,
     parseBalanceUnits,
@@ -207,13 +205,11 @@
   }
 
   // Calculate max available token balance for a specific asset
-  // Uses calculateMaxAmountForAsset which implements the inverse formula of calculateRequiredAssetAmount
-  // This ensures consistency with link calculation logic (see amountCalculator.ts for details)
   function getMaxTokenBalance(index: number): number {
     const token = getTokenForAsset(index);
     if (!token || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
+    const maxAmountResult = validationService.calculateMaxAssetAmountV3(
       token.address,
       link.maxUse,
       walletStore.query.data,

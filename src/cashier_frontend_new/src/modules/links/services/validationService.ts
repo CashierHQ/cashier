@@ -1,6 +1,5 @@
 import type { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import {
-  calculateMaxAmountForAsset,
   calculateRequiredAssetAmount,
   calculateTotalAssetAmount,
 } from "$modules/links/utils/amountCalculator";
@@ -66,25 +65,6 @@ class ValidationService {
     }
 
     return Ok(true);
-  }
-
-  /**
-   * Get the maximum amount for asset for link creation
-   * @param tokenAddress - The address of the token to calculate the max amount for
-   * @param maxUse - The maximum number of times each asset can be used
-   * @param walletTokens - The list of tokens in the user's wallet
-   * @returns Result containing max amount or error
-   */
-  maxAmountForAsset(
-    tokenAddress: string,
-    maxUse: number,
-    walletTokens: TokenWithPriceAndBalance[],
-  ): Result<bigint, Error> {
-    if (!walletTokens || walletTokens.length === 0) {
-      return Err(new Error("Wallet tokens data is not available"));
-    }
-
-    return calculateMaxAmountForAsset(tokenAddress, maxUse, walletTokens);
   }
 
   /**
@@ -222,7 +202,7 @@ class ValidationService {
 
     if (feeTokenAssetInfo) {
       const totalRequiredAmountForFeeToken =
-        requiredFeeAmount + feeTokenAssetInfo;
+        requiredFeeAmount + feeTokenAssetInfo - feeToken.fee; // subtract one ledger fee because it is already included in the required fee amount calculation
       if (feeToken.balance < totalRequiredAmountForFeeToken) {
         return Err(
           new Error(
