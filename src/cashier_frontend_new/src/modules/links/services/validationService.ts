@@ -13,6 +13,7 @@ import {
   type Link as SharedLink,
   TokenStandard as SharedTokenStandard,
   calculateIntentFees,
+  calculateMaxAssetAmount,
 } from "$shared";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -285,11 +286,22 @@ class ValidationService {
     );
   }
 
-  calculateMaxAmountForAssetV3(
+  /**
+   * Calculate the maximum amount for asset for link v3 creation, using the max asset amount calculation logic from shared package
+   * @param tokenAddress
+   * @param maxUse
+   * @param walletTokens
+   * @returns
+   */
+  calculateMaxAssetAmountV3(
     tokenAddress: string,
     maxUse: number,
     walletTokens: TokenWithPriceAndBalance[],
   ): Result<bigint, Error> {
+    if (maxUse <= 0) {
+      return Err(new Error("Max use must be greater than zero"));
+    }
+
     const feeConfig = feeService.getLinkCreationFee();
     const feeAmount = feeConfig.amount;
     const feeToken = walletTokens.find(
@@ -302,27 +314,46 @@ class ValidationService {
         ),
       );
     }
-    const isICRC2 =
+
+    const feeTokenStandard =
       !feeToken.tokenStandards ||
-      feeToken.tokenStandards.includes(TokenStandard.ICRC2);
+      feeToken.tokenStandards.includes(TokenStandard.ICRC2)
+        ? SharedTokenStandard.ICRC2
+        : SharedTokenStandard.ICRC1;
 
-    const requiredFeeAmountResult = this.calculateRequiredFeeAmountV3(
-      feeAmount,
-      feeToken.fee,
-      isICRC2 ? SharedTokenStandard.ICRC2 : SharedTokenStandard.ICRC1,
+    const isFeeToken =
+      tokenAddress.toLowerCase() === feeConfig.tokenAddress.toLowerCase();
+
+    const assetToken = walletTokens.find(
+      (t) => t.address.toLowerCase() === tokenAddress.toLowerCase(),
     );
-
-    if (requiredFeeAmountResult.isErr()) {
+    if (!assetToken) {
       return Err(
-        new Error(
-          `Failed to calculate required fee amount: ${requiredFeeAmountResult.error.message}`,
-        ),
+        new Error(`Token with address ${tokenAddress} not found in wallet`),
       );
     }
 
-    const requiredFeeAmount = requiredFeeAmountResult.unwrap();
+    const tokenStandard =
+      !assetToken.tokenStandards ||
+      assetToken.tokenStandards.includes(TokenStandard.ICRC2)
+        ? SharedTokenStandard.ICRC2
+        : SharedTokenStandard.ICRC1;
 
-    return Ok(requiredFeeAmount);
+    const maxAssetAmount = calculateMaxAssetAmount({
+      token_balance: assetToken.balance,
+      token_standard: tokenStandard,
+      ledger_fee: assetToken.fee,
+      max_use: maxUse,
+      link_creation_fee: isFeeToken ? feeAmount : undefined,
+      fee_token_standard: isFeeToken ? feeTokenStandard : undefined,
+      is_fee_token: isFeeToken,
+    });
+
+    if (maxAssetAmount < 0n) {
+      return Err(new Error("Insufficient balance to cover required fees"));
+    }
+
+    return Ok(maxAssetAmount);
   }
 }
 

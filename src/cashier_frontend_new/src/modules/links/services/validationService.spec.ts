@@ -561,3 +561,114 @@ describe("maxAmountForAsset", () => {
     expect(maxAmountResult.isErr()).toBe(true);
   });
 });
+
+describe("calculateMaxAssetAmountV3", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(feeService, "getLinkCreationFee").mockReturnValue(MOCK_FEE_CONFIG);
+  });
+
+  it("should return error when maxUse is not positive", () => {
+    const result = validationService.calculateMaxAssetAmountV3(
+      ASSET_TOKEN_ADDRESS,
+      0,
+      [makeAssetToken(1_000_000n), makeFeeToken(1_000_000n)],
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toBe(
+      "Max use must be greater than zero",
+    );
+  });
+
+  it("should return error when fee token is missing in wallet", () => {
+    const result = validationService.calculateMaxAssetAmountV3(
+      ASSET_TOKEN_ADDRESS,
+      2,
+      [makeAssetToken(1_000_000n)],
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toBe(
+      `Fee token with address ${FEE_TOKEN_ADDRESS} not found in wallet`,
+    );
+  });
+
+  it("should return error when target asset token is missing in wallet", () => {
+    const result = validationService.calculateMaxAssetAmountV3(
+      ASSET_TOKEN_ADDRESS,
+      2,
+      [makeFeeToken(1_000_000n)],
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toBe(
+      `Token with address ${ASSET_TOKEN_ADDRESS} not found in wallet`,
+    );
+  });
+
+  it("should calculate max amount for non-fee token and default unknown standards to ICRC2", () => {
+    const assetTokenNoStandards: TokenWithPriceAndBalance = {
+      ...makeAssetToken(1_000_000n),
+      tokenStandards: undefined,
+    };
+
+    // non-fee token formula:
+    // max = balance - (inboundMultiplier * fee) - (maxUse * fee)
+    // unknown standard defaults to ICRC2 => inboundMultiplier = 2
+    // max = 1_000_000 - (2*10_000) - (2*10_000) = 960_000
+    const result = validationService.calculateMaxAssetAmountV3(
+      ASSET_TOKEN_ADDRESS,
+      2,
+      [assetTokenNoStandards, makeFeeToken(1_000_000n)],
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result.isOk() && result.value).toBe(960_000n);
+  });
+
+  it("should calculate max amount when asset token is also fee token", () => {
+    const feeTokenNoStandards: TokenWithPriceAndBalance = {
+      ...makeFeeToken(1_000_000n),
+      tokenStandards: undefined,
+    };
+
+    // fee-token formula:
+    // max = balance
+    //   - creatorToTreasury(total_amount + total_network_fee)
+    //   - inbound fee for CreatorToLink
+    //   - outbound fee per use
+    // feeToken standard defaults to ICRC2:
+    // creatorToTreasury = 10_000 + 20_000
+    // inbound = 2*10_000
+    // outbound = 2*10_000
+    // max = 1_000_000 - 30_000 - 20_000 - 20_000 = 930_000
+    const result = validationService.calculateMaxAssetAmountV3(
+      FEE_TOKEN_ADDRESS,
+      2,
+      [feeTokenNoStandards],
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result.isOk() && result.value).toBe(930_000n);
+  });
+
+  it("should return error when computed max amount is negative", () => {
+    const feeTokenLowBalance: TokenWithPriceAndBalance = {
+      ...makeFeeToken(60_000n),
+      tokenStandards: undefined,
+    };
+
+    // expected max = 60_000 - 30_000 - 20_000 - 20_000 = -10_000 => error
+    const result = validationService.calculateMaxAssetAmountV3(
+      FEE_TOKEN_ADDRESS,
+      2,
+      [feeTokenLowBalance],
+    );
+
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toBe(
+      "Insufficient balance to cover required fees",
+    );
+  });
+});
