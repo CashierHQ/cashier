@@ -11,86 +11,12 @@ import {
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, Result } from "ts-results-es";
 
-function parseActionType(value: string | undefined): ActionType {
-  switch (value) {
-    case ActionType.CreateLink:
-      return ActionType.CreateLink;
-    case ActionType.Withdraw:
-      return ActionType.Withdraw;
-    case ActionType.Send:
-      return ActionType.Send;
-    case ActionType.Receive:
-      return ActionType.Receive;
-    default:
-      throw new Error(`Unknown action type: ${value ?? "<undefined>"}`);
-  }
-}
-
-function parseAddressType(
-  value: string | undefined,
-  fallback: AddressType,
-): AddressType {
-  switch (value) {
-    case AddressType.Creator:
-      return AddressType.Creator;
-    case AddressType.Treasury:
-      return AddressType.Treasury;
-    case AddressType.User:
-      return AddressType.User;
-    case AddressType.Link:
-      return AddressType.Link;
-    default:
-      return fallback;
-  }
-}
-
-function parseIntentType(value: string | undefined): IntentType {
-  switch (value) {
-    case IntentType.Send:
-      return IntentType.Send;
-    case IntentType.Receive:
-      return IntentType.Receive;
-    default:
-      throw new Error(`Unknown intent type: ${value ?? "<undefined>"}`);
-  }
-}
-
-function parseIntentState(value: string | undefined): IntentState {
-  switch (value) {
-    case IntentState.Created:
-      return IntentState.Created;
-    case IntentState.Processing:
-      return IntentState.Processing;
-    case IntentState.Success:
-      return IntentState.Success;
-    case IntentState.Fail:
-      return IntentState.Fail;
-    default:
-      return IntentState.Created;
-  }
-}
-
-function parseTokenStandard(value?: string): TokenStandard {
-  if (value === TokenStandard.ICRC2) return TokenStandard.ICRC2;
-  return TokenStandard.ICRC1;
-}
-
-function parseBigint(value: string | undefined, fallback: bigint): bigint {
-  if (!value) return fallback;
-  return BigInt(value);
-}
-
-function parseBigintOrUndefined(value?: string): bigint | undefined {
-  return value ? BigInt(value) : undefined;
-}
-
-function parsePrincipalOrFallback(
-  value: string | undefined,
-  fallback: string,
-): Principal {
-  return Principal.fromText(value ?? fallback);
-}
-
+/**
+ * Deserialize an ActionTemplateJson into an Action instance.
+ * This is used to convert our static JSON templates into actual Action objects we can work with.
+ * @param template
+ * @returns
+ */
 export function deserializeActionTemplate(
   template: ActionTemplateJson,
 ): Result<Action, Error> {
@@ -153,6 +79,12 @@ export function deserializeActionTemplate(
   }
 }
 
+/**
+ * Serialize an Action instance into an ActionTemplateJson.
+ * This is used to convert our Action objects back into a JSON format that can be saved or transmitted.
+ * @param action
+ * @returns
+ */
 export function serializeActionTemplate(action: Action): ActionTemplateJson {
   return {
     id: action.id,
@@ -180,4 +112,128 @@ export function serializeActionTemplate(action: Action): ActionTemplateJson {
     })),
     action_state: action.action_state,
   };
+}
+
+/**
+ * Parse a string into an ActionType enum value. Throws an error if the value is not recognized.
+ * @param value
+ * @returns
+ */
+function parseActionType(value: string | undefined): ActionType {
+  switch (value) {
+    case ActionType.CreateLink:
+      return ActionType.CreateLink;
+    case ActionType.Withdraw:
+      return ActionType.Withdraw;
+    case ActionType.Send:
+      return ActionType.Send;
+    case ActionType.Receive:
+      return ActionType.Receive;
+    default:
+      throw new Error(`Unknown action type: ${value ?? "<undefined>"}`);
+  }
+}
+
+/**
+ * Parse a string into an AddressType enum value, with a fallback if the value is not recognized.
+ * @param value
+ * @param fallback
+ * @returns
+ */
+function parseAddressType(
+  value: string | undefined,
+  fallback: AddressType,
+): AddressType {
+  switch (value) {
+    case AddressType.Creator:
+      return AddressType.Creator;
+    case AddressType.Treasury:
+      return AddressType.Treasury;
+    case AddressType.User:
+      return AddressType.User;
+    case AddressType.Link:
+      return AddressType.Link;
+    default:
+      return fallback;
+  }
+}
+
+/**
+ * Parse a string into an IntentType enum value. Throws an error if the value is not recognized.
+ * @param value
+ * @returns
+ */
+function parseIntentType(value: string | undefined): IntentType {
+  switch (value) {
+    case IntentType.Send:
+      return IntentType.Send;
+    case IntentType.Receive:
+      return IntentType.Receive;
+    default:
+      throw new Error(`Unknown intent type: ${value ?? "<undefined>"}`);
+  }
+}
+
+/**
+ * Parse a string into an IntentState enum value, with a default of Created if the value is not recognized.
+ * @param value
+ * @returns
+ */
+function parseIntentState(value: string | undefined): IntentState {
+  switch (value) {
+    case IntentState.Created:
+      return IntentState.Created;
+    case IntentState.Processing:
+      return IntentState.Processing;
+    case IntentState.Success:
+      return IntentState.Success;
+    case IntentState.Fail:
+      return IntentState.Fail;
+    default:
+      return IntentState.Created;
+  }
+}
+
+/**
+ * Parse a string into a TokenStandard enum value, with a default of ICRC2 if the value is not recognized.
+ * @param value
+ * @returns
+ */
+function parseTokenStandard(value?: string): TokenStandard {
+  switch (value) {
+    case TokenStandard.ICRC2:
+      return TokenStandard.ICRC2;
+    case TokenStandard.ICRC1:
+      return TokenStandard.ICRC1;
+    default:
+      return TokenStandard.ICRC2;
+  }
+}
+
+function parseBigint(value: string | undefined, fallback: bigint): bigint {
+  if (!value) return fallback;
+  return BigInt(value);
+}
+
+/**
+ * Parse a string into a bigint value, with a fallback if the value is not recognized.
+ * @param value
+ * @param fallback
+ * @returns
+ */
+function parseBigintOrUndefined(value?: string): bigint | undefined {
+  return value ? BigInt(value) : undefined;
+}
+
+/**
+ * Parse a string into a Principal value, with a fallback if the value is not recognized.
+ * @param value
+ * @param fallback
+ * @returns
+ */
+function parsePrincipalOrFallback(
+  value: string | undefined,
+  fallback: string,
+): Principal {
+  return Principal.fromText(value ?? fallback);
 }
