@@ -48,7 +48,7 @@ export class DraftLinkService {
 
     return Ok({
       id,
-      title: "Draft Link",
+      title: "New Link",
       link_type: SharedLinkType.SendTip,
       link_state: SharedLinkState.ChooseType,
       creator,
