@@ -161,7 +161,9 @@
           "insufficientBalance": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
           "noTokensAvailable": "No tokens available",
           "allTokensSelected": "All available tokens have been selected",
-          "atLeastOneAssetRequired": "At least one asset is required"
+          "atLeastOneAssetRequired": "At least one asset is required",
+          "maxUseMustBeGreaterThanZero": "Max use must be greater than zero",
+          "maxUseCannotExceedOnce": "Max use cannot exceed 1"
         },
         "noPriceAvailable": "No price available",
         "switchToTokenAmount": "Switch to token amount",

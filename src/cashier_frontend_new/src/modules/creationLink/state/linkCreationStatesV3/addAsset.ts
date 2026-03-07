@@ -8,6 +8,7 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { LinkType as SharedLinkType } from "$shared";
 
 // Default state when user is adding asset details for the link
 export class AddAssetStateV3 implements LinkCreationStateV3 {
@@ -43,6 +44,21 @@ export class AddAssetStateV3 implements LinkCreationStateV3 {
           ),
         );
       }
+    }
+
+    // validate max_use
+    if (this.#linkStore.draftLink.max_use <= 0) {
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.maxUseMustBeGreaterThanZero"),
+      );
+    } else if (
+      this.#linkStore.draftLink.max_use > 1 &&
+      (this.#linkStore.draftLink.link_type === SharedLinkType.SendTip ||
+        this.#linkStore.draftLink.link_type === SharedLinkType.SendTokenBasket)
+    ) {
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.maxUseCannotExceedOnce"),
+      );
     }
 
     // Validate asset amount

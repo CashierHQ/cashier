@@ -54,6 +54,7 @@ function makeStore(
   assetInfo?: AssetInfo[],
   draftLinkUndefined?: boolean,
   linkType: LinkType = LinkType.SendTip,
+  maxUse: bigint = 1n,
 ): LinkCreationStoreV3 {
   const store = {
     draftLink: draftLinkUndefined
@@ -65,7 +66,7 @@ function makeStore(
           link_state: LinkState.AddAsset,
           creator: Principal.anonymous(),
           asset_info: assetInfo ?? VALID_ASSET_INFO,
-          max_use: 1n,
+          max_use: maxUse,
           use_count: 0n,
         },
     state: undefined as unknown,
@@ -161,6 +162,35 @@ describe("AddAssetStateV3", () => {
       );
     });
 
+    it("it_should_fail_go_next_due_to_max_use_less_than_or_equal_to_zero", async () => {
+      const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendTip, 0n);
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow(
+        "links.linkForm.addAsset.errors.maxUseMustBeGreaterThanZero",
+      );
+    });
+
+    it("it_should_fail_go_next_due_to_max_use_exceeds_once_for_send_tip", async () => {
+      const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendTip, 2n);
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow(
+        "links.linkForm.addAsset.errors.maxUseCannotExceedOnce",
+      );
+    });
+
+    it("it_should_fail_go_next_due_to_max_use_exceeds_once_for_send_token_basket", async () => {
+      const store = makeStore(
+        [VALID_ASSET_INFO[0], VALID_SECOND_ASSET_INFO],
+        false,
+        LinkType.SendTokenBasket,
+        2n,
+      );
+      const state = new AddAssetStateV3(store);
+      await expect(state.goNext()).rejects.toThrow(
+        "links.linkForm.addAsset.errors.maxUseCannotExceedOnce",
+      );
+    });
+
     it("it_should_fail_go_next_due_to_validation_error", async () => {
       vi.mocked(
         validationService.validateRequiredAssetAmountV3,
@@ -231,6 +261,13 @@ describe("AddAssetStateV3", () => {
 
     it("it_should_succeed_go_next_for_send_airdrop_link_type", async () => {
       const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendAirdrop);
+      const state = new AddAssetStateV3(store);
+      await state.goNext();
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
+    });
+
+    it("it_should_succeed_go_next_for_send_airdrop_when_max_use_greater_than_one", async () => {
+      const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendAirdrop, 3n);
       const state = new AddAssetStateV3(store);
       await state.goNext();
       expect(store.state).toBeInstanceOf(PreviewStateV3);
