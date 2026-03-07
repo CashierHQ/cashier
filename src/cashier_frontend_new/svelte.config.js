@@ -10,8 +10,8 @@ const config = {
     }),
     alias: {
       $modules: "./src/modules",
-      $shared: "../shared/generated/ts",
-      $sharedTemplates: "../shared/templates",
+      $shared: "../lib/cashier_shared/generated/ts",
+      $sharedTemplates: "../lib/cashier_shared/templates",
       // Ensure @dfinity/principal resolves from the frontend's node_modules
       // when TypeScript checks files in ../shared/generated/ts/ (which is
       // outside the frontend's node_modules ancestor path).
