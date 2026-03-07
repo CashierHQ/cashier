@@ -12,7 +12,7 @@ export const safeParseJSON = (
   return JSON.stringify(arg, (key, value) =>
     typeof value === "bigint" ? value.toString() : value,
   );
-};
+}; // safeParseJSON
 
 type Response<T, E> =
   | {
@@ -26,7 +26,7 @@ type Response<T, E> =
     }
   | {
       Err: E;
-    };
+    }; // Response
 
 export const responseToResult = <T, E>(
   response: Response<T, E>,

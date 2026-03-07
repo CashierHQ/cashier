@@ -4,6 +4,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// cn utility - standard pattern from shadcn/ui
+// Ref: https://ui.shadcn.com/docs/installation/manual
+export const cn = (...inputs: ClassValue[]): string =>
+  twMerge(clsx(inputs));
