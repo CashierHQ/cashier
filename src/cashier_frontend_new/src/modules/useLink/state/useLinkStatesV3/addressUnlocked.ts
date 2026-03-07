@@ -45,6 +45,8 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
         `Action type ${actionType} not supported in AddressUnlocked state.`,
       );
     }
+
+    // Create the draft action from template
     const receiveActionRes = this.#store.linkDetail.getDraftingAction(
       ActionType.RECEIVE,
     );
@@ -56,6 +58,7 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
 
     const receiveAction = receiveActionRes.unwrap();
 
+    // Call backend to create the receive action
     const actionRes = await cashierBackendService.createActionV3({
       link_id: this.#store.linkDetail.id,
       action: receiveAction,
@@ -80,6 +83,7 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
       );
     }
 
+    // Call backend to process the receive action
     const actionId = this.#store.action.id;
     const result = await cashierBackendService.processActionV3(actionId);
 
