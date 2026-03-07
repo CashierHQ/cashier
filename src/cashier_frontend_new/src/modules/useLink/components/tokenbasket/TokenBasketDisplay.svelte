@@ -1,12 +1,12 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { TokenIcon } from "$modules/imageCache";
   import type { AssetInfo } from "$modules/links/types/link/asset";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { SvelteSet } from "svelte/reactivity";
-  import { locale } from "$lib/i18n";
-  import { TokenIcon } from "$modules/imageCache";
 
   const {
     assets,
