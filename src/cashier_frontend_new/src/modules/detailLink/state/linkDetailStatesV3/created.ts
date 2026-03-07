@@ -1,3 +1,4 @@
+import { authState } from "$modules/auth/state/auth.svelte";
 import type { LinkDetailStateV3 } from "$modules/detailLink/state/linkDetailStatesV3";
 import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
@@ -40,6 +41,19 @@ export class LinkCreatedStateV3 implements LinkDetailStateV3 {
       throw new Error("Invalid action type for Created state");
     }
 
+    // validate user is creator of the link
+    if (!authState.account || !authState.account.owner) {
+      throw new Error("User is not authenticated");
+    }
+
+    if (
+      authState.account.owner.toLowerCase() !==
+      this.#linkDetailStore.link.creator.toText().toLowerCase()
+    ) {
+      throw new Error("Only the creator of the link can activate it");
+    }
+
+    // Call backend to process the action and activate the link
     const actionId = this.#linkDetailStore.backendAction.id;
     const result = await cashierBackendService.processActionV3(actionId);
     if (result.isErr()) {
