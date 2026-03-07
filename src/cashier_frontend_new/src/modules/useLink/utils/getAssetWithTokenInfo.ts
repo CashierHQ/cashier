@@ -49,9 +49,20 @@ export function getAssetWithTokenInfo(
     walletToken?.symbol ?? tokenMetaSymbol ?? (assetInfoItem.label || "TOKEN");
 
   // Get decimals (prefer walletToken, then tokenMeta, then default to 8)
+  let tokenMetaDecimals: number | undefined;
+  if (tokenMeta?.decimals !== undefined) {
+    if (Array.isArray(tokenMeta.decimals) && tokenMeta.decimals.length > 0) {
+      tokenMetaDecimals = tokenMeta.decimals[0];
+    } else if (typeof tokenMeta.decimals === "number") {
+      tokenMetaDecimals = tokenMeta.decimals;
+    }
+  }
+
   const decimals =
     walletToken?.decimals ??
-    (tokenMeta && tokenMeta.decimals > 0 ? tokenMeta.decimals : 8);
+    (tokenMetaDecimals !== undefined && tokenMetaDecimals > 0
+      ? tokenMetaDecimals
+      : 8);
 
   // Get price from walletToken
   const priceUSD = walletToken?.priceUSD;

@@ -23,8 +23,18 @@ vi.mock("$lib/i18n", () => ({
   locale: { t: vi.fn((key: string) => key) },
 }));
 
+vi.mock("$modules/creationLink/state/linkCreationStatesV3/addAsset", () => ({
+  AddAssetStateV3: class AddAssetStateV3 {
+    readonly step = LinkStep.ADD_ASSET;
+    constructor(_: unknown) {}
+  },
+}));
+
 vi.mock("$modules/auth/state/auth.svelte", () => ({
-  authState: { account: { owner: "test-owner-principal" } },
+  authState: {
+    account: { owner: "test-owner-principal" },
+    buildAnonymousAgent: vi.fn(() => ({})),
+  },
 }));
 
 vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({

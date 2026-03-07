@@ -86,7 +86,7 @@ describe("LinkCreatedState", () => {
 
       // Assert
       await expect(res).rejects.toThrow(
-        "Creating RECEIVE action is not supported in Created state",
+        "Creating Receive action is not supported in Created state",
       );
     });
   });

@@ -91,7 +91,7 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     expect(() =>
       CreateLinkInputMapper.toBackendCreateLinkInputArg(data),
     ).toThrow(
-      "Only Tip, Airdrop, Token Basket, and Tip Shared Test link types are supported currently",
+      "Only Tip, Airdrop, and Token Basket link types are supported currently",
     );
   });
 });
