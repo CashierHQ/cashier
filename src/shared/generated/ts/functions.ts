@@ -256,6 +256,10 @@ export interface MaxAssetAmountInput {
  * @returns
  */
 export function calculateMaxAssetAmount(input: MaxAssetAmountInput): bigint {
+  if (input.max_use <= 0) {
+    return 0n;
+  }
+
   const inboundMultiplier =
     input.token_standard === TokenStandard.ICRC2 ? 2n : 1n;
   const outboundMultiplier = BigInt(input.max_use);
@@ -265,7 +269,7 @@ export function calculateMaxAssetAmount(input: MaxAssetAmountInput): bigint {
     input.fee_token_standard &&
     input.link_creation_fee
   ) {
-    const intentFees = calculateIntentFees({
+    const linkCreationFees = calculateIntentFees({
       intent_participants: IntentParticipants.CreatorToTreasury,
       token_standard: input.fee_token_standard,
       user_input_amount: 0n,
@@ -274,19 +278,26 @@ export function calculateMaxAssetAmount(input: MaxAssetAmountInput): bigint {
       asset_network_fee: input.ledger_fee,
     });
 
-    return (
+    const networkFee =
+      inboundMultiplier * input.ledger_fee +
+      outboundMultiplier * input.ledger_fee -
+      input.ledger_fee; // subtract one ledger fee because it is already included in the required fee amount calculation
+
+    const availableBalance =
       input.token_balance -
-      BigInt(intentFees.intent_total_amount) -
-      BigInt(intentFees.intent_total_network_fee) -
-      inboundMultiplier * input.ledger_fee -
-      outboundMultiplier * input.ledger_fee +
-      input.ledger_fee // add back one ledger fee because it is already included in the required fee amount calculation
-    );
+      BigInt(linkCreationFees.intent_total_amount) -
+      BigInt(linkCreationFees.intent_total_network_fee) -
+      networkFee;
+
+    return availableBalance > 0n
+      ? availableBalance / BigInt(input.max_use)
+      : 0n;
   }
 
-  return (
-    input.token_balance -
-    inboundMultiplier * input.ledger_fee -
-    outboundMultiplier * input.ledger_fee
-  );
+  const networkFee =
+    inboundMultiplier * input.ledger_fee +
+    outboundMultiplier * input.ledger_fee;
+  const availableBalance = input.token_balance - networkFee;
+
+  return availableBalance > 0n ? availableBalance / BigInt(input.max_use) : 0n;
 }
