@@ -14,7 +14,9 @@ describe("LinkEndedStateV3", () => {
   describe("createAction", () => {
     it("it_should_fail_do_create_action_due_to_not_supported_in_ended_state", async () => {
       const state = new LinkEndedStateV3();
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow(
         "Creating Withdraw action is not supported in Ended state",
       );
     });

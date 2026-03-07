@@ -180,10 +180,10 @@ export class LinkCreationStoreV3 {
       return;
     }
 
-    let title = this.#draftLink?.title ?? "Draft Link";
-    let linkType = this.#draftLink?.link_type ?? SharedLinkType.SendTip;
-    let assetInfo = this.#draftLink?.asset_info ?? [];
-    let maxUse = this.#draftLink?.max_use ?? 1n;
+    const title = this.#draftLink?.title ?? "Draft Link";
+    const linkType = this.#draftLink?.link_type ?? SharedLinkType.SendTip;
+    const assetInfo = this.#draftLink?.asset_info ?? [];
+    const maxUse = this.#draftLink?.max_use ?? 1n;
 
     let linkState: SharedLinkState;
     switch (this.#state.step) {

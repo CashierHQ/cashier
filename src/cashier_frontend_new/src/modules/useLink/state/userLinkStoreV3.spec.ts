@@ -79,7 +79,9 @@ describe("UserLinkStoreV3", () => {
     });
 
     it("it_should_fail_do_skip_sync_due_to_missing_link_id", () => {
-      mocks.LinkDetailStoreV3.mockImplementation(() => makeDetailStore({ id: "" }));
+      mocks.LinkDetailStoreV3.mockImplementation(() =>
+        makeDetailStore({ id: "" }),
+      );
       const store = new UserLinkStoreV3({ id: "link-1" });
 
       store.syncUserLink();

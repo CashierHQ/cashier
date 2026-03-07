@@ -13,7 +13,9 @@ describe("LinkCreatedStateV3", () => {
   describe("goNext", () => {
     it("it_should_fail_go_next_always", async () => {
       const state = new LinkCreatedStateV3();
-      await expect(state.goNext()).rejects.toThrow("No next state from Created");
+      await expect(state.goNext()).rejects.toThrow(
+        "No next state from Created",
+      );
     });
   });
 

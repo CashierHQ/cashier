@@ -306,8 +306,7 @@ describe("FeeService", () => {
       if (a) {
         const expectedA = formatNumber(
           parseBalanceUnits(
-            useA * BigInt(maxUse) +
-              tokenA.fee * (2n + BigInt(maxUse)),
+            useA * BigInt(maxUse) + tokenA.fee * (2n + BigInt(maxUse)),
             tokenA.decimals,
           ),
         );
@@ -322,8 +321,7 @@ describe("FeeService", () => {
       if (b) {
         const expectedB = formatNumber(
           parseBalanceUnits(
-            useB * BigInt(maxUse) +
-              tokenB.fee * (2n + BigInt(maxUse)),
+            useB * BigInt(maxUse) + tokenB.fee * (2n + BigInt(maxUse)),
             tokenB.decimals,
           ),
         );
@@ -338,8 +336,7 @@ describe("FeeService", () => {
       if (c) {
         const expectedC = formatNumber(
           parseBalanceUnits(
-            useC * BigInt(maxUse) +
-              tokenC.fee * (2n + BigInt(maxUse)),
+            useC * BigInt(maxUse) + tokenC.fee * (2n + BigInt(maxUse)),
             tokenC.decimals,
           ),
         );

@@ -15,7 +15,7 @@ export class SharedActionMapper {
    * @returns
    */
   static toBackendType(action: SharedAction): BackendSharedAction {
-    let filterIntents = action.intents.filter(
+    const filterIntents = action.intents.filter(
       (intent) => intent.amount > BigInt(0),
     );
 

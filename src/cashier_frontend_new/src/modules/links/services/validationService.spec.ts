@@ -352,10 +352,9 @@ describe("validateRequiredAssetAmountV3", () => {
 
   it("it_should_fail_validate_due_to_no_assets", () => {
     const draftLink = makeDraftLink({ asset_info: [] });
-    const result = validationService.validateRequiredAssetAmountV3(
-      draftLink,
-      [makeFeeToken(1_000_000n)],
-    );
+    const result = validationService.validateRequiredAssetAmountV3(draftLink, [
+      makeFeeToken(1_000_000n),
+    ]);
     expect(result.isErr()).toBe(true);
     expect(result.isErr() && result.error.message).toBe(
       "No assets provided for validation",

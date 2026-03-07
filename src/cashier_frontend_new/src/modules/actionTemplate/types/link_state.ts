@@ -3,6 +3,9 @@ import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 import { LinkState as SharedLinkState } from "$shared";
 
 export type SharedLinkStateValue =
+  | typeof SharedLinkState.ChooseType
+  | typeof SharedLinkState.AddAsset
+  | typeof SharedLinkState.Preview
   | typeof SharedLinkState.Created
   | typeof SharedLinkState.Active
   | typeof SharedLinkState.Inactive
@@ -19,6 +22,12 @@ export class SharedLinkStateMapper {
    */
   static toBackendType(linkState: SharedLinkState): BackendSharedLinkState {
     switch (linkState) {
+      case SharedLinkState.ChooseType:
+        return { ChooseType: null };
+      case SharedLinkState.AddAsset:
+        return { AddAsset: null };
+      case SharedLinkState.Preview:
+        return { Preview: null };
       case SharedLinkState.Created:
         return { Created: null };
       case SharedLinkState.Active:
@@ -39,6 +48,9 @@ export class SharedLinkStateMapper {
    */
   static toLocalType(linkState: BackendSharedLinkState): SharedLinkState {
     return rsMatch(linkState, {
+      ChooseType: () => SharedLinkState.ChooseType,
+      AddAsset: () => SharedLinkState.AddAsset,
+      Preview: () => SharedLinkState.Preview,
       Created: () => SharedLinkState.Created,
       Active: () => SharedLinkState.Active,
       Inactive: () => SharedLinkState.Inactive,

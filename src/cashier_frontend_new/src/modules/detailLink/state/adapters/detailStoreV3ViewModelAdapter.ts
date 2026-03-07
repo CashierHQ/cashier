@@ -63,7 +63,7 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
         isSuccess: result.isSuccess,
         errors: result.errors,
       };
-    } catch (error) {
+    } catch {
       return {
         action: undefined,
         isSuccess: false,

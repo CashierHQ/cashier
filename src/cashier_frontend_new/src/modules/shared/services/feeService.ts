@@ -376,7 +376,7 @@ export class FeeService {
         );
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        let tokenStandard = TokenMetadataHelper.getTokenStandard(token);
+        const tokenStandard = TokenMetadataHelper.getTokenStandard(token);
 
         // use shared package to calculate intent fees
         const intentFees = calculateIntentFees({

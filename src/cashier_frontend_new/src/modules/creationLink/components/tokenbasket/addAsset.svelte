@@ -84,7 +84,6 @@
     if (tokenMetadataRes.isErr()) {
       return;
     }
-    const tokenMetadata = tokenMetadataRes.unwrap();
 
     const newAsset: AddAssetItem = {
       address,

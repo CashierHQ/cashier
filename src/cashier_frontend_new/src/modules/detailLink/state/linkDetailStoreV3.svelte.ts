@@ -28,7 +28,6 @@ import { Err, Ok, Result } from "ts-results-es";
 export class LinkDetailStoreV3 {
   #linkDetailQuery;
   #id: string;
-  #withdrawAction: SharedAction | undefined = undefined;
 
   constructor({ id }: { id: string }) {
     this.#id = id;

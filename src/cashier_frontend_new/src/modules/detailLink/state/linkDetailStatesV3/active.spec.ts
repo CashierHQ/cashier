@@ -14,9 +14,9 @@ describe("LinkActiveStateV3", () => {
   describe("createAction", () => {
     it("it_should_fail_do_create_action_due_to_not_supported_in_active_state", async () => {
       const state = new LinkActiveStateV3();
-      await expect(state.createAction(SharedActionType.CreateLink)).rejects.toThrow(
-        "Create action is not supported in Active state",
-      );
+      await expect(
+        state.createAction(SharedActionType.CreateLink),
+      ).rejects.toThrow("Create action is not supported in Active state");
     });
   });
 

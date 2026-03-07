@@ -77,7 +77,10 @@ class CanisterBackendService {
       }),
     );
 
-    return responseToResult(response).mapErr(
+    return responseToResult<
+      cashierBackend.PaginateResult_1,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_12).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -110,7 +113,10 @@ class CanisterBackendService {
       }),
     );
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.PaginateResult,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_11)
       .map((res) => res.data)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -135,7 +141,10 @@ class CanisterBackendService {
       CreateLinkInputMapper.toBackendCreateLinkInputArg(input);
     const response = await actor.user_create_link_v2(backendInput);
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.CreateLinkDto,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_7)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -193,7 +202,10 @@ class CanisterBackendService {
       action_id: actionId,
     });
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.ProcessActionDto,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_13)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -243,7 +255,10 @@ class CanisterBackendService {
 
     const response = await actor.user_disable_link_v2(id);
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.LinkDto,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_9)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -265,7 +280,10 @@ class CanisterBackendService {
 
     const response = await actor.user_disable_link_v3(linkId);
 
-    return responseToResult(response).mapErr(
+    return responseToResult<
+      cashierBackend.DisableLinkResponseV3,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_10).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -291,7 +309,10 @@ class CanisterBackendService {
       action_type: ActionTypeMapper.toBackendType(input.actionType),
     });
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.ActionDto,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_5)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -351,7 +372,10 @@ class CanisterBackendService {
     }
     const response = await actor.get_link_details_v3(id, toNullable(options));
 
-    return responseToResult(response).mapErr(
+    return responseToResult<
+      cashierBackend.GetLinkResponseV3,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_3).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -384,7 +408,10 @@ class CanisterBackendService {
     }
     const response = await actor.get_link_details_v2(id, toNullable(options));
 
-    return responseToResult(response)
+    return responseToResult<
+      cashierBackend.GetLinkResp,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_2)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }

@@ -246,7 +246,9 @@ describe("LinkDetailStoreV3", () => {
 
     it("it_should_fail_do_get_drafting_action_due_to_template_loader_error", () => {
       const store = new LinkDetailStoreV3({ id: "link-1" });
-      mocks.queryState.data = { link: makeSharedLink(SharedLinkState.Inactive) };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.Inactive),
+      };
       mocks.createActionFromTemplate.mockReturnValueOnce(
         Err(new Error("template missing")),
       );
@@ -288,7 +290,9 @@ describe("LinkDetailStoreV3", () => {
 
     it("it_should_fail_do_get_state_due_to_unhandled_creation_state", () => {
       const store = new LinkDetailStoreV3({ id: "link-1" });
-      mocks.queryState.data = { link: makeSharedLink(SharedLinkState.ChooseType) };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.ChooseType),
+      };
       expect(() => store.state).toThrow(
         "Link in state ChooseType should not be handled in LinkDetailStoreV3",
       );
@@ -308,7 +312,9 @@ describe("LinkDetailStoreV3", () => {
 
     it("it_should_succeed_do_get_inactive_state_handler", () => {
       const store = new LinkDetailStoreV3({ id: "link-1" });
-      mocks.queryState.data = { link: makeSharedLink(SharedLinkState.Inactive) };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.Inactive),
+      };
       expect(store.state).toBeInstanceOf(LinkInactiveStateV3);
     });
 
@@ -360,7 +366,9 @@ describe("LinkDetailStoreV3", () => {
 
     it("it_should_fail_do_disable_link_due_to_link_not_active", async () => {
       const store = new LinkDetailStoreV3({ id: "link-1" });
-      mocks.queryState.data = { link: makeSharedLink(SharedLinkState.Inactive) };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.Inactive),
+      };
       await expect(store.disableLink()).rejects.toThrow(
         "Only active links can be disabled",
       );

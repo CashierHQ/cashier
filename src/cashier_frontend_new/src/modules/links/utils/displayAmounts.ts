@@ -15,9 +15,11 @@ export type DisplayAmountsResult = {
  */
 export function calculateDisplayAmounts(
   assets: Array<{ asset: ForecastAssetAndFee["asset"] }>,
-  _linkType: string | undefined,
-  _maxUse: number,
+  linkType: string | undefined,
+  maxUse: number,
 ): DisplayAmountsResult {
+  void linkType;
+  void maxUse;
   const amounts = new Map<string, string>();
   const usdAmounts = new Map<string, string>();
 

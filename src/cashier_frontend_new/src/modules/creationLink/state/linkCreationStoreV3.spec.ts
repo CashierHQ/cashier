@@ -31,11 +31,13 @@ vi.mock("$lib/i18n", () => ({
 }));
 
 const mockAuthState = vi.hoisted(() => ({
-  account: { owner: "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae" } as
-    | { owner: string }
-    | undefined,
+  account: {
+    owner: "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
+  } as { owner: string } | undefined,
 }));
-vi.mock("$modules/auth/state/auth.svelte", () => ({ authState: mockAuthState }));
+vi.mock("$modules/auth/state/auth.svelte", () => ({
+  authState: mockAuthState,
+}));
 
 vi.mock("$modules/actionTemplate/services/actionTemplateLoader", () => ({
   actionTemplateLoader: { createActionFromTemplate: vi.fn() },
@@ -51,7 +53,8 @@ vi.mock("$modules/token/state/walletStore.svelte", () => ({
 
 vi.mock("$modules/shared/constants", () => ({
   CASHIER_BACKEND_CANISTER_ID: "aaaaa-aa",
-  FEE_TREASURY_PRINCIPAL: "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae",
+  FEE_TREASURY_PRINCIPAL:
+    "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae",
   LINK_CREATION_FEE: 10_000n,
 }));
 
@@ -74,7 +77,8 @@ vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
-const CREATOR_TEXT = "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae";
+const CREATOR_TEXT =
+  "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae";
 const CREATOR = Principal.fromText(CREATOR_TEXT);
 
 function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
@@ -92,8 +96,8 @@ function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
 }
 
 function makeIntent(
-  sourceType: typeof AddressType[keyof typeof AddressType],
-  destType: typeof AddressType[keyof typeof AddressType],
+  sourceType: (typeof AddressType)[keyof typeof AddressType],
+  destType: (typeof AddressType)[keyof typeof AddressType],
   id: string,
 ): Intent {
   return {
@@ -157,34 +161,47 @@ describe("LinkCreationStoreV3", () => {
 
   describe("constructor / getStateHandler", () => {
     it("it_should_succeed_initialize_with_choose_type_state_for_choose_type_link_state", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_state: LinkState.ChooseType }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_state: LinkState.ChooseType }),
+      );
       expect(store.state).toBeInstanceOf(ChooseLinkTypeStateV3);
     });
 
     it("it_should_succeed_initialize_with_add_asset_state_for_add_asset_link_state", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_state: LinkState.AddAsset }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_state: LinkState.AddAsset }),
+      );
       expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
     it("it_should_succeed_initialize_with_preview_state_for_preview_link_state", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_state: LinkState.Preview }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_state: LinkState.Preview }),
+      );
       expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_initialize_with_created_state_for_created_link_state", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_state: LinkState.Created }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_state: LinkState.Created }),
+      );
       expect(store.state).toBeInstanceOf(LinkCreatedStateV3);
     });
 
     it("it_should_succeed_initialize_with_choose_type_state_as_default_fallback", () => {
       const store = new LinkCreationStoreV3(
-        makeDraftLink({ link_state: "UnknownState" as typeof LinkState.ChooseType }),
+        makeDraftLink({
+          link_state: "UnknownState" as typeof LinkState.ChooseType,
+        }),
       );
       expect(store.state).toBeInstanceOf(ChooseLinkTypeStateV3);
     });
 
     it("it_should_succeed_set_draft_link_from_constructor_argument", () => {
-      const draftLink = makeDraftLink({ title: "My link", link_type: LinkType.SendAirdrop });
+      const draftLink = makeDraftLink({
+        title: "My link",
+        link_type: LinkType.SendAirdrop,
+      });
       const store = new LinkCreationStoreV3(draftLink);
       expect(store.draftLink.title).toBe("My link");
       expect(store.draftLink.link_type).toBe(LinkType.SendAirdrop);
@@ -198,17 +215,23 @@ describe("LinkCreationStoreV3", () => {
 
   describe("linkType", () => {
     it("it_should_succeed_return_send_tip_link_type", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_type: LinkType.SendTip }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_type: LinkType.SendTip }),
+      );
       expect(store.linkType).toBe(LinkType.SendTip);
     });
 
     it("it_should_succeed_return_send_airdrop_link_type", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_type: LinkType.SendAirdrop }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_type: LinkType.SendAirdrop }),
+      );
       expect(store.linkType).toBe(LinkType.SendAirdrop);
     });
 
     it("it_should_succeed_return_send_token_basket_link_type", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_type: LinkType.SendTokenBasket }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_type: LinkType.SendTokenBasket }),
+      );
       expect(store.linkType).toBe(LinkType.SendTokenBasket);
     });
   });
@@ -258,7 +281,9 @@ describe("LinkCreationStoreV3", () => {
       vi.mocked(walletStore.findTokenByAddress).mockReturnValue(
         Ok({ fee: 10_000n, tokenStandards: [TokenStandard.ICRC2] } as never),
       );
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_type: LinkType.SendTokenBasket }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_type: LinkType.SendTokenBasket }),
+      );
       store.setAssets([
         { address: "aaaaa-aa", useAmount: 100n },
         { address: "ryjl3-tyaaa-aaaaa-aaaba-cai", useAmount: 200n },
@@ -347,7 +372,11 @@ describe("LinkCreationStoreV3", () => {
         makeDraftLink({
           asset_info: [
             {
-              asset: { address: assetPrincipal, network_fee: 500n, token_standard: SharedTokenStandard.ICRC1 },
+              asset: {
+                address: assetPrincipal,
+                network_fee: 500n,
+                token_standard: SharedTokenStandard.ICRC1,
+              },
               amount: 999n,
               label: "test",
             },
@@ -360,13 +389,17 @@ describe("LinkCreationStoreV3", () => {
       );
       expect(assetIntent).toBeDefined();
       expect(assetIntent!.amount).toBe(999n);
-      expect(assetIntent!.asset.address.toText()).toBe("ryjl3-tyaaa-aaaaa-aaaba-cai");
+      expect(assetIntent!.asset.address.toText()).toBe(
+        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+      );
     });
   });
 
   describe("syncDraftLinkToStorage", () => {
     it("it_should_succeed_skip_sync_when_state_is_created", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ link_state: LinkState.Created }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ link_state: LinkState.Created }),
+      );
       store.syncDraftLinkToStorage();
       expect(draftLinkService.update).not.toHaveBeenCalled();
     });
@@ -386,7 +419,11 @@ describe("LinkCreationStoreV3", () => {
 
     it("it_should_succeed_call_draft_link_service_update_with_correct_data", () => {
       const store = new LinkCreationStoreV3(
-        makeDraftLink({ id: "test-id", title: "My link", link_type: LinkType.SendTip }),
+        makeDraftLink({
+          id: "test-id",
+          title: "My link",
+          link_type: LinkType.SendTip,
+        }),
       );
       store.syncDraftLinkToStorage();
       expect(draftLinkService.update).toHaveBeenCalledWith(

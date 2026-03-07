@@ -40,7 +40,7 @@ export class SharedLinkMapper {
    * @returns
    */
   static toBackendType(link: SharedLink): BackendSharedLink {
-    let asset_info = link.asset_info.map(SharedAssetInfoMapper.toBackendType);
+    const asset_info = link.asset_info.map(SharedAssetInfoMapper.toBackendType);
     return {
       id: link.id,
       title: link.title,
@@ -60,7 +60,7 @@ export class SharedLinkMapper {
    * @returns
    */
   static toLocalType(action: BackendSharedLink): SharedLink {
-    let asset_info = action.asset_info.map(SharedAssetInfoMapper.toLocalType);
+    const asset_info = action.asset_info.map(SharedAssetInfoMapper.toLocalType);
     return {
       id: action.id,
       title: action.title,

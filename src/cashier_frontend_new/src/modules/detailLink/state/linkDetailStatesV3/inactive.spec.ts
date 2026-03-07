@@ -95,32 +95,32 @@ describe("LinkInactiveStateV3", () => {
   describe("createAction", () => {
     it("it_should_fail_do_create_action_due_to_missing_link", async () => {
       const state = new LinkInactiveStateV3(makeStore({ link: undefined }));
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
-        "Link is missing",
-      );
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow("Link is missing");
     });
 
     it("it_should_fail_do_create_action_due_to_invalid_action_type", async () => {
       const state = new LinkInactiveStateV3(makeStore());
-      await expect(state.createAction(SharedActionType.Receive)).rejects.toThrow(
-        "Invalid action type for Inactive state",
-      );
+      await expect(
+        state.createAction(SharedActionType.Receive),
+      ).rejects.toThrow("Invalid action type for Inactive state");
     });
 
     it("it_should_fail_do_create_action_due_to_user_not_authenticated", async () => {
       authStateMock.account = null;
       const state = new LinkInactiveStateV3(makeStore());
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
-        "User is not authenticated",
-      );
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow("User is not authenticated");
     });
 
     it("it_should_fail_do_create_action_due_to_user_is_not_creator", async () => {
       authStateMock.account = { owner: OTHER.toText() };
       const state = new LinkInactiveStateV3(makeStore());
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
-        "Only the creator of the link can activate it",
-      );
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow("Only the creator of the link can activate it");
     });
 
     it("it_should_fail_do_create_action_due_to_failed_get_drafting_action", async () => {
@@ -129,7 +129,9 @@ describe("LinkInactiveStateV3", () => {
           getDraftingAction: vi.fn().mockReturnValue(Err("missing template")),
         }),
       );
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow(
         "Failed to get drafting withdraw action: missing template",
       );
     });
@@ -137,9 +139,9 @@ describe("LinkInactiveStateV3", () => {
     it("it_should_fail_do_create_action_due_to_backend_error", async () => {
       mocks.createActionV3.mockResolvedValueOnce(Err("backend error"));
       const state = new LinkInactiveStateV3(makeStore());
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
-        "Failed to create action: backend error",
-      );
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow("Failed to create action: backend error");
     });
 
     it("it_should_succeed_do_create_action", async () => {

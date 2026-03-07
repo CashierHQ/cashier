@@ -13,7 +13,7 @@ vi.mock("$lib/i18n", () => ({
 vi.mock("$modules/creationLink/state/linkCreationStatesV3/addAsset", () => ({
   AddAssetStateV3: class AddAssetStateV3 {
     readonly step = LinkStep.ADD_ASSET;
-    constructor(_: unknown) {}
+    constructor() {}
   },
 }));
 

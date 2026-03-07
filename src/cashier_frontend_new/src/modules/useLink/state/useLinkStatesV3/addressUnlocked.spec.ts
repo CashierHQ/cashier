@@ -140,7 +140,9 @@ describe("AddressUnlockedStateV3", () => {
 
   describe("processAction", () => {
     it("it_should_fail_do_process_action_due_to_missing_action", async () => {
-      await expect(state.processAction()).rejects.toThrow("Action is not created");
+      await expect(state.processAction()).rejects.toThrow(
+        "Action is not created",
+      );
     });
 
     it("it_should_fail_do_process_action_due_to_unsupported_action_type", async () => {
@@ -148,7 +150,9 @@ describe("AddressUnlockedStateV3", () => {
         ...mockStore,
         action: { id: "action-1", type: ActionType.SEND } as Action,
       } as UserLinkStoreV3;
-      const stateWithSendAction = new AddressUnlockedStateV3(storeWithSendAction);
+      const stateWithSendAction = new AddressUnlockedStateV3(
+        storeWithSendAction,
+      );
 
       await expect(stateWithSendAction.processAction()).rejects.toThrow(
         `Action type ${ActionType.SEND} not supported in AddressUnlocked state.`,

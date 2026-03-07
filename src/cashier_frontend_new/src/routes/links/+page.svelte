@@ -34,7 +34,7 @@
       // Track Link list plus (user pressed + button)
       trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
       goto(resolve(`/link/create/${draftLink.id}`));
-    } catch (error) {
+    } catch {
       toast.error(locale.t("links.createLinkError"));
     }
   }

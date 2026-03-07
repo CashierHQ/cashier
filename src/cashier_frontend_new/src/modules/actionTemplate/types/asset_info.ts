@@ -53,7 +53,9 @@ export class SharedAssetInfoMapper {
    * @param assetInfo
    * @returns
    */
-  static fromStorageType(assetInfo: SerializedSharedAssetInfo): SharedAssetInfo {
+  static fromStorageType(
+    assetInfo: SerializedSharedAssetInfo,
+  ): SharedAssetInfo {
     return {
       asset: SharedAssetMapper.fromStorageType(assetInfo.asset),
       label: assetInfo.label,

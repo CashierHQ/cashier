@@ -14,7 +14,9 @@ describe("getTemplateForActionType", () => {
       ActionType.Send,
     );
     expect(result.isErr()).toBe(true);
-    expect(result.isErr() && result.error.message).toContain("No template found for action type");
+    expect(result.isErr() && result.error.message).toContain(
+      "No template found for action type",
+    );
   });
 
   it("it_should_fail_get_template_due_to_action_type_absent_from_link_templates", () => {
@@ -24,7 +26,9 @@ describe("getTemplateForActionType", () => {
       ActionType.Send,
     );
     expect(result.isErr()).toBe(true);
-    expect(result.isErr() && result.error.message).toContain("No template found for action type");
+    expect(result.isErr() && result.error.message).toContain(
+      "No template found for action type",
+    );
   });
 
   it("it_should_succeed_get_template_for_send_tip_create_link", () => {
@@ -117,7 +121,9 @@ describe("createActionFromTemplate", () => {
       CREATOR,
     );
     expect(result.isErr()).toBe(true);
-    expect(result.isErr() && result.error.message).toContain("Invalid template or intents");
+    expect(result.isErr() && result.error.message).toContain(
+      "Invalid template or intents",
+    );
   });
 
   it("it_should_fail_create_action_due_to_action_type_absent_from_link_templates", () => {
@@ -128,7 +134,9 @@ describe("createActionFromTemplate", () => {
       CREATOR,
     );
     expect(result.isErr()).toBe(true);
-    expect(result.isErr() && result.error.message).toContain("Invalid template or intents");
+    expect(result.isErr() && result.error.message).toContain(
+      "Invalid template or intents",
+    );
   });
 
   it("it_should_succeed_create_action_with_fresh_ids", () => {

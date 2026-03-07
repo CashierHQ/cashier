@@ -9,8 +9,9 @@ export class LinkActiveStateV3 implements LinkDetailStateV3 {
   readonly step = LinkStep.ACTIVE;
 
   async createAction(
-    _actionType: SharedActionType,
+    actionType: SharedActionType,
   ): Promise<CreateActionResponseV3> {
+    void actionType;
     throw new Error("Create action is not supported in Active state");
   }
 

@@ -148,7 +148,9 @@ class TokenStorageService {
       limit: [limit],
     });
 
-    return res.map((nft) => NFTMapper.fromTokenStorageNft(nft));
+    return res.map((nft: tokenStorage.Nft) =>
+      NFTMapper.fromTokenStorageNft(nft),
+    );
   }
 
   /**
@@ -280,8 +282,9 @@ class TokenStorageService {
           : [],
       });
 
-      const bridgeTransactions = res.map((tx) =>
-        BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
+      const bridgeTransactions = res.map(
+        (tx: tokenStorage.UserBridgeTransactionDto) =>
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
       );
       return bridgeTransactions;
     } catch (err) {

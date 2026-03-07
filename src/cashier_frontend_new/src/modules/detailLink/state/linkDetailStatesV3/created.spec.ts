@@ -82,7 +82,9 @@ describe("LinkCreatedStateV3", () => {
   describe("createAction", () => {
     it("it_should_fail_do_create_action_due_to_not_supported_in_created_state", async () => {
       const state = new LinkCreatedStateV3(makeStore());
-      await expect(state.createAction(SharedActionType.Withdraw)).rejects.toThrow(
+      await expect(
+        state.createAction(SharedActionType.Withdraw),
+      ).rejects.toThrow(
         "Creating Withdraw action is not supported in Created state",
       );
     });
