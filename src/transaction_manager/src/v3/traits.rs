@@ -18,10 +18,10 @@ pub trait TransactionManagerV3 {
         intent_txs_map: Option<HashMap<String, Vec<Transaction>>>,
     ) -> Result<CreateActionResultV3, CanisterError>;
 
-    fn process_action(
+    async fn process_action(
         &self,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResultV3, CanisterError>>>>;
+    ) -> Result<ProcessActionResultV3, CanisterError>;
 }
