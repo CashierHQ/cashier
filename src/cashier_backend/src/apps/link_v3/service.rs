@@ -25,7 +25,11 @@ use cashier_shared::{
     AddressType as SharedAddressType,
     types::{Action as SharedAction, ActionType as SharedActionType},
 };
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::transaction::validator_service;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::{
     apps::{
@@ -231,15 +235,19 @@ impl<R: Repositories> LinkV3Service<R> {
     /// # Returns
     /// * `Ok(ProcessActionResponseV3)` - The processed action data
     /// * `Err(CanisterError)` - If action processing fails or validation errors occur
-    pub async fn process_action<M>(
+    pub async fn process_action<M, V, X>(
         &mut self,
         caller: Principal,
         canister_id: Principal,
         action_id: &str,
         transaction_manager: M,
+        validator_service: V,
+        execution_service: X,
     ) -> Result<ProcessActionResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let action_data = self
             .action_service
@@ -259,6 +267,8 @@ impl<R: Repositories> LinkV3Service<R> {
                 action_data.intents,
                 action_data.intent_txs,
                 transaction_manager,
+                validator_service,
+                execution_service,
             )
             .await?;
 

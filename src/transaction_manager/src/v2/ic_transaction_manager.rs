@@ -6,12 +6,12 @@ use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::v1::IcIntentAdapter,
     transaction::{
-        dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
-        validator_service::ValidatorService,
-    },
-    transaction::{
+        dependency_analyzer::DependencyAnalyzer,
+        executor_service::IcExecutorService,
         ic_transaction_executor::IcTransactionExecutor,
         ic_transaction_validator::IcTransactionValidator,
+        traits::{ExecutionService, ValidationService},
+        validator_service::IcValidatorService,
     },
     v2::traits::TransactionManager,
 };
@@ -32,17 +32,23 @@ pub struct IcTransactionManager<E: IcEnvironment> {
     pub ic_env: E,
     pub intent_adapter: IcIntentAdapter,
     pub dependency_analyzer: DependencyAnalyzer,
+    pub validator_service: IcValidatorService<IcTransactionValidator>,
+    pub executor_service: IcExecutorService<IcTransactionExecutor>,
 }
 
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
         let intent_adapter = IcIntentAdapter;
         let dependency_analyzer = DependencyAnalyzer;
+        let validator_service = IcValidatorService::new(IcTransactionValidator);
+        let executor_service = IcExecutorService::new(IcTransactionExecutor);
 
         Self {
             ic_env,
             intent_adapter,
             dependency_analyzer,
+            validator_service,
+            executor_service,
         }
     }
 }
@@ -148,8 +154,8 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         // verify and execute transactions
         let canister_id = self.ic_env.id();
         let link_id = action.link_id.clone();
-        let validator_service = ValidatorService::new(IcTransactionValidator);
-        let executor_service = ExecutorService::new(IcTransactionExecutor);
+        let validator_service = IcValidatorService::new(IcTransactionValidator);
+        let executor_service = IcExecutorService::new(IcTransactionExecutor);
 
         Box::pin(async move {
             // validate and update transactions dependencies and states

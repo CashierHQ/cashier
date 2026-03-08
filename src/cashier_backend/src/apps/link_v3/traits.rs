@@ -12,7 +12,10 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::apps::{
     token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
@@ -54,16 +57,20 @@ pub trait LinkV3Instance {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        execution_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
-        M: TransactionManagerV3 + 'static;
+        M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static;
 }
 
 pub trait LinkV3State {
@@ -101,14 +108,18 @@ pub trait LinkV3State {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        execution_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
-        M: TransactionManagerV3 + 'static;
+        M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static;
 }

@@ -21,12 +21,10 @@ use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::v1::IcIntentAdapter,
     transaction::{
-        dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
-        validator_service::ValidatorService,
-    },
-    transaction::{
+        dependency_analyzer::DependencyAnalyzer,
         ic_transaction_executor::IcTransactionExecutor,
         ic_transaction_validator::IcTransactionValidator,
+        traits::{ExecutionService, ValidationService},
     },
     v3::traits::TransactionManagerV3,
 };
@@ -116,12 +114,18 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
         })
     }
 
-    async fn process_action(
+    async fn process_action<V, X>(
         &self,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Result<ProcessActionResultV3, CanisterError> {
+        validator_service: V,
+        executor_service: X,
+    ) -> Result<ProcessActionResultV3, CanisterError>
+    where
+        V: ValidationService,
+        X: ExecutionService,
+    {
         let current_ts = self.ic_env.time();
 
         // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
@@ -137,8 +141,8 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
 
         // verify and execute transactions
         let canister_id = self.ic_env.id();
-        let validator_service = ValidatorService::new(IcTransactionValidator);
-        let executor_service = ExecutorService::new(IcTransactionExecutor);
+        //let validator_service = ValidatorService::new(IcTransactionValidator);
+        //let executor_service = ExecutorService::new(IcTransactionExecutor);
 
         // validate and update transactions dependencies and states
         let validation_result = validator_service

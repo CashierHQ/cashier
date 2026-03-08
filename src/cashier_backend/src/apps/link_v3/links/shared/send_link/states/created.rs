@@ -13,7 +13,10 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::apps::{
     link_v2::links::shared::receive_link::states::created,
@@ -85,16 +88,20 @@ impl CreatedState {
         })
     }
 
-    pub async fn activate<M>(
+    pub async fn activate<M, V, X>(
         caller: Principal,
         link: LinkV3,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
@@ -105,7 +112,13 @@ impl CreatedState {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
-            .process_action(action, intents, intent_txs_map)
+            .process_action(
+                action,
+                intents,
+                intent_txs_map,
+                validator_service,
+                executor_service,
+            )
             .await?;
 
         // if process action succeeds, activate the link
@@ -160,16 +173,20 @@ impl LinkV3State for CreatedState {
         }
     }
 
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let link = self.link.clone();
 
@@ -182,6 +199,8 @@ impl LinkV3State for CreatedState {
                     intents,
                     intent_txs_map,
                     transaction_manager,
+                    validator_service,
+                    executor_service,
                 )
                 .await?;
                 Ok(activate_link_result)

@@ -5,8 +5,14 @@ use candid::Principal;
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
-use transaction_manager::v2::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV2;
-use transaction_manager::v3::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV3;
+use transaction_manager::{
+    transaction::{
+        executor_service::IcExecutorService, ic_transaction_executor::IcTransactionExecutor,
+        ic_transaction_validator::IcTransactionValidator, validator_service::IcValidatorService,
+    },
+    v2::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV2,
+    v3::ic_transaction_manager::IcTransactionManager as IcTransactionManagerV3,
+};
 
 use crate::{
     apps::{
@@ -44,6 +50,8 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub token_standard_service:
         TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
     pub token_balance_service: TokenBalanceService,
+    pub validator_service: IcValidatorService<IcTransactionValidator>,
+    pub executor_service: IcExecutorService<IcTransactionExecutor>,
     pub env: E,
 }
 
@@ -66,6 +74,8 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             env.clone(),
         );
         let token_balance_service = TokenBalanceService;
+        let validator_service = IcValidatorService::new(IcTransactionValidator);
+        let executor_service = IcExecutorService::new(IcTransactionExecutor);
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -79,6 +89,8 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            validator_service,
+            executor_service,
             env,
         }
     }

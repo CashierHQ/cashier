@@ -17,7 +17,10 @@ use cashier_backend_types::{
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use token_storage_types::token;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::apps::{
     link_v3::{links::shared::send_link::actions::withdraw::WithdrawAction, traits::LinkV3State},
@@ -96,16 +99,20 @@ impl InactiveState {
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the withdraw action
-    pub async fn withdraw<M>(
+    pub async fn withdraw<M, V, X>(
         caller: Principal,
         link: LinkV3,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         if caller != link.creator {
             return Err(CanisterError::Unauthorized(
@@ -116,7 +123,13 @@ impl InactiveState {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
-            .process_action(action, intents, intent_txs_map)
+            .process_action(
+                action,
+                intents,
+                intent_txs_map,
+                validator_service,
+                executor_service,
+            )
             .await?;
 
         if process_action_result.is_success {
@@ -170,16 +183,20 @@ impl LinkV3State for InactiveState {
         }
     }
 
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: std::collections::HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let link = self.link.clone();
 
@@ -192,6 +209,8 @@ impl LinkV3State for InactiveState {
                     intents,
                     intent_txs_map,
                     transaction_manager,
+                    validator_service,
+                    executor_service,
                 )
                 .await?;
                 Ok(withdraw_result)

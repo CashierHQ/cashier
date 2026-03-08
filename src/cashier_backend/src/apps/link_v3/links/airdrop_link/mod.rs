@@ -17,7 +17,10 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 use uuid::Uuid;
 
 use crate::apps::{
@@ -151,16 +154,20 @@ impl LinkV3Instance for AirdropLink {
         }
     }
 
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let link = self.link.clone();
         let canister_id = self.canister_id;
@@ -169,21 +176,45 @@ impl LinkV3Instance for AirdropLink {
             LinkStateV3::Created => {
                 let state = CreatedState::new(&link, canister_id);
                 let process_action_result = state
-                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .process_action(
+                        caller,
+                        action,
+                        intents,
+                        intent_txs_map,
+                        transaction_manager,
+                        validator_service,
+                        executor_service,
+                    )
                     .await?;
                 return Ok(process_action_result);
             }
             LinkStateV3::Active => {
                 let state = ActiveState::new(&link, canister_id);
                 let process_action_result = state
-                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .process_action(
+                        caller,
+                        action,
+                        intents,
+                        intent_txs_map,
+                        transaction_manager,
+                        validator_service,
+                        executor_service,
+                    )
                     .await?;
                 return Ok(process_action_result);
             }
             LinkStateV3::Inactive => {
                 let state = InactiveState::new(&link, canister_id);
                 let process_action_result = state
-                    .process_action(caller, action, intents, intent_txs_map, transaction_manager)
+                    .process_action(
+                        caller,
+                        action,
+                        intents,
+                        intent_txs_map,
+                        transaction_manager,
+                        validator_service,
+                        executor_service,
+                    )
                     .await?;
                 return Ok(process_action_result);
             }

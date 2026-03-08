@@ -1,9 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    transaction::traits::TransactionExecutor, utils::topological_sort::kahn_topological_sort,
-};
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::{graph::Graph, transaction_manager::ExecuteTransactionsResult},
@@ -12,21 +9,28 @@ use cashier_backend_types::{
 use log::debug;
 use std::collections::HashMap;
 
-pub struct ExecutorService<E: TransactionExecutor + Clone> {
+use crate::{
+    transaction::traits::{ExecutionService, TransactionExecutor},
+    utils::topological_sort::kahn_topological_sort,
+};
+
+pub struct IcExecutorService<E: TransactionExecutor + Clone> {
     executor: E,
 }
 
-impl<E: TransactionExecutor + Clone> ExecutorService<E> {
+impl<E: TransactionExecutor + Clone> IcExecutorService<E> {
     pub fn new(executor: E) -> Self {
         Self { executor }
     }
+}
 
+impl<E: TransactionExecutor + Clone> ExecutionService for IcExecutorService<E> {
     /// Executes a list of transactions using the underlying executor.
     /// # Arguments
     /// * `transactions` - A slice of transactions to be executed
     /// # Returns
     /// * `Result<ExecuteTransactionsResult, CanisterError>` - The result of executing the transactions
-    pub async fn execute_transactions(
+    async fn execute_transactions(
         &self,
         transactions: &[Transaction],
     ) -> Result<ExecuteTransactionsResult, CanisterError> {
@@ -186,7 +190,7 @@ mod tests {
         let mut mock_executor = MockTransactionExecutor::new();
         mock_executor.set_failure(&fee_txs[1].id, true);
         mock_executor.set_failure(&asset_txs[1].id, true);
-        let service = ExecutorService::new(mock_executor);
+        let service = IcExecutorService::new(mock_executor);
 
         // Act
         let result = service.execute_transactions(&all_txs).await;
@@ -232,7 +236,7 @@ mod tests {
 
         let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
         let mock_executor = MockTransactionExecutor::new();
-        let service = ExecutorService::new(mock_executor);
+        let service = IcExecutorService::new(mock_executor);
 
         // Act
         let result = service.execute_transactions(&all_txs).await;
@@ -280,7 +284,7 @@ mod tests {
         let all_txs = [fee_txs.clone(), asset_txs.clone()].concat();
         let mut mock_executor = MockTransactionExecutor::new();
         mock_executor.set_failure(&fee_txs[0].id, true); // Fail the first fee transaction
-        let service = ExecutorService::new(mock_executor);
+        let service = IcExecutorService::new(mock_executor);
 
         // Act
         let result = service.execute_transactions(&all_txs).await;

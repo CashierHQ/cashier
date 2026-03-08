@@ -16,7 +16,10 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::apps::{
     token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
@@ -76,20 +79,30 @@ impl ActiveState {
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the receive action
-    pub async fn receive<M>(
+    pub async fn receive<M, V, X>(
         link: &LinkV3,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
-            .process_action(action, intents, intent_txs_map)
+            .process_action(
+                action,
+                intents,
+                intent_txs_map,
+                validator_service,
+                executor_service,
+            )
             .await?;
 
         if process_action_result.is_success {
@@ -144,24 +157,35 @@ impl LinkV3State for ActiveState {
         }
     }
 
-    async fn process_action<M>(
+    async fn process_action<M, V, X>(
         &self,
         _caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        executor_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         let link = self.link.clone();
 
         match action.action_type {
             ActionType::Receive => {
-                let receive_result =
-                    Self::receive(&link, action, intents, intent_txs_map, transaction_manager)
-                        .await?;
+                let receive_result = Self::receive(
+                    &link,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                    validator_service,
+                    executor_service,
+                )
+                .await?;
                 Ok(receive_result)
             }
             _ => Err(CanisterError::ValidationErrors(

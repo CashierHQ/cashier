@@ -14,7 +14,10 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::v3::traits::TransactionManagerV3;
+use transaction_manager::{
+    transaction::traits::{ExecutionService, ValidationService},
+    v3::traits::TransactionManagerV3,
+};
 
 use crate::apps::{
     link_v3::traits::LinkV3Instance, token_balance::traits::TokenBalanceFetcher,
@@ -105,29 +108,57 @@ impl LinkV3Types {
     /// * `transaction_manager` - The transaction manager to handle action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the action
-    pub async fn process_action<M>(
+    pub async fn process_action<M, V, X>(
         &self,
         caller: Principal,
         action: ActionV3,
         intents: Vec<IntentV3>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: M,
+        validator_service: V,
+        execution_service: X,
     ) -> Result<LinkProcessActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        V: ValidationService + 'static,
+        X: ExecutionService + 'static,
     {
         match self {
             LinkV3Types::TipLink(link) => {
-                link.process_action(caller, action, intents, intent_txs_map, transaction_manager)
-                    .await
+                link.process_action(
+                    caller,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                    validator_service,
+                    execution_service,
+                )
+                .await
             }
             LinkV3Types::AirdropLink(link) => {
-                link.process_action(caller, action, intents, intent_txs_map, transaction_manager)
-                    .await
+                link.process_action(
+                    caller,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                    validator_service,
+                    execution_service,
+                )
+                .await
             }
             LinkV3Types::TokenBasketLink(link) => {
-                link.process_action(caller, action, intents, intent_txs_map, transaction_manager)
-                    .await
+                link.process_action(
+                    caller,
+                    action,
+                    intents,
+                    intent_txs_map,
+                    transaction_manager,
+                    validator_service,
+                    execution_service,
+                )
+                .await
             }
         }
     }

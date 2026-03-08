@@ -21,6 +21,7 @@ use cashier_backend_types::{
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
+use transaction_manager::transaction::validator_service;
 
 /// Creates a new link V3
 /// # Arguments
@@ -131,6 +132,8 @@ async fn user_process_action_v3(
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
+    let validator_service = get_state().validator_service;
+    let executor_service = get_state().executor_service;
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -146,6 +149,8 @@ async fn user_process_action_v3(
             canister_id,
             &input.action_id,
             transaction_manager_v3,
+            validator_service,
+            executor_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);

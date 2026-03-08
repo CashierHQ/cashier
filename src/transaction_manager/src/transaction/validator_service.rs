@@ -24,24 +24,27 @@ use log::info;
 use std::collections::HashMap;
 
 use crate::{
-    transaction::traits::TransactionValidator, utils::topological_sort::kahn_topological_sort,
+    transaction::traits::{TransactionValidator, ValidationService},
+    utils::topological_sort::kahn_topological_sort,
 };
 
-pub struct ValidatorService<V: TransactionValidator + Clone> {
+pub struct IcValidatorService<V: TransactionValidator + Clone> {
     validator: V,
 }
 
-impl<V: TransactionValidator + Clone> ValidatorService<V> {
+impl<V: TransactionValidator + Clone> IcValidatorService<V> {
     pub fn new(validator: V) -> Self {
         Self { validator }
     }
+}
 
+impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V> {
     /// Validate a list of transactions and update their states accordingly
     /// # Arguments
     /// * `transactions` - A slice of transactions to be validated
     /// # Returns
     /// * `Result<ValidateActionTransactionsResult, CanisterError>` - The result of validating the transactions
-    pub async fn validate_action_transactions(
+    async fn validate_action_transactions(
         &self,
         transactions: &[Transaction],
     ) -> Result<ValidateActionTransactionsResult, CanisterError> {
@@ -132,7 +135,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
     /// Rollup the state of ICRC-2 wallet transactions based on their dependent transactions
     /// # Arguments
     /// * `transactions` - A mutable slice of transactions to be rolled up
-    pub fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]) {
+    fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]) {
         info!("[rollup_icrc2_wallet_transaction_state] {:?}", transactions);
         // Build dependent_map with immutable borrows
         let mut dependent_map: HashMap<String, Vec<TransactionState>> = HashMap::new();
@@ -175,7 +178,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
     /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
     /// # Returns
     /// * `Result<RollupActionStateResult, CanisterError>` - The result of rolling up the action state
-    pub fn rollup_action_state(
+    fn rollup_action_state(
         &self,
         action: Action,
         intents: &[Intent],
@@ -220,7 +223,7 @@ impl<V: TransactionValidator + Clone> ValidatorService<V> {
         })
     }
 
-    pub fn rollup_action_state_v3(
+    fn rollup_action_state_v3(
         &self,
         action: ActionV3,
         intents: Vec<IntentV3>,
@@ -344,7 +347,7 @@ mod tests {
         let all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
         mock_validator.set_failure(&fee_txs[0].id, true);
         mock_validator.set_failure(&asset_txs[0].id, true);
-        let service = ValidatorService::new(mock_validator);
+        let service = IcValidatorService::new(mock_validator);
 
         // Act
         let result = service
@@ -382,7 +385,7 @@ mod tests {
 
         mock_validator.set_failure(&fee_tx[0].id, true);
         mock_validator.set_failure(&asset_txs[0].id, true);
-        let service = ValidatorService::new(mock_validator);
+        let service = IcValidatorService::new(mock_validator);
 
         // Act
         let result = service
@@ -425,7 +428,7 @@ mod tests {
         asset_txs[1].state = TransactionState::Success; // Simulate asset transfer
 
         let mut all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
-        let service = ValidatorService::new(MockValidator::new());
+        let service = IcValidatorService::new(MockValidator::new());
 
         // Assert initial states
         assert_eq!(all_txs[0].state, TransactionState::Created);
@@ -462,7 +465,7 @@ mod tests {
         asset_txs[1].state = TransactionState::Fail; // Simulate asset transfer failure
 
         let mut all_txs: Vec<Transaction> = [fee_txs.clone(), asset_txs.clone()].concat();
-        let service = ValidatorService::new(MockValidator::new());
+        let service = IcValidatorService::new(MockValidator::new());
 
         // Assert initial states
         assert_eq!(all_txs[0].state, TransactionState::Created);
@@ -514,7 +517,7 @@ mod tests {
         }
 
         let mock_validator = MockValidator::new();
-        let service = ValidatorService::new(mock_validator);
+        let service = IcValidatorService::new(mock_validator);
 
         // Act
         let result = service
@@ -574,7 +577,7 @@ mod tests {
         }
 
         let mock_validator = MockValidator::new();
-        let service = ValidatorService::new(mock_validator);
+        let service = IcValidatorService::new(mock_validator);
 
         // Act
         let result = service
@@ -634,7 +637,7 @@ mod tests {
         }
 
         let mock_validator = MockValidator::new();
-        let service = ValidatorService::new(mock_validator);
+        let service = IcValidatorService::new(mock_validator);
 
         // Act
         let result = service
