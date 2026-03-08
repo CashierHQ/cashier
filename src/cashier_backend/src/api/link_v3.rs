@@ -115,6 +115,12 @@ async fn user_create_action_v3(
     res
 }
 
+/// Processes a created action V3.
+/// # Arguments
+/// * `input` - Action processing data
+/// # Returns
+/// * `Ok(ProcessActionResponseV3)` - The processed action data
+/// * `Err(CanisterError)` - If action processing fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_process_action_v3(
     input: ProcessActionInputV3,
@@ -147,6 +153,12 @@ async fn user_process_action_v3(
     res
 }
 
+/// Retrieves a paginated list of links for the caller.
+/// # Arguments
+/// * `input` - Optional pagination parameters
+/// # Returns
+/// * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
+/// * `Err(CanisterError)` - If retrieval fails or validation errors occur
 #[query(guard = "is_not_anonymous")]
 async fn user_get_links_v3(
     input: Option<PaginateInput>,
@@ -157,6 +169,13 @@ async fn user_get_links_v3(
     link_v3_service.get_links(msg_caller(), input).await
 }
 
+/// Retrieves a specific link by its ID with optional action data.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link to retrieve
+/// * `options` - Optional parameters including action type to include in response
+/// # Returns
+/// * `Ok(GetLinkResponseV3)` - Link data
+/// * `Err(String)` - Error message if link not found or access denied
 #[query]
 async fn get_link_details_v3(
     link_id: &str,
@@ -173,6 +192,12 @@ async fn get_link_details_v3(
         .await
 }
 
+/// Disables a link by its ID
+/// # Arguments
+/// * `link_id` - The unique identifier of the link to disable
+/// # Returns
+/// * `Ok(DisableLinkResponseV3)` - Confirmation of link being disabled
+/// * `Err(String)` - Error message if link not found, access denied, or already disabled
 #[update(guard = "is_not_anonymous")]
 fn user_disable_link_v3(link_id: &str) -> Result<DisableLinkResponseV3, CanisterError> {
     info!("[disable_link_v3]");

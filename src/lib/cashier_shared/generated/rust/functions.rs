@@ -19,7 +19,7 @@ use crate::types::{IntentParticipants, TokenStandard};
 /// - UserToLink: user_input_amount (user sending to link)
 /// - LinkToUser: user_input_amount (user receiving from link)
 /// - LinkToCreator: link_max_asset_amount (withdrawal/refund)
-pub fn calculate_intent_total_amount(participants: &IntentParticipants, user_input_amount: &Nat, max_use: u64, link_creation_fee: &Nat, link_max_asset_amount: &Nat) -> Nat {
+pub fn calculate_intent_total_amount(participants: IntentParticipants, user_input_amount: &Nat, max_use: u64, link_creation_fee: &Nat, link_max_asset_amount: &Nat) -> Nat {
     match participants {
         IntentParticipants::CreatorToTreasury => {
             link_creation_fee.clone()
@@ -55,17 +55,48 @@ pub fn calculate_intent_total_amount(participants: &IntentParticipants, user_inp
 /// - UserToLink: inbound (1x or 2x) + 1x outbound
 /// - LinkToUser: no inbound + 1x outbound
 /// - LinkToCreator: no inbound + 1x outbound
-pub fn calculate_intent_total_network_fee(participants: &IntentParticipants, token_standard: &TokenStandard, asset_network_fee: &Nat, max_use: u64) -> Nat {
-    let inbound_multiplier = if *token_standard == TokenStandard::ICRC2 { Nat::from(2u64) } else { Nat::from(1u64) };
+pub fn calculate_intent_total_network_fee(participants: IntentParticipants, token_standard: TokenStandard, asset_network_fee: &Nat, max_use: u64) -> Nat {
+    let inbound_fee = calculate_intent_inbound_network_fee(participants.clone(), token_standard.clone(), asset_network_fee, max_use);
+    let outbound_fee = calculate_intent_outbound_network_fee(participants.clone(), asset_network_fee, max_use);
+    inbound_fee.clone() + outbound_fee.clone()
+}
+
+/// Calculate the inbound network fee for an intent.
+pub fn calculate_intent_inbound_network_fee(participants: IntentParticipants, token_standard: TokenStandard, asset_network_fee: &Nat, max_use: u64) -> Nat {
+    let inbound_multiplier = if token_standard == TokenStandard::ICRC2 { Nat::from(2u64) } else { Nat::from(1u64) };
     match participants {
         IntentParticipants::CreatorToTreasury => {
             asset_network_fee.clone() * inbound_multiplier.clone()
         }
         IntentParticipants::CreatorToLink => {
-            (asset_network_fee.clone() * inbound_multiplier.clone() + asset_network_fee.clone() * Nat::from(max_use))
+            asset_network_fee.clone() * inbound_multiplier.clone()
         }
         IntentParticipants::UserToLink => {
-            asset_network_fee.clone() * inbound_multiplier.clone() + asset_network_fee.clone()
+            asset_network_fee.clone() * inbound_multiplier.clone()
+        }
+        IntentParticipants::LinkToUser => {
+            Nat::from(0u64)
+        }
+        IntentParticipants::LinkToCreator => {
+            Nat::from(0u64)
+        }
+        _ => {
+            Nat::from(0u64)
+        }
+    }
+}
+
+/// Calculate the outbound network fee for an intent.
+pub fn calculate_intent_outbound_network_fee(participants: IntentParticipants, asset_network_fee: &Nat, max_use: u64) -> Nat {
+    match participants {
+        IntentParticipants::CreatorToTreasury => {
+            Nat::from(0u64)
+        }
+        IntentParticipants::CreatorToLink => {
+            asset_network_fee.clone() * Nat::from(max_use)
+        }
+        IntentParticipants::UserToLink => {
+            asset_network_fee.clone()
         }
         IntentParticipants::LinkToUser => {
             asset_network_fee.clone()
@@ -89,7 +120,7 @@ pub fn calculate_intent_total_network_fee(participants: &IntentParticipants, tok
 /// - UserToLink: network_fee only
 /// - LinkToUser: 0 (free to receive)
 /// - LinkToCreator: network_fee (pays withdrawal fee)
-pub fn calculate_intent_user_fee(participants: &IntentParticipants, intent_total_amount: &Nat, intent_total_network_fee: &Nat) -> Nat {
+pub fn calculate_intent_user_fee(participants: IntentParticipants, intent_total_amount: &Nat, intent_total_network_fee: &Nat) -> Nat {
     match participants {
         IntentParticipants::CreatorToTreasury => {
             intent_total_amount.clone() + intent_total_network_fee.clone()

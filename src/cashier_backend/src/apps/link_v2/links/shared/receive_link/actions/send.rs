@@ -70,7 +70,7 @@ impl SendAction {
             &link.asset_info,
             &token_fee_map,
             link.link_use_action_max_count,
-        );
+        )?;
 
         // intents
         let deposit_intents = link

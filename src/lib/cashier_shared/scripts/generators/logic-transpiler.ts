@@ -49,6 +49,9 @@ const TYPE_MAP: Record<string, string> = {
 	number: 'u64',
 };
 
+// Function parameter types for transpiled functions (TS name and snake_case name)
+const FUNCTION_PARAM_TYPES = new Map<string, string[]>();
+
 // Convert TypeScript type to Rust type
 function convertType(tsType: string): string {
 	// Handle import("...").TypeName format from ts-morph
@@ -66,14 +69,33 @@ function convertParameter(param: ParameterDeclaration): string {
 	const rustType = convertType(tsType);
 
 	// Use references for complex types
-	if (
-		rustType === 'Nat' ||
-		rustType === 'IntentParticipants' ||
-		rustType === 'TokenStandard'
-	) {
+	if (rustType === 'Nat') {
 		return `${name}: &${rustType}`;
 	}
 	return `${name}: ${rustType}`;
+}
+
+function convertParameterType(param: ParameterDeclaration): string {
+	const tsType = param.getType().getText();
+	const rustType = convertType(tsType);
+	if (rustType === 'Nat') return `&${rustType}`;
+	return rustType;
+}
+
+function isCopyRustType(rustType: string): boolean {
+	return [
+		'u8',
+		'u16',
+		'u32',
+		'u64',
+		'usize',
+		'i8',
+		'i16',
+		'i32',
+		'i64',
+		'isize',
+		'bool',
+	].includes(rustType);
 }
 
 // Convert JSDoc to Rust doc comments
@@ -138,9 +160,24 @@ function convertExpression(node: Node): string {
 
 			// Handle regular function calls - convert to snake_case
 			const rustFuncName = toSnakeCase(funcName);
+			const paramTypes =
+				FUNCTION_PARAM_TYPES.get(funcName) ||
+				FUNCTION_PARAM_TYPES.get(rustFuncName);
 			const args = call
 				.getArguments()
-				.map((arg) => convertExpression(arg))
+				.map((arg, index) => {
+					const convertedArg = convertExpression(arg);
+					const paramType = paramTypes?.[index];
+					const shouldClone =
+						arg.getKind() === SyntaxKind.Identifier &&
+						!!paramType &&
+						!paramType.startsWith('&') &&
+						!isCopyRustType(paramType) &&
+						!convertedArg.includes('.clone()') &&
+						!convertedArg.startsWith('Nat::');
+
+					return shouldClone ? `${convertedArg}.clone()` : convertedArg;
+				})
 				.join(', ');
 			return `${rustFuncName}(${args})`;
 		}
@@ -168,14 +205,6 @@ function convertExpression(node: Node): string {
 					);
 				case '===':
 				case '==':
-					// For enum comparisons, dereference the left side
-					const leftText = binary.getLeft().getText();
-					if (
-						leftText.includes('participants') ||
-						leftText.includes('tokenStandard')
-					) {
-						return `*${left} == ${right}`;
-					}
 					return `${left} == ${right}`;
 				case '*':
 					// For Nat multiplication, clone if needed
@@ -384,11 +413,7 @@ function convertFunction(func: FunctionDeclaration): string {
 		const rustType = convertType(tsType);
 
 		// Parameters that become references in Rust
-		if (
-			rustType === 'Nat' ||
-			rustType === 'IntentParticipants' ||
-			rustType === 'TokenStandard'
-		) {
+		if (rustType === 'Nat') {
 			borrowedParams.add(paramName);
 		}
 	}
@@ -424,6 +449,14 @@ export function transpileToRust(sourceFile: string): string {
 	});
 
 	const source = project.addSourceFileAtPath(sourceFile);
+	FUNCTION_PARAM_TYPES.clear();
+	for (const func of source.getFunctions()) {
+		const funcName = func.getName();
+		if (!funcName) continue;
+		const paramTypes = func.getParameters().map(convertParameterType);
+		FUNCTION_PARAM_TYPES.set(funcName, paramTypes);
+		FUNCTION_PARAM_TYPES.set(toSnakeCase(funcName), paramTypes);
+	}
 
 	// Filter out TypeScript-only functions
 	// These functions use TypeScript-specific features (typeof, ??, union types)

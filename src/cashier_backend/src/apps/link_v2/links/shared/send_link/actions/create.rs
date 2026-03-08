@@ -87,7 +87,7 @@ impl CreateAction {
             &link.asset_info,
             &token_fee_map,
             link.link_use_action_max_count,
-        );
+        )?;
 
         // intents
         let deposit_intents = link
@@ -379,7 +379,7 @@ mod tests {
             .await
             .unwrap();
         let link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(
@@ -500,7 +500,7 @@ mod tests {
             .await
             .unwrap();
         let _link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(
@@ -636,7 +636,7 @@ mod tests {
             .await
             .unwrap();
         let link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(

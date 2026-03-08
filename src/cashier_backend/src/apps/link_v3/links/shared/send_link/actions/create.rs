@@ -20,6 +20,10 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
+use cashier_shared::{
+    IntentParticipants as SharedIntentParticipants, calculate_intent_total_amount,
+    calculate_intent_total_network_fee, calculate_intent_user_fee,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
@@ -133,6 +137,7 @@ impl CreateActionV3 {
 
                     TransferWalletToLinkIntent::create_icrc2(&action.id, input)
                 } else {
+                    // TODO
                     let (actual_amount, _total_amount) = calculate_icrc1_transfer_intent_amount(
                         link.max_use,
                         &asset_info.amount,

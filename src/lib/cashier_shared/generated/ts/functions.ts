@@ -82,30 +82,82 @@ export function calculateIntentTotalNetworkFee(
   assetNetworkFee: bigint,
   maxUse: number = 1
 ): bigint {
-  // ICRC2 requires 2x fee for inbound (approve + transfer_from)
-  const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
+  const inboundFee = calculateIntentInboundNetworkFee(
+    participants,
+    tokenStandard,
+    assetNetworkFee,
+    maxUse
+  );
+  const outboundFee = calculateIntentOutboundNetworkFee(
+    participants,
+    assetNetworkFee,
+    maxUse
+  );
+  return inboundFee + outboundFee;
+}
 
+/**
+ * Calculate the inbound network fee for an intent.
+ * @param participants
+ * @param tokenStandard
+ * @param assetNetworkFee
+ * @param maxUse
+ * @returns
+ */
+export function calculateIntentInboundNetworkFee(
+  participants: IntentParticipants,
+  tokenStandard: TokenStandard,
+  assetNetworkFee: bigint,
+  maxUse: number = 1
+): bigint {
+  const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
   switch (participants) {
     case IntentParticipants.CreatorToTreasury:
-      // Inbound only, treasury holds (no outbound)
       return assetNetworkFee * inboundMultiplier;
 
     case IntentParticipants.CreatorToLink:
-      // Inbound + outbound per use
-      return (
-        assetNetworkFee * inboundMultiplier + assetNetworkFee * BigInt(maxUse)
-      );
+      return assetNetworkFee * inboundMultiplier;
 
     case IntentParticipants.UserToLink:
-      // Inbound + 1x outbound
-      return assetNetworkFee * inboundMultiplier + assetNetworkFee;
+      return assetNetworkFee * inboundMultiplier;
 
     case IntentParticipants.LinkToUser:
-      // No inbound (already in link) + 1x outbound
+      return 0n;
+
+    case IntentParticipants.LinkToCreator:
+      return 0n;
+
+    default:
+      return 0n;
+  }
+}
+
+/**
+ * Calculate the outbound network fee for an intent.
+ * @param participants
+ * @param assetNetworkFee
+ * @param maxUse
+ * @returns
+ */
+export function calculateIntentOutboundNetworkFee(
+  participants: IntentParticipants,
+  assetNetworkFee: bigint,
+  maxUse: number = 1
+): bigint {
+  switch (participants) {
+    case IntentParticipants.CreatorToTreasury:
+      return 0n;
+
+    case IntentParticipants.CreatorToLink:
+      return assetNetworkFee * BigInt(maxUse);
+
+    case IntentParticipants.UserToLink:
+      return assetNetworkFee;
+
+    case IntentParticipants.LinkToUser:
       return assetNetworkFee;
 
     case IntentParticipants.LinkToCreator:
-      // No inbound + 1x outbound
       return assetNetworkFee;
 
     default:

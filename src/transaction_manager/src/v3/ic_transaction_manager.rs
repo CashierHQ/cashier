@@ -1,10 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::dto::link;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::action_result::{CreateActionResult, ProcessActionResult},
     link_v3::action_result::{
         CreateActionResult as CreateActionResultV3, ProcessActionResult as ProcessActionResultV3,
     },
@@ -18,7 +16,7 @@ use std::{
     pin::Pin,
 };
 
-use crate::adapter::ic::intent::traits::{IntentAdapterTrait, IntentAdapterTraitV3};
+use crate::adapter::ic::intent::traits::IntentAdapterTraitV3;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::v1::IcIntentAdapter,
@@ -39,7 +37,6 @@ pub struct IcTransactionManager<E: IcEnvironment> {
     pub dependency_analyzer: DependencyAnalyzer,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
         let intent_adapter = IcIntentAdapter;

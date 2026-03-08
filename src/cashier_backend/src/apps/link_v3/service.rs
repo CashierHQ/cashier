@@ -21,7 +21,10 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
-use cashier_shared::{AddressType as AddressTypeShared, types::Action as ActionShared};
+use cashier_shared::{
+    AddressType as SharedAddressType,
+    types::{Action as SharedAction, ActionType as SharedActionType},
+};
 use transaction_manager::v3::traits::TransactionManagerV3;
 
 use crate::{
@@ -61,6 +64,7 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `GetLinkResp` - The response containing the created link and action details
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_link<M, F, S, B>(
         &mut self,
         input: CreateLinkInputV3,
@@ -78,7 +82,7 @@ impl<R: Repositories> LinkV3Service<R> {
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
     {
-        if input.action.action_type != cashier_shared::types::ActionType::CreateLink {
+        if input.action.action_type != SharedActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
                 "Only CREATE action can be created when creating a link".to_string(),
             ));
@@ -89,7 +93,7 @@ impl<R: Repositories> LinkV3Service<R> {
             .action
             .intents
             .iter()
-            .filter(|i| i.dest_address_type != AddressTypeShared::Treasury)
+            .filter(|i| i.dest_address_type != SharedAddressType::Treasury)
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
@@ -112,7 +116,7 @@ impl<R: Repositories> LinkV3Service<R> {
         };
         self.user_link_repository.create(new_user_link);
 
-        // create action firstly
+        // create action
         let action_result = self
             .create_action(
                 link_model.id.as_str(),
@@ -141,12 +145,13 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `link_id` - The ID of the link for which the action is created
     /// * `action_type` - The type of action to be created
     /// # Returns
-    /// * `Ok(ActionShared)` - The created action data
+    /// * `Ok(SharedAction)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_action<M, F, S, B>(
         &mut self,
         link_id: &str,
-        action: ActionShared,
+        action: SharedAction,
         creator: Principal,
         canister_id: Principal,
         created_at: u64,
@@ -172,12 +177,6 @@ impl<R: Repositories> LinkV3Service<R> {
             creator,
         );
 
-        let _intent_models: Vec<IntentV3> = action
-            .intents
-            .iter()
-            .map(|i| IntentV3::from(i.clone()))
-            .collect();
-
         let link_instance = LinkFactoryV3::create_from_link_model(link_model, canister_id)?;
         let result = link_instance
             .create_action(
@@ -201,12 +200,14 @@ impl<R: Repositories> LinkV3Service<R> {
         };
 
         self.action_service.store_action_data(
-            link_action,
+            link_action.clone(),
             result.create_action_result.action.clone(),
             result.create_action_result.intents.clone(),
             result.create_action_result.intent_txs_map.clone(),
             result.create_action_result.action.creator,
         )?;
+
+        self.user_link_action_repository.create(link_action);
 
         // format response
         let link_shared = result.link.to_shared();
@@ -222,6 +223,14 @@ impl<R: Repositories> LinkV3Service<R> {
         })
     }
 
+    /// Process action V3.
+    /// # Arguments
+    /// * `caller` - The principal of the user processing the action
+    /// * `canister_id` - The canister ID of the token contract
+    /// * `action_id` - The ID of the action to be processed
+    /// # Returns
+    /// * `Ok(ProcessActionResponseV3)` - The processed action data
+    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
     pub async fn process_action<M>(
         &mut self,
         caller: Principal,
@@ -278,6 +287,13 @@ impl<R: Repositories> LinkV3Service<R> {
         })
     }
 
+    /// Retrieves a list of links for the caller with pagination support.
+    /// # Arguments
+    /// * `caller` - The principal of the user retrieving the links
+    /// * `input` - Optional pagination parameters
+    /// # Returns
+    /// * `Ok(GetLinksResponseV3)` - The paginated list of links for the caller
+    /// * `Err(CanisterError)` - If there is an error during retrieval or validation errors occur
     pub async fn get_links(
         &self,
         caller: Principal,
@@ -301,6 +317,15 @@ impl<R: Repositories> LinkV3Service<R> {
         Ok(paginate_result.map(|link| link.to_shared()))
     }
 
+    /// Retrieves a specific link by its ID with optional action data.
+    /// # Arguments
+    /// * `caller` - The principal of the user retrieving the link details
+    /// * `link_id` - The unique identifier of the link to retrieve
+    /// * `options` - Optional parameters including action type to include in response
+    /// * `transaction_manager` - The transaction manager for fetching action data
+    /// # Returns
+    /// * `Ok(GetLinkResponseV3)` - The link details along with action data
+    /// * `Err(CanisterError)` - If link not found, access denied, or other errors occur
     pub async fn get_link_details<M>(
         &self,
         caller: Principal,
@@ -323,7 +348,7 @@ impl<R: Repositories> LinkV3Service<R> {
 
         // build response dto
         let link_shared = link_model.to_shared();
-        let (action_shared, icrc112_requests): (Option<ActionShared>, Option<Icrc112Requests>) =
+        let (action_shared, icrc112_requests): (Option<SharedAction>, Option<Icrc112Requests>) =
             if let Some(action) = action {
                 let action_data = self
                     .action_service
@@ -354,6 +379,13 @@ impl<R: Repositories> LinkV3Service<R> {
         })
     }
 
+    /// Disables a link by its ID.
+    /// # Arguments
+    /// * `caller` - The principal of the user disabling the link
+    /// * `link_id` - The unique identifier of the link to disable
+    /// # Returns
+    /// * `Ok(DisableLinkResponseV3)` - Confirmation of link being disabled
+    /// * `Err(CanisterError)` - If link not found, access denied, already disabled, or other errors occur
     pub fn disable_link(
         &mut self,
         caller: Principal,

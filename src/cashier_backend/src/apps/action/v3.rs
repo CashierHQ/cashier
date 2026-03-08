@@ -70,7 +70,7 @@ impl<R: Repositories> ActionServiceV3<R> {
     ) -> ActionV3 {
         let action_id = Uuid::new_v4().to_string();
         let mut action_model = ActionV3::from(action);
-        action_model.id = action_id.clone();
+        action_model.id = action_id;
         action_model.creator = creator;
         action_model.link_id = link_id.unwrap_or_default();
         action_model
