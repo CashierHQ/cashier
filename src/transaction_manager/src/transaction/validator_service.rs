@@ -20,7 +20,6 @@ use cashier_backend_types::{
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };
-use log::info;
 use std::collections::HashMap;
 
 use crate::{
@@ -39,11 +38,6 @@ impl<V: TransactionValidator + Clone> IcValidatorService<V> {
 }
 
 impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V> {
-    /// Validate a list of transactions and update their states accordingly
-    /// # Arguments
-    /// * `transactions` - A slice of transactions to be validated
-    /// # Returns
-    /// * `Result<ValidateActionTransactionsResult, CanisterError>` - The result of validating the transactions
     async fn validate_action_transactions(
         &self,
         transactions: &[Transaction],
@@ -132,11 +126,7 @@ impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V
         })
     }
 
-    /// Rollup the state of ICRC-2 wallet transactions based on their dependent transactions
-    /// # Arguments
-    /// * `transactions` - A mutable slice of transactions to be rolled up
     fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]) {
-        info!("[rollup_icrc2_wallet_transaction_state] {:?}", transactions);
         // Build dependent_map with immutable borrows
         let mut dependent_map: HashMap<String, Vec<TransactionState>> = HashMap::new();
 
@@ -171,13 +161,6 @@ impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V
         }
     }
 
-    /// Rollup the state of an action based on its intents and their transactions
-    /// # Arguments
-    /// * `action` - The action whose state is to be rolled up
-    /// * `intents` - A slice of intents associated with the action
-    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
-    /// # Returns
-    /// * `Result<RollupActionStateResult, CanisterError>` - The result of rolling up the action state
     fn rollup_action_state(
         &self,
         action: Action,
@@ -279,8 +262,13 @@ mod tests {
     };
     use candid::Nat;
     use cashier_backend_types::repository::action::v1::ActionState;
+    use cashier_backend_types::repository::action::v1::ActionType;
+    use cashier_backend_types::repository::action::v3::ActionV3;
     use cashier_backend_types::repository::asset::v1::Asset;
+    use cashier_backend_types::repository::asset::v3::AssetV3;
+    use cashier_backend_types::repository::common::AddressTypeV3;
     use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask};
+    use cashier_backend_types::repository::intent::v3::{IntentTypeV3, IntentV3};
     use cashier_backend_types::repository::transaction::v1::{Transaction, TransactionState};
     use cashier_common::test_utils::random_principal_id;
     use std::collections::HashMap;
@@ -323,6 +311,115 @@ mod tests {
                 }
             })
         }
+    }
+
+    fn generate_mock_action_and_intents_v3()
+    -> (ActionV3, Vec<IntentV3>, HashMap<String, Vec<Transaction>>) {
+        let creator = random_principal_id();
+        let fee_intent = IntentV3 {
+            id: "fee_intent".to_string(),
+            label: "fee".to_string(),
+            intent_type: IntentTypeV3::Send,
+            asset: AssetV3::default(),
+            amount: Nat::from(100u64),
+            total_amount: Some(Nat::from(100u64)),
+            network_fee: None,
+            user_fee: None,
+            source_address: creator,
+            source_account: None,
+            source_address_type: AddressTypeV3::Creator,
+            dest_address: random_principal_id(),
+            dest_account: None,
+            dest_address_type: AddressTypeV3::Treasury,
+            intent_tx_data: None,
+            dependencies: vec![],
+            action_id: "action_v3".to_string(),
+            state: IntentState::Created,
+            created_at: 0,
+        };
+
+        let asset_intent = IntentV3 {
+            id: "asset_intent".to_string(),
+            label: "asset".to_string(),
+            intent_type: IntentTypeV3::Send,
+            asset: AssetV3::default(),
+            amount: Nat::from(500u64),
+            total_amount: Some(Nat::from(500u64)),
+            network_fee: None,
+            user_fee: None,
+            source_address: creator,
+            source_account: None,
+            source_address_type: AddressTypeV3::Creator,
+            dest_address: random_principal_id(),
+            dest_account: None,
+            dest_address_type: AddressTypeV3::Link,
+            intent_tx_data: None,
+            dependencies: vec![],
+            action_id: "action_v3".to_string(),
+            state: IntentState::Created,
+            created_at: 0,
+        };
+
+        let action = ActionV3 {
+            id: "action_v3".to_string(),
+            action_type: ActionType::CreateLink,
+            state: ActionState::Created,
+            creator,
+            creator_address_type: AddressTypeV3::Creator,
+            link_id: "link_v3".to_string(),
+            intent_ids: vec![fee_intent.id.clone(), asset_intent.id.clone()],
+        };
+
+        let fee_tx = Transaction {
+            id: "fee_tx".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type:
+                cashier_backend_types::repository::transaction::v1::FromCallType::Wallet,
+            protocol: cashier_backend_types::repository::transaction::v1::Protocol::IC(
+                cashier_backend_types::repository::transaction::v1::IcTransaction::Icrc1Transfer(
+                    cashier_backend_types::repository::transaction::v1::Icrc1Transfer {
+                        from: cashier_backend_types::repository::common::Wallet::default(),
+                        to: cashier_backend_types::repository::common::Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(100u64),
+                        memo: None,
+                        ts: None,
+                    },
+                ),
+            ),
+            start_ts: None,
+        };
+        let asset_tx = Transaction {
+            id: "asset_tx".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type:
+                cashier_backend_types::repository::transaction::v1::FromCallType::Wallet,
+            protocol: cashier_backend_types::repository::transaction::v1::Protocol::IC(
+                cashier_backend_types::repository::transaction::v1::IcTransaction::Icrc1Transfer(
+                    cashier_backend_types::repository::transaction::v1::Icrc1Transfer {
+                        from: cashier_backend_types::repository::common::Wallet::default(),
+                        to: cashier_backend_types::repository::common::Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(500u64),
+                        memo: None,
+                        ts: None,
+                    },
+                ),
+            ),
+            start_ts: None,
+        };
+
+        let mut intent_txs_map = HashMap::new();
+        intent_txs_map.insert(fee_intent.id.clone(), vec![fee_tx]);
+        intent_txs_map.insert(asset_intent.id.clone(), vec![asset_tx]);
+
+        (action, vec![fee_intent, asset_intent], intent_txs_map)
     }
 
     #[tokio::test]
@@ -659,5 +756,113 @@ mod tests {
             .find(|intent| intent.task == IntentTask::TransferWalletToLink)
             .unwrap();
         assert_eq!(asset_intent.state, IntentState::Success);
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_rollup_action_state_v3_due_to_fee_intent_transactions_failed() {
+        // Arrange
+        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Fail;
+        intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Success;
+
+        let service = IcValidatorService::new(MockValidator::new());
+
+        // Act
+        let result = service
+            .rollup_action_state_v3(action, intents, intent_txs_map)
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.action.state, ActionState::Fail);
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "fee_intent")
+                .unwrap()
+                .state,
+            IntentState::Fail
+        );
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "asset_intent")
+                .unwrap()
+                .state,
+            IntentState::Success
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_rollup_action_state_v3_due_to_asset_intent_transactions_failed() {
+        // Arrange
+        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Success;
+        intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Fail;
+
+        let service = IcValidatorService::new(MockValidator::new());
+
+        // Act
+        let result = service
+            .rollup_action_state_v3(action, intents, intent_txs_map)
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.action.state, ActionState::Fail);
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "fee_intent")
+                .unwrap()
+                .state,
+            IntentState::Success
+        );
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "asset_intent")
+                .unwrap()
+                .state,
+            IntentState::Fail
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_rollup_action_state_v3() {
+        // Arrange
+        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Success;
+        intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Success;
+
+        let service = IcValidatorService::new(MockValidator::new());
+
+        // Act
+        let result = service
+            .rollup_action_state_v3(action, intents, intent_txs_map)
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.action.state, ActionState::Success);
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "fee_intent")
+                .unwrap()
+                .state,
+            IntentState::Success
+        );
+        assert_eq!(
+            result
+                .intents
+                .iter()
+                .find(|i| i.id == "asset_intent")
+                .unwrap()
+                .state,
+            IntentState::Success
+        );
     }
 }

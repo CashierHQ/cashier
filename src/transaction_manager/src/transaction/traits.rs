@@ -50,8 +50,21 @@ pub trait ValidationService {
         transactions: &[Transaction],
     ) -> Result<ValidateActionTransactionsResult, CanisterError>;
 
+    /// Rollup the transaction state for the ICRC-2 wallet transactions
+    /// # Arguments
+    /// * `transactions` - The transactions to be rolled up
+    /// # Returns
+    /// * `()` - No return value, the function updates the transaction states in place
     fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]);
 
+    /// Rollup the action state based on the transaction states and dependencies
+    /// # Arguments
+    /// * `action` - The action for which the state needs to be rolled up
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A map of intent IDs to their associated transactions
+    /// # Returns
+    /// * `Ok(RollupActionStateResult)` - The rolled up action state result if successful
+    /// * `Err(CanisterError)` - If error occurs during rollup
     fn rollup_action_state(
         &self,
         action: Action,
@@ -59,6 +72,14 @@ pub trait ValidationService {
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<RollupActionStateResult, CanisterError>;
 
+    /// Rollup the action state based on the transaction states and dependencies for V3 action
+    /// # Arguments
+    /// * `action` - The V3 action for which the state needs to be rolled up
+    /// * `intents` - The V3 intents associated with the action
+    /// * `intent_txs_map` - A map of intent IDs to their associated transactions
+    /// # Returns
+    /// * `Ok(RollupActionStateResultV3)` - The rolled up action state result if successful
+    /// * `Err(CanisterError)` - If error occurs during rollup
     fn rollup_action_state_v3(
         &self,
         action: ActionV3,
