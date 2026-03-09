@@ -240,7 +240,7 @@ impl<R: Repositories> LinkV3Service<R> {
         canister_id: Principal,
         action_id: &str,
         transaction_manager: M,
-        validator_service: V,
+        validation_service: V,
         execution_service: X,
     ) -> Result<ProcessActionResponseV3, CanisterError>
     where
@@ -266,7 +266,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 action_data.intents,
                 action_data.intent_txs,
                 transaction_manager,
-                validator_service,
+                validation_service,
                 execution_service,
             )
             .await?;
@@ -425,5 +425,618 @@ impl<R: Repositories> LinkV3Service<R> {
         let link_shared = link.to_shared();
 
         Ok(DisableLinkResponseV3 { link: link_shared })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apps::{
+        shared::test_utils::tests::{
+            MockExecutionService, MockTransactionManagerV3, MockValidationService,
+        },
+        token_balance::service::tests::MockTokenBalanceService,
+        token_fee::service::tests::{
+            MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
+        },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
+    };
+    use crate::repositories::tests::TestRepositories;
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        action::v1::ActionType,
+        asset::v3::{AssetV3, TokenStandardV3},
+        asset_info::v3::AssetInfoV3,
+        link::v1::LinkType,
+        link::v3::{LinkState, LinkV3},
+    };
+    use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, test_utils::random_principal_id};
+    use cashier_shared::types::{
+        Action as SharedAction, ActionState as SharedActionState, ActionType as SharedActionType,
+        AddressType as SharedAddressType, Asset as SharedAsset, Intent as SharedIntent,
+        IntentState as SharedIntentState, IntentType as SharedIntentType,
+        LinkType as SharedLinkType, TokenStandard as SharedTokenStandard,
+    };
+    use token_storage_types::token::IcrcStandard;
+    use uuid::Uuid;
+
+    fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
+        AssetInfoV3 {
+            asset: AssetV3 {
+                address,
+                network_fee: None,
+                token_standard: TokenStandardV3::ICRC1,
+            },
+            label: "asset".to_string(),
+            amount,
+        }
+    }
+
+    fn fixture_of_link_v3(id: &str, creator: Principal, state: LinkState) -> LinkV3 {
+        LinkV3 {
+            id: id.to_string(),
+            title: "test-link".to_string(),
+            link_type: LinkType::SendTokenBasket,
+            asset_info: vec![fixture_of_asset_info_v3(
+                random_principal_id(),
+                Nat::from(1_000u64),
+            )],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state,
+            created_at: 1_000_000,
+        }
+    }
+
+    fn fixture_of_shared_intent(
+        creator: Principal,
+        canister_id: Principal,
+        ledger_id: Principal,
+    ) -> SharedIntent {
+        SharedIntent {
+            id: Uuid::new_v4().to_string(),
+            intent_type: SharedIntentType::Send,
+            asset: SharedAsset {
+                address: ledger_id,
+                network_fee: None,
+                token_standard: Some(SharedTokenStandard::ICRC1),
+            },
+            amount: Nat::from(1_000u64),
+            total_amount: Some(Nat::from(1_000u64)),
+            network_fee: None,
+            user_fee: None,
+            source_address: creator,
+            source_address_type: SharedAddressType::Creator,
+            dest_address: canister_id,
+            dest_address_type: SharedAddressType::Link,
+            dependencies: Some(vec![]),
+            action_id: None,
+            intent_state: SharedIntentState::Created,
+        }
+    }
+
+    fn fixture_of_shared_action(
+        action_type: SharedActionType,
+        creator: Principal,
+        canister_id: Principal,
+        ledger_id: Principal,
+    ) -> SharedAction {
+        SharedAction {
+            id: Uuid::new_v4().to_string(),
+            creator,
+            creator_address_type: SharedAddressType::Creator,
+            action_type,
+            intents: vec![fixture_of_shared_intent(creator, canister_id, ledger_id)],
+            action_state: SharedActionState::Created,
+            link_id: None,
+            intent_ids: None,
+        }
+    }
+
+    fn fixture_of_create_link_input_v3(
+        action_type: SharedActionType,
+        creator: Principal,
+        canister_id: Principal,
+        ledger_id: Principal,
+    ) -> CreateLinkInputV3 {
+        CreateLinkInputV3 {
+            title: "test-link".to_string(),
+            link_type: SharedLinkType::SendTip,
+            max_use: 3,
+            action: fixture_of_shared_action(action_type, creator, canister_id, ledger_id),
+        }
+    }
+
+    fn fixture_of_services(
+        current_ts: u64,
+    ) -> (
+        MockTokenFeeService,
+        MockTokenStandardService,
+        MockTokenBalanceService,
+    ) {
+        (
+            create_mock_token_fee_service(current_ts),
+            create_mock_token_standard_service(current_ts),
+            MockTokenBalanceService::new(),
+        )
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_link_due_to_non_create_action_type() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(1_000_000);
+
+        let result = service
+            .create_link(
+                fixture_of_create_link_input_v3(
+                    SharedActionType::Receive,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                1_000_000,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await;
+
+        assert!(matches!(result, Err(CanisterError::InvalidInput(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_missing_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let mut token_standard_service = create_mock_token_standard_service(1_000_000);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let result = service
+            .create_action(
+                "missing-link",
+                fixture_of_shared_action(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                1_000_000,
+                MockTransactionManagerV3::default(),
+                create_mock_token_fee_service(1_000_000),
+                token_standard_service,
+                MockTokenBalanceService::new(),
+            )
+            .await;
+
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_process_action_due_to_missing_action() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+
+        let result = service
+            .process_action(
+                random_principal_id(),
+                random_principal_id(),
+                "missing-action",
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await;
+
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_get_link_details_due_to_missing_link() {
+        let repositories = TestRepositories::new();
+        let service = LinkV3Service::new(&repositories);
+
+        let result = service
+            .get_link_details(
+                random_principal_id(),
+                "missing-link",
+                None,
+                MockTransactionManagerV3::default(),
+            )
+            .await;
+
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[test]
+    fn it_should_fail_disable_link_due_to_missing_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+
+        let result = service.disable_link(random_principal_id(), "missing-link");
+
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[test]
+    fn it_should_fail_disable_link_due_to_unauthorized_caller() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Active);
+        service.link_v3_repository.create(link);
+
+        let result = service.disable_link(random_principal_id(), "link-1");
+
+        assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
+    }
+
+    #[test]
+    fn it_should_fail_disable_link_due_to_non_active_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Created);
+        service.link_v3_repository.create(link);
+
+        let result = service.disable_link(creator, "link-1");
+
+        assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_for_icrc1_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "link-icrc1".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Created,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        let token_fee_service = create_mock_token_fee_service(created_at);
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                MockTokenBalanceService::new(),
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.expect("create_action should succeed for icrc1");
+        assert_eq!(response.action.action_type, SharedActionType::CreateLink);
+        assert!(
+            response
+                .action
+                .intents
+                .iter()
+                .any(|i| i.dest_address_type == SharedAddressType::Treasury)
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_for_icrc2_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "link-icrc2".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Created,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        let token_fee_service = create_mock_token_fee_service(created_at);
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC2]);
+
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                MockTokenBalanceService::new(),
+            )
+            .await;
+
+        assert!(result.is_ok());
+        let response = result.expect("create_action should succeed for icrc2");
+        assert_eq!(response.action.action_type, SharedActionType::CreateLink);
+        assert!(
+            response
+                .action
+                .intents
+                .iter()
+                .any(|i| i.dest_address_type == SharedAddressType::Treasury)
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let response = service
+            .create_link(
+                fixture_of_create_link_input_v3(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create link should succeed");
+
+        assert_eq!(response.link.creator, creator);
+        assert_eq!(response.action.action_type, SharedActionType::CreateLink);
+        assert_eq!(response.link.link_type, SharedLinkType::SendTip);
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_process_action() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let created = service
+            .create_link(
+                fixture_of_create_link_input_v3(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create link should succeed");
+
+        let processed = service
+            .process_action(
+                creator,
+                canister_id,
+                &created.action.id,
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await
+            .expect("process action should succeed");
+
+        assert!(processed.is_success);
+        assert_eq!(
+            processed.link.link_state,
+            cashier_shared::types::LinkState::Active
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_get_links() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let created = service
+            .create_link(
+                fixture_of_create_link_input_v3(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create link should succeed");
+
+        let response = service
+            .get_links(creator, None)
+            .await
+            .expect("get links should succeed");
+
+        assert_eq!(response.data.len(), 1);
+        assert_eq!(response.data[0].id, created.link.id);
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_get_link_details_with_action() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        let created = service
+            .create_link(
+                fixture_of_create_link_input_v3(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create link should succeed");
+
+        let response = service
+            .get_link_details(
+                creator,
+                &created.link.id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::CreateLink,
+                }),
+                MockTransactionManagerV3::default(),
+            )
+            .await
+            .expect("get link details should succeed");
+
+        assert_eq!(response.link.id, created.link.id);
+        assert!(response.action.is_some());
+        assert_eq!(
+            response.action.expect("action should exist").action_type,
+            SharedActionType::CreateLink
+        );
+    }
+
+    #[test]
+    fn it_should_succeed_disable_link() {
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Active);
+        service.link_v3_repository.create(link);
+
+        let response = service
+            .disable_link(creator, "link-1")
+            .expect("disable link should succeed");
+
+        assert_eq!(
+            response.link.link_state,
+            cashier_shared::types::LinkState::Inactive
+        );
     }
 }
