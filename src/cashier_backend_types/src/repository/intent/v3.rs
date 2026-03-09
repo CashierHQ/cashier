@@ -14,7 +14,7 @@ use crate::repository::{
     asset::v3::AssetV3,
     asset_info::v3::AssetInfoV3,
     common::AddressTypeV3,
-    intent::v1::{IntentState, IntentType, TransferData, TransferFromData},
+    intent::v1::{IntentState, TransferData, TransferFromData},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -156,6 +156,7 @@ impl IntentV3 {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn from_asset_info(
         asset_info: &AssetInfoV3,
         intent_type: IntentTypeV3,

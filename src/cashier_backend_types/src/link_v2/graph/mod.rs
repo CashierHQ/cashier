@@ -2,7 +2,6 @@ use crate::repository::{
     intent::{v1::Intent, v3::IntentV3},
     transaction::v1::Transaction,
 };
-use cashier_shared::types::Intent as IntentShared;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
