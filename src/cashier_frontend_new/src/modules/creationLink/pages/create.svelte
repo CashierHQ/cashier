@@ -32,6 +32,7 @@
   });
 
   const linkStep = $derived.by(() => linkStore?.step ?? LinkStep.CHOOSE_TYPE);
+  const linkTitle = $derived.by(() => linkStore?.createLinkData.title ?? "");
 
   const detailStore = $derived.by(() => {
     if (!linkStore || !linkStore.backendId) return null;
@@ -71,7 +72,7 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader {linkStep} onBack={handleBack} />
+    <CreateLinkHeader {linkStep} {linkTitle} onBack={handleBack} />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}

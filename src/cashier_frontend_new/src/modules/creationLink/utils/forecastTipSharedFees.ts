@@ -1,21 +1,21 @@
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
-import {
-  ICP_LEDGER_CANISTER_ID,
-  ICP_LEDGER_FEE,
-} from "$modules/token/constants";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { FeeType } from "$modules/links/types/fee";
+import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import {
   formatNumber,
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
-import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import {
   calculateIntentFees,
   IntentParticipants,
   TokenStandard as SharedTokenStandard,
 } from "$shared";
-import { FeeType } from "$modules/links/types/fee";
 
 /**
  * Forecast link creation fees for TIP_SHARED_TEST using the shared fee-calculations.ts logic.
@@ -61,7 +61,7 @@ export function forecastTipSharedFees(
     const totalAmount = BigInt(creatorToLinkFees.intent_total_amount);
     const totalNetworkFees = BigInt(creatorToLinkFees.intent_total_network_fee);
 
-    // Creator sends: amount that user отримує + всі мережеві fee
+    // Creator sends
     const totalSentByCreator = totalAmount + totalNetworkFees;
     const totalSentUi = parseBalanceUnits(totalSentByCreator, token.decimals);
     const totalSentUsd = token.priceUSD

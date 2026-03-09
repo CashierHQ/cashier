@@ -54,7 +54,7 @@ impl From<LinkShared> for LinkV3 {
             use_count: link.use_count,
             creator: link.creator,
             state: LinkState::from(link.link_state),
-            created_at: 0,
+            created_at: link.created_at.unwrap_or(0),
         }
     }
 }
@@ -116,7 +116,9 @@ impl From<LinkStateShared> for LinkState {
             LinkStateShared::Active => LinkState::Active,
             LinkStateShared::Inactive => LinkState::Inactive,
             LinkStateShared::Ended => LinkState::Ended,
-            _ => LinkState::Created,
+            LinkStateShared::ChooseType | LinkStateShared::AddAsset | LinkStateShared::Preview => {
+                LinkState::Created
+            }
         }
     }
 }

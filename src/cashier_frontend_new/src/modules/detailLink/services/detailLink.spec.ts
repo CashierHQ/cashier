@@ -123,7 +123,10 @@ describe("fetchLinkDetail behavior", () => {
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp));
 
     // act
-    await detailLinkService.fetchLinkDetail({ id: "some-id", anonymous: false });
+    await detailLinkService.fetchLinkDetail({
+      id: "some-id",
+      anonymous: false,
+    });
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
@@ -242,5 +245,4 @@ describe("fetchLinkDetail behavior", () => {
     // first call should include actorOptions { anonymous: true }
     expect(firstCallArgs[2]).toEqual({ anonymous: true });
   });
-
 });

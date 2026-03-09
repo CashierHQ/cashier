@@ -4,8 +4,8 @@
   import { TokenIcon } from "$modules/imageCache";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
-      formatNumber,
-      formatUsdAmount,
+    formatNumber,
+    formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
 
   type Props = {

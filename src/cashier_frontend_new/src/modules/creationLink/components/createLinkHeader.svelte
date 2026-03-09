@@ -4,9 +4,11 @@
   import { ChevronLeft } from "lucide-svelte";
 
   const {
+    linkTitle,
     linkStep,
     onBack,
   }: {
+    linkTitle?: string;
     linkStep: LinkStep;
     onBack: () => Promise<void>;
   } = $props();
@@ -26,7 +28,8 @@
     if (linkStep === LinkStep.PREVIEW) {
       return locale.t("links.linkForm.header.createLink");
     }
-    return locale.t("links.linkForm.header.linkName");
+
+    return linkTitle?.trim() || locale.t("links.linkForm.header.linkName");
   });
 </script>
 
