@@ -29,85 +29,91 @@ impl<E: TransactionExecutor + Clone> ExecutionService for IcExecutorService<E> {
     /// * `transactions` - A slice of transactions to be executed
     /// # Returns
     /// * `Result<ExecuteTransactionsResult, CanisterError>` - The result of executing the transactions
-    async fn execute_transactions(
-        &self,
-        transactions: &[Transaction],
-    ) -> Result<ExecuteTransactionsResult, CanisterError> {
-        let mut executed_transactions = Vec::<Transaction>::new();
-        let mut errors = Vec::<String>::new();
-        let mut is_success = true;
-        let executor = self.executor.clone();
+    fn execute_transactions<'a>(
+        &'a self,
+        transactions: &'a [Transaction],
+    ) -> std::pin::Pin<
+        Box<
+            dyn std::future::Future<Output = Result<ExecuteTransactionsResult, CanisterError>> + 'a,
+        >,
+    > {
+        Box::pin(async move {
+            let mut executed_transactions = Vec::<Transaction>::new();
+            let mut errors = Vec::<String>::new();
+            let mut is_success = true;
+            let executor = self.executor.clone();
 
-        let txs_map: HashMap<&str, &Transaction> =
-            transactions.iter().map(|tx| (tx.id.as_str(), tx)).collect();
+            let txs_map: HashMap<&str, &Transaction> =
+                transactions.iter().map(|tx| (tx.id.as_str(), tx)).collect();
 
-        // Execute transactions in topological order
-        // all transactions in the same level are executed in parallel
-        let graph: Graph = transactions.to_vec().into();
-        let sorted_levels = kahn_topological_sort(&graph)?;
+            // Execute transactions in topological order
+            // all transactions in the same level are executed in parallel
+            let graph: Graph = transactions.to_vec().into();
+            let sorted_levels = kahn_topological_sort(&graph)?;
 
-        for level_txids in sorted_levels.iter() {
-            let level_txs = level_txids
-                .iter()
-                .map(|txid| {
-                    txs_map.get(txid.as_str()).cloned().ok_or_else(|| {
-                        CanisterError::HandleLogicError(format!(
-                            "Transaction with id {} not found in transactions map",
-                            txid
-                        ))
+            for level_txids in sorted_levels.iter() {
+                let level_txs = level_txids
+                    .iter()
+                    .map(|txid| {
+                        txs_map.get(txid.as_str()).cloned().ok_or_else(|| {
+                            CanisterError::HandleLogicError(format!(
+                                "Transaction with id {} not found in transactions map",
+                                txid
+                            ))
+                        })
                     })
-                })
-                .collect::<Result<Vec<_>, _>>()?;
+                    .collect::<Result<Vec<_>, _>>()?;
 
-            // filter only Canister call type transactions for execution
-            // skip Success transactions to avoid re-execution on retry
-            let level_txs = level_txs
-                .iter()
-                .filter(|tx| {
-                    tx.from_call_type == FromCallType::Canister
-                        && tx.state != TransactionState::Success
-                })
-                .cloned()
-                .collect::<Vec<_>>();
+                // filter only Canister call type transactions for execution
+                // skip Success transactions to avoid re-execution on retry
+                let level_txs = level_txs
+                    .iter()
+                    .filter(|tx| {
+                        tx.from_call_type == FromCallType::Canister
+                            && tx.state != TransactionState::Success
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>();
 
-            if level_txs.is_empty() {
-                continue;
-            }
+                if level_txs.is_empty() {
+                    continue;
+                }
 
-            let futures = level_txs
-                .iter()
-                .map(|&tx| executor.execute(tx.clone()))
-                .collect::<Vec<_>>();
-            let results = futures::future::join_all(futures).await;
+                let futures = level_txs
+                    .iter()
+                    .map(|&tx| executor.execute(tx.clone()))
+                    .collect::<Vec<_>>();
+                let results = futures::future::join_all(futures).await;
 
-            for (&tx, result) in level_txs.iter().zip(results.into_iter()) {
-                match result {
-                    Ok(_) => {
-                        executed_transactions.push(Transaction {
-                            state: TransactionState::Success,
-                            ..tx.clone()
-                        });
+                for (&tx, result) in level_txs.iter().zip(results.into_iter()) {
+                    match result {
+                        Ok(_) => {
+                            executed_transactions.push(Transaction {
+                                state: TransactionState::Success,
+                                ..tx.clone()
+                            });
+                        }
+                        Err(e) => {
+                            let mut failed_tx = tx.clone();
+                            failed_tx.state = TransactionState::Fail;
+                            executed_transactions.push(failed_tx);
+                            errors.push(format!("Failed to execute transaction {}: {}", tx.id, e));
+                            is_success = false;
+                        }
                     }
-                    Err(e) => {
-                        let mut failed_tx = tx.clone();
-                        failed_tx.state = TransactionState::Fail;
-                        executed_transactions.push(failed_tx);
-                        errors.push(format!("Failed to execute transaction {}: {}", tx.id, e));
-                        is_success = false;
-                    }
+                }
+
+                // If any transaction in the level failed, stop executing further levels
+                if !is_success {
+                    break;
                 }
             }
 
-            // If any transaction in the level failed, stop executing further levels
-            if !is_success {
-                break;
-            }
-        }
-
-        Ok(ExecuteTransactionsResult {
-            transactions: executed_transactions,
-            is_success,
-            errors,
+            Ok(ExecuteTransactionsResult {
+                transactions: executed_transactions,
+                is_success,
+                errors,
+            })
         })
     }
 }

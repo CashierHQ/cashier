@@ -38,91 +38,101 @@ impl<V: TransactionValidator + Clone> IcValidatorService<V> {
 }
 
 impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V> {
-    async fn validate_action_transactions(
-        &self,
-        transactions: &[Transaction],
-    ) -> Result<ValidateActionTransactionsResult, CanisterError> {
-        let mut errors = Vec::<String>::new();
-        let mut is_success = true;
-        let validator = self.validator.clone();
+    fn validate_action_transactions<'a>(
+        &'a self,
+        transactions: &'a [Transaction],
+    ) -> std::pin::Pin<
+        Box<
+            dyn std::future::Future<
+                    Output = Result<ValidateActionTransactionsResult, CanisterError>,
+                > + 'a,
+        >,
+    > {
+        Box::pin(async move {
+            let mut errors = Vec::<String>::new();
+            let mut is_success = true;
+            let validator = self.validator.clone();
 
-        let txs_map: HashMap<&str, &Transaction> =
-            transactions.iter().map(|tx| (tx.id.as_str(), tx)).collect();
+            let txs_map: HashMap<&str, &Transaction> =
+                transactions.iter().map(|tx| (tx.id.as_str(), tx)).collect();
 
-        // split canister and wallet transactions
-        let (canister_transactions, mut wallet_transactions): (Vec<Transaction>, Vec<Transaction>) =
-            transactions
+            // split canister and wallet transactions
+            let (canister_transactions, mut wallet_transactions): (
+                Vec<Transaction>,
+                Vec<Transaction>,
+            ) = transactions
                 .iter()
                 .cloned()
                 .partition(|tx| tx.from_call_type == FromCallType::Canister);
 
-        // verify ICRC1 wallet transactions in topological order and update their status
-        // the ICRC2 wallet transactions verification is skipped because they are verified during execution
-        let icrc1_wallet_transactions = wallet_transactions
-            .iter()
-            .filter(|tx| tx.is_icrc1())
-            .cloned()
-            .collect::<Vec<_>>();
-
-        let graph: Graph = icrc1_wallet_transactions.into();
-        let sorted_levels = kahn_topological_sort(&graph)?;
-
-        for level_txids in sorted_levels.iter() {
-            // validate all transactions in the same level in parallel
-            let level_txs = level_txids
+            // verify ICRC1 wallet transactions in topological order and update their status
+            // the ICRC2 wallet transactions verification is skipped because they are verified during execution
+            let icrc1_wallet_transactions = wallet_transactions
                 .iter()
-                .map(|txid| {
-                    txs_map.get(txid.as_str()).cloned().ok_or_else(|| {
-                        CanisterError::HandleLogicError(format!(
-                            "Transaction with id {} not found",
-                            txid
-                        ))
-                    })
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-
-            let futures = level_txs
-                .iter()
-                .map(|&tx| validator.validate_success(tx.clone()))
+                .filter(|tx| tx.is_icrc1())
+                .cloned()
                 .collect::<Vec<_>>();
-            let results = futures::future::join_all(futures).await;
 
-            for (txid, result) in level_txids.iter().zip(results.into_iter()) {
-                let mut updated_tx = txs_map
-                    .get(txid.as_str())
-                    .cloned()
-                    .ok_or_else(|| {
-                        CanisterError::HandleLogicError(format!(
-                            "Transaction with id {} not found",
-                            txid
-                        ))
-                    })?
-                    .clone();
-                match result {
-                    Ok(_) => {
-                        updated_tx.state = TransactionState::Success;
-                    }
-                    Err(e) => {
-                        updated_tx.state = TransactionState::Fail;
-                        is_success = false;
-                        errors.push(format!("Failed to validate transaction {}: {}", txid, e));
-                    }
-                }
-                // update in wallet transactions
-                if let Some(pos) = wallet_transactions
+            let graph: Graph = icrc1_wallet_transactions.into();
+            let sorted_levels = kahn_topological_sort(&graph)?;
+
+            for level_txids in sorted_levels.iter() {
+                // validate all transactions in the same level in parallel
+                let level_txs = level_txids
                     .iter()
-                    .position(|wtx| wtx.id == updated_tx.id)
-                {
-                    wallet_transactions[pos] = updated_tx;
+                    .map(|txid| {
+                        txs_map.get(txid.as_str()).cloned().ok_or_else(|| {
+                            CanisterError::HandleLogicError(format!(
+                                "Transaction with id {} not found",
+                                txid
+                            ))
+                        })
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                let futures = level_txs
+                    .iter()
+                    .map(|&tx| validator.validate_success(tx.clone()))
+                    .collect::<Vec<_>>();
+                let results = futures::future::join_all(futures).await;
+
+                for (txid, result) in level_txids.iter().zip(results.into_iter()) {
+                    let mut updated_tx = txs_map
+                        .get(txid.as_str())
+                        .cloned()
+                        .ok_or_else(|| {
+                            CanisterError::HandleLogicError(format!(
+                                "Transaction with id {} not found",
+                                txid
+                            ))
+                        })?
+                        .clone();
+                    match result {
+                        Ok(_) => {
+                            updated_tx.state = TransactionState::Success;
+                        }
+                        Err(e) => {
+                            updated_tx.state = TransactionState::Fail;
+                            is_success = false;
+                            errors.push(format!("Failed to validate transaction {}: {}", txid, e));
+                        }
+                    }
+                    // update in wallet transactions
+                    if let Some(pos) = wallet_transactions
+                        .iter()
+                        .position(|wtx| wtx.id == updated_tx.id)
+                    {
+                        wallet_transactions[pos] = updated_tx;
+                    }
                 }
             }
-        }
 
-        Ok(ValidateActionTransactionsResult {
-            wallet_transactions,
-            canister_transactions,
-            is_success,
-            errors,
+            Ok(ValidateActionTransactionsResult {
+                wallet_transactions,
+                canister_transactions,
+                is_success,
+                errors,
+            })
         })
     }
 

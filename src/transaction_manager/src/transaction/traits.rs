@@ -13,7 +13,7 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use std::{collections::HashMap, pin::Pin};
+use std::{collections::HashMap, future::Future, pin::Pin};
 
 pub trait TransactionValidator {
     /// Validate the transaction success
@@ -45,10 +45,10 @@ pub trait ValidationService {
     /// * `transactions` - The transactions to be validated
     /// # Returns
     /// * `Result<ValidateActionTransactionsResult, CanisterError>` - Ok(ValidateActionTransactionsResult) if validation is successful, or a CanisterError if error occurs
-    async fn validate_action_transactions(
-        &self,
-        transactions: &[Transaction],
-    ) -> Result<ValidateActionTransactionsResult, CanisterError>;
+    fn validate_action_transactions<'a>(
+        &'a self,
+        transactions: &'a [Transaction],
+    ) -> Pin<Box<dyn Future<Output = Result<ValidateActionTransactionsResult, CanisterError>> + 'a>>;
 
     /// Rollup the transaction state for the ICRC-2 wallet transactions
     /// # Arguments
@@ -94,8 +94,8 @@ pub trait ExecutionService {
     /// * `transactions` - The transactions to be executed
     /// # Returns
     /// * `Result<ExecuteTransactionsResult, CanisterError>` - Ok(ExecuteTransactionsResult) if processing is successful, or a CanisterError if error occurs
-    async fn execute_transactions(
-        &self,
-        transactions: &[Transaction],
-    ) -> Result<ExecuteTransactionsResult, CanisterError>;
+    fn execute_transactions<'a>(
+        &'a self,
+        transactions: &'a [Transaction],
+    ) -> Pin<Box<dyn Future<Output = Result<ExecuteTransactionsResult, CanisterError>> + 'a>>;
 }
