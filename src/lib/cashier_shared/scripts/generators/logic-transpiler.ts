@@ -49,6 +49,17 @@ const TYPE_MAP: Record<string, string> = {
 	number: 'u64',
 };
 
+const ENUM_VARIANTS: Record<string, string[]> = {
+	IntentParticipants: [
+		'CreatorToTreasury',
+		'CreatorToLink',
+		'UserToLink',
+		'LinkToUser',
+		'LinkToCreator',
+	],
+	TokenStandard: ['ICRC1', 'ICRC2'],
+};
+
 // Function parameter types for transpiled functions (TS name and snake_case name)
 const FUNCTION_PARAM_TYPES = new Map<string, string[]>();
 
@@ -296,6 +307,22 @@ function convertSwitchStatement(
 ): string {
 	const expr = stmt.getExpression();
 	const exprText = toSnakeCase(expr.getText());
+	const exprTypeName = convertType(expr.getType().getText());
+	const enumVariants = ENUM_VARIANTS[exprTypeName] || [];
+	const coveredVariants = new Set<string>();
+
+	for (const clause of stmt.getClauses()) {
+		if (clause.getKind() !== SyntaxKind.CaseClause) continue;
+		const caseExprText = (clause as CaseClause).getExpression().getText();
+		const dotIndex = caseExprText.lastIndexOf('.');
+		if (dotIndex > -1) {
+			coveredVariants.add(caseExprText.substring(dotIndex + 1));
+		}
+	}
+
+	const isExhaustiveEnumSwitch =
+		enumVariants.length > 0 &&
+		enumVariants.every((variant) => coveredVariants.has(variant));
 
 	const lines: string[] = [];
 	lines.push(`${indent}match ${exprText} {`);
@@ -330,6 +357,10 @@ function convertSwitchStatement(
 
 			lines.push(`${indent}    }`);
 		} else if (clause.getKind() === SyntaxKind.DefaultClause) {
+			if (isExhaustiveEnumSwitch) {
+				continue;
+			}
+
 			const defaultClause = clause as DefaultClause;
 			lines.push(`${indent}    _ => {`);
 

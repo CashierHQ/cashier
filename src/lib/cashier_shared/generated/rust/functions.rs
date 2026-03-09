@@ -36,9 +36,6 @@ pub fn calculate_intent_total_amount(participants: IntentParticipants, user_inpu
         IntentParticipants::LinkToCreator => {
             link_max_asset_amount.clone()
         }
-        _ => {
-            Nat::from(0u64)
-        }
     }
 }
 
@@ -56,13 +53,13 @@ pub fn calculate_intent_total_amount(participants: IntentParticipants, user_inpu
 /// - LinkToUser: no inbound + 1x outbound
 /// - LinkToCreator: no inbound + 1x outbound
 pub fn calculate_intent_total_network_fee(participants: IntentParticipants, token_standard: TokenStandard, asset_network_fee: &Nat, max_use: u64) -> Nat {
-    let inbound_fee = calculate_intent_inbound_network_fee(participants.clone(), token_standard.clone(), asset_network_fee, max_use);
+    let inbound_fee = calculate_intent_inbound_network_fee(participants.clone(), token_standard.clone(), asset_network_fee);
     let outbound_fee = calculate_intent_outbound_network_fee(participants.clone(), asset_network_fee, max_use);
     inbound_fee.clone() + outbound_fee.clone()
 }
 
 /// Calculate the inbound network fee for an intent.
-pub fn calculate_intent_inbound_network_fee(participants: IntentParticipants, token_standard: TokenStandard, asset_network_fee: &Nat, max_use: u64) -> Nat {
+pub fn calculate_intent_inbound_network_fee(participants: IntentParticipants, token_standard: TokenStandard, asset_network_fee: &Nat) -> Nat {
     let inbound_multiplier = if token_standard == TokenStandard::ICRC2 { Nat::from(2u64) } else { Nat::from(1u64) };
     match participants {
         IntentParticipants::CreatorToTreasury => {
@@ -78,9 +75,6 @@ pub fn calculate_intent_inbound_network_fee(participants: IntentParticipants, to
             Nat::from(0u64)
         }
         IntentParticipants::LinkToCreator => {
-            Nat::from(0u64)
-        }
-        _ => {
             Nat::from(0u64)
         }
     }
@@ -103,9 +97,6 @@ pub fn calculate_intent_outbound_network_fee(participants: IntentParticipants, a
         }
         IntentParticipants::LinkToCreator => {
             asset_network_fee.clone()
-        }
-        _ => {
-            Nat::from(0u64)
         }
     }
 }
@@ -136,9 +127,6 @@ pub fn calculate_intent_user_fee(participants: IntentParticipants, intent_total_
         }
         IntentParticipants::LinkToCreator => {
             intent_total_network_fee.clone()
-        }
-        _ => {
-            Nat::from(0u64)
         }
     }
 }

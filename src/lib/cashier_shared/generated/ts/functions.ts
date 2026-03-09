@@ -85,8 +85,7 @@ export function calculateIntentTotalNetworkFee(
   const inboundFee = calculateIntentInboundNetworkFee(
     participants,
     tokenStandard,
-    assetNetworkFee,
-    maxUse
+    assetNetworkFee
   );
   const outboundFee = calculateIntentOutboundNetworkFee(
     participants,
@@ -107,8 +106,7 @@ export function calculateIntentTotalNetworkFee(
 export function calculateIntentInboundNetworkFee(
   participants: IntentParticipants,
   tokenStandard: TokenStandard,
-  assetNetworkFee: bigint,
-  maxUse: number = 1
+  assetNetworkFee: bigint
 ): bigint {
   const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
   switch (participants) {
