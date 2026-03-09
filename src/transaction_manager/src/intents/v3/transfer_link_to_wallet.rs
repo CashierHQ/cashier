@@ -95,6 +95,7 @@ mod tests {
             owner: random_principal_id(),
             subaccount: None,
         };
+        let expected_from_wallet: Wallet = link_account.into();
         let created_at_ts = 0;
         let input = CreateLinkToWalletIntentArgs {
             label: label.clone(),
@@ -127,7 +128,7 @@ mod tests {
                     }
                 );
                 assert_eq!(transfer_data.to, Wallet::new(receiver_id));
-                assert_eq!(transfer_data.from, Wallet::new(source_address));
+                assert_eq!(transfer_data.from, expected_from_wallet);
             }
             _ => panic!("Expected Transfer intent transaction data"),
         }

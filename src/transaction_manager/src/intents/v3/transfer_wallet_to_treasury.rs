@@ -145,7 +145,13 @@ mod tests {
                 );
                 assert_eq!(transfer_from_data.asset.get_address(), asset.address);
                 assert_eq!(transfer_from_data.from, Wallet::new(sender_id));
-                assert_eq!(transfer_from_data.to, Wallet::new(receiver_id));
+                assert_eq!(
+                    transfer_from_data.to,
+                    Wallet::from(Account {
+                        owner: FEE_TREASURY_PRINCIPAL,
+                        subaccount: None
+                    })
+                );
                 assert_eq!(transfer_from_data.spender, Wallet::from(spender_account));
             }
             _ => panic!("Expected TransferFrom intent type"),
