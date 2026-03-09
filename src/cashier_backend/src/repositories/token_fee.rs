@@ -51,22 +51,111 @@ mod tests {
     use crate::repositories::{Repositories, tests::TestRepositories};
     use candid::Nat;
 
+    fn fixture_of_cached_fee(fee: u64, updated_at: u64) -> CachedFee {
+        CachedFee {
+            fee: Nat::from(fee),
+            updated_at,
+        }
+    }
+
     #[test]
-    fn it_should_store_and_retrieve_token_fee() {
+    fn it_should_fail_get_token_fee_due_to_missing_token_key() {
+        // Arrange
+        let repo = TestRepositories::new().token_fee();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+
+        // Act
+        let retrieved_fee = repo.get(&token_principal);
+
+        // Assert
+        assert!(retrieved_fee.is_none());
+    }
+
+    #[test]
+    fn it_should_fail_remove_token_fee_due_to_missing_token_key() {
         // Arrange
         let mut repo = TestRepositories::new().token_fee();
-        let token_principal = Principal::from_text("aaaaa-aa").unwrap();
-        let cached_fee = CachedFee {
-            fee: Nat::from(100u64),
-            updated_at: 1_632_144_000_000_000_000,
-        };
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+
+        // Act
+        repo.remove(&token_principal);
+
+        // Assert
+        assert!(repo.get(&token_principal).is_none());
+    }
+
+    #[test]
+    fn it_should_succeed_store_and_retrieve_token_fee() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_fee();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let cached_fee = fixture_of_cached_fee(100, 1_632_144_000_000_000_000);
 
         // Act
         repo.insert(&token_principal, cached_fee.clone());
 
         // Assert
-        let retrieved_fee = repo.get(&token_principal).unwrap();
+        let retrieved_fee = repo.get(&token_principal).expect("fee should exist");
         assert_eq!(retrieved_fee.fee, cached_fee.fee);
         assert_eq!(retrieved_fee.updated_at, cached_fee.updated_at);
+    }
+
+    #[test]
+    fn it_should_succeed_overwrite_token_fee_due_to_same_token_key() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_fee();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let old_fee = fixture_of_cached_fee(100, 1_632_144_000_000_000_000);
+        let new_fee = fixture_of_cached_fee(200, 1_732_144_000_000_000_000);
+        repo.insert(&token_principal, old_fee);
+
+        // Act
+        repo.insert(&token_principal, new_fee.clone());
+
+        // Assert
+        let retrieved_fee = repo.get(&token_principal).expect("fee should exist");
+        assert_eq!(retrieved_fee.fee, new_fee.fee);
+        assert_eq!(retrieved_fee.updated_at, new_fee.updated_at);
+    }
+
+    #[test]
+    fn it_should_succeed_remove_token_fee() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_fee();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+        repo.insert(
+            &token_principal,
+            fixture_of_cached_fee(100, 1_632_144_000_000_000_000),
+        );
+
+        // Act
+        repo.remove(&token_principal);
+
+        // Assert
+        assert!(repo.get(&token_principal).is_none());
+    }
+
+    #[test]
+    fn it_should_succeed_clear_all_token_fees() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_fee();
+        let token_principal_1 = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let token_principal_2 =
+            Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").expect("valid principal");
+        repo.insert(
+            &token_principal_1,
+            fixture_of_cached_fee(100, 1_632_144_000_000_000_000),
+        );
+        repo.insert(
+            &token_principal_2,
+            fixture_of_cached_fee(250, 1_732_144_000_000_000_000),
+        );
+
+        // Act
+        repo.clear();
+
+        // Assert
+        assert!(repo.get(&token_principal_1).is_none());
+        assert!(repo.get(&token_principal_2).is_none());
     }
 }
