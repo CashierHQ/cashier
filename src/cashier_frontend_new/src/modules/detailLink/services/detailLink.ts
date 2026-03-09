@@ -30,10 +30,9 @@ import { Err, Ok, type Result } from "ts-results-es";
  */
 export class DetailLinkService {
   determineActionTypeFromLink(initialLink: Link): ActionTypeValue | undefined {
-    if (initialLink.state === LinkState.CREATE_LINK)
+    if (initialLink.state === LinkState.CREATE_LINK) {
       return ActionType.CREATE_LINK;
-
-    if (initialLink.state === LinkState.ACTIVE) {
+    } else if (initialLink.state === LinkState.ACTIVE) {
       switch (initialLink.link_type) {
         case LinkType.TIP:
         case LinkType.TOKEN_BASKET:
@@ -44,9 +43,8 @@ export class DetailLinkService {
         default:
           return assertUnreachable(initialLink.link_type);
       }
-    }
-
-    if (initialLink.state === LinkState.INACTIVE) return ActionType.WITHDRAW;
+    } else if (initialLink.state === LinkState.INACTIVE)
+      return ActionType.WITHDRAW;
 
     return undefined;
   }

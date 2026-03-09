@@ -76,6 +76,60 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+describe("determineActionTypeFromLink", () => {
+  it("should return undefined for INACTIVE_ENDED links", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLink(
+        makeLink(LinkState.INACTIVE_ENDED, LinkType.TIP),
+      ),
+    ).toBeUndefined();
+    expect(
+      detailLinkService.determineActionTypeFromLink(
+        makeLink(LinkState.INACTIVE_ENDED, LinkType.TOKEN_BASKET),
+      ),
+    ).toBeUndefined();
+    expect(
+      detailLinkService.determineActionTypeFromLink(
+        makeLink(LinkState.INACTIVE_ENDED, LinkType.AIRDROP),
+      ),
+    ).toBeUndefined();
+    expect(
+      detailLinkService.determineActionTypeFromLink(
+        makeLink(LinkState.INACTIVE_ENDED, LinkType.RECEIVE_PAYMENT),
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe("fetchLinkDetail behavior", () => {
+  it("should call getLink once for INACTIVE_ENDED links", async () => {
+    // arrange
+    const linkInstance = makeLink(LinkState.INACTIVE_ENDED, LinkType.TIP);
+    vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
+
+    const linkDto: LinkDto = makeLinkDto(
+      { InactiveEnded: null },
+      { SendTip: null },
+    );
+    const resp: GetLinkResp = {
+      link: linkDto,
+      action: [],
+      link_user_state: {
+        link_id: linkDto.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
+    };
+    vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp));
+
+    // act
+    await detailLinkService.fetchLinkDetail({ id: "some-id", anonymous: false });
+
+    // assert
+    expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("fetchLinkDetail behavior", () => {
   it("should call getLink once when action is provided", async () => {
     // arrange
@@ -188,4 +242,5 @@ describe("fetchLinkDetail behavior", () => {
     // first call should include actorOptions { anonymous: true }
     expect(firstCallArgs[2]).toEqual({ anonymous: true });
   });
+
 });
