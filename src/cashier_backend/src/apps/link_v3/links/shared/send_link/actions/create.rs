@@ -20,10 +20,6 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
-use cashier_shared::{
-    IntentParticipants as SharedIntentParticipants, calculate_intent_total_amount,
-    calculate_intent_total_network_fee, calculate_intent_user_fee,
-};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
@@ -55,12 +51,12 @@ impl CreateActionV3 {
         Self { action, intents }
     }
 
-    /// Creates a new CreateAction for a given Link.
+    /// Creates a new CreateActionV3 for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
-    /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
+    /// * `Result<CreateActionV3, CanisterError>` - The resulting action or an error if the creation fails.
     pub async fn create<F, S>(
         link: &LinkV3,
         canister_id: Principal,
@@ -137,7 +133,6 @@ impl CreateActionV3 {
 
                     TransferWalletToLinkIntent::create_icrc2(&action.id, input)
                 } else {
-                    // TODO
                     let (actual_amount, _total_amount) = calculate_icrc1_transfer_intent_amount(
                         link.max_use,
                         &asset_info.amount,
@@ -199,5 +194,511 @@ impl CreateActionV3 {
         action.intent_ids = intent_ids;
 
         Ok(Self::new(action, intents))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apps::{
+        token_fee::service::tests::{
+            MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
+        },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
+    };
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        action::v1::ActionState, asset_info::v3::AssetInfoV3, common::Wallet,
+        intent::v3::IntentTransactionDataV3, link::v1::LinkType,
+    };
+    use cashier_common::test_utils::random_principal_id;
+    use std::collections::HashMap;
+    use uuid::Uuid;
+
+    fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
+        AssetInfoV3 {
+            asset: AssetV3 {
+                address,
+                network_fee: None,
+                token_standard: TokenStandardV3::ICRC1,
+            },
+            label: "asset".to_string(),
+            amount,
+        }
+    }
+
+    fn fixture_of_link_v3(
+        creator: Principal,
+        asset_info: Vec<AssetInfoV3>,
+        max_use: u64,
+        created_at: u64,
+    ) -> LinkV3 {
+        LinkV3 {
+            id: Uuid::new_v4().to_string(),
+            title: "Test Link V3".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info,
+            max_use,
+            use_count: 0,
+            creator,
+            state: cashier_backend_types::repository::link::v3::LinkState::Created,
+            created_at,
+        }
+    }
+
+    fn fixture_of_services(current_ts: u64) -> (MockTokenFeeService, MockTokenStandardService) {
+        (
+            create_mock_token_fee_service(current_ts),
+            create_mock_token_standard_service(current_ts),
+        )
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_invalid_link_id() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, Nat::from(10_000u64))];
+        let mut link = fixture_of_link_v3(creator, asset_info, 3, created_at);
+        link.id = "invalid-link-id".to_string();
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::UnknownError(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_token_fee_service_error() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, Nat::from(10_000u64))];
+        let link = fixture_of_link_v3(creator, asset_info, 3, created_at);
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_error(ledger_id, "canister unavailable");
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_err());
+        let err = result.expect_err("expected token fee service error");
+        assert!(matches!(err, CanisterError::CallCanisterFailed(_)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_missing_token_standard() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, Nat::from(10_000u64))];
+        let link = fixture_of_link_v3(creator, asset_info, 3, created_at);
+        let (token_fee_service, token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_err());
+        let err = result.expect_err("expected missing token standard error");
+        assert!(matches!(err, CanisterError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_with_icrc1_deposit_intent() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let amount = Nat::from(10_000u64);
+        let max_use = 3u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, amount.clone())];
+        let link = fixture_of_link_v3(creator, asset_info, max_use, created_at);
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let created = result.expect("create action should succeed");
+        assert_eq!(created.action.action_type, ActionType::CreateLink);
+        assert_eq!(created.action.creator, creator);
+        assert_eq!(created.action.state, ActionState::Created);
+        assert_eq!(created.intents.len(), 2);
+        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+
+        let deposit_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id))
+            .expect("deposit intent should exist");
+        let fee_map: HashMap<Principal, Nat> =
+            vec![(ledger_id, Nat::from(100u64))].into_iter().collect();
+        let expected_actual_amount =
+            calculate_icrc1_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
+                .expect("expected ICRC1 amount calculation success")
+                .0;
+
+        match deposit_intent
+            .intent_tx_data
+            .clone()
+            .expect("deposit intent tx data should exist")
+        {
+            IntentTransactionDataV3::Transfer(transfer_data) => {
+                assert_eq!(transfer_data.amount, expected_actual_amount);
+                assert_eq!(transfer_data.asset.get_address(), ledger_id);
+                assert_eq!(transfer_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_data.to,
+                    get_link_account(&link.id, canister_id)
+                        .expect("link account should be valid")
+                        .into()
+                );
+            }
+            _ => panic!("expected Transfer intent transaction data for ICRC1"),
+        }
+
+        let fee_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
+            .expect("fee intent should exist");
+        let (expected_fee_actual_amount, expected_fee_approval_amount) =
+            calculate_create_link_fee(&fee_map);
+        match fee_intent
+            .intent_tx_data
+            .clone()
+            .expect("fee intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(transfer_from_data) => {
+                assert_eq!(transfer_from_data.amount, expected_fee_actual_amount);
+                assert_eq!(
+                    transfer_from_data.approve_amount,
+                    Some(expected_fee_approval_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.actual_amount,
+                    Some(expected_fee_actual_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.asset.get_address(),
+                    ICP_CANISTER_PRINCIPAL
+                );
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_from_data.spender,
+                    Wallet::from(Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    })
+                );
+            }
+            _ => panic!("expected TransferFrom intent transaction data for fee intent"),
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_with_icrc2_deposit_intent() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let amount = Nat::from(20_000u64);
+        let max_use = 3u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, amount.clone())];
+        let link = fixture_of_link_v3(creator, asset_info, max_use, created_at);
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(200u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC2]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let created = result.expect("create action should succeed");
+        assert_eq!(created.action.action_type, ActionType::CreateLink);
+        assert_eq!(created.action.creator, creator);
+        assert_eq!(created.action.state, ActionState::Created);
+        assert_eq!(created.intents.len(), 2);
+        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+
+        let deposit_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id))
+            .expect("deposit intent should exist");
+        let fee_map: HashMap<Principal, Nat> =
+            vec![(ledger_id, Nat::from(200u64))].into_iter().collect();
+        let (expected_actual_amount, expected_approval_amount) =
+            calculate_icrc2_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
+                .expect("expected ICRC2 amount calculation success");
+
+        match deposit_intent
+            .intent_tx_data
+            .clone()
+            .expect("deposit intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(transfer_from_data) => {
+                assert_eq!(transfer_from_data.amount, expected_actual_amount);
+                assert_eq!(
+                    transfer_from_data.approve_amount,
+                    Some(expected_approval_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.actual_amount,
+                    Some(expected_actual_amount)
+                );
+                assert_eq!(transfer_from_data.asset.get_address(), ledger_id);
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_from_data.to,
+                    get_link_account(&link.id, canister_id)
+                        .expect("link account should be valid")
+                        .into()
+                );
+                assert_eq!(
+                    transfer_from_data.spender,
+                    Wallet::from(Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    })
+                );
+            }
+            _ => panic!("expected TransferFrom intent transaction data for ICRC2"),
+        }
+
+        let fee_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
+            .expect("fee intent should exist");
+        let (expected_fee_actual_amount, expected_fee_approval_amount) =
+            calculate_create_link_fee(&fee_map);
+        match fee_intent
+            .intent_tx_data
+            .clone()
+            .expect("fee intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(transfer_from_data) => {
+                assert_eq!(transfer_from_data.amount, expected_fee_actual_amount);
+                assert_eq!(
+                    transfer_from_data.approve_amount,
+                    Some(expected_fee_approval_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.actual_amount,
+                    Some(expected_fee_actual_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.asset.get_address(),
+                    ICP_CANISTER_PRINCIPAL
+                );
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_from_data.spender,
+                    Wallet::from(Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    })
+                );
+            }
+            _ => panic!("expected TransferFrom intent transaction data for fee intent"),
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_with_mixed_icrc1_and_icrc2_deposit_intents() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_icrc1 = random_principal_id();
+        let ledger_icrc2 = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let amount_icrc1 = Nat::from(10_000u64);
+        let amount_icrc2 = Nat::from(20_000u64);
+        let max_use = 3u64;
+        let asset_info = vec![
+            fixture_of_asset_info_v3(ledger_icrc1, amount_icrc1.clone()),
+            fixture_of_asset_info_v3(ledger_icrc2, amount_icrc2.clone()),
+        ];
+        let link = fixture_of_link_v3(creator, asset_info, max_use, created_at);
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_icrc1, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_icrc2, Nat::from(200u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_icrc1, vec![IcrcStandard::ICRC1]);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_icrc2, vec![IcrcStandard::ICRC2]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let created = result.expect("create action should succeed");
+        assert_eq!(created.intents.len(), 3);
+        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+
+        let icrc1_intent = created
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.label == generate_intent_asset_label(link.link_type, ledger_icrc1)
+            })
+            .expect("ICRC1 intent should exist");
+        let icrc2_intent = created
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.label == generate_intent_asset_label(link.link_type, ledger_icrc2)
+            })
+            .expect("ICRC2 intent should exist");
+        let fee_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
+            .expect("fee intent should exist");
+
+        match icrc1_intent
+            .intent_tx_data
+            .clone()
+            .expect("ICRC1 intent tx data should exist")
+        {
+            IntentTransactionDataV3::Transfer(_) => {}
+            _ => panic!("expected Transfer intent transaction data for ICRC1"),
+        }
+        match icrc2_intent
+            .intent_tx_data
+            .clone()
+            .expect("ICRC2 intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(_) => {}
+            _ => panic!("expected TransferFrom intent transaction data for ICRC2"),
+        }
+        match fee_intent
+            .intent_tx_data
+            .clone()
+            .expect("fee intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(transfer_from_data) => {
+                let fee_map: HashMap<Principal, Nat> = vec![
+                    (ledger_icrc1, Nat::from(100u64)),
+                    (ledger_icrc2, Nat::from(200u64)),
+                ]
+                .into_iter()
+                .collect();
+                let (expected_fee_actual_amount, expected_fee_approval_amount) =
+                    calculate_create_link_fee(&fee_map);
+                assert_eq!(transfer_from_data.amount, expected_fee_actual_amount);
+                assert_eq!(
+                    transfer_from_data.approve_amount,
+                    Some(expected_fee_approval_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.actual_amount,
+                    Some(expected_fee_actual_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.asset.get_address(),
+                    ICP_CANISTER_PRINCIPAL
+                );
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_from_data.spender,
+                    Wallet::from(Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    })
+                );
+            }
+            _ => panic!("expected TransferFrom intent transaction data for fee intent"),
+        }
     }
 }

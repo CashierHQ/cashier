@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::apps::link_v3::{
-    links::shared::send_link::actions::receive::ReceiveAction, traits::LinkV3State,
+    links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -57,7 +57,8 @@ impl ActiveState {
     where
         M: TransactionManagerV3 + 'static,
     {
-        let receive_action = ReceiveAction::create(&link, caller, canister_id, created_at).await?;
+        let receive_action =
+            ReceiveActionV3::create(&link, caller, canister_id, created_at).await?;
         let create_action_result = transaction_manager.create_action(
             receive_action.action,
             receive_action.intents,

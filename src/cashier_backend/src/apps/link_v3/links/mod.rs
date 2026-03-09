@@ -43,6 +43,7 @@ impl LinkV3Types {
     /// * `token_balance_service` - The token balance fetcher service to fetch token balance information
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the action
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
@@ -108,6 +109,7 @@ impl LinkV3Types {
     /// * `transaction_manager` - The transaction manager to handle action processing
     /// # Returns
     /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the action
+    #[allow(clippy::too_many_arguments)]
     pub async fn process_action<M, V, X>(
         &self,
         caller: Principal,

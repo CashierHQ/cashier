@@ -23,7 +23,7 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{links::shared::send_link::actions::withdraw::WithdrawAction, traits::LinkV3State},
+    link_v3::{links::shared::send_link::actions::withdraw::WithdrawActionV3, traits::LinkV3State},
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -70,7 +70,7 @@ impl InactiveState {
             ));
         }
 
-        let withdraw_action = WithdrawAction::create(
+        let withdraw_action = WithdrawActionV3::create(
             &link,
             canister_id,
             created_at,
