@@ -46,16 +46,13 @@ impl AssetV3 {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(
+    Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd, Default,
+)]
 pub enum TokenStandardV3 {
     ICRC1,
+    #[default]
     ICRC2,
-}
-
-impl Default for TokenStandardV3 {
-    fn default() -> Self {
-        TokenStandardV3::ICRC2
-    }
 }
 
 impl From<TokenStandardShared> for TokenStandardV3 {
