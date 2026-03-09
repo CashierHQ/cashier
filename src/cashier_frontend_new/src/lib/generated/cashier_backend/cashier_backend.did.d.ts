@@ -506,6 +506,15 @@ export interface _SERVICE {
     [string, [] | [GetLinkOptions]],
     Result_2
   >,
+  /**
+   * Retrieves a specific link by its ID with optional action data.
+   * # Arguments
+   * * `link_id` - The unique identifier of the link to retrieve
+   * * `options` - Optional parameters including action type to include in response
+   * # Returns
+   * * `Ok(GetLinkResponseV3)` - Link data
+   * * `Err(String)` - Error message if link not found or access denied
+   */
   'get_link_details_v3' : ActorMethod<
     [string, [] | [GetLinkOptions]],
     Result_3
@@ -569,6 +578,14 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - If disabling fails or unauthorized
    */
   'user_disable_link_v2' : ActorMethod<[string], Result_9>,
+  /**
+   * Disables a link by its ID
+   * # Arguments
+   * * `link_id` - The unique identifier of the link to disable
+   * # Returns
+   * * `Ok(DisableLinkResponseV3)` - Confirmation of link being disabled
+   * * `Err(String)` - Error message if link not found, access denied, or already disabled
+   */
   'user_disable_link_v3' : ActorMethod<[string], Result_10>,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
@@ -584,6 +601,14 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - Error message if retrieval fails
    */
   'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_11>,
+  /**
+   * Retrieves a paginated list of links for the caller.
+   * # Arguments
+   * * `input` - Optional pagination parameters
+   * # Returns
+   * * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
+   * * `Err(CanisterError)` - If retrieval fails or validation errors occur
+   */
   'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_12>,
   /**
    * Processes a created action V2.
@@ -594,6 +619,14 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
   'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_13>,
+  /**
+   * Processes a created action V3.
+   * # Arguments
+   * * `input` - Action processing data
+   * # Returns
+   * * `Ok(ProcessActionResponseV3)` - The processed action data
+   * * `Err(CanisterError)` - If action processing fails or validation errors occur
+   */
   'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_14>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
