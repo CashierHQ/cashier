@@ -43,7 +43,7 @@ async fn it_should_fail_activate_icp_token_tip_link_if_caller_anonymous() {
             LinkTestFixtureV3::new(Arc::new(ctx.clone()), caller, token_fee.clone()).await;
         let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
 
-        // Act: Activate the link
+        // Act
         let action_id = create_link_result.action.id.clone();
         let process_action_input = ProcessActionInputV3 {
             action_id: action_id.clone(),
@@ -52,7 +52,7 @@ async fn it_should_fail_activate_icp_token_tip_link_if_caller_anonymous() {
             .user_process_action_v3(process_action_input)
             .await;
 
-        // Assert: Activated link result
+        // Assert
         assert!(activate_link_result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = activate_link_result {
             assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
@@ -91,7 +91,7 @@ async fn it_should_fail_activate_icp_token_tip_link_if_caller_not_creator() {
             LinkTestFixtureV3::new(Arc::new(ctx.clone()), caller, token_fee.clone()).await;
         let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
 
-        // Act: Activate the link
+        // Act
         let action_id = create_link_result.action.id.clone();
         let process_action_input = ProcessActionInputV3 {
             action_id: action_id.clone(),
@@ -100,7 +100,7 @@ async fn it_should_fail_activate_icp_token_tip_link_if_caller_not_creator() {
             .user_process_action_v3(process_action_input)
             .await;
 
-        // Assert: Activated link result
+        // Assert
         assert!(activate_link_result.is_ok());
         let activate_link_result = activate_link_result.unwrap();
         assert!(activate_link_result.is_err());
@@ -198,7 +198,8 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
         let icrc_112_requests = create_link_result.icrc112_requests.unwrap();
 
         let approval_req = &icrc_112_requests[0][0];
-        let approval_args: ApproveArgs = Decode!(approval_req.arg.as_slice(), ApproveArgs).unwrap();
+        let _approval_args: ApproveArgs =
+            Decode!(approval_req.arg.as_slice(), ApproveArgs).unwrap();
 
         let icrc112_execution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
@@ -214,9 +215,6 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
         // Assert: Activated link result
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
-
-        println!("Activated link result: {:?}", result);
-
         assert_eq!(result.link.link_state, LinkStateShared::Active);
 
         // Assert: Link account balance
@@ -292,9 +290,6 @@ async fn it_should_succeed_activate_icrc_token_tip_link() {
         // Assert: Activated link result
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
-
-        println!("Activated link result: {:?}", result);
-
         assert_eq!(result.link.link_state, LinkStateShared::Active);
 
         // Assert: Link balance after activation

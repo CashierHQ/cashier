@@ -1,20 +1,19 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use candid::{Nat, Principal};
+use cashier_backend_types::link_v3::dto::{
+    action::ProcessActionResponseV3,
+    link::{CreateLinkInputV3, CreateLinkResponseV3},
+};
+use cashier_shared::types::LinkType as LinkTypeShared;
+use std::sync::Arc;
+
 use crate::{
     cashier_backend::link_v3::fixture::LinkTestFixtureV3,
     constant::ICP_TOKEN,
     utils::{PocketIcTestContext, icrc_112, principal::TestUser},
 };
-use candid::{Nat, Principal};
-use cashier_backend_types::{
-    constant,
-    dto::link::CreateLinkInput,
-    link_v3::dto::{
-        action::{CreateActionInputV3, CreateActionResponseV3, ProcessActionResponseV3},
-        link::{CreateLinkInputV3, CreateLinkResponseV3},
-    },
-    repository::{link::v1::LinkType, token_fee},
-};
-use cashier_shared::types::{IntentType as IntentTypeShared, LinkType as LinkTypeShared};
-use std::sync::Arc;
 
 pub struct TipLinkV3Fixture {
     pub caller: Principal,
@@ -101,21 +100,6 @@ impl TipLinkV3Fixture {
         })
     }
 
-    pub fn create_action_input(&self, link_id: &str) -> CreateActionInputV3 {
-        CreateActionInputV3 {
-            link_id: link_id.to_string(),
-            action: self
-                .link_fixture
-                .create_action_from_tokens_and_amount(
-                    self.caller,
-                    vec![self.token.to_string()],
-                    vec![self.amount.clone()],
-                    vec![self.token_fee.clone()],
-                )
-                .unwrap(),
-        }
-    }
-
     /// This function is used to airdrop ICP and the specified asset to the caller.
     /// # Returns
     /// * `()` - No return value
@@ -135,7 +119,7 @@ impl TipLinkV3Fixture {
     }
 }
 
-/// Creates a fixture for a tip link v2.
+/// Creates a fixture for a tip link v3.
 /// # Arguments
 /// * `ctx` - The Pocket IC test context
 /// * `creator` - The principal of the creator

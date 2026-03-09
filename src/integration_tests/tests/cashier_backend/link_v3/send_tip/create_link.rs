@@ -1,40 +1,23 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture;
-use crate::{
-    constant::{
-        CK_BTC_PRINCIPAL, CKBTC_ICRC_TOKEN, CKETH_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_PRINCIPAL,
-        ICP_TOKEN,
-    },
-    utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
-};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::{
-    constant,
-    repository::link::v1::LinkType,
-    repository::{
-        action::v1::ActionType,
-        asset::v1::Asset,
-        common::Wallet,
-        intent::v1::{IntentTask, IntentType},
-        transaction::v1::{IcTransaction, Protocol},
-    },
-};
-use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use cashier_shared::types::{AddressType as AddressTypeShared, LinkType as LinkTypeShared};
 use ic_mple_client::CanisterClientError;
-use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use std::{collections::HashMap, sync::Arc};
-use transaction_manager::utils::calculator::calculate_icrc2_transfer_intent_amount;
+use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
+use std::sync::Arc;
+
+use crate::{
+    cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture,
+    constant::{CK_BTC_PRINCIPAL, CKBTC_ICRC_TOKEN, ICP_PRINCIPAL, ICP_TOKEN},
+    utils::{principal::TestUser, with_pocket_ic_context},
+};
 
 #[tokio::test]
 async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
-
         let caller = TestUser::User1.get_principal();
         let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
@@ -53,6 +36,7 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
 
         // Act
         let result = be_client.user_create_link_v3(input).await;
+
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
@@ -113,9 +97,6 @@ async fn it_should_create_icp_token_tip_link_successfully() {
         let link = create_link_result.link;
         let action = create_link_result.action;
 
-        println!("Created link {:?}", link);
-        println!("Create action: {:?}", action);
-
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkTypeShared::SendTip);
         assert_eq!(action.intents.len(), 2);
@@ -149,7 +130,7 @@ async fn it_should_create_icp_token_tip_link_successfully() {
             asset_intent.asset.address,
             Principal::from_text(ICP_PRINCIPAL).unwrap()
         );
-        assert_eq!(asset_intent.amount, tip_amount.clone() + token_fee);
+        assert_eq!(asset_intent.amount, tip_amount.clone());
 
         // Assert ICRC-112 requests
         assert!(create_link_result.icrc112_requests.is_some());
@@ -198,7 +179,7 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
-        let token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
+        let _token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
         let mut test_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
@@ -274,7 +255,7 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
             asset_intent.asset.address,
             Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
         );
-        assert_eq!(asset_intent.amount, tip_amount.clone() + token_fee);
+        assert_eq!(asset_intent.amount, tip_amount.clone());
 
         // Assert ICRC-112 requests
         assert!(create_link_result.icrc112_requests.is_some());

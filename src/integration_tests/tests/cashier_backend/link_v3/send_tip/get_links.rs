@@ -1,15 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
-use crate::cashier_backend::link_v3::send_tip::fixture::activate_tip_link_v3_fixture;
-use crate::constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN};
-use crate::utils::principal::TestUser;
-use crate::utils::with_pocket_ic_context;
 use candid::Nat;
 use cashier_backend_types::service::link::PaginateInput;
 use cashier_shared::types::LinkState as LinkStateShared;
 use std::sync::Arc;
+
+use crate::{
+    cashier_backend::link_v3::{
+        fixture::LinkTestFixtureV3, send_tip::fixture::activate_tip_link_v3_fixture,
+    },
+    constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN},
+    utils::{principal::TestUser, with_pocket_ic_context},
+};
 
 #[tokio::test]
 async fn it_should_succeed_get_icp_token_tip_link_with_no_link_existed() {

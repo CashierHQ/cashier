@@ -1,23 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    constant::treasury_principal,
-    utils::{PocketIcTestContext, principal::TestUser},
-};
-
 use candid::{Nat, Principal};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
-    constant,
-    dto::{
-        action::{ActionDto, CreateActionInput},
-        link::{
-            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
-        },
-    },
+    dto::link::GetLinkOptions,
     error::CanisterError,
-    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     link_v3::dto::{
         action::{
             CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
@@ -28,18 +16,23 @@ use cashier_backend_types::{
             GetLinksResponseV3,
         },
     },
-    service::link::{PaginateInput, PaginateResult},
+    service::link::PaginateInput,
 };
 use cashier_common::{constant::CREATE_LINK_FEE, fee_calculator::icrc2};
 use cashier_shared::types::{
     Action as ActionShared, ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, Asset as AssetShared, Intent as IntentShared,
-    IntentState as IntentStateShared, IntentType as IntentTypeShared, LinkType as LinkTypeShared,
+    IntentState as IntentStateShared, IntentType as IntentTypeShared,
     TokenStandard as TokenStandardShared,
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
+
+use crate::{
+    constant::treasury_principal,
+    utils::{PocketIcTestContext, principal::TestUser},
+};
 
 #[derive(Clone)]
 pub struct LinkTestFixtureV3 {
@@ -241,19 +234,15 @@ impl LinkTestFixtureV3 {
             .unwrap();
     }
 
-    /// Creates the asset information from the provided tokens and amounts.
-    /// Creates the asset information from the provided tokens and amounts.
-    ///
+    /// Create a mock CreateLink action for testing purposes.
     /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
-    /// - `label`: A label for the asset information (e.g., "SEND_AIRDROP_ASSET")
-    /// - `is_token_basket`: A boolean indicating if the link is a token basket
-    ///
+    /// * `creator` - The principal of the action creator
+    /// * `tokens` - A vector of token identifiers (e.g., "ICP")
+    /// * `amounts` - A vector of amounts corresponding to each token
+    /// * `token_fees` - A vector of network fees corresponding to each token
     /// # Returns
-    /// - An `ActionShared` struct containing the created asset information.
-    /// # Errors
-    /// Returns an error if the tokens not found in the token map
+    /// * `Ok(ActionShared)` - The created CreateLink action
+    /// * `Err(String)` - Error message if the input vectors have mismatched lengths or if a token is not found
     pub fn create_action_from_tokens_and_amount(
         &self,
         creator: Principal,
@@ -367,6 +356,12 @@ impl LinkTestFixtureV3 {
         })
     }
 
+    /// Create a mock Receive action for testing purposes.
+    /// # Arguments
+    /// * `link_id` - The ID of the link associated with the action
+    /// * `creator` - The principal of the action creator
+    /// # Returns
+    /// * `ActionShared` - The created Receive action
     pub fn receive_action(&self, link_id: String, creator: Principal) -> ActionShared {
         ActionShared {
             id: "receive_action_id".to_string(),
@@ -380,6 +375,12 @@ impl LinkTestFixtureV3 {
         }
     }
 
+    /// Create a mock Withdraw action for testing purposes.
+    /// # Arguments
+    /// * `link_id` - The ID of the link associated with the action
+    /// * `creator` - The principal of the action creator
+    /// # Returns
+    /// * `ActionShared` - The created Withdraw action
     pub fn withdraw_action(&self, link_id: String, creator: Principal) -> ActionShared {
         ActionShared {
             id: "withdraw_action_id".to_string(),

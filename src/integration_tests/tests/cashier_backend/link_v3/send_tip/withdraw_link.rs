@@ -1,26 +1,26 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v3::fixture::LinkTestFixtureV3;
-use crate::cashier_backend::link_v3::send_tip::fixture::activate_tip_link_v3_fixture;
-use crate::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
-use crate::utils::principal::TestUser;
-use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
-use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3};
-use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
-use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
-use cashier_backend_types::repository::link::v1::LinkState;
-use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use cashier_backend_types::{
+    error::CanisterError,
+    link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3},
+};
 use cashier_common::test_utils;
 use cashier_shared::types::{
     ActionState as ActionStateShared, ActionType as ActionTypeShared,
     AddressType as AddressTypeShared, IntentState as IntentStateShared,
-    IntentType as IntentTypeShared, LinkState as LinkStateShared,
+    LinkState as LinkStateShared,
 };
 use icrc_ledger_types::icrc1::account::Account;
+
+use crate::{
+    cashier_backend::link_v3::{
+        fixture::LinkTestFixtureV3, send_tip::fixture::activate_tip_link_v3_fixture,
+    },
+    constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN},
+    utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
+};
 
 #[tokio::test]
 async fn it_should_withdraw_icp_token_tip_link_error_if_link_active() {

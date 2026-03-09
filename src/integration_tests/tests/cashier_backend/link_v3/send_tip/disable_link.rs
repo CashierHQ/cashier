@@ -1,17 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Nat;
+use cashier_backend_types::error::CanisterError;
+use cashier_shared::types::LinkState as LinkStateShared;
+
 use crate::{
     cashier_backend::link_v3::{
         fixture::LinkTestFixtureV3,
         send_tip::fixture::{activate_tip_link_v3_fixture, create_tip_linkv3_fixture},
     },
-    constant::ICP_TOKEN,
+    constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN},
     utils::{principal::TestUser, with_pocket_ic_context},
 };
-use candid::Nat;
-use cashier_backend_types::error::CanisterError;
-use cashier_shared::types::LinkState as LinkStateShared;
 
 #[tokio::test]
 async fn it_should_fail_disable_icp_token_tip_link_if_link_not_active() {
@@ -35,6 +36,7 @@ async fn it_should_fail_disable_icp_token_tip_link_if_link_not_active() {
         // Act
         let link_id = create_link_result.link.id.clone();
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
+
         // Assert
         assert!(disable_link_result.is_err());
         if let Err(CanisterError::ValidationErrors(msg)) = disable_link_result {
@@ -128,6 +130,41 @@ async fn it_should_succeed_disable_icp_token_tip_link() {
         // Act
         let link_id = create_link_result.link.id.clone();
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
+        // Assert
+        assert!(disable_link_result.is_ok());
+        let result = disable_link_result.unwrap();
+        assert_eq!(result.link.link_state, LinkStateShared::Inactive);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_succeed_disable_icrc_token_tip_link() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = Nat::from(5_000_000u64);
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
+
+        let (test_fixture, create_link_result) = activate_tip_link_v3_fixture(
+            ctx,
+            CKBTC_ICRC_TOKEN,
+            tip_amount,
+            token_fee,
+            icp_fee.clone(),
+        )
+        .await;
+
+        // Act
+        let link_id = create_link_result.link.id.clone();
+        let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
+
         // Assert
         assert!(disable_link_result.is_ok());
         let result = disable_link_result.unwrap();
