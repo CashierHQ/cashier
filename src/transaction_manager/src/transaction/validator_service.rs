@@ -313,7 +313,7 @@ mod tests {
         }
     }
 
-    fn generate_mock_action_and_intents_v3()
+    fn fixture_action_and_intents_v3()
     -> (ActionV3, Vec<IntentV3>, HashMap<String, Vec<Transaction>>) {
         let creator = random_principal_id();
         let fee_intent = IntentV3 {
@@ -761,7 +761,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_rollup_action_state_v3_due_to_fee_intent_transactions_failed() {
         // Arrange
-        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        let (action, intents, mut intent_txs_map) = fixture_action_and_intents_v3();
         intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Fail;
         intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Success;
 
@@ -797,7 +797,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_rollup_action_state_v3_due_to_asset_intent_transactions_failed() {
         // Arrange
-        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        let (action, intents, mut intent_txs_map) = fixture_action_and_intents_v3();
         intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Success;
         intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Fail;
 
@@ -833,7 +833,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_succeed_rollup_action_state_v3() {
         // Arrange
-        let (action, intents, mut intent_txs_map) = generate_mock_action_and_intents_v3();
+        let (action, intents, mut intent_txs_map) = fixture_action_and_intents_v3();
         intent_txs_map.get_mut("fee_intent").unwrap()[0].state = TransactionState::Success;
         intent_txs_map.get_mut("asset_intent").unwrap()[0].state = TransactionState::Success;
 

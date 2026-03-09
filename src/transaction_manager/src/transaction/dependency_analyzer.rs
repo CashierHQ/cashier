@@ -197,7 +197,7 @@ mod tests {
     };
     use std::collections::HashMap;
 
-    fn generate_mock_intent_v3(id: &str, dependencies: Vec<&str>) -> IntentV3 {
+    fn fixture_intent_v3(id: &str, dependencies: Vec<&str>) -> IntentV3 {
         IntentV3 {
             id: id.to_string(),
             label: "mock_intent_v3".to_string(),
@@ -361,8 +361,8 @@ mod tests {
     fn it_should_fail_check_circular_intents_dependencies_v3_due_to_circular_dependency() {
         // Arrange
         let analyzer = DependencyAnalyzer;
-        let intent_a = generate_mock_intent_v3("A", vec!["B"]);
-        let intent_b = generate_mock_intent_v3("B", vec!["A"]);
+        let intent_a = fixture_intent_v3("A", vec!["B"]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
         let intents = vec![intent_a, intent_b];
 
         // Act
@@ -376,8 +376,8 @@ mod tests {
     fn it_should_succeed_check_circular_intents_dependencies_v3() {
         // Arrange
         let analyzer = DependencyAnalyzer;
-        let intent_a = generate_mock_intent_v3("A", vec![]);
-        let intent_b = generate_mock_intent_v3("B", vec!["A"]);
+        let intent_a = fixture_intent_v3("A", vec![]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
         let intents = vec![intent_a, intent_b];
 
         // Act
@@ -392,8 +392,8 @@ mod tests {
     ) {
         // Arrange
         let analyzer = DependencyAnalyzer;
-        let intent_a = generate_mock_intent_v3("A", vec!["B"]);
-        let intent_b = generate_mock_intent_v3("B", vec!["A"]);
+        let intent_a = fixture_intent_v3("A", vec!["B"]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
         let intents = vec![intent_a, intent_b];
         let intent_txs_map: HashMap<String, Vec<Transaction>> = HashMap::new();
 
@@ -409,8 +409,8 @@ mod tests {
     fn it_should_succeed_analyze_and_fill_transaction_dependencies_v3() {
         // Arrange
         let analyzer = DependencyAnalyzer;
-        let intent_a = generate_mock_intent_v3("A", vec![]);
-        let intent_b = generate_mock_intent_v3("B", vec!["A"]);
+        let intent_a = fixture_intent_v3("A", vec![]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
         let intents = vec![intent_a, intent_b];
 
         let tx_a = generate_mock_transaction("tx_a", vec![]);

@@ -52,7 +52,7 @@ mod tests {
     };
     use cashier_common::test_utils::{random_id_string, random_principal_id};
 
-    fn build_intent_v3(
+    fn fixture_intent_v3(
         source_address_type: AddressTypeV3,
         intent_tx_data: Option<IntentTransactionDataV3>,
     ) -> IntentV3 {
@@ -83,10 +83,11 @@ mod tests {
     fn it_should_fail_convert_intent_to_transactions_v3_due_to_missing_transaction_data() {
         // Arrange
         let adapter = IcIntentAdapter;
-        let intent = build_intent_v3(AddressTypeV3::Creator, None);
+        let intent = fixture_intent_v3(AddressTypeV3::Creator, None);
 
         // Act
-        let result = adapter.intent_to_transactions_v3(Principal::anonymous(), 1_632_144_000, &intent);
+        let result =
+            adapter.intent_to_transactions_v3(Principal::anonymous(), 1_632_144_000, &intent);
 
         // Assert
         assert!(matches!(
@@ -97,8 +98,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_convert_transfer_from_intent_to_transactions_v3_due_to_missing_approve_amount(
-    ) {
+    fn it_should_fail_convert_transfer_from_intent_to_transactions_v3_due_to_missing_approve_amount()
+     {
         // Arrange
         let adapter = IcIntentAdapter;
         let transfer_from_data = TransferFromData {
@@ -110,13 +111,14 @@ mod tests {
             actual_amount: Some(Nat::from(80u64)),
             approve_amount: None,
         };
-        let intent = build_intent_v3(
+        let intent = fixture_intent_v3(
             AddressTypeV3::Creator,
             Some(IntentTransactionDataV3::TransferFrom(transfer_from_data)),
         );
 
         // Act
-        let result = adapter.intent_to_transactions_v3(Principal::anonymous(), 1_632_144_000, &intent);
+        let result =
+            adapter.intent_to_transactions_v3(Principal::anonymous(), 1_632_144_000, &intent);
 
         // Assert
         assert!(matches!(
@@ -135,7 +137,7 @@ mod tests {
             asset: Asset::default(),
             amount: Nat::from(120u64),
         };
-        let intent = build_intent_v3(
+        let intent = fixture_intent_v3(
             AddressTypeV3::Creator,
             Some(IntentTransactionDataV3::Transfer(transfer_data.clone())),
         );
@@ -167,7 +169,7 @@ mod tests {
             asset: Asset::default(),
             amount: Nat::from(130u64),
         };
-        let intent = build_intent_v3(
+        let intent = fixture_intent_v3(
             AddressTypeV3::Link,
             Some(IntentTransactionDataV3::Transfer(transfer_data.clone())),
         );
@@ -202,7 +204,7 @@ mod tests {
             actual_amount: Some(Nat::from(150u64)),
             approve_amount: Some(Nat::from(180u64)),
         };
-        let intent = build_intent_v3(
+        let intent = fixture_intent_v3(
             AddressTypeV3::Creator,
             Some(IntentTransactionDataV3::TransferFrom(transfer_from_data)),
         );
