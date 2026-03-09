@@ -4,8 +4,8 @@
   import { TokenIcon } from "$modules/imageCache";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
-    formatNumber,
-    formatUsdAmount,
+      formatNumber,
+      formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
 
   type Props = {
@@ -24,13 +24,13 @@
     useCount,
   }: Props = $props();
 
-  const linkUseActionCounter = $derived(useCount ?? 0n);
+  const linkUseActionCounter = $derived(useCount ?? 0);
 
   const maxUseValue = $derived(maxUse ? Number(maxUse) : 1);
 
   // Calculate remaining uses
   const remainingUses: number = $derived(
-    Math.max(0, (maxUseValue || 1) - Number(linkUseActionCounter)),
+    Math.max(0, (maxUseValue || 1) - linkUseActionCounter),
   );
 </script>
 

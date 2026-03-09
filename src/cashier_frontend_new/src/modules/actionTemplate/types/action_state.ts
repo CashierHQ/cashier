@@ -1,6 +1,8 @@
-import { type IntentState_1 as BackendSharedActionState } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { type Action as BackendAction } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 import { ActionState as SharedActionState } from "$shared";
+
+type BackendSharedActionState = BackendAction["action_state"];
 
 export type SharedActionStateValue =
   | typeof SharedActionState.Created
