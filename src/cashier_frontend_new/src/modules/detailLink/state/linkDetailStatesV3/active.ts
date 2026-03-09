@@ -4,7 +4,6 @@ import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/proc
 import { LinkStep } from "$modules/links/types/linkStep";
 import { ActionType as SharedActionType } from "$shared";
 
-// State when the link active and ready for use
 export class LinkActiveStateV3 implements LinkDetailStateV3 {
   readonly step = LinkStep.ACTIVE;
 
@@ -15,7 +14,6 @@ export class LinkActiveStateV3 implements LinkDetailStateV3 {
     throw new Error("Create action is not supported in Active state");
   }
 
-  // process the action for use link
   async processAction(): Promise<ProcessActionResponseV3> {
     throw new Error("Process action is not supported in Active state");
   }

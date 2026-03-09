@@ -8,10 +8,14 @@
   import Preview from "$modules/creationLink/components/preview.svelte";
   import { CreationStoreV3ViewModelAdapter } from "$modules/creationLink/state/adapters/storeV3ViewModelAdapter";
   import { CreationStoreViewModelAdapter } from "$modules/creationLink/state/adapters/storeViewModelAdapter";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+  import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -19,14 +23,35 @@
 
   const context = getGuardContext();
   const isV3 = $state(context.linkCreationStoreV3 !== null);
-  const linkStore = $derived.by(() => {
+  let cachedCreationStoreV3 = context.linkCreationStoreV3;
+  let cachedCreationAdapterV3: CreationStoreV3ViewModelAdapter | null =
+    cachedCreationStoreV3
+      ? new CreationStoreV3ViewModelAdapter(cachedCreationStoreV3)
+      : null;
+  let cachedCreationStore = context.linkCreationStore;
+  let cachedCreationAdapter: CreationStoreViewModelAdapter | null =
+    cachedCreationStore
+      ? new CreationStoreViewModelAdapter(cachedCreationStore)
+      : null;
+
+  const linkStore = $derived.by<
+    (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null
+  >(() => {
     const storeV3 = context.linkCreationStoreV3;
     if (storeV3) {
-      return new CreationStoreV3ViewModelAdapter(storeV3);
+      if (cachedCreationStoreV3 !== storeV3 || !cachedCreationAdapterV3) {
+        cachedCreationStoreV3 = storeV3;
+        cachedCreationAdapterV3 = new CreationStoreV3ViewModelAdapter(storeV3);
+      }
+      return cachedCreationAdapterV3;
     }
     const store = context.linkCreationStore;
     if (store) {
-      return new CreationStoreViewModelAdapter(store);
+      if (cachedCreationStore !== store || !cachedCreationAdapter) {
+        cachedCreationStore = store;
+        cachedCreationAdapter = new CreationStoreViewModelAdapter(store);
+      }
+      return cachedCreationAdapter;
     }
     return null;
   });
@@ -34,15 +59,27 @@
   const linkStep = $derived.by(() => linkStore?.step ?? LinkStep.CHOOSE_TYPE);
   const linkTitle = $derived.by(() => linkStore?.createLinkData.title ?? "");
 
-  const detailStore = $derived.by(() => {
-    if (!linkStore || !linkStore.backendId) return null;
-    if (isV3) {
-      const detailStoreV3 = new LinkDetailStoreV3({ id: linkStore.backendId });
-      return new DetailStoreV3ViewModelAdapter(detailStoreV3);
-    } else {
-      const detailStore = new LinkDetailStore({ id: linkStore.backendId });
-      return new DetailStoreViewModelAdapter(detailStore);
+  let cachedDetailStoreKey: string | null = null;
+  let cachedDetailStore: GenericDetailStoreVM | null = null;
+
+  const detailStore = $derived.by<GenericDetailStoreVM | null>(() => {
+    const backendId = linkStore?.backendId;
+    if (!backendId) return null;
+
+    const detailStoreKey = `${isV3 ? "v3" : "v2"}:${backendId}`;
+    if (cachedDetailStoreKey === detailStoreKey && cachedDetailStore) {
+      return cachedDetailStore;
     }
+
+    if (isV3) {
+      const detailStoreV3 = new LinkDetailStoreV3({ id: backendId });
+      cachedDetailStore = new DetailStoreV3ViewModelAdapter(detailStoreV3);
+    } else {
+      const detailStoreV2 = new LinkDetailStore({ id: backendId });
+      cachedDetailStore = new DetailStoreViewModelAdapter(detailStoreV2);
+    }
+    cachedDetailStoreKey = detailStoreKey;
+    return cachedDetailStore;
   });
 
   const handleBack = async () => {

@@ -53,7 +53,7 @@ export class CreateLinkInputV3Mapper {
     const inputDto: BackendCreateLinkInputV3 = {
       title: link.title,
       link_type: beLinkType,
-      max_use: BigInt(link.max_use || 1),
+      max_use: BigInt(link.max_use ?? 1),
       action: beAction,
     };
 

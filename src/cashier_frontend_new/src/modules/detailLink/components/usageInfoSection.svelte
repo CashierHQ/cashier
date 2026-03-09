@@ -25,12 +25,11 @@
   }: Props = $props();
 
   const linkUseActionCounter = $derived(useCount ?? 0);
-
-  const maxUseValue = $derived(maxUse ? Number(maxUse) : 1);
+  const maxUseValue = $derived(maxUse ?? 1);
 
   // Calculate remaining uses
   const remainingUses: number = $derived(
-    Math.max(0, (maxUseValue || 1) - linkUseActionCounter),
+    Math.max(0, (maxUseValue ?? 1) - linkUseActionCounter),
   );
 </script>
 

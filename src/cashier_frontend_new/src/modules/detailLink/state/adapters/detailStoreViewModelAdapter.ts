@@ -40,11 +40,15 @@ export class DetailStoreViewModelAdapter implements GenericDetailStoreVM {
         isSuccess: result.isSuccess,
         errors: result.errors,
       };
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "An error occurred while processing the action";
       return {
         action: undefined,
         isSuccess: false,
-        errors: ["An error occurred"],
+        errors: [message],
       };
     }
   }

@@ -1,8 +1,12 @@
 import type {
   ActionDto,
   LinkState as BackendLinkState,
+  LinkState_1 as BackendLinkStateV3,
   LinkType as BackendLinkType,
+  LinkType_1 as BackendLinkTypeV3,
+  Link as BackendSharedLink,
   GetLinkResp,
+  GetLinkResponseV3,
   LinkDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
@@ -16,6 +20,11 @@ import {
   LinkType,
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
+import {
+  LinkState as SharedLinkState,
+  LinkType as SharedLinkType,
+  type Link as SharedLink,
+} from "$shared";
 import { Principal } from "@dfinity/principal";
 import { Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,6 +33,7 @@ import { detailLinkService } from "./detailLink";
 const mocks = vi.hoisted(() => ({
   cashierBackendService: {
     getLink: vi.fn(),
+    getLinkV3: vi.fn(),
   },
 }));
 
@@ -72,6 +82,35 @@ const makeActionDto = (): ActionDto => ({
   state: { Created: null },
 });
 
+const makeSharedLink = (
+  linkState: SharedLink["link_state"],
+  linkType: SharedLink["link_type"] = SharedLinkType.SendTip,
+): SharedLink => ({
+  id: "shared-id",
+  title: "shared-title",
+  creator: Principal.fromText("aaaaa-aa"),
+  asset_info: [],
+  link_type: linkType,
+  link_state: linkState,
+  use_count: 0n,
+  max_use: 1n,
+});
+
+const makeLinkV3Dto = (
+  stateBackend: BackendLinkStateV3,
+  linkTypeBackend: BackendLinkTypeV3,
+): BackendSharedLink => ({
+  id: "id",
+  title: "title",
+  creator: Principal.fromText("aaaaa-aa"),
+  asset_info: [],
+  link_type: linkTypeBackend,
+  created_at: [],
+  use_count: 0n,
+  max_use: 1n,
+  link_state: stateBackend,
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -101,7 +140,59 @@ describe("determineActionTypeFromLink", () => {
   });
 });
 
-describe("fetchLinkDetail behavior", () => {
+describe("determineActionTypeFromLinkV3", () => {
+  it("should map Created to CREATE_LINK", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Created),
+      ),
+    ).toBe(ActionType.CREATE_LINK);
+  });
+
+  it("should map Active SendTip/SendAirdrop/SendTokenBasket to RECEIVE", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Active, SharedLinkType.SendTip),
+      ),
+    ).toBe(ActionType.RECEIVE);
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Active, SharedLinkType.SendAirdrop),
+      ),
+    ).toBe(ActionType.RECEIVE);
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Active, SharedLinkType.SendTokenBasket),
+      ),
+    ).toBe(ActionType.RECEIVE);
+  });
+
+  it("should map Active ReceivePayment to SEND", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Active, SharedLinkType.ReceivePayment),
+      ),
+    ).toBe(ActionType.SEND);
+  });
+
+  it("should map Inactive to WITHDRAW", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Inactive),
+      ),
+    ).toBe(ActionType.WITHDRAW);
+  });
+
+  it("should return undefined for Ended", () => {
+    expect(
+      detailLinkService.determineActionTypeFromLinkV3(
+        makeSharedLink(SharedLinkState.Ended),
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe("fetchLinkDetail", () => {
   it("should call getLink once for INACTIVE_ENDED links", async () => {
     // arrange
     const linkInstance = makeLink(LinkState.INACTIVE_ENDED, LinkType.TIP);
@@ -130,6 +221,89 @@ describe("fetchLinkDetail behavior", () => {
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("fetchLinkDetailV3", () => {
+  it("should call getLinkV3 once when actionTypeValue is provided", async () => {
+    const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
+    const resp: GetLinkResponseV3 = {
+      link: linkDto,
+      action: [],
+      icrc112_requests: [],
+      link_user_state: [],
+    };
+    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(Ok(resp));
+
+    await detailLinkService.fetchLinkDetailV3({
+      id: "some-id",
+      actionTypeValue: ActionType.SEND,
+      anonymous: false,
+    });
+
+    expect(vi.mocked(cashierBackendService.getLinkV3)).toHaveBeenCalledTimes(1);
+    const callArgs = vi.mocked(cashierBackendService.getLinkV3).mock.calls[0];
+    expect(callArgs[0]).toBe("some-id");
+    expect(callArgs[1]).toBeDefined();
+    expect(callArgs[2]).toBe(false);
+  });
+
+  it("should call getLinkV3 twice for active link when authenticated", async () => {
+    const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
+    const firstResp: GetLinkResponseV3 = {
+      link: linkDto,
+      action: [],
+      icrc112_requests: [],
+      link_user_state: [],
+    };
+    const secondResp: GetLinkResponseV3 = {
+      link: linkDto,
+      action: [],
+      icrc112_requests: [],
+      link_user_state: [],
+    };
+    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(
+      Ok(firstResp),
+    );
+    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(
+      Ok(secondResp),
+    );
+
+    await detailLinkService.fetchLinkDetailV3({
+      id: "some-id",
+      anonymous: false,
+    });
+
+    expect(vi.mocked(cashierBackendService.getLinkV3)).toHaveBeenCalledTimes(2);
+    const firstCall = vi.mocked(cashierBackendService.getLinkV3).mock.calls[0];
+    const secondCall = vi.mocked(cashierBackendService.getLinkV3).mock.calls[1];
+    expect(firstCall[2]).toBe(false);
+    expect(secondCall[1]).toBeDefined();
+  });
+
+  it("should call getLinkV3 once and skip action fetch when anonymous", async () => {
+    const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
+    const resp: GetLinkResponseV3 = {
+      link: linkDto,
+      action: [],
+      icrc112_requests: [],
+      link_user_state: [],
+    };
+    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(Ok(resp));
+
+    const result = await detailLinkService.fetchLinkDetailV3({
+      id: "some-id",
+      anonymous: true,
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result.isOk() && result.value.link.id).toBe("id");
+    expect(result.isOk() && result.value.link.link_state).toBe(
+      SharedLinkState.Active,
+    );
+    expect(vi.mocked(cashierBackendService.getLinkV3)).toHaveBeenCalledTimes(1);
+    const firstCall = vi.mocked(cashierBackendService.getLinkV3).mock.calls[0];
+    expect(firstCall[2]).toBe(true);
   });
 });
 

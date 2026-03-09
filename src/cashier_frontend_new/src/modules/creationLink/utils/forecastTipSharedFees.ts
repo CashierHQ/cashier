@@ -1,5 +1,6 @@
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import { FeeType } from "$modules/links/types/fee";
+import { LINK_CREATION_FEE } from "$modules/shared/constants";
 import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import {
@@ -100,7 +101,7 @@ export function forecastTipSharedFees(
 
   // 2. Link creation fee via CreatorToTreasury intent
   const linkFeeInfo = {
-    amount: 10_000n, // 0.0001 ICP in e8s – keep in sync with shared rules
+    amount: LINK_CREATION_FEE,
     tokenAddress: ICP_LEDGER_CANISTER_ID,
   };
   const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
