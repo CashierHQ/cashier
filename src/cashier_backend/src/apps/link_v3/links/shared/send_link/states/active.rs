@@ -1,9 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::apps::link_v3::{
-    links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State,
-};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -22,7 +19,9 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
+    link_v3::{links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State},
+    token_balance::traits::TokenBalanceFetcher,
+    token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
 
@@ -193,5 +192,402 @@ impl LinkV3State for ActiveState {
                 "Unsupported action type for ActiveState".to_string(),
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::apps::{
+        shared::test_utils::tests::{
+            MockExecutionService, MockTransactionManagerV3, MockValidationService,
+        },
+        token_balance::service::tests::MockTokenBalanceService,
+        token_fee::service::tests::{
+            MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
+        },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
+    };
+    use cashier_backend_types::repository::{
+        action::v1::ActionState,
+        asset::v3::{AssetV3, TokenStandardV3},
+        asset_info::v3::AssetInfoV3,
+        common::AddressTypeV3,
+        link::v1::LinkType,
+    };
+    use cashier_common::test_utils::random_principal_id;
+    use uuid::Uuid;
+
+    fn fixture_of_asset_info_v3(address: Principal, amount: candid::Nat) -> AssetInfoV3 {
+        AssetInfoV3 {
+            asset: AssetV3 {
+                address,
+                network_fee: None,
+                token_standard: TokenStandardV3::ICRC1,
+            },
+            label: "asset".to_string(),
+            amount,
+        }
+    }
+
+    fn fixture_of_link_v3(
+        creator: Principal,
+        max_use: u64,
+        created_at: u64,
+        asset_info: Vec<AssetInfoV3>,
+    ) -> LinkV3 {
+        LinkV3 {
+            id: Uuid::new_v4().to_string(),
+            title: "Test Active Link".to_string(),
+            link_type: LinkType::SendTokenBasket,
+            asset_info,
+            max_use,
+            use_count: 0,
+            creator,
+            state: LinkState::Active,
+            created_at,
+        }
+    }
+
+    fn fixture_of_services(
+        current_ts: u64,
+    ) -> (
+        MockTokenFeeService,
+        MockTokenStandardService,
+        MockTokenBalanceService,
+    ) {
+        (
+            create_mock_token_fee_service(current_ts),
+            create_mock_token_standard_service(current_ts),
+            MockTokenBalanceService::new(),
+        )
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_unsupported_action_type_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                random_principal_id(),
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let transaction_manager = MockTransactionManagerV3::default();
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        // Act
+        let result = state_handler
+            .create_action(
+                creator,
+                ActionType::Withdraw,
+                created_at,
+                transaction_manager,
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(CanisterError::ValidationErrors(ref msg))
+                if msg == "Unsupported action type for ActiveState"
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_transaction_manager_error_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                ledger_id,
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let mut transaction_manager = MockTransactionManagerV3::default();
+        transaction_manager.set_failed(true);
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        // Act
+        let result = state_handler
+            .create_action(
+                creator,
+                ActionType::Receive,
+                created_at,
+                transaction_manager,
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_process_action_due_to_unsupported_action_type_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                random_principal_id(),
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let action = ActionV3 {
+            id: Uuid::new_v4().to_string(),
+            action_type: ActionType::CreateLink,
+            link_id: link.id.clone(),
+            creator,
+            creator_address_type: AddressTypeV3::Creator,
+            state: ActionState::Created,
+            intent_ids: vec![],
+        };
+
+        // Act
+        let result = state_handler
+            .process_action(
+                creator,
+                action,
+                vec![],
+                HashMap::new(),
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(CanisterError::ValidationErrors(ref msg))
+                if msg == "Unsupported action type for ActiveState"
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_process_action_due_to_transaction_manager_error_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                ledger_id,
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+        let create_result = state_handler
+            .create_action(
+                creator,
+                ActionType::Receive,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create action should succeed");
+        let mut failed_tx_manager = MockTransactionManagerV3::default();
+        failed_tx_manager.set_failed(true);
+
+        // Act
+        let result = state_handler
+            .process_action(
+                creator,
+                create_result.create_action_result.action,
+                create_result.create_action_result.intents,
+                create_result.create_action_result.intent_txs_map,
+                failed_tx_manager,
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![
+                fixture_of_asset_info_v3(random_principal_id(), candid::Nat::from(1000u64)),
+                fixture_of_asset_info_v3(random_principal_id(), candid::Nat::from(2000u64)),
+            ],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        // Act
+        let result = state_handler
+            .create_action(
+                creator,
+                ActionType::Receive,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let created = result.expect("create action should succeed");
+        assert_eq!(created.link.id, link.id);
+        assert_eq!(
+            created.create_action_result.action.action_type,
+            ActionType::Receive
+        );
+        assert_eq!(created.create_action_result.action.creator, creator);
+        assert_eq!(created.create_action_result.action.state, ActionState::Created);
+        assert_eq!(created.create_action_result.intents.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_process_action_and_end_link_due_to_reaching_max_use_for_active_state()
+    {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            1,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                random_principal_id(),
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+        let create_result = state_handler
+            .create_action(
+                creator,
+                ActionType::Receive,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create action should succeed");
+
+        // Act
+        let result = state_handler
+            .process_action(
+                creator,
+                create_result.create_action_result.action,
+                create_result.create_action_result.intents,
+                create_result.create_action_result.intent_txs_map,
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let processed = result.expect("process action should succeed");
+        assert_eq!(processed.link.use_count, 1u64);
+        assert_eq!(processed.link.state, LinkState::Ended);
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_process_action_and_increase_use_count_of_link_for_active_state() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000u64;
+        let link = fixture_of_link_v3(
+            creator,
+            3,
+            created_at,
+            vec![fixture_of_asset_info_v3(
+                random_principal_id(),
+                candid::Nat::from(1000u64),
+            )],
+        );
+        let state_handler = ActiveState::new(&link, canister_id);
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+        let create_result = state_handler
+            .create_action(
+                creator,
+                ActionType::Receive,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+            )
+            .await
+            .expect("create action should succeed");
+
+        // Act
+        let result = state_handler
+            .process_action(
+                creator,
+                create_result.create_action_result.action,
+                create_result.create_action_result.intents,
+                create_result.create_action_result.intent_txs_map,
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let processed = result.expect("process action should succeed");
+        assert_eq!(processed.link.use_count, 1u64);
+        assert_eq!(processed.link.state, LinkState::Active);
     }
 }
