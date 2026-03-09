@@ -6,7 +6,6 @@ use cashier_backend_types::{
     link_v2::{graph::Graph, transaction_manager::ExecuteTransactionsResult},
     repository::transaction::v1::{FromCallType, Transaction, TransactionState},
 };
-use log::debug;
 use std::collections::HashMap;
 
 use crate::{
@@ -34,8 +33,6 @@ impl<E: TransactionExecutor + Clone> ExecutionService for IcExecutorService<E> {
         &self,
         transactions: &[Transaction],
     ) -> Result<ExecuteTransactionsResult, CanisterError> {
-        debug!("execute transactions: {:?}", transactions);
-
         let mut executed_transactions = Vec::<Transaction>::new();
         let mut errors = Vec::<String>::new();
         let mut is_success = true;

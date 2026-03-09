@@ -8,22 +8,14 @@ use cashier_backend_types::{
     },
     repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
 };
-use cashier_common::runtime::IcEnvironment;
-use cashier_common::utils::get_link_account;
-use std::{
-    collections::{HashMap, HashSet},
-    future::Future,
-    pin::Pin,
-};
+use cashier_common::{runtime::IcEnvironment, utils::get_link_account};
+use std::collections::{HashMap, HashSet};
 
-use crate::adapter::ic::intent::traits::IntentAdapterTraitV3;
-use crate::icrc112::create_icrc_112_requests;
 use crate::{
-    adapter::ic::intent::v1::IcIntentAdapter,
+    adapter::ic::intent::{traits::IntentAdapterTraitV3, v1::IcIntentAdapter},
+    icrc112::create_icrc_112_requests,
     transaction::{
         dependency_analyzer::DependencyAnalyzer,
-        ic_transaction_executor::IcTransactionExecutor,
-        ic_transaction_validator::IcTransactionValidator,
         traits::{ExecutionService, ValidationService},
     },
     v3::traits::TransactionManagerV3,
@@ -141,8 +133,6 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
 
         // verify and execute transactions
         let canister_id = self.ic_env.id();
-        //let validator_service = ValidatorService::new(IcTransactionValidator);
-        //let executor_service = ExecutorService::new(IcTransactionExecutor);
 
         // validate and update transactions dependencies and states
         let validation_result = validator_service
