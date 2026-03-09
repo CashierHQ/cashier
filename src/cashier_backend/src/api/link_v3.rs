@@ -21,7 +21,6 @@ use cashier_backend_types::{
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
-use transaction_manager::transaction::validator_service;
 
 /// Creates a new link V3
 /// # Arguments
