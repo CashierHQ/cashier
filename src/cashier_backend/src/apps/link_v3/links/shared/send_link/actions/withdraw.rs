@@ -216,7 +216,9 @@ mod tests {
             created_at,
         );
         let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
-        token_fee_service.fetcher.set_error(ledger_id, "fee unavailable");
+        token_fee_service
+            .fetcher
+            .set_error(ledger_id, "fee unavailable");
         token_balance_service.set_balance(ledger_id, Nat::from(5_000u64));
 
         // Act
@@ -252,8 +254,12 @@ mod tests {
             created_at,
         );
         let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id_1, Nat::from(100u64));
-        token_fee_service.fetcher.set_fee(ledger_id_2, Nat::from(200u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_1, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_2, Nat::from(200u64));
         token_balance_service.set_balance(ledger_id_1, Nat::from(5_000u64));
 
         // Act
@@ -289,8 +295,12 @@ mod tests {
             created_at,
         );
         let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id_1, Nat::from(100u64));
-        token_fee_service.fetcher.set_fee(ledger_id_2, Nat::from(200u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_1, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_2, Nat::from(200u64));
         token_balance_service.set_balance(ledger_id_1, Nat::from(5_000u64));
         token_balance_service.set_balance(ledger_id_2, Nat::from(150u64)); // <= fee -> zero sending
 

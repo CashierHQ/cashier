@@ -214,7 +214,9 @@ mod tests {
     use candid::Nat;
     use cashier_backend_types::{
         error::CanisterError,
-        link_v2::transaction_manager::{ExecuteTransactionsResult, ValidateActionTransactionsResult},
+        link_v2::transaction_manager::{
+            ExecuteTransactionsResult, ValidateActionTransactionsResult,
+        },
         link_v3::transaction_manager::RollupActionStateResultV3,
         repository::{
             action::{
@@ -233,13 +235,7 @@ mod tests {
         },
     };
     use icrc_ledger_types::icrc1::transfer::Memo;
-    use std::{
-        cell::RefCell,
-        collections::HashMap,
-        future::Future,
-        pin::Pin,
-        rc::Rc,
-    };
+    use std::{cell::RefCell, collections::HashMap, future::Future, pin::Pin, rc::Rc};
 
     #[derive(Clone)]
     struct MockValidationService {
@@ -253,9 +249,7 @@ mod tests {
             &'a self,
             _transactions: &'a [Transaction],
         ) -> Pin<
-            Box<
-                dyn Future<Output = Result<ValidateActionTransactionsResult, CanisterError>> + 'a,
-            >,
+            Box<dyn Future<Output = Result<ValidateActionTransactionsResult, CanisterError>> + 'a>,
         > {
             let result = self.validate_result.clone();
             Box::pin(async move { result })
@@ -270,7 +264,10 @@ mod tests {
             _action: cashier_backend_types::repository::action::v1::Action,
             _intents: &[cashier_backend_types::repository::intent::v1::Intent],
             _intent_txs_map: HashMap<String, Vec<Transaction>>,
-        ) -> Result<cashier_backend_types::link_v2::transaction_manager::RollupActionStateResult, CanisterError> {
+        ) -> Result<
+            cashier_backend_types::link_v2::transaction_manager::RollupActionStateResult,
+            CanisterError,
+        > {
             Err(CanisterError::HandleLogicError(
                 "unused in v3 tests".to_string(),
             ))
@@ -394,7 +391,10 @@ mod tests {
         intent_txs_map
     }
 
-    fn fixture_of_rollup_result_v3(action: ActionV3, intents: Vec<IntentV3>) -> RollupActionStateResultV3 {
+    fn fixture_of_rollup_result_v3(
+        action: ActionV3,
+        intents: Vec<IntentV3>,
+    ) -> RollupActionStateResultV3 {
         RollupActionStateResultV3 {
             action,
             intents,
@@ -464,7 +464,8 @@ mod tests {
         let manager = fixture_of_manager();
         let action = fixture_of_action_v3("11111111-1111-1111-1111-111111111111");
         let intent = fixture_of_intent_v3("intent_v3_id");
-        let input_tx = fixture_of_canister_transaction_created("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        let input_tx =
+            fixture_of_canister_transaction_created("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         let intent_txs_map = fixture_of_intent_txs_map(&intent.id, vec![input_tx]);
 
         let validation_service = MockValidationService {
@@ -575,7 +576,8 @@ mod tests {
         let manager = fixture_of_manager();
         let action = fixture_of_action_v3("11111111-1111-1111-1111-111111111111");
         let intent = fixture_of_intent_v3("intent_v3_id");
-        let input_tx = fixture_of_canister_transaction_created("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        let input_tx =
+            fixture_of_canister_transaction_created("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
         let intent_txs_map = fixture_of_intent_txs_map(&intent.id, vec![input_tx]);
 
         let rollup_called = Rc::new(RefCell::new(false));
@@ -598,8 +600,9 @@ mod tests {
         let execution_service = MockExecutionService {
             execute_result: Ok(ExecuteTransactionsResult {
                 transactions: vec![{
-                    let mut tx =
-                        fixture_of_canister_transaction_created("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+                    let mut tx = fixture_of_canister_transaction_created(
+                        "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+                    );
                     tx.state = TransactionState::Success;
                     tx
                 }],

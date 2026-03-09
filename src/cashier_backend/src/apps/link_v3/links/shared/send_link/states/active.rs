@@ -484,13 +484,16 @@ mod tests {
             ActionType::Receive
         );
         assert_eq!(created.create_action_result.action.creator, creator);
-        assert_eq!(created.create_action_result.action.state, ActionState::Created);
+        assert_eq!(
+            created.create_action_result.action.state,
+            ActionState::Created
+        );
         assert_eq!(created.create_action_result.intents.len(), 2);
     }
 
     #[tokio::test]
     async fn it_should_succeed_process_action_and_end_link_due_to_reaching_max_use_for_active_state()
-    {
+     {
         // Arrange
         let creator = random_principal_id();
         let canister_id = random_principal_id();

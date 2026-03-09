@@ -14,8 +14,7 @@ use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use std::time::Duration;
 
 #[tokio::test]
-async fn it_should_fail_activate_tip_linkv3_icrc_and_return_same_icrc112_if_icrc112_not_executed()
-{
+async fn it_should_fail_activate_tip_linkv3_icrc_and_return_same_icrc112_if_icrc112_not_executed() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -170,8 +169,8 @@ async fn it_should_fail_activate_tip_linkv3_icrc_and_return_same_icrc112_if_icrc
 }
 
 #[tokio::test]
-async fn it_should_fail_activate_tip_linkv3_icrc_and_create_new_icrc112_if_icrc112_not_executed_and_activate_later_than_1day(
-) {
+async fn it_should_fail_activate_tip_linkv3_icrc_and_create_new_icrc112_if_icrc112_not_executed_and_activate_later_than_1day()
+ {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();

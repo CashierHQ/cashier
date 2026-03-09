@@ -183,8 +183,7 @@ async fn it_should_succeed_receive_basket_link() {
         let receiver_icp_ledger_client = ctx.new_icp_ledger_client(receiver);
         let receiver_icp_fee = receiver_icp_ledger_client.fee().await.unwrap_or_default();
         let receiver_fixture =
-            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, receiver_icp_fee)
-                .await;
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, receiver_icp_fee).await;
         let receiver_account = Account {
             owner: receiver,
             subaccount: None,

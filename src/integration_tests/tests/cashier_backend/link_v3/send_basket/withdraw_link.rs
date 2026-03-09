@@ -16,8 +16,7 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     cashier_backend::link_v3::{
-        fixture::LinkTestFixtureV3,
-        send_basket::fixture::activate_basket_link_v3_fixture,
+        fixture::LinkTestFixtureV3, send_basket::fixture::activate_basket_link_v3_fixture,
     },
     constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN},
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
@@ -52,14 +51,9 @@ async fn it_should_fail_withdraw_basket_link_if_link_active() {
         let ckusdc_fee = ckusdc_ledger_client.fee().await.unwrap_or_default();
         let token_fees = vec![icp_fee.clone(), ckbtc_fee, ckusdc_fee];
 
-        let (test_fixture, activate_link_result) = activate_basket_link_v3_fixture(
-            ctx,
-            tokens,
-            amounts,
-            token_fees,
-            icp_fee.clone(),
-        )
-        .await;
+        let (test_fixture, activate_link_result) =
+            activate_basket_link_v3_fixture(ctx, tokens, amounts, token_fees, icp_fee.clone())
+                .await;
 
         // Act
         let link_id = activate_link_result.link.id.clone();
@@ -106,19 +100,17 @@ async fn it_should_fail_withdraw_basket_link_if_caller_not_creator() {
         let ckusdc_fee = ckusdc_ledger_client.fee().await.unwrap_or_default();
         let token_fees = vec![icp_fee.clone(), ckbtc_fee, ckusdc_fee];
 
-        let (creator_fixture, activate_link_result) = activate_basket_link_v3_fixture(
-            ctx,
-            tokens,
-            amounts,
-            token_fees,
-            icp_fee.clone(),
-        )
-        .await;
+        let (creator_fixture, activate_link_result) =
+            activate_basket_link_v3_fixture(ctx, tokens, amounts, token_fees, icp_fee.clone())
+                .await;
 
         let link_id = activate_link_result.link.id.clone();
         let disable_link_result = creator_fixture.disable_link_v3(&link_id).await;
         assert!(disable_link_result.is_ok());
-        assert_eq!(disable_link_result.unwrap().link.link_state, LinkStateShared::Inactive);
+        assert_eq!(
+            disable_link_result.unwrap().link.link_state,
+            LinkStateShared::Inactive
+        );
 
         let other = test_utils::random_principal_id();
         let other_fixture =
@@ -163,14 +155,9 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         let ckusdc_fee = ckusdc_ledger_client.fee().await.unwrap_or_default();
         let token_fees = vec![icp_fee.clone(), ckbtc_fee.clone(), ckusdc_fee.clone()];
 
-        let (test_fixture, activate_link_result) = activate_basket_link_v3_fixture(
-            ctx,
-            tokens,
-            amounts,
-            token_fees,
-            icp_fee.clone(),
-        )
-        .await;
+        let (test_fixture, activate_link_result) =
+            activate_basket_link_v3_fixture(ctx, tokens, amounts, token_fees, icp_fee.clone())
+                .await;
 
         let creator_account = Account {
             owner: creator,
@@ -179,7 +166,10 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         let link_id = activate_link_result.link.id.clone();
         let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
 
-        let icp_creator_before = icp_ledger_client.balance_of(&creator_account).await.unwrap();
+        let icp_creator_before = icp_ledger_client
+            .balance_of(&creator_account)
+            .await
+            .unwrap();
         let ckbtc_creator_before = ckbtc_ledger_client
             .balance_of(&creator_account)
             .await
@@ -191,7 +181,10 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
 
         let icp_link_before = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let ckbtc_link_before = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
-        let ckusdc_link_before = ckusdc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckusdc_link_before = ckusdc_ledger_client
+            .balance_of(&link_account)
+            .await
+            .unwrap();
 
         let icp_withdraw = if icp_link_before > icp_fee {
             icp_link_before.clone() - icp_fee.clone()
@@ -212,7 +205,10 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         // Act: disable link first (required for withdraw)
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
         assert!(disable_link_result.is_ok());
-        assert_eq!(disable_link_result.unwrap().link.link_state, LinkStateShared::Inactive);
+        assert_eq!(
+            disable_link_result.unwrap().link.link_state,
+            LinkStateShared::Inactive
+        );
 
         // Act: create withdraw action
         let withdraw_action = test_fixture.withdraw_action(link_id.clone(), creator);
@@ -245,14 +241,20 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         // Assert process
         assert!(process_action_result.is_ok());
         let process_action_result = process_action_result.unwrap();
-        assert_eq!(process_action_result.link.link_state, LinkStateShared::Ended);
+        assert_eq!(
+            process_action_result.link.link_state,
+            LinkStateShared::Ended
+        );
         assert_eq!(
             process_action_result.action.action_state,
             ActionStateShared::Success
         );
 
         // Assert creator balances increase by withdraw amounts
-        let icp_creator_after = icp_ledger_client.balance_of(&creator_account).await.unwrap();
+        let icp_creator_after = icp_ledger_client
+            .balance_of(&creator_account)
+            .await
+            .unwrap();
         let ckbtc_creator_after = ckbtc_ledger_client
             .balance_of(&creator_account)
             .await
@@ -263,7 +265,10 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
             .unwrap();
         assert_eq!(icp_creator_after, icp_creator_before + icp_withdraw);
         assert_eq!(ckbtc_creator_after, ckbtc_creator_before + ckbtc_withdraw);
-        assert_eq!(ckusdc_creator_after, ckusdc_creator_before + ckusdc_withdraw);
+        assert_eq!(
+            ckusdc_creator_after,
+            ckusdc_creator_before + ckusdc_withdraw
+        );
 
         // Assert link balances become zero
         assert_eq!(
@@ -275,7 +280,10 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
             Nat::from(0u64)
         );
         assert_eq!(
-            ckusdc_ledger_client.balance_of(&link_account).await.unwrap(),
+            ckusdc_ledger_client
+                .balance_of(&link_account)
+                .await
+                .unwrap(),
             Nat::from(0u64)
         );
 

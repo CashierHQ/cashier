@@ -70,7 +70,10 @@ impl AirdropLinkV3Fixture {
         )
         .await;
 
-        self.link_fixture.activate_link_v3(&action_id).await.unwrap()
+        self.link_fixture
+            .activate_link_v3(&action_id)
+            .await
+            .unwrap()
     }
 
     /// Creates the input for an airdrop link.

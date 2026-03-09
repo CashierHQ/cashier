@@ -98,7 +98,10 @@ async fn it_should_fail_activate_tip_linkv3_icp_and_return_same_icrc112_if_icrc1
             "Intent to Link state should be Fail"
         );
         assert_eq!(intent_to_link.source_address, caller);
-        assert_eq!(intent_to_link.source_address_type, AddressTypeShared::Creator);
+        assert_eq!(
+            intent_to_link.source_address_type,
+            AddressTypeShared::Creator
+        );
 
         // Assert Intent 2: CreatorToTreasury (TransferWalletToTreasury equivalent)
         let intent_to_treasury = activate_link_result
@@ -150,8 +153,8 @@ async fn it_should_fail_activate_tip_linkv3_icp_and_return_same_icrc112_if_icrc1
 }
 
 #[tokio::test]
-async fn it_should_fail_activate_tip_linkv3_icp_and_create_new_icrc112_if_icrc112_not_executed_and_activate_later_than_1day(
-) {
+async fn it_should_fail_activate_tip_linkv3_icp_and_create_new_icrc112_if_icrc112_not_executed_and_activate_later_than_1day()
+ {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -295,8 +298,7 @@ async fn it_should_fail_activate_tip_linkv3_icp_and_create_new_icrc112_if_icrc11
                         .created_at_time
                         .expect("Initial icrc2_approve args ts should not be None");
                     assert!(
-                        (new_created_ts - initial_created_ts)
-                            > (24 * 3600 + 1) * 1_000_000_000,
+                        (new_created_ts - initial_created_ts) > (24 * 3600 + 1) * 1_000_000_000,
                         "ICRC2 approve created_at_time should be advanced by 1 day + 1 second"
                     );
                 }

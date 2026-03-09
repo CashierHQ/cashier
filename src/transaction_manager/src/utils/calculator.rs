@@ -181,8 +181,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_to_calculate_link_balance_map_due_to_missing_fee_for_one_of_multiple_assets(
-    ) {
+    fn it_should_fail_to_calculate_link_balance_map_due_to_missing_fee_for_one_of_multiple_assets()
+    {
         // Arrange
         let max_use_count = 2u64;
         let asset_info_1 = AssetInfo {
@@ -201,13 +201,13 @@ mod tests {
         };
 
         // Fee exists only for asset 1, asset 2 should trigger failure.
-        let fee_map: HashMap<Principal, Nat> =
-            vec![(Principal::anonymous(), Nat::from(1u64))]
-                .into_iter()
-                .collect();
+        let fee_map: HashMap<Principal, Nat> = vec![(Principal::anonymous(), Nat::from(1u64))]
+            .into_iter()
+            .collect();
 
         // Act
-        let result = calculate_link_balance_map(&[asset_info_1, asset_info_2], &fee_map, max_use_count);
+        let result =
+            calculate_link_balance_map(&[asset_info_1, asset_info_2], &fee_map, max_use_count);
 
         // Assert
         assert!(matches!(

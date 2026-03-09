@@ -9,7 +9,9 @@ use ic_mple_client::CanisterClientError;
 use std::sync::Arc;
 
 use crate::{
-    cashier_backend::link_v3::{fixture::LinkTestFixtureV3, send_basket::fixture::BasketLinkV3Fixture},
+    cashier_backend::link_v3::{
+        fixture::LinkTestFixtureV3, send_basket::fixture::BasketLinkV3Fixture,
+    },
     constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN},
     utils::{
         icrc_112::execute_icrc112_request, link_id_to_account::fee_treasury_account,
@@ -438,7 +440,10 @@ async fn it_should_succeed_activate_mixed_icrc2_token_basket_link_v3() {
             "ckBTC link balance is incorrect"
         );
 
-        let ckusdc_link_balance = ckusdc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckusdc_link_balance = ckusdc_ledger_client
+            .balance_of(&link_account)
+            .await
+            .unwrap();
         let ckusdc_fee_now = ckusdc_ledger_client.fee().await.unwrap();
         assert_eq!(
             ckusdc_link_balance,

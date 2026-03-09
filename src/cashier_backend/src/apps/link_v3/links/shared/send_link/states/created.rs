@@ -351,7 +351,9 @@ mod tests {
         let state_handler = CreatedState::new(&link, canister_id);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -391,7 +393,9 @@ mod tests {
         failed_tx_manager.set_failed(true);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -477,7 +481,9 @@ mod tests {
         let state_handler = CreatedState::new(&link, canister_id);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -527,7 +533,9 @@ mod tests {
         let state_handler = CreatedState::new(&link, canister_id);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -579,7 +587,9 @@ mod tests {
         let state_handler = CreatedState::new(&link, canister_id);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -610,7 +620,10 @@ mod tests {
             created.create_action_result.action.creator_address_type,
             AddressTypeV3::Creator
         );
-        assert_eq!(created.create_action_result.action.state, ActionState::Created);
+        assert_eq!(
+            created.create_action_result.action.state,
+            ActionState::Created
+        );
     }
 
     #[tokio::test]
@@ -629,7 +642,9 @@ mod tests {
         let state_handler = CreatedState::new(&link, canister_id);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);

@@ -106,7 +106,9 @@ async fn it_should_fail_receive_icp_token_airdrop_link_if_requested_more_than_ma
             link_id: link_id.clone(),
             action: receive_action,
         };
-        let create_action_result = receiver1_fixture.create_action_v3(create_action_input).await;
+        let create_action_result = receiver1_fixture
+            .create_action_v3(create_action_input)
+            .await;
         assert!(create_action_result.is_ok());
         let process_action_result = receiver1_fixture
             .process_action_v3(ProcessActionInputV3 {

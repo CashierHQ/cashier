@@ -16,8 +16,7 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     cashier_backend::link_v3::{
-        fixture::LinkTestFixtureV3,
-        send_airdrop::fixture::activate_airdrop_link_v3_fixture,
+        fixture::LinkTestFixtureV3, send_airdrop::fixture::activate_airdrop_link_v3_fixture,
     },
     constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN},
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
@@ -87,7 +86,10 @@ async fn it_should_fail_create_withdraw_action_for_airdrop_link_due_to_non_creat
         let link_id = create_link_result.link.id.clone();
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
         assert!(disable_link_result.is_ok());
-        assert_eq!(disable_link_result.unwrap().link.link_state, LinkStateShared::Inactive);
+        assert_eq!(
+            disable_link_result.unwrap().link.link_state,
+            LinkStateShared::Inactive
+        );
 
         // Act
         let other = test_utils::random_principal_id();
@@ -154,7 +156,10 @@ async fn it_should_succeed_withdraw_icp_token_airdrop_link() {
         // Act: make link inactive first
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
         assert!(disable_link_result.is_ok());
-        assert_eq!(disable_link_result.unwrap().link.link_state, LinkStateShared::Inactive);
+        assert_eq!(
+            disable_link_result.unwrap().link.link_state,
+            LinkStateShared::Inactive
+        );
 
         // Act: create and process withdraw action
         let withdraw_action = test_fixture.withdraw_action(link_id.clone(), creator);
@@ -183,7 +188,10 @@ async fn it_should_succeed_withdraw_icp_token_airdrop_link() {
             .await;
         assert!(process_action_result.is_ok());
         let process_action_result = process_action_result.unwrap();
-        assert_eq!(process_action_result.link.link_state, LinkStateShared::Ended);
+        assert_eq!(
+            process_action_result.link.link_state,
+            LinkStateShared::Ended
+        );
         assert_eq!(
             process_action_result.action.action_state,
             ActionStateShared::Success
@@ -250,7 +258,10 @@ async fn it_should_succeed_withdraw_icrc_token_airdrop_link() {
         // Act: make link inactive first
         let disable_link_result = test_fixture.disable_link_v3(&link_id).await;
         assert!(disable_link_result.is_ok());
-        assert_eq!(disable_link_result.unwrap().link.link_state, LinkStateShared::Inactive);
+        assert_eq!(
+            disable_link_result.unwrap().link.link_state,
+            LinkStateShared::Inactive
+        );
 
         // Act: create and process withdraw action
         let withdraw_action = test_fixture.withdraw_action(link_id.clone(), creator);
@@ -279,7 +290,10 @@ async fn it_should_succeed_withdraw_icrc_token_airdrop_link() {
             .await;
         assert!(process_action_result.is_ok());
         let process_action_result = process_action_result.unwrap();
-        assert_eq!(process_action_result.link.link_state, LinkStateShared::Ended);
+        assert_eq!(
+            process_action_result.link.link_state,
+            LinkStateShared::Ended
+        );
         assert_eq!(
             process_action_result.action.action_state,
             ActionStateShared::Success

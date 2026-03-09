@@ -388,8 +388,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_analyze_and_fill_transaction_dependencies_v3_due_to_circular_intent_dependency(
-    ) {
+    fn it_should_fail_analyze_and_fill_transaction_dependencies_v3_due_to_circular_intent_dependency()
+     {
         // Arrange
         let analyzer = DependencyAnalyzer;
         let intent_a = fixture_intent_v3("A", vec!["B"]);

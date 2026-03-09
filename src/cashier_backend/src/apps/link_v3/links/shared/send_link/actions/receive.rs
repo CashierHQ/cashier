@@ -95,13 +95,8 @@ mod tests {
     use super::*;
     use candid::Nat;
     use cashier_backend_types::repository::{
-        action::v1::ActionState,
-        asset::v1::Asset,
-        asset::v3::AssetV3,
-        asset_info::v3::AssetInfoV3,
-        common::Wallet,
-        intent::v3::IntentTransactionDataV3,
-        link::v1::LinkType,
+        action::v1::ActionState, asset::v1::Asset, asset::v3::AssetV3, asset_info::v3::AssetInfoV3,
+        common::Wallet, intent::v3::IntentTransactionDataV3, link::v1::LinkType,
         link::v3::LinkState,
     };
     use cashier_common::test_utils::random_principal_id;
@@ -112,7 +107,8 @@ mod tests {
             asset: AssetV3 {
                 address,
                 network_fee: None,
-                token_standard: cashier_backend_types::repository::asset::v3::TokenStandardV3::ICRC1,
+                token_standard:
+                    cashier_backend_types::repository::asset::v3::TokenStandardV3::ICRC1,
             },
             label: "asset".to_string(),
             amount,

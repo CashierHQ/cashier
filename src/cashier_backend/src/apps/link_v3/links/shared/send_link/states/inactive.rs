@@ -345,7 +345,9 @@ mod tests {
         let state_handler = InactiveState::new(&link, canister_id);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -382,7 +384,9 @@ mod tests {
         failed_tx_manager.set_failed(true);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -464,7 +468,9 @@ mod tests {
         let state_handler = InactiveState::new(&link, canister_id);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
         let create_result = state_handler
             .create_action(
@@ -511,7 +517,9 @@ mod tests {
         let state_handler = InactiveState::new(&link, canister_id);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
         let create_result = state_handler
             .create_action(
@@ -560,7 +568,9 @@ mod tests {
         let state_handler = InactiveState::new(&link, canister_id);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -589,7 +599,10 @@ mod tests {
             created.create_action_result.action.creator_address_type,
             AddressTypeV3::Creator
         );
-        assert_eq!(created.create_action_result.action.state, ActionState::Created);
+        assert_eq!(
+            created.create_action_result.action.state,
+            ActionState::Created
+        );
     }
 
     #[tokio::test]
@@ -607,7 +620,9 @@ mod tests {
         let state_handler = InactiveState::new(&link, canister_id);
         let (token_fee_service, token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
         let create_result = state_handler
             .create_action(

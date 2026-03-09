@@ -147,14 +147,9 @@ async fn it_should_succeed_disable_basket_link() {
         let ckusdc_fee = ckusdc_ledger_client.fee().await.unwrap_or_default();
         let token_fees = vec![icp_fee.clone(), ckbtc_fee, ckusdc_fee];
 
-        let (test_fixture, create_link_result) = activate_basket_link_v3_fixture(
-            ctx,
-            tokens,
-            amounts,
-            token_fees,
-            icp_fee.clone(),
-        )
-        .await;
+        let (test_fixture, create_link_result) =
+            activate_basket_link_v3_fixture(ctx, tokens, amounts, token_fees, icp_fee.clone())
+                .await;
 
         // Act
         let link_id = create_link_result.link.id.clone();

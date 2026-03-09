@@ -11,7 +11,8 @@ pub mod tests {
             ExecuteTransactionsResult, ValidateActionTransactionsResult,
         },
         link_v3::action_result::{
-            CreateActionResult as CreateActionResultV3, ProcessActionResult as ProcessActionResultV3,
+            CreateActionResult as CreateActionResultV3,
+            ProcessActionResult as ProcessActionResultV3,
         },
         link_v3::transaction_manager::RollupActionStateResultV3,
         repository::{
@@ -218,9 +219,7 @@ pub mod tests {
             &'a self,
             _transactions: &'a [Transaction],
         ) -> Pin<
-            Box<
-                dyn Future<Output = Result<ValidateActionTransactionsResult, CanisterError>> + 'a,
-            >,
+            Box<dyn Future<Output = Result<ValidateActionTransactionsResult, CanisterError>> + 'a>,
         > {
             Box::pin(async {
                 Ok(ValidateActionTransactionsResult {
@@ -239,7 +238,10 @@ pub mod tests {
             _action: cashier_backend_types::repository::action::v1::Action,
             _intents: &[cashier_backend_types::repository::intent::v1::Intent],
             _intent_txs_map: HashMap<String, Vec<Transaction>>,
-        ) -> Result<cashier_backend_types::link_v2::transaction_manager::RollupActionStateResult, CanisterError> {
+        ) -> Result<
+            cashier_backend_types::link_v2::transaction_manager::RollupActionStateResult,
+            CanisterError,
+        > {
             Err(CanisterError::HandleLogicError(
                 "unused in v3 tests".to_string(),
             ))
