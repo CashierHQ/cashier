@@ -54,7 +54,13 @@ mod tests {
     };
     use cashier_common::test_utils::{random_id_string, random_principal_id};
 
-    fn fixture_of_link_v3(id: &str, title: &str, state: LinkState, max_use: u64, use_count: u64) -> LinkV3 {
+    fn fixture_of_link_v3(
+        id: &str,
+        title: &str,
+        state: LinkState,
+        max_use: u64,
+        use_count: u64,
+    ) -> LinkV3 {
         LinkV3 {
             id: id.to_string(),
             title: title.to_string(),
@@ -102,7 +108,7 @@ mod tests {
         let link = fixture_of_link_v3(&link_id, "Test Link V3", LinkState::Created, 10, 0);
 
         // Act
-        repo.create(link.clone());
+        repo.create(link);
 
         // Assert
         let result = repo.get(&link_id);
@@ -118,7 +124,8 @@ mod tests {
         // Arrange
         let mut repo = TestRepositories::new().link_v3();
         let link_id = random_id_string();
-        let initial_link = fixture_of_link_v3(&link_id, "Initial Link V3", LinkState::Created, 10, 0);
+        let initial_link =
+            fixture_of_link_v3(&link_id, "Initial Link V3", LinkState::Created, 10, 0);
         repo.create(initial_link);
 
         let mut updated_link =
@@ -126,7 +133,7 @@ mod tests {
         updated_link.creator = random_principal_id();
 
         // Act
-        repo.update(updated_link.clone());
+        repo.update(updated_link);
 
         // Assert
         let result = repo.get(&link_id);
@@ -155,7 +162,10 @@ mod tests {
 
         // Assert
         assert_eq!(result.len(), 2);
-        let ids = result.iter().map(|link| link.id.clone()).collect::<Vec<_>>();
+        let ids = result
+            .iter()
+            .map(|link| link.id.clone())
+            .collect::<Vec<_>>();
         assert!(ids.contains(&link_id_1));
         assert!(ids.contains(&link_id_2));
     }

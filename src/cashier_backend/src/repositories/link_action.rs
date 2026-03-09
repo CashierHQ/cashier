@@ -120,12 +120,8 @@ mod tests {
             user_id,
             Some(LinkUserState::Address),
         );
-        let key = fixture_of_link_action_key(
-            &link_id,
-            &ActionType::CreateLink,
-            &action_id,
-            &user_id,
-        );
+        let key =
+            fixture_of_link_action_key(&link_id, &ActionType::CreateLink, &action_id, &user_id);
 
         // Act
         repo.create(link_action.clone());
@@ -148,12 +144,7 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let user_id = random_principal_id();
-        let key = fixture_of_link_action_key(
-            &link_id,
-            &ActionType::Receive,
-            &action_id,
-            &user_id,
-        );
+        let key = fixture_of_link_action_key(&link_id, &ActionType::Receive, &action_id, &user_id);
 
         let initial = fixture_of_link_action(
             &link_id,
@@ -172,11 +163,14 @@ mod tests {
         repo.create(initial);
 
         // Act
-        repo.create(updated.clone());
+        repo.create(updated);
 
         // Assert
         let stored = repo.storage.with_borrow(|store| store.get(&key));
         assert!(stored.is_some());
-        assert_eq!(stored.unwrap().link_user_state, Some(LinkUserState::Completed));
+        assert_eq!(
+            stored.unwrap().link_user_state,
+            Some(LinkUserState::Completed)
+        );
     }
 }

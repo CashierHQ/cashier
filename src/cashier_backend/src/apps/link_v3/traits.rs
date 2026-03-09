@@ -31,6 +31,7 @@ pub trait LinkV3Instance {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
+    #[allow(clippy::too_many_arguments)]
     async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
@@ -57,6 +58,7 @@ pub trait LinkV3Instance {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
+    #[allow(clippy::too_many_arguments)]
     async fn process_action<M, V, X>(
         &self,
         caller: Principal,
@@ -82,6 +84,7 @@ pub trait LinkV3State {
     /// * `LinkCreateActionResult` - The result containing the updated link and action creation result
     /// # Errors
     /// * `CanisterError` - If there is an error during action creation
+    #[allow(clippy::too_many_arguments)]
     async fn create_action<M, F, S, B>(
         &self,
         caller: Principal,
@@ -108,6 +111,7 @@ pub trait LinkV3State {
     /// * `LinkProcessActionResult` - The result containing the updated link and action processing result
     /// # Errors
     /// * `CanisterError` - If there is an error during action processing
+    #[allow(clippy::too_many_arguments)]
     async fn process_action<M, V, X>(
         &self,
         caller: Principal,

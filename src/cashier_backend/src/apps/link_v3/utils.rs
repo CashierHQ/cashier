@@ -1,58 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
-use cashier_backend_types::{
-    error::CanisterError,
-    repository::{asset::v3::AssetV3, link::v3::LinkV3},
-};
-use cashier_common::utils::get_link_account;
-use std::collections::HashMap;
-
-use crate::{
-    api::state::get_state,
-    apps::{token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache},
-};
-
-/// Fetching token fees for all assets in a LinkV3
-/// # Arguments
-/// * `link` - A reference to the LinkV3 for which to fetch token fees
-/// # Returns
-/// * Ok(HashMap<Principal, Nat>) - A mapping of asset principals to their corresponding fees
-/// * Err(CanisterError) - If there was an error fetching the token fees
-pub async fn get_batch_tokens_fee_for_link_v3(
-    link: &LinkV3,
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let asset_principals = link_v3_asset_principals(link);
-
-    // Use TokenFeeService from CanisterState (with caching)
-    let mut state = get_state();
-    state
-        .token_fee_service
-        .get_batch_tokens_fee(&asset_principals)
-        .await
-}
-
-/// Fetching token balances for all assets in a LinkV3
-/// # Arguments
-/// * `link` - A reference to the LinkV3 for which to fetch token balances
-/// * `canister_id` - The Principal of the canister for which to fetch the token balances (used to derive the link account)
-/// # Returns
-/// * Ok(HashMap<Principal, Nat>) - A mapping of asset principals to their corresponding balances
-/// * Err(CanisterError) - If there was an error fetching the token balances
-pub async fn get_batch_tokens_balance_for_link_v3(
-    link: &LinkV3,
-    canister_id: Principal,
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let asset_principals = link_v3_asset_principals(link);
-    let link_account = get_link_account(&link.id, canister_id)?;
-
-    let state = get_state();
-    state
-        .token_balance_service
-        .get_batch_token_balances(&link_account.into(), &asset_principals)
-        .await
-}
+use candid::Principal;
+use cashier_backend_types::repository::{asset::v3::AssetV3, link::v3::LinkV3};
 
 /// Helper function to extract asset principals from a LinkV3
 /// # Arguments
@@ -72,6 +22,7 @@ pub fn link_v3_asset_principals(link: &LinkV3) -> Vec<Principal> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Nat;
     use cashier_backend_types::repository::{
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,

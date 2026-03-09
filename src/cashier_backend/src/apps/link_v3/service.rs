@@ -25,7 +25,6 @@ use cashier_shared::{
     AddressType as SharedAddressType,
     types::{Action as SharedAction, ActionType as SharedActionType},
 };
-use transaction_manager::transaction::validator_service;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
     v3::traits::TransactionManagerV3,
