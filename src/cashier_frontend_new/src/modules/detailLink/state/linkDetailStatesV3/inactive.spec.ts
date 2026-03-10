@@ -86,7 +86,7 @@ describe("LinkInactiveStateV3", () => {
   });
 
   describe("step", () => {
-    it("it_should_succeed_do_have_inactive_step", () => {
+    it("it_should_have_inactive_step", () => {
       const state = new LinkInactiveStateV3(makeStore());
       expect(state.step).toBe(LinkStep.INACTIVE);
     });

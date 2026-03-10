@@ -47,12 +47,12 @@ export class AddAssetStateV3 implements LinkCreationStateV3 {
     }
 
     // validate max_use
-    if (this.#linkStore.draftLink.max_use <= 0) {
+    if (this.#linkStore.draftLink.max_use <= 0n) {
       throw new Error(
         locale.t("links.linkForm.addAsset.errors.maxUseMustBeGreaterThanZero"),
       );
     } else if (
-      this.#linkStore.draftLink.max_use > 1 &&
+      this.#linkStore.draftLink.max_use > 1n &&
       (this.#linkStore.draftLink.link_type === SharedLinkType.SendTip ||
         this.#linkStore.draftLink.link_type === SharedLinkType.SendTokenBasket)
     ) {

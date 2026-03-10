@@ -36,8 +36,9 @@ export class DraftLinkRepository {
         SharedLinkMapper.serde.deserialize,
       );
       return list;
-    } catch {
-      throw new Error("Failed to parse draft links from storage");
+    } catch (error) {
+      const details = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse draft links from storage: ${details}`);
     }
   }
 

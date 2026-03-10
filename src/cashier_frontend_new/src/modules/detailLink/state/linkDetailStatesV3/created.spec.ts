@@ -73,7 +73,7 @@ describe("LinkCreatedStateV3", () => {
   });
 
   describe("step", () => {
-    it("it_should_succeed_do_have_created_step", () => {
+    it("it_should_have_created_step", () => {
       const state = new LinkCreatedStateV3(makeStore());
       expect(state.step).toBe(LinkStep.CREATED);
     });

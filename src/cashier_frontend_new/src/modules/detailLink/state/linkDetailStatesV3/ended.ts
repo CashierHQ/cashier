@@ -6,7 +6,7 @@ import type { ActionType as SharedActionType } from "$shared";
 
 // State when the link ended
 export class LinkEndedStateV3 implements LinkDetailStateV3 {
-  readonly step = LinkStep.INACTIVE;
+  readonly step = LinkStep.ENDED;
 
   async createAction(
     actionType: SharedActionType,

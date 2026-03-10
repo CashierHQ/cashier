@@ -5,9 +5,9 @@ import { LinkEndedStateV3 } from "./ended";
 
 describe("LinkEndedStateV3", () => {
   describe("step", () => {
-    it("it_should_succeed_do_have_inactive_step", () => {
+    it("it_should_have_ended_step", () => {
       const state = new LinkEndedStateV3();
-      expect(state.step).toBe(LinkStep.INACTIVE);
+      expect(state.step).toBe(LinkStep.ENDED);
     });
   });
 

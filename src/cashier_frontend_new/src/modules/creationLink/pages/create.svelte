@@ -22,36 +22,27 @@
   import { onMount } from "svelte";
 
   const context = getGuardContext();
-  const isV3 = $state(context.linkCreationStoreV3 !== null);
-  let cachedCreationStoreV3 = context.linkCreationStoreV3;
-  let cachedCreationAdapterV3: CreationStoreV3ViewModelAdapter | null =
-    cachedCreationStoreV3
-      ? new CreationStoreV3ViewModelAdapter(cachedCreationStoreV3)
-      : null;
-  let cachedCreationStore = context.linkCreationStore;
-  let cachedCreationAdapter: CreationStoreViewModelAdapter | null =
-    cachedCreationStore
-      ? new CreationStoreViewModelAdapter(cachedCreationStore)
-      : null;
+  const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
 
+  let cachedCreationStore:
+    | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
+    | null = null;
   const linkStore = $derived.by<
     (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null
   >(() => {
     const storeV3 = context.linkCreationStoreV3;
-    if (storeV3) {
-      if (cachedCreationStoreV3 !== storeV3 || !cachedCreationAdapterV3) {
-        cachedCreationStoreV3 = storeV3;
-        cachedCreationAdapterV3 = new CreationStoreV3ViewModelAdapter(storeV3);
+    if (isV3 && storeV3) {
+      if (!cachedCreationStore) {
+        cachedCreationStore = new CreationStoreV3ViewModelAdapter(storeV3);
       }
-      return cachedCreationAdapterV3;
+      return cachedCreationStore;
     }
     const store = context.linkCreationStore;
     if (store) {
-      if (cachedCreationStore !== store || !cachedCreationAdapter) {
-        cachedCreationStore = store;
-        cachedCreationAdapter = new CreationStoreViewModelAdapter(store);
+      if (!cachedCreationStore) {
+        cachedCreationStore = new CreationStoreViewModelAdapter(store);
       }
-      return cachedCreationAdapter;
+      return cachedCreationStore;
     }
     return null;
   });
@@ -61,7 +52,6 @@
 
   let cachedDetailStoreKey: string | null = null;
   let cachedDetailStore: GenericDetailStoreVM | null = null;
-
   const detailStore = $derived.by<GenericDetailStoreVM | null>(() => {
     const backendId = linkStore?.backendId;
     if (!backendId) return null;

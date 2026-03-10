@@ -5,7 +5,7 @@ import { LinkActiveStateV3 } from "./active";
 
 describe("LinkActiveStateV3", () => {
   describe("step", () => {
-    it("it_should_succeed_have_active_step", () => {
+    it("it_should_have_active_step", () => {
       const state = new LinkActiveStateV3();
       expect(state.step).toBe(LinkStep.ACTIVE);
     });
