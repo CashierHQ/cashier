@@ -5,6 +5,7 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import { Principal } from "@dfinity/principal";
 import type { BitcoinBlock } from "./bitcoin_transaction";
 
 /**
@@ -349,6 +350,31 @@ export class BridgeTransactionMapper {
       deposit_fee: deposit_fee ? [deposit_fee] : [],
       withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
       retry_times: retry_times ? [retry_times] : [],
+    };
+  }
+
+  public static toCreateExportBridgeTransactionArgs(
+    icpAddress: string,
+    btcAddress: string,
+    amount: bigint,
+    withdrawalFee: bigint,
+  ): tokenStorage.CreateBridgeTransactionInputArg {
+    return {
+      btc_txid: [],
+      icp_address: Principal.fromText(icpAddress),
+      btc_address: btcAddress,
+      asset_infos: [
+        {
+          asset_type: { BTC: null },
+          asset_id: CKBTC_CANISTER_ID,
+          amount,
+          decimals: 8,
+        },
+      ],
+      bridge_type: { Export: null },
+      deposit_fee: [],
+      withdrawal_fee: [withdrawalFee],
+      created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
     };
   }
 }

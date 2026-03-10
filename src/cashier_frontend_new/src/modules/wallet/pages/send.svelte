@@ -7,6 +7,7 @@
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
+    CKBTC_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
@@ -16,12 +17,16 @@
   import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
-  import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
   import { Principal } from "@dfinity/principal";
+  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
+  import type { BridgeSource, WalletSource } from "$modules/transactionCart/types/transactionSource";
+  import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
+  import { tokenStorageService } from "$modules/token/services/tokenStorage";
+  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
 
   type Props = {
     initialToken?: string;
@@ -41,6 +46,7 @@
   let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
   let lastBlockId = $state<bigint | null>(null);
+  let bridgeSource = $state<BridgeSource | null>(null);
 
   // URL param effect - set token from URL or default to first token
   $effect(() => {
@@ -86,8 +92,11 @@
   });
 
   let shouldShowAddressTypeSelector: boolean = $derived(
-    selectedToken === ICP_LEDGER_CANISTER_ID,
+    selectedToken === ICP_LEDGER_CANISTER_ID &&
+      selectedToken !== CKBTC_CANISTER_ID,
   );
+
+  const isCkBtc = $derived(selectedToken === CKBTC_CANISTER_ID);
 
   const isMaxAvailable = $derived(maxAmount > 0);
   const isLoading = $derived(
@@ -182,11 +191,56 @@
       amount,
       receiveType,
       maxAmount,
+      isBitcoinAddress: isCkBtc,
     });
     if (result.isErr()) {
       toast.error(result.error);
+    } else if (isCkBtc) {
+      handleCreateExportBridge();
     } else {
       showConfirmDrawer = true;
+    }
+  }
+
+  async function handleCreateExportBridge() {
+    if (!selectedTokenObj || amount <= 0) {
+      return;
+    }
+
+    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
+    try {
+      const withdrawalFee =
+        await ckBTCMinterService.getWithdrawalFee(amountBigInt);
+      const totalDebit =
+        amountBigInt + withdrawalFee.minter_fee + withdrawalFee.bitcoin_fee;
+      const maxAmountResult = calculateMaxSendAmount(
+        selectedTokenObj.address,
+        walletStore.query.data ?? [],
+      );
+
+      if (maxAmountResult.isErr() || totalDebit > maxAmountResult.unwrap()) {
+        toast.error(locale.t("wallet.send.errors.amountExceedsWithdrawalMax"));
+        return;
+      }
+
+      const createResult =
+        await tokenStorageService.createExportBridgeTransaction(
+          receiveAddress.trim(),
+          amountBigInt,
+          withdrawalFee.minter_fee + withdrawalFee.bitcoin_fee,
+        );
+
+      if (createResult.isErr()) {
+        toast.error(createResult.unwrapErr());
+        return;
+      }
+
+      bridgeSource = {
+        bridge: createResult.unwrap(),
+      };
+      showConfirmDrawer = true;
+    } catch (error) {
+      toast.error((error as Error).message);
     }
   }
 
@@ -204,13 +258,15 @@
 
   function handleCloseDrawer() {
     showConfirmDrawer = false;
-    if (lastBlockId !== null) {
+    if (lastBlockId !== null || bridgeSource !== null) {
       // Reset form after successful send
       receiveAddress = "";
       amount = 0;
       tokenAmount = "";
       usdAmount = "";
       lastBlockId = null;
+      bridgeSource = null;
+      void bridgeStore.fetchBtcAddress();
     }
   }
 </script>
@@ -244,7 +300,9 @@
           for="receive-address-input"
           class="block text-sm font-medium mb-2"
         >
-          {locale.t("wallet.send.receiveAddressLabel")}
+          {isCkBtc
+            ? locale.t("wallet.send.btcAddressLabel")
+            : locale.t("wallet.send.receiveAddressLabel")}
         </label>
 
         {#if shouldShowAddressTypeSelector}
@@ -276,7 +334,9 @@
             type="text"
             bind:value={receiveAddress}
             class="w-full p-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
-            placeholder={locale.t("wallet.send.addressPlaceholder")}
+            placeholder={isCkBtc
+              ? locale.t("wallet.send.btcAddressPlaceholder")
+              : locale.t("wallet.send.addressPlaceholder")}
           />
           <button
             onclick={handlePasteFromClipboard}
@@ -288,13 +348,24 @@
         <div
           class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
-          {locale.t(
-            receiveType === ReceiveAddressType.PRINCIPAL
-              ? "wallet.send.addressPrincipleExample"
-              : "wallet.send.addressAccountExample",
-          )}
+          {#if isCkBtc}
+            {locale.t("wallet.send.addressBitcoinExample")}
+          {:else}
+            {locale.t(
+              receiveType === ReceiveAddressType.PRINCIPAL
+                ? "wallet.send.addressPrincipleExample"
+                : "wallet.send.addressAccountExample",
+            )}
+          {/if}
         </div>
-        {#if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
+        {#if isCkBtc}
+          <div class="flex items-start gap-1.5 mt-2">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("wallet.send.btcAddressInfoText")}
+            </div>
+          </div>
+        {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
           <div class="flex items-start gap-1.5 mt-2">
             <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
             <div class="text-sm text-green">
@@ -330,13 +401,22 @@
   {/if}
 </div>
 
-{#if walletSource}
+{#if !isCkBtc && walletSource}
   <WalletTxCart
     source={{
       ...walletSource,
       onSuccess: handleTxSuccess,
     }}
     bind:isOpen={showConfirmDrawer}
+    onCloseDrawer={handleCloseDrawer}
+  />
+{/if}
+
+{#if bridgeSource}
+  <BridgeTxCart
+    source={bridgeSource}
+    bind:isOpen={showConfirmDrawer}
+    minConfirmations={bridgeStore.minConfirmations}
     onCloseDrawer={handleCloseDrawer}
   />
 {/if}

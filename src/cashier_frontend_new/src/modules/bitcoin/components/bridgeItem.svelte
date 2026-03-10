@@ -6,7 +6,7 @@
     BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
-  import { ArrowDownLeft } from "lucide-svelte";
+  import { ArrowDownLeft, ArrowUpRight } from "lucide-svelte";
 
   interface Props {
     bridge: BridgeTransactionWithUsdValue;
@@ -23,9 +23,9 @@
       }
     } else if (bridge.bridge_type === BridgeType.Export) {
       if (bridge.status === BridgeTransactionStatus.Completed) {
-        return locale.t("bitcoin.receive.exported");
+        return locale.t("bitcoin.send.exported");
       } else {
-        return locale.t("bitcoin.receive.exporting");
+        return locale.t("bitcoin.send.exporting");
       }
     }
     return locale.t("bitcoin.receive.unknown");
@@ -37,6 +37,7 @@
     }
     return "0";
   });
+  let isExport = $derived(bridge.bridge_type === BridgeType.Export);
 </script>
 
 <button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
@@ -45,7 +46,11 @@
       <div
         class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
       >
-        <ArrowDownLeft class="w-5 h-5 text-gray-700" />
+        {#if isExport}
+          <ArrowUpRight class="w-5 h-5 text-gray-700" />
+        {:else}
+          <ArrowDownLeft class="w-5 h-5 text-gray-700" />
+        {/if}
       </div>
 
       <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
@@ -54,12 +59,12 @@
             {typeTitle}
           </p>
           <p class="text-[#222222] text-right">
-            +{amount}
+            {isExport ? "-" : "+"}{amount}
           </p>
         </div>
         <div class="flex justify-between items-start">
           <p class="text-[10px]/[100%] text-grey">
-            From: {transformShortAddress(bridge.btc_address)}
+            {isExport ? "To" : "From"}: {transformShortAddress(bridge.btc_address)}
           </p>
           <p class="text-[10px]/[100%] text-grey text-right">
             ${bridge.total_amount_usd ?? "0.00"}

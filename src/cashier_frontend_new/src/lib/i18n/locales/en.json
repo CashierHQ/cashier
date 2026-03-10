@@ -337,12 +337,16 @@
       "selectTokenLabel": "Asset",
       "amountLabel": "Amount: (max {{max}})",
       "receiveAddressLabel": "Send address",
+      "btcAddressLabel": "BTC destination address",
       "principalId": "Principal ID",
       "accountId": "Account ID",
       "addressPlaceholder": "Enter address",
+      "btcAddressPlaceholder": "Enter Bitcoin address",
       "addressPrincipleExample": "Ex.: vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
       "addressAccountExample": "Ex.: 5b0bc7f314b8e2c0c46cababdffd5235e9eb1c0972664a027714b81369a17884",
+      "addressBitcoinExample": "Ex.: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
       "principleIdInfoText": "You need to use account id, if you are sending to an exchange",
+      "btcAddressInfoText": "ckBTC exports send Bitcoin to a Bitcoin network address. The amount you enter excludes the withdrawal fee.",
       "sending": "Sending...",
       "sendButton": "Send",
       "continueButton": "Continue",
@@ -353,10 +357,12 @@
       "errors": {
         "selectToken": "Please select a token to send.",
         "enterAddress": "Please enter a valid receive address.",
+        "invalidBitcoinAddress": "Invalid Bitcoin address format.",
         "invalidPrincipal": "Invalid Principal address format.",
         "invalidAccountId": "Invalid Account Identifier format.",
         "amountGreaterThanZero": "Amount must be greater than zero.",
         "amountExceedsMax": "Amount exceeds maximum balance of {{max}}",
+        "amountExceedsWithdrawalMax": "Amount plus withdrawal fees exceeds your ckBTC balance.",
         "invalidReceiveType": "Invalid receive type selected."
       },
       "confirmDrawer": {
@@ -471,6 +477,9 @@
     "txCart": {
       "title": "Transaction details",
       "close": "Close",
+      "confirm": "Confirm",
+      "processing": "Processing...",
+      "retry": "Retry",
       "successMessage": "Bridge transaction completed successfully.",
       "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)",
       "confirmation": "Confirmation"

@@ -6,6 +6,34 @@ export type WithdrawalFee = {
   bitcoin_fee: bigint;
 };
 
+export class RetrieveBtcStatusKind {
+  static readonly Signing = "Signing";
+  static readonly Sending = "Sending";
+  static readonly Submitted = "Submitted";
+  static readonly Confirmed = "Confirmed";
+  static readonly Pending = "Pending";
+  static readonly Unknown = "Unknown";
+  static readonly AmountTooLow = "AmountTooLow";
+  static readonly WillReimburse = "WillReimburse";
+  static readonly Reimbursed = "Reimbursed";
+}
+
+export type RetrieveBtcStatusKindValue =
+  | typeof RetrieveBtcStatusKind.Signing
+  | typeof RetrieveBtcStatusKind.Sending
+  | typeof RetrieveBtcStatusKind.Submitted
+  | typeof RetrieveBtcStatusKind.Confirmed
+  | typeof RetrieveBtcStatusKind.Pending
+  | typeof RetrieveBtcStatusKind.Unknown
+  | typeof RetrieveBtcStatusKind.AmountTooLow
+  | typeof RetrieveBtcStatusKind.WillReimburse
+  | typeof RetrieveBtcStatusKind.Reimbursed;
+
+export type RetrieveBtcStatus = {
+  kind: RetrieveBtcStatusKindValue;
+  txid: string | null;
+};
+
 /**
  * MinterInfo type representing information about the ckBTC Minter
  */

@@ -614,4 +614,33 @@ describe("BridgeTransactionMapper", () => {
       ]);
     });
   });
+
+  describe("toCreateExportBridgeTransactionArgs", () => {
+    it("should create export bridge args for ckBTC withdrawal", () => {
+      const result = BridgeTransactionMapper.toCreateExportBridgeTransactionArgs(
+        "aaaaa-aa",
+        "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        125000n,
+        450n,
+      );
+
+      expect(result.icp_address.toText()).toBe("aaaaa-aa");
+      expect(result.btc_address).toBe(
+        "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+      );
+      expect(result.bridge_type).toEqual({ Export: null });
+      expect(result.btc_txid).toEqual([]);
+      expect(result.deposit_fee).toEqual([]);
+      expect(result.withdrawal_fee).toEqual([450n]);
+      expect(result.asset_infos).toEqual([
+        {
+          asset_type: { BTC: null },
+          asset_id: CKBTC_CANISTER_ID,
+          amount: 125000n,
+          decimals: 8,
+        },
+      ]);
+      expect(result.created_at_ts).toBeTypeOf("bigint");
+    });
+  });
 });

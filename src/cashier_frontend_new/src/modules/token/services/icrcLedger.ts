@@ -1,5 +1,6 @@
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { rsMatch } from "$lib/rsMatch";
@@ -111,6 +112,65 @@ export class IcrcLedgerService {
         },
         InsufficientFunds: () => {
           throw new Error("Insufficient funds");
+        },
+      });
+    }
+
+    return result.Ok;
+  }
+
+  /**
+   * Approve the ckBTC minter to spend ckBTC for BTC withdrawal.
+   * Returns the approval block index on success.
+   */
+  public async approveCkBtcWithdrawal(amount: bigint): Promise<bigint> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const result = await actor.icrc2_approve({
+      spender: {
+        owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
+        subaccount: [],
+      },
+      amount,
+      fee: [this.#fee],
+      memo: [],
+      created_at_time: [],
+      expected_allowance: [],
+      expires_at: [],
+      from_subaccount: [],
+    });
+
+    if ("Err" in result) {
+      return rsMatch(result.Err, {
+        GenericError: (e) => {
+          throw new Error(`${e.message} (code: ${e.error_code})`);
+        },
+        TemporarilyUnavailable: () => {
+          throw new Error("Ledger is temporarily unavailable");
+        },
+        Duplicate: (e) => {
+          throw new Error(`Duplicate approval: ${e.duplicate_of}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Bad fee: ${e.expected_fee}`);
+        },
+        AllowanceChanged: (e) => {
+          throw new Error(`Allowance changed: ${e.current_allowance}`);
+        },
+        Expired: (e) => {
+          throw new Error(`Approval expired at: ${e.ledger_time}`);
+        },
+        TooOld: () => {
+          throw new Error("Approval is too old");
+        },
+        CreatedInFuture: (e) => {
+          throw new Error(`Created in future: ${e.ledger_time}`);
+        },
+        InsufficientFunds: (e) => {
+          throw new Error(`Insufficient funds: ${e.balance}`);
         },
       });
     }

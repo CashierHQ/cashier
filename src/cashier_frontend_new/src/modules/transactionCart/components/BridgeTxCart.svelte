@@ -4,6 +4,10 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
+  import {
+    BridgeTransactionStatus,
+    BridgeType,
+  } from "$modules/bitcoin/types/bridge_transaction";
   import BridgeConfirmation from "$modules/transactionCart/components/shared/BridgeConfirmation.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
@@ -29,6 +33,7 @@
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let bridgeTxCartStore = $state<BridgeTxCartStore | null>(null);
+  let isProcessing = $state(false);
 
   let showFeeInfoDrawer = $state(false);
   let isTransitioningToFeeDrawer = $state(false);
@@ -43,6 +48,17 @@
   );
   let confirmations = $derived.by(
     () => bridgeTxCartStore?.blockConfirmations ?? [],
+  );
+  let bridgeTransaction = $derived.by(
+    () => bridgeTxCartStore?.bridgeTransaction ?? null,
+  );
+  let canConfirmExport = $derived.by(
+    () => bridgeTxCartStore?.canConfirmExport ?? false,
+  );
+  let isCreatedExport = $derived.by(
+    () =>
+      bridgeTransaction?.bridge_type === BridgeType.Export &&
+      bridgeTransaction.status === BridgeTransactionStatus.Created,
   );
 
   const totalFeesUsd = $derived.by(() => bridgeTxCartStore?.totalFeesUsd ?? 0);
@@ -71,7 +87,28 @@
    * WalletSource returns Result<bigint, string>.
    */
   async function handleConfirm() {
-    onCloseDrawer();
+    if (!bridgeTxCartStore || isProcessing) {
+      return;
+    }
+
+    if (!canConfirmExport) {
+      onCloseDrawer();
+      return;
+    }
+
+    isProcessing = true;
+    errorMessage = null;
+    successMessage = null;
+
+    const result = await bridgeTxCartStore.executeExport();
+    isProcessing = false;
+
+    if (result.isErr()) {
+      errorMessage = result.unwrapErr();
+      return;
+    }
+
+    successMessage = locale.t("bitcoin.txCart.successMessage");
   }
 
   /**
@@ -156,6 +193,7 @@
           <FeesBreakdownSection
             {totalFeesUsd}
             onBreakdownClick={handleFeeBreakdownClick}
+            disabled={isProcessing}
           />
         {/if}
       </div>
@@ -165,8 +203,17 @@
       <Button
         class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
         onclick={handleConfirm}
+        disabled={isProcessing}
       >
-        {locale.t(`bitcoin.txCart.close`)}
+        {#if isProcessing}
+          {locale.t(`bitcoin.txCart.processing`)}
+        {:else if errorMessage && isCreatedExport}
+          {locale.t(`bitcoin.txCart.retry`)}
+        {:else if canConfirmExport}
+          {locale.t(`bitcoin.txCart.confirm`)}
+        {:else}
+          {locale.t(`bitcoin.txCart.close`)}
+        {/if}
       </Button>
     </div>
   </Drawer.Content>

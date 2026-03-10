@@ -1,6 +1,8 @@
 import { managedState } from "$lib/managedState";
+import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  BridgeTransactionStatus,
   BridgeTransactionMapper,
   BridgeType,
   type BridgeTransactionWithUsdValue,
@@ -9,8 +11,10 @@ import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
+import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { Err, Ok, type Result } from "ts-results-es";
 
 /**
  * Store managing the bridge transaction in the transaction cart
@@ -18,9 +22,20 @@ import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 export class BridgeTxCartStore {
   #bridgeId;
   #bridgeDetailQuery;
+  #ckBtcLedgerService;
 
   constructor(bridgeId: string) {
     this.#bridgeId = bridgeId;
+    this.#ckBtcLedgerService = new IcrcLedgerService({
+      name: "Chain key Bitcoin",
+      symbol: "ckBTC",
+      address: CKBTC_CANISTER_ID,
+      decimals: 8,
+      enabled: true,
+      fee: 10n,
+      is_default: true,
+      indexId: undefined,
+    });
     this.#bridgeDetailQuery =
       managedState<BridgeTransactionWithUsdValue | null>({
         queryFn: async () => {
@@ -55,6 +70,13 @@ export class BridgeTxCartStore {
 
   get bridgeTransaction() {
     return this.#bridgeDetailQuery.data;
+  }
+
+  get canConfirmExport() {
+    return (
+      this.bridgeTransaction?.bridge_type === BridgeType.Export &&
+      this.bridgeTransaction.status === BridgeTransactionStatus.Created
+    );
   }
 
   /**
@@ -170,5 +192,52 @@ export class BridgeTxCartStore {
       return [];
     }
     return this.bridgeTransaction.confirmations;
+  }
+
+  async refresh() {
+    await this.#bridgeDetailQuery.refresh();
+  }
+
+  async executeExport(): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    if (!this.canConfirmExport) {
+      return Err("Bridge transaction is not ready for confirmation.");
+    }
+
+    const totalDebit =
+      this.bridgeTransaction.total_amount + this.bridgeTransaction.withdrawal_fee;
+
+    try {
+      await this.#ckBtcLedgerService.approveCkBtcWithdrawal(totalDebit);
+    } catch (error) {
+      return Err((error as Error).message);
+    }
+
+    const retrieveResult = await ckBTCMinterService.retrieveBtcWithApproval(
+      this.bridgeTransaction.btc_address,
+      this.bridgeTransaction.total_amount,
+    );
+    if (retrieveResult.isErr()) {
+      return Err(retrieveResult.unwrapErr());
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Pending,
+      retrieveResult.unwrap(),
+    );
+    if (updateResult.isErr()) {
+      return Err(updateResult.unwrapErr());
+    }
+
+    await this.refresh();
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction refresh failed.");
+    }
+
+    return Ok(this.bridgeTransaction);
   }
 }

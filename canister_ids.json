@@ -5,8 +5,14 @@
   "cashier_backend": {
     "dev": "edrez-4iaaa-aaaam-aekta-cai",
     "production": "eyuy4-gqaaa-aaaam-aekrq-cai",
-    "ic": "pnhpm-haaaa-aaaao-a5wna-cai",
-    "staging": "jjio5-5aaaa-aaaam-adhaq-cai"
+    "staging": "jjio5-5aaaa-aaaam-adhaq-cai",
+    "ic": "pnhpm-haaaa-aaaao-a5wna-cai"
+  },
+  "token_storage": {
+    "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
+    "production": "d2fvt-giaaa-aaaam-aen4q-cai",
+    "staging": "o4l23-2iaaa-aaaam-aehga-cai",
+    "ic": "rpfmw-oqaaa-aaaao-a5uaa-cai"
   },
   "cashier_frontend": {
     "dev": "ynjts-uyaaa-aaaam-aeqka-cai",
@@ -17,10 +23,5 @@
     "dev": "bepcz-nyaaa-aaaam-aekoa-cai",
     "production": "jg57n-xyaaa-aaaam-admqq-cai",
     "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
-  },
-  "token_storage": {
-    "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
-    "production": "d2fvt-giaaa-aaaam-aen4q-cai",
-    "staging": "o4l23-2iaaa-aaaam-aehga-cai"
   }
 }

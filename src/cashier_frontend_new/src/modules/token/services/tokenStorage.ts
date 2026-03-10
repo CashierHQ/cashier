@@ -256,6 +256,40 @@ class TokenStorageService {
     }
   }
 
+  public async createExportBridgeTransaction(
+    receiverBtcAddress: string,
+    amount: bigint,
+    withdrawalFee: bigint,
+  ): Promise<Result<BridgeTransaction, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs =
+        BridgeTransactionMapper.toCreateExportBridgeTransactionArgs(
+          authState.account?.owner || "",
+          receiverBtcAddress,
+          amount,
+          withdrawalFee,
+        );
+
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      if ("Ok" in res) {
+        const bridgeTransaction =
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res.Ok);
+        return Ok(bridgeTransaction);
+      }
+
+      return Err(
+        `Error creating export bridge transaction: ${JSON.stringify(res.Err)}`,
+      );
+    } catch (err) {
+      return Err(`Error creating export bridge transaction: ${err}`);
+    }
+  }
+
   /**
    * Get bridge transactions with pagination
    * @param start The starting index for pagination
