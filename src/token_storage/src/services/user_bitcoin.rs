@@ -173,7 +173,7 @@ mod tests {
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::bitcoin::bridge_transaction::{
-        BlockConfirmation, BridgeTransactionStatus, BridgeType,
+        BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
     };
 
     #[tokio::test]
@@ -303,6 +303,86 @@ mod tests {
             update_input.retry_times.unwrap()
         );
         assert_eq!(updated_transaction.status, update_input.status.unwrap());
+    }
+
+    #[tokio::test]
+    async fn it_should_create_and_update_export_bridge_transaction() {
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+
+        let create_input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            bridge_type: BridgeType::Export,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(450u64)),
+            created_at_ts: 100000,
+        };
+
+        let created_transaction = service
+            .create_bridge_transaction(user_id, create_input)
+            .await
+            .unwrap();
+
+        assert_eq!(created_transaction.bridge_type, BridgeType::Export);
+        assert_eq!(created_transaction.btc_txid, None);
+        assert_eq!(created_transaction.block_id, None);
+        assert_eq!(created_transaction.status, BridgeTransactionStatus::Created);
+
+        let pending_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_transaction.bridge_id.clone(),
+            btc_txid: None,
+            block_id: Some(42u64),
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+        };
+
+        let pending_transaction = service
+            .update_bridge_transaction(user_id, pending_input)
+            .await
+            .unwrap();
+
+        assert_eq!(pending_transaction.block_id, Some(42u64));
+        assert_eq!(pending_transaction.status, BridgeTransactionStatus::Pending);
+
+        let completed_input = UpdateBridgeTransactionInputArg {
+            bridge_id: pending_transaction.bridge_id.clone(),
+            btc_txid: Some("btc-txid-1".to_string()),
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+
+        let completed_transaction = service
+            .update_bridge_transaction(user_id, completed_input)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            completed_transaction.btc_txid,
+            Some("btc-txid-1".to_string())
+        );
+        assert_eq!(
+            completed_transaction.status,
+            BridgeTransactionStatus::Completed
+        );
     }
 
     #[tokio::test]

@@ -149,3 +149,133 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repository::{tests::TestRepositories, Repositories};
+    use candid::Nat;
+    use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::bitcoin::bridge_transaction::{
+        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus,
+    };
+
+    #[test]
+    fn it_should_reject_duplicate_import_bridge() {
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("txid-1".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "btc-address".to_string(),
+            bridge_type: BridgeType::Import,
+            asset_infos: vec![],
+            deposit_fee: None,
+            withdrawal_fee: None,
+            created_at_ts: 0,
+        };
+
+        let bridge = BridgeTransactionFactory::from_create_input(input.clone()).unwrap();
+        repo.user_bridge_transaction()
+            .upsert_bridge_transaction(user_id, bridge.bridge_id.clone(), bridge)
+            .unwrap();
+
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_allow_export_bridge_without_duplicate_lookup() {
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            bridge_type: BridgeType::Export,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(450u64)),
+            created_at_ts: 0,
+        };
+
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_allow_export_bridge_lifecycle_updates() {
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let create_input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            bridge_type: BridgeType::Export,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(450u64)),
+            created_at_ts: 0,
+        };
+
+        let bridge = BridgeTransactionFactory::from_create_input(create_input).unwrap();
+        let bridge_id = bridge.bridge_id.clone();
+        repo.user_bridge_transaction()
+            .upsert_bridge_transaction(user_id, bridge_id.clone(), bridge)
+            .unwrap();
+
+        let pending_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            btc_txid: None,
+            block_id: Some(42),
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+        };
+        assert!(validator
+            .validate_update_bridge_transaction(user_id, &bridge_id, &pending_input)
+            .is_ok());
+
+        let mut stored = repo
+            .user_bridge_transaction()
+            .get_bridge_transaction_by_id(user_id, &bridge_id)
+            .unwrap();
+        stored.update(pending_input);
+        repo.user_bridge_transaction()
+            .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
+            .unwrap();
+
+        let completed_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            btc_txid: Some("btc-txid-1".to_string()),
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+        assert!(validator
+            .validate_update_bridge_transaction(user_id, &bridge_id, &completed_input)
+            .is_ok());
+    }
+}
