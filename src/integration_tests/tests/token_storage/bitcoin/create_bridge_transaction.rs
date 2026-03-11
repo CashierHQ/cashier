@@ -5,26 +5,52 @@ use candid::Principal;
 use cashier_common::test_utils::random_principal_id;
 use ic_mple_client::CanisterClientError;
 use token_storage_types::{
-    bitcoin::bridge_transaction::BridgeType, dto::bitcoin::CreateBridgeTransactionInputArg,
+    bitcoin::bridge_transaction::{
+        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+    },
+    dto::bitcoin::CreateBridgeTransactionInputArg,
+    error::CanisterError,
 };
 
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
+fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: Some("test_txid_123".to_string()),
+        icp_address: caller,
+        btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
+        asset_infos: vec![],
+        bridge_type: BridgeType::Import,
+        deposit_fee: None,
+        withdrawal_fee: None,
+        created_at_ts: 0,
+    }
+}
+
+fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: None,
+        icp_address: caller,
+        btc_address: "tb1qexportreceiver0000000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::BTC,
+            asset_id: "ckbtc".to_string(),
+            amount: 125_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Export,
+        deposit_fee: None,
+        withdrawal_fee: Some(450u64.into()),
+        created_at_ts: 100,
+    }
+}
+
 #[tokio::test]
-async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller() {
+async fn it_should_fail_create_import_bridge_transaction_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
-        let input = CreateBridgeTransactionInputArg {
-            btc_txid: Some("test_txid_123".to_string()),
-            icp_address: random_principal_id(),
-            btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
-            asset_infos: vec![],
-            bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
-            created_at_ts: 0,
-        };
+        let input = import_bridge_input(random_principal_id());
 
         // Act
         let result = token_storage_client
@@ -46,21 +72,67 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
 }
 
 #[tokio::test]
-async fn it_should_create_bridge_transaction_for_valid_user() {
+async fn it_should_fail_create_export_bridge_transaction_due_to_anonymous_caller() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
+        let input = export_bridge_input(random_principal_id());
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(result.is_err(), "Expected error for anonymous user");
+        if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
+        } else {
+            panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_create_export_bridge_transaction_due_to_initial_btc_txid() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let token_storage_client = ctx.new_token_storage_client(caller);
-        let input = CreateBridgeTransactionInputArg {
-            btc_txid: Some("test_txid_123".to_string()),
-            icp_address: caller,
-            btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
-            asset_infos: vec![],
-            bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
-            created_at_ts: 0,
-        };
+        let mut input = export_bridge_input(caller);
+        input.btc_txid = Some("unexpected-txid".to_string());
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok(), "Expected canister call to succeed with inner error");
+        let bridge_transaction_result = result.unwrap();
+        assert!(bridge_transaction_result.is_err());
+        assert!(matches!(
+            bridge_transaction_result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "btc_txid must not be set when creating an export bridge"
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_import_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let input = import_bridge_input(caller);
 
         // Act
         let result = token_storage_client
@@ -84,6 +156,37 @@ async fn it_should_create_bridge_transaction_for_valid_user() {
             "tb1qexampleaddress0000000000000000000000000".to_string()
         );
         assert_eq!(bridge_transaction.bridge_type, BridgeType::Import);
+        assert_eq!(bridge_transaction.status, BridgeTransactionStatus::Pending);
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_export_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let input = export_bridge_input(caller);
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok(), "Expected successful export bridge transaction creation");
+        let bridge_transaction_result = result.unwrap();
+        assert!(bridge_transaction_result.is_ok());
+        let bridge_transaction = bridge_transaction_result.unwrap();
+        assert_eq!(bridge_transaction.icp_address, caller);
+        assert_eq!(bridge_transaction.bridge_type, BridgeType::Export);
+        assert_eq!(bridge_transaction.btc_txid, None);
+        assert_eq!(bridge_transaction.block_id, None);
+        assert_eq!(bridge_transaction.withdrawal_fee, Some(450u64.into()));
+        assert_eq!(bridge_transaction.status, BridgeTransactionStatus::Created);
         Ok(())
     })
     .await

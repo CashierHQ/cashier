@@ -316,19 +316,6 @@ class BridgeStore {
    */
   createPendingBridgeTransactionsTask(): NodeJS.Timeout {
     return setInterval(async () => {
-      const createdTxs = await tokenStorageService.getBridgeTransactions(
-        0,
-        1,
-        BridgeTransactionStatus.Created,
-      );
-      if (
-        createdTxs.length > 0 &&
-        createdTxs[0].bridge_type === BridgeType.Import
-      ) {
-        await this.processBridgeTransaction(createdTxs[0]);
-        return;
-      }
-
       const pendingTxs = await tokenStorageService.getBridgeTransactions(
         0,
         1,

@@ -93,6 +93,11 @@ impl BridgeTransactionFactory {
             ));
         }
 
+        let mut status = BridgeTransactionStatus::Created;
+        if input.bridge_type == BridgeType::Import {
+            status = BridgeTransactionStatus::Pending;
+        }
+
         Ok(BridgeTransaction {
             bridge_id,
             icp_address: input.icp_address,
@@ -108,7 +113,7 @@ impl BridgeTransactionFactory {
             total_amount: Some(total_amount),
             created_at_ts: input.created_at_ts,
             retry_times: 0,
-            status: BridgeTransactionStatus::Created,
+            status,
         })
     }
 }
@@ -146,7 +151,7 @@ mod tests {
         assert_eq!(transaction.btc_txid, Some("test_txid".to_string()));
         assert_eq!(transaction.block_id, None);
         assert_eq!(transaction.block_confirmations.len(), 0);
-        assert_eq!(transaction.status, BridgeTransactionStatus::Created);
+        assert_eq!(transaction.status, BridgeTransactionStatus::Pending);
         assert_eq!(transaction.created_at_ts, 0);
     }
 
