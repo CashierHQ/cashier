@@ -5,16 +5,15 @@ import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/proc
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { userLinkRepository } from "../repositories/userLinkRepository";
-import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
-import { userLinkStateFromStepV3 } from "../utils/userLinkStateFromStep";
-import type { UserLinkState } from "./useLinkStates";
-import { CompletedState } from "./useLinkStates/completed";
+import { userLinkRepository } from "$modules/useLink/repositories/userLinkRepository";
 import type {
   UserActionCapableStateV3,
   UserLinkStateV3,
-} from "./useLinkStatesV3";
-import { LandingStateV3 } from "./useLinkStatesV3/landing";
+} from "$modules/useLink/state/useLinkStatesV3";
+import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
+import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
+import { findUseActionTypeFromLinkType } from "$modules/useLink/utils/useActionTypeFromLinkType";
+import { userLinkStateFromStepV3 } from "$modules/useLink/utils/userLinkStateFromStep";
 
 /**
  * Store for user link state management
@@ -49,7 +48,7 @@ export class UserLinkStoreV3 {
     $effect(() => {
       const s = this.linkDetail.query.data?.link_user_state;
       if (s === LinkUserState.COMPLETED) {
-        this.#state = new CompletedState();
+        this.#state = new CompletedStateV3();
       }
     });
   }
@@ -77,14 +76,14 @@ export class UserLinkStoreV3 {
   /**
    * Get the current state
    */
-  get state(): UserLinkState {
+  get state(): UserLinkStateV3 {
     return this.#state;
   }
 
   /**
    * Set the current state
    */
-  set state(s: UserLinkState) {
+  set state(s: UserLinkStateV3) {
     this.#state = s;
   }
 
