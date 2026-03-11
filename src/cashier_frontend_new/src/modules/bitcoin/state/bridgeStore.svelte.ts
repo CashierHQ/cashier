@@ -498,7 +498,7 @@ class BridgeStore {
       ) {
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
-          BridgeTransactionStatus.Completed,
+          null,
           null,
           null,
           [],
@@ -562,13 +562,21 @@ class BridgeStore {
     const shouldUpdateConfirmations =
       updatedConfirmingBlocks.length > 0 &&
       updatedConfirmingBlocks.length !== bridgeTx.confirmations.length;
-    if (!updatedBlockId && !updatedBlockTimestamp && !shouldUpdateConfirmations) {
+    const shouldComplete =
+      bridgeTx.status !== BridgeTransactionStatus.Completed &&
+      updatedConfirmingBlocks.length >= 1;
+    if (
+      !updatedBlockId &&
+      !updatedBlockTimestamp &&
+      !shouldUpdateConfirmations &&
+      !shouldComplete
+    ) {
       return;
     }
 
     const updateResult = await tokenStorageService.updateBridgeTransaction(
       bridgeTx.bridge_id,
-      null,
+      shouldComplete ? BridgeTransactionStatus.Completed : null,
       updatedBlockId,
       updatedBlockTimestamp,
       shouldUpdateConfirmations ? updatedConfirmingBlocks : [],

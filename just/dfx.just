@@ -208,7 +208,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug" mode="":
   #!/usr/bin/env bash
   set -e
 
@@ -270,7 +270,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
       };
       ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
-  })" {{network}} --yes
+  })" {{network}} {{mode}} --yes
 
 # Deploy Gate canister
 # params:
@@ -599,3 +599,12 @@ dfx_local_deploy_ckbtc_canisters owner ledger_id minter_id kyt_id:
         })"
 
   dfx canister call ckbtc_kyt set_api_key "(record { api_key = \"\" })"
+
+# deploy token storage to Mainnet
+[group('dfx')]
+dfx_mainnet_deploy_token_storage:
+  #!/usr/bin/env bash
+  set -e
+
+  export OWNER=$(dfx identity get-principal)
+  just dfx_deploy_token_storage "${OWNER}" "--network=ic" "global,cashier=debug,token_storage=debug" "--mode=upgrade"

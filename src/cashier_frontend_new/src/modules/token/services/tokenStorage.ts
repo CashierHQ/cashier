@@ -320,6 +320,10 @@ class TokenStorageService {
         (tx: tokenStorage.UserBridgeTransactionDto) =>
           BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
       );
+
+      // todo
+      console.log("Fetched bridge transactions:", bridgeTransactions);
+
       return bridgeTransactions;
     } catch (err) {
       throw new Error(`Error fetching bridge transactions: ${err}`);
