@@ -27,6 +27,7 @@
   import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
   import { tokenStorageService } from "$modules/token/services/tokenStorage";
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
 
   type Props = {
     initialToken?: string;
@@ -375,6 +376,10 @@
           </div>
         {/if}
       </div>
+
+      {#if isCkBtc}
+        <SendBTC />
+      {/if}
 
       <div
         class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"

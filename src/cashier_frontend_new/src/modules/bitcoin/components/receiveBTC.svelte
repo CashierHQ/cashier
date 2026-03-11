@@ -3,6 +3,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { BridgeType } from "$modules/bitcoin/types/bridge_transaction";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
@@ -16,6 +17,12 @@
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
+  const importBridgeTxs = $derived.by(
+    () =>
+      bridgeStore.bridgeTxs?.filter(
+        (bridge) => bridge.bridge_type === BridgeType.Import,
+      ) ?? [],
+  );
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -95,8 +102,9 @@
     </div>
   </div>
   <BridgeList
-    bridgeTxs={bridgeStore.bridgeTxs ?? []}
+    bridgeTxs={importBridgeTxs}
     hasMore={bridgeStore.hasMore}
+    emptyText={locale.t("wallet.receive.noBtcImportTxs")}
     onSelectBridge={handleSelectBridge}
     onLoadMore={handleLoadMore}
   />
