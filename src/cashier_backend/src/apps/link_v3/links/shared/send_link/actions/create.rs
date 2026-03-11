@@ -217,6 +217,12 @@ mod tests {
     use std::collections::HashMap;
     use uuid::Uuid;
 
+    fn assert_action_intent_ids_match_intents(action: &ActionV3, intents: &[IntentV3]) {
+        let expected_intent_ids: Vec<String> =
+            intents.iter().map(|intent| intent.id.clone()).collect();
+        assert_eq!(action.intent_ids, expected_intent_ids);
+    }
+
     fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
         AssetInfoV3 {
             asset: AssetV3 {
@@ -386,7 +392,7 @@ mod tests {
         assert_eq!(created.action.creator, creator);
         assert_eq!(created.action.state, ActionState::Created);
         assert_eq!(created.intents.len(), 2);
-        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+        assert_action_intent_ids_match_intents(&created.action, &created.intents);
 
         let deposit_intent = created
             .intents
@@ -494,7 +500,7 @@ mod tests {
         assert_eq!(created.action.creator, creator);
         assert_eq!(created.action.state, ActionState::Created);
         assert_eq!(created.intents.len(), 2);
-        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+        assert_action_intent_ids_match_intents(&created.action, &created.intents);
 
         let deposit_intent = created
             .intents
@@ -624,7 +630,7 @@ mod tests {
         assert!(result.is_ok());
         let created = result.expect("create action should succeed");
         assert_eq!(created.intents.len(), 3);
-        assert_eq!(created.action.intent_ids.len(), created.intents.len());
+        assert_action_intent_ids_match_intents(&created.action, &created.intents);
 
         let icrc1_intent = created
             .intents
