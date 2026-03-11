@@ -125,6 +125,13 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
                 "withdrawal_fee is already set and cannot be updated".to_string(),
             ));
         }
+        if let Some(_btc_fee) = input.btc_fee.clone()
+            && existing_transaction.btc_fee.is_some()
+        {
+            return Err(CanisterError::ValidationErrors(
+                "btc_fee is already set and cannot be updated".to_string(),
+            ));
+        }
 
         if let Some(retry_times) = input.retry_times
             && existing_transaction.retry_times >= retry_times
@@ -173,6 +180,7 @@ mod tests {
             asset_infos: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             created_at_ts: 0,
         };
 
@@ -204,6 +212,7 @@ mod tests {
             }],
             deposit_fee: None,
             withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
         };
 
@@ -230,6 +239,7 @@ mod tests {
             }],
             deposit_fee: None,
             withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
         };
 
@@ -247,6 +257,7 @@ mod tests {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
         };
@@ -271,6 +282,7 @@ mod tests {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
         };

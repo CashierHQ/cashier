@@ -168,6 +168,7 @@ export const idlFactory = ({ IDL }) => {
   const BridgeType = IDL.Variant({ 'Import' : IDL.Null, 'Export' : IDL.Null });
   const CreateBridgeTransactionInputArg = IDL.Record({
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'btc_fee' : IDL.Opt(IDL.Nat),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
     'created_at_ts' : IDL.Nat64,
@@ -192,6 +193,7 @@ export const idlFactory = ({ IDL }) => {
     'block_confirmations' : IDL.Vec(BlockConfirmation),
     'block_id' : IDL.Opt(IDL.Nat64),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'btc_fee' : IDL.Opt(IDL.Nat),
     'total_amount' : IDL.Opt(IDL.Nat),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
@@ -223,6 +225,7 @@ export const idlFactory = ({ IDL }) => {
     'block_confirmations' : IDL.Opt(IDL.Vec(BlockConfirmation)),
     'block_id' : IDL.Opt(IDL.Nat64),
     'btc_txid' : IDL.Opt(IDL.Text),
+    'btc_fee' : IDL.Opt(IDL.Nat),
     'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'block_timestamp' : IDL.Opt(IDL.Nat64),
     'bridge_id' : IDL.Text,

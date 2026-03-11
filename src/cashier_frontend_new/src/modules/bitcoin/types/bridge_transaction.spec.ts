@@ -33,6 +33,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067200n,
         deposit_fee: [1000n],
         withdrawal_fee: [2000n],
+        btc_fee: [3000n],
         btc_txid: ["tx_abc123"],
         block_id: [800000n],
         block_timestamp: [1704067100n],
@@ -66,6 +67,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067200n,
         deposit_fee: 1000n,
         withdrawal_fee: 2000n,
+        btc_fee: 3000n,
         btc_txid: "tx_abc123",
         block_id: 800000n,
         block_timestamp: 1704067100n,
@@ -90,6 +92,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067300n,
         deposit_fee: [],
         withdrawal_fee: [],
+        btc_fee: [],
         btc_txid: [],
         block_id: [],
         block_timestamp: [],
@@ -106,6 +109,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result.total_amount).toBe(0n);
       expect(result.deposit_fee).toBe(0n);
       expect(result.withdrawal_fee).toBe(0n);
+      expect(result.btc_fee).toBe(0n);
       expect(result.btc_txid).toBeNull();
       expect(result.block_id).toBeNull();
       expect(result.block_timestamp).toBeNull();
@@ -145,6 +149,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067400n,
         deposit_fee: [],
         withdrawal_fee: [],
+        btc_fee: [],
         btc_txid: [],
         block_id: [],
         block_timestamp: [],
@@ -176,6 +181,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067500n,
         deposit_fee: [],
         withdrawal_fee: [],
+        btc_fee: [],
         btc_txid: [],
         block_id: [],
         block_timestamp: [],
@@ -311,6 +317,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067200n,
         deposit_fee: 1000n,
         withdrawal_fee: 2000n,
+        btc_fee: 3000n,
         btc_txid: "tx_123",
         block_id: 800000n,
         block_timestamp: 1704067100n,
@@ -360,6 +367,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067300n,
         deposit_fee: 0n,
         withdrawal_fee: 0n,
+        btc_fee: 0n,
         btc_txid: null,
         block_id: null,
         block_timestamp: null,
@@ -398,6 +406,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067400n,
         deposit_fee: 100n,
         withdrawal_fee: 200n,
+        btc_fee: 300n,
         btc_txid: null,
         block_id: null,
         block_timestamp: null,
@@ -445,6 +454,7 @@ describe("BridgeTransactionMapper", () => {
         created_at_ts: 1704067500n,
         deposit_fee: 0n,
         withdrawal_fee: 0n,
+        btc_fee: 0n,
         btc_txid: null,
         block_id: null,
         block_timestamp: null,
@@ -508,6 +518,7 @@ describe("BridgeTransactionMapper", () => {
       const btc_txid = "tx_update_123";
       const deposit_fee = 1000n;
       const withdrawal_fee = 2000n;
+      const btc_fee = 3000n;
       const retry_times = 3;
 
       // Act
@@ -520,6 +531,7 @@ describe("BridgeTransactionMapper", () => {
         btc_txid,
         deposit_fee,
         withdrawal_fee,
+        btc_fee,
         retry_times,
       );
 
@@ -538,6 +550,7 @@ describe("BridgeTransactionMapper", () => {
         btc_txid: ["tx_update_123"],
         deposit_fee: [1000n],
         withdrawal_fee: [2000n],
+        btc_fee: [3000n],
         retry_times: [3],
       });
     });
@@ -557,6 +570,7 @@ describe("BridgeTransactionMapper", () => {
         null,
         null,
         null,
+        null,
       );
 
       // Assert
@@ -569,6 +583,7 @@ describe("BridgeTransactionMapper", () => {
         btc_txid: [],
         deposit_fee: [],
         withdrawal_fee: [],
+        btc_fee: [],
         retry_times: [],
       });
     });
@@ -622,6 +637,7 @@ describe("BridgeTransactionMapper", () => {
         "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
         125000n,
         450n,
+        1200n,
       );
 
       expect(result.icp_address.toText()).toBe("aaaaa-aa");
@@ -632,6 +648,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result.btc_txid).toEqual([]);
       expect(result.deposit_fee).toEqual([]);
       expect(result.withdrawal_fee).toEqual([450n]);
+      expect(result.btc_fee).toEqual([1200n]);
       expect(result.asset_infos).toEqual([
         {
           asset_type: { BTC: null },

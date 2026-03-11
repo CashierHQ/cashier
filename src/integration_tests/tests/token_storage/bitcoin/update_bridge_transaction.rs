@@ -22,6 +22,7 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         bridge_type: BridgeType::Import,
         deposit_fee: None,
         withdrawal_fee: None,
+        btc_fee: None,
         created_at_ts: 0,
     }
 }
@@ -40,6 +41,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         bridge_type: BridgeType::Export,
         deposit_fee: None,
         withdrawal_fee: Some(Nat::from(450u64)),
+        btc_fee: Some(Nat::from(1200u64)),
         created_at_ts: 100,
     }
 }
@@ -67,6 +69,7 @@ async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -123,6 +126,7 @@ async fn it_should_update_import_bridge_transaction() {
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1500u32)),
             withdrawal_fee: Some(Nat::from(700u32)),
+            btc_fee: Some(Nat::from(300u32)),
             retry_times: Some(2),
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -175,6 +179,7 @@ async fn it_should_update_export_bridge_transaction() {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
         };
@@ -199,6 +204,7 @@ async fn it_should_update_export_bridge_transaction() {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
         };

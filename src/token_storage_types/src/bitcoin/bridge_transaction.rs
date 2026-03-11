@@ -21,6 +21,7 @@ pub struct BridgeTransaction {
     pub block_confirmations: Vec<BlockConfirmation>,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
@@ -46,6 +47,9 @@ impl BridgeTransaction {
         }
         if let Some(withdrawal_fee) = input.withdrawal_fee {
             self.withdrawal_fee = Some(withdrawal_fee);
+        }
+        if let Some(btc_fee) = input.btc_fee {
+            self.btc_fee = Some(btc_fee);
         }
         if let Some(retry_times) = input.retry_times {
             self.retry_times = retry_times;
@@ -133,6 +137,7 @@ mod tests {
             block_confirmations: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             total_amount: None,
             created_at_ts: 0,
             retry_times: 0,
@@ -157,6 +162,7 @@ mod tests {
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -171,6 +177,7 @@ mod tests {
         assert_eq!(transaction.block_confirmations.len(), 2);
         assert_eq!(transaction.deposit_fee, Some(Nat::from(1000u32)));
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(500u32)));
+        assert_eq!(transaction.btc_fee, Some(Nat::from(200u32)));
         assert_eq!(transaction.retry_times, 1);
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
     }

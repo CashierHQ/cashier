@@ -13,8 +13,8 @@ import {
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionStatus,
-  type BridgeTransaction,
   BridgeType,
+  type BridgeTransaction,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import {
@@ -329,9 +329,7 @@ class BridgeStore {
     }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
 
-  async processBridgeTransaction(
-    bridgeTx: BridgeTransaction,
-  ): Promise<void> {
+  async processBridgeTransaction(bridgeTx: BridgeTransaction): Promise<void> {
     if (bridgeTx.bridge_type === BridgeType.Export) {
       await this.processExportBridgeTransaction(bridgeTx);
     } else {
@@ -447,6 +445,7 @@ class BridgeStore {
           null,
           null,
           null,
+          null,
           updatedRetryTimes,
         );
         if (updateResult.isErr()) {
@@ -520,16 +519,21 @@ class BridgeStore {
       return;
     }
 
-    const btcTxResult = await mempoolService.getTransactionById(bridgeTx.btc_txid);
+    const btcTxResult = await mempoolService.getTransactionById(
+      bridgeTx.btc_txid,
+    );
     if (btcTxResult.isErr()) {
       return;
     }
 
     const btcTx = btcTxResult.unwrap();
     const updatedBlockId =
-      btcTx.block_id && bridgeTx.block_id !== btcTx.block_id ? btcTx.block_id : null;
+      btcTx.block_id && bridgeTx.block_id !== btcTx.block_id
+        ? btcTx.block_id
+        : null;
     const updatedBlockTimestamp =
-      btcTx.block_timestamp && bridgeTx.block_timestamp !== btcTx.block_timestamp
+      btcTx.block_timestamp &&
+      bridgeTx.block_timestamp !== btcTx.block_timestamp
         ? btcTx.block_timestamp
         : null;
     const currentTipHeightResult = await mempoolService.getTipHeight();

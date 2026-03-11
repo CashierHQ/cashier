@@ -227,7 +227,8 @@
         await tokenStorageService.createExportBridgeTransaction(
           receiveAddress.trim(),
           amountBigInt,
-          withdrawalFee.minter_fee + withdrawalFee.bitcoin_fee,
+          withdrawalFee.minter_fee,
+          withdrawalFee.bitcoin_fee,
         );
 
       if (createResult.isErr()) {

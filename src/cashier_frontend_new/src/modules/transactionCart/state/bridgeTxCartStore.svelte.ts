@@ -138,7 +138,8 @@ export class BridgeTxCartStore {
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
       fee = this.bridgeTransaction.deposit_fee;
     } else {
-      fee = this.bridgeTransaction.withdrawal_fee;
+      fee =
+        this.bridgeTransaction.withdrawal_fee + this.bridgeTransaction.btc_fee;
     }
 
     const btcPriceUSD =
@@ -177,7 +178,19 @@ export class BridgeTxCartStore {
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
         tokenDecimals: 8,
-        usdAmount: this.totalFeesUsd,
+        usdAmount:
+          (Number(this.bridgeTransaction.withdrawal_fee) / 100_000_000) *
+          (tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0),
+      });
+      feeItems.push({
+        name: "Bitcoin Network Fee",
+        amount: this.bridgeTransaction.btc_fee,
+        tokenAddress: CKBTC_CANISTER_ID,
+        tokenSymbol: "BTC",
+        tokenDecimals: 8,
+        usdAmount:
+          (Number(this.bridgeTransaction.btc_fee) / 100_000_000) *
+          (tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0),
       });
     }
     return feeItems;
@@ -208,7 +221,9 @@ export class BridgeTxCartStore {
     }
 
     const totalDebit =
-      this.bridgeTransaction.total_amount + this.bridgeTransaction.withdrawal_fee;
+      this.bridgeTransaction.total_amount +
+      this.bridgeTransaction.withdrawal_fee +
+      this.bridgeTransaction.btc_fee;
 
     try {
       await this.#ckBtcLedgerService.approveCkBtcWithdrawal(totalDebit);

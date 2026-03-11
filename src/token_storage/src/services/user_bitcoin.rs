@@ -217,6 +217,7 @@ mod tests {
             asset_infos: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             created_at_ts: 100000,
         };
 
@@ -249,6 +250,7 @@ mod tests {
             asset_infos: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             created_at_ts: 100000,
         };
 
@@ -275,6 +277,7 @@ mod tests {
             block_confirmations: Some(block_confirmations.clone()),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -298,6 +301,7 @@ mod tests {
             updated_transaction.withdrawal_fee,
             update_input.withdrawal_fee
         );
+        assert_eq!(updated_transaction.btc_fee, update_input.btc_fee);
         assert_eq!(
             updated_transaction.retry_times,
             update_input.retry_times.unwrap()
@@ -325,6 +329,7 @@ mod tests {
             }],
             deposit_fee: None,
             withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 100000,
         };
 
@@ -336,6 +341,8 @@ mod tests {
         assert_eq!(created_transaction.bridge_type, BridgeType::Export);
         assert_eq!(created_transaction.btc_txid, None);
         assert_eq!(created_transaction.block_id, None);
+        assert_eq!(created_transaction.withdrawal_fee, Some(Nat::from(450u64)));
+        assert_eq!(created_transaction.btc_fee, Some(Nat::from(1200u64)));
         assert_eq!(created_transaction.status, BridgeTransactionStatus::Created);
 
         let pending_input = UpdateBridgeTransactionInputArg {
@@ -346,6 +353,7 @@ mod tests {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
         };
@@ -366,6 +374,7 @@ mod tests {
             block_confirmations: None,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -401,6 +410,7 @@ mod tests {
                 asset_infos: vec![],
                 deposit_fee: None,
                 withdrawal_fee: None,
+                btc_fee: None,
                 created_at_ts: 0,
             };
             let mut transaction = BridgeTransactionFactory::from_create_input(input).unwrap();

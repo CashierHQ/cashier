@@ -34,6 +34,12 @@ impl BridgeTransactionFactory {
                 ));
             }
 
+            if input.btc_fee.is_none() {
+                return Err(CanisterError::ValidationErrors(
+                    "btc_fee is required for export bridges".to_string(),
+                ));
+            }
+
             if input.asset_infos.is_empty() {
                 return Err(CanisterError::ValidationErrors(
                     "asset_infos is required for export bridges".to_string(),
@@ -52,6 +58,10 @@ impl BridgeTransactionFactory {
         let mut withdrawal_fee = None;
         if let Some(fee) = input.withdrawal_fee {
             withdrawal_fee = Some(fee);
+        }
+        let mut btc_fee = None;
+        if let Some(fee) = input.btc_fee {
+            btc_fee = Some(fee);
         }
 
         if input.bridge_type == BridgeType::Import {
@@ -110,6 +120,7 @@ impl BridgeTransactionFactory {
             block_confirmations: vec![],
             deposit_fee,
             withdrawal_fee,
+            btc_fee,
             total_amount: Some(total_amount),
             created_at_ts: input.created_at_ts,
             retry_times: 0,
@@ -136,6 +147,7 @@ mod tests {
             bridge_type: BridgeType::Import,
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             created_at_ts: 0,
         };
 
@@ -171,16 +183,20 @@ mod tests {
             bridge_type: BridgeType::Export,
             deposit_fee: None,
             withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
         };
 
+        // Act
         let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
 
+        // Assert
         assert_eq!(transaction.icp_address, icp_address);
         assert_eq!(transaction.btc_address, "bc1qreceiver".to_string());
         assert_eq!(transaction.bridge_type, BridgeType::Export);
         assert_eq!(transaction.btc_txid, None);
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(450u64)));
+        assert_eq!(transaction.btc_fee, Some(Nat::from(1200u64)));
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
         assert_eq!(transaction.status, BridgeTransactionStatus::Created);
     }
@@ -200,11 +216,14 @@ mod tests {
             bridge_type: BridgeType::Export,
             deposit_fee: None,
             withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
         };
 
+        // Act
         let result = BridgeTransactionFactory::from_create_input(input);
 
+        // Assert
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),

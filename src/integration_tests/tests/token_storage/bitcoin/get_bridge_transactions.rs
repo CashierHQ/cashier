@@ -21,6 +21,7 @@ fn import_bridge_input(caller: Principal, txid: String) -> CreateBridgeTransacti
         bridge_type: BridgeType::Import,
         deposit_fee: None,
         withdrawal_fee: None,
+        btc_fee: None,
         created_at_ts: 0,
     }
 }
@@ -39,6 +40,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         bridge_type: BridgeType::Export,
         deposit_fee: None,
         withdrawal_fee: Some(450u64.into()),
+        btc_fee: Some(1200u64.into()),
         created_at_ts: 1,
     }
 }

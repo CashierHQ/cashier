@@ -260,6 +260,7 @@ class TokenStorageService {
     receiverBtcAddress: string,
     amount: bigint,
     withdrawalFee: bigint,
+    btcFee: bigint,
   ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -273,6 +274,7 @@ class TokenStorageService {
           receiverBtcAddress,
           amount,
           withdrawalFee,
+          btcFee,
         );
 
       const res = await actor.user_create_bridge_transaction(inputArgs);
@@ -368,6 +370,7 @@ class TokenStorageService {
    * @param btc_txid the Bitcoin transaction ID
    * @param deposit_fee ckBTC deposit fee
    * @param withdrawal_fee ckBTC withdrawal fee
+   * @param btc_fee Bitcoin network fee
    * @param retry_times number of retry attempts for updating balance
    * @returns updated BridgeTransaction or error message
    */
@@ -380,6 +383,7 @@ class TokenStorageService {
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
+    btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
@@ -397,6 +401,7 @@ class TokenStorageService {
         btc_txid,
         deposit_fee,
         withdrawal_fee,
+        btc_fee,
         retry_times,
       );
 

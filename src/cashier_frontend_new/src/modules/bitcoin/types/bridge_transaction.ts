@@ -28,6 +28,7 @@ export type BridgeTransaction = {
   created_at_ts: bigint;
   deposit_fee: bigint;
   withdrawal_fee: bigint;
+  btc_fee: bigint;
   btc_txid: string | null;
   block_id: bigint | null;
   block_timestamp: bigint | null;
@@ -115,6 +116,11 @@ export class BridgeTransactionMapper {
     if (data_withdrawal_fee.length === 1) {
       withdrawal_fee = data_withdrawal_fee[0];
     }
+    let btc_fee = 0n;
+    const data_btc_fee = data.btc_fee as [] | [bigint];
+    if (data_btc_fee.length === 1) {
+      btc_fee = data_btc_fee[0];
+    }
 
     let btc_txid = null;
     const data_btc_txid = data.btc_txid as [] | [string];
@@ -161,6 +167,7 @@ export class BridgeTransactionMapper {
       created_at_ts: data.created_at_ts,
       deposit_fee,
       withdrawal_fee,
+      btc_fee,
       btc_txid,
       block_id,
       block_timestamp,
@@ -313,6 +320,7 @@ export class BridgeTransactionMapper {
    * @param btc_txid
    * @param deposit_fee
    * @param withdrawal_fee
+   * @param btc_fee
    * @param retry_times
    * @returns tokenStorage.UpdateBridgeTransactionInputArg
    */
@@ -325,6 +333,7 @@ export class BridgeTransactionMapper {
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
+    btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
     const block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
@@ -349,6 +358,7 @@ export class BridgeTransactionMapper {
       btc_txid: btc_txid ? [btc_txid] : [],
       deposit_fee: deposit_fee ? [deposit_fee] : [],
       withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
+      btc_fee: btc_fee ? [btc_fee] : [],
       retry_times: retry_times ? [retry_times] : [],
     };
   }
@@ -358,6 +368,7 @@ export class BridgeTransactionMapper {
     btcAddress: string,
     amount: bigint,
     withdrawalFee: bigint,
+    btcFee: bigint,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     return {
       btc_txid: [],
@@ -374,6 +385,7 @@ export class BridgeTransactionMapper {
       bridge_type: { Export: null },
       deposit_fee: [],
       withdrawal_fee: [withdrawalFee],
+      btc_fee: [btcFee],
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
     };
   }

@@ -79,6 +79,7 @@ export type ChainTokenDetails = {
   };
 export interface CreateBridgeTransactionInputArg {
   'asset_infos' : Array<BridgeAssetInfo>,
+  'btc_fee' : [] | [bigint],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,
@@ -175,6 +176,7 @@ export interface UpdateBridgeTransactionInputArg {
   'block_confirmations' : [] | [Array<BlockConfirmation>],
   'block_id' : [] | [bigint],
   'btc_txid' : [] | [string],
+  'btc_fee' : [] | [bigint],
   'withdrawal_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
   'bridge_id' : string,
@@ -198,6 +200,7 @@ export interface UserBridgeTransactionDto {
   'block_confirmations' : Array<BlockConfirmation>,
   'block_id' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
+  'btc_fee' : [] | [bigint],
   'total_amount' : [] | [bigint],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,

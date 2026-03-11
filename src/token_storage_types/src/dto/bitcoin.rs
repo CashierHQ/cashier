@@ -16,6 +16,7 @@ pub struct CreateBridgeTransactionInputArg {
     pub bridge_type: BridgeType,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
 }
 
@@ -28,6 +29,7 @@ pub struct UpdateBridgeTransactionInputArg {
     pub block_confirmations: Option<Vec<BlockConfirmation>>,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
     pub retry_times: Option<u8>,
     pub status: Option<BridgeTransactionStatus>,
 }
@@ -52,6 +54,7 @@ pub struct UserBridgeTransactionDto {
     pub block_confirmations: Vec<BlockConfirmation>,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
@@ -72,6 +75,7 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             block_confirmations: tx.block_confirmations,
             deposit_fee: tx.deposit_fee,
             withdrawal_fee: tx.withdrawal_fee,
+            btc_fee: tx.btc_fee,
             created_at_ts: tx.created_at_ts,
             total_amount: tx.total_amount,
             retry_times: tx.retry_times,

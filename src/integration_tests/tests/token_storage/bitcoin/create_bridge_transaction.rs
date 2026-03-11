@@ -23,6 +23,7 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         bridge_type: BridgeType::Import,
         deposit_fee: None,
         withdrawal_fee: None,
+        btc_fee: None,
         created_at_ts: 0,
     }
 }
@@ -41,6 +42,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         bridge_type: BridgeType::Export,
         deposit_fee: None,
         withdrawal_fee: Some(450u64.into()),
+        btc_fee: Some(1200u64.into()),
         created_at_ts: 100,
     }
 }
@@ -186,6 +188,7 @@ async fn it_should_create_export_bridge_transaction() {
         assert_eq!(bridge_transaction.btc_txid, None);
         assert_eq!(bridge_transaction.block_id, None);
         assert_eq!(bridge_transaction.withdrawal_fee, Some(450u64.into()));
+        assert_eq!(bridge_transaction.btc_fee, Some(1200u64.into()));
         assert_eq!(bridge_transaction.status, BridgeTransactionStatus::Created);
         Ok(())
     })
