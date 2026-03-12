@@ -140,9 +140,7 @@ export class CkBTCMinterService {
       });
       return Ok(this.#mapRetrieveBtcStatus(result));
     } catch (error) {
-      return Err(
-        "Error retrieving BTC status: " + (error as Error).message,
-      );
+      return Err("Error retrieving BTC status: " + (error as Error).message);
     }
   }
 

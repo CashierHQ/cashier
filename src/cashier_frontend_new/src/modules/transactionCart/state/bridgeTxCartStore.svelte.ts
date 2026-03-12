@@ -211,7 +211,9 @@ export class BridgeTxCartStore {
     await this.#bridgeDetailQuery.refresh();
   }
 
-  async executeExport(): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+  async executeExport(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction not found.");
     }

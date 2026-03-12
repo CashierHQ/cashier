@@ -216,7 +216,10 @@ async fn it_should_update_export_bridge_transaction() {
         // Assert
         assert!(complete_result.is_ok());
         let complete_transaction = complete_result.unwrap().unwrap();
-        assert_eq!(complete_transaction.status, BridgeTransactionStatus::Completed);
+        assert_eq!(
+            complete_transaction.status,
+            BridgeTransactionStatus::Completed
+        );
         assert_eq!(
             complete_transaction.btc_txid,
             Some("btc-export-txid-1".to_string())

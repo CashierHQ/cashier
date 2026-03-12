@@ -64,7 +64,9 @@
         </div>
         <div class="flex justify-between items-start">
           <p class="text-[10px]/[100%] text-grey">
-            {isExport ? "To" : "From"}: {transformShortAddress(bridge.btc_address)}
+            {isExport ? "To" : "From"}: {transformShortAddress(
+              bridge.btc_address,
+            )}
           </p>
           <p class="text-[10px]/[100%] text-grey text-right">
             ${bridge.total_amount_usd ?? "0.00"}

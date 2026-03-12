@@ -52,7 +52,7 @@ impl WithdrawActionV3 {
         F: TokenFeeCache + 'static,
         B: TokenBalanceFetcher + 'static,
     {
-        let action = ActionV3 {
+        let mut action = ActionV3 {
             id: Uuid::new_v4().to_string(),
             action_type: ActionType::Withdraw,
             link_id: link.id.clone(),
@@ -111,6 +111,10 @@ impl WithdrawActionV3 {
                 intents.push(link_to_wallet_intent.intent.clone());
             });
 
+        // enrich action with intent ids
+        let intent_ids = intents.iter().map(|intent| intent.id.clone()).collect();
+        action.intent_ids = intent_ids;
+
         Ok(Self::new(action, intents))
     }
 }
@@ -136,6 +140,12 @@ mod tests {
     };
     use cashier_common::test_utils::random_principal_id;
     use uuid::Uuid;
+
+    fn assert_action_intent_ids_match_intents(action: &ActionV3, intents: &[IntentV3]) {
+        let expected_intent_ids: Vec<String> =
+            intents.iter().map(|intent| intent.id.clone()).collect();
+        assert_eq!(action.intent_ids, expected_intent_ids);
+    }
 
     fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
         AssetInfoV3 {
@@ -325,6 +335,7 @@ mod tests {
         );
         assert_eq!(withdraw_action.action.state, ActionState::Created);
         assert_eq!(withdraw_action.intents.len(), 2);
+        assert_action_intent_ids_match_intents(&withdraw_action.action, &withdraw_action.intents);
 
         let link_account = get_link_account(&link.id, canister_id).expect("link account valid");
         let intent_1 = withdraw_action

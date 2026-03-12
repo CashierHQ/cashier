@@ -3,10 +3,10 @@
  */
 export class TransactionKind {
   private constructor() {}
-  static readonly TRANSFER = "transfer";
-  static readonly MINT = "mint";
-  static readonly BURN = "burn";
-  static readonly APPROVE = "approve";
+  static readonly TRANSFER = "transfer" as const;
+  static readonly MINT = "mint" as const;
+  static readonly BURN = "burn" as const;
+  static readonly APPROVE = "approve" as const;
 }
 
 export type TransactionKindValue =

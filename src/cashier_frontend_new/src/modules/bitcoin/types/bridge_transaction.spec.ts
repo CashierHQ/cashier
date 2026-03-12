@@ -632,13 +632,14 @@ describe("BridgeTransactionMapper", () => {
 
   describe("toCreateExportBridgeTransactionArgs", () => {
     it("should create export bridge args for ckBTC withdrawal", () => {
-      const result = BridgeTransactionMapper.toCreateExportBridgeTransactionArgs(
-        "aaaaa-aa",
-        "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-        125000n,
-        450n,
-        1200n,
-      );
+      const result =
+        BridgeTransactionMapper.toCreateExportBridgeTransactionArgs(
+          "aaaaa-aa",
+          "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+          125000n,
+          450n,
+          1200n,
+        );
 
       expect(result.icp_address.toText()).toBe("aaaaa-aa");
       expect(result.btc_address).toBe(

@@ -79,11 +79,11 @@ export type ChainTokenDetails = {
   };
 export interface CreateBridgeTransactionInputArg {
   'asset_infos' : Array<BridgeAssetInfo>,
-  'btc_fee' : [] | [bigint],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,
   'withdrawal_fee' : [] | [bigint],
+  'btc_fee' : [] | [bigint],
   'btc_address' : string,
   'bridge_type' : BridgeType,
   'deposit_fee' : [] | [bigint],
@@ -176,8 +176,8 @@ export interface UpdateBridgeTransactionInputArg {
   'block_confirmations' : [] | [Array<BlockConfirmation>],
   'block_id' : [] | [bigint],
   'btc_txid' : [] | [string],
-  'btc_fee' : [] | [bigint],
   'withdrawal_fee' : [] | [bigint],
+  'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
   'bridge_id' : string,
   'deposit_fee' : [] | [bigint],
@@ -200,12 +200,12 @@ export interface UserBridgeTransactionDto {
   'block_confirmations' : Array<BlockConfirmation>,
   'block_id' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
-  'btc_fee' : [] | [bigint],
   'total_amount' : [] | [bigint],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,
   'withdrawal_fee' : [] | [bigint],
+  'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
   'bridge_id' : string,
   'btc_address' : string,
@@ -305,12 +305,20 @@ export interface _SERVICE {
    * # Arguments
    * * `input` - The input data for creating the bridge transaction
    * # Returns
-   * * `UserBridgeTransactionDto` - The created bridge transaction, or a CanisterError
+   * * `Ok(UserBridgeTransactionDto)` - The created bridge transaction if successful
+   * * `Err(CanisterError)` - An error if the transaction creation fails
    */
   'user_create_bridge_transaction' : ActorMethod<
     [CreateBridgeTransactionInputArg],
     Result_9
   >,
+  /**
+   * Retrieves a specific bridge transaction by its ID for the calling user
+   * # Arguments
+   * * `bridge_id` - The ID of the bridge transaction to retrieve
+   * # Returns
+   * * `Option<UserBridgeTransactionDto>` - The bridge transaction if found, or None if not found
+   */
   'user_get_bridge_transaction_by_id' : ActorMethod<
     [string],
     [] | [UserBridgeTransactionDto]
@@ -347,7 +355,8 @@ export interface _SERVICE {
    * # Arguments
    * * `input` - The input data for updating the bridge transaction
    * # Returns
-   * * `UserBridgeTransactionDto` - The updated bridge transaction, or a CanisterError
+   * * `Ok(UserBridgeTransactionDto)` - The updated bridge transaction if successful
+   * * `Err(CanisterError)` - An error if the transaction update fails
    */
   'user_update_bridge_transaction' : ActorMethod<
     [UpdateBridgeTransactionInputArg],

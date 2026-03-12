@@ -5,7 +5,9 @@ use candid::Principal;
 use cashier_common::test_utils::random_id_string;
 use ic_mple_client::CanisterClientError;
 use token_storage_types::{
-    bitcoin::bridge_transaction::{BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType},
+    bitcoin::bridge_transaction::{
+        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+    },
     dto::bitcoin::CreateBridgeTransactionInputArg,
 };
 
@@ -88,7 +90,10 @@ async fn it_should_get_import_bridge_transaction_by_id() {
             .await;
 
         // Assert
-        assert!(result.is_ok(), "Expected successful bridge transaction retrieval");
+        assert!(
+            result.is_ok(),
+            "Expected successful bridge transaction retrieval"
+        );
         let bridge = result.unwrap();
         assert!(bridge.is_some(), "Expected bridge transaction to exist");
         let bridge = bridge.unwrap();
@@ -120,7 +125,10 @@ async fn it_should_get_export_bridge_transaction_by_id() {
             .await;
 
         // Assert
-        assert!(result.is_ok(), "Expected successful bridge transaction retrieval");
+        assert!(
+            result.is_ok(),
+            "Expected successful bridge transaction retrieval"
+        );
         let bridge = result.unwrap();
         assert!(bridge.is_some(), "Expected bridge transaction to exist");
         let bridge = bridge.unwrap();

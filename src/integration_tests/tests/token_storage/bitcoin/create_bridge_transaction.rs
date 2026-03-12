@@ -113,7 +113,10 @@ async fn it_should_fail_create_export_bridge_transaction_due_to_initial_btc_txid
             .await;
 
         // Assert
-        assert!(result.is_ok(), "Expected canister call to succeed with inner error");
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
         let bridge_transaction_result = result.unwrap();
         assert!(bridge_transaction_result.is_err());
         assert!(matches!(
@@ -179,7 +182,10 @@ async fn it_should_create_export_bridge_transaction() {
             .await;
 
         // Assert
-        assert!(result.is_ok(), "Expected successful export bridge transaction creation");
+        assert!(
+            result.is_ok(),
+            "Expected successful export bridge transaction creation"
+        );
         let bridge_transaction_result = result.unwrap();
         assert!(bridge_transaction_result.is_ok());
         let bridge_transaction = bridge_transaction_result.unwrap();

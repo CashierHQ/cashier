@@ -160,7 +160,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repository::{tests::TestRepositories, Repositories};
+    use crate::repository::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::bitcoin::bridge_transaction::{
@@ -261,9 +261,11 @@ mod tests {
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
         };
-        assert!(validator
-            .validate_update_bridge_transaction(user_id, &bridge_id, &pending_input)
-            .is_ok());
+        assert!(
+            validator
+                .validate_update_bridge_transaction(user_id, &bridge_id, &pending_input)
+                .is_ok()
+        );
 
         let mut stored = repo
             .user_bridge_transaction()
@@ -286,8 +288,10 @@ mod tests {
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
         };
-        assert!(validator
-            .validate_update_bridge_transaction(user_id, &bridge_id, &completed_input)
-            .is_ok());
+        assert!(
+            validator
+                .validate_update_bridge_transaction(user_id, &bridge_id, &completed_input)
+                .is_ok()
+        );
     }
 }

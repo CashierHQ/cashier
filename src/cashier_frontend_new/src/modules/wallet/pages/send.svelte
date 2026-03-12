@@ -23,7 +23,10 @@
   import { ReceiveAddressType } from "$modules/wallet/types";
   import { Principal } from "@dfinity/principal";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
-  import type { BridgeSource, WalletSource } from "$modules/transactionCart/types/transactionSource";
+  import type {
+    BridgeSource,
+    WalletSource,
+  } from "$modules/transactionCart/types/transactionSource";
   import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
   import { tokenStorageService } from "$modules/token/services/tokenStorage";
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";

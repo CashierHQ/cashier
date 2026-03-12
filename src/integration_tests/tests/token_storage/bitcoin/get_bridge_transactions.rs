@@ -174,7 +174,7 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
         // Assert
         assert_eq!(pending_bridges.len(), 1);
         assert_eq!(pending_bridges[0].bridge_id, import_bridge.bridge_id);
-        
+
         // Act
         let created_bridges = token_storage_client
             .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {

@@ -282,42 +282,42 @@
             disabled={!tx.bridge}
           >
             <div class="flex items-start gap-3 py-2">
-            <div
-              class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
-            >
-              {#if tx.kind === TransactionKind.APPROVE}
-                <Check class="w-5 h-5 text-gray-700" />
-              {:else if tx.isOutgoing}
-                <ArrowUpRight class="w-5 h-5 text-gray-700" />
-              {:else}
-                <ArrowDownLeft class="w-5 h-5 text-gray-700" />
-              {/if}
-            </div>
+              <div
+                class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
+              >
+                {#if tx.kind === TransactionKind.APPROVE}
+                  <Check class="w-5 h-5 text-gray-700" />
+                {:else if tx.isOutgoing}
+                  <ArrowUpRight class="w-5 h-5 text-gray-700" />
+                {:else}
+                  <ArrowDownLeft class="w-5 h-5 text-gray-700" />
+                {/if}
+              </div>
 
-            <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
-              <div class="flex justify-between items-start mb-1">
-                <p class="text-[#222222]">
-                  {tx.label}
-                </p>
-                <p class="text-[#222222] text-right">
-                  {tx.isOutgoing ? "-" : "+"}{tx.amount}
-                </p>
+              <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
+                <div class="flex justify-between items-start mb-1">
+                  <p class="text-[#222222]">
+                    {tx.label}
+                  </p>
+                  <p class="text-[#222222] text-right">
+                    {tx.isOutgoing ? "-" : "+"}{tx.amount}
+                  </p>
+                </div>
+                <div class="flex justify-between items-start">
+                  <p class="text-[10px]/[100%] text-grey">
+                    {new Date(tx.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <p class="text-[10px]/[100%] text-grey text-right">
+                    ${tx.usdValue.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
+                </div>
               </div>
-              <div class="flex justify-between items-start">
-                <p class="text-[10px]/[100%] text-grey">
-                  {new Date(tx.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <p class="text-[10px]/[100%] text-grey text-right">
-                  ${tx.usdValue.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-            </div>
             </div>
           </button>
         {/each}

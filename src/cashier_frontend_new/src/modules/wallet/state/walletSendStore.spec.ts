@@ -214,7 +214,9 @@ describe("WalletSendStore", () => {
       });
 
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("wallet.send.errors.invalidBitcoinAddress");
+      expect(result.unwrapErr()).toBe(
+        "wallet.send.errors.invalidBitcoinAddress",
+      );
     });
   });
 });
