@@ -52,6 +52,7 @@
   let showConfirmDrawer = $state(false);
   let lastBlockId = $state<bigint | null>(null);
   let bridgeSource = $state<BridgeSource | null>(null);
+  let isCreatingExportBridge = $state(false);
 
   // URL param effect - set token from URL or default to first token
   $effect(() => {
@@ -197,7 +198,11 @@
     }
   }
 
-  function handleContinue() {
+  async function handleContinue() {
+    if (isCreatingExportBridge) {
+      return;
+    }
+
     if (isCkBtc && receiveAddress.trim() && nativeBtcAddress.trim()) {
       toast.error(locale.t("wallet.send.errors.chooseOneCkBtcDestination"));
       return;
@@ -215,7 +220,7 @@
       if (result.isErr()) {
         toast.error(result.error);
       } else {
-        handleCreateExportBridge();
+        await handleCreateExportBridge();
       }
       return;
     }
@@ -241,6 +246,7 @@
     }
 
     const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
+    isCreatingExportBridge = true;
     try {
       const withdrawalFee =
         await ckBTCMinterService.getWithdrawalFee(amountBigInt);
@@ -275,6 +281,8 @@
       showConfirmDrawer = true;
     } catch (error) {
       toast.error((error as Error).message);
+    } finally {
+      isCreatingExportBridge = false;
     }
   }
 
@@ -489,9 +497,15 @@
       >
         <Button
           onclick={handleContinue}
+          disabled={isCreatingExportBridge}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           type="button"
         >
+          {#if isCreatingExportBridge}
+            <div
+              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+            ></div>
+          {/if}
           {locale.t("wallet.send.continueButton")}
         </Button>
       </div>
