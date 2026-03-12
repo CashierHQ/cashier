@@ -3,8 +3,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import {
-      BridgeTransactionStatus,
-      BridgeType,
+    BridgeTransactionStatus,
+    BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
