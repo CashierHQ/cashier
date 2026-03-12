@@ -2,12 +2,12 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
+  import {
+      BridgeTransactionStatus,
+      BridgeType,
+  } from "$modules/bitcoin/types/bridge_transaction";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import {
-    BridgeTransactionStatus,
-    BridgeType,
-  } from "$modules/bitcoin/types/bridge_transaction";
   import BridgeConfirmation from "$modules/transactionCart/components/shared/BridgeConfirmation.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
@@ -81,7 +81,9 @@
   const totalFeesUsd = $derived.by(() => bridgeTxCartStore?.totalFeesUsd ?? 0);
   const feesBreakdown = $derived.by(() => bridgeTxCartStore?.feeItems ?? []);
 
-  // Handle fee breakdown click - close txCart and show FeeInfoDrawer
+  /**
+   * Handle fee breakdown click - open FeeInfoDrawer and keep txCart open during transition to prevent unmounting
+   */
   function handleFeeBreakdownClick() {
     showFeeInfoDrawer = true;
     isTransitioningToFeeDrawer = true;
@@ -91,7 +93,9 @@
     }, 100);
   }
 
-  // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
+  /**
+   * Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
+   */
   function handleFeeInfoDrawerBack() {
     showFeeInfoDrawer = false;
     setTimeout(() => {
@@ -138,6 +142,10 @@
     }
   }
 
+  /**
+   * Handle image load errors
+   * @param address
+   */
   function handleImageError(address: string) {
     failedImageLoads.add(address);
   }

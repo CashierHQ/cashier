@@ -2,8 +2,8 @@ import { managedState } from "$lib/managedState";
 import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
-  BridgeTransactionStatus,
   BridgeTransactionMapper,
+  BridgeTransactionStatus,
   BridgeType,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
@@ -207,10 +207,17 @@ export class BridgeTxCartStore {
     return this.bridgeTransaction.confirmations;
   }
 
-  async refresh() {
-    await this.#bridgeDetailQuery.refresh();
+  /**
+   * Refresh bridge transaction details by re-fetching data from the server
+   */
+  refresh() {
+    this.#bridgeDetailQuery.refresh();
   }
 
+  /**
+   * Process the export bridge
+   * @returns Result containing the updated bridge transaction or an error message
+   */
   async executeExport(): Promise<
     Result<BridgeTransactionWithUsdValue, string>
   > {

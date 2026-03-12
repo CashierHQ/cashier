@@ -6,6 +6,9 @@ export type WithdrawalFee = {
   bitcoin_fee: bigint;
 };
 
+/**
+ * RetrieveBtcStatusKind enum representing the various statuses of a Bitcoin retrieval process
+ */
 export class RetrieveBtcStatusKind {
   static readonly Signing = "Signing";
   static readonly Sending = "Sending";
@@ -18,6 +21,9 @@ export class RetrieveBtcStatusKind {
   static readonly Reimbursed = "Reimbursed";
 }
 
+/**
+ * RetrieveBtcStatus type representing the status of a Bitcoin retrieval process
+ */
 export type RetrieveBtcStatusKindValue =
   | typeof RetrieveBtcStatusKind.Signing
   | typeof RetrieveBtcStatusKind.Sending
@@ -29,6 +35,9 @@ export type RetrieveBtcStatusKindValue =
   | typeof RetrieveBtcStatusKind.WillReimburse
   | typeof RetrieveBtcStatusKind.Reimbursed;
 
+/**
+ * RetrieveBtcStatus type representing the status of a Bitcoin retrieval process, including the transaction ID if available
+ */
 export type RetrieveBtcStatus = {
   kind: RetrieveBtcStatusKindValue;
   txid: string | null;
