@@ -30,7 +30,6 @@
       onOpenDrawer?.();
     }
   }
-
 </script>
 
 {#if selectedToken}

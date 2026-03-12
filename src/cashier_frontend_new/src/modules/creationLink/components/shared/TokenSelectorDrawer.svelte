@@ -33,18 +33,12 @@
   let searchQuery = $state("");
   let failedImageLoads = new SvelteSet<string>();
 
-  function matchesTokenQuery(
-    token: TokenWithPriceAndBalance,
-    query: string,
-  ) {
+  function matchesTokenQuery(token: TokenWithPriceAndBalance, query: string) {
     const normalizedQuery = query.toLowerCase().trim();
     const symbol = token.symbol.toLowerCase();
     const name = token.name.toLowerCase();
 
-    if (
-      symbol.includes(normalizedQuery) ||
-      name.includes(normalizedQuery)
-    ) {
+    if (symbol.includes(normalizedQuery) || name.includes(normalizedQuery)) {
       return true;
     }
 
@@ -73,9 +67,7 @@
     if (!searchQuery.trim()) return baseTokens;
 
     const query = searchQuery.toLowerCase().trim();
-    return baseTokens.filter(
-      (token) => matchesTokenQuery(token, query),
-    );
+    return baseTokens.filter((token) => matchesTokenQuery(token, query));
   });
 
   function handleSelectToken(address: string) {
