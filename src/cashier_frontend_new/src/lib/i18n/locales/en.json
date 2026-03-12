@@ -366,6 +366,7 @@
         "amountGreaterThanZero": "Amount must be greater than zero.",
         "amountExceedsMax": "Amount exceeds maximum balance of {{max}}",
         "amountExceedsWithdrawalMax": "Amount plus withdrawal fees exceeds your ckBTC balance.",
+        "amountBelowWithdrawalMin": "Amount must be at least {{min}} BTC for ckBTC export.",
         "invalidReceiveType": "Invalid receive type selected."
       },
       "confirmDrawer": {
@@ -487,7 +488,7 @@
       },
       "btcAddress": {
         "warning1": "Send BTC to Coinbase, Xverse, Ledger, etc.",
-        "warning2": "Minimum 0.0005 BTC.",
+        "warning2": "Minimum 0.00005 BTC.",
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
         "warning5": "Transfer time ~ 1 hour. Track the progress below."

@@ -258,7 +258,7 @@ export class BridgeTxCartStore {
       return Err(updateResult.unwrapErr());
     }
 
-    await this.refresh();
+    this.refresh();
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction refresh failed.");
     }

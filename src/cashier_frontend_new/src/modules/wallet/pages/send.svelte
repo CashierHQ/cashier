@@ -244,6 +244,20 @@
     const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
     isCreatingExportBridge = true;
     try {
+      const minterInfo = await ckBTCMinterService.getMinterInfo();
+      if (amountBigInt < minterInfo.retrieve_btc_min_amount) {
+        const minAmount = parseBalanceUnits(
+          minterInfo.retrieve_btc_min_amount,
+          selectedTokenObj.decimals,
+        ).toFixed(selectedTokenObj.decimals);
+        toast.error(
+          locale
+            .t("wallet.send.errors.amountBelowWithdrawalMin")
+            .replace("{{min}}", minAmount),
+        );
+        return;
+      }
+
       const withdrawalFee =
         await ckBTCMinterService.getWithdrawalFee(amountBigInt);
       const totalDebit =
