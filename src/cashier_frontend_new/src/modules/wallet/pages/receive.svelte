@@ -105,22 +105,24 @@
 <div class="px-4 grow-1 flex flex-col">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      <div class="flex items-start gap-1.5">
-        <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-        <div class="text-sm text-green">
-          {#if selectedTokenObj}
-            {getWarningText(selectedTokenObj.symbol)}
-            <span class="font-semibold"
-              >{locale.t("wallet.receive.warningHighlighted")}</span
-            >
-          {:else}
-            {getWarningText("")}
-            <span class="font-semibold"
-              >{locale.t("wallet.receive.warningHighlighted")}</span
-            >
-          {/if}
+      {#if !isBTC}
+        <div class="flex items-start gap-1.5">
+          <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+          <div class="text-sm text-green">
+            {#if selectedTokenObj}
+              {getWarningText(selectedTokenObj.symbol)}
+              <span class="font-semibold"
+                >{locale.t("wallet.receive.warningHighlighted")}</span
+              >
+            {:else}
+              {getWarningText("")}
+              <span class="font-semibold"
+                >{locale.t("wallet.receive.warningHighlighted")}</span
+              >
+            {/if}
+          </div>
         </div>
-      </div>
+      {/if}
 
       <div class="space-y-2">
         <Label class="text-base font-semibold"
@@ -155,7 +157,9 @@
 
       <div class="space-y-2">
         <Label class="text-base font-semibold">
-          {#if selectedTokenObj}
+          {#if isBTC}
+            BTC Address (ckBTC on ICP)
+          {:else if selectedTokenObj}
             {locale
               .t("wallet.receive.receiveAddressLabel")
               .replace("{{token}}", selectedTokenObj.symbol)}
@@ -180,6 +184,13 @@
           >
             <Copy size={20} class="text-[#36A18B]" />
           </button>
+        </div>
+        <div
+          class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {#if isBTC}
+            {locale.t("wallet.send.addressPrincipleExample")}
+          {/if}
         </div>
 
         {#if shouldShowAddressTypeInfo}

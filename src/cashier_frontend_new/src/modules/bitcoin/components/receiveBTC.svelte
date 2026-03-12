@@ -76,6 +76,11 @@
         <Copy size={20} class="text-[#36A18B]" />
       </button>
     </div>
+    <div
+      class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+    >
+      {locale.t("wallet.send.addressBitcoinExample")}
+    </div>
     <div class="flex items-start gap-1.5">
       <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
       <div class="text-sm text-green">
@@ -100,6 +105,11 @@
         {locale.t("bitcoin.receive.btcAddress.warning4")}
       </div>
     </div>
+  </div>
+  <div class="mt-6">
+    <Label class="text-base font-semibold">
+      {locale.t("bitcoin.receive.history")}
+    </Label>
   </div>
   <BridgeList
     bridgeTxs={importBridgeTxs}

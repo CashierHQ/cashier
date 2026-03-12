@@ -27,7 +27,7 @@
 <div class="space-y-4">
   {#if Object.keys(bridgeTxsByDate).length > 0}
     {#each Object.keys(bridgeTxsByDate) as createdDate (createdDate)}
-      <Label class="text-base font-semibold">
+      <Label class="text-base font-normal">
         {createdDate}
       </Label>
       <div class="text-sm text-gray-600">

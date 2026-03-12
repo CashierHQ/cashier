@@ -44,7 +44,7 @@
 
 <div class="space-y-4">
   <Label class="text-base font-semibold">
-    {locale.t("bitcoin.send.title")}
+    {locale.t("bitcoin.send.history")}
   </Label>
 
   <BridgeList

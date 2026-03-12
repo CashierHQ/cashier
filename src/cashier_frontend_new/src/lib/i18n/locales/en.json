@@ -337,14 +337,16 @@
       "selectTokenLabel": "Asset",
       "amountLabel": "Amount: (max {{max}})",
       "receiveAddressLabel": "Send address",
+      "ckbtcIcpAddressLabel": "BTC Address (ckBTC on ICP)",
       "btcAddressLabel": "BTC destination address",
+      "btcNativeAddressLabel": "BTC Address(native)",
       "principalId": "Principal ID",
       "accountId": "Account ID",
       "addressPlaceholder": "Enter address",
       "btcAddressPlaceholder": "Enter Bitcoin address",
-      "addressPrincipleExample": "Ex.: vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
-      "addressAccountExample": "Ex.: 5b0bc7f314b8e2c0c46cababdffd5235e9eb1c0972664a027714b81369a17884",
-      "addressBitcoinExample": "Ex.: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+      "addressPrincipleExample": "e.g. vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
+      "addressAccountExample": "e.g. 5b0bc7f314b8e2c0c46cababdffd5235e9eb1c0972664a027714b81369a17884",
+      "addressBitcoinExample": "e.g. bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
       "principleIdInfoText": "You need to use account id, if you are sending to an exchange",
       "btcAddressInfoText": "ckBTC exports send Bitcoin to a Bitcoin network address. The amount you enter excludes the withdrawal fee.",
       "sending": "Sending...",
@@ -357,6 +359,7 @@
       "errors": {
         "selectToken": "Please select a token to send.",
         "enterAddress": "Please enter a valid receive address.",
+        "chooseOneCkBtcDestination": "Use either the ckBTC on ICP address or the native BTC address, not both.",
         "invalidBitcoinAddress": "Invalid Bitcoin address format.",
         "invalidPrincipal": "Invalid Principal address format.",
         "invalidAccountId": "Invalid Account Identifier format.",
@@ -403,7 +406,7 @@
       "closeButton": "Close",
       "warning": "Send {{token}} to this wallet to begin using Cashier. Ensure that you are only sending assets that are {{highlighted}}, otherwise you could lose them forever.",
       "warningHighlighted": "meant for this address",
-      "btcAddress": "BTC Address",
+      "btcAddress": "BTC Address (native)",
       "ethAddress": "ETH Address",
       "noBtcImportTxs": "No BTC import transactions found."
     },
@@ -457,24 +460,38 @@
   "bitcoin": {
     "receive": {
       "title": "Importing BTC from Bitcoin network",
+      "history": "History",
       "importing": "Importing (in ~60mins)",
       "imported": "Imported",
       "btcAddress": {
-        "warning1": "Receive BTC from a Bitcoin wallet (e.g. Coinbase, Xverse, Ledger).",
-        "warning2": "BTC is automatically converted to ckBTC on arrival.",
+        "warning1": "Receive BTC from Coinbase, Xverse, Ledger, etc.",
+        "warning2": "BTC is auto converted to ckBTC on arrival.",
         "warning3": "0.000001 BTC import fee.",
-        "warning4": "Time ~1 hour. You can track progress below."
+        "warning4": "Transfer time ~ 1 hour. Track progress below."
       },
       "icpAddress": {
-        "warning1": "Receive ckBTC from a ICP wallet (e.g. Oisy, NFID, Plug)",
+        "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
-        "warning3": "Transfers are almost instant."
+        "warning3": "Transfer time almost instant."
       }
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",
+      "history": "History",
       "exporting": "Exporting (in ~60mins)",
-      "exported": "Exported"
+      "exported": "Exported",
+      "icpAddress": {
+        "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
+        "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP.",
+        "warning3": "Transfer time almost instant."
+      },
+      "btcAddress": {
+        "warning1": "Send BTC to Coinbase, Xverse, Ledger, etc.",
+        "warning2": "Minimum 0.0005 BTC.",
+        "warning3": "Your ckBTC is auto converted to BTC.",
+        "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
+        "warning5": "Transfer time ~ 1 hour. Track the progress below."
+      }
     },
     "txCart": {
       "title": "Transaction details",
