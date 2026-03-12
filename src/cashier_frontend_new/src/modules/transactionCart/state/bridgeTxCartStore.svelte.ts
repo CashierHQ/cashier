@@ -245,6 +245,7 @@ export class BridgeTxCartStore {
       this.bridgeTransaction.bridge_id,
       BridgeTransactionStatus.Pending,
       retrieveResult.unwrap(),
+      null,
     );
     if (updateResult.isErr()) {
       return Err(updateResult.unwrapErr());

@@ -3,10 +3,10 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import {
   type MinterInfo,
-  RetrieveBtcStatusKind,
   type RetrieveBtcStatus,
   type WithdrawalFee,
 } from "$modules/bitcoin/types/ckbtc_minter";
+import { mapRetrieveBtcStatus } from "$modules/bitcoin/utils";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -94,7 +94,9 @@ export class CkBTCMinterService {
 
   /**
    * Request a ckBTC withdrawal using the user's ledger approval.
-   * Returns the burn block index for status tracking.
+   * @param address the destination btc address
+   * @param amount the withdrawl amount
+   * @returns Result with the block index of the withdrawal request or an error message.
    */
   async retrieveBtcWithApproval(
     address: string,
@@ -126,6 +128,11 @@ export class CkBTCMinterService {
     }
   }
 
+  /**
+   * Retrieve the status of a BTC withdrawal request by block index.
+   * @param blockIndex
+   * @returns Result with the retrieve BTC status or an error message.
+   */
   async retrieveBtcStatusV2(
     blockIndex: bigint,
   ): Promise<Result<RetrieveBtcStatus, string>> {
@@ -138,62 +145,10 @@ export class CkBTCMinterService {
       const result = await actor.retrieve_btc_status_v2({
         block_index: blockIndex,
       });
-      return Ok(this.#mapRetrieveBtcStatus(result));
+      return Ok(mapRetrieveBtcStatus(result));
     } catch (error) {
       return Err("Error retrieving BTC status: " + (error as Error).message);
     }
-  }
-
-  #mapRetrieveBtcStatus(
-    status: ckBTCMinter.RetrieveBtcStatusV2,
-  ): RetrieveBtcStatus {
-    if ("Signing" in status) {
-      return { kind: RetrieveBtcStatusKind.Signing, txid: null };
-    }
-    if ("Sending" in status) {
-      return {
-        kind: RetrieveBtcStatusKind.Sending,
-        txid: this.#txidToHex(status.Sending.txid),
-      };
-    }
-    if ("Submitted" in status) {
-      return {
-        kind: RetrieveBtcStatusKind.Submitted,
-        txid: this.#txidToHex(status.Submitted.txid),
-      };
-    }
-    if ("Confirmed" in status) {
-      return {
-        kind: RetrieveBtcStatusKind.Confirmed,
-        txid: this.#txidToHex(status.Confirmed.txid),
-      };
-    }
-    if ("Pending" in status) {
-      return { kind: RetrieveBtcStatusKind.Pending, txid: null };
-    }
-    if ("Unknown" in status) {
-      return { kind: RetrieveBtcStatusKind.Unknown, txid: null };
-    }
-    if ("AmountTooLow" in status) {
-      return { kind: RetrieveBtcStatusKind.AmountTooLow, txid: null };
-    }
-    if ("WillReimburse" in status) {
-      return { kind: RetrieveBtcStatusKind.WillReimburse, txid: null };
-    }
-    if ("Reimbursed" in status) {
-      return { kind: RetrieveBtcStatusKind.Reimbursed, txid: null };
-    }
-
-    throw new Error("Unknown retrieve BTC status");
-  }
-
-  #txidToHex(txid: Uint8Array | number[]): string {
-    const bytes = Array.from(txid);
-    return bytes
-      .slice()
-      .reverse()
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
   }
 }
 

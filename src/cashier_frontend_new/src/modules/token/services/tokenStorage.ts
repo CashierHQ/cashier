@@ -323,9 +323,6 @@ class TokenStorageService {
           BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
       );
 
-      // todo
-      console.log("Fetched bridge transactions:", bridgeTransactions);
-
       return bridgeTransactions;
     } catch (err) {
       throw new Error(`Error fetching bridge transactions: ${err}`);
@@ -364,6 +361,7 @@ class TokenStorageService {
    * Update a bridge transaction's details
    * @param bridgeId the bridge transaction ID
    * @param status the new status of the bridge transaction
+   * @param ckbtc_block_id the ckBTC ledger burn block index for export tracking
    * @param block_id the block ID where the transaction was confirmed
    * @param block_timestamp the timestamp of the block where the transaction was confirmed
    * @param confirmations list of Bitcoin blocks confirming the transaction
@@ -377,6 +375,7 @@ class TokenStorageService {
   public async updateBridgeTransaction(
     bridgeId: string,
     status: BridgeTransactionStatus | null = null,
+    ckbtc_block_id: bigint | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] = [],
@@ -395,6 +394,7 @@ class TokenStorageService {
       const updateArgs = BridgeTransactionMapper.toUpdateBridgeTransactionArgs(
         bridgeId,
         status,
+        ckbtc_block_id,
         block_id,
         block_timestamp,
         confirmations,

@@ -272,6 +272,7 @@ mod tests {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_transaction.bridge_id.clone(),
             btc_txid: None,
+            ckbtc_block_id: None,
             block_id: Some(100u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations.clone()),
@@ -340,6 +341,7 @@ mod tests {
 
         assert_eq!(created_transaction.bridge_type, BridgeType::Export);
         assert_eq!(created_transaction.btc_txid, None);
+        assert_eq!(created_transaction.ckbtc_block_id, None);
         assert_eq!(created_transaction.block_id, None);
         assert_eq!(created_transaction.withdrawal_fee, Some(Nat::from(450u64)));
         assert_eq!(created_transaction.btc_fee, Some(Nat::from(1200u64)));
@@ -348,7 +350,8 @@ mod tests {
         let pending_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_transaction.bridge_id.clone(),
             btc_txid: None,
-            block_id: Some(42u64),
+            ckbtc_block_id: Some(42u64),
+            block_id: None,
             block_timestamp: None,
             block_confirmations: None,
             deposit_fee: None,
@@ -363,15 +366,20 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(pending_transaction.block_id, Some(42u64));
+        assert_eq!(pending_transaction.ckbtc_block_id, Some(42u64));
+        assert_eq!(pending_transaction.block_id, None);
         assert_eq!(pending_transaction.status, BridgeTransactionStatus::Pending);
 
         let completed_input = UpdateBridgeTransactionInputArg {
             bridge_id: pending_transaction.bridge_id.clone(),
             btc_txid: Some("btc-txid-1".to_string()),
-            block_id: None,
-            block_timestamp: None,
-            block_confirmations: None,
+            ckbtc_block_id: None,
+            block_id: Some(840_000u64),
+            block_timestamp: Some(1_720_000_000u64),
+            block_confirmations: Some(vec![BlockConfirmation {
+                block_id: 840_000u64,
+                block_timestamp: 1_720_000_000u64,
+            }]),
             deposit_fee: None,
             withdrawal_fee: None,
             btc_fee: None,

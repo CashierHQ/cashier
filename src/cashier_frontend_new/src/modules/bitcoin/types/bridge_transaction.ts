@@ -30,6 +30,7 @@ export type BridgeTransaction = {
   withdrawal_fee: bigint;
   btc_fee: bigint;
   btc_txid: string | null;
+  ckbtc_block_id: bigint | null;
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
@@ -128,6 +129,12 @@ export class BridgeTransactionMapper {
       btc_txid = data_btc_txid[0];
     }
 
+    let ckbtc_block_id = null;
+    const data_ckbtc_block_id = data.ckbtc_block_id as [] | [bigint];
+    if (data_ckbtc_block_id.length === 1) {
+      ckbtc_block_id = data_ckbtc_block_id[0];
+    }
+
     let block_id = null;
     const data_block_id = data.block_id as [] | [bigint];
     if (data_block_id.length === 1) {
@@ -169,6 +176,7 @@ export class BridgeTransactionMapper {
       withdrawal_fee,
       btc_fee,
       btc_txid,
+      ckbtc_block_id,
       block_id,
       block_timestamp,
       confirmations,
@@ -314,6 +322,7 @@ export class BridgeTransactionMapper {
    * Map frontend BridgeTransaction update to token storage UpdateBridgeTransactionInputArg
    * @param bridgeId
    * @param status
+   * @param ckbtc_block_id
    * @param block_id
    * @param block_timestamp
    * @param confirmations
@@ -327,6 +336,7 @@ export class BridgeTransactionMapper {
   public static toUpdateBridgeTransactionArgs(
     bridgeId: string,
     status: BridgeTransactionStatus | null = null,
+    ckbtc_block_id: bigint | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] | [] = [],
@@ -336,6 +346,9 @@ export class BridgeTransactionMapper {
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
+    const ckbtc_block_id_arg: [] | [bigint] = ckbtc_block_id
+      ? [ckbtc_block_id]
+      : [];
     const block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
     const block_timestamp_arg: [] | [bigint] = block_timestamp
       ? [block_timestamp]
@@ -352,6 +365,7 @@ export class BridgeTransactionMapper {
       status: status
         ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
         : [],
+      ckbtc_block_id: ckbtc_block_id_arg,
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
@@ -363,6 +377,15 @@ export class BridgeTransactionMapper {
     };
   }
 
+  /**
+   * Create export bridge transaction input argument
+   * @param icpAddress
+   * @param btcAddress
+   * @param amount
+   * @param withdrawalFee
+   * @param btcFee
+   * @returns tokenStorage.CreateBridgeTransactionInputArg
+   */
   public static toCreateExportBridgeTransactionArgs(
     icpAddress: string,
     btcAddress: string,

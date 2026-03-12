@@ -12,6 +12,12 @@ use uuid::Uuid;
 pub struct BridgeTransactionFactory;
 
 impl BridgeTransactionFactory {
+    /// Create a bridge transaction from the given input
+    /// # Arguments
+    /// * `input` - The input data for creating the bridge transaction
+    /// # Returns
+    /// * `Ok(BridgeTransaction)` if the input is valid and the bridge transaction is created successfully
+    /// * `Err(CanisterError)` if the input is invalid or there is an error during creation
     pub fn from_create_input(
         input: CreateBridgeTransactionInputArg,
     ) -> Result<BridgeTransaction, CanisterError> {
@@ -115,6 +121,7 @@ impl BridgeTransactionFactory {
             bridge_type: input.bridge_type,
             asset_infos,
             btc_txid,
+            ckbtc_block_id: None,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -161,6 +168,7 @@ mod tests {
         assert_eq!(transaction.asset_infos.len(), 0);
         assert_eq!(transaction.bridge_type, BridgeType::Import);
         assert_eq!(transaction.btc_txid, Some("test_txid".to_string()));
+        assert_eq!(transaction.ckbtc_block_id, None);
         assert_eq!(transaction.block_id, None);
         assert_eq!(transaction.block_confirmations.len(), 0);
         assert_eq!(transaction.status, BridgeTransactionStatus::Pending);
@@ -195,6 +203,7 @@ mod tests {
         assert_eq!(transaction.btc_address, "bc1qreceiver".to_string());
         assert_eq!(transaction.bridge_type, BridgeType::Export);
         assert_eq!(transaction.btc_txid, None);
+        assert_eq!(transaction.ckbtc_block_id, None);
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(450u64)));
         assert_eq!(transaction.btc_fee, Some(Nat::from(1200u64)));
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));

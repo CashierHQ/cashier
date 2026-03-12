@@ -24,6 +24,7 @@ pub struct CreateBridgeTransactionInputArg {
 pub struct UpdateBridgeTransactionInputArg {
     pub bridge_id: String,
     pub btc_txid: Option<String>,
+    pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Option<Vec<BlockConfirmation>>,
@@ -49,6 +50,7 @@ pub struct UserBridgeTransactionDto {
     pub bridge_type: BridgeType,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
+    pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
@@ -70,6 +72,7 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             bridge_type: tx.bridge_type,
             asset_infos: tx.asset_infos,
             btc_txid: tx.btc_txid,
+            ckbtc_block_id: tx.ckbtc_block_id,
             block_id: tx.block_id,
             block_timestamp: tx.block_timestamp,
             block_confirmations: tx.block_confirmations,

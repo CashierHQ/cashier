@@ -200,6 +200,7 @@ export const idlFactory = ({ IDL }) => {
     'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
     'block_timestamp' : IDL.Opt(IDL.Nat64),
+    'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'bridge_id' : IDL.Text,
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
@@ -228,6 +229,7 @@ export const idlFactory = ({ IDL }) => {
     'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
     'block_timestamp' : IDL.Opt(IDL.Nat64),
+    'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'bridge_id' : IDL.Text,
     'deposit_fee' : IDL.Opt(IDL.Nat),
   });

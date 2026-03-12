@@ -16,6 +16,7 @@ pub struct BridgeTransaction {
     pub bridge_type: BridgeType,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
+    pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
@@ -32,6 +33,9 @@ impl BridgeTransaction {
     pub fn update(&mut self, input: UpdateBridgeTransactionInputArg) {
         if let Some(btc_txid) = input.btc_txid {
             self.btc_txid = Some(btc_txid);
+        }
+        if let Some(ckbtc_block_id) = input.ckbtc_block_id {
+            self.ckbtc_block_id = Some(ckbtc_block_id);
         }
         if let Some(block_id) = input.block_id {
             self.block_id = Some(block_id);
@@ -132,6 +136,7 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
             btc_txid: None,
+            ckbtc_block_id: None,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -157,6 +162,7 @@ mod tests {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "test_bridge_id".to_string(),
             btc_txid: Some("new_btc_txid".to_string()),
+            ckbtc_block_id: Some(99u64),
             block_id: Some(100u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
@@ -172,6 +178,7 @@ mod tests {
 
         // Assert
         assert_eq!(transaction.btc_txid, Some("new_btc_txid".to_string()));
+        assert_eq!(transaction.ckbtc_block_id, Some(99u64));
         assert_eq!(transaction.block_id, Some(100u64));
         assert_eq!(transaction.block_timestamp, Some(1620001200u64));
         assert_eq!(transaction.block_confirmations.len(), 2);

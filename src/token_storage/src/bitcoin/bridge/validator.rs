@@ -24,15 +24,13 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
         }
     }
 
-    /**
-     * Validate the creation input for a bridge transaction
-     * # Arguments
-     * * `user_id` - The principal ID of the user creating the bridge transaction
-     * * `input` - The input data for creating the bridge transaction
-     * # Returns
-     * * `Ok(())` if the input is valid
-     * * `Err(CanisterError)` if the input is invalid
-     */
+    /// Validate the creation input for a bridge transaction
+    /// # Arguments
+    /// * `user_id` - The principal ID of the user creating the bridge transaction
+    /// * `input` - The input data for creating the bridge transaction
+    /// # Returns
+    /// * `Ok(())` if the input is valid
+    /// * `Err(CanisterError)` if the input is invalid
     pub fn validate_create_bridge_transaction(
         &self,
         user_id: Principal,
@@ -89,6 +87,14 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             ));
         }
 
+        if let Some(_ckbtc_block_id) = input.ckbtc_block_id
+            && existing_transaction.ckbtc_block_id.is_some()
+        {
+            return Err(CanisterError::ValidationErrors(
+                "ckbtc_block_id is already set and cannot be updated".to_string(),
+            ));
+        }
+
         if let Some(_block_id) = input.block_id
             && existing_transaction.block_id.is_some()
         {
@@ -96,6 +102,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
                 "block_id is already set and cannot be updated".to_string(),
             ));
         }
+
         if let Some(_block_timestamp) = input.block_timestamp
             && existing_transaction.block_timestamp.is_some()
         {
@@ -111,6 +118,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
                 "block_confirmations are already set with the same length".to_string(),
             ));
         }
+
         if let Some(_deposit_fee) = input.deposit_fee.clone()
             && existing_transaction.deposit_fee.is_some()
         {
@@ -118,6 +126,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
                 "deposit_fee is already set and cannot be updated".to_string(),
             ));
         }
+
         if let Some(_withdrawal_fee) = input.withdrawal_fee.clone()
             && existing_transaction.withdrawal_fee.is_some()
         {
@@ -125,6 +134,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
                 "withdrawal_fee is already set and cannot be updated".to_string(),
             ));
         }
+
         if let Some(_btc_fee) = input.btc_fee.clone()
             && existing_transaction.btc_fee.is_some()
         {
@@ -252,7 +262,8 @@ mod tests {
         let pending_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
             btc_txid: None,
-            block_id: Some(42),
+            ckbtc_block_id: Some(42),
+            block_id: None,
             block_timestamp: None,
             block_confirmations: None,
             deposit_fee: None,
@@ -279,9 +290,15 @@ mod tests {
         let completed_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
             btc_txid: Some("btc-txid-1".to_string()),
-            block_id: None,
-            block_timestamp: None,
-            block_confirmations: None,
+            ckbtc_block_id: None,
+            block_id: Some(840_000),
+            block_timestamp: Some(1_720_000_000),
+            block_confirmations: Some(vec![
+                token_storage_types::bitcoin::bridge_transaction::BlockConfirmation {
+                    block_id: 840_000,
+                    block_timestamp: 1_720_000_000,
+                },
+            ]),
             deposit_fee: None,
             withdrawal_fee: None,
             btc_fee: None,

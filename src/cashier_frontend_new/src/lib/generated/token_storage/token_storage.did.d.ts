@@ -179,6 +179,7 @@ export interface UpdateBridgeTransactionInputArg {
   'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
+  'ckbtc_block_id' : [] | [bigint],
   'bridge_id' : string,
   'deposit_fee' : [] | [bigint],
 }
@@ -207,6 +208,7 @@ export interface UserBridgeTransactionDto {
   'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
+  'ckbtc_block_id' : [] | [bigint],
   'bridge_id' : string,
   'btc_address' : string,
   'bridge_type' : BridgeType,

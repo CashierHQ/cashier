@@ -180,10 +180,6 @@
     receiveType = ReceiveAddressType.ACCOUNT_ID;
   }
 
-  async function handlePasteFromClipboard() {
-    await handlePasteIntoField("icp");
-  }
-
   async function handlePasteIntoField(target: "icp" | "btc") {
     try {
       const text = await navigator.clipboard.readText();
