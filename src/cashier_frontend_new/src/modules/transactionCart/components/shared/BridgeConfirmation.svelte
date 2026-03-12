@@ -6,9 +6,10 @@
   type Props = {
     confirmations: BitcoinBlock[];
     minConfirmations: number;
+    headerText: string;
   };
 
-  let { confirmations, minConfirmations }: Props = $props();
+  let { confirmations, minConfirmations, headerText }: Props = $props();
   const confirmationSlots = $derived(
     Array.from({ length: minConfirmations }, (_, index) => ({
       index,
@@ -20,11 +21,7 @@
 <div class="input-label-field-container">
   <div class="flex flex-col w-full gap-2">
     <div class="flex items-center gap-2">
-      <Label class="font-medium text-base">
-        {locale
-          .t("bitcoin.txCart.confirmationsRequired")
-          .replace("{{minConfirmations}}", minConfirmations.toString())}
-      </Label>
+      <Label class="font-medium text-base">{headerText}</Label>
     </div>
 
     <div

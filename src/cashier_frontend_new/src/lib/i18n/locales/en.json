@@ -500,7 +500,9 @@
       "processing": "Processing...",
       "retry": "Retry",
       "successMessage": "Bridge transaction completed successfully.",
-      "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)",
+      "confirmationRequiredSingular": "{{minConfirmations}} confirmation required (~10m each)",
+      "confirmationsRequiredPlural": "{{minConfirmations}} confirmations required (~10m each)",
+      "confirmationRequiredExport": "1 confirmation required",
       "confirmation": "Confirmation"
     }
   }

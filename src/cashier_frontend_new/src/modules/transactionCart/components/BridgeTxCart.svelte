@@ -60,6 +60,23 @@
       bridgeTransaction?.bridge_type === BridgeType.Export &&
       bridgeTransaction.status === BridgeTransactionStatus.Created,
   );
+  let requiredConfirmations = $derived.by(() =>
+    bridgeTransaction?.bridge_type === BridgeType.Export ? 1 : minConfirmations,
+  );
+  let confirmationsHeaderText = $derived.by(() => {
+    if (bridgeTransaction?.bridge_type === BridgeType.Export) {
+      return locale.t("bitcoin.txCart.confirmationRequiredExport");
+    }
+
+    const key =
+      requiredConfirmations === 1
+        ? "bitcoin.txCart.confirmationRequiredSingular"
+        : "bitcoin.txCart.confirmationsRequiredPlural";
+
+    return locale
+      .t(key)
+      .replace("{{minConfirmations}}", requiredConfirmations.toString());
+  });
 
   const totalFeesUsd = $derived.by(() => bridgeTxCartStore?.totalFeesUsd ?? 0);
   const feesBreakdown = $derived.by(() => bridgeTxCartStore?.feeItems ?? []);
@@ -186,7 +203,11 @@
         {/if}
 
         {#if confirmations.length > 0}
-          <BridgeConfirmation {confirmations} {minConfirmations} />
+          <BridgeConfirmation
+            {confirmations}
+            minConfirmations={requiredConfirmations}
+            headerText={confirmationsHeaderText}
+          />
         {/if}
 
         {#if feesBreakdown.length > 0}
