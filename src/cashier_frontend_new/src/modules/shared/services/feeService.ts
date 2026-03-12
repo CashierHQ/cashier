@@ -8,8 +8,8 @@ import {
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
 import {
-  ICP_LEDGER_FEE,
   ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
 } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import {
@@ -23,20 +23,31 @@ import {
 } from "$modules/transactionCart/types/txCart";
 
 import { assertUnreachable } from "$lib/rsMatch";
+import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import {
   FeeType,
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
   type FeeItem,
 } from "$modules/links/types/fee";
-import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type {
+  AssetAndFee,
   AssetAndFeeList,
+  FeeConfig,
   ForecastAssetAndFee,
   WalletAssetInput,
-} from "../types/feeService";
+} from "$modules/shared/types/feeService";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import { TokenMetadataHelper } from "$modules/token/types/tokenMetadata";
+import { TokenStandardMapper } from "$modules/token/types/tokenStandard";
+import {
+  calculateIntentFees,
+  IntentParticipants,
+  IntentType as SharedIntentType,
+  type Intent as SharedIntent,
+} from "$shared";
+import { Err, Ok, Result } from "ts-results-es";
 
 export class FeeService {
   /**
@@ -54,6 +65,20 @@ export class FeeService {
     const fromAddress = payload.from.address.toText();
     if (fromAddress === currentWalletPrincipal) return FlowDirection.OUTGOING;
     if (toAddress === currentWalletPrincipal) return FlowDirection.INCOMING;
+    throw new Error("User is neither sender nor receiver");
+  }
+
+  /**
+   * Determine flow direction from shared Intent.
+   * @param intent
+   * @returns
+   */
+  getFlowDirectionFromSharedIntent(intent: SharedIntent): FlowDirectionValue {
+    if (intent.intent_type === SharedIntentType.Send) {
+      return FlowDirection.OUTGOING;
+    } else if (intent.intent_type === SharedIntentType.Receive) {
+      return FlowDirection.INCOMING;
+    }
     throw new Error("User is neither sender nor receiver");
   }
 
@@ -114,12 +139,21 @@ export class FeeService {
    */
   buildFromAction(
     action: Action,
+    maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
     currentWalletPrincipal: string,
   ): AssetAndFeeList {
-    return action.intents.map((intent) => {
+    const pairs: AssetAndFee[] = [];
+    const feeConfig = this.getLinkCreationFee();
+
+    for (const intent of action.intents) {
       const address = intent.type.payload.asset.address.toString();
       const token = tokens[address];
+
+      if (!token) {
+        throw new Error(`Token not found for address ${address}`);
+      }
+
       const direction = this.getFlowDirection(
         intent.type.payload,
         currentWalletPrincipal,
@@ -138,15 +172,47 @@ export class FeeService {
           : "";
 
       const ledgerFee = token?.fee ?? ICP_LEDGER_FEE;
-      const { amount: forecastAmount, fee: feeRaw } = this.computeAmount({
-        intent,
-        ledgerFee,
-        actionType: action.type,
+
+      let intentParticipants: IntentParticipants =
+        IntentParticipants.CreatorToLink;
+      switch (intent.task) {
+        case IntentTask.TRANSFER_WALLET_TO_TREASURY:
+          intentParticipants = IntentParticipants.CreatorToTreasury;
+          break;
+        case IntentTask.TRANSFER_WALLET_TO_LINK:
+          intentParticipants = IntentParticipants.CreatorToLink;
+          break;
+        case IntentTask.TRANSFER_LINK_TO_WALLET:
+          if (action.type === ActionType.RECEIVE) {
+            intentParticipants = IntentParticipants.LinkToUser;
+          } else if (action.type === ActionType.WITHDRAW) {
+            intentParticipants = IntentParticipants.LinkToCreator;
+          }
+          break;
+      }
+
+      const intentFees = calculateIntentFees({
+        intent_participants: intentParticipants,
+        token_standard: TokenStandardMapper.toSharedType(
+          TokenMetadataHelper.getTokenStandard(token),
+        ),
+        user_input_amount: intent.type.payload.amount,
+        asset_network_fee: ledgerFee,
+        link_creation_fee: feeConfig.amount,
+        link_max_asset_amount: intent.type.payload.amount,
+        max_use: maxUse,
       });
 
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
-      const amountUi = parseBalanceUnits(forecastAmount, decimals);
+      const assetAmount =
+        direction === FlowDirection.OUTGOING
+          ? BigInt(intentFees.intent_total_amount) +
+            BigInt(intentFees.intent_total_network_fee)
+          : BigInt(intentFees.intent_total_amount) -
+            BigInt(intentFees.intent_user_fee);
+
+      const amountUi = parseBalanceUnits(assetAmount, decimals);
       const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
 
       const asset: AssetItem = {
@@ -158,7 +224,7 @@ export class FeeService {
         label,
         symbol,
         address,
-        amount: forecastAmount,
+        amount: assetAmount,
         amountFormattedStr: token
           ? formatNumber(amountUi)
           : amountUi.toString(),
@@ -167,23 +233,22 @@ export class FeeService {
         intentId: intent.id,
       };
 
-      let fee: FeeItem | undefined;
-      if (feeRaw !== undefined) {
-        const feeUi = parseBalanceUnits(feeRaw, decimals);
-        const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
-        fee = {
-          feeType,
-          amount: feeRaw,
-          amountFormattedStr: token ? formatNumber(feeUi) : feeUi.toString(),
-          symbol,
-          price: token?.priceUSD,
-          usdValue: feeUsd,
-          usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
-        };
-      }
+      const feeAmount = BigInt(intentFees.intent_user_fee);
+      const feeUi = parseBalanceUnits(feeAmount, decimals);
+      const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
+      const fee: FeeItem = {
+        feeType,
+        amount: feeAmount,
+        amountFormattedStr: token ? formatNumber(feeUi) : feeUi.toString(),
+        symbol,
+        price: token?.priceUSD,
+        usdValue: feeUsd,
+        usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+      };
 
-      return { asset, fee };
-    });
+      pairs.push({ asset, fee });
+    }
+    return pairs;
   }
 
   /**
@@ -252,16 +317,25 @@ export class FeeService {
       const token = tokensMap[item.asset.address];
       if (!token) continue;
 
+      const amount =
+        item.fee.feeType === FeeType.CREATE_LINK_FEE
+          ? item.asset.amount
+          : item.fee.amount;
+      const usdAmount =
+        item.fee.feeType === FeeType.CREATE_LINK_FEE
+          ? parseFloat(item.asset.usdValueStr ?? "0")
+          : item.fee.usdValue;
+
       breakdown.push({
         name:
           item.fee.feeType === FeeType.CREATE_LINK_FEE
             ? "Link creation fee"
-            : "Network fees",
-        amount: item.fee.amount,
+            : "Network fee",
+        amount,
         tokenAddress: item.asset.address,
         tokenSymbol: token.symbol,
         tokenDecimals: token.decimals,
-        usdAmount: item.fee.usdValue || 0,
+        usdAmount: usdAmount ?? 0,
       });
     }
 
@@ -271,9 +345,9 @@ export class FeeService {
   /**
    * Get link creation fee information.
    */
-  getLinkCreationFee() {
+  getLinkCreationFee(): FeeConfig {
     return {
-      amount: 10_000n, // 0.0001 ICP in e8s
+      amount: 10_000n,
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
@@ -290,45 +364,45 @@ export class FeeService {
     linkAssets: Array<CreateLinkAsset>,
     maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
-  ): ForecastAssetAndFee[] {
+  ): Result<ForecastAssetAndFee[], Error> {
     const pairs: ForecastAssetAndFee[] = [];
 
     for (const assetData of linkAssets) {
       const token = tokens[assetData.address];
 
       if (!token) {
-        console.error("Failed to resolve token for asset:", assetData.address);
-        const totalAmount =
-          (assetData.useAmount + ICP_LEDGER_FEE) * BigInt(maxUse) +
-          ICP_LEDGER_FEE;
-        const amountStr = parseBalanceUnits(totalAmount, 8).toString();
-
-        pairs.push({
-          asset: {
-            label: "",
-            symbol: "N/A",
-            address: assetData.address,
-            amount: amountStr,
-            usdValueStr: undefined,
-          },
-          fee: {
-            amount: ICP_LEDGER_FEE,
-            feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
-            symbol: "N/A",
-          },
-        });
+        return Err(
+          new Error(`Token not found for address ${assetData.address}`),
+        );
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        const totalAmount =
-          (assetData.useAmount + tokenFee) * BigInt(maxUse) + tokenFee;
-        const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
-        const totalUsd = token.priceUSD
-          ? totalAmountUi * token.priceUSD
+        const tokenStandard = TokenMetadataHelper.getTokenStandard(token);
+
+        // use shared package to calculate intent fees
+        const intentFees = calculateIntentFees({
+          intent_participants: IntentParticipants.CreatorToLink,
+          token_standard: TokenStandardMapper.toSharedType(tokenStandard),
+          user_input_amount: assetData.useAmount,
+          max_use: maxUse,
+          asset_network_fee: tokenFee,
+        });
+
+        const assetAmount =
+          BigInt(intentFees.intent_total_amount) +
+          BigInt(intentFees.intent_total_network_fee);
+        const assetAmountUi = parseBalanceUnits(assetAmount, token.decimals);
+        const assetAmountUsd = token.priceUSD
+          ? assetAmountUi * token.priceUSD
           : undefined;
-        const feeAmountUi = parseBalanceUnits(tokenFee, token.decimals);
-        const feeUsd = token.priceUSD
-          ? feeAmountUi * token.priceUSD
+
+        // Total network fees = tokenFee * maxUse (for funding) + tokenFee (for claiming)
+        const totalNetworkFees = BigInt(intentFees.intent_total_network_fee);
+        const totalNetworkFeesUi = parseBalanceUnits(
+          totalNetworkFees,
+          token.decimals,
+        );
+        const totalNetworkFeesUsd = token.priceUSD
+          ? totalNetworkFeesUi * token.priceUSD
           : undefined;
 
         pairs.push({
@@ -336,17 +410,21 @@ export class FeeService {
             label: "",
             symbol: token.symbol,
             address: assetData.address,
-            amount: formatNumber(totalAmountUi),
-            usdValueStr: totalUsd ? formatUsdAmount(totalUsd) : undefined,
+            amount: formatNumber(assetAmountUi),
+            usdValueStr: assetAmountUsd
+              ? formatUsdAmount(assetAmountUsd)
+              : undefined,
           },
           fee: {
-            amount: tokenFee,
+            amount: totalNetworkFees,
             feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: formatNumber(feeAmountUi),
+            amountFormattedStr: formatNumber(totalNetworkFeesUi),
             symbol: token.symbol,
             price: token.priceUSD,
-            usdValue: feeUsd,
-            usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+            usdValue: totalNetworkFeesUsd,
+            usdValueStr: totalNetworkFeesUsd
+              ? formatUsdAmount(totalNetworkFeesUsd)
+              : undefined,
           },
         });
       }
@@ -355,37 +433,53 @@ export class FeeService {
     // Add link creation fee item
     const linkFeeInfo = this.getLinkCreationFee();
     const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
-    if (linkFeeToken) {
-      const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
-      const linkFeeFormatted = parseBalanceUnits(
-        linkCreationFeeTotal,
-        linkFeeToken.decimals,
-      );
-      const linkFeeUsd = linkFeeToken.priceUSD
-        ? linkFeeFormatted * linkFeeToken.priceUSD
-        : undefined;
-
-      pairs.push({
-        asset: {
-          label: "Create link fee",
-          symbol: linkFeeToken.symbol,
-          address: linkFeeInfo.tokenAddress,
-          amount: formatNumber(linkFeeFormatted),
-          usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
-        },
-        fee: {
-          amount: linkCreationFeeTotal,
-          feeType: FeeType.CREATE_LINK_FEE,
-          amountFormattedStr: formatNumber(linkFeeFormatted),
-          symbol: linkFeeToken.symbol,
-          price: linkFeeToken.priceUSD,
-          usdValue: linkFeeUsd,
-          usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
-        },
-      });
+    if (!linkFeeToken) {
+      return Err(new Error("Link fee token not found"));
     }
 
-    return pairs;
+    const intentFees = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToTreasury,
+      token_standard: TokenStandardMapper.toSharedType(
+        TokenMetadataHelper.getTokenStandard(linkFeeToken),
+      ),
+      user_input_amount: 0n,
+      max_use: maxUse,
+      asset_network_fee: linkFeeToken.fee,
+      link_creation_fee: linkFeeInfo.amount,
+    });
+
+    const linkCreationFeeTotal =
+      BigInt(intentFees.intent_total_amount) +
+      BigInt(intentFees.intent_total_network_fee);
+
+    const linkFeeFormatted = parseBalanceUnits(
+      linkCreationFeeTotal,
+      linkFeeToken.decimals,
+    );
+    const linkFeeUsd = linkFeeToken.priceUSD
+      ? linkFeeFormatted * linkFeeToken.priceUSD
+      : undefined;
+
+    pairs.push({
+      asset: {
+        label: "Create link fee",
+        symbol: linkFeeToken.symbol,
+        address: linkFeeInfo.tokenAddress,
+        amount: formatNumber(linkFeeFormatted),
+        usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
+      },
+      fee: {
+        amount: linkCreationFeeTotal,
+        feeType: FeeType.CREATE_LINK_FEE,
+        amountFormattedStr: formatNumber(linkFeeFormatted),
+        symbol: linkFeeToken.symbol,
+        price: linkFeeToken.priceUSD,
+        usdValue: linkFeeUsd,
+        usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
+      },
+    });
+
+    return Ok(pairs);
   }
 }
 

@@ -1,5 +1,6 @@
 import type { IntentState as BackendIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
+import { IntentState as SharedIntentState } from "$shared";
 
 // Frontend representation of the state of an Intent (string-based)
 class IntentState {
@@ -28,6 +29,21 @@ export class IntentStateMapper {
       Success: () => IntentState.SUCCESS,
       Fail: () => IntentState.FAIL,
     });
+  }
+
+  static fromSharedType(s: SharedIntentState): IntentStateValue {
+    switch (s) {
+      case SharedIntentState.Created:
+        return IntentState.CREATED;
+      case SharedIntentState.Processing:
+        return IntentState.PROCESSING;
+      case SharedIntentState.Success:
+        return IntentState.SUCCESS;
+      case SharedIntentState.Fail:
+        return IntentState.FAIL;
+      default:
+        throw new Error(`Unsupported IntentState: ${s}`);
+    }
   }
 }
 

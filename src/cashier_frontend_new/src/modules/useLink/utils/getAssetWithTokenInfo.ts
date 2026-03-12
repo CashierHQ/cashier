@@ -1,8 +1,8 @@
+import { getTokenLogo } from "$modules/imageCache";
 import type { AssetInfo } from "$modules/links/types/link/asset";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { getTokenLogo } from "$modules/imageCache";
 
 export interface AssetWithTokenInfo {
   address: string;
@@ -49,15 +49,20 @@ export function getAssetWithTokenInfo(
     walletToken?.symbol ?? tokenMetaSymbol ?? (assetInfoItem.label || "TOKEN");
 
   // Get decimals (prefer walletToken, then tokenMeta, then default to 8)
-  // tokenMeta.decimals is an array ([] | [number]), so we take the first element
+  let tokenMetaDecimals: number | undefined;
+  if (tokenMeta?.decimals !== undefined) {
+    if (Array.isArray(tokenMeta.decimals) && tokenMeta.decimals.length > 0) {
+      tokenMetaDecimals = tokenMeta.decimals[0];
+    } else if (typeof tokenMeta.decimals === "number") {
+      tokenMetaDecimals = tokenMeta.decimals;
+    }
+  }
+
   const decimals =
     walletToken?.decimals ??
-    (Array.isArray(tokenMeta?.decimals) &&
-    tokenMeta.decimals.length > 0 &&
-    typeof tokenMeta.decimals[0] === "number"
-      ? tokenMeta.decimals[0]
-      : null) ??
-    8;
+    (tokenMetaDecimals !== undefined && tokenMetaDecimals > 0
+      ? tokenMetaDecimals
+      : 8);
 
   // Get price from walletToken
   const priceUSD = walletToken?.priceUSD;

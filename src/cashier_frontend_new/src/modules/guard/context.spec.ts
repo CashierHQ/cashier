@@ -342,10 +342,7 @@ describe("GuardContext", () => {
       it("should return true when userLinkStore linkDetail query is loading", () => {
         const mockStore = {
           link: null,
-          linkDetail: {
-            link: null,
-            query: { isLoading: true },
-          },
+          isLoading: true,
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
 
@@ -355,10 +352,7 @@ describe("GuardContext", () => {
       it("should return false when userLinkStore linkDetail query is not loading", () => {
         const mockStore = {
           link: null,
-          linkDetail: {
-            link: null,
-            query: { isLoading: false },
-          },
+          isLoading: false,
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
 
@@ -368,7 +362,7 @@ describe("GuardContext", () => {
       it("should return false when userLinkStore linkDetail is null", () => {
         const mockStore = {
           link: null,
-          linkDetail: null,
+          isLoading: false,
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
 
@@ -378,10 +372,7 @@ describe("GuardContext", () => {
       it("should return false when userLinkStore linkDetail query is undefined", () => {
         const mockStore = {
           link: null,
-          linkDetail: {
-            link: null,
-            query: undefined,
-          },
+          isLoading: false,
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
 
@@ -443,7 +434,7 @@ describe("GuardContext", () => {
       it("should check userLinkStore second if linkDetailStore doesn't exist", () => {
         const mockUserStore = {
           link: null,
-          linkDetail: { link: null, query: { isLoading: true } },
+          isLoading: true,
         } as unknown as UserLinkStore;
         const mockCreationStore = {
           link: null,

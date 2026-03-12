@@ -1,0 +1,43 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use candid::CandidType;
+use cashier_shared::types::{
+    Action as ActionShared, Link as LinkShared, LinkType as LinkTypeShared,
+};
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    dto::action::Icrc112Requests,
+    {repository::link_action::v1::LinkUserState, service::link::PaginateResult},
+};
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CreateLinkInputV3 {
+    pub title: String,
+    pub link_type: LinkTypeShared,
+    pub max_use: u64,
+    pub action: ActionShared,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CreateLinkResponseV3 {
+    pub link: LinkShared,
+    pub action: ActionShared,
+    pub icrc112_requests: Option<Icrc112Requests>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct DisableLinkResponseV3 {
+    pub link: LinkShared,
+}
+
+pub type GetLinksResponseV3 = PaginateResult<LinkShared>;
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetLinkResponseV3 {
+    pub link: LinkShared,
+    pub action: Option<ActionShared>,
+    pub icrc112_requests: Option<Icrc112Requests>,
+    pub link_user_state: Option<LinkUserState>,
+}

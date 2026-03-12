@@ -1,18 +1,17 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { locale } from "$lib/i18n";
   import { ChevronLeft } from "lucide-svelte";
 
   const {
-    linkStore,
+    linkTitle,
     onBack,
   }: {
-    linkStore: LinkDetailStore;
+    linkTitle: string;
     onBack: () => Promise<void>;
   } = $props();
 
   const linkName = $derived.by(() => {
-    return linkStore.link?.title || locale.t("links.linkForm.header.linkName");
+    return linkTitle || locale.t("links.linkForm.header.linkName");
   });
 </script>
 

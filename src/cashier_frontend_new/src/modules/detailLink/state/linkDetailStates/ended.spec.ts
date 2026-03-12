@@ -12,7 +12,7 @@ describe("LinkEndedState", () => {
 
     // Assert
     await expect(res).rejects.toThrow(
-      "Creating RECEIVE action is not supported in Ended state",
+      "Creating Receive action is not supported in Ended state",
     );
   });
 

@@ -154,7 +154,7 @@
         </div>
       {/if}
 
-      {#each feesBreakdown as fee (fee.name)}
+      {#each feesBreakdown as fee (fee.name + "_" + fee.tokenAddress)}
         {#if fee.name !== "Network fees" && fee.name !== "Link creation fee"}
           {@const feeView = formatFeeBreakdownItem(fee)}
           <div>

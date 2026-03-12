@@ -92,7 +92,7 @@ describe("feesBreakdown", () => {
       // Check network fee for ICP
       const icpNetworkFee = result.find(
         (fee) =>
-          fee.name === "Network fees" &&
+          fee.name === "Network fee" &&
           (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
@@ -104,7 +104,7 @@ describe("feesBreakdown", () => {
       // Check network fee for USDC
       const usdcNetworkFee = result.find(
         (fee) =>
-          fee.name === "Network fees" &&
+          fee.name === "Network fee" &&
           fee.tokenAddress === "token-usdc-address",
       );
       expect(usdcNetworkFee).toBeDefined();
@@ -145,7 +145,7 @@ describe("feesBreakdown", () => {
 
       const networkFee = result.find(
         (fee) =>
-          fee.name === "Network fees" &&
+          fee.name === "Network fee" &&
           (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
@@ -175,7 +175,7 @@ describe("feesBreakdown", () => {
 
       const networkFee = result.find(
         (fee) =>
-          fee.name === "Network fees" &&
+          fee.name === "Network fee" &&
           (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
@@ -204,7 +204,7 @@ describe("feesBreakdown", () => {
       );
 
       // Should only have 1 network fee (for ICP) + 1 link creation fee
-      const networkFees = result.filter((fee) => fee.name === "Network fees");
+      const networkFees = result.filter((fee) => fee.name === "Network fee");
       expect(networkFees).toHaveLength(1);
       expect(result).toHaveLength(2); // 1 network fee + 1 link creation fee
     });
@@ -233,7 +233,7 @@ describe("feesBreakdown", () => {
       );
 
       // Should only have 1 network fee (for ICP) + 1 link creation fee
-      const networkFees = result.filter((fee) => fee.name === "Network fees");
+      const networkFees = result.filter((fee) => fee.name === "Network fee");
       expect(networkFees).toHaveLength(1);
       expect(result).toHaveLength(2); // 1 network fee + 1 link creation fee
     });
@@ -266,7 +266,7 @@ describe("feesBreakdown", () => {
 
       const networkFee = result.find(
         (fee) =>
-          fee.name === "Network fees" &&
+          fee.name === "Network fee" &&
           (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
@@ -303,7 +303,7 @@ describe("feesBreakdown", () => {
     it("should sum all USD amounts from breakdown", () => {
       const breakdown: FeeBreakdownItem[] = [
         {
-          name: "Network fees",
+          name: "Network fee",
           amount: 10_000n,
           tokenAddress: TEST_ICP_LEDGER_CANISTER_ID,
           tokenSymbol: "ICP",
@@ -311,7 +311,7 @@ describe("feesBreakdown", () => {
           usdAmount: 0.5,
         },
         {
-          name: "Network fees",
+          name: "Network fee",
           amount: 1_000n,
           tokenAddress: "token-usdc-address",
           tokenSymbol: "USDC",
@@ -343,7 +343,7 @@ describe("feesBreakdown", () => {
     it("should return link creation fee from breakdown", () => {
       const breakdown: FeeBreakdownItem[] = [
         {
-          name: "Network fees",
+          name: "Network fee",
           amount: 10_000n,
           tokenAddress: TEST_ICP_LEDGER_CANISTER_ID,
           tokenSymbol: "ICP",
@@ -368,7 +368,7 @@ describe("feesBreakdown", () => {
     it("should return undefined if link creation fee is not in breakdown", () => {
       const breakdown: FeeBreakdownItem[] = [
         {
-          name: "Network fees",
+          name: "Network fee",
           amount: 10_000n,
           tokenAddress: TEST_ICP_LEDGER_CANISTER_ID,
           tokenSymbol: "ICP",
@@ -524,7 +524,7 @@ describe("feesBreakdown", () => {
   describe("formatFeeBreakdownItem", () => {
     it("should format fee breakdown item for display", () => {
       const fee: FeeBreakdownItem = {
-        name: "Network fees",
+        name: "Network fee",
         amount: 10_000n,
         tokenAddress: TEST_ICP_LEDGER_CANISTER_ID,
         tokenSymbol: "ICP",
@@ -534,7 +534,7 @@ describe("feesBreakdown", () => {
 
       const formatted = formatFeeBreakdownItem(fee);
 
-      expect(formatted.name).toBe("Network fees");
+      expect(formatted.name).toBe("Network fee");
       expect(formatted.amount).toBe(10_000n);
       expect(formatted.tokenAddress).toBe(TEST_ICP_LEDGER_CANISTER_ID);
       expect(formatted.tokenSymbol).toBe("ICP");

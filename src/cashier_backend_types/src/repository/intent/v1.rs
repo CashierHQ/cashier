@@ -8,7 +8,10 @@ use ic_mple_structures::Codec;
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 
-use crate::repository::common::{Asset, Chain, Wallet};
+use crate::repository::{
+    asset::v1::Asset,
+    common::{Chain, Wallet},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 #[storable]

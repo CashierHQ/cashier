@@ -11,7 +11,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
+use transaction_manager::intents::v2::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
 use crate::apps::link_v2::links::shared::utils::generate_intent_asset_label;
@@ -56,7 +56,10 @@ impl ReceiveAction {
             .map(|asset_info| {
                 let sending_amount = asset_info.amount_per_link_use_action.clone();
                 let input = CreateLinkToWalletIntentArgs {
-                    label: generate_intent_asset_label(link.link_type, &asset_info.asset),
+                    label: generate_intent_asset_label(
+                        link.link_type,
+                        asset_info.asset.get_address(),
+                    ),
                     receiver_id,
                     sending_amount,
                     asset: asset_info.asset.clone(),
@@ -84,8 +87,9 @@ mod tests {
     use super::*;
     use candid::Nat;
     use cashier_backend_types::repository::{
-        asset_info::AssetInfo,
-        common::{Asset, Wallet},
+        asset::v1::Asset,
+        asset_info::v1::AssetInfo,
+        common::Wallet,
         intent::v1::IntentType,
         link::v1::{LinkState, LinkType},
     };
@@ -150,9 +154,7 @@ mod tests {
         // Assert ledger1 intent
         let intent1 = intents
             .iter()
-            .find(|intent| {
-                intent.label == generate_intent_asset_label(link.link_type, &asset_info1.asset)
-            })
+            .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id1))
             .unwrap();
         match &intent1.r#type {
             IntentType::Transfer(transfer_data) => {
@@ -167,9 +169,7 @@ mod tests {
         // Assert ledger2 intent
         let intent2 = intents
             .iter()
-            .find(|intent| {
-                intent.label == generate_intent_asset_label(link.link_type, &asset_info2.asset)
-            })
+            .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id2))
             .unwrap();
         match &intent2.r#type {
             IntentType::Transfer(transfer_data) => {

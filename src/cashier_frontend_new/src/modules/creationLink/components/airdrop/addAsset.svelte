@@ -1,34 +1,37 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatBalanceUnits } from "$modules/shared/utils/converter";
   import {
-    formatUsdAmount,
-    formatNumber,
-  } from "$modules/shared/utils/formatNumber";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
-  import { validationService } from "$modules/links/services/validationService";
-  import { locale } from "$lib/i18n";
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import { toast } from "svelte-sonner";
-  import { Minus, Plus } from "lucide-svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
   import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
   import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
-  import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
+  import { validationService } from "$modules/links/services/validationService";
   import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
+  import {
+    formatNumber,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { Minus, Plus } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
+
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let showAssetDrawer = $state(false);
@@ -41,22 +44,19 @@
     if (
       walletStore.query.data &&
       walletStore.query.data.length > 0 &&
-      link.createLinkData.assets.length === 0
+      link.assets.length === 0
     ) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: walletStore.query.data[0].address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: walletStore.query.data[0].address,
+          useAmount: 0n,
+        },
+      ]);
     }
   });
 
   let selectedAddress: string | undefined = $derived.by(() => {
-    const assets = link.createLinkData?.assets;
+    const assets = link.assets;
     if (assets && assets.length > 0) return assets[0].address;
     return undefined;
   });
@@ -82,7 +82,7 @@
   // Sync form amount with local state and handle token changes
   $effect(() => {
     const currentAddress = selectedToken?.address;
-    const asset = link.createLinkData.assets[0];
+    const asset = link.assets[0];
     const currentUseAmount = asset?.useAmount;
 
     const addressChanged = Boolean(
@@ -101,7 +101,7 @@
       previousUseAmount = undefined;
     }
 
-    if (selectedToken && link.createLinkData.assets.length > 0 && asset) {
+    if (selectedToken && link.assets.length > 0 && asset) {
       const syncResult = syncAssetFormState({
         assetUseAmount: asset.useAmount,
         decimals: decimals,
@@ -125,15 +125,12 @@
   });
 
   function handleSelectToken(address: string) {
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address,
-          useAmount: 0n,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address,
+        useAmount: 0n,
+      },
+    ]);
     showAssetDrawer = false;
   }
 
@@ -168,20 +165,17 @@
 
     const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: 0n,
+        },
+      ]);
       return;
     }
 
     // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
-    const uses = link.createLinkData.maxUse || 0;
+    const uses = link.maxUse || 0;
 
     const validationResult = validateTotalAmount({
       perUseAmount: num,
@@ -201,15 +195,12 @@
       }
 
       const amount = formatBalanceUnits(validationResult.maxPerUse, decimals);
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: amount,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: amount,
+        },
+      ]);
 
       const message = locale
         .t("links.linkForm.addAsset.errors.insufficientBalance")
@@ -221,15 +212,12 @@
     }
 
     const amount = formatBalanceUnits(num, decimals);
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address: selectedToken.address,
-          useAmount: amount,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address: selectedToken.address,
+        useAmount: amount,
+      },
+    ]);
   }
 
   function setUsdAmount(value: string) {
@@ -237,22 +225,19 @@
 
     const num = parseFloat(value);
     if (isNaN(num) || num <= 0) {
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: 0n,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: 0n,
+        },
+      ]);
       return;
     }
 
     const tokenValue = convertUsdToToken(num, tokenUsdPrice);
 
     // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
-    const uses = link.createLinkData.maxUse || 0;
+    const uses = link.maxUse || 0;
     const validationResult = validateTotalAmount({
       perUseAmount: tokenValue,
       maxUse: uses,
@@ -266,15 +251,12 @@
       localTokenAmount = validationResult.maxPerUse.toString();
 
       const amount = formatBalanceUnits(validationResult.maxPerUse, decimals);
-      link.createLinkData = {
-        ...link.createLinkData,
-        assets: [
-          {
-            address: selectedToken.address,
-            useAmount: amount,
-          },
-        ],
-      };
+      link.setAssets([
+        {
+          address: selectedToken.address,
+          useAmount: amount,
+        },
+      ]);
 
       const message = locale
         .t("links.linkForm.addAsset.errors.insufficientBalance")
@@ -286,15 +268,12 @@
     }
 
     const amount = formatBalanceUnits(tokenValue, decimals);
-    link.createLinkData = {
-      ...link.createLinkData,
-      assets: [
-        {
-          address: selectedToken.address,
-          useAmount: amount,
-        },
-      ],
-    };
+    link.setAssets([
+      {
+        address: selectedToken.address,
+        useAmount: amount,
+      },
+    ]);
   }
 
   function handleToggleUsd(value: boolean) {
@@ -305,9 +284,9 @@
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
+    const maxAmountResult = validationService.calculateMaxAssetAmountV3(
       selectedToken.address,
-      link.createLinkData.maxUse,
+      link.maxUse,
       walletStore.query.data,
     );
 
@@ -351,8 +330,8 @@
   // Total amount = useAmount * maxUse (derived from validationService.totalAssetAmount)
   // This ensures consistency with backend calculations and YouSendPreview
   const totalAmount = $derived.by(() => {
-    const asset = link.createLinkData.assets[0];
-    const uses = link.createLinkData.maxUse || 0;
+    const asset = link.assets[0];
+    const uses = link.maxUse || 0;
     if (!asset || !selectedToken || uses <= 0) return 0;
 
     // Use validationService to get exact total amount (useAmount * maxUse)
@@ -375,9 +354,8 @@
   });
 
   // Calculate max total amount (max per use * uses)
-  // maxTokenBalance uses calculateMaxAmountForAsset (same logic as validationService.maxAmountForAsset)
   const maxTotalAmount = $derived.by(() => {
-    const uses = link.createLinkData.maxUse || 0;
+    const uses = link.maxUse || 0;
     if (uses <= 0) return 0;
     return maxTokenBalance * uses;
   });
@@ -469,13 +447,13 @@
   }
 
   function handleDecreaseUses() {
-    if (link.createLinkData.maxUse > 1) {
-      link.createLinkData.maxUse = link.createLinkData.maxUse - 1;
+    if (link.maxUse > 1) {
+      link.decreaseMaxUse();
     }
   }
 
   function handleIncreaseUses() {
-    link.createLinkData.maxUse = link.createLinkData.maxUse + 1;
+    link.increaseMaxUse();
   }
 
   function handleMaxUseInput(
@@ -487,7 +465,7 @@
 
     if (cleaned === "") {
       // Set to 1 if empty
-      link.createLinkData.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
       return;
     }
@@ -495,10 +473,10 @@
     // Only allow positive integers
     const numValue = parseInt(cleaned, 10);
     if (isNaN(numValue) || numValue < 1) {
-      link.createLinkData.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
     } else {
-      link.createLinkData.maxUse = numValue;
+      link.setMaxUse(numValue);
     }
   }
 
@@ -508,10 +486,10 @@
     // Ensure value is valid integer on blur
     const numValue = parseInt(e.currentTarget.value, 10);
     if (isNaN(numValue) || numValue < 1) {
-      link.createLinkData.maxUse = 1;
+      link.setMaxUse(1);
       e.currentTarget.value = "1";
     } else {
-      link.createLinkData.maxUse = numValue;
+      link.setMaxUse(numValue);
       e.currentTarget.value = numValue.toString();
     }
   }
@@ -569,12 +547,12 @@
           <button
             type="button"
             onclick={handleDecreaseUses}
-            disabled={link.createLinkData.maxUse <= 1}
+            disabled={link.maxUse <= 1}
             class="flex items-center justify-center cursor-pointer min-w-6 w-6 h-6 rounded-full bg-lightgreen disabled:bg-lightgreen disabled:text-gray-400 disabled:cursor-not-allowed disabled:border-gray-200 text-gray-700 hover:bg-gray-200 focus:outline-none outline-none transition-colors"
             aria-label="Decrease uses"
           >
             <Minus
-              class="w-3.5 h-3.5 {link.createLinkData.maxUse <= 1
+              class="w-3.5 h-3.5 {link.maxUse <= 1
                 ? 'text-gray-400'
                 : 'text-[#36A18B]'}"
             />
@@ -584,7 +562,7 @@
             min="1"
             step="1"
             class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            bind:value={link.createLinkData.maxUse}
+            value={link.maxUse}
             oninput={handleMaxUseInput}
             onblur={handleMaxUseBlur}
           />

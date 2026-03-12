@@ -7,7 +7,7 @@ use derive_more::Display;
 use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
-use crate::repository::asset_info::AssetInfo;
+use crate::repository::asset_info::v1::AssetInfo;
 
 #[derive(Debug, Clone)]
 #[storable]

@@ -13,7 +13,7 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 
 use crate::apps::{
     link_v2::links::{shared::send_link::actions::create::CreateAction, traits::LinkV2State},
@@ -210,7 +210,7 @@ mod tests {
     };
     use candid::Nat;
     use cashier_backend_types::repository::{
-        action::v1::ActionState, asset_info::AssetInfo, common::Asset, link::v1::LinkType,
+        action::v1::ActionState, asset::v1::Asset, asset_info::v1::AssetInfo, link::v1::LinkType,
     };
     use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, test_utils::random_principal_id};
     use token_storage_types::token::IcrcStandard;

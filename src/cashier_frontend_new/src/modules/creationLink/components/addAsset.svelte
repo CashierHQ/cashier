@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { LinkType } from "$modules/links/types/link/linkType";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
-  import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
-  import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
   import {
-    trackEvent,
     AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
+  import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
+  import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
+  import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { LinkType } from "$modules/links/types/link/linkType";
   import { onMount } from "svelte";
 
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   onMount(() => {
@@ -24,12 +25,10 @@
   });
 </script>
 
-{#if link.createLinkData}
-  {#if link.createLinkData.linkType === LinkType.TIP}
-    <TipLinkAddAsset {link} />
-  {:else if link.createLinkData.linkType === LinkType.AIRDROP}
-    <AirDropAddAsset {link} />
-  {:else if link.createLinkData.linkType === LinkType.TOKEN_BASKET}
-    <TokenBasketAddAsset {link} />
-  {/if}
+{#if link.linkType === LinkType.TIP}
+  <TipLinkAddAsset {link} />
+{:else if link.linkType === LinkType.AIRDROP}
+  <AirDropAddAsset {link} />
+{:else if link.linkType === LinkType.TOKEN_BASKET}
+  <TokenBasketAddAsset {link} />
 {/if}

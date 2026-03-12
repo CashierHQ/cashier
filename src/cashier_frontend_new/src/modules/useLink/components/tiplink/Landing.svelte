@@ -1,22 +1,22 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
-  import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: (payload?: {
       link_type: string;
       BE_link_id: string;
@@ -25,7 +25,7 @@
 
   // Get first asset from asset_info
   const firstAsset = $derived.by(() => {
-    return userLink.linkDetail?.link?.asset_info?.[0];
+    return userLink.link?.asset_info?.[0];
   });
 
   // Get token from wallet store
@@ -61,36 +61,32 @@
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 
   function handleContinueLoggedIn() {
-    const link = userLink.linkDetail?.link;
+    const link = userLink.link;
     if (link) {
       trackEvent(AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_IN, {
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
     }
     userLink.goNext();
   }
 
   function handleContinueLoggedOut() {
-    const link = userLink.linkDetail?.link;
+    const link = userLink.link;
     if (link) {
       trackEvent(AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_OUT, {
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
       openLoginModal?.({
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
     } else {
       openLoginModal?.();
     }
   }
 </script>
-
-{#if userLink.linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.useLink.loading")}
-{/if}
 
 {#if displayInfo}
   <TokenRewardDisplay

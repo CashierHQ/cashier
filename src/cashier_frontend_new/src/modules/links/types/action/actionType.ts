@@ -1,15 +1,19 @@
 import type { ActionType as BackendActionType } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
-import { LinkType, type LinkTypeValue } from "../link/linkType";
+import {
+  LinkType,
+  type LinkTypeValue,
+} from "$modules/links/types/link/linkType";
+import { ActionType as SharedActionType } from "$shared";
 
 // Frontend representation of action types for links (string-based)
 export class ActionType {
   private constructor() {}
 
-  static readonly CREATE_LINK = "CREATE_LINK";
-  static readonly WITHDRAW = "WITHDRAW";
-  static readonly RECEIVE = "RECEIVE";
-  static readonly SEND = "SEND";
+  static readonly CREATE_LINK = "CreateLink";
+  static readonly WITHDRAW = "Withdraw";
+  static readonly RECEIVE = "Receive";
+  static readonly SEND = "Send";
 }
 
 export type ActionTypeValue =
@@ -59,6 +63,51 @@ export class ActionTypeMapper {
         return ActionType.SEND;
       default:
         return assertUnreachable(a);
+    }
+  }
+
+  static fromSharedType(a: SharedActionType): ActionTypeValue {
+    switch (a) {
+      case SharedActionType.CreateLink:
+        return ActionType.CREATE_LINK;
+      case SharedActionType.Withdraw:
+        return ActionType.WITHDRAW;
+      case SharedActionType.Receive:
+        return ActionType.RECEIVE;
+      case SharedActionType.Send:
+        return ActionType.SEND;
+      default:
+        return assertUnreachable(a);
+    }
+  }
+
+  static toSharedType(a: ActionTypeValue): SharedActionType {
+    switch (a) {
+      case ActionType.CREATE_LINK:
+        return SharedActionType.CreateLink;
+      case ActionType.WITHDRAW:
+        return SharedActionType.Withdraw;
+      case ActionType.RECEIVE:
+        return SharedActionType.Receive;
+      case ActionType.SEND:
+        return SharedActionType.Send;
+      default:
+        return assertUnreachable(a);
+    }
+  }
+
+  static fromSharedTypeString(a: string): ActionTypeValue {
+    switch (a) {
+      case SharedActionType.CreateLink:
+        return ActionType.CREATE_LINK;
+      case SharedActionType.Withdraw:
+        return ActionType.WITHDRAW;
+      case SharedActionType.Receive:
+        return ActionType.RECEIVE;
+      case SharedActionType.Send:
+        return ActionType.SEND;
+      default:
+        throw new Error(`Unknown action type string: ${a}`);
     }
   }
 }

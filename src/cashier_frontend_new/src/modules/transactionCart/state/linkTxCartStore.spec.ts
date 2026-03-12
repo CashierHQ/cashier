@@ -99,7 +99,7 @@ describe("LinkTxCartStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSigner.mockReturnValue({ mock: "signer" });
-    mockSendBatchRequest.mockResolvedValue(undefined);
+    mockSendBatchRequest.mockResolvedValue({ isSuccess: true });
     vi.mocked(authState).account = {
       owner: "test-principal-id",
     } as typeof authState.account;

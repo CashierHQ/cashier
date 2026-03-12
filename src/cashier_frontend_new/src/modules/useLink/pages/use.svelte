@@ -1,26 +1,28 @@
 <script lang="ts">
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   import Completed from "$modules/useLink/components/Completed.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { onDestroy, onMount } from "svelte";
-  import { getGuardContext } from "$modules/guard/context.svelte";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
-  import { locale } from "$lib/i18n";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
+  import { UserLinkStoreViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreViewModelAdapter";
   import {
-    shouldRedirectTo404,
     shouldRedirectErrorTo404,
+    shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
-  import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
+  import { onDestroy, onMount } from "svelte";
 
   const {
     onIsLinkChange,
@@ -31,12 +33,19 @@
   } = $props();
 
   // Get userLinkStore from context (created by RouteGuard)
-  const guardContext = getGuardContext();
-  const userStore = guardContext.userLinkStore;
+  const context = getGuardContext();
+  const userStore = $derived.by(() => {
+    const storeV3 = context.userLinkStoreV3;
+    if (storeV3) {
+      return new UserLinkStoreV3ViewModelAdapter(storeV3);
+    }
+    const store = context.userLinkStore;
+    if (store) {
+      return new UserLinkStoreViewModelAdapter(store);
+    }
+    return null;
+  });
 
-  if (!userStore) {
-    throw new Error("userLinkStore not found in context");
-  }
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isCreatingAction = $state(false);
@@ -56,10 +65,17 @@
   };
 
   const handleCreateUseAction = async () => {
+    if (!userStore) {
+      errorMessage = locale.t(
+        "links.linkForm.useLink.errors.linkDetailMissing",
+      );
+      return;
+    }
+
     if (userStore?.link) {
       trackEvent(AnalyticsEvent.USE_WALLET_USE_UNLOCKED, {
         link_type: userStore.link.link_type,
-        BE_link_id: userStore.linkDetail?.id ?? "",
+        BE_link_id: userStore.link?.id ?? "",
       });
     }
     errorMessage = null;
@@ -76,15 +92,17 @@
       } else {
         isCreatingAction = true;
         const actionType = userStore.findUseActionType();
+
         if (!actionType) {
           throw new Error(
             locale.t("links.linkForm.useLink.errors.noActionTypeFound"),
           );
         }
+
         await userStore.createAction(actionType);
 
         successMessage = "Action created successfully.";
-        userStore.query?.refresh();
+        userStore.refreshAsync();
       }
     } catch (err) {
       // Check if error requires redirect to 404
@@ -106,6 +124,12 @@
   };
 
   const handleProcessAction = async (): Promise<ProcessActionResult> => {
+    if (!userStore) {
+      throw new Error(
+        locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
+      );
+    }
+
     try {
       const result = await userStore.processAction();
 
@@ -118,7 +142,7 @@
       if (result.isSuccess && userStore?.link) {
         trackEvent(AnalyticsEvent.USE_ACTION_SUCCESS, {
           link_type: userStore.link.link_type,
-          BE_link_id: userStore.linkDetail?.id ?? "",
+          BE_link_id: userStore.link?.id ?? "",
         });
       }
 
@@ -145,12 +169,12 @@
 
   // Use funnel: track landing (logged in), wallet locked, gate, wallet unlocked page loads
   $effect(() => {
-    const step = userStore.state?.step ?? userStore.step;
-    const link = userStore.link;
+    const step = userStore?.state?.step ?? userStore?.step;
+    const link = userStore?.link;
     const payload = link
       ? {
           link_type: link.link_type,
-          BE_link_id: userStore.linkDetail?.id ?? "",
+          BE_link_id: userStore?.link?.id ?? "",
         }
       : null;
 
@@ -182,7 +206,7 @@
 
   // Notify parent about isLink changes based on current step
   $effect(() => {
-    if (onIsLinkChange) {
+    if (userStore && onIsLinkChange) {
       const step = userStore.state?.step ?? userStore.step;
       const isLink = step !== UserLinkStep.ADDRESS_UNLOCKED;
       onIsLinkChange(isLink);
@@ -191,7 +215,7 @@
 
   // Notify parent about showFooter changes based on current step
   $effect(() => {
-    if (onShowFooterChange) {
+    if (userStore && onShowFooterChange) {
       const isLanding = userStore.step === UserLinkStep.LANDING;
       const isCompleted = userStore.state?.step === UserLinkStep.COMPLETED;
       const showFooter = isLanding || isCompleted;
@@ -200,20 +224,32 @@
   });
 
   const handleWalletUnlockLocked = async () => {
+    if (!userStore) {
+      errorMessage = locale.t(
+        "links.linkForm.useLink.errors.linkDetailMissing",
+      );
+      return;
+    }
     if (userStore?.link) {
       trackEvent(AnalyticsEvent.USE_WALLET_UNLOCK_LOCKED, {
         link_type: userStore.link.link_type,
-        BE_link_id: userStore.linkDetail?.id ?? "",
+        BE_link_id: userStore.link?.id ?? "",
       });
     }
     await userStore.goNext();
   };
 
   const handleGateContinue = async () => {
+    if (!userStore) {
+      errorMessage = locale.t(
+        "links.linkForm.useLink.errors.linkDetailMissing",
+      );
+      return;
+    }
     if (userStore?.link) {
       trackEvent(AnalyticsEvent.USE_GATE_CONTINUE, {
         link_type: userStore.link.link_type,
-        BE_link_id: userStore.linkDetail?.id ?? "",
+        BE_link_id: userStore.link?.id ?? "",
       });
     }
     await userStore.goNext();
@@ -221,7 +257,7 @@
 
   // Register back handler for AppHeader on the use flow
   const handleBack = async () => {
-    if (userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
+    if (userStore && userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
       await userStore.goBack();
       return;
     }
@@ -231,6 +267,9 @@
 
   // Register logo click handler for AppHeader on the use flow
   const handleLogoClick = async () => {
+    if (!userStore) {
+      return;
+    }
     try {
       await userStore.goToLanding();
     } catch (error) {
@@ -269,11 +308,11 @@
       </div>
     {/if}
 
-    {#if userStore.step === UserLinkStep.LANDING}
+    {#if userStore && userStore.step === UserLinkStep.LANDING}
       <div class="py-4">
         <Landing userLink={userStore} />
       </div>
-    {:else if userStore.state.step === UserLinkStep.ADDRESS_LOCKED}
+    {:else if userStore && userStore.state.step === UserLinkStep.ADDRESS_LOCKED}
       <div class="py-4 flex flex-col gap-4 grow-1">
         <p class="text-sm text-muted-foreground">
           {locale.t("links.linkForm.useLink.walletLocked") ??
@@ -283,7 +322,7 @@
           {locale.t("links.linkForm.useLink.continueButton")}
         </Button>
       </div>
-    {:else if userStore.state.step === UserLinkStep.GATE}
+    {:else if userStore && userStore.state.step === UserLinkStep.GATE}
       <div class="py-4 flex flex-col gap-4 grow-1">
         <p class="text-sm text-muted-foreground">
           {locale.t("links.linkForm.useLink.gate") ?? "Continue to claim"}
@@ -292,10 +331,10 @@
           {locale.t("links.linkForm.useLink.continueButton")}
         </Button>
       </div>
-    {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
+    {:else if userStore && userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED && userStore.link}
       <div class="w-full grow-1 flex flex-col">
         <Unlocked
-          linkDetail={userStore.linkDetail}
+          link={userStore.link}
           onCreateUseAction={handleCreateUseAction}
           {isCreatingAction}
           hasAction={!!userStore.action}
@@ -306,13 +345,17 @@
             source={{
               action: userStore.action,
               handleProcessAction,
+              linkType: userStore.link?.link_type,
+              maxUse: userStore.link
+                ? Number(userStore.link.link_use_action_max_count)
+                : undefined,
             }}
             {onCloseDrawer}
           />
         {/if}
       </div>
-    {:else if userStore.state.step === UserLinkStep.COMPLETED}
-      <Completed linkDetail={userStore.linkDetail} />
+    {:else if userStore && userStore.state.step === UserLinkStep.COMPLETED && userStore.link}
+      <Completed link={userStore.link} />
     {/if}
   </div>
 </div>

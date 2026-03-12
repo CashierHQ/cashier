@@ -372,6 +372,7 @@ dependencies = [
  "cashier_backend_types",
  "cashier_common",
  "cashier_macros",
+ "cashier_shared",
  "ciborium",
  "futures",
  "getrandom 0.2.16",
@@ -417,6 +418,7 @@ dependencies = [
  "candid",
  "cashier_common",
  "cashier_macros",
+ "cashier_shared",
  "ciborium",
  "derive_more",
  "ic-cdk",
@@ -456,6 +458,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.106",
+]
+
+[[package]]
+name = "cashier_shared"
+version = "0.1.1"
+dependencies = [
+ "candid",
+ "serde",
 ]
 
 [[package]]
@@ -1615,6 +1625,7 @@ dependencies = [
  "cashier_backend_client",
  "cashier_backend_types",
  "cashier_common",
+ "cashier_shared",
  "gate_service_client",
  "gate_service_types",
  "ic-btc-interface",
@@ -3135,6 +3146,7 @@ dependencies = [
  "candid",
  "cashier_backend_types",
  "cashier_common",
+ "cashier_shared",
  "futures",
  "ic-cdk",
  "ic-cdk-timers",

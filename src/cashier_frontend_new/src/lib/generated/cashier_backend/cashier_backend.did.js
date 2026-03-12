@@ -114,7 +114,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferData,
     'TransferFrom' : TransferFromData,
   });
-  const IntentState = IDL.Variant({
+  const IntentState_1 = IDL.Variant({
     'Fail' : IDL.Null,
     'Success' : IDL.Null,
     'Processing' : IDL.Null,
@@ -160,7 +160,7 @@ export const idlFactory = ({ IDL }) => {
     'protocol' : Protocol,
     'from_call_type' : FromCallType,
     'created_at' : IDL.Nat64,
-    'state' : IntentState,
+    'state' : IntentState_1,
     'dependency' : IDL.Opt(IDL.Vec(IDL.Text)),
     'group' : IDL.Nat16,
   });
@@ -170,16 +170,22 @@ export const idlFactory = ({ IDL }) => {
     'task' : IntentTask,
     'type' : IntentType,
     'created_at' : IDL.Nat64,
-    'state' : IntentState,
+    'state' : IntentState_1,
     'transactions' : IDL.Vec(TransactionDto),
+  });
+  const ActionType_1 = IDL.Variant({
+    'Withdraw' : IDL.Null,
+    'Send' : IDL.Null,
+    'CreateLink' : IDL.Null,
+    'Receive' : IDL.Null,
   });
   const ActionDto = IDL.Record({
     'id' : IDL.Text,
     'icrc_112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
     'creator' : IDL.Principal,
     'intents' : IDL.Vec(IntentDto),
-    'type' : ActionType,
-    'state' : IntentState,
+    'type' : ActionType_1,
+    'state' : IntentState_1,
   });
   const LinkUserState = IDL.Variant({
     'Address' : IDL.Null,
@@ -197,7 +203,7 @@ export const idlFactory = ({ IDL }) => {
     'amount_per_link_use_action' : IDL.Nat,
     'label' : IDL.Text,
   });
-  const LinkType = IDL.Variant({
+  const LinkType_1 = IDL.Variant({
     'SendAirdrop' : IDL.Null,
     'SendTip' : IDL.Null,
     'ReceivePayment' : IDL.Null,
@@ -214,7 +220,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'creator' : IDL.Principal,
     'asset_info' : IDL.Vec(AssetInfoDto),
-    'link_type' : LinkType,
+    'link_type' : LinkType_1,
     'create_at' : IDL.Nat64,
     'state' : LinkState,
     'link_use_action_max_count' : IDL.Nat64,
@@ -226,6 +232,80 @@ export const idlFactory = ({ IDL }) => {
     'link' : LinkDto,
   });
   const Result_2 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : CanisterError });
+  const TokenStandard = IDL.Variant({ 'ICRC1' : IDL.Null, 'ICRC2' : IDL.Null });
+  const Asset_1 = IDL.Record({
+    'token_standard' : IDL.Opt(TokenStandard),
+    'address' : IDL.Principal,
+    'network_fee' : IDL.Opt(IDL.Nat),
+  });
+  const AddressType = IDL.Variant({
+    'Link' : IDL.Null,
+    'User' : IDL.Null,
+    'Treasury' : IDL.Null,
+    'Creator' : IDL.Null,
+  });
+  const IntentType_1 = IDL.Variant({ 'Send' : IDL.Null, 'Receive' : IDL.Null });
+  const Intent = IDL.Record({
+    'id' : IDL.Text,
+    'action_id' : IDL.Opt(IDL.Text),
+    'user_fee' : IDL.Opt(IDL.Nat),
+    'total_amount' : IDL.Opt(IDL.Nat),
+    'asset' : Asset_1,
+    'dest_address_type' : AddressType,
+    'dest_address' : IDL.Principal,
+    'source_address' : IDL.Principal,
+    'intent_state' : IntentState_1,
+    'source_address_type' : AddressType,
+    'dependencies' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'amount' : IDL.Nat,
+    'network_fee' : IDL.Opt(IDL.Nat),
+    'intent_type' : IntentType_1,
+  });
+  const Action = IDL.Record({
+    'id' : IDL.Text,
+    'creator' : IDL.Principal,
+    'intents' : IDL.Vec(Intent),
+    'link_id' : IDL.Opt(IDL.Text),
+    'action_type' : ActionType_1,
+    'action_state' : IntentState_1,
+    'creator_address_type' : AddressType,
+    'intent_ids' : IDL.Opt(IDL.Vec(IDL.Text)),
+  });
+  const AssetInfo = IDL.Record({
+    'asset' : Asset_1,
+    'label' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  const LinkState_1 = IDL.Variant({
+    'Ended' : IDL.Null,
+    'Preview' : IDL.Null,
+    'ChooseType' : IDL.Null,
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+    'AddAsset' : IDL.Null,
+    'Created' : IDL.Null,
+  });
+  const Link = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'creator' : IDL.Principal,
+    'asset_info' : IDL.Vec(AssetInfo),
+    'link_state' : LinkState_1,
+    'link_type' : LinkType_1,
+    'created_at' : IDL.Opt(IDL.Nat64),
+    'use_count' : IDL.Nat64,
+    'max_use' : IDL.Nat64,
+  });
+  const GetLinkResponseV3 = IDL.Record({
+    'action' : IDL.Opt(Action),
+    'link_user_state' : IDL.Opt(LinkUserState),
+    'link' : Link,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
+  });
+  const Result_3 = IDL.Variant({
+    'Ok' : GetLinkResponseV3,
+    'Err' : CanisterError,
+  });
   const Icrc21SupportedStandard = IDL.Record({
     'url' : IDL.Text,
     'name' : IDL.Text,
@@ -278,7 +358,7 @@ export const idlFactory = ({ IDL }) => {
     'UnsupportedCanisterCall' : Icrc21ErrorInfo,
     'ConsentMessageUnavailable' : Icrc21ErrorInfo,
   });
-  const Result_3 = IDL.Variant({
+  const Result_4 = IDL.Variant({
     'Ok' : Icrc21ConsentInfo,
     'Err' : Icrc21Error,
   });
@@ -287,18 +367,51 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateActionInput = IDL.Record({
     'link_id' : IDL.Text,
-    'action_type' : ActionType,
+    'action_type' : ActionType_1,
   });
-  const Result_4 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
+  const Result_5 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
+  const CreateActionInputV3 = IDL.Record({
+    'action' : Action,
+    'link_id' : IDL.Text,
+  });
+  const CreateActionResponseV3 = IDL.Record({
+    'action' : Action,
+    'link' : Link,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
+  });
+  const Result_6 = IDL.Variant({
+    'Ok' : CreateActionResponseV3,
+    'Err' : CanisterError,
+  });
   const CreateLinkInput = IDL.Record({
     'title' : IDL.Text,
     'asset_info' : IDL.Vec(AssetInfoDto),
-    'link_type' : LinkType,
+    'link_type' : LinkType_1,
     'link_use_action_max_count' : IDL.Nat64,
   });
   const CreateLinkDto = IDL.Record({ 'action' : ActionDto, 'link' : LinkDto });
-  const Result_5 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
-  const Result_6 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
+  const Result_7 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
+  const CreateLinkInputV3 = IDL.Record({
+    'title' : IDL.Text,
+    'action' : Action,
+    'link_type' : LinkType_1,
+    'max_use' : IDL.Nat64,
+  });
+  const CreateLinkResponseV3 = IDL.Record({
+    'action' : Action,
+    'link' : Link,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
+  });
+  const Result_8 = IDL.Variant({
+    'Ok' : CreateLinkResponseV3,
+    'Err' : CanisterError,
+  });
+  const Result_9 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
+  const DisableLinkResponseV3 = IDL.Record({ 'link' : Link });
+  const Result_10 = IDL.Variant({
+    'Ok' : DisableLinkResponseV3,
+    'Err' : CanisterError,
+  });
   const PaginateInput = IDL.Record({
     'offset' : IDL.Nat64,
     'limit' : IDL.Nat64,
@@ -314,8 +427,16 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(LinkDto),
   });
-  const Result_7 = IDL.Variant({
+  const Result_11 = IDL.Variant({
     'Ok' : PaginateResult,
+    'Err' : CanisterError,
+  });
+  const PaginateResult_1 = IDL.Record({
+    'metadata' : PaginateResultMetadata,
+    'data' : IDL.Vec(Link),
+  });
+  const Result_12 = IDL.Variant({
+    'Ok' : PaginateResult_1,
     'Err' : CanisterError,
   });
   const ProcessActionV2Input = IDL.Record({ 'action_id' : IDL.Text });
@@ -325,8 +446,19 @@ export const idlFactory = ({ IDL }) => {
     'errors' : IDL.Vec(IDL.Text),
     'is_success' : IDL.Bool,
   });
-  const Result_8 = IDL.Variant({
+  const Result_13 = IDL.Variant({
     'Ok' : ProcessActionDto,
+    'Err' : CanisterError,
+  });
+  const ProcessActionResponseV3 = IDL.Record({
+    'action' : Action,
+    'link' : Link,
+    'errors' : IDL.Vec(IDL.Text),
+    'is_success' : IDL.Bool,
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
+  });
+  const Result_14 = IDL.Variant({
+    'Ok' : ProcessActionResponseV3,
     'Err' : CanisterError,
   });
   return IDL.Service({
@@ -355,6 +487,11 @@ export const idlFactory = ({ IDL }) => {
         [Result_2],
         ['query'],
       ),
+    'get_link_details_v3' : IDL.Func(
+        [IDL.Text, IDL.Opt(GetLinkOptions)],
+        [Result_3],
+        ['query'],
+      ),
     'icrc10_supported_standards' : IDL.Func(
         [],
         [IDL.Vec(Icrc21SupportedStandard)],
@@ -363,20 +500,37 @@ export const idlFactory = ({ IDL }) => {
     'icrc114_validate' : IDL.Func([Icrc114ValidateArgs], [IDL.Bool], []),
     'icrc21_canister_call_consent_message' : IDL.Func(
         [Icrc21ConsentMessageRequest],
-        [Result_3],
+        [Result_4],
         [],
       ),
     'icrc28_trusted_origins' : IDL.Func([], [Icrc28TrustedOriginsResponse], []),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'user_create_action_v2' : IDL.Func([CreateActionInput], [Result_4], []),
-    'user_create_link_v2' : IDL.Func([CreateLinkInput], [Result_5], []),
-    'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_6], []),
+    'user_create_action_v2' : IDL.Func([CreateActionInput], [Result_5], []),
+    'user_create_action_v3' : IDL.Func([CreateActionInputV3], [Result_6], []),
+    'user_create_link_v2' : IDL.Func([CreateLinkInput], [Result_7], []),
+    'user_create_link_v3' : IDL.Func([CreateLinkInputV3], [Result_8], []),
+    'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_9], []),
+    'user_disable_link_v3' : IDL.Func([IDL.Text], [Result_10], []),
     'user_get_links_v2' : IDL.Func(
         [IDL.Opt(PaginateInput)],
-        [Result_7],
+        [Result_11],
         ['query'],
       ),
-    'user_process_action_v2' : IDL.Func([ProcessActionV2Input], [Result_8], []),
+    'user_get_links_v3' : IDL.Func(
+        [IDL.Opt(PaginateInput)],
+        [Result_12],
+        ['query'],
+      ),
+    'user_process_action_v2' : IDL.Func(
+        [ProcessActionV2Input],
+        [Result_13],
+        [],
+      ),
+    'user_process_action_v3' : IDL.Func(
+        [ProcessActionV2Input],
+        [Result_14],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => {

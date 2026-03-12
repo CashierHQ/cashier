@@ -234,6 +234,7 @@ describe("FeeService", () => {
 
   describe("forecastLinkCreationFees", () => {
     it("handles three tokens with different decimals and ledger fees", () => {
+      const linkFeeInfo = svc.getLinkCreationFee();
       const tokenA = {
         address: "token-a",
         decimals: 8,
@@ -258,10 +259,19 @@ describe("FeeService", () => {
         priceUSD: 0.5,
       } as unknown as TokenWithPriceAndBalance;
 
+      const linkFeeToken = {
+        address: linkFeeInfo.tokenAddress,
+        decimals: 8,
+        fee: 10_000n,
+        symbol: "ICP",
+        priceUSD: 1.0,
+      } as unknown as TokenWithPriceAndBalance;
+
       const tokensMap = {
         [tokenA.address]: tokenA,
         [tokenB.address]: tokenB,
         [tokenC.address]: tokenC,
+        [linkFeeToken.address]: linkFeeToken,
       } as Record<string, TokenWithPriceAndBalance>;
 
       const useA = 1_000_000_00n; // 100_000_000
@@ -269,7 +279,7 @@ describe("FeeService", () => {
       const useC = 3_000n;
       const maxUse = 2; // test non-trivial maxUse
 
-      const pairs = svc.forecastLinkCreationFees(
+      const pairsResult = svc.forecastLinkCreationFees(
         [
           { address: tokenA.address, useAmount: useA },
           { address: tokenB.address, useAmount: useB },
@@ -278,6 +288,8 @@ describe("FeeService", () => {
         maxUse,
         tokensMap,
       );
+      expect(pairsResult.isOk()).toBe(true);
+      const pairs = pairsResult.unwrap();
 
       // At least one returned pair per provided token
       expect(pairs.length).toBeGreaterThanOrEqual(3);
@@ -294,7 +306,7 @@ describe("FeeService", () => {
       if (a) {
         const expectedA = formatNumber(
           parseBalanceUnits(
-            (useA + tokenA.fee) * BigInt(maxUse) + tokenA.fee,
+            useA * BigInt(maxUse) + tokenA.fee * (2n + BigInt(maxUse)),
             tokenA.decimals,
           ),
         );
@@ -309,7 +321,7 @@ describe("FeeService", () => {
       if (b) {
         const expectedB = formatNumber(
           parseBalanceUnits(
-            (useB + tokenB.fee) * BigInt(maxUse) + tokenB.fee,
+            useB * BigInt(maxUse) + tokenB.fee * (2n + BigInt(maxUse)),
             tokenB.decimals,
           ),
         );
@@ -324,7 +336,7 @@ describe("FeeService", () => {
       if (c) {
         const expectedC = formatNumber(
           parseBalanceUnits(
-            (useC + tokenC.fee) * BigInt(maxUse) + tokenC.fee,
+            useC * BigInt(maxUse) + tokenC.fee * (2n + BigInt(maxUse)),
             tokenC.decimals,
           ),
         );
@@ -337,34 +349,17 @@ describe("FeeService", () => {
       }
     });
 
-    it("should falls back to ICP values when token missing and does not add link fee if ICP token not present", () => {
+    it("should return error when token is missing", () => {
       const unknownAddress = "unknown-token-address";
-      const pairs = svc.forecastLinkCreationFees(
+      const pairsResult = svc.forecastLinkCreationFees(
         [{ address: unknownAddress, useAmount: 100_000_000n }],
         1,
         {},
       );
-
-      // No ICP token in tokens map -> only the single asset (fallback) should be present
-      expect(pairs).toHaveLength(1);
-
-      const p = pairs[0];
-      expect(p.asset.symbol).toBe("N/A");
-
-      // Formula: (useAmount + ledgerFee) * maxUse + ledgerFee
-      // maxUse=1: (100_000_000n + 10_000n) * 1 + 10_000n = 100_020_000n
-      const expectedTotal = parseBalanceUnits(
-        (100_000_000n + 10_000n) * 1n + 10_000n,
-        8,
+      expect(pairsResult.isErr()).toBe(true);
+      expect(pairsResult.isErr() && pairsResult.error.message).toBe(
+        `Token not found for address ${unknownAddress}`,
       );
-      expect(p.asset.amount).toBe(expectedTotal.toString());
-      expect(p.fee).toBeDefined();
-      if (p.fee) {
-        expect(p.fee.amountFormattedStr).toBe(
-          parseBalanceUnits(10_000n, 8).toString(),
-        );
-        expect(p.fee.symbol).toBe("N/A");
-      }
     });
   });
 
@@ -428,6 +423,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );
@@ -448,13 +444,15 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           to.getPrincipal().toText(),
         );
 
         expect(result).toHaveLength(1);
         expect(result[0].asset.direction).toBe(FlowDirection.INCOMING);
-        expect(result[0].fee).toBeUndefined();
+        expect(result[0].fee).toBeDefined();
+        expect(result[0].fee?.amount).toBe(0n);
       });
 
       it("maps CREATE_LINK with TRANSFER_WALLET_TO_TREASURY as CREATE_LINK_FEE", () => {
@@ -467,6 +465,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );
@@ -486,6 +485,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );
@@ -505,6 +505,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );
@@ -529,6 +530,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );
@@ -540,7 +542,7 @@ describe("FeeService", () => {
     });
 
     describe("with token not found in map", () => {
-      it("falls back to N/A symbol and default decimals", () => {
+      it("throws when token is not found", () => {
         const intent = createIntentWithPayload(
           "id-8",
           IntentTask.TRANSFER_WALLET_TO_LINK,
@@ -548,18 +550,12 @@ describe("FeeService", () => {
         );
         const action = createMockAction(ActionType.SEND, [intent]);
 
-        const result = svc.buildFromAction(
-          action,
-          {},
-          from.getPrincipal().toText(),
-        );
-
-        expect(result).toHaveLength(1);
-        expect(result[0].asset.symbol).toBe("N/A");
-        expect(result[0].fee?.symbol).toBe("N/A");
+        expect(() =>
+          svc.buildFromAction(action, 1, {}, from.getPrincipal().toText()),
+        ).toThrow(`Token not found for address ${tokenAddress}`);
       });
 
-      it("uses ICP_LEDGER_FEE as fallback", () => {
+      it("throws when token is not found for fallback fee case", () => {
         const intent = createIntentWithPayload(
           "id-9",
           IntentTask.TRANSFER_WALLET_TO_LINK,
@@ -567,15 +563,9 @@ describe("FeeService", () => {
         );
         const action = createMockAction(ActionType.SEND, [intent]);
 
-        const result = svc.buildFromAction(
-          action,
-          {},
-          from.getPrincipal().toText(),
-        );
-
-        // For SEND: amount = payload + fee = 100_000_000 + ICP_LEDGER_FEE
-        expect(result[0].asset.amount).toBe(100_000_000n + ICP_LEDGER_FEE);
-        expect(result[0].fee?.amount).toBe(ICP_LEDGER_FEE);
+        expect(() =>
+          svc.buildFromAction(action, 1, {}, from.getPrincipal().toText()),
+        ).toThrow(`Token not found for address ${tokenAddress}`);
       });
     });
 
@@ -588,6 +578,7 @@ describe("FeeService", () => {
 
         const result = svc.buildFromAction(
           action,
+          1,
           tokensMap,
           from.getPrincipal().toText(),
         );

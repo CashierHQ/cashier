@@ -1,22 +1,22 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
   import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
-  import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: (payload?: {
       link_type: string;
       BE_link_id: string;
@@ -24,7 +24,7 @@
   } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived(userLink.linkDetail?.link?.asset_info?.[0]);
+  const firstAsset = $derived(userLink.link?.asset_info?.[0]);
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -58,50 +58,46 @@
 
   // Get airdrop progress info
   const claimedCount = $derived(
-    userLink.linkDetail?.link
-      ? Number(userLink.linkDetail.link.link_use_action_counter ?? 0n)
+    userLink.link?.link_use_action_counter
+      ? Number(userLink.link.link_use_action_counter ?? 0n)
       : undefined,
   );
 
   const totalCount = $derived(
-    userLink.linkDetail?.link
-      ? Number(userLink.linkDetail.link.link_use_action_max_count ?? 1n)
+    userLink.link?.link_use_action_max_count
+      ? Number(userLink.link.link_use_action_max_count ?? 1n)
       : undefined,
   );
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 
   function handleContinueLoggedIn() {
-    const link = userLink.linkDetail?.link;
+    const link = userLink.link;
     if (link) {
       trackEvent(AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_IN, {
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
     }
     userLink.goNext();
   }
 
   function handleContinueLoggedOut() {
-    const link = userLink.linkDetail?.link;
+    const link = userLink.link;
     if (link) {
       trackEvent(AnalyticsEvent.USE_LANDING_CONTINUE_LOGGED_OUT, {
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
       openLoginModal?.({
         link_type: link.link_type,
-        BE_link_id: userLink.linkDetail?.id ?? "",
+        BE_link_id: userLink.link?.id ?? "",
       });
     } else {
       openLoginModal?.();
     }
   }
 </script>
-
-{#if userLink.linkDetail?.query.isLoading}
-  {locale.t("links.linkForm.useLink.loading")}
-{/if}
 
 {#if displayInfo}
   <TokenRewardDisplay

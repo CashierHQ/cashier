@@ -7,14 +7,14 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        common::Asset,
+        asset::v1::Asset,
         intent::v1::{CreateIcrc1WalletToLinkIntentArgs, Intent},
         link::v1::Link,
     },
 };
 use cashier_common::utils::get_link_account;
 use transaction_manager::{
-    intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
+    intents::v2::transfer_wallet_to_link::TransferWalletToLinkIntent,
     utils::calculator::calculate_link_balance_map,
 };
 
@@ -70,7 +70,7 @@ impl SendAction {
             &link.asset_info,
             &token_fee_map,
             link.link_use_action_max_count,
-        );
+        )?;
 
         // intents
         let deposit_intents = link

@@ -1,3 +1,5 @@
+pub mod ckbtc;
+
 // Ledger Principals
 pub const ICP_PRINCIPAL: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 pub const CK_BTC_PRINCIPAL: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
@@ -29,4 +31,8 @@ pub const NFT3_NAME: &str = "Cool NFT #3";
 pub const NFT3_DESCRIPTION: &str = "This is a really cool NFT!";
 pub const NFT3_IMAGE: &str = "https://example.com/nft3.png";
 
-pub mod ckbtc;
+use candid::Principal;
+
+pub fn treasury_principal() -> Principal {
+    Principal::from_text(FEE_TREASURY_PRINCIPAL).unwrap()
+}

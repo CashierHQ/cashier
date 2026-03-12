@@ -1,7 +1,7 @@
 import type { AssetInfo } from "$modules/links/types/link/asset";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
 export interface FirstAssetDisplayInfo {
   tokenAddress: string;
@@ -53,15 +53,9 @@ export function getFirstAssetDisplayInfo(
   const symbol = walletToken?.symbol ?? tokenMetaSymbol ?? "TOKEN";
 
   // Get decimals (prefer walletToken, then tokenMeta, then default to 8)
-  // tokenMeta.decimals is an array ([] | [number]), so we take the first element
   const decimals =
     walletToken?.decimals ??
-    (Array.isArray(tokenMeta?.decimals) &&
-    tokenMeta.decimals.length > 0 &&
-    typeof tokenMeta.decimals[0] === "number"
-      ? tokenMeta.decimals[0]
-      : null) ??
-    8;
+    (tokenMeta && tokenMeta.decimals > 0 ? tokenMeta.decimals : 8);
 
   // Get amount as number (will be formatted in component with proper decimals)
   const amount = parseBalanceUnits(

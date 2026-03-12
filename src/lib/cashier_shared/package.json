@@ -1,0 +1,47 @@
+{
+	"name": "@cashier/shared",
+	"version": "0.1.0",
+	"description": "Shared types, configs, and utilities for Cashier Protocol (TypeScript + Rust)",
+	"type": "module",
+	"main": "./generated/ts/index.js",
+	"types": "./generated/ts/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./generated/ts/index.d.ts",
+			"import": "./generated/ts/index.js"
+		},
+		"./types": {
+			"types": "./generated/ts/types.d.ts",
+			"import": "./generated/ts/types.js"
+		},
+		"./functions": {
+			"types": "./generated/ts/functions.d.ts",
+			"import": "./generated/ts/functions.js"
+		}
+	},
+	"files": [
+		"generated/ts"
+	],
+	"scripts": {
+		"generate": "tsx scripts/generate.ts",
+		"generate:types": "tsx scripts/generate.ts --types-only",
+		"generate:functions": "tsx scripts/generate.ts --functions-only",
+		"build": "npm run generate && tsc",
+		"clean": "rm -rf generated/ts generated/rust",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:rust": "cargo test -p cashier_shared",
+		"test:all": "npm test && npm run test:rust"
+	},
+  "devDependencies": {
+    "@dfinity/principal": "^2.4.0",
+    "@types/node": "^22.0.0",
+    "ts-morph": "^27.0.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.0"
+  },
+  "peerDependencies": {
+    "@dfinity/principal": "^2.4.0"
+  }
+}

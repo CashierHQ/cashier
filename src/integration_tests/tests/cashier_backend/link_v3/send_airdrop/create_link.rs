@@ -1,0 +1,303 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use candid::{Decode, Nat, Principal};
+use cashier_shared::types::{AddressType as AddressTypeShared, LinkType as LinkTypeShared};
+use ic_mple_client::CanisterClientError;
+use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
+use std::sync::Arc;
+
+use crate::{
+    cashier_backend::link_v3::send_airdrop::fixture::AirdropLinkV3Fixture,
+    constant::{CK_BTC_PRINCIPAL, CKBTC_ICRC_TOKEN, ICP_PRINCIPAL, ICP_TOKEN},
+    utils::{principal::TestUser, with_pocket_ic_context},
+};
+
+#[tokio::test]
+async fn it_should_error_create_icp_token_airdrop_link_v3_if_caller_anonymous() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+        let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
+        let airdrop_amount = Nat::from(1_000_000u64);
+        let max_use_count = 10;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let test_fixture = AirdropLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            airdrop_amount,
+            max_use_count,
+            token_fee.clone(),
+            token_fee.clone(),
+        )
+        .await;
+        let input = test_fixture.airdrop_link_input().unwrap();
+
+        // Act
+        let result = be_client.user_create_link_v3(input).await;
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
+        } else {
+            panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_icp_token_airdrop_link_v3_successfully() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
+        let airdrop_amount = Nat::from(1_000_000u64);
+        let max_use_count = 10;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let token_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let mut test_fixture = AirdropLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            airdrop_amount.clone(),
+            max_use_count,
+            token_fee.clone(),
+            token_fee.clone(),
+        )
+        .await;
+
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+
+        // Act
+        test_fixture
+            .link_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
+
+        // Assert
+        let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(
+            caller_balance_before, initial_balance,
+            "Caller ICP balance does not match"
+        );
+
+        // Act
+        let create_link_result = test_fixture.create_link().await;
+
+        // Assert
+        let link = create_link_result.link;
+        let action = create_link_result.action;
+
+        assert!(!link.id.is_empty());
+        assert_eq!(link.link_type, LinkTypeShared::SendAirdrop);
+        assert_eq!(link.max_use, max_use_count);
+        assert_eq!(action.intents.len(), 2);
+
+        // Assert Fee Intent
+        let fee_intent = action
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.source_address_type == AddressTypeShared::Creator
+                    && intent.dest_address_type == AddressTypeShared::Treasury
+            })
+            .expect("TransferWalletToTreasury intent not found");
+        assert_eq!(
+            fee_intent.asset.address,
+            Principal::from_text(ICP_PRINCIPAL).unwrap()
+        );
+
+        // Assert Asset Intent
+        let asset_intent = action
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.source_address_type == AddressTypeShared::Creator
+                    && intent.dest_address_type == AddressTypeShared::Link
+            })
+            .expect("TransferWalletToLink intent not found");
+        assert_eq!(
+            asset_intent.asset.address,
+            Principal::from_text(ICP_PRINCIPAL).unwrap()
+        );
+        assert_eq!(asset_intent.amount, airdrop_amount.clone());
+
+        // Assert ICRC-112 requests
+        assert!(create_link_result.icrc112_requests.is_some());
+        let icrc112_requests = create_link_result.icrc112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+
+        assert_eq!(requests.len(), 1);
+        for req in requests {
+            match req.method.as_str() {
+                "icrc2_approve" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
+
+                    let approve_args: ApproveArgs =
+                        Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
+
+                    assert_eq!(
+                        approve_args.spender,
+                        Account {
+                            owner: ctx.cashier_backend_principal,
+                            subaccount: None,
+                        }
+                    );
+                    assert!(approve_args.amount > airdrop_amount.clone());
+                }
+                _ => panic!("Unexpected method in ICRC-112 request"),
+            }
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_icrc_token_airdrop_link_v3_successfully() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
+        let airdrop_amount = Nat::from(5_000_000u64);
+        let max_use_count = 10;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let token_fee = ckbtc_ledger_client.fee().await.unwrap_or_default();
+        let mut test_fixture = AirdropLinkV3Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            token,
+            airdrop_amount.clone(),
+            max_use_count,
+            token_fee.clone(),
+            icp_fee.clone(),
+        )
+        .await;
+
+        let icp_initial_balance = Nat::from(1_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+
+        // Act
+        test_fixture
+            .link_fixture
+            .airdrop_icp(icp_initial_balance.clone(), &caller)
+            .await;
+        test_fixture
+            .link_fixture
+            .airdrop_icrc(CKBTC_ICRC_TOKEN, ckbtc_initial_balance.clone(), &caller)
+            .await;
+
+        // Assert
+        let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(icp_balance_before, icp_initial_balance);
+        let ckbtc_balance_before = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        assert_eq!(ckbtc_balance_before, ckbtc_initial_balance);
+
+        // Act
+        let create_link_result = test_fixture.create_link().await;
+
+        // Assert
+        let link = create_link_result.link;
+        let action = create_link_result.action;
+
+        assert!(!link.id.is_empty());
+        assert_eq!(link.link_type, LinkTypeShared::SendAirdrop);
+        assert_eq!(link.max_use, max_use_count);
+
+        // Assert Fee Intent
+        let fee_intent = action
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.source_address_type == AddressTypeShared::Creator
+                    && intent.dest_address_type == AddressTypeShared::Treasury
+            })
+            .expect("TransferWalletToTreasury intent not found");
+        assert_eq!(
+            fee_intent.asset.address,
+            Principal::from_text(ICP_PRINCIPAL).unwrap()
+        );
+
+        // Assert Asset Intent
+        let asset_intent = action
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.source_address_type == AddressTypeShared::Creator
+                    && intent.dest_address_type == AddressTypeShared::Link
+            })
+            .expect("TransferWalletToLink intent not found");
+        assert_eq!(
+            asset_intent.asset.address,
+            Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
+        );
+        assert_eq!(asset_intent.amount, airdrop_amount.clone());
+
+        // Assert ICRC-112 requests
+        assert!(create_link_result.icrc112_requests.is_some());
+        let icrc112_requests = create_link_result.icrc112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+
+        assert_eq!(requests.len(), 2);
+        for req in requests {
+            match req.method.as_str() {
+                "icrc2_approve" => {
+                    assert!(
+                        req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap()
+                            || req.canister_id == Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
+                    );
+
+                    let approve_args: ApproveArgs =
+                        Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
+
+                    assert_eq!(
+                        approve_args.spender,
+                        Account {
+                            owner: ctx.cashier_backend_principal,
+                            subaccount: None,
+                        }
+                    );
+
+                    if req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap() {
+                        assert!(approve_args.amount > icp_fee.clone());
+                    } else {
+                        assert!(approve_args.amount > airdrop_amount.clone());
+                    }
+                }
+                _ => panic!("Unexpected method in ICRC-112 request"),
+            }
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

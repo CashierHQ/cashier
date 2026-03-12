@@ -1,8 +1,8 @@
 import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
 import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
@@ -11,11 +11,11 @@ import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
-import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import {
   AssetProcessState,
   AssetProcessStateMapper,
 } from "$modules/transactionCart/types/txCart";
+import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import type { Signer } from "@slide-computer/signer";
 
 /**
@@ -62,8 +62,12 @@ export class LinkTxCartStore implements TxCartStore {
 
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
+
+    const maxUse = this.#source.maxUse ?? 1;
+
     this.#assetAndFeeList = feeService.buildFromAction(
       this.#source.action,
+      maxUse,
       tokens,
       walletPrincipal,
     );
@@ -137,8 +141,21 @@ export class LinkTxCartStore implements TxCartStore {
   }
 
   /**
+   * Set assets to SIGNED_PENDING (semi-transparent checkmark) after ICRC-112 succeeds.
+   */
+  setStatesToSignedPending(): void {
+    this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
+      ...item,
+      asset: {
+        ...item.asset,
+        state: AssetProcessState.SIGNED_PENDING,
+      },
+    }));
+  }
+
+  /**
    * Execute action transaction (ICRC-112 batch + processAction).
-   * Transitions asset states: CREATED → PROCESSING → SUCCESS|FAILED
+   * Transitions: CREATED → PROCESSING → [SIGNED_PENDING after ICRC-112] → SUCCEED after backend
    * @returns ProcessActionResult from handleProcessAction
    */
   async execute(): Promise<ProcessActionResult> {
@@ -158,17 +175,32 @@ export class LinkTxCartStore implements TxCartStore {
 
     try {
       if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
-        await this.#icrc112Service.sendBatchRequest(
+        const icrcResult = await this.#icrc112Service.sendBatchRequest(
           action.icrc_112_requests,
           authState.account!.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );
+        if (!icrcResult.isSuccess) {
+          this.setSourceState(IntentState.FAIL);
+          throw new Error(
+            icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed",
+          );
+        }
+        // TODO: Show semi-transparent green checkmarks (ICRC-112 signed successfully)
+        //this.setStatesToSignedPending();
       }
 
       const result = await handleProcessAction();
 
-      // Sync asset states from updated action (mirrors backend state)
-      this.syncStatesFromAction(result.action);
+      // When backend reports is_success: true, show full green checkmarks
+      if (result.isSuccess) {
+        this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
+          ...item,
+          asset: { ...item.asset, state: AssetProcessState.SUCCEED },
+        }));
+      } else if (result.action) {
+        this.syncStatesFromAction(result.action);
+      }
 
       return result;
     } catch (e) {

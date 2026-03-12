@@ -81,3 +81,71 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::{Repositories, tests::TestRepositories};
+
+    fn fixture_of_settings(inspect_message_enabled: bool) -> Settings {
+        Settings {
+            inspect_message_enabled,
+        }
+    }
+
+    #[test]
+    fn it_should_fail_change_settings_due_to_no_update_call() {
+        // Arrange
+        let repo = TestRepositories::new().settings();
+
+        // Act
+        let is_disabled = repo.read(|settings| !settings.inspect_message_enabled);
+
+        // Assert
+        assert!(!is_disabled);
+    }
+
+    #[test]
+    fn it_should_succeed_read_default_settings() {
+        // Arrange
+        let repo = TestRepositories::new().settings();
+
+        // Act
+        let settings = repo.read(Clone::clone);
+
+        // Assert
+        assert_eq!(settings, fixture_of_settings(true));
+    }
+
+    #[test]
+    fn it_should_succeed_update_settings() {
+        // Arrange
+        let mut repo = TestRepositories::new().settings();
+
+        // Act
+        repo.update(|settings| {
+            settings.inspect_message_enabled = false;
+        });
+        let settings = repo.read(Clone::clone);
+
+        // Assert
+        assert_eq!(settings, fixture_of_settings(false));
+    }
+
+    #[test]
+    fn it_should_succeed_return_callback_result_from_update() {
+        // Arrange
+        let mut repo = TestRepositories::new().settings();
+
+        // Act
+        let previous_value = repo.update(|settings| {
+            let current = settings.inspect_message_enabled;
+            settings.inspect_message_enabled = false;
+            current
+        });
+
+        // Assert
+        assert!(previous_value);
+        assert_eq!(repo.read(Clone::clone), fixture_of_settings(false));
+    }
+}

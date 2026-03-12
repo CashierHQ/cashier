@@ -19,7 +19,7 @@ describe("calculateDisplayAmounts", () => {
   });
 
   describe("for AIRDROP links with maxUse > 1", () => {
-    it("should multiply token amounts by maxUse", () => {
+    it("should keep token amounts unchanged", () => {
       const assets = [
         createMockAsset("0xtoken1", "100.5", "50.25"),
         createMockAsset("0xtoken2", "200", "100"),
@@ -28,11 +28,11 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      expect(result.amounts.get("0xtoken1")).toBe("301.5");
-      expect(result.amounts.get("0xtoken2")).toBe("600");
+      expect(result.amounts.get("0xtoken1")).toBe("100.5");
+      expect(result.amounts.get("0xtoken2")).toBe("200");
     });
 
-    it("should multiply USD amounts by maxUse", () => {
+    it("should keep USD amounts unchanged", () => {
       const assets = [
         createMockAsset("0xtoken1", "100", "50.5"),
         createMockAsset("0xtoken2", "200", "100.25"),
@@ -41,8 +41,8 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      expect(result.usdAmounts.get("0xtoken1")).toBe("101");
-      expect(result.usdAmounts.get("0xtoken2")).toBe("200.5");
+      expect(result.usdAmounts.get("0xtoken1")).toBe("50.5");
+      expect(result.usdAmounts.get("0xtoken2")).toBe("100.25");
     });
 
     it("should handle decimal amounts correctly", () => {
@@ -51,11 +51,9 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      expect(result.amounts.get("0xtoken1")).toBe("0.61728");
-      // Floating point precision may cause slight differences
+      expect(result.amounts.get("0xtoken1")).toBe("0.123456");
       const usdValue = result.usdAmounts.get("0xtoken1");
-      expect(usdValue).toBeDefined();
-      expect(parseFloat(usdValue!)).toBeCloseTo(0.30864, 5);
+      expect(usdValue).toBe("0.061728");
     });
 
     it("should handle formatted amounts with commas", () => {
@@ -64,9 +62,8 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      // formatNumber adds commas for numbers >= 1000
-      expect(result.amounts.get("0xtoken1")).toBe("2,001");
-      expect(result.usdAmounts.get("0xtoken1")).toBe("1000.5");
+      expect(result.amounts.get("0xtoken1")).toBe("1,000.5");
+      expect(result.usdAmounts.get("0xtoken1")).toBe("500.25");
     });
 
     it("should preserve original amount if parsing fails", () => {
@@ -169,10 +166,10 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      expect(result.amounts.get("0xtoken1")).toBe("200");
+      expect(result.amounts.get("0xtoken1")).toBe("100");
       expect(result.usdAmounts.has("0xtoken1")).toBe(false);
-      expect(result.amounts.get("0xtoken2")).toBe("400");
-      expect(result.usdAmounts.get("0xtoken2")).toBe("200");
+      expect(result.amounts.get("0xtoken2")).toBe("200");
+      expect(result.usdAmounts.get("0xtoken2")).toBe("100");
     });
 
     it("should handle zero amounts", () => {
@@ -191,8 +188,8 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      expect(result.amounts.get("0xtoken1")).toBe("-200");
-      expect(result.usdAmounts.get("0xtoken1")).toBe("-100");
+      expect(result.amounts.get("0xtoken1")).toBe("-100");
+      expect(result.usdAmounts.get("0xtoken1")).toBe("-50");
     });
 
     it("should handle very large maxUse values", () => {
@@ -201,9 +198,8 @@ describe("calculateDisplayAmounts", () => {
 
       const result = calculateDisplayAmounts(assets, LinkType.AIRDROP, maxUse);
 
-      // formatNumber adds commas for numbers >= 1000
-      expect(result.amounts.get("0xtoken1")).toBe("1,000");
-      expect(result.usdAmounts.get("0xtoken1")).toBe("500");
+      expect(result.amounts.get("0xtoken1")).toBe("1");
+      expect(result.usdAmounts.get("0xtoken1")).toBe("0.5");
     });
   });
 });

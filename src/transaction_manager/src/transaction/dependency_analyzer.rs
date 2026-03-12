@@ -5,7 +5,10 @@ use crate::utils::topological_sort::kahn_topological_sort;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::graph::Graph,
-    repository::{intent::v1::Intent, transaction::v1::Transaction},
+    repository::{
+        intent::{v1::Intent, v3::IntentV3},
+        transaction::v1::Transaction,
+    },
 };
 use std::collections::{HashMap, HashSet};
 
@@ -74,6 +77,68 @@ impl DependencyAnalyzer {
         Ok(updated_transactions)
     }
 
+    /// Analyze and fill transaction dependencies based on intent dependencies for V3
+    /// # Arguments
+    /// * `intents` - A reference to a vector of Intents
+    /// * `intent_txs_map` - A reference to a map from intent ID to its associated Transactions
+    /// # Returns
+    /// * `Result<Vec<Transaction>, CanisterError>` - A result containing the updated Transactions or an error
+    pub fn analyze_and_fill_transaction_dependencies_v3(
+        &self,
+        intents: &[IntentV3],
+        intent_txs_map: &HashMap<String, Vec<Transaction>>,
+    ) -> Result<Vec<Transaction>, CanisterError> {
+        self.check_circular_intents_dependencies_v3(intents)?;
+
+        let mut updated_transactions = Vec::<Transaction>::new();
+
+        // build intent dependency map
+        let intent_dependency_map: HashMap<String, Vec<String>> = intents
+            .iter()
+            .map(|intent| (intent.id.clone(), intent.dependencies.clone()))
+            .collect();
+
+        // build transaction dependency map
+        let mut tx_dependency_map = HashMap::<String, HashSet<String>>::new();
+        for (intent_id, txs) in intent_txs_map.iter() {
+            let mut dependent_txs = HashSet::<String>::new();
+            if let Some(dependent_intents) = intent_dependency_map.get(intent_id) {
+                for dep_intent_id in dependent_intents.iter() {
+                    if let Some(dep_txs) = intent_txs_map.get(dep_intent_id) {
+                        for tx in dep_txs.iter() {
+                            dependent_txs.insert(tx.id.clone());
+                        }
+                    }
+                }
+            }
+
+            for tx in txs.iter() {
+                let deps = tx_dependency_map.entry(tx.id.clone()).or_default();
+
+                // Add intent-derived dependencies
+                deps.extend(dependent_txs.iter().cloned());
+
+                // Preserve existing transaction dependencies (if any)
+                if let Some(ref existing_deps) = tx.dependency {
+                    deps.extend(existing_deps.iter().cloned());
+                }
+            }
+        }
+
+        // update transactions with dependencies
+        for (_intent_id, txs) in intent_txs_map.iter() {
+            for mut tx in txs.iter().cloned() {
+                if let Some(dependencies) = tx_dependency_map.get(&tx.id) {
+                    tx.dependency = Some(dependencies.iter().cloned().collect());
+                }
+                updated_transactions.push(tx);
+            }
+        }
+
+        self.check_circular_transactions_dependencies(&updated_transactions)?;
+        Ok(updated_transactions)
+    }
+
     /// Check for circular dependencies among intents using topological sort
     /// # Arguments
     /// * `intents` - A reference to a vector of Intents
@@ -86,6 +151,20 @@ impl DependencyAnalyzer {
         let graph: Graph = intents.to_vec().into();
         let _sorted_levels = kahn_topological_sort(&graph)?;
 
+        Ok(())
+    }
+
+    /// Check for circular dependencies among intents using topological sort for V3
+    /// # Arguments
+    /// * `intents` - A reference to a vector of Intents
+    /// # Returns
+    /// * `Result<(), CanisterError>` - Ok if no cycles, Err if cycles detected
+    pub fn check_circular_intents_dependencies_v3(
+        &self,
+        intents: &[IntentV3],
+    ) -> Result<(), CanisterError> {
+        let graph: Graph = intents.to_vec().into();
+        let _sorted_levels = kahn_topological_sort(&graph)?;
         Ok(())
     }
 
@@ -109,7 +188,38 @@ impl DependencyAnalyzer {
 mod tests {
     use super::*;
     use crate::utils::test_utils::{generate_mock_intent, generate_mock_transaction};
+    use candid::{Nat, Principal};
+    use cashier_backend_types::repository::{
+        asset::v3::AssetV3,
+        common::AddressTypeV3,
+        intent::v1::IntentState,
+        intent::v3::{IntentTypeV3, IntentV3},
+    };
     use std::collections::HashMap;
+
+    fn fixture_intent_v3(id: &str, dependencies: Vec<&str>) -> IntentV3 {
+        IntentV3 {
+            id: id.to_string(),
+            label: "mock_intent_v3".to_string(),
+            intent_type: IntentTypeV3::Send,
+            asset: AssetV3::default(),
+            amount: Nat::from(100u64),
+            total_amount: Some(Nat::from(100u64)),
+            network_fee: None,
+            user_fee: None,
+            source_address: Principal::anonymous(),
+            source_account: None,
+            source_address_type: AddressTypeV3::Creator,
+            dest_address: Principal::anonymous(),
+            dest_account: None,
+            dest_address_type: AddressTypeV3::Link,
+            intent_tx_data: None,
+            dependencies: dependencies.into_iter().map(ToString::to_string).collect(),
+            action_id: "mock_action_id".to_string(),
+            state: IntentState::Created,
+            created_at: 0,
+        }
+    }
 
     #[test]
     fn test_analyze_and_fill_transaction_dependencies_simple() {
@@ -244,6 +354,85 @@ mod tests {
                 .as_ref()
                 .map(Vec::is_empty)
                 .unwrap_or(true)
+        );
+    }
+
+    #[test]
+    fn it_should_fail_check_circular_intents_dependencies_v3_due_to_circular_dependency() {
+        // Arrange
+        let analyzer = DependencyAnalyzer;
+        let intent_a = fixture_intent_v3("A", vec!["B"]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
+        let intents = vec![intent_a, intent_b];
+
+        // Act
+        let result = analyzer.check_circular_intents_dependencies_v3(&intents);
+
+        // Assert
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_succeed_check_circular_intents_dependencies_v3() {
+        // Arrange
+        let analyzer = DependencyAnalyzer;
+        let intent_a = fixture_intent_v3("A", vec![]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
+        let intents = vec![intent_a, intent_b];
+
+        // Act
+        let result = analyzer.check_circular_intents_dependencies_v3(&intents);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_fail_analyze_and_fill_transaction_dependencies_v3_due_to_circular_intent_dependency()
+     {
+        // Arrange
+        let analyzer = DependencyAnalyzer;
+        let intent_a = fixture_intent_v3("A", vec!["B"]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
+        let intents = vec![intent_a, intent_b];
+        let intent_txs_map: HashMap<String, Vec<Transaction>> = HashMap::new();
+
+        // Act
+        let result =
+            analyzer.analyze_and_fill_transaction_dependencies_v3(&intents, &intent_txs_map);
+
+        // Assert
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_succeed_analyze_and_fill_transaction_dependencies_v3() {
+        // Arrange
+        let analyzer = DependencyAnalyzer;
+        let intent_a = fixture_intent_v3("A", vec![]);
+        let intent_b = fixture_intent_v3("B", vec!["A"]);
+        let intents = vec![intent_a, intent_b];
+
+        let tx_a = generate_mock_transaction("tx_a", vec![]);
+        let tx_b = generate_mock_transaction("tx_b", vec![]);
+
+        let mut intent_txs_map = HashMap::new();
+        intent_txs_map.insert("A".to_string(), vec![tx_a]);
+        intent_txs_map.insert("B".to_string(), vec![tx_b]);
+
+        // Act
+        let result = analyzer
+            .analyze_and_fill_transaction_dependencies_v3(&intents, &intent_txs_map)
+            .unwrap();
+
+        // Assert
+        let tx_b_result = result.iter().find(|tx| tx.id == "tx_b").unwrap();
+        assert!(
+            tx_b_result
+                .dependency
+                .as_ref()
+                .unwrap()
+                .contains(&"tx_a".to_string())
         );
     }
 }

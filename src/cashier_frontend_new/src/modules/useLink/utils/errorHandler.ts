@@ -1,4 +1,4 @@
-import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import type { ErrorData } from "$modules/useLink/types/errorData";

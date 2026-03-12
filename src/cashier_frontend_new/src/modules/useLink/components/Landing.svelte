@@ -1,15 +1,15 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
   import AirdropLanding from "$modules/useLink/components/airdrop/Landing.svelte";
+  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
   import BasketLanding from "$modules/useLink/components/tokenbasket/Landing.svelte";
+  import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
 
   const {
     userLink,
     openLoginModal,
   }: {
-    userLink: UserLinkStore;
+    userLink: GenericUserLinkStoreVM;
     openLoginModal?: (payload?: {
       link_type: string;
       BE_link_id: string;
@@ -17,7 +17,7 @@
   } = $props();
 
   const linkType = $derived.by(() => {
-    return userLink.linkDetail?.link?.link_type;
+    return userLink.link?.link_type;
   });
 </script>
 
@@ -33,6 +33,7 @@
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketLanding {userLink} {openLoginModal} />
   {/if}
+
   <!-- TODO: Other link types will be added here -->
   <!-- 
   {#if linkType === LinkType.RECEIVE_PAYMENT}

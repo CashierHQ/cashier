@@ -1,8 +1,9 @@
-import { Principal } from "@dfinity/principal";
 import type { LinkDto as BackendLinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { LinkTypeMapper, type LinkTypeValue } from "./linkType";
+import type { Link as SharedLink } from "$shared";
+import { Principal } from "@dfinity/principal";
 import { Asset, AssetInfo, AssetInfoMapper } from "./asset";
 import { LinkStateMapper, type LinkStateValue } from "./linkState";
+import { LinkTypeMapper, type LinkTypeValue } from "./linkType";
 
 export class Link {
   id: string;
@@ -82,6 +83,20 @@ export class LinkMapper {
       link_use_action_max_count: link.link_use_action_max_count,
       link_use_action_counter: link.link_use_action_counter,
     };
+  }
+
+  static fromSharedLink(link: SharedLink): Link {
+    return new Link(
+      link.id,
+      link.title,
+      link.creator,
+      (link.asset_info || []).map((a) => AssetInfoMapper.fromSharedType(a)),
+      LinkTypeMapper.fromSharedLinkType(link.link_type),
+      link.created_at ?? 0n,
+      LinkStateMapper.fromSharedLinkState(link.link_state),
+      link.max_use,
+      link.use_count,
+    );
   }
 
   /**

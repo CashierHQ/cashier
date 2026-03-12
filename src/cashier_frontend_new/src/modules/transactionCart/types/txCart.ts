@@ -2,6 +2,7 @@ import { assertUnreachable } from "$lib/rsMatch";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
+import { IntentState as SharedIntentState } from "$shared";
 import type { FlowDirection } from "./transactionSource";
 
 /**
@@ -11,6 +12,8 @@ import type { FlowDirection } from "./transactionSource";
 export enum AssetProcessState {
   CREATED = "CREATED",
   PROCESSING = "PROCESSING",
+  /** ICRC-112 signed successfully, waiting for backend to process */
+  SIGNED_PENDING = "SIGNED_PENDING",
   SUCCEED = "SUCCEED",
   FAILED = "FAILED",
 }
@@ -42,6 +45,21 @@ export class AssetProcessStateMapper {
       case IntentState.SUCCESS:
         return AssetProcessState.SUCCEED;
       case IntentState.FAIL:
+        return AssetProcessState.FAILED;
+      default:
+        assertUnreachable(state);
+    }
+  }
+
+  static fromSharedIntentState(state: SharedIntentState): AssetProcessState {
+    switch (state) {
+      case SharedIntentState.Created:
+        return AssetProcessState.CREATED;
+      case SharedIntentState.Processing:
+        return AssetProcessState.PROCESSING;
+      case SharedIntentState.Success:
+        return AssetProcessState.SUCCEED;
+      case SharedIntentState.Fail:
         return AssetProcessState.FAILED;
       default:
         assertUnreachable(state);
