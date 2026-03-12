@@ -56,8 +56,6 @@ class BridgeStore {
           BRIDGE_PAGE_SIZE,
         );
 
-        console.log("fetched bridge transactions:", bridgeTxs);
-
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
           this.hasMore = false;
         }
@@ -586,8 +584,6 @@ class BridgeStore {
       updatedBlockTimestamp,
       shouldUpdateConfirmations ? updatedConfirmingBlocks : [],
     );
-
-    console.log("updated transaction result:", updateResult);
 
     if (updateResult.isOk()) {
       this.#bridgeTxQuery.refresh();
