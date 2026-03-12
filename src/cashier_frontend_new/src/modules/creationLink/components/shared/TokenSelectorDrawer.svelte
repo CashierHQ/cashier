@@ -7,6 +7,7 @@
     DrawerClose,
   } from "$lib/shadcn/components/ui/drawer";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { locale } from "$lib/i18n";
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
@@ -32,6 +33,33 @@
   let searchQuery = $state("");
   let failedImageLoads = new SvelteSet<string>();
 
+  function matchesTokenQuery(
+    token: TokenWithPriceAndBalance,
+    query: string,
+  ) {
+    const normalizedQuery = query.toLowerCase().trim();
+    const symbol = token.symbol.toLowerCase();
+    const name = token.name.toLowerCase();
+
+    if (
+      symbol.includes(normalizedQuery) ||
+      name.includes(normalizedQuery)
+    ) {
+      return true;
+    }
+
+    const isBitcoinLikeToken =
+      symbol.includes("btc") ||
+      name.includes("btc") ||
+      name.includes("chainkey");
+
+    if (!isBitcoinLikeToken) {
+      return false;
+    }
+
+    return normalizedQuery === "btc" || normalizedQuery === "ckbtc";
+  }
+
   const filteredTokens = $derived.by(() => {
     if (!walletStore.query.data) return [];
 
@@ -46,9 +74,7 @@
 
     const query = searchQuery.toLowerCase().trim();
     return baseTokens.filter(
-      (token) =>
-        token.symbol.toLowerCase().includes(query) ||
-        token.name.toLowerCase().includes(query),
+      (token) => matchesTokenQuery(token, query),
     );
   });
 
