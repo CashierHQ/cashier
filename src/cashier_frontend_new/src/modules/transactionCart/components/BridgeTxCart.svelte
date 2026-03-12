@@ -189,7 +189,7 @@
           <BridgeConfirmation {confirmations} {minConfirmations} />
         {/if}
 
-        {#if totalFeesUsd > 0}
+        {#if feesBreakdown.length > 0}
           <FeesBreakdownSection
             {totalFeesUsd}
             onBreakdownClick={handleFeeBreakdownClick}
@@ -224,4 +224,5 @@
   bind:open={showFeeInfoDrawer}
   onBack={handleFeeInfoDrawerBack}
   {feesBreakdown}
+  prioritizeNetworkFees={false}
 />
