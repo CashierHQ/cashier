@@ -1,27 +1,42 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { authState } from "$modules/auth/state/auth.svelte";
+  import { locale } from "$lib/i18n";
   import {
-    trackEvent,
     AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
-  import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import { draftLinkService } from "$modules/creationLink/services/draftLink";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
+  import AppHeader from "$modules/shared/components/AppHeader.svelte";
+  import { Principal } from "@dfinity/principal";
+  import { toast } from "svelte-sonner";
 
+  /**
+   * Handle the creation of a new link
+   */
   function handleCreateNewLink() {
-    if (!authState.account?.owner) {
-      throw new Error("Cannot create link: no account owner found");
+    try {
+      if (!authState.account?.owner) {
+        throw new Error("User is not authenticated");
+      }
+      const creator = Principal.fromText(authState.account.owner);
+      const draftLinkResult =
+        draftLinkService.createAndPersistDraftLink(creator);
+      if (draftLinkResult.isErr()) {
+        throw new Error("Failed to create draft link");
+      }
+      const draftLink = draftLinkResult.unwrap();
+      // Track Link list plus (user pressed + button)
+      trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
+      goto(resolve(`/link/create/${draftLink.id}`));
+    } catch {
+      toast.error(locale.t("links.createLinkError"));
     }
-    const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
-
-    // Track Link list plus (user pressed + button)
-    trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
-    goto(resolve(`/link/create/${tempLink.id}`));
   }
 </script>
 

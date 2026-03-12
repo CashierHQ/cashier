@@ -7,6 +7,7 @@ use crate::{
     constant::{self, ICP_PRINCIPAL},
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
 };
+use candid::Decode;
 use candid::{Nat, Principal};
 use cashier_backend_types::constant::FEE_TREASURY_PRINCIPAL;
 use cashier_backend_types::dto::action::CreateActionInput;
@@ -14,13 +15,10 @@ use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkType;
-use cashier_backend_types::repository::{
-    common::Asset,
-    transaction::v1::{IcTransaction, Protocol},
-};
+use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
-use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveArgs};
 use std::{collections::HashMap, sync::Arc};
 use transaction_manager::utils::calculator::{
     calculate_icrc1_transfer_intent_amount, calculate_icrc2_transfer_intent_amount,
@@ -167,17 +165,14 @@ async fn it_should_create_icp_token_tip_link_successfully() {
         assert_eq!(intent1.transactions.len(), 2);
         let tx0 = &intent1.transactions[0];
 
-        let tip_asset = Asset::IC {
-            address: Principal::from_text(ICP_PRINCIPAL).unwrap(),
-        };
+        let ledger_id = Principal::from_text(ICP_PRINCIPAL).unwrap();
         let mut fee_map = HashMap::new(); // You need to provide the actual fee_map here
         fee_map.insert(
             Principal::from_text(ICP_PRINCIPAL).unwrap(),
             icp_ledger_fee.clone(),
         );
         let (_actual_amount, approval_amount) =
-            calculate_icrc2_transfer_intent_amount(1u64, &tip_amount, &tip_asset, &fee_map)
-                .unwrap();
+            calculate_icrc2_transfer_intent_amount(1u64, &tip_amount, ledger_id, &fee_map).unwrap();
 
         match tx0.protocol {
             Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
@@ -349,9 +344,7 @@ async fn it_should_create_icrc2_token_tip_link_successfully() {
             .expect("TransferWalletToLink intent not found");
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
 
-        let asset = Asset::IC {
-            address: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
-        };
+        let ledger_id = Principal::from_text(CK_BTC_PRINCIPAL).unwrap();
         let fee_map = {
             let mut map = HashMap::new();
             map.insert(
@@ -361,7 +354,7 @@ async fn it_should_create_icrc2_token_tip_link_successfully() {
             map
         };
         let (actual_amount, approval_amount) =
-            calculate_icrc2_transfer_intent_amount(1, &tip_amount, &asset, &fee_map).unwrap();
+            calculate_icrc2_transfer_intent_amount(1, &tip_amount, ledger_id, &fee_map).unwrap();
         match intent1.r#type {
             IntentType::TransferFrom(ref transfer_from) => {
                 assert_eq!(transfer_from.from, Wallet::new(caller));
@@ -483,6 +476,23 @@ async fn it_should_create_icrc2_token_tip_link_successfully() {
                         req.canister_id == Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
                             || req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap()
                     );
+
+                    let approve_args: ApproveArgs =
+                        Decode!(req.arg.as_slice(), ApproveArgs).unwrap();
+
+                    assert_eq!(
+                        approve_args.spender,
+                        Account {
+                            owner: ctx.cashier_backend_principal,
+                            subaccount: None,
+                        }
+                    );
+
+                    if req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap() {
+                        assert!(approve_args.amount > icp_ledger_fee.clone());
+                    } else {
+                        assert!(approve_args.amount > tip_amount.clone());
+                    }
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
             }
@@ -564,9 +574,7 @@ async fn it_should_create_icrc1_token_tip_link_successfully() {
             .expect("TransferWalletToLink intent not found");
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
 
-        let asset = Asset::IC {
-            address: Principal::from_text(constant::TESTICP_PRINCIPAL).unwrap(),
-        };
+        let ledger_id = Principal::from_text(constant::TESTICP_PRINCIPAL).unwrap();
         let fee_map = {
             let mut map = HashMap::new();
             map.insert(
@@ -576,7 +584,7 @@ async fn it_should_create_icrc1_token_tip_link_successfully() {
             map
         };
         let (actual_amount, _total_amount) =
-            calculate_icrc1_transfer_intent_amount(1, &tip_amount, &asset, &fee_map).unwrap();
+            calculate_icrc1_transfer_intent_amount(1, &tip_amount, ledger_id, &fee_map).unwrap();
         match intent1.r#type {
             IntentType::Transfer(ref transfer_data) => {
                 assert_eq!(transfer_data.from, Wallet::new(caller));

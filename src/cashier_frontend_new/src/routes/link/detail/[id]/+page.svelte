@@ -3,14 +3,14 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import DetailLink from "$modules/detailLink/pages/detail.svelte";
-  import PageLayout from "$modules/shared/components/PageLayout.svelte";
-  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
-  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
   import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
   import ProtectedLinkState from "$modules/guard/components/ProtectedLinkState.svelte";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import PageLayout from "$modules/shared/components/PageLayout.svelte";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
 
   const id = page.params.id!;

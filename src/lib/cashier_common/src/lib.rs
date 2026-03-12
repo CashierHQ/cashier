@@ -1,6 +1,7 @@
 pub mod build_data;
 pub mod chain;
 pub mod constant;
+pub mod fee_calculator;
 pub mod guard;
 pub mod icrc;
 pub mod random;

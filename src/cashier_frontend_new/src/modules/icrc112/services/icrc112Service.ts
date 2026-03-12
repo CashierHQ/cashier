@@ -35,14 +35,22 @@ class Icrc112Service<T extends Transport> {
     cashierBackendCanisterId: string,
   ): Promise<Icrc112ExecutionResult> {
     const requests = icrc112Requests.map((parallelRequests) =>
-      parallelRequests.map((request) => ({
-        canisterId: request.canister_id.toString(),
-        method: request.method,
-        arg: Buffer.from(request.arg).toString("base64"),
-        ...(request.nonce && {
-          nonce: Buffer.from(request.nonce).toString("base64"),
-        }),
-      })),
+      parallelRequests.map((request) => {
+        const canisterId = request.canister_id;
+        if (!canisterId) {
+          throw new Error(
+            "ICRC-112 request missing canister_id - malformed request",
+          );
+        }
+        return {
+          canisterId: canisterId.toString(),
+          method: request.method,
+          arg: Buffer.from(request.arg).toString("base64"),
+          ...(request.nonce && {
+            nonce: Buffer.from(request.nonce).toString("base64"),
+          }),
+        };
+      }),
     );
 
     const batchRequest: BatchCallCanisterRequest = {

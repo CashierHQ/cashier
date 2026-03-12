@@ -13,7 +13,7 @@ use cashier_backend_types::{
     },
 };
 use std::collections::HashMap;
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 
 use crate::apps::{
     link_v2::links::{shared::receive_link::actions::send::SendAction, traits::LinkV2State},

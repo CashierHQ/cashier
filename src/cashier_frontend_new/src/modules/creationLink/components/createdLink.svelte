@@ -1,27 +1,32 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import type {
+    GenericDetailStoreVM,
+    ProcessActionResult,
+  } from "$modules/detailLink/types/genericDetailStoreVM";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { onMount } from "svelte";
-  import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
-  import { locale } from "$lib/i18n";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
+  import { onMount } from "svelte";
+
   const {
-    linkCreationStore,
+    link,
+    detailStore,
   }: {
-    linkCreationStore: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
+    detailStore: GenericDetailStoreVM;
   } = $props();
 
-  let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -35,47 +40,38 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    if (!linkDetailStore) {
-      throw new Error("LinkDetailStore is not initialized");
-    }
-    return await linkDetailStore.processAction();
+    return await detailStore.processAction();
   }
 
   $effect(() => {
     // Redirect to detail page if the link is active
     if (
-      linkDetailStore &&
-      linkDetailStore.link &&
-      linkDetailStore.link.state === LinkState.ACTIVE
+      link.backendId &&
+      detailStore &&
+      detailStore.state === LinkState.ACTIVE
     ) {
       trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_SUCCESS, {
-        link_type: linkCreationStore.createLinkData.linkType,
-        BE_link_id: linkDetailStore.id ?? "",
+        link_type: link.createLinkData.linkType,
+        BE_link_id: link.backendId ?? "",
       });
-      goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
+      goto(resolve(`/link/detail/${link.backendId}?created=true`));
     }
   });
 
   onMount(() => {
-    trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_LANDING, {
-      link_type: linkCreationStore.createLinkData.linkType,
-      BE_link_id: linkCreationStore.id ?? "",
-    });
-    if (linkCreationStore.id) {
-      linkDetailStore = new LinkDetailStore({ id: linkCreationStore.id });
-    }
+    if (link.action && link.action.state !== ActionState.SUCCESS) {
+      trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_LANDING, {
+        link_type: link.createLinkData.linkType,
+        BE_link_id: link.backendId ?? "",
+      });
 
-    if (
-      linkCreationStore.action &&
-      linkCreationStore.action.state !== ActionState.SUCCESS
-    ) {
       showTxCart = true;
     }
   });
 </script>
 
 <div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
-  <LinkDetails link={linkCreationStore} {errorMessage} {successMessage} />
+  <LinkDetails {link} {errorMessage} {successMessage} />
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
@@ -89,11 +85,12 @@
   </div>
 </div>
 
-{#if showTxCart && linkDetailStore && linkDetailStore.action}
+{#if showTxCart && detailStore && detailStore.action}
   <LinkTxCart
     bind:isOpen={showTxCart}
     source={{
-      action: linkDetailStore.action,
+      action: detailStore.action,
+      maxUse: link.maxUse,
       handleProcessAction,
     }}
     {onCloseDrawer}

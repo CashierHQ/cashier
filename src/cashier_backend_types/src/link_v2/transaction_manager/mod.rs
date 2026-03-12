@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use crate::repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct ValidateActionTransactionsResult {

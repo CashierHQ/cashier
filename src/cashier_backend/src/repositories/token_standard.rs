@@ -44,16 +44,35 @@ mod tests {
     use crate::repositories::{Repositories, tests::TestRepositories};
     use token_storage_types::token::IcrcStandard;
 
+    fn fixture_of_cached_token_standard(
+        standards: Vec<IcrcStandard>,
+        updated_at: u64,
+    ) -> CachedTokenStandard {
+        CachedTokenStandard {
+            standards,
+            updated_at,
+        }
+    }
+
     #[test]
-    fn it_should_store_and_retrieve_token_standard() {
+    fn it_should_fail_get_token_standard_due_to_missing_token_key() {
+        // Arrange
+        let repo = TestRepositories::new().token_standard();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+
+        // Act
+        let retrieved = repo.get(&token_principal);
+
+        // Assert
+        assert!(retrieved.is_none());
+    }
+
+    #[test]
+    fn it_should_succeed_store_and_retrieve_token_standard() {
         // Arrange
         let mut repo = TestRepositories::new().token_standard();
-
-        let token_principal = Principal::from_text("aaaaa-aa").unwrap();
-        let cached_standards = CachedTokenStandard {
-            standards: vec![IcrcStandard::ICRC1],
-            updated_at: 0,
-        };
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let cached_standards = fixture_of_cached_token_standard(vec![IcrcStandard::ICRC1], 0);
 
         // Act
         repo.insert(&token_principal, cached_standards.clone());
@@ -68,5 +87,46 @@ mod tests {
         // Assert
         let retrieved_after_removal = repo.get(&token_principal);
         assert_eq!(retrieved_after_removal, None);
+    }
+
+    #[test]
+    fn it_should_succeed_overwrite_token_standard_due_to_same_token_key() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_standard();
+        let token_principal = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let initial = fixture_of_cached_token_standard(vec![IcrcStandard::ICRC1], 10);
+        let updated =
+            fixture_of_cached_token_standard(vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2], 20);
+        repo.insert(&token_principal, initial);
+
+        // Act
+        repo.insert(&token_principal, updated.clone());
+
+        // Assert
+        assert_eq!(repo.get(&token_principal), Some(updated));
+    }
+
+    #[test]
+    fn it_should_succeed_clear_all_token_standards() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_standard();
+        let token_principal_1 = Principal::from_text("aaaaa-aa").expect("valid principal");
+        let token_principal_2 =
+            Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").expect("valid principal");
+        repo.insert(
+            &token_principal_1,
+            fixture_of_cached_token_standard(vec![IcrcStandard::ICRC1], 10),
+        );
+        repo.insert(
+            &token_principal_2,
+            fixture_of_cached_token_standard(vec![IcrcStandard::ICRC2], 20),
+        );
+
+        // Act
+        repo.clear();
+
+        // Assert
+        assert!(repo.get(&token_principal_1).is_none());
+        assert!(repo.get(&token_principal_2).is_none());
     }
 }

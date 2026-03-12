@@ -1,8 +1,8 @@
+import { locale } from "$lib/i18n";
 import {
   LinkType,
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
-import { locale } from "$lib/i18n";
 
 export function getLinkTemplateInfo(type: LinkTypeValue) {
   switch (type) {

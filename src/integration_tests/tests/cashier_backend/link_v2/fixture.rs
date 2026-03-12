@@ -11,7 +11,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
-    repository::common::Asset,
+    repository::asset::v1::Asset,
     service::link::{PaginateInput, PaginateResult},
 };
 use ic_mple_client::PocketIcClient;

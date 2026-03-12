@@ -8,6 +8,7 @@ pub mod icrc;
 pub mod init_and_upgrade;
 mod inspect_message;
 pub mod link_v2;
+pub mod link_v3;
 pub mod state;
 
 use candid::Principal;
@@ -17,6 +18,7 @@ use cashier_backend_types::dto::link::*;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::init::CashierBackendInitData;
 use cashier_backend_types::link_v2::dto::*;
+use cashier_backend_types::link_v3::dto::{action::*, link::*};
 use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
 

@@ -5,7 +5,13 @@ import packageConfig from "./package.json";
 import * as child from "child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
 // Get commit hash
-const commitHash = child.execSync("git rev-parse --short HEAD").toString();
+let commitHash = "unknown";
+try {
+  commitHash = child.execSync("git rev-parse --short HEAD").toString().trim();
+} catch {
+  // In restricted environments (e.g. sandboxed CI), shelling out may be blocked.
+  commitHash = "unknown";
+}
 
 process.env.VITE_DEV_BUILD_COMMIT_HASH = commitHash;
 process.env.VITE_DEV_BUILD_APP_VERSION = packageConfig.version;

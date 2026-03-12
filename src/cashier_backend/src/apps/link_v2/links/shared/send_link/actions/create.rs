@@ -7,7 +7,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        common::Asset,
+        asset::v1::Asset,
         intent::v1::{
             CreateIcrc1WalletToLinkIntentArgs, CreateIcrc2WalletToLinkIntentArgs,
             CreateWalletToTreasuryIntentArgs, Intent,
@@ -19,7 +19,7 @@ use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
-    intents::{
+    intents::v2::{
         transfer_wallet_to_link::TransferWalletToLinkIntent,
         transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     },
@@ -87,7 +87,7 @@ impl CreateAction {
             &link.asset_info,
             &token_fee_map,
             link.link_use_action_max_count,
-        );
+        )?;
 
         // intents
         let deposit_intents = link
@@ -111,12 +111,15 @@ impl CreateAction {
                     let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
                         link.link_use_action_max_count,
                         &asset_info.amount_per_link_use_action,
-                        &asset_info.asset,
+                        asset_info.asset.get_address(),
                         &token_fee_map,
                     )?;
 
                     let input = CreateIcrc2WalletToLinkIntentArgs {
-                        label: generate_intent_asset_label(link.link_type, &asset_info.asset),
+                        label: generate_intent_asset_label(
+                            link.link_type,
+                            asset_info.asset.get_address(),
+                        ),
                         asset: asset_info.asset.clone(),
                         actual_amount,
                         approval_amount,
@@ -136,7 +139,10 @@ impl CreateAction {
                         })?;
 
                     let input = CreateIcrc1WalletToLinkIntentArgs {
-                        label: generate_intent_asset_label(link.link_type, &asset_info.asset),
+                        label: generate_intent_asset_label(
+                            link.link_type,
+                            asset_info.asset.get_address(),
+                        ),
                         asset: asset_info.asset.clone(),
                         sending_amount: sending_amount.clone(),
                         sender_id: link.creator,
@@ -192,7 +198,7 @@ mod tests {
     };
     use candid::Nat;
     use cashier_backend_types::repository::{
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         common::Wallet,
         intent::v1::{IntentTask, IntentType},
         link::v1::{LinkState, LinkType},
@@ -373,7 +379,7 @@ mod tests {
             .await
             .unwrap();
         let link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(
@@ -494,7 +500,7 @@ mod tests {
             .await
             .unwrap();
         let _link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(
@@ -546,7 +552,7 @@ mod tests {
                     calculate_icrc2_transfer_intent_amount(
                         max_use,
                         &amount,
-                        &asset,
+                        asset.get_address(),
                         &token_fee_map,
                     )
                     .unwrap()
@@ -630,7 +636,7 @@ mod tests {
             .await
             .unwrap();
         let link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use);
+            calculate_link_balance_map(&link.asset_info, &token_fee_map, max_use).unwrap();
 
         // Act
         let result = CreateAction::create(
@@ -658,13 +664,7 @@ mod tests {
         // Assert leger_id1 intent (ICRC1)
         let intent1 = &intents.iter().find(|intent| {
             matches!(intent.task, IntentTask::TransferWalletToLink)
-                && intent.label
-                    == generate_intent_asset_label(
-                        link.link_type,
-                        &Asset::IC {
-                            address: ledger_id1,
-                        },
-                    )
+                && intent.label == generate_intent_asset_label(link.link_type, ledger_id1)
         });
         assert!(intent1.is_some());
         let intent1 = intent1.unwrap();
@@ -697,13 +697,7 @@ mod tests {
         // Assert leger_id2 intent (ICRC2)
         let intent2 = &intents.iter().find(|intent| {
             matches!(intent.task, IntentTask::TransferWalletToLink)
-                && intent.label
-                    == generate_intent_asset_label(
-                        link.link_type,
-                        &Asset::IC {
-                            address: ledger_id2,
-                        },
-                    )
+                && intent.label == generate_intent_asset_label(link.link_type, ledger_id2)
         });
         assert!(intent2.is_some());
         let intent2 = intent2.unwrap();
@@ -726,7 +720,7 @@ mod tests {
                     calculate_icrc2_transfer_intent_amount(
                         max_use,
                         &amount2,
-                        &asset,
+                        asset.get_address(),
                         &token_fee_map,
                     )
                     .unwrap()

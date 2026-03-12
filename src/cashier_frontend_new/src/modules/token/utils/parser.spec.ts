@@ -76,6 +76,7 @@ describe("parseListTokens", () => {
         fee: 10000n,
         is_default: true,
         indexId: undefined,
+        tokenStandards: [],
       },
     ]);
   });
@@ -130,6 +131,7 @@ describe("parseListTokens", () => {
         fee: 10n,
         is_default: false,
         indexId: mockIndexPrincipal.toText(),
+        tokenStandards: [],
       },
     ]);
   });

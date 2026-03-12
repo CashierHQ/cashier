@@ -1,5 +1,9 @@
 import type { IntentTask as BackendIntentTask } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
+import {
+  type Intent as SharedIntent,
+  AddressType as SharedAddressType,
+} from "$shared";
 
 // Frontend representation of an IntentTask
 class IntentTask {
@@ -20,6 +24,25 @@ export class IntentTaskMapper {
       TransferLinkToWallet: () => IntentTask.TRANSFER_LINK_TO_WALLET,
       TransferWalletToTreasury: () => IntentTask.TRANSFER_WALLET_TO_TREASURY,
     });
+  }
+
+  static fromSharedType(s: SharedIntent): IntentTask {
+    if (s.source_address_type === SharedAddressType.Creator) {
+      if (s.dest_address_type === SharedAddressType.Link) {
+        return IntentTask.TRANSFER_WALLET_TO_LINK;
+      } else if (s.dest_address_type === SharedAddressType.Treasury) {
+        return IntentTask.TRANSFER_WALLET_TO_TREASURY;
+      }
+    } else if (s.source_address_type === SharedAddressType.Link) {
+      if (s.dest_address_type === SharedAddressType.Creator) {
+        return IntentTask.TRANSFER_LINK_TO_WALLET;
+      } else if (s.dest_address_type === SharedAddressType.User) {
+        return IntentTask.TRANSFER_LINK_TO_WALLET;
+      }
+    }
+    throw new Error(
+      `Unsupported IntentTask for source ${s.source_address_type} and dest ${s.dest_address_type}`,
+    );
   }
 }
 

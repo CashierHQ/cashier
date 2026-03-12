@@ -1,12 +1,12 @@
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import type { Result } from "ts-results-es";
 import { getTokenLogo } from "$modules/imageCache";
+import { feeService } from "$modules/shared/services/feeService";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import {
   formatNumber,
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
-import { feeService } from "$modules/shared/services/feeService";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import type { Result } from "ts-results-es";
 
 export type FeeBreakdownItem = {
   name: string;
@@ -50,7 +50,7 @@ export function calculateFeesBreakdown(
     const usdValue = token.priceUSD ? networkFeeAmount * token.priceUSD : 0;
 
     breakdown.push({
-      name: "Network fees",
+      name: "Network fee",
       amount: networkFee,
       tokenAddress: assetAddress,
       tokenSymbol: token.symbol,

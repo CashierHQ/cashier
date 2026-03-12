@@ -1,43 +1,54 @@
 <script lang="ts">
+  import {
+    AnalyticsEvent,
+    trackEvent,
+  } from "$modules/analytics/amplitudeStore";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import Ended from "$modules/useLink/components/Ended.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
-  import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import {
-    trackEvent,
-    AnalyticsEvent,
-  } from "$modules/analytics/amplitudeStore";
+  import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
+  import { UserLinkStoreViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreViewModelAdapter";
 
   const {
-    linkId,
     openLoginModal,
   }: {
-    linkId: string;
     openLoginModal?: (payload?: {
       link_type: string;
       BE_link_id: string;
     }) => void;
   } = $props();
 
-  const userStore = new UserLinkStore({ id: linkId });
+  const context = getGuardContext();
+  const userStore = $derived.by(() => {
+    const storeV3 = context.userLinkStoreV3;
+    if (storeV3) {
+      return new UserLinkStoreV3ViewModelAdapter(storeV3);
+    }
+    const store = context.userLinkStore;
+    if (store) {
+      return new UserLinkStoreViewModelAdapter(store);
+    }
+    return null;
+  });
+
   let loggedOutLandingTracked = $state(false);
 
   // Track Use landing (logged out) when link data is loaded
   $effect(() => {
-    const link = userStore.linkDetail?.link;
-    if (link && !loggedOutLandingTracked) {
+    if (userStore && userStore.link && !loggedOutLandingTracked) {
       loggedOutLandingTracked = true;
       trackEvent(AnalyticsEvent.USE_LANDING_LOGGED_OUT, {
-        link_type: link.link_type,
-        BE_link_id: linkId,
+        link_type: userStore.link.link_type,
+        BE_link_id: userStore.link.id,
       });
     }
   });
 
   const isEndedWithoutCompletion = $derived(
-    userStore.link?.state === LinkState.INACTIVE_ENDED &&
-      userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED,
+    userStore?.link?.state === LinkState.INACTIVE_ENDED &&
+      userStore?.link_user_state !== LinkUserState.COMPLETED,
   );
 </script>
 
@@ -45,7 +56,7 @@
   <div class="">
     {#if isEndedWithoutCompletion}
       <Ended />
-    {:else}
+    {:else if userStore}
       <Landing userLink={userStore} {openLoginModal} />
     {/if}
   </div>

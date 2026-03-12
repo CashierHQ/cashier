@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{CandidType, Principal};
+use cashier_shared::types::AddressType as AddressTypeShared;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -116,6 +117,36 @@ impl From<Account> for Wallet {
         Wallet::IC {
             address: value.owner,
             subaccount: value.subaccount,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
+pub enum AddressTypeV3 {
+    Creator,
+    User,
+    Treasury,
+    Link,
+}
+
+impl From<AddressTypeShared> for AddressTypeV3 {
+    fn from(address_type: AddressTypeShared) -> Self {
+        match address_type {
+            AddressTypeShared::Creator => AddressTypeV3::Creator,
+            AddressTypeShared::User => AddressTypeV3::User,
+            AddressTypeShared::Treasury => AddressTypeV3::Treasury,
+            AddressTypeShared::Link => AddressTypeV3::Link,
+        }
+    }
+}
+
+impl AddressTypeV3 {
+    pub fn to_shared(&self) -> AddressTypeShared {
+        match self {
+            AddressTypeV3::Creator => AddressTypeShared::Creator,
+            AddressTypeV3::User => AddressTypeShared::User,
+            AddressTypeV3::Treasury => AddressTypeShared::Treasury,
+            AddressTypeV3::Link => AddressTypeShared::Link,
         }
     }
 }

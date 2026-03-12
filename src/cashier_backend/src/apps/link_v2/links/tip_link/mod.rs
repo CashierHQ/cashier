@@ -7,14 +7,14 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         intent::v1::Intent,
         link::v1::{Link, LinkState, LinkType},
         transaction::v1::Transaction,
     },
 };
 use std::collections::HashMap;
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::v2::traits::TransactionManager;
 use uuid::Uuid;
 
 use crate::apps::{
@@ -187,7 +187,7 @@ impl LinkV2 for TipLink {
 mod tests {
     use super::*;
     use candid::Nat;
-    use cashier_backend_types::repository::common::Asset;
+    use cashier_backend_types::repository::asset::v1::Asset;
     use cashier_common::test_utils::random_principal_id;
 
     #[test]

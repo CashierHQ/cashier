@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
@@ -14,7 +14,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
+use transaction_manager::intents::v2::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
 use crate::apps::{

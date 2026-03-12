@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::repository::asset::v1::Asset;
 use cashier_backend_types::repository::intent::v1::CreateLinkToWalletIntentArgs;
 use cashier_backend_types::{
     error::CanisterError,
@@ -13,7 +13,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
+use transaction_manager::intents::v2::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::{
     link_v2::links::shared::utils::{generate_intent_asset_label, link_asset_principals},
@@ -89,7 +89,10 @@ impl WithdrawAction {
                 };
 
                 let input = CreateLinkToWalletIntentArgs {
-                    label: generate_intent_asset_label(link.link_type, &asset_info.asset),
+                    label: generate_intent_asset_label(
+                        link.link_type,
+                        asset_info.asset.get_address(),
+                    ),
                     receiver_id: link.creator,
                     sending_amount,
                     asset: asset_info.asset.clone(),
@@ -122,7 +125,7 @@ mod tests {
         },
     };
     use cashier_backend_types::repository::{
-        asset_info::AssetInfo,
+        asset_info::v1::AssetInfo,
         common::Wallet,
         intent::v1::IntentType,
         link::v1::{LinkState, LinkType},
@@ -295,7 +298,7 @@ mod tests {
         let intent = &intents[0];
         assert_eq!(
             intent.label,
-            generate_intent_asset_label(link.link_type, &Asset::IC { address: ledger_id })
+            generate_intent_asset_label(link.link_type, ledger_id)
         );
 
         let link_account = get_link_account(&link.id, canister_id).unwrap();

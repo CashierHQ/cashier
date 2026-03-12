@@ -1,19 +1,20 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    trackEvent,
     AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
+  import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
+  import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { onMount } from "svelte";
 
   const {
-    linkCreationStore,
+    link,
   }: {
-    linkCreationStore: LinkCreationStore;
+    link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
 
   let errorMessage: string | null = $state(null);
@@ -22,8 +23,8 @@
 
   onMount(() => {
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_LANDING, {
-      link_type: linkCreationStore.createLinkData.linkType,
-      FE_link_id: linkCreationStore.id ?? "",
+      link_type: link.createLinkData.linkType,
+      FE_link_id: link.id ?? "",
     });
   });
 
@@ -32,23 +33,23 @@
     successMessage = null;
     isCreating = true;
 
-    const feLinkId = linkCreationStore.id ?? "";
+    const feLinkId = link.id ?? "";
 
     trackEvent(AnalyticsEvent.LINK_CREATION_PREVIEW_CONTINUE, {
-      link_type: linkCreationStore.createLinkData.linkType,
+      link_type: link.createLinkData.linkType,
       FE_link_id: feLinkId,
     });
 
     try {
-      await linkCreationStore.goNext();
+      await link.goNext();
       trackEvent(AnalyticsEvent.LINK_CREATION_CREATE_ACTION_PRESSED, {
-        link_type: linkCreationStore.createLinkData.linkType,
+        link_type: link.createLinkData.linkType,
         FE_link_id: feLinkId,
-        BE_link_id: linkCreationStore.link?.id ?? "",
+        BE_link_id: link.backendId ?? "",
       });
       linkListStore.refresh();
       successMessage =
-        locale.t("links.linkForm.preview.createSuccess") + linkCreationStore.id;
+        locale.t("links.linkForm.preview.createSuccess") + link.id;
     } catch (error) {
       errorMessage = locale.t("links.linkForm.preview.createError") + error;
       return;
@@ -59,7 +60,7 @@
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
-  <LinkDetails link={linkCreationStore} {errorMessage} {successMessage} />
+  <LinkDetails {link} {errorMessage} {successMessage} />
 
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"

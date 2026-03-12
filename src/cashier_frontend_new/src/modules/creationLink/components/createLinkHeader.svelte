@@ -1,37 +1,35 @@
 <script lang="ts">
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { locale } from "$lib/i18n";
+  import { LinkStep } from "$modules/links/types/linkStep";
   import { ChevronLeft } from "lucide-svelte";
 
   const {
-    link,
+    linkTitle,
+    linkStep,
     onBack,
   }: {
-    link: LinkCreationStore;
+    linkTitle?: string;
+    linkStep: LinkStep;
     onBack: () => Promise<void>;
   } = $props();
 
   const progress = $derived.by(() => {
-    const step = link?.state?.step;
-    if (step === LinkStep.CHOOSE_TYPE) return 1;
-    if (step === LinkStep.ADD_ASSET) return 2;
-    if (step === LinkStep.PREVIEW || step === LinkStep.CREATED) return 3;
+    if (linkStep === LinkStep.CHOOSE_TYPE) return 1;
+    if (linkStep === LinkStep.ADD_ASSET) return 2;
+    if (linkStep === LinkStep.PREVIEW || linkStep === LinkStep.CREATED)
+      return 3;
     return 0;
   });
 
   const linkName = $derived.by(() => {
-    const step = link?.state?.step;
-    if (step === LinkStep.ADD_ASSET) {
+    if (linkStep === LinkStep.ADD_ASSET) {
       return locale.t("links.linkForm.header.addAssets");
     }
-    if (step === LinkStep.PREVIEW) {
+    if (linkStep === LinkStep.PREVIEW) {
       return locale.t("links.linkForm.header.createLink");
     }
-    return (
-      link.createLinkData.title.trim() ||
-      locale.t("links.linkForm.header.linkName")
-    );
+
+    return linkTitle?.trim() || locale.t("links.linkForm.header.linkName");
   });
 </script>
 

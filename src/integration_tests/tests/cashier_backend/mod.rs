@@ -5,6 +5,7 @@ use crate::utils::with_pocket_ic_context;
 pub mod admin;
 pub mod inspect_message;
 pub mod link_v2;
+pub mod link_v3;
 pub mod request_lock;
 
 /// Tests that the cashier backend canister can be deployed.

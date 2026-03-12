@@ -3,6 +3,7 @@
 
 pub mod action;
 pub mod action_intent;
+pub mod asset;
 pub mod asset_info;
 pub mod common;
 pub mod intent;

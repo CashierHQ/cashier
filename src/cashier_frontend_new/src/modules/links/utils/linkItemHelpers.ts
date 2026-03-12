@@ -7,6 +7,7 @@ import {
   LinkType,
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
+import { LinkType as SharedLinkType } from "$shared";
 
 export function getStatusLabel(
   state: LinkStateValue,
@@ -80,8 +81,23 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
   }
 }
 
+export function getLinkTypeTextV3(linkType: SharedLinkType): string {
+  switch (linkType) {
+    case SharedLinkType.SendTip:
+      return "Send Tip";
+    case SharedLinkType.SendAirdrop:
+      return "Send Airdrop";
+    case SharedLinkType.ReceivePayment:
+      return "Receive Payment";
+    case SharedLinkType.SendTokenBasket:
+      return "Send Token Basket";
+    default:
+      assertUnreachable(linkType);
+  }
+}
+
 /**
- * Check if link type is a send type (TIP, AIRDROP, TOKEN_BASKET)
+ * Check if link type is a send type (TIP, AIRDROP, TOKEN_BASKET, TIP_SHARED_TEST)
  * @param linkType - Link type to check
  * @returns true if link type is a send type
  */

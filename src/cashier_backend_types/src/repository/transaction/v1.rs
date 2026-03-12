@@ -14,7 +14,7 @@ use icrc_ledger_types::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::repository::common::{Asset, Wallet};
+use crate::repository::{asset::v1::Asset, common::Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]

@@ -1,5 +1,6 @@
-import { rsMatch } from "$lib/rsMatch";
 import type { IntentState as BackendIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { assertUnreachable, rsMatch } from "$lib/rsMatch";
+import { ActionState as SharedActionState } from "$shared";
 
 // Frontend representation of the state of an Action (string-based like LinkState)
 export class ActionState {
@@ -28,5 +29,20 @@ export class ActionStateMapper {
       Success: () => ActionState.SUCCESS,
       Fail: () => ActionState.FAIL,
     });
+  }
+
+  static fromSharedType(s: SharedActionState): ActionStateValue {
+    switch (s) {
+      case SharedActionState.Created:
+        return ActionState.CREATED;
+      case SharedActionState.Processing:
+        return ActionState.PROCESSING;
+      case SharedActionState.Success:
+        return ActionState.SUCCESS;
+      case SharedActionState.Fail:
+        return ActionState.FAIL;
+      default:
+        return assertUnreachable(s);
+    }
   }
 }

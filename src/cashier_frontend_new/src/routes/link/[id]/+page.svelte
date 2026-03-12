@@ -48,7 +48,7 @@
     <ProtectedValidLink>
       <ProtectedUserState allowedStates={[UserLinkStep.LANDING]}>
         <Header onLoginClick={openLoginModal} />
-        <Landing linkId={id} {openLoginModal} />
+        <Landing {openLoginModal} />
       </ProtectedUserState>
     </ProtectedValidLink>
   </RouteGuard>
