@@ -44,6 +44,14 @@ export type RetrieveBtcStatus = {
 };
 
 /**
+ * RetrieveBtcStatusByAccountItem type representing the status of a Bitcoin retrieval process for a specific account, including the block index and status
+ */
+export type RetrieveBtcStatusByAccountItem = {
+  block_index: bigint;
+  status_v2: RetrieveBtcStatus | null;
+};
+
+/**
  * MinterInfo type representing information about the ckBTC Minter
  */
 export type MinterInfo = {

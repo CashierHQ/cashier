@@ -14,6 +14,7 @@ import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { SvelteSet } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -215,7 +216,108 @@ export class BridgeTxCartStore {
   }
 
   /**
-   * Process the export bridge
+   * Convert a bridge ID to an approval memo.
+   * @param bridgeId The ID of the bridge transaction.
+   * @returns The approval memo as a Uint8Array.
+   */
+  #toApprovalMemo(bridgeId: string): Uint8Array {
+    return new TextEncoder().encode(bridgeId);
+  }
+
+  /**
+   * Convert bridge created timestamp to created_at_time for ledger approval.
+   * @param createdAtTs The created timestamp of the bridge transaction.
+   * @returns The created_at_time in nanoseconds.
+   */
+  #toCreatedAtTimeNanoseconds(createdAtTs: bigint): bigint {
+    return createdAtTs * 1_000_000_000n;
+  }
+
+  /**
+   * Update the bridge transaction status to pending with the given ckBTC block ID.
+   * @param ckbtcBlockId The block ID of the ckBTC transaction.
+   * @returns Result containing the updated bridge transaction or an error message.
+   */
+  async #updateBridgeToPending(
+    ckbtcBlockId: bigint,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Pending,
+      ckbtcBlockId,
+      null,
+    );
+    if (updateResult.isErr()) {
+      return Err(updateResult.unwrapErr());
+    }
+
+    this.refresh();
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction refresh failed.");
+    }
+
+    return Ok(this.bridgeTransaction);
+  }
+
+  /**
+   * Recover pending export bridge by checking the retrieval request status from the ckBTC minter
+   * @returns Result containing the updated bridge transaction or an error message.
+   */
+  async #recoverPendingExportFromAccountStatus(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const statusByAccountResult =
+      await ckBTCMinterService.retrieveBtcStatusV2ByAccount();
+    if (statusByAccountResult.isErr()) {
+      return Err(statusByAccountResult.unwrapErr());
+    }
+
+    const exportBridges = await tokenStorageService.getBridgeTransactions(
+      0,
+      100,
+    );
+    const seenBlockIds = new SvelteSet(
+      exportBridges
+        .filter(
+          (bridge) =>
+            bridge.bridge_type === BridgeType.Export &&
+            bridge.ckbtc_block_id !== null,
+        )
+        .map((bridge) => bridge.ckbtc_block_id?.toString()),
+    );
+
+    const unseenBlockIds = statusByAccountResult
+      .unwrap()
+      .map((item) => item.block_index)
+      .filter((blockIndex) => !seenBlockIds.has(blockIndex.toString()))
+      .sort((left, right) => Number(right - left));
+
+    if (unseenBlockIds.length > 0) {
+      return this.#updateBridgeToPending(unseenBlockIds[0]);
+    }
+
+    const failResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Failed,
+    );
+    if (failResult.isErr()) {
+      return Err(failResult.unwrapErr());
+    }
+
+    this.refresh();
+    return Err("Unable to recover export bridge transaction.");
+  }
+
+  /**
+   * Process the export bridge transaction.
    * @returns Result containing the updated bridge transaction or an error message
    */
   async executeExport(): Promise<
@@ -229,15 +331,28 @@ export class BridgeTxCartStore {
       return Err("Bridge transaction is not ready for confirmation.");
     }
 
-    const totalDebit =
-      this.bridgeTransaction.total_amount +
-      this.bridgeTransaction.withdrawal_fee +
-      this.bridgeTransaction.btc_fee;
+    const approvalAmount = this.bridgeTransaction.total_amount;
+    const approvalMemo = this.#toApprovalMemo(this.bridgeTransaction.bridge_id);
+    const approvalCreatedAtTime = this.#toCreatedAtTimeNanoseconds(
+      this.bridgeTransaction.created_at_ts,
+    );
 
     try {
-      await this.#ckBtcLedgerService.approveCkBtcWithdrawal(totalDebit);
-    } catch (error) {
-      return Err((error as Error).message);
+      await this.#ckBtcLedgerService.approveCkBtcWithdrawal(
+        approvalAmount,
+        approvalMemo,
+        approvalCreatedAtTime,
+      );
+    } catch {
+      try {
+        const allowance =
+          await this.#ckBtcLedgerService.getAllowanceForCkBtcMinter();
+        if (allowance < approvalAmount) {
+          return this.#recoverPendingExportFromAccountStatus();
+        }
+      } catch (allowanceError) {
+        return Err((allowanceError as Error).message);
+      }
     }
 
     const retrieveResult = await ckBTCMinterService.retrieveBtcWithApproval(
@@ -245,24 +360,9 @@ export class BridgeTxCartStore {
       this.bridgeTransaction.total_amount,
     );
     if (retrieveResult.isErr()) {
-      return Err(retrieveResult.unwrapErr());
+      return this.#recoverPendingExportFromAccountStatus();
     }
 
-    const updateResult = await tokenStorageService.updateBridgeTransaction(
-      this.bridgeTransaction.bridge_id,
-      BridgeTransactionStatus.Pending,
-      retrieveResult.unwrap(),
-      null,
-    );
-    if (updateResult.isErr()) {
-      return Err(updateResult.unwrapErr());
-    }
-
-    this.refresh();
-    if (!this.bridgeTransaction) {
-      return Err("Bridge transaction refresh failed.");
-    }
-
-    return Ok(this.bridgeTransaction);
+    return this.#updateBridgeToPending(retrieveResult.unwrap());
   }
 }

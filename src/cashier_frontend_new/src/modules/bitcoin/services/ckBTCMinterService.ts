@@ -4,9 +4,11 @@ import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import {
   type MinterInfo,
   type RetrieveBtcStatus,
+  type RetrieveBtcStatusByAccountItem,
   type WithdrawalFee,
 } from "$modules/bitcoin/types/ckbtc_minter";
 import { mapRetrieveBtcStatus } from "$modules/bitcoin/utils";
+import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -148,6 +150,46 @@ export class CkBTCMinterService {
       return Ok(mapRetrieveBtcStatus(result));
     } catch (error) {
       return Err("Error retrieving BTC status: " + (error as Error).message);
+    }
+  }
+
+  /**
+   * Retrieve recent BTC withdrawal requests associated with an account.
+   * Defaults to the current authenticated account.
+   * @returns Result with an array of RetrieveBtcStatusByAccountItem or an error message.
+   */
+  async retrieveBtcStatusV2ByAccount(): Promise<
+    Result<RetrieveBtcStatusByAccountItem[], string>
+  > {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const account: [] | [ckBTCMinter.Account] = authState.account
+      ? [
+          {
+            owner: Principal.fromText(authState.account.owner),
+            subaccount: [],
+          },
+        ]
+      : [];
+
+    try {
+      const result = await actor.retrieve_btc_status_v2_by_account(account);
+      return Ok(
+        result.map((item) => ({
+          block_index: item.block_index,
+          status_v2:
+            item.status_v2.length === 1
+              ? mapRetrieveBtcStatus(item.status_v2[0])
+              : null,
+        })),
+      );
+    } catch (error) {
+      return Err(
+        "Error retrieving BTC status by account: " + (error as Error).message,
+      );
     }
   }
 }

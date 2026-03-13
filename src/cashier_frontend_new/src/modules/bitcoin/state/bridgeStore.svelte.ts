@@ -339,8 +339,6 @@ class BridgeStore {
   async processImportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
-    console.log("process import bridge transaction:", bridgeTx);
-
     const btcTxId = bridgeTx.btc_txid;
     if (!btcTxId) {
       // mark as failed if no BTC txid
@@ -437,8 +435,6 @@ class BridgeStore {
         updatedConfirmingBlocks = confirmingBlocks;
       }
 
-      console.log("updated confirming blocks:", updatedConfirmingBlocks);
-
       if (isUpdateNeeded) {
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
@@ -453,8 +449,6 @@ class BridgeStore {
           null,
           updatedRetryTimes,
         );
-
-        console.log("update bridge transaction result:", updateResult);
 
         if (updateResult.isErr()) {
           console.error(
