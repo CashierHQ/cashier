@@ -462,8 +462,10 @@
     "receive": {
       "title": "Importing BTC from Bitcoin network",
       "history": "History",
+      "created": "Created",
       "importing": "Importing (in ~60mins)",
       "imported": "Imported",
+      "failed": "Failed",
       "btcAddress": {
         "warning1": "Receive BTC from Coinbase, Xverse, Ledger, etc.",
         "warning2": "BTC is auto converted to ckBTC on arrival.",
@@ -479,8 +481,10 @@
     "send": {
       "title": "Exporting BTC to Bitcoin network",
       "history": "History",
+      "created": "Created",
       "exporting": "Exporting (in ~60mins)",
       "exported": "Exported",
+      "failed": "Failed",
       "icpAddress": {
         "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP.",

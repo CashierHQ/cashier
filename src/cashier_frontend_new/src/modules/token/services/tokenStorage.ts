@@ -213,7 +213,7 @@ class TokenStorageService {
    * @param isImporting Flag indicating if the transaction is for importing BTC
    * @returns BridgeTransaction or error message
    */
-  public async createBridgeTransaction(
+  public async createImportBridgeTransaction(
     senderBtcAddress: string,
     receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
@@ -256,6 +256,14 @@ class TokenStorageService {
     }
   }
 
+  /**
+   * Create an export bridge transaction to withdrawl BTC from ckBTC on ICP
+   * @param receiverBtcAddress The BTC address of the receiver
+   * @param amount The amount of BTC to withdraw
+   * @param withdrawalFee The withdrawal fee in satoshis
+   * @param btcFee The BTC network fee in satoshis
+   * @returns BridgeTransaction or error message
+   */
   public async createExportBridgeTransaction(
     receiverBtcAddress: string,
     amount: bigint,

@@ -18,14 +18,26 @@
     if (bridge.bridge_type === BridgeType.Import) {
       if (bridge.status === BridgeTransactionStatus.Completed) {
         return locale.t("bitcoin.receive.imported");
-      } else {
+      } else if (bridge.status === BridgeTransactionStatus.Failed) {
+        return locale.t("bitcoin.receive.failed");
+      } else if (bridge.status === BridgeTransactionStatus.Pending) {
         return locale.t("bitcoin.receive.importing");
+      } else if (bridge.status === BridgeTransactionStatus.Created) {
+        return locale.t("bitcoin.receive.created");
+      } else {
+        return locale.t("bitcoin.receive.unknown");
       }
     } else if (bridge.bridge_type === BridgeType.Export) {
       if (bridge.status === BridgeTransactionStatus.Completed) {
         return locale.t("bitcoin.send.exported");
-      } else {
+      } else if (bridge.status === BridgeTransactionStatus.Failed) {
+        return locale.t("bitcoin.send.failed");
+      } else if (bridge.status === BridgeTransactionStatus.Pending) {
         return locale.t("bitcoin.send.exporting");
+      } else if (bridge.status === BridgeTransactionStatus.Created) {
+        return locale.t("bitcoin.send.created");
+      } else {
+        return locale.t("bitcoin.receive.unknown");
       }
     }
     return locale.t("bitcoin.receive.unknown");
