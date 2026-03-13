@@ -14,7 +14,7 @@ updates:
 
     # Node.js package updates
     - package-ecosystem: "npm"
-      directory: "/src/cashier_frontend" # Location of package.json
+      directory: "/src/cashier_frontend_new" # Location of package.json
       schedule:
           interval: "weekly"
       target-branch: "staging"
