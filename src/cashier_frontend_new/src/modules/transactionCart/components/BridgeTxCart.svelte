@@ -60,14 +60,8 @@
       bridgeTransaction?.bridge_type === BridgeType.Export &&
       bridgeTransaction.status === BridgeTransactionStatus.Created,
   );
-  let requiredConfirmations = $derived.by(() =>
-    bridgeTransaction?.bridge_type === BridgeType.Export ? 1 : minConfirmations,
-  );
+  let requiredConfirmations = $derived.by(() => minConfirmations);
   let confirmationsHeaderText = $derived.by(() => {
-    if (bridgeTransaction?.bridge_type === BridgeType.Export) {
-      return locale.t("bitcoin.txCart.confirmationRequiredExport");
-    }
-
     const key =
       requiredConfirmations === 1
         ? "bitcoin.txCart.confirmationRequiredSingular"

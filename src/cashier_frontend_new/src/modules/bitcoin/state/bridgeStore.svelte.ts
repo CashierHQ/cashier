@@ -77,7 +77,7 @@ class BridgeStore {
 
         return this.#allBridges;
       },
-      refetchInterval: 15000, // refresh every 15 seconds
+      refetchInterval: 30_000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],
       storageType: "sessionStorage",
     });
@@ -566,7 +566,7 @@ class BridgeStore {
       updatedConfirmingBlocks.length !== bridgeTx.confirmations.length;
     const shouldComplete =
       bridgeTx.status !== BridgeTransactionStatus.Completed &&
-      updatedConfirmingBlocks.length >= 1;
+      updatedConfirmingBlocks.length >= this.minConfirmations;
 
     if (
       !updatedBlockId &&
