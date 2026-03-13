@@ -120,7 +120,7 @@ git push origin staging
 
 **What happens:**
 
-1. Reads current version from `src/cashier_frontend/package.json`
+1. Reads current version from `src/cashier_frontend_new/package.json`
 2. Increments patch version (e.g., `0.0.9` → `0.0.10`)
 3. Updates `package.json` with new version
 4. Commits change: `"chore: bump version to 0.0.10 [skip ci]"`
@@ -291,7 +291,7 @@ git push origin experiment/new-ui-design
 
 **1. Deployment not triggering**
 
--   Check if changes are in `src/cashier_frontend/**` path
+-   Check if changes are in `src/cashier_frontend_new/**` path
 -   Verify branch naming and PR target branch
 -   Check GitHub Actions logs
 
@@ -311,7 +311,7 @@ git push origin experiment/new-ui-design
 
 ```bash
 # Check current package.json version
-node -p "require('./src/cashier_frontend/package.json').version"
+node -p "require('./src/cashier_frontend_new/package.json').version"
 
 # Validate GitHub Actions syntax
 npx yaml-lint .github/workflows/frontend-deploy.yml
