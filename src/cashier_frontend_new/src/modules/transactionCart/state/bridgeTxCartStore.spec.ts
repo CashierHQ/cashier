@@ -118,6 +118,11 @@ describe("BridgeTxCartStore", () => {
         currentBridgeTransaction = result;
         return result;
       }),
+      refreshAsync: vi.fn(async () => {
+        const result = await queryFn();
+        currentBridgeTransaction = result;
+        return result;
+      }),
     }));
 
     mockGetBridgeTransactionById.mockResolvedValue(
