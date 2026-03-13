@@ -97,7 +97,7 @@ export class CkBTCMinterService {
   /**
    * Request a ckBTC withdrawal using the user's ledger approval.
    * @param address the destination btc address
-   * @param amount the withdrawl amount
+   * @param amount the withdrawal amount
    * @returns Result with the block index of the withdrawal request or an error message.
    */
   async retrieveBtcWithApproval(

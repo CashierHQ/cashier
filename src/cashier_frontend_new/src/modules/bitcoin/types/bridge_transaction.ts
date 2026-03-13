@@ -346,19 +346,25 @@ export class BridgeTransactionMapper {
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
-    const ckbtc_block_id_arg: [] | [bigint] = ckbtc_block_id
-      ? [ckbtc_block_id]
-      : [];
-    const block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
-    const block_timestamp_arg: [] | [bigint] = block_timestamp
-      ? [block_timestamp]
-      : [];
+    const ckbtc_block_id_arg: [] | [bigint] =
+      ckbtc_block_id !== null ? [ckbtc_block_id] : [];
+    const block_id_arg: [] | [bigint] = block_id !== null ? [block_id] : [];
+    const block_timestamp_arg: [] | [bigint] =
+      block_timestamp !== null ? [block_timestamp] : [];
     const block_confirmations = confirmations.map((block) => ({
       block_id: block.block_id,
       block_timestamp: block.block_timestamp,
     }));
     const block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
       block_confirmations.length > 0 ? [block_confirmations] : [];
+    const btc_txid_arg: [] | [string] = btc_txid !== null ? [btc_txid] : [];
+    const deposit_fee_arg: [] | [bigint] =
+      deposit_fee !== null ? [deposit_fee] : [];
+    const withdrawal_fee_arg: [] | [bigint] =
+      withdrawal_fee !== null ? [withdrawal_fee] : [];
+    const btc_fee_arg: [] | [bigint] = btc_fee !== null ? [btc_fee] : [];
+    const retry_times_arg: [] | [number] =
+      retry_times !== null ? [retry_times] : [];
 
     return {
       bridge_id: bridgeId,
@@ -369,11 +375,11 @@ export class BridgeTransactionMapper {
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
-      btc_txid: btc_txid ? [btc_txid] : [],
-      deposit_fee: deposit_fee ? [deposit_fee] : [],
-      withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
-      btc_fee: btc_fee ? [btc_fee] : [],
-      retry_times: retry_times ? [retry_times] : [],
+      btc_txid: btc_txid_arg,
+      deposit_fee: deposit_fee_arg,
+      withdrawal_fee: withdrawal_fee_arg,
+      btc_fee: btc_fee_arg,
+      retry_times: retry_times_arg,
     };
   }
 

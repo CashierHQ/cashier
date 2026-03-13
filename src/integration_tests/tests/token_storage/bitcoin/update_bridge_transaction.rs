@@ -9,11 +9,12 @@ use token_storage_types::{
         BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
     },
     dto::bitcoin::{CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg},
+    error::CanisterError,
 };
 
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
-fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+fn fixture_of_import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
     CreateBridgeTransactionInputArg {
         btc_txid: Some("test_txid_123".to_string()),
         icp_address: caller,
@@ -27,7 +28,7 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
     }
 }
 
-fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+fn fixture_of_export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
     CreateBridgeTransactionInputArg {
         btc_txid: None,
         icp_address: caller,
@@ -46,21 +47,25 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
     }
 }
 
+fn fixture_of_block_confirmations() -> Vec<BlockConfirmation> {
+    vec![
+        BlockConfirmation {
+            block_id: 1,
+            block_timestamp: 1620000000,
+        },
+        BlockConfirmation {
+            block_id: 2,
+            block_timestamp: 1620000600,
+        },
+    ]
+}
+
 #[tokio::test]
 async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
-        let block_confirmations = vec![
-            BlockConfirmation {
-                block_id: 1,
-                block_timestamp: 1620000000,
-            },
-            BlockConfirmation {
-                block_id: 2,
-                block_timestamp: 1620000600,
-            },
-        ];
+        let block_confirmations = fixture_of_block_confirmations();
         let input = UpdateBridgeTransactionInputArg {
             bridge_id: random_id_string(),
             btc_txid: Some("exampletxid0000000000000000000000000000000000".to_string()),
@@ -95,12 +100,270 @@ async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
 }
 
 #[tokio::test]
+async fn it_should_fail_update_bridge_transaction_due_to_missing_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let input = UpdateBridgeTransactionInputArg {
+            bridge_id: random_id_string(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: Some(200u64),
+            block_timestamp: Some(1620001200u64),
+            block_confirmations: Some(fixture_of_block_confirmations()),
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
+        let update_result = result.unwrap();
+        assert!(update_result.is_err());
+        assert!(matches!(
+            update_result.unwrap_err(),
+            CanisterError::NotFound(message)
+                if message.contains("Bridge transaction with id")
+                    && message.contains("not found")
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_update_import_bridge_transaction_due_to_existing_block_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let create_input = fixture_of_import_bridge_input(caller);
+
+        let create_result = token_storage_client
+            .user_create_bridge_transaction(create_input)
+            .await;
+        let created_bridge = create_result.unwrap().unwrap();
+
+        let initial_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: Some(200u64),
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+        };
+
+        let _initial_update_result = token_storage_client
+            .user_update_bridge_transaction(initial_update_input)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let invalid_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id,
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: Some(201u64),
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(invalid_update_input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
+        let update_result = result.unwrap();
+        assert!(update_result.is_err());
+        assert!(matches!(
+            update_result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "block_id is already set and cannot be updated"
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_update_import_bridge_transaction_due_to_non_increasing_retry_times() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let create_input = fixture_of_import_bridge_input(caller);
+
+        let create_result = token_storage_client
+            .user_create_bridge_transaction(create_input)
+            .await;
+        let created_bridge = create_result.unwrap().unwrap();
+
+        let initial_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: Some(1),
+            status: None,
+        };
+
+        let _initial_update_result = token_storage_client
+            .user_update_bridge_transaction(initial_update_input)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let invalid_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id,
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: Some(1),
+            status: None,
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(invalid_update_input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
+        let update_result = result.unwrap();
+        assert!(update_result.is_err());
+        assert!(matches!(
+            update_result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "retry_times can only be increased"
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_update_export_bridge_transaction_due_to_existing_ckbtc_block_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let create_input = fixture_of_export_bridge_input(caller);
+
+        let create_result = token_storage_client
+            .user_create_bridge_transaction(create_input)
+            .await;
+        let created_bridge = create_result.unwrap().unwrap();
+
+        let initial_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: Some(42u64),
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+        };
+
+        let _initial_update_result = token_storage_client
+            .user_update_bridge_transaction(initial_update_input)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let invalid_update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id,
+            btc_txid: None,
+            ckbtc_block_id: Some(43u64),
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(invalid_update_input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
+        let update_result = result.unwrap();
+        assert!(update_result.is_err());
+        assert!(matches!(
+            update_result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "ckbtc_block_id is already set and cannot be updated"
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_update_import_bridge_transaction() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let token_storage_client = ctx.new_token_storage_client(caller);
-        let input = import_bridge_input(caller);
+        let input = fixture_of_import_bridge_input(caller);
 
         // Act
         let result = token_storage_client
@@ -108,17 +371,8 @@ async fn it_should_update_import_bridge_transaction() {
             .await;
         let created_bridge = result.unwrap().unwrap();
 
-        // Act: update
-        let block_confirmations = vec![
-            BlockConfirmation {
-                block_id: 1,
-                block_timestamp: 1620000000,
-            },
-            BlockConfirmation {
-                block_id: 2,
-                block_timestamp: 1620000600,
-            },
-        ];
+        // Arrange
+        let block_confirmations = fixture_of_block_confirmations();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id,
             btc_txid: None,
@@ -161,7 +415,7 @@ async fn it_should_update_export_bridge_transaction() {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let token_storage_client = ctx.new_token_storage_client(caller);
-        let input = export_bridge_input(caller);
+        let input = fixture_of_export_bridge_input(caller);
 
         // Act
         let result = token_storage_client

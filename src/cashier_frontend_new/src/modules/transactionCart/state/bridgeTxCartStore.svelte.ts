@@ -211,8 +211,8 @@ export class BridgeTxCartStore {
   /**
    * Refresh bridge transaction details by re-fetching data from the server
    */
-  refresh() {
-    this.#bridgeDetailQuery.refresh();
+  async refreshAsync() {
+    await this.#bridgeDetailQuery.refreshAsync();
   }
 
   /**
@@ -255,7 +255,7 @@ export class BridgeTxCartStore {
       return Err(updateResult.unwrapErr());
     }
 
-    this.refresh();
+    await this.refreshAsync();
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction refresh failed.");
     }
@@ -312,7 +312,7 @@ export class BridgeTxCartStore {
       return Err(failResult.unwrapErr());
     }
 
-    this.refresh();
+    await this.refreshAsync();
     return Err("Unable to recover export bridge transaction.");
   }
 

@@ -143,7 +143,7 @@ mod tests {
     use token_storage_types::bitcoin::bridge_transaction::{BridgeAssetInfo, BridgeAssetType};
 
     #[test]
-    fn it_shoulf_create_bridge_transaction_from_input() {
+    fn it_should_create_import_bridge_transaction_from_input() {
         // Arrange
         let icp_address = random_principal_id();
         let input = CreateBridgeTransactionInputArg {
@@ -177,6 +177,7 @@ mod tests {
 
     #[test]
     fn it_should_create_export_bridge_transaction_from_input() {
+        // Arrange
         let icp_address = random_principal_id();
         let input = CreateBridgeTransactionInputArg {
             btc_txid: None,
@@ -212,6 +213,7 @@ mod tests {
 
     #[test]
     fn it_should_reject_export_bridge_with_btc_txid() {
+        // Arrange
         let input = CreateBridgeTransactionInputArg {
             btc_txid: Some("unexpected".to_string()),
             icp_address: random_principal_id(),
