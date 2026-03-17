@@ -221,7 +221,9 @@ mod tests {
         link.id = "invalid-link-id".to_string();
         let ledger_id = link.asset_info[0].asset.address;
         let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -254,7 +256,9 @@ mod tests {
             created_at,
         );
         let (token_fee_service, token_standard_service) = fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
 
         // Act
         let result = ReceiveActionV3::create(

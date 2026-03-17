@@ -349,7 +349,9 @@ mod tests {
         transaction_manager.set_failed(true);
         let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        token_fee_service.fetcher.set_fee(ledger_id, candid::Nat::from(0u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, candid::Nat::from(0u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);

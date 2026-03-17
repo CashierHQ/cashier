@@ -156,6 +156,7 @@ async fn it_should_succeed_receive_icp_token_tip_link() {
         assert_eq!(link.max_use, 1);
         assert_eq!(link.use_count, 1);
         assert_eq!(link.link_state, LinkStateShared::Ended);
+        assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
 
         let action = process_action_result.action;
         assert_eq!(action.action_state, ActionStateShared::Success);
@@ -281,6 +282,7 @@ async fn it_should_succeed_receive_icrc_token_tip_link() {
         assert_eq!(link.max_use, 1);
         assert_eq!(link.use_count, 1);
         assert_eq!(link.link_state, LinkStateShared::Ended);
+        assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
 
         let action = process_action_result.action;
         assert_eq!(action.action_state, ActionStateShared::Success);

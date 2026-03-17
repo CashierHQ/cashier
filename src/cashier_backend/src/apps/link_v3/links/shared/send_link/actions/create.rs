@@ -425,13 +425,12 @@ mod tests {
             .expect("deposit intent should exist");
         assert_eq!(deposit_intent.asset.token_standard, TokenStandardV3::ICRC1);
         assert_eq!(deposit_intent.asset.network_fee, Some(Nat::from(100u64)));
-        let fee_map: HashMap<Principal, Nat> =
-            vec![
-                (ledger_id, Nat::from(100u64)),
-                (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
-            ]
-            .into_iter()
-            .collect();
+        let fee_map: HashMap<Principal, Nat> = vec![
+            (ledger_id, Nat::from(100u64)),
+            (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
+        ]
+        .into_iter()
+        .collect();
         let expected_actual_amount =
             calculate_icrc1_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
                 .expect("expected ICRC1 amount calculation success")
@@ -545,13 +544,12 @@ mod tests {
             .expect("deposit intent should exist");
         assert_eq!(deposit_intent.asset.token_standard, TokenStandardV3::ICRC2);
         assert_eq!(deposit_intent.asset.network_fee, Some(Nat::from(200u64)));
-        let fee_map: HashMap<Principal, Nat> =
-            vec![
-                (ledger_id, Nat::from(200u64)),
-                (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
-            ]
-            .into_iter()
-            .collect();
+        let fee_map: HashMap<Principal, Nat> = vec![
+            (ledger_id, Nat::from(200u64)),
+            (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
+        ]
+        .into_iter()
+        .collect();
         let (expected_actual_amount, expected_approval_amount) =
             calculate_icrc2_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
                 .expect("expected ICRC2 amount calculation success");
