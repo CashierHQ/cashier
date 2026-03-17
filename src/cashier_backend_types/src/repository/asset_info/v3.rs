@@ -12,6 +12,7 @@ pub struct AssetInfoV3 {
     pub asset: AssetV3,
     pub label: String,
     pub amount: Nat,
+    pub available_amount: Option<Nat>,
 }
 
 impl From<AssetInfoShared> for AssetInfoV3 {
@@ -20,6 +21,7 @@ impl From<AssetInfoShared> for AssetInfoV3 {
             asset: AssetV3::from(asset_info.asset),
             label: asset_info.label,
             amount: asset_info.amount,
+            available_amount: asset_info.available_amount,
         }
     }
 }
@@ -30,6 +32,7 @@ impl AssetInfoV3 {
             asset: self.asset.to_shared(),
             label: self.label.clone(),
             amount: self.amount.clone(),
+            available_amount: self.available_amount.clone(),
         }
     }
 
@@ -47,6 +50,7 @@ impl From<IntentV3> for AssetInfoV3 {
             asset: intents.asset,
             label: intents.label,
             amount: intents.amount,
+            available_amount: None,
         }
     }
 }

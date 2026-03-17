@@ -9,16 +9,22 @@ use cashier_backend_types::{
             v1::{ActionState, ActionType},
             v3::ActionV3,
         },
+        asset::v3::{AssetV3, TokenStandardV3},
         common::AddressTypeV3,
         intent::v3::{CreateLinkToWalletIntentArgs, IntentV3},
         link::v3::LinkV3,
     },
 };
 use cashier_common::utils::get_link_account;
+use token_storage_types::token::IcrcStandard;
 use transaction_manager::intents::v3::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
-use crate::apps::link_v2::links::shared::utils::generate_intent_asset_label;
+use crate::apps::{
+    link_v2::links::shared::utils::generate_intent_asset_label,
+    link_v3::utils::link_v3_asset_principals, token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
+};
 
 #[derive(Debug)]
 pub struct ReceiveActionV3 {
@@ -38,12 +44,18 @@ impl ReceiveActionV3 {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<ReceiveActionV3, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(
+    pub async fn create<F, S>(
         link: &LinkV3,
         receiver_id: Principal,
         canister_id: Principal,
         created_at: u64,
-    ) -> Result<Self, CanisterError> {
+        mut token_fee_service: F,
+        mut token_standard_service: S,
+    ) -> Result<Self, CanisterError>
+    where
+        F: TokenFeeCache,
+        S: TokenStandardCache,
+    {
         let mut action = ActionV3 {
             id: Uuid::new_v4().to_string(),
             action_type: ActionType::Receive,
@@ -55,18 +67,53 @@ impl ReceiveActionV3 {
         };
 
         let link_account = get_link_account(&link.id, canister_id)?;
+        // lookup token fees and standards from caching services
+        let asset_principals: Vec<Principal> = link_v3_asset_principals(link);
+        let token_fee_map = token_fee_service
+            .get_batch_tokens_fee(&asset_principals)
+            .await?;
+        let token_standards_map = token_standard_service
+            .get_batch_token_standards(&asset_principals)
+            .await?;
 
         // intents
         let link_to_wallet_intents = link
             .asset_info
             .iter()
             .map(|asset_info| {
+                let asset_address = asset_info.get_asset_address();
+                let token_standards = token_standards_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token standards for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
+
+                let token_standard = if token_standards.contains(&IcrcStandard::ICRC2) {
+                    TokenStandardV3::ICRC2
+                } else {
+                    TokenStandardV3::ICRC1
+                };
+
+                let token_network_fee = token_fee_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token network fee for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
+
+                let intent_asset = AssetV3 {
+                    address: asset_address,
+                    network_fee: Some(token_network_fee.clone()),
+                    token_standard,
+                };
+
                 let sending_amount = asset_info.amount.clone();
                 let input = CreateLinkToWalletIntentArgs {
                     label: generate_intent_asset_label(link.link_type, asset_info.asset.address),
                     receiver_id,
                     sending_amount,
-                    asset: asset_info.asset.clone(),
+                    asset: intent_asset,
                     source_address: canister_id,
                     link_account,
                     created_at_ts: created_at,
@@ -94,6 +141,14 @@ impl ReceiveActionV3 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::apps::{
+        token_fee::service::tests::{
+            MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
+        },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
+    };
     use candid::Nat;
     use cashier_backend_types::repository::{
         action::v1::ActionState, asset::v1::Asset, asset::v3::AssetV3, asset_info::v3::AssetInfoV3,
@@ -101,6 +156,7 @@ mod tests {
         link::v3::LinkState,
     };
     use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
 
     fn assert_action_intent_ids_match_intents(action: &ActionV3, intents: &[IntentV3]) {
@@ -119,6 +175,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -140,6 +197,13 @@ mod tests {
         }
     }
 
+    fn fixture_of_services(current_ts: u64) -> (MockTokenFeeService, MockTokenStandardService) {
+        (
+            create_mock_token_fee_service(current_ts),
+            create_mock_token_standard_service(current_ts),
+        )
+    }
+
     #[tokio::test]
     async fn it_should_fail_create_receive_action_due_to_invalid_link_id() {
         // Arrange
@@ -155,12 +219,56 @@ mod tests {
             created_at,
         );
         link.id = "invalid-link-id".to_string();
+        let ledger_id = link.asset_info[0].asset.address;
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
         // Act
-        let result = ReceiveActionV3::create(&link, receiver_id, canister_id, created_at).await;
+        let result = ReceiveActionV3::create(
+            &link,
+            receiver_id,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
 
         // Assert
         assert!(matches!(result, Err(CanisterError::UnknownError(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_receive_action_due_to_missing_token_standard() {
+        // Arrange
+        let receiver_id = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let ledger_id = random_principal_id();
+        let link = fixture_of_link_v3(
+            random_principal_id(),
+            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            created_at,
+        );
+        let (token_fee_service, token_standard_service) = fixture_of_services(created_at);
+        token_fee_service.fetcher.set_fee(ledger_id, Nat::from(100u64));
+
+        // Act
+        let result = ReceiveActionV3::create(
+            &link,
+            receiver_id,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[tokio::test]
@@ -181,9 +289,30 @@ mod tests {
             ],
             created_at,
         );
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_1, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id_2, Nat::from(200u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_1, vec![IcrcStandard::ICRC1]);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_2, vec![IcrcStandard::ICRC2]);
 
         // Act
-        let result = ReceiveActionV3::create(&link, receiver_id, canister_id, created_at).await;
+        let result = ReceiveActionV3::create(
+            &link,
+            receiver_id,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
 
         // Assert
         assert!(result.is_ok());
@@ -204,11 +333,15 @@ mod tests {
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id_1))
             .expect("intent for ledger 1 should exist");
+        assert_eq!(intent_1.asset.token_standard, TokenStandardV3::ICRC1);
+        assert_eq!(intent_1.asset.network_fee, Some(Nat::from(100u64)));
         let intent_2 = receive_action
             .intents
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id_2))
             .expect("intent for ledger 2 should exist");
+        assert_eq!(intent_2.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(intent_2.asset.network_fee, Some(Nat::from(200u64)));
 
         match intent_1
             .intent_tx_data

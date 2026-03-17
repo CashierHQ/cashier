@@ -19,7 +19,10 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State},
+    link_v3::{
+        links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State,
+        utils::update_link_available_amount_after_receive,
+    },
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -46,18 +49,29 @@ impl ActiveState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the RECEIVE action
-    pub async fn create_receive_action<M>(
+    pub async fn create_receive_action<M, F, S>(
         caller: Principal,
         canister_id: Principal,
         link: LinkV3,
         created_at: u64,
         transaction_manager: M,
+        token_fee_service: F,
+        token_standard_service: S,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
+        F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
     {
-        let receive_action =
-            ReceiveActionV3::create(&link, caller, canister_id, created_at).await?;
+        let receive_action = ReceiveActionV3::create(
+            &link,
+            caller,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await?;
         let create_action_result = transaction_manager.create_action(
             receive_action.action,
             receive_action.intents,
@@ -107,6 +121,7 @@ impl ActiveState {
 
         if process_action_result.is_success {
             link.use_count += 1;
+            update_link_available_amount_after_receive(&mut link, &process_action_result.intents)?;
             if link.use_count >= link.max_use {
                 link.state = LinkState::Ended;
             }
@@ -126,8 +141,8 @@ impl LinkV3State for ActiveState {
         action_type: ActionType,
         created_at: u64,
         transaction_manager: M,
-        _token_fee_service: F,
-        _token_standard_service: S,
+        token_fee_service: F,
+        token_standard_service: S,
         _token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
@@ -147,6 +162,8 @@ impl LinkV3State for ActiveState {
                     link,
                     created_at,
                     transaction_manager,
+                    token_fee_service,
+                    token_standard_service,
                 )
                 .await?;
                 Ok(create_action_result)
@@ -212,12 +229,16 @@ mod tests {
     };
     use cashier_backend_types::repository::{
         action::v1::ActionState,
+        asset::v1::Asset,
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,
-        common::AddressTypeV3,
+        common::{AddressTypeV3, Wallet},
+        intent::v1::TransferData,
+        intent::v3::IntentTransactionDataV3,
         link::v1::LinkType,
     };
     use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
 
     fn fixture_of_asset_info_v3(address: Principal, amount: candid::Nat) -> AssetInfoV3 {
@@ -229,6 +250,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -325,8 +347,12 @@ mod tests {
         let state_handler = ActiveState::new(&link, canister_id);
         let mut transaction_manager = MockTransactionManagerV3::default();
         transaction_manager.set_failed(true);
-        let (token_fee_service, token_standard_service, token_balance_service) =
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
+        token_fee_service.fetcher.set_fee(ledger_id, candid::Nat::from(0u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
         // Act
         let result = state_handler
@@ -409,8 +435,16 @@ mod tests {
             )],
         );
         let state_handler = ActiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, token_balance_service) =
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
+        link.asset_info.iter().for_each(|asset_info| {
+            token_fee_service
+                .fetcher
+                .set_fee(asset_info.asset.address, candid::Nat::from(0u64));
+            token_standard_service
+                .token_storage_client
+                .set_token_standards(asset_info.asset.address, vec![IcrcStandard::ICRC1]);
+        });
         let create_result = state_handler
             .create_action(
                 creator,
@@ -459,8 +493,16 @@ mod tests {
             ],
         );
         let state_handler = ActiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, token_balance_service) =
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
+        link.asset_info.iter().for_each(|asset_info| {
+            token_fee_service
+                .fetcher
+                .set_fee(asset_info.asset.address, candid::Nat::from(0u64));
+            token_standard_service
+                .token_storage_client
+                .set_token_standards(asset_info.asset.address, vec![IcrcStandard::ICRC1]);
+        });
 
         // Act
         let result = state_handler
@@ -502,15 +544,21 @@ mod tests {
             creator,
             1,
             created_at,
-            vec![fixture_of_asset_info_v3(
-                random_principal_id(),
-                candid::Nat::from(1000u64),
-            )],
+            vec![AssetInfoV3 {
+                available_amount: Some(candid::Nat::from(1000u64)),
+                ..fixture_of_asset_info_v3(random_principal_id(), candid::Nat::from(1000u64))
+            }],
         );
         let state_handler = ActiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, token_balance_service) =
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        let create_result = state_handler
+        token_fee_service
+            .fetcher
+            .set_fee(link.asset_info[0].asset.address, candid::Nat::from(0u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(link.asset_info[0].asset.address, vec![IcrcStandard::ICRC1]);
+        let mut create_result = state_handler
             .create_action(
                 creator,
                 ActionType::Receive,
@@ -522,6 +570,25 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        create_result
+            .create_action_result
+            .intents
+            .iter_mut()
+            .for_each(|intent| {
+                if intent.source_address_type == AddressTypeV3::Link
+                    && intent.dest_address_type == AddressTypeV3::User
+                {
+                    intent.asset.network_fee = Some(candid::Nat::from(0u64));
+                    intent.intent_tx_data = Some(IntentTransactionDataV3::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::IC {
+                            address: link.asset_info[0].asset.address,
+                        },
+                        amount: candid::Nat::from(1000u64),
+                    }));
+                }
+            });
 
         // Act
         let result = state_handler
@@ -541,6 +608,10 @@ mod tests {
         let processed = result.expect("process action should succeed");
         assert_eq!(processed.link.use_count, 1u64);
         assert_eq!(processed.link.state, LinkState::Ended);
+        assert_eq!(
+            processed.link.asset_info[0].available_amount,
+            Some(candid::Nat::from(0u64))
+        );
     }
 
     #[tokio::test]
@@ -553,15 +624,21 @@ mod tests {
             creator,
             3,
             created_at,
-            vec![fixture_of_asset_info_v3(
-                random_principal_id(),
-                candid::Nat::from(1000u64),
-            )],
+            vec![AssetInfoV3 {
+                available_amount: Some(candid::Nat::from(1000u64)),
+                ..fixture_of_asset_info_v3(random_principal_id(), candid::Nat::from(1000u64))
+            }],
         );
         let state_handler = ActiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, token_balance_service) =
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
             fixture_of_services(created_at);
-        let create_result = state_handler
+        token_fee_service
+            .fetcher
+            .set_fee(link.asset_info[0].asset.address, candid::Nat::from(0u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(link.asset_info[0].asset.address, vec![IcrcStandard::ICRC1]);
+        let mut create_result = state_handler
             .create_action(
                 creator,
                 ActionType::Receive,
@@ -573,6 +650,25 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        create_result
+            .create_action_result
+            .intents
+            .iter_mut()
+            .for_each(|intent| {
+                if intent.source_address_type == AddressTypeV3::Link
+                    && intent.dest_address_type == AddressTypeV3::User
+                {
+                    intent.asset.network_fee = Some(candid::Nat::from(0u64));
+                    intent.intent_tx_data = Some(IntentTransactionDataV3::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::IC {
+                            address: link.asset_info[0].asset.address,
+                        },
+                        amount: candid::Nat::from(400u64),
+                    }));
+                }
+            });
 
         // Act
         let result = state_handler
@@ -592,5 +688,9 @@ mod tests {
         let processed = result.expect("process action should succeed");
         assert_eq!(processed.link.use_count, 1u64);
         assert_eq!(processed.link.state, LinkState::Active);
+        assert_eq!(
+            processed.link.asset_info[0].available_amount,
+            Some(candid::Nat::from(600u64))
+        );
     }
 }
