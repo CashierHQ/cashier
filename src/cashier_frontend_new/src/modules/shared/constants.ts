@@ -6,6 +6,7 @@ import {
   PUBLIC_SHARED_HOST_ICP_MAINNET,
   PUBLIC_SHARED_IC_INTERNET_IDENTITY_PROVIDER,
   PUBLIC_SHARED_TOKEN_STORAGE_CANISTER_ID,
+  PUBLIC_CASHIER_WALLET_ORIGIN,
 } from "$env/static/public";
 
 type BuildType = "dev" | "local" | "staging" | "production";
@@ -46,5 +47,12 @@ export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
 export const USD_DISPLAY_DECIMALS = 6;
 
 export const II_SIGNER_WALLET_ID = "iiSigner";
+
+/** PNP adapter ID for the Cashier Wallet (ICRC-29 iframe wallet). */
+export const CASHIER_WALLET_ID = "cashier";
+
+/** Origin URL of the Cashier Wallet app (set via PUBLIC_CASHIER_WALLET_ORIGIN env var). */
+export const CASHIER_WALLET_ORIGIN =
+  PUBLIC_CASHIER_WALLET_ORIGIN ?? "http://localhost:5177";
 
 export const DRAFT_LINKS_STORAGE_KEY_PREFIX = "draftLinks";
