@@ -8,11 +8,13 @@
   interface Props {
     bridgeTxs: BridgeTransactionWithUsdValue[];
     hasMore: boolean;
+    emptyText: string;
     onSelectBridge: (bridgeId: string) => void;
     onLoadMore: () => void;
   }
 
-  let { bridgeTxs, hasMore, onSelectBridge, onLoadMore }: Props = $props();
+  let { bridgeTxs, hasMore, emptyText, onSelectBridge, onLoadMore }: Props =
+    $props();
 
   let bridgeTxsByDate = $derived.by(() => {
     if (bridgeTxs) {
@@ -25,7 +27,7 @@
 <div class="space-y-4">
   {#if Object.keys(bridgeTxsByDate).length > 0}
     {#each Object.keys(bridgeTxsByDate) as createdDate (createdDate)}
-      <Label class="text-base font-semibold">
+      <Label class="text-base font-normal">
         {createdDate}
       </Label>
       <div class="text-sm text-gray-600">
@@ -48,6 +50,6 @@
       </div>
     {/if}
   {:else}
-    <p>{locale.t("wallet.receive.noBtcImportTxs")}</p>
+    <p>{emptyText}</p>
   {/if}
 </div>

@@ -414,7 +414,6 @@ export class IIChannel implements Channel {
                       },
                     };
                   }
-                  //console.log("request:", request);
                   if (
                     request.method.startsWith("icrc1_") ||
                     request.method.startsWith("icrc2_") ||

@@ -17,6 +17,7 @@ export interface ValidateSendParams {
   amount: number;
   receiveType: ReceiveAddressType;
   maxAmount: number;
+  isBitcoinAddress?: boolean;
 }
 
 export interface ComputeSendFeeParams {

@@ -5,6 +5,7 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import { Principal } from "@dfinity/principal";
 import type { BitcoinBlock } from "./bitcoin_transaction";
 
 /**
@@ -27,7 +28,9 @@ export type BridgeTransaction = {
   created_at_ts: bigint;
   deposit_fee: bigint;
   withdrawal_fee: bigint;
+  btc_fee: bigint;
   btc_txid: string | null;
+  ckbtc_block_id: bigint | null;
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
@@ -114,11 +117,22 @@ export class BridgeTransactionMapper {
     if (data_withdrawal_fee.length === 1) {
       withdrawal_fee = data_withdrawal_fee[0];
     }
+    let btc_fee = 0n;
+    const data_btc_fee = data.btc_fee as [] | [bigint];
+    if (data_btc_fee.length === 1) {
+      btc_fee = data_btc_fee[0];
+    }
 
     let btc_txid = null;
     const data_btc_txid = data.btc_txid as [] | [string];
     if (data_btc_txid.length === 1) {
       btc_txid = data_btc_txid[0];
+    }
+
+    let ckbtc_block_id = null;
+    const data_ckbtc_block_id = data.ckbtc_block_id as [] | [bigint];
+    if (data_ckbtc_block_id.length === 1) {
+      ckbtc_block_id = data_ckbtc_block_id[0];
     }
 
     let block_id = null;
@@ -160,7 +174,9 @@ export class BridgeTransactionMapper {
       created_at_ts: data.created_at_ts,
       deposit_fee,
       withdrawal_fee,
+      btc_fee,
       btc_txid,
+      ckbtc_block_id,
       block_id,
       block_timestamp,
       confirmations,
@@ -306,49 +322,100 @@ export class BridgeTransactionMapper {
    * Map frontend BridgeTransaction update to token storage UpdateBridgeTransactionInputArg
    * @param bridgeId
    * @param status
+   * @param ckbtc_block_id
    * @param block_id
    * @param block_timestamp
    * @param confirmations
    * @param btc_txid
    * @param deposit_fee
    * @param withdrawal_fee
+   * @param btc_fee
    * @param retry_times
    * @returns tokenStorage.UpdateBridgeTransactionInputArg
    */
   public static toUpdateBridgeTransactionArgs(
     bridgeId: string,
     status: BridgeTransactionStatus | null = null,
+    ckbtc_block_id: bigint | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] | [] = [],
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
+    btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
-    const block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
-    const block_timestamp_arg: [] | [bigint] = block_timestamp
-      ? [block_timestamp]
-      : [];
+    const ckbtc_block_id_arg: [] | [bigint] =
+      ckbtc_block_id !== null ? [ckbtc_block_id] : [];
+    const block_id_arg: [] | [bigint] = block_id !== null ? [block_id] : [];
+    const block_timestamp_arg: [] | [bigint] =
+      block_timestamp !== null ? [block_timestamp] : [];
     const block_confirmations = confirmations.map((block) => ({
       block_id: block.block_id,
       block_timestamp: block.block_timestamp,
     }));
     const block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
       block_confirmations.length > 0 ? [block_confirmations] : [];
+    const btc_txid_arg: [] | [string] = btc_txid !== null ? [btc_txid] : [];
+    const deposit_fee_arg: [] | [bigint] =
+      deposit_fee !== null ? [deposit_fee] : [];
+    const withdrawal_fee_arg: [] | [bigint] =
+      withdrawal_fee !== null ? [withdrawal_fee] : [];
+    const btc_fee_arg: [] | [bigint] = btc_fee !== null ? [btc_fee] : [];
+    const retry_times_arg: [] | [number] =
+      retry_times !== null ? [retry_times] : [];
 
     return {
       bridge_id: bridgeId,
       status: status
         ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
         : [],
+      ckbtc_block_id: ckbtc_block_id_arg,
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
-      btc_txid: btc_txid ? [btc_txid] : [],
-      deposit_fee: deposit_fee ? [deposit_fee] : [],
-      withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
-      retry_times: retry_times ? [retry_times] : [],
+      btc_txid: btc_txid_arg,
+      deposit_fee: deposit_fee_arg,
+      withdrawal_fee: withdrawal_fee_arg,
+      btc_fee: btc_fee_arg,
+      retry_times: retry_times_arg,
+    };
+  }
+
+  /**
+   * Create export bridge transaction input argument
+   * @param icpAddress
+   * @param btcAddress
+   * @param amount
+   * @param withdrawalFee
+   * @param btcFee
+   * @returns tokenStorage.CreateBridgeTransactionInputArg
+   */
+  public static toCreateExportBridgeTransactionArgs(
+    icpAddress: string,
+    btcAddress: string,
+    amount: bigint,
+    withdrawalFee: bigint,
+    btcFee: bigint,
+  ): tokenStorage.CreateBridgeTransactionInputArg {
+    return {
+      btc_txid: [],
+      icp_address: Principal.fromText(icpAddress),
+      btc_address: btcAddress,
+      asset_infos: [
+        {
+          asset_type: { BTC: null },
+          asset_id: CKBTC_CANISTER_ID,
+          amount,
+          decimals: 8,
+        },
+      ],
+      bridge_type: { Export: null },
+      deposit_fee: [],
+      withdrawal_fee: [withdrawalFee],
+      btc_fee: [btcFee],
+      created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
     };
   }
 }

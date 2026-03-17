@@ -5,13 +5,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@dfinity/principal";
 
 // Hoisted mock functions for vi.mock factory
-const { mockBuildActor, mockIcrc1BalanceOf, mockIcrc1Transfer } = vi.hoisted(
-  () => ({
-    mockBuildActor: vi.fn(),
-    mockIcrc1BalanceOf: vi.fn(),
-    mockIcrc1Transfer: vi.fn(),
-  }),
-);
+const {
+  mockBuildActor,
+  mockIcrc1BalanceOf,
+  mockIcrc1Transfer,
+  mockIcrc2Approve,
+  mockIcrc2Allowance,
+} = vi.hoisted(() => ({
+  mockBuildActor: vi.fn(),
+  mockIcrc1BalanceOf: vi.fn(),
+  mockIcrc1Transfer: vi.fn(),
+  mockIcrc2Approve: vi.fn(),
+  mockIcrc2Allowance: vi.fn(),
+}));
 
 // Mock auth state
 vi.mock("$modules/auth/state/auth.svelte", () => ({
@@ -21,8 +27,13 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   },
 }));
 
+vi.mock("$modules/bitcoin/constants", () => ({
+  CKBTC_MINTER_CANISTER_ID: "ml52i-qqaaa-aaaar-qaaba-cai",
+}));
+
 // Import after mocks
 import { authState } from "$modules/auth/state/auth.svelte";
+import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import { IcrcLedgerService } from "./icrcLedger";
 import type { TokenMetadata } from "../types";
 
@@ -42,6 +53,8 @@ describe("IcrcLedgerService", () => {
   const mockActor = {
     icrc1_balance_of: mockIcrc1BalanceOf,
     icrc1_transfer: mockIcrc1Transfer,
+    icrc2_approve: mockIcrc2Approve,
+    icrc2_allowance: mockIcrc2Allowance,
   };
 
   beforeEach(() => {
@@ -219,6 +232,65 @@ describe("IcrcLedgerService", () => {
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
       ).rejects.toThrow("Insufficient funds");
+    });
+  });
+
+  describe("approveCkBtcWithdrawal", () => {
+    it("should approve ckBTC withdrawal with deterministic memo and created_at_time", async () => {
+      // Arrange
+      const amount = 50_000n;
+      const memo = new Uint8Array([1, 2, 3]);
+      const createdAtTime = 1_700_000_000_000_000_000n;
+      mockIcrc2Approve.mockResolvedValue({ Ok: 123n });
+
+      // Act
+      const result = await service.approveCkBtcWithdrawal(
+        amount,
+        memo,
+        createdAtTime,
+      );
+
+      // Assert
+      expect(result).toBe(123n);
+      expect(mockIcrc2Approve).toHaveBeenCalledWith({
+        spender: {
+          owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
+          subaccount: [],
+        },
+        amount,
+        fee: [mockToken.fee],
+        memo: [memo],
+        created_at_time: [createdAtTime],
+        expected_allowance: [],
+        expires_at: [],
+        from_subaccount: [],
+      });
+    });
+  });
+
+  describe("getAllowanceForCkBtcMinter", () => {
+    it("should return allowance for ckBTC minter spender", async () => {
+      // Arrange
+      mockIcrc2Allowance.mockResolvedValue({
+        allowance: 99_000n,
+        expires_at: [],
+      });
+
+      // Act
+      const result = await service.getAllowanceForCkBtcMinter();
+
+      // Assert
+      expect(result).toBe(99_000n);
+      expect(mockIcrc2Allowance).toHaveBeenCalledWith({
+        account: {
+          owner: Principal.fromText("aaaaa-aa"),
+          subaccount: [],
+        },
+        spender: {
+          owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
+          subaccount: [],
+        },
+      });
     });
   });
 });
