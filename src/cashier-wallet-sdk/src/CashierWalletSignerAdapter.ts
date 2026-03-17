@@ -215,6 +215,17 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
         }
       }, POPUP_CLOSED_CHECK_MS)
 
+      // Poll the popup with wallet_check_auth so the wallet can reply via
+      // event.source even when window.opener is null (e.g. after a cross-origin
+      // II redirect that clears the opener reference via COOP headers).
+      // postMessage silently drops while the popup is at a different origin
+      // (e.g. https://id.ai), so this is safe to run continuously.
+      const authPollInterval = setInterval(() => {
+        if (!popup.closed) {
+          popup.postMessage({ type: 'wallet_check_auth' }, walletOriginUrl)
+        }
+      }, POPUP_CLOSED_CHECK_MS)
+
       const timeoutHandle = setTimeout(() => {
         cleanup()
         reject(new Error('CashierWalletSignerAdapter: login timed out'))
@@ -222,6 +233,7 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
 
       const cleanup = () => {
         clearInterval(closedCheck)
+        clearInterval(authPollInterval)
         clearTimeout(timeoutHandle)
         window.removeEventListener('message', messageHandler)
       }

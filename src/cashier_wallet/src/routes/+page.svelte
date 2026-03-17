@@ -34,6 +34,20 @@
       initIcrc29Handler()
     }
 
+    // Reply to wallet_check_auth polls from the DApp adapter.
+    // This handles the case where window.opener is null after a cross-origin
+    // II redirect (COOP headers), allowing the DApp to still receive the
+    // wallet_auth_complete message via event.source.postMessage.
+    window.addEventListener('message', (event: MessageEvent) => {
+      if (event.data?.type !== 'wallet_check_auth') return
+      if (authenticated && principal) {
+        ;(event.source as Window).postMessage(
+          { type: 'wallet_auth_complete', principal },
+          event.origin,
+        )
+      }
+    })
+
     // Auto-trigger II when opened as a login popup by the SDK or PNP adapter
     if (isLoginPopup) {
       if (authenticated) {

@@ -72,7 +72,7 @@ const CONFIG: CreatePnpArgs = {
       },
     },
     // Cashier Wallet — ICRC-29 iframe wallet with II authentication
-    cashierWallet: {
+    [CASHIER_WALLET_ID]: {
       id: CASHIER_WALLET_ID,
       enabled: true,
       adapter: CashierWalletSignerAdapter,
