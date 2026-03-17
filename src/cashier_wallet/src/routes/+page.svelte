@@ -9,9 +9,13 @@
   let requestLog: { time: string; method: string }[] = []
   let isLoginPopup = false
   let loginPending = false
+  let derivationOrigin: string | undefined
 
   onMount(async () => {
     isLoginPopup = !!window.opener
+    // Read derivationOrigin forwarded by CashierWalletSignerAdapter via URL param.
+    // This ensures II derives the same principal as a direct DApp login.
+    derivationOrigin = new URLSearchParams(window.location.search).get('derivationOrigin') ?? undefined
 
     // Init auth client to restore session
     await initAuthClient()
@@ -64,7 +68,7 @@
   })
 
   async function handleLogin() {
-    const result = await login()
+    const result = await login(derivationOrigin)
     authenticated = result.ok
     if (result.ok) {
       principal = getIdentity()?.getPrincipal().toText() ?? ''

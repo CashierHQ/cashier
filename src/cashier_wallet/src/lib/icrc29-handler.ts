@@ -1,6 +1,5 @@
 import { getIdentity, isAuthenticated, refreshAuthClient } from './identity-manager'
 import { callCanister } from './signer'
-import { createPendingConsent, pendingConsents } from './consent-store'
 
 export let walletReady = false
 
@@ -139,41 +138,19 @@ export function initIcrc29Handler(): void {
           return
         }
 
-        // Register this operation with the consent store (same mechanism as
-        // old consent_prepare). The popup fetches details via BroadcastChannel.
-        const consentId = crypto.randomUUID()
-        createPendingConsent(consentId, 'icrc49_call_canister', p, event.origin)
-
-        // Open the wallet's /consent popup. The iframe must be embedded with
-        // allow="popups" for this window.open() to succeed in major browsers.
-        const popup = window.open(
-          `/consent?id=${consentId}`,
-          `wallet_consent_${consentId}`,
-          'width=460,height=520,scrollbars=no,resizable=no',
-        )
-        if (!popup) {
-          pendingConsents.delete(consentId)
-          respond(undefined, {
-            code: -32003,
-            message:
-              'Consent popup was blocked. Ensure the wallet iframe has allow="popups".',
-          })
-          return
-        }
-
-        const consent = pendingConsents.get(consentId)!
+        // icrc49_call_canister permission is granted at session start via
+        // icrc25_request_permissions. Execute the call directly without a
+        // per-call consent popup — this wallet is first-party and the user
+        // already authorised the DApp by completing Internet Identity login.
         try {
-          await consent.approvalPromise
-          pendingConsents.delete(consentId)
           const result = await callCanister({
             canisterId: p.canisterId,
             method: p.method,
             arg: p.arg,
           })
           respond(result)
-        } catch {
-          pendingConsents.delete(consentId)
-          respond(undefined, { code: 3000, message: 'Action aborted by user' })
+        } catch (e) {
+          respond(undefined, { code: -32603, message: String(e) })
         }
         break
       }

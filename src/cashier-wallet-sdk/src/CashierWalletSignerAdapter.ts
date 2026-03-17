@@ -27,6 +27,20 @@ export interface CashierWalletAdapterConfig {
    * @default 30000
    */
   establishTimeout?: number
+  /**
+   * ICRC-29 heartbeat disconnect timeout in ms.
+   * Must exceed the longest expected IC update call (~10 s on mainnet).
+   * @default 30000
+   */
+  disconnectTimeout?: number
+  /**
+   * Internet Identity derivation origin.
+   * Set this to the DApp's origin so that the wallet derives the same
+   * principal as a direct II login from the DApp.
+   * @example 'https://cashierapp.io'
+   * @example 'http://localhost:3000'
+   */
+  derivationOrigin?: string
 }
 
 // ── Adapter ───────────────────────────────────────────────────────────────
@@ -88,14 +102,20 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
    *  6. Return `{ owner, subaccount }` to PNP.
    */
   async connect(): Promise<Account> {
-    const { walletOrigin, host = 'https://icp-api.io', establishTimeout = 30_000 } = this.config
+    const {
+      walletOrigin,
+      host = 'https://icp-api.io',
+      establishTimeout = 30_000,
+      disconnectTimeout = 30_000,
+      derivationOrigin,
+    } = this.config
 
-    // Phase 1 — II login via popup
-    const principal = await this.openLoginPopup(walletOrigin)
+    // Phase 1 — II login via popup (pass derivationOrigin so wallet uses same II principal)
+    const principal = await this.openLoginPopup(walletOrigin, derivationOrigin)
     this.principalText = principal
 
     // Phase 2 — mount iframe + ICRC-29 transport
-    this.iframeTransport = new IframeTransport({ url: walletOrigin, establishTimeout })
+    this.iframeTransport = new IframeTransport({ url: walletOrigin, establishTimeout, disconnectTimeout })
     // Cast to Transport to avoid private-field variance issues across signer-js versions
     this.signer = new Signer({
       transport: this.iframeTransport as unknown as Transport,
@@ -184,10 +204,18 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
    * The wallet +page.svelte auto-triggers II login when `window.opener` is set.
    * After successful II auth it posts `{ type: 'wallet_auth_complete', principal }`
    * and closes itself.
+   *
+   * @param derivationOrigin - if provided, appended as `?derivationOrigin=<value>` so
+   *   the wallet passes it through to AuthClient.login, ensuring the same II principal
+   *   as a direct DApp login.
    */
-  private openLoginPopup(walletOrigin: string): Promise<string> {
+  private openLoginPopup(walletOrigin: string, derivationOrigin?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      const popup = window.open(walletOrigin, '_blank')
+      const popupUrl = new URL(walletOrigin)
+      if (derivationOrigin) {
+        popupUrl.searchParams.set('derivationOrigin', derivationOrigin)
+      }
+      const popup = window.open(popupUrl.toString(), '_blank')
       if (!popup) {
         reject(new Error('CashierWalletSignerAdapter: login popup was blocked'))
         return

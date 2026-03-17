@@ -1,8 +1,9 @@
 import { Cbor, HttpAgent, polling } from '@dfinity/agent'
 import { Principal } from '@dfinity/principal'
+import { env } from '$env/dynamic/public'
 import { getIdentity } from './identity-manager'
 
-const IC_HOST = 'https://icp-api.io'
+const IC_HOST = env.PUBLIC_ICP_HOST ?? 'https://icp-api.io'
 
 interface Signable {
   sign(blob: Uint8Array | ArrayBuffer): Promise<ArrayBuffer>

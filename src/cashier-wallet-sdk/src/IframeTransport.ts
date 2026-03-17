@@ -14,8 +14,9 @@ export interface IframeTransportOptions {
   establishTimeout?: number
   /**
    * Time in milliseconds without a heartbeat before the channel is considered
-   * disconnected.
-   * @default 2000
+   * disconnected. Must be longer than the slowest expected IC update call
+   * (~10 s on mainnet) to prevent premature channel closure during icrc49_call_canister.
+   * @default 30000
    */
   disconnectTimeout?: number
   /**
@@ -64,7 +65,7 @@ export class IframeTransport implements Transport {
     this.options = {
       url: options.url,
       establishTimeout: options.establishTimeout ?? 30_000,
-      disconnectTimeout: options.disconnectTimeout ?? 2_000,
+      disconnectTimeout: options.disconnectTimeout ?? 30_000,
       statusPollingRate: options.statusPollingRate ?? 300,
       container: options.container,
     }
