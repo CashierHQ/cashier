@@ -16,11 +16,13 @@ pub struct BridgeTransaction {
     pub bridge_type: BridgeType,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
+    pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
@@ -31,6 +33,9 @@ impl BridgeTransaction {
     pub fn update(&mut self, input: UpdateBridgeTransactionInputArg) {
         if let Some(btc_txid) = input.btc_txid {
             self.btc_txid = Some(btc_txid);
+        }
+        if let Some(ckbtc_block_id) = input.ckbtc_block_id {
+            self.ckbtc_block_id = Some(ckbtc_block_id);
         }
         if let Some(block_id) = input.block_id {
             self.block_id = Some(block_id);
@@ -46,6 +51,9 @@ impl BridgeTransaction {
         }
         if let Some(withdrawal_fee) = input.withdrawal_fee {
             self.withdrawal_fee = Some(withdrawal_fee);
+        }
+        if let Some(btc_fee) = input.btc_fee {
+            self.btc_fee = Some(btc_fee);
         }
         if let Some(retry_times) = input.retry_times {
             self.retry_times = retry_times;
@@ -128,11 +136,13 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
             btc_txid: None,
+            ckbtc_block_id: None,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
+            btc_fee: None,
             total_amount: None,
             created_at_ts: 0,
             retry_times: 0,
@@ -152,11 +162,13 @@ mod tests {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "test_bridge_id".to_string(),
             btc_txid: Some("new_btc_txid".to_string()),
+            ckbtc_block_id: Some(99u64),
             block_id: Some(100u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
@@ -166,11 +178,13 @@ mod tests {
 
         // Assert
         assert_eq!(transaction.btc_txid, Some("new_btc_txid".to_string()));
+        assert_eq!(transaction.ckbtc_block_id, Some(99u64));
         assert_eq!(transaction.block_id, Some(100u64));
         assert_eq!(transaction.block_timestamp, Some(1620001200u64));
         assert_eq!(transaction.block_confirmations.len(), 2);
         assert_eq!(transaction.deposit_fee, Some(Nat::from(1000u32)));
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(500u32)));
+        assert_eq!(transaction.btc_fee, Some(Nat::from(200u32)));
         assert_eq!(transaction.retry_times, 1);
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
     }

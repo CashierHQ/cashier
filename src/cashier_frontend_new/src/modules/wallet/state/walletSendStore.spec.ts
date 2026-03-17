@@ -20,6 +20,7 @@ vi.mock("$modules/shared/utils/converter", () => ({
 
 vi.mock("$modules/token/constants", () => ({
   ICP_LEDGER_CANISTER_ID: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  CKBTC_CANISTER_ID: "mxzaz-hqaaa-aaaar-qaada-cai",
 }));
 
 const mockFindTokenByAddress = vi.fn();
@@ -191,6 +192,31 @@ describe("WalletSendStore", () => {
         maxAmount: 10,
       });
       expect(result.isOk()).toBe(true);
+    });
+
+    it("should validate a valid Bitcoin address for ckBTC exports", () => {
+      const result = walletSendStore.validateSend({
+        ...baseParams,
+        selectedToken: "mxzaz-hqaaa-aaaar-qaada-cai",
+        receiveAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        isBitcoinAddress: true,
+      });
+
+      expect(result.isOk()).toBe(true);
+    });
+
+    it("should reject an invalid Bitcoin address for ckBTC exports", () => {
+      const result = walletSendStore.validateSend({
+        ...baseParams,
+        selectedToken: "mxzaz-hqaaa-aaaar-qaada-cai",
+        receiveAddress: "not-a-btc-address",
+        isBitcoinAddress: true,
+      });
+
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe(
+        "wallet.send.errors.invalidBitcoinAddress",
+      );
     });
   });
 });

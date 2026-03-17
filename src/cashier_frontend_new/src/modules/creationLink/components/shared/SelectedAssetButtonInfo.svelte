@@ -55,7 +55,7 @@
       <div
         class="text-[14px] font-normal leading-[1.1] whitespace-nowrap overflow-hidden text-ellipsis"
       >
-        {selectedToken.name}
+        {selectedToken.symbol}
       </div>
       <ChevronDown
         color="#36A18B"

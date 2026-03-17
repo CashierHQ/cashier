@@ -134,6 +134,7 @@ export class BitcoinTransactionMapper {
       bridge_type: isImporting ? { Import: null } : { Export: null },
       deposit_fee: [depositFee],
       withdrawal_fee: [withdrawalFee],
+      btc_fee: [],
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
     };
   }
