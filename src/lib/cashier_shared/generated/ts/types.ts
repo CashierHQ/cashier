@@ -140,6 +140,8 @@ export interface AssetInfo {
   label: string;
   /** Amount in base units (Nat) */
   amount: bigint;
+  /** Available amount in base units (Nat) */
+  available_amount?: bigint;
 }
 
 /**

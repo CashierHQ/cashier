@@ -45,6 +45,23 @@ export declare function calculateIntentTotalAmount(participants: IntentParticipa
  */
 export declare function calculateIntentTotalNetworkFee(participants: IntentParticipants, tokenStandard: TokenStandard, assetNetworkFee: bigint, maxUse?: number): bigint;
 /**
+ * Calculate the inbound network fee for an intent.
+ * @param participants
+ * @param tokenStandard
+ * @param assetNetworkFee
+ * @param maxUse
+ * @returns
+ */
+export declare function calculateIntentInboundNetworkFee(participants: IntentParticipants, tokenStandard: TokenStandard, assetNetworkFee: bigint): bigint;
+/**
+ * Calculate the outbound network fee for an intent.
+ * @param participants
+ * @param assetNetworkFee
+ * @param maxUse
+ * @returns
+ */
+export declare function calculateIntentOutboundNetworkFee(participants: IntentParticipants, assetNetworkFee: bigint, maxUse?: number): bigint;
+/**
  * Calculate the fee paid by the user for an intent.
  *
  * This is what the user actually pays from their perspective.
