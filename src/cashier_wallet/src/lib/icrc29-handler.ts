@@ -45,8 +45,8 @@ export function initIcrc29Handler(): void {
     const req = event.data
     if (req?.jsonrpc !== '2.0' || !req.method) return
 
-    // Only handle ICRC-standard methods here; custom protocol handled by rpc-handler.ts
-    if (!req.method.startsWith('icrc')) return
+    // Only handle ICRC-25/27/29/49 signer-standard methods; icrc1_* and custom methods handled by rpc-handler.ts
+    if (!/^icrc(25|27|29|49)_/.test(req.method)) return
 
     if (!event.source) return
     const source = event.source as Window
@@ -105,7 +105,10 @@ export function initIcrc29Handler(): void {
           respond(undefined, { code: -32603, message: 'No identity available' })
           return
         }
-        respond({ accounts: [{ owner, subaccount: null }] })
+        // Omit subaccount when there is none — signer-web v3 treats null as a
+        // base64 string and throws, whereas a missing key yields `undefined`
+        // which correctly maps to "no subaccount".
+        respond({ accounts: [{ owner }] })
         break
       }
 

@@ -24,6 +24,9 @@ export function initRpcHandler(onRequest?: OnRequestCallback): void {
     const req = event.data as RpcRequest
     if (req?.jsonrpc !== '2.0' || !req.method || req.id === undefined) return
 
+    // Skip ICRC-25/27/29/49 signer-standard methods — handled exclusively by icrc29-handler.ts
+    if (/^icrc(25|27|29|49)_/.test(req.method)) return
+
     console.debug('[wallet ← dapp] received:', req)
     onRequest?.(req.method)
 
