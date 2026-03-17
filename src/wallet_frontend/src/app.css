@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  body {
+    @apply bg-white text-gray-900;
+  }
+}
