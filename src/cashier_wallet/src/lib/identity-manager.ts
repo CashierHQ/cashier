@@ -4,6 +4,10 @@ import type { Identity } from '@dfinity/agent'
 // Internet Identity URL — https://id.ai is an alias for https://identity.ic0.app
 const II_URL = 'https://id.ai'
 
+// Cashier frontend origin — wallet uses this as derivationOrigin so II derives
+// the same principal as the cashier app. Set per-environment via PUBLIC_CASHIER_ORIGIN.
+const CASHIER_ORIGIN = import.meta.env.PUBLIC_CASHIER_ORIGIN as string | undefined
+
 let authClient: AuthClient | null = null
 
 /**
@@ -35,6 +39,7 @@ export async function login(): Promise<{ ok: boolean; error?: string }> {
     try {
       ac.login({
         identityProvider: II_URL,
+        ...(CASHIER_ORIGIN ? { derivationOrigin: CASHIER_ORIGIN } : {}),
         onSuccess: () => resolve({ ok: true }),
         onError: (err) => {
           const msg = typeof err === 'string' ? err : String(err)

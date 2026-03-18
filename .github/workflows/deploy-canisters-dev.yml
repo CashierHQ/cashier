@@ -5,6 +5,9 @@ on:
           - dev
       types:
           - closed
+  push:
+      branches:
+          - feature/standalone-wallet-and-ask
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   build_and_deploy:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: dev
 
