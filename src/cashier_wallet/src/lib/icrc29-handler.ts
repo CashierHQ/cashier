@@ -142,14 +142,19 @@ export function initIcrc29Handler(): void {
         // icrc25_request_permissions. Execute the call directly without a
         // per-call consent popup — this wallet is first-party and the user
         // already authorised the DApp by completing Internet Identity login.
+        console.log(
+          `[cashier-wallet-instance] icrc49_call_canister received — canister: ${p.canisterId}, method: ${p.method}`,
+        )
         try {
           const result = await callCanister({
             canisterId: p.canisterId,
             method: p.method,
             arg: p.arg,
           })
+          console.log('[cashier-wallet-instance] icrc49_call_canister — IC call complete, returning certificate')
           respond(result)
         } catch (e) {
+          console.error(`[cashier-wallet-instance] icrc49_call_canister failed — ${String(e)}`)
           respond(undefined, { code: -32603, message: String(e) })
         }
         break

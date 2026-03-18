@@ -195,6 +195,14 @@ export const authState = {
   },
 
   /**
+   * ID of the currently connected wallet adapter, or null if not connected.
+   * e.g. "cashier" for the standalone wallet, "iiSigner" for Internet Identity.
+   */
+  get connectedWalletId() {
+    return walletConnect.current.id;
+  },
+
+  /**
    * Get the current signer instance from the connected wallet.
    * @throws Error if PNP is not initialized or no adapter is connected
    * @returns The Signer instance from the connected wallet

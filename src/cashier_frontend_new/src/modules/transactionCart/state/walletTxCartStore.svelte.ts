@@ -97,8 +97,13 @@ export class WalletTxCartStore implements TxCartStore {
       return Err("User is not authenticated.");
     }
 
+    console.log(
+      `[cashier-dapp] Transfer initiated via ${authState.connectedWalletId} — token: ${this.#source.token.address}, amount: ${this.#source.amount}, to: ${String(this.#source.to)}`,
+    );
+
     // Transition to PROCESSING before tx
     this.setSourceState(WalletTransferState.PROCESSING);
+    console.log("[cashier-dapp] Transfer in progress (waiting for wallet signer)...");
 
     const { to, amount, receiveType } = this.#source;
     const isAccountId = receiveType === ReceiveAddressType.ACCOUNT_ID;
@@ -115,9 +120,11 @@ export class WalletTxCartStore implements TxCartStore {
           result = await this.#icpLedgerService.transferToPrincipal(to, amount);
         } else {
           this.setSourceState(WalletTransferState.FAILED);
+          console.warn(`[cashier-dapp] Transfer failed — Invalid address type for ${receiveType}.`);
           return Err(`Invalid address type for ${receiveType}.`);
         }
         this.setSourceState(WalletTransferState.SUCCESS);
+        console.log(`[cashier-dapp] Transfer succeeded — block index: ${result}`);
         return Ok(result);
       }
 
@@ -125,21 +132,26 @@ export class WalletTxCartStore implements TxCartStore {
       if (this.#icrcLedgerService) {
         if (!isPrincipal) {
           this.setSourceState(WalletTransferState.FAILED);
+          console.warn("[cashier-dapp] Transfer failed — ICRC transfer only supports principal address.");
           return Err("ICRC transfer only supports principal address.");
         }
         if (typeof to === "string") {
           this.setSourceState(WalletTransferState.FAILED);
+          console.warn("[cashier-dapp] Transfer failed — Invalid principal address.");
           return Err("Invalid principal address.");
         }
         result = await this.#icrcLedgerService.transferToPrincipal(to, amount);
         this.setSourceState(WalletTransferState.SUCCESS);
+        console.log(`[cashier-dapp] Transfer succeeded — block index: ${result}`);
         return Ok(result);
       }
 
       this.setSourceState(WalletTransferState.FAILED);
+      console.warn("[cashier-dapp] Transfer failed — Ledger service is not initialized.");
       return Err("Ledger service is not initialized.");
     } catch (e) {
       this.setSourceState(WalletTransferState.FAILED);
+      console.error(`[cashier-dapp] Transfer threw — ${(e as Error).message}`);
       return Err((e as Error).message);
     }
   }

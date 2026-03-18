@@ -43,14 +43,14 @@ export interface CallCanisterParams {
   canisterId: string
   /** Method name to call. */
   method: string
-  /** Base64-encoded Candid argument bytes. */
+  /** Base64url-encoded Candid argument bytes (ICRC-49). */
   arg: string
 }
 
 export interface CallCanisterResult {
-  /** Base64-encoded CBOR contentMap of the signed update envelope. */
+  /** Base64url-encoded CBOR contentMap of the signed update envelope (ICRC-49). */
   contentMap: string
-  /** Base64-encoded DER certificate returned from read_state. */
+  /** Base64url-encoded IC certificate returned from read_state (ICRC-49). */
   certificate: string
 }
 
@@ -68,7 +68,11 @@ export async function callCanister(
   if (!identity) throw new Error('No authenticated identity')
 
   const canisterId = Principal.fromText(params.canisterId)
-  const argBytes = base64ToBytes(params.arg)
+  const argBytes = base64UrlToBytes(params.arg)
+
+  console.log(
+    `[cashier-wallet-instance] Submitting update call — ${params.method} on ${params.canisterId} via ${IC_HOST}`,
+  )
 
   // Create a fresh agent so the addTransform callback doesn't leak across calls
   const agent = HttpAgent.createSync({ identity, host: IC_HOST })
@@ -84,9 +88,11 @@ export async function callCanister(
     methodName: params.method,
     arg: argBytes,
   })
+  console.log('[cashier-wallet-instance] Call submitted to IC, polling for response...')
 
   const { pollForResponse, defaultStrategy } = polling
   await pollForResponse(agent, canisterId, submitResponse.requestId, defaultStrategy())
+  console.log('[cashier-wallet-instance] IC response received, reading certificate...')
 
   const { certificate } = await agent.readState(canisterId, {
     paths: [
@@ -99,9 +105,10 @@ export async function callCanister(
 
   if (!contentMap) throw new Error('contentMap was not captured by transform')
 
+  console.log('[cashier-wallet-instance] Certificate obtained — ICRC-49 result ready')
   return {
-    contentMap: bytesToBase64(new Uint8Array(contentMap)),
-    certificate: bytesToBase64(new Uint8Array(certificate)),
+    contentMap: bytesToBase64Url(new Uint8Array(contentMap)),
+    certificate: bytesToBase64Url(new Uint8Array(certificate)),
   }
 }
 
@@ -116,17 +123,26 @@ function bufferToHex(buffer: ArrayBuffer): string {
     .join('')
 }
 
-/** Decode a standard base64 string to a Uint8Array. */
-function base64ToBytes(b64: string): Uint8Array {
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes
+/**
+ * Decode a base64url string (RFC 4648 §5, no padding) to a Uint8Array.
+ * Also accepts standard base64 with `+`/`/` for compatibility.
+ * ICRC-49 requires base64url for all binary fields.
+ */
+function base64UrlToBytes(b64url: string): Uint8Array {
+  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+  const binary = atob(padded)
+  const out = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i)
+  return out
 }
 
-/** Encode a Uint8Array as a standard base64 string. */
-function bytesToBase64(bytes: Uint8Array): string {
+/**
+ * Encode a Uint8Array as a base64url string (RFC 4648 §5, no padding).
+ * ICRC-49 requires base64url for contentMap and certificate.
+ */
+function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = ''
   for (const b of bytes) binary += String.fromCharCode(b)
-  return btoa(binary)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
 }
