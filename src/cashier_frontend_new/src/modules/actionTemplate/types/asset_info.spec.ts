@@ -75,8 +75,7 @@ describe("SharedAssetInfoMapper", () => {
     const serialized_asset_info = fixture_of_serialized_shared_asset_info();
 
     // Act
-    const to_storage_result =
-      SharedAssetInfoMapper.toStorageType(asset_info);
+    const to_storage_result = SharedAssetInfoMapper.toStorageType(asset_info);
     const from_storage_result = SharedAssetInfoMapper.fromStorageType(
       serialized_asset_info,
     );

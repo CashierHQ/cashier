@@ -15,12 +15,8 @@
     useCount?: number;
   };
 
-  let {
-    assetsWithTokenInfo,
-    failedImageLoads,
-    onImageError,
-    useCount,
-  }: Props = $props();
+  let { assetsWithTokenInfo, failedImageLoads, onImageError, useCount }: Props =
+    $props();
 
   const linkUseActionCounter = $derived(useCount ?? 0);
 </script>
