@@ -19,7 +19,15 @@ process.env.VITE_DEV_BUILD_TIMESTAMP = new Date().toISOString();
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  resolve: {
+    alias: {
+      // Force Vite/Rollup to use the npm 'buffer' polyfill instead of treating
+      // 'buffer' as a Node.js built-in (which becomes __vite-browser-external in prod builds).
+      buffer: "buffer/",
+    },
+  },
   optimizeDeps: {
+    include: ["buffer"],
     esbuildOptions: {
       define: {
         global: "globalThis",

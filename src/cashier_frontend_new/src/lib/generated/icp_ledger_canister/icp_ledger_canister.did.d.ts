@@ -1,6 +1,6 @@
-import type { Principal } from '@icp-sdk/core/principal';
-import type { ActorMethod } from '@icp-sdk/core/agent';
-import type { IDL } from '@icp-sdk/core/candid';
+import type { Principal } from '@dfinity/principal';
+import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface Account {
   'owner' : Principal,
@@ -323,6 +323,7 @@ export type TextAccountIdentifier = string;
  */
 export interface TimeStamp { 'timestamp_nanos' : bigint }
 /**
+ * This is the official Ledger interface that is guaranteed to be backward compatible.
  * Amount of tokens, measured in 10^-8 of a token.
  */
 export interface Tokens { 'e8s' : bigint }

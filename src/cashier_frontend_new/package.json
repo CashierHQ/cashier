@@ -65,6 +65,7 @@
   "dependencies": {
     "@cashier-wallet/wallet-sdk": "workspace:*",
     "@amplitude/analytics-browser": "^2.35.3",
+    "buffer": "^6.0.3",
     "@dfinity/agent": "2.4.1",
     "@dfinity/auth-client": "2.4.1",
     "@dfinity/candid": "2.4.1",
