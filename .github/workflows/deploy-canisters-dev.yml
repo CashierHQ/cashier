@@ -8,6 +8,7 @@ on:
   push:
       branches:
           - feature/standalone-wallet-and-ask
+          - feature/standalone-wallet-deployment
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
