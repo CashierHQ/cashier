@@ -28,7 +28,7 @@ build_canisters: pre_build
 # Builds the frontend
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps
-  cd "{{FRONTEND_DIR_NEW}}" && npm run build:{{mode}}
+  cd "{{FRONTEND_DIR_NEW}}" && pnpm run build:{{mode}}
 
 # Generates the ts files for the canister services 
 [group('build')]
@@ -40,7 +40,7 @@ generate_frontend_ts:
 
 [private]
 install_frontend_deps:
-  cd "{{FRONTEND_DIR_NEW}}" && npm install
+  pnpm install
 
 [private]
 generate_frontend_ts_for_canister canister:
