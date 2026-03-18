@@ -501,7 +501,6 @@
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
-        maxUse={Number(linkStore.link.link_use_action_max_count)}
         useCount={Number(linkStore.link.link_use_action_counter)}
       />
 
