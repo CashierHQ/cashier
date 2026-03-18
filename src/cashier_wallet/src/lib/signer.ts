@@ -43,14 +43,14 @@ export interface CallCanisterParams {
   canisterId: string
   /** Method name to call. */
   method: string
-  /** Base64url-encoded Candid argument bytes (ICRC-49). */
+  /** Base64-encoded Candid argument bytes (ICRC-49). */
   arg: string
 }
 
 export interface CallCanisterResult {
-  /** Base64url-encoded CBOR contentMap of the signed update envelope (ICRC-49). */
+  /** Base64-encoded CBOR contentMap of the signed update envelope (ICRC-49). */
   contentMap: string
-  /** Base64url-encoded IC certificate returned from read_state (ICRC-49). */
+  /** Base64-encoded IC certificate returned from read_state (ICRC-49). */
   certificate: string
 }
 
@@ -68,7 +68,7 @@ export async function callCanister(
   if (!identity) throw new Error('No authenticated identity')
 
   const canisterId = Principal.fromText(params.canisterId)
-  const argBytes = base64UrlToBytes(params.arg)
+  const argBytes = base64ToBytes(params.arg)
 
   console.log(
     `[cashier-wallet-instance] Submitting update call — ${params.method} on ${params.canisterId} via ${IC_HOST}`,
@@ -107,8 +107,8 @@ export async function callCanister(
 
   console.log('[cashier-wallet-instance] Certificate obtained — ICRC-49 result ready')
   return {
-    contentMap: bytesToBase64Url(new Uint8Array(contentMap)),
-    certificate: bytesToBase64Url(new Uint8Array(certificate)),
+    contentMap: bytesToBase64(new Uint8Array(contentMap)),
+    certificate: bytesToBase64(new Uint8Array(certificate)),
   }
 }
 
@@ -124,13 +124,12 @@ function bufferToHex(buffer: ArrayBuffer): string {
 }
 
 /**
- * Decode a base64url string (RFC 4648 §5, no padding) to a Uint8Array.
- * Also accepts standard base64 with `+`/`/` for compatibility.
- * ICRC-49 requires base64url for all binary fields.
+ * Decode base64 to bytes. Accepts both standard base64 and base64url.
+ * Signer-agent expects the same format as IIChannel: standard base64 (toBase64).
  */
-function base64UrlToBytes(b64url: string): Uint8Array {
-  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+function base64ToBytes(b64: string): Uint8Array {
+  const normalized = b64.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
   const binary = atob(padded)
   const out = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i)
@@ -138,11 +137,10 @@ function base64UrlToBytes(b64url: string): Uint8Array {
 }
 
 /**
- * Encode a Uint8Array as a base64url string (RFC 4648 §5, no padding).
- * ICRC-49 requires base64url for contentMap and certificate.
+ * Encode bytes as standard base64. Must match IIChannel/signer-agent expectations.
  */
-function bytesToBase64Url(bytes: Uint8Array): string {
+function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
   for (const b of bytes) binary += String.fromCharCode(b)
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+  return btoa(binary)
 }
