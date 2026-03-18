@@ -31,7 +31,10 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { calculateUsageInfoAssetsWithTokenInfo } from "$modules/detailLink/utils/usageInfo";
+  import {
+    calculateLinkInfoAssetsWithTokenInfo,
+    calculateUsageInfoAssetsWithTokenInfo,
+  } from "$modules/detailLink/utils/usageInfo";
   import {
     getLinkTypeText,
     isPaymentLinkType,
@@ -124,6 +127,13 @@
   // Convert link.asset_info to assetsWithTokenInfo format
   const assetsWithTokenInfo = $derived.by(() => {
     return calculateUsageInfoAssetsWithTokenInfo(
+      linkStore?.link,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  const linkInfoAssetsWithTokenInfo = $derived.by(() => {
+    return calculateLinkInfoAssetsWithTokenInfo(
       linkStore?.link,
       walletStore.findTokenByAddress.bind(walletStore),
     );
@@ -472,7 +482,7 @@
       <!-- Block 1: Link Info -->
       <LinkInfoSection
         {linkTypeText}
-        {assetsWithTokenInfo}
+        assetsWithTokenInfo={linkInfoAssetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
         {isPaymentLink}

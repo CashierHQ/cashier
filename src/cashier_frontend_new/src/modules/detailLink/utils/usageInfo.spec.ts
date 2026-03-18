@@ -6,7 +6,10 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok } from "ts-results-es";
 import { describe, expect, it, vi } from "vitest";
-import { calculateUsageInfoAssetsWithTokenInfo } from "./usageInfo";
+import {
+  calculateLinkInfoAssetsWithTokenInfo,
+  calculateUsageInfoAssetsWithTokenInfo,
+} from "./usageInfo";
 
 function fixture_of_token(): TokenWithPriceAndBalance {
   return {
@@ -91,5 +94,38 @@ describe("calculateUsageInfoAssetsWithTokenInfo", () => {
     // Assert
     expect(result).toHaveLength(1);
     expect(result[0].amount).toBe(2);
+  });
+});
+
+describe("calculateLinkInfoAssetsWithTokenInfo", () => {
+  it("it_should_fail_do_return_empty_assets_due_to_missing_token_lookup", () => {
+    // Arrange
+    const link = fixture_of_link_with_available_amount(150_000_000n);
+    const findTokenByAddress = vi.fn(() => Err(new Error("missing token")));
+
+    // Act
+    const result = calculateLinkInfoAssetsWithTokenInfo(
+      link,
+      findTokenByAddress,
+    );
+
+    // Assert
+    expect(result).toEqual([]);
+  });
+
+  it("it_should_do_use_amount_per_link_use_action_for_link_info", () => {
+    // Arrange
+    const link = fixture_of_link_with_available_amount(150_000_000n);
+    const findTokenByAddress = vi.fn(() => Ok(fixture_of_token()));
+
+    // Act
+    const result = calculateLinkInfoAssetsWithTokenInfo(
+      link,
+      findTokenByAddress,
+    );
+
+    // Assert
+    expect(result).toHaveLength(1);
+    expect(result[0].amount).toBe(1);
   });
 });

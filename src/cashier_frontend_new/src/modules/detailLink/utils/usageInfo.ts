@@ -47,3 +47,34 @@ export function calculateUsageInfoAssetsWithTokenInfo(
 
   return calculateAssetsWithTokenInfo(assets, findTokenByAddress);
 }
+
+/**
+ * Calculates the link info assets with token info for a given link.
+ * @param link The link object containing asset information.
+ * @param findTokenByAddress Function to find token information by address.
+ * @returns An array of assets with token information.
+ */
+export function calculateLinkInfoAssetsWithTokenInfo(
+  link: Link | undefined,
+  findTokenByAddress: FindTokenByAddress,
+): AssetWithTokenInfo[] {
+  if (!link?.asset_info?.length) {
+    return [];
+  }
+
+  const assets = link.asset_info
+    .map((assetInfo) => {
+      const assetAddress = assetInfo.asset.address?.toString();
+      if (!assetAddress) return null;
+
+      return {
+        address: assetAddress,
+        amount: assetInfo.amount_per_link_use_action,
+      };
+    })
+    .filter(
+      (item): item is { address: string; amount: bigint } => item !== null,
+    );
+
+  return calculateAssetsWithTokenInfo(assets, findTokenByAddress);
+}
