@@ -18,8 +18,8 @@
     "lint": "prettier --check . && eslint .",
     "knip": "knip",
     "test:unit": "vitest",
-    "test": "npm run test:unit -- --run",
-    "add:ui": "npx shadcn-svelte@latest add"
+    "test": "pnpm test:unit --run",
+    "add:ui": "pnpm dlx shadcn-svelte@latest add"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.5",

@@ -68,7 +68,7 @@ test_unit_i686 test_name="":
 # Run the frontend tests
 [group('test')]
 test_frontend: install_frontend_deps
-  cd {{FRONTEND_DIR_NEW}} && npm run test
+  cd {{FRONTEND_DIR_NEW}} && pnpm test
 
 
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.

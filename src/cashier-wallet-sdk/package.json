@@ -35,7 +35,7 @@
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"prepublishOnly": "pnpm run build",
-		"version:minor": "npm version minor --no-git-tag-version",
+		"version:minor": "pnpm version minor --no-git-tag-version",
 		"publish:minor": "pnpm run version:minor && pnpm publish --no-git-checks"
 	},
 	"devDependencies": {
