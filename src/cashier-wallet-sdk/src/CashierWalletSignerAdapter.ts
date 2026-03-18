@@ -160,10 +160,33 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     const signerAgentRef = this.signerAgent
     this.agent = new Proxy(signerAgentRef, {
       get(target: unknown, prop: string | symbol) {
-        if (prop === 'query' || prop === 'readState') {
+        if (prop === 'query') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const fn = (queryAgent as any)[prop]
           return typeof fn === 'function' ? fn.bind(queryAgent) : fn
+        }
+        if (prop === 'readState') {
+          return async (
+            canisterId: unknown,
+            options: { paths?: unknown[] },
+            ...rest: unknown[]
+          ) => {
+            const paths = options?.paths
+            const isRequestStatus =
+              Array.isArray(paths) &&
+              paths.length === 1 &&
+              Array.isArray(paths[0]) &&
+              paths[0].length === 2 &&
+              (paths[0][0] instanceof ArrayBuffer ||
+                paths[0][0] instanceof Uint8Array) &&
+              new TextDecoder().decode(paths[0][0]) === 'request_status'
+            if (isRequestStatus) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              return (signerAgentRef as any).readState(canisterId, options, ...rest)
+            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (queryAgent as any).readState(canisterId, options, ...rest)
+          }
         }
         if (prop === 'call') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
