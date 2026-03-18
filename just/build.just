@@ -27,7 +27,7 @@ build_canisters: pre_build
 
 # Builds the frontend
 [group('build')]
-build_frontend mode="local_dev": install_frontend_deps
+build_frontend mode="local_dev": install_frontend_deps build_wallet_sdk
   cd "{{FRONTEND_DIR_NEW}}" && pnpm run build:{{mode}}
 
 # Generates the ts files for the canister services 
@@ -41,6 +41,11 @@ generate_frontend_ts:
 [private]
 install_frontend_deps:
   pnpm install
+
+# Builds the wallet SDK package (required before building cashier_frontend_new)
+[private]
+build_wallet_sdk:
+  pnpm --filter @cashier-wallet/wallet-sdk build
 
 [private]
 generate_frontend_ts_for_canister canister:
