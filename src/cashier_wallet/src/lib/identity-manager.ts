@@ -1,12 +1,13 @@
 import { AuthClient } from '@dfinity/auth-client'
 import type { Identity } from '@dfinity/agent'
+import { PUBLIC_CASHIER_ORIGIN } from "$env/static/public";
 
 // Internet Identity URL — https://id.ai is an alias for https://identity.ic0.app
 const II_URL = 'https://id.ai'
 
 // Cashier frontend origin — wallet uses this as derivationOrigin so II derives
 // the same principal as the cashier app. Set per-environment via PUBLIC_CASHIER_ORIGIN.
-const CASHIER_ORIGIN = import.meta.env.PUBLIC_CASHIER_ORIGIN as string | undefined
+const CASHIER_ORIGIN = PUBLIC_CASHIER_ORIGIN || undefined;
 
 let authClient: AuthClient | null = null
 
