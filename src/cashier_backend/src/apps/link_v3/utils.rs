@@ -139,7 +139,7 @@ pub fn update_link_available_amount_after_withdraw(
     intents: &[IntentV3],
 ) -> Result<(), CanisterError> {
     for asset_info in &mut link.asset_info {
-        let _current_available_amount = asset_info.available_amount.clone().ok_or_else(|| {
+        asset_info.available_amount.as_ref().ok_or_else(|| {
             CanisterError::InvalidDataError(format!(
                 "Current available amount of asset {} not found",
                 asset_info.asset.address
@@ -160,18 +160,17 @@ pub fn update_link_available_amount_after_withdraw(
                 ))
             })?;
 
-        let _deducted_amount = match &intent.intent_tx_data {
-            Some(IntentTransactionDataV3::Transfer(data)) => Some(data.amount.clone()),
-            _ => None,
+        match &intent.intent_tx_data {
+            Some(IntentTransactionDataV3::Transfer(_)) => {}
+            _ => {
+                return Err(CanisterError::InvalidDataError(format!(
+                    "Invalid withdraw transfer intent_tx_data for asset {}",
+                    asset_info.asset.address
+                )));
+            }
         }
-        .ok_or_else(|| {
-            CanisterError::InvalidDataError(format!(
-                "Invalid withdraw transfer intent_tx_data for asset {}",
-                asset_info.asset.address
-            ))
-        })?;
 
-        let _network_fee = intent.asset.network_fee.clone().ok_or_else(|| {
+        intent.asset.network_fee.as_ref().ok_or_else(|| {
             CanisterError::InvalidDataError(format!(
                 "Network fee of asset {} not found",
                 asset_info.asset.address
