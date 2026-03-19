@@ -256,6 +256,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 

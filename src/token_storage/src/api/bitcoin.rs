@@ -27,7 +27,8 @@ pub async fn user_get_btc_address() -> Result<String, CanisterError> {
 /// # Arguments
 /// * `input` - The input data for creating the bridge transaction
 /// # Returns
-/// * `UserBridgeTransactionDto` - The created bridge transaction, or a CanisterError
+/// * `Ok(UserBridgeTransactionDto)` - The created bridge transaction if successful
+/// * `Err(CanisterError)` - An error if the transaction creation fails
 #[update(guard = "is_not_anonymous")]
 pub async fn user_create_bridge_transaction(
     input: CreateBridgeTransactionInputArg,
@@ -44,7 +45,8 @@ pub async fn user_create_bridge_transaction(
 /// # Arguments
 /// * `input` - The input data for updating the bridge transaction
 /// # Returns
-/// * `UserBridgeTransactionDto` - The updated bridge transaction, or a CanisterError
+/// * `Ok(UserBridgeTransactionDto)` - The updated bridge transaction if successful
+/// * `Err(CanisterError)` - An error if the transaction update fails
 #[update(guard = "is_not_anonymous")]
 pub async fn user_update_bridge_transaction(
     input: UpdateBridgeTransactionInputArg,
@@ -75,6 +77,11 @@ pub async fn user_get_bridge_transactions(
         .await
 }
 
+/// Retrieves a specific bridge transaction by its ID for the calling user
+/// # Arguments
+/// * `bridge_id` - The ID of the bridge transaction to retrieve
+/// # Returns
+/// * `Option<UserBridgeTransactionDto>` - The bridge transaction if found, or None if not found
 #[query(guard = "is_not_anonymous")]
 pub async fn user_get_bridge_transaction_by_id(
     bridge_id: String,

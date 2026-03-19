@@ -182,6 +182,20 @@ impl<C: CanisterClient> TokenStorageClient<C> {
             .await
     }
 
+    /// Retrieves a bridge transaction by ID for the calling user
+    /// # Arguments
+    /// * `bridge_id` - The bridge transaction id
+    /// # Returns
+    /// * `Option<UserBridgeTransactionDto>` - The bridge transaction if found
+    pub async fn user_get_bridge_transaction_by_id(
+        &self,
+        bridge_id: String,
+    ) -> CanisterClientResult<Option<UserBridgeTransactionDto>> {
+        self.client
+            .query("user_get_bridge_transaction_by_id", (bridge_id,))
+            .await
+    }
+
     /// Admin override for a token's supported standards
     pub async fn token_manager_update_token_standards(
         &self,

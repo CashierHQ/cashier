@@ -2,13 +2,13 @@ import { managedState, type ManagedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
-import { TokenIndexService } from "../services/tokenIndexService";
 import {
   DEFAULT_TX_PAGE_SIZE,
-  TX_STALE_TIME_MS,
   TX_REFETCH_INTERVAL_MS,
+  TX_STALE_TIME_MS,
 } from "../constants";
-import type { TokenTransaction, GetTransactionsResult } from "../types";
+import { TokenIndexService } from "../services/tokenIndexService";
+import type { GetTransactionsResult, TokenTransaction } from "../types";
 
 // Cache stores by indexId to preserve transaction history across token switches
 const storeCache = new SvelteMap<string, WalletHistoryStore>();
@@ -163,10 +163,6 @@ class WalletHistoryStore {
  * Factory function to get or create a WalletHistoryStore for a single token.
  * Uses cache to preserve transaction history across token switches (prevents flickering).
  * @param indexId - Index canister ID for the token
- * @example
- * const store = getWalletHistoryStore("qhbym-qaaaa-aaaaa-aaafq-cai");
- * await store.loadMore();
- * console.log(store.transactions);
  */
 export function getWalletHistoryStore(indexId: string): WalletHistoryStore {
   let store = storeCache.get(indexId);

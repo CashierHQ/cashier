@@ -89,6 +89,11 @@
           "type": "string",
           "format": "icp-nat",
           "description": "Amount in base units (Nat)"
+        },
+        "available_amount": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Available amount in base units (Nat)"
         }
       },
       "required": ["asset", "label", "amount"]

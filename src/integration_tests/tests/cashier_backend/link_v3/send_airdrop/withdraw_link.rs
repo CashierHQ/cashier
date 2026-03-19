@@ -179,7 +179,7 @@ async fn it_should_succeed_withdraw_icp_token_airdrop_link() {
         let intent = &action.intents[0];
         assert_eq!(intent.intent_state, IntentStateShared::Created);
         assert_eq!(intent.source_address_type, AddressTypeShared::Link);
-        assert_eq!(intent.dest_address_type, AddressTypeShared::User);
+        assert_eq!(intent.dest_address_type, AddressTypeShared::Creator);
         assert_eq!(intent.dest_address, creator);
         assert_eq!(intent.amount, withdraw_balance);
 
@@ -195,6 +195,10 @@ async fn it_should_succeed_withdraw_icp_token_airdrop_link() {
         assert_eq!(
             process_action_result.action.action_state,
             ActionStateShared::Success
+        );
+        assert_eq!(
+            process_action_result.link.asset_info[0].available_amount,
+            Some(Nat::from(0u64))
         );
 
         // Assert balances
@@ -281,7 +285,7 @@ async fn it_should_succeed_withdraw_icrc_token_airdrop_link() {
         let intent = &action.intents[0];
         assert_eq!(intent.intent_state, IntentStateShared::Created);
         assert_eq!(intent.source_address_type, AddressTypeShared::Link);
-        assert_eq!(intent.dest_address_type, AddressTypeShared::User);
+        assert_eq!(intent.dest_address_type, AddressTypeShared::Creator);
         assert_eq!(intent.dest_address, creator);
         assert_eq!(intent.amount, withdraw_balance);
 
@@ -297,6 +301,10 @@ async fn it_should_succeed_withdraw_icrc_token_airdrop_link() {
         assert_eq!(
             process_action_result.action.action_state,
             ActionStateShared::Success
+        );
+        assert_eq!(
+            process_action_result.link.asset_info[0].available_amount,
+            Some(Nat::from(0u64))
         );
 
         // Assert balances

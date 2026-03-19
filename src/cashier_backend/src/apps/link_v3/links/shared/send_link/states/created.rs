@@ -19,7 +19,10 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{links::shared::send_link::actions::create::CreateActionV3, traits::LinkV3State},
+    link_v3::{
+        links::shared::send_link::actions::create::CreateActionV3, traits::LinkV3State,
+        utils::update_link_available_amount_after_create,
+    },
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -134,6 +137,7 @@ impl CreatedState {
         // if process action succeeds, activate the link
         if process_action_result.is_success {
             link.state = LinkState::Active;
+            update_link_available_amount_after_create(&mut link, &process_action_result.intents)?;
         }
 
         Ok(LinkProcessActionResult {
@@ -243,6 +247,7 @@ mod tests {
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,
         common::AddressTypeV3,
+        intent::v3::IntentTransactionDataV3,
         link::v1::LinkType,
     };
     use cashier_common::test_utils::random_principal_id;
@@ -258,6 +263,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -499,7 +505,6 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
-
         // Act
         let result = state_handler
             .process_action(
@@ -660,6 +665,20 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        let expected_available_amount = create_result
+            .create_action_result
+            .intents
+            .iter()
+            .find(|intent| {
+                intent.source_address_type == AddressTypeV3::Creator
+                    && intent.dest_address_type == AddressTypeV3::Link
+            })
+            .and_then(|intent| match &intent.intent_tx_data {
+                Some(IntentTransactionDataV3::Transfer(data)) => Some(data.amount.clone()),
+                Some(IntentTransactionDataV3::TransferFrom(data)) => data.actual_amount.clone(),
+                None => None,
+            })
+            .expect("create action should include a link transfer amount");
 
         // Act
         let result = state_handler
@@ -678,5 +697,9 @@ mod tests {
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
         assert_eq!(processed.link.state, LinkState::Active);
+        assert_eq!(
+            processed.link.asset_info[0].available_amount,
+            Some(expected_available_amount)
+        );
     }
 }
