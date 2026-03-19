@@ -1,6 +1,6 @@
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
-import { AssetInfoMapper } from "$modules/links/types/link/asset";
+import { AssetInfo, AssetInfoMapper } from "$modules/links/types/link/asset";
 import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkTypeMapper } from "$modules/links/types/link/linkType";
@@ -29,11 +29,16 @@ function mapV3LinkStateToFrontend(
 function mapV3AssetInfo(
   info: cashierBackend.AssetInfo,
 ): InstanceType<typeof import("$modules/links/types/link/asset").AssetInfo> {
-  return AssetInfoMapper.fromBackendType({
-    asset: { IC: { address: info.asset.address } },
-    amount_per_link_use_action: info.amount,
-    label: info.label,
-  });
+  return new AssetInfo(
+    AssetInfoMapper.fromBackendType({
+      asset: { IC: { address: info.asset.address } },
+      amount_per_link_use_action: info.amount,
+      label: info.label,
+    }).asset,
+    info.amount,
+    info.label,
+    info.available_amount.length > 0 ? info.available_amount[0] : undefined,
+  );
 }
 
 /**

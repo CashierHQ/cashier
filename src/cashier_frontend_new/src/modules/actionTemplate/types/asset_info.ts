@@ -19,6 +19,10 @@ export class SharedAssetInfoMapper {
       asset: SharedAssetMapper.toBackendType(assetInfo.asset),
       label: assetInfo.label,
       amount: assetInfo.amount,
+      available_amount:
+        assetInfo.available_amount !== undefined
+          ? [assetInfo.available_amount]
+          : [],
     };
   }
 
@@ -32,6 +36,10 @@ export class SharedAssetInfoMapper {
       asset: SharedAssetMapper.toLocalType(assetInfo.asset),
       label: assetInfo.label,
       amount: assetInfo.amount,
+      available_amount:
+        assetInfo.available_amount.length > 0
+          ? assetInfo.available_amount[0]
+          : undefined,
     };
   }
 
@@ -45,6 +53,7 @@ export class SharedAssetInfoMapper {
       asset: SharedAssetMapper.toStorageType(assetInfo.asset),
       label: assetInfo.label,
       amount: assetInfo.amount,
+      available_amount: assetInfo.available_amount,
     };
   }
 
@@ -60,6 +69,7 @@ export class SharedAssetInfoMapper {
       asset: SharedAssetMapper.fromStorageType(assetInfo.asset),
       label: assetInfo.label,
       amount: assetInfo.amount,
+      available_amount: assetInfo.available_amount,
     };
   }
 }
@@ -71,4 +81,5 @@ export type SerializedSharedAssetInfo = {
   asset: SerializedSharedAsset;
   label: string;
   amount: bigint;
+  available_amount?: bigint;
 };

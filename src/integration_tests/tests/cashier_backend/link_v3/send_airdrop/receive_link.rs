@@ -249,10 +249,19 @@ async fn it_should_succeed_receive_icp_token_airdrop_link() {
             link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 Nat::from(1_000_000u64),
-                icp_fee,
+                icp_fee.clone(),
                 max_use_count - 1,
             ),
             "Link balance should have enough amount for remaining uses"
+        );
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            activate_link_result.link.asset_info[0]
+                .available_amount
+                .clone()
+                .map(|available_amount| {
+                    available_amount - Nat::from(1_000_000u64) - icp_fee.clone()
+                })
         );
 
         let link_detail_result = receiver_fixture
@@ -375,10 +384,19 @@ async fn it_should_succeed_receive_icrc_token_airdrop_link() {
             link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 Nat::from(5_000_000u64),
-                ckbtc_fee,
+                ckbtc_fee.clone(),
                 max_use_count - 1,
             ),
             "Link balance should have enough amount for remaining uses"
+        );
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            activate_link_result.link.asset_info[0]
+                .available_amount
+                .clone()
+                .map(|available_amount| {
+                    available_amount - Nat::from(5_000_000u64) - ckbtc_fee.clone()
+                })
         );
 
         let link_detail_result = receiver_fixture

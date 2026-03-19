@@ -19,7 +19,10 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{links::shared::send_link::actions::withdraw::WithdrawActionV3, traits::LinkV3State},
+    link_v3::{
+        links::shared::send_link::actions::withdraw::WithdrawActionV3, traits::LinkV3State,
+        utils::update_link_available_amount_after_withdraw,
+    },
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -46,18 +49,21 @@ impl InactiveState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
-    pub async fn create_withdraw_action<M, F, B>(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_withdraw_action<M, F, S, B>(
         caller: Principal,
         canister_id: Principal,
         link: LinkV3,
         created_at: u64,
         transaction_manager: M,
         token_fee_service: F,
+        token_standard_service: S,
         token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
+        S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
     {
         if caller != link.creator {
@@ -71,6 +77,7 @@ impl InactiveState {
             canister_id,
             created_at,
             token_fee_service,
+            token_standard_service,
             token_balance_service,
         )
         .await?;
@@ -132,6 +139,7 @@ impl InactiveState {
 
         if process_action_result.is_success {
             link.state = LinkState::Ended;
+            update_link_available_amount_after_withdraw(&mut link, &process_action_result.intents)?;
         }
 
         Ok(LinkProcessActionResult {
@@ -149,7 +157,7 @@ impl LinkV3State for InactiveState {
         created_at: u64,
         transaction_manager: M,
         token_fee_service: F,
-        _token_standard_service: S,
+        token_standard_service: S,
         token_balance_service: B,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
@@ -170,6 +178,7 @@ impl LinkV3State for InactiveState {
                     created_at,
                     transaction_manager,
                     token_fee_service,
+                    token_standard_service,
                     token_balance_service,
                 )
                 .await?;
@@ -238,12 +247,16 @@ mod tests {
     use candid::Nat;
     use cashier_backend_types::repository::{
         action::v1::ActionState,
+        asset::v1::Asset,
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,
-        common::AddressTypeV3,
+        common::{AddressTypeV3, Wallet},
+        intent::v1::TransferData,
+        intent::v3::IntentTransactionDataV3,
         link::v1::LinkType,
     };
     use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
 
     fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
@@ -255,6 +268,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -340,14 +354,20 @@ mod tests {
         let link = fixture_of_link_v3(
             creator,
             created_at,
-            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
+            vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(1000u64)),
+                ..fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))
+            }],
         );
         let state_handler = InactiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -377,16 +397,22 @@ mod tests {
         let link = fixture_of_link_v3(
             creator,
             created_at,
-            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
+            vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(1000u64)),
+                ..fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))
+            }],
         );
         let state_handler = InactiveState::new(&link, canister_id);
         let mut failed_tx_manager = MockTransactionManagerV3::default();
         failed_tx_manager.set_failed(true);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -463,16 +489,22 @@ mod tests {
         let link = fixture_of_link_v3(
             creator,
             created_at,
-            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
+            vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(1900u64)),
+                ..fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))
+            }],
         );
         let state_handler = InactiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
-        let create_result = state_handler
+        let mut create_result = state_handler
             .create_action(
                 creator,
                 ActionType::Withdraw,
@@ -484,6 +516,23 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        create_result
+            .create_action_result
+            .intents
+            .iter_mut()
+            .for_each(|intent| {
+                if intent.source_address_type == AddressTypeV3::Link
+                    && intent.dest_address_type == AddressTypeV3::Creator
+                {
+                    intent.asset.network_fee = Some(Nat::from(100u64));
+                    intent.intent_tx_data = Some(IntentTransactionDataV3::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::IC { address: ledger_id },
+                        amount: Nat::from(1800u64),
+                    }));
+                }
+            });
 
         // Act
         let result = state_handler
@@ -515,13 +564,16 @@ mod tests {
             vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
         );
         let state_handler = InactiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
-        let create_result = state_handler
+        let mut create_result = state_handler
             .create_action(
                 creator,
                 ActionType::Withdraw,
@@ -533,6 +585,23 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        create_result
+            .create_action_result
+            .intents
+            .iter_mut()
+            .for_each(|intent| {
+                if intent.source_address_type == AddressTypeV3::Link
+                    && intent.dest_address_type == AddressTypeV3::Creator
+                {
+                    intent.asset.network_fee = Some(Nat::from(100u64));
+                    intent.intent_tx_data = Some(IntentTransactionDataV3::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::IC { address: ledger_id },
+                        amount: Nat::from(1800u64),
+                    }));
+                }
+            });
         let mut failed_tx_manager = MockTransactionManagerV3::default();
         failed_tx_manager.set_failed(true);
 
@@ -566,11 +635,14 @@ mod tests {
             vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
         );
         let state_handler = InactiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
 
         // Act
@@ -615,16 +687,22 @@ mod tests {
         let link = fixture_of_link_v3(
             creator,
             created_at,
-            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))],
+            vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(1900u64)),
+                ..fixture_of_asset_info_v3(ledger_id, Nat::from(1000u64))
+            }],
         );
         let state_handler = InactiveState::new(&link, canister_id);
-        let (token_fee_service, token_standard_service, mut token_balance_service) =
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
             fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(2000u64));
-        let create_result = state_handler
+        let mut create_result = state_handler
             .create_action(
                 creator,
                 ActionType::Withdraw,
@@ -636,6 +714,23 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
+        create_result
+            .create_action_result
+            .intents
+            .iter_mut()
+            .for_each(|intent| {
+                if intent.source_address_type == AddressTypeV3::Link
+                    && intent.dest_address_type == AddressTypeV3::Creator
+                {
+                    intent.asset.network_fee = Some(Nat::from(100u64));
+                    intent.intent_tx_data = Some(IntentTransactionDataV3::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::IC { address: ledger_id },
+                        amount: Nat::from(1800u64),
+                    }));
+                }
+            });
 
         // Act
         let result = state_handler
@@ -654,5 +749,9 @@ mod tests {
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
         assert_eq!(processed.link.state, LinkState::Ended);
+        assert_eq!(
+            processed.link.asset_info[0].available_amount,
+            Some(Nat::from(0u64))
+        );
     }
 }

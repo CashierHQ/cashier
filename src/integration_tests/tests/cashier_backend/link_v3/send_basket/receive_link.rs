@@ -246,6 +246,11 @@ async fn it_should_succeed_receive_basket_link() {
         assert_eq!(link.max_use, 1);
         assert_eq!(link.use_count, 1);
         assert_eq!(link.link_state, LinkStateShared::Ended);
+        assert!(
+            link.asset_info
+                .iter()
+                .all(|asset| asset.available_amount == Some(Nat::from(0u64)))
+        );
         let action = process_action_result.action;
         assert_eq!(action.action_state, ActionStateShared::Success);
         assert_eq!(action.intents.len(), 3);

@@ -229,7 +229,7 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         for intent in &action.intents {
             assert_eq!(intent.intent_state, IntentStateShared::Created);
             assert_eq!(intent.source_address_type, AddressTypeShared::Link);
-            assert_eq!(intent.dest_address_type, AddressTypeShared::User);
+            assert_eq!(intent.dest_address_type, AddressTypeShared::Creator);
             assert_eq!(intent.dest_address, creator);
         }
 
@@ -244,6 +244,13 @@ async fn it_should_succeed_withdraw_basket_link_with_three_tokens() {
         assert_eq!(
             process_action_result.link.link_state,
             LinkStateShared::Ended
+        );
+        assert!(
+            process_action_result
+                .link
+                .asset_info
+                .iter()
+                .all(|asset| asset.available_amount == Some(Nat::from(0u64)))
         );
         assert_eq!(
             process_action_result.action.action_state,

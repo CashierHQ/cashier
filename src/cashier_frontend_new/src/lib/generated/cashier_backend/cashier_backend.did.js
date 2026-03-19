@@ -274,6 +274,7 @@ export const idlFactory = ({ IDL }) => {
   const AssetInfo = IDL.Record({
     'asset' : Asset_1,
     'label' : IDL.Text,
+    'available_amount' : IDL.Opt(IDL.Nat),
     'amount' : IDL.Nat,
   });
   const LinkState_1 = IDL.Variant({
