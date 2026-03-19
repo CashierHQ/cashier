@@ -88,7 +88,7 @@ impl CreateActionV3 {
             .get_batch_token_standards(&asset_principals)
             .await?;
 
-        // intents
+        // deposit intents Creator -> Link
         let deposit_intents = link
             .asset_info
             .iter()
@@ -97,6 +97,13 @@ impl CreateActionV3 {
                 let token_standards = token_standards_map.get(&asset_address).ok_or_else(|| {
                     CanisterError::not_found(
                         "Token standards for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
+
+                let token_network_fee = token_fee_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token network fee for asset",
                         &asset_address.to_string(),
                     )
                 })?;
@@ -114,12 +121,18 @@ impl CreateActionV3 {
                         &token_fee_map,
                     )?;
 
+                    let deposit_asset = AssetV3 {
+                        address: asset_info.asset.address,
+                        network_fee: Some(token_network_fee.clone()),
+                        token_standard: TokenStandardV3::ICRC2,
+                    };
+
                     let input = CreateIcrc2WalletToLinkIntentArgs {
                         label: generate_intent_asset_label(
                             link.link_type,
                             asset_info.asset.address,
                         ),
-                        asset: asset_info.asset.clone(),
+                        asset: deposit_asset,
                         user_ui_input_asset_amount: asset_info.amount.clone(),
                         max_use: link.max_use,
                         actual_amount,
@@ -140,12 +153,18 @@ impl CreateActionV3 {
                         &token_fee_map,
                     )?;
 
+                    let deposit_asset = AssetV3 {
+                        address: asset_info.asset.address,
+                        network_fee: Some(token_network_fee.clone()),
+                        token_standard: TokenStandardV3::ICRC1,
+                    };
+
                     let input = CreateIcrc1WalletToLinkIntentArgs {
                         label: generate_intent_asset_label(
                             link.link_type,
                             asset_info.asset.address,
                         ),
-                        asset: asset_info.asset.clone(),
+                        asset: deposit_asset,
                         user_ui_input_asset_amount: asset_info.amount.clone(),
                         max_use: link.max_use,
                         sending_amount: actual_amount,
@@ -160,6 +179,7 @@ impl CreateActionV3 {
             })
             .collect::<Result<Vec<TransferWalletToLinkIntent>, CanisterError>>()?;
 
+        // Creation link fee intent Creator -> Treasury
         let fee_asset = AssetV3 {
             address: ICP_CANISTER_PRINCIPAL,
             network_fee: token_fee_map.get(&ICP_CANISTER_PRINCIPAL).cloned(),
@@ -232,6 +252,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -275,6 +296,9 @@ mod tests {
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(100u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
@@ -399,8 +423,14 @@ mod tests {
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id))
             .expect("deposit intent should exist");
-        let fee_map: HashMap<Principal, Nat> =
-            vec![(ledger_id, Nat::from(100u64))].into_iter().collect();
+        assert_eq!(deposit_intent.asset.token_standard, TokenStandardV3::ICRC1);
+        assert_eq!(deposit_intent.asset.network_fee, Some(Nat::from(100u64)));
+        let fee_map: HashMap<Principal, Nat> = vec![
+            (ledger_id, Nat::from(100u64)),
+            (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
+        ]
+        .into_iter()
+        .collect();
         let expected_actual_amount =
             calculate_icrc1_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
                 .expect("expected ICRC1 amount calculation success")
@@ -430,6 +460,8 @@ mod tests {
             .iter()
             .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
             .expect("fee intent should exist");
+        assert_eq!(fee_intent.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(fee_intent.asset.network_fee, None);
         let (expected_fee_actual_amount, expected_fee_approval_amount) =
             calculate_create_link_fee(&fee_map);
         match fee_intent
@@ -479,6 +511,9 @@ mod tests {
         token_fee_service
             .fetcher
             .set_fee(ledger_id, Nat::from(200u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC2]);
@@ -507,8 +542,14 @@ mod tests {
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id))
             .expect("deposit intent should exist");
-        let fee_map: HashMap<Principal, Nat> =
-            vec![(ledger_id, Nat::from(200u64))].into_iter().collect();
+        assert_eq!(deposit_intent.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(deposit_intent.asset.network_fee, Some(Nat::from(200u64)));
+        let fee_map: HashMap<Principal, Nat> = vec![
+            (ledger_id, Nat::from(200u64)),
+            (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
+        ]
+        .into_iter()
+        .collect();
         let (expected_actual_amount, expected_approval_amount) =
             calculate_icrc2_transfer_intent_amount(max_use, &amount, ledger_id, &fee_map)
                 .expect("expected ICRC2 amount calculation success");
@@ -552,6 +593,8 @@ mod tests {
             .iter()
             .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
             .expect("fee intent should exist");
+        assert_eq!(fee_intent.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(fee_intent.asset.network_fee, None);
         let (expected_fee_actual_amount, expected_fee_approval_amount) =
             calculate_create_link_fee(&fee_map);
         match fee_intent
@@ -609,6 +652,9 @@ mod tests {
         token_fee_service
             .fetcher
             .set_fee(ledger_icrc2, Nat::from(200u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
         token_standard_service
             .token_storage_client
             .set_token_standards(ledger_icrc1, vec![IcrcStandard::ICRC1]);
@@ -651,6 +697,12 @@ mod tests {
             .iter()
             .find(|intent| intent.label == INTENT_LABEL_LINK_CREATION_FEE)
             .expect("fee intent should exist");
+        assert_eq!(icrc1_intent.asset.token_standard, TokenStandardV3::ICRC1);
+        assert_eq!(icrc1_intent.asset.network_fee, Some(Nat::from(100u64)));
+        assert_eq!(icrc2_intent.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(icrc2_intent.asset.network_fee, Some(Nat::from(200u64)));
+        assert_eq!(fee_intent.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(fee_intent.asset.network_fee, None);
 
         match icrc1_intent
             .intent_tx_data
@@ -677,6 +729,7 @@ mod tests {
                 let fee_map: HashMap<Principal, Nat> = vec![
                     (ledger_icrc1, Nat::from(100u64)),
                     (ledger_icrc2, Nat::from(200u64)),
+                    (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
                 ]
                 .into_iter()
                 .collect();

@@ -9,18 +9,20 @@ use cashier_backend_types::{
             v1::{ActionState, ActionType},
             v3::ActionV3,
         },
+        asset::v3::{AssetV3, TokenStandardV3},
         common::AddressTypeV3,
         intent::v3::{CreateLinkToWalletIntentArgs, IntentV3},
         link::v3::LinkV3,
     },
 };
 use cashier_common::utils::get_link_account;
+use token_storage_types::token::IcrcStandard;
 use transaction_manager::intents::v3::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::{
     link_v2::links::shared::utils::generate_intent_asset_label,
     link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
-    token_fee::traits::TokenFeeCache,
+    token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
 };
 use uuid::Uuid;
 
@@ -41,16 +43,18 @@ impl WithdrawActionV3 {
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<WithdrawActionV3, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create<F, B>(
+    pub async fn create<F, S, B>(
         link: &LinkV3,
         canister_id: Principal,
         created_at: u64,
         mut token_fee_service: F,
+        mut token_standard_service: S,
         token_balance_service: B,
     ) -> Result<Self, CanisterError>
     where
-        F: TokenFeeCache + 'static,
-        B: TokenBalanceFetcher + 'static,
+        F: TokenFeeCache,
+        S: TokenStandardCache,
+        B: TokenBalanceFetcher,
     {
         let mut action = ActionV3 {
             id: Uuid::new_v4().to_string(),
@@ -67,6 +71,9 @@ impl WithdrawActionV3 {
         let token_fee_map = token_fee_service
             .get_batch_tokens_fee(&asset_principals)
             .await?;
+        let token_standards_map = token_standard_service
+            .get_batch_token_standards(&asset_principals)
+            .await?;
         let actual_token_balance_map = token_balance_service
             .get_batch_token_balances(&link_account.into(), &asset_principals)
             .await?;
@@ -76,25 +83,49 @@ impl WithdrawActionV3 {
             .asset_info
             .iter()
             .map(|asset_info| {
+                let asset_address = asset_info.get_asset_address();
+                let token_standards = token_standards_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token standards for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
+
+                let token_standard = if token_standards.contains(&IcrcStandard::ICRC2) {
+                    TokenStandardV3::ICRC2
+                } else {
+                    TokenStandardV3::ICRC1
+                };
+
+                let token_network_fee = token_fee_map.get(&asset_address).ok_or_else(|| {
+                    CanisterError::not_found(
+                        "Token network fee for asset",
+                        &asset_address.to_string(),
+                    )
+                })?;
+
+                let intent_asset = AssetV3 {
+                    address: asset_address,
+                    network_fee: Some(token_network_fee.clone()),
+                    token_standard,
+                };
+
                 let sending_amount = actual_token_balance_map
                     .get(&asset_info.asset.address)
                     .cloned()
                     .unwrap_or(Nat::from(0u64));
-                let fee_amount = token_fee_map
-                    .get(&asset_info.asset.address)
-                    .cloned()
-                    .unwrap_or(Nat::from(0u64));
-                let sending_amount = if sending_amount <= fee_amount {
+
+                let sending_amount = if sending_amount <= token_network_fee.clone() {
                     Nat::from(0u64)
                 } else {
-                    sending_amount - fee_amount
+                    sending_amount - token_network_fee.clone()
                 };
 
                 let input = CreateLinkToWalletIntentArgs {
                     label: generate_intent_asset_label(link.link_type, asset_info.asset.address),
                     receiver_id: link.creator,
                     sending_amount,
-                    asset: asset_info.asset.clone(),
+                    asset: intent_asset,
                     source_address: canister_id,
                     link_account,
                     created_at_ts: created_at,
@@ -108,7 +139,9 @@ impl WithdrawActionV3 {
         link_to_wallet_intents
             .iter()
             .for_each(|link_to_wallet_intent| {
-                intents.push(link_to_wallet_intent.intent.clone());
+                let mut intent = link_to_wallet_intent.intent.clone();
+                intent.dest_address_type = AddressTypeV3::Creator;
+                intents.push(intent);
             });
 
         // enrich action with intent ids
@@ -127,6 +160,9 @@ mod tests {
         token_fee::service::tests::{
             MockTokenFeeService, create_mock_service as create_mock_token_fee_service,
         },
+        token_standard::service::tests::{
+            MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
+        },
     };
     use cashier_backend_types::repository::{
         action::v1::ActionState,
@@ -139,6 +175,7 @@ mod tests {
         link::v3::LinkState,
     };
     use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
 
     fn assert_action_intent_ids_match_intents(action: &ActionV3, intents: &[IntentV3]) {
@@ -156,6 +193,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount,
+            available_amount: None,
         }
     }
 
@@ -177,9 +215,16 @@ mod tests {
         }
     }
 
-    fn fixture_of_services(current_ts: u64) -> (MockTokenFeeService, MockTokenBalanceService) {
+    fn fixture_of_services(
+        current_ts: u64,
+    ) -> (
+        MockTokenFeeService,
+        MockTokenStandardService,
+        MockTokenBalanceService,
+    ) {
         (
             create_mock_token_fee_service(current_ts),
+            create_mock_token_standard_service(current_ts),
             MockTokenBalanceService::new(),
         )
     }
@@ -197,7 +242,11 @@ mod tests {
             created_at,
         );
         link.id = "invalid-link-id".to_string();
-        let (token_fee_service, token_balance_service) = fixture_of_services(created_at);
+        let (token_fee_service, mut token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
         // Act
         let result = WithdrawActionV3::create(
@@ -205,6 +254,7 @@ mod tests {
             canister_id,
             created_at,
             token_fee_service,
+            token_standard_service,
             token_balance_service,
         )
         .await;
@@ -225,10 +275,14 @@ mod tests {
             vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
             created_at,
         );
-        let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
+            fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_error(ledger_id, "fee unavailable");
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
         token_balance_service.set_balance(ledger_id, Nat::from(5_000u64));
 
         // Act
@@ -237,6 +291,7 @@ mod tests {
             canister_id,
             created_at,
             token_fee_service,
+            token_standard_service,
             token_balance_service,
         )
         .await;
@@ -245,6 +300,40 @@ mod tests {
         assert!(result.is_err());
         let err = result.expect_err("expected token fee service error");
         assert!(matches!(err, CanisterError::CallCanisterFailed(_)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_withdraw_action_due_to_missing_token_standard() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let ledger_id = random_principal_id();
+        let link = fixture_of_link_v3(
+            creator,
+            vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            created_at,
+        );
+        let (token_fee_service, token_standard_service, mut token_balance_service) =
+            fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(100u64));
+        token_balance_service.set_balance(ledger_id, Nat::from(5_000u64));
+
+        // Act
+        let result = WithdrawActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            token_fee_service,
+            token_standard_service,
+            token_balance_service,
+        )
+        .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[tokio::test]
@@ -263,13 +352,20 @@ mod tests {
             ],
             created_at,
         );
-        let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
+            fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id_1, Nat::from(100u64));
         token_fee_service
             .fetcher
             .set_fee(ledger_id_2, Nat::from(200u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_1, vec![IcrcStandard::ICRC1]);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_2, vec![IcrcStandard::ICRC2]);
         token_balance_service.set_balance(ledger_id_1, Nat::from(5_000u64));
 
         // Act
@@ -278,6 +374,7 @@ mod tests {
             canister_id,
             created_at,
             token_fee_service,
+            token_standard_service,
             token_balance_service,
         )
         .await;
@@ -304,13 +401,20 @@ mod tests {
             ],
             created_at,
         );
-        let (token_fee_service, mut token_balance_service) = fixture_of_services(created_at);
+        let (token_fee_service, mut token_standard_service, mut token_balance_service) =
+            fixture_of_services(created_at);
         token_fee_service
             .fetcher
             .set_fee(ledger_id_1, Nat::from(100u64));
         token_fee_service
             .fetcher
             .set_fee(ledger_id_2, Nat::from(200u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_1, vec![IcrcStandard::ICRC1]);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id_2, vec![IcrcStandard::ICRC2]);
         token_balance_service.set_balance(ledger_id_1, Nat::from(5_000u64));
         token_balance_service.set_balance(ledger_id_2, Nat::from(150u64)); // <= fee -> zero sending
 
@@ -320,6 +424,7 @@ mod tests {
             canister_id,
             created_at,
             token_fee_service,
+            token_standard_service,
             token_balance_service,
         )
         .await;
@@ -343,11 +448,15 @@ mod tests {
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id_1))
             .expect("intent for ledger 1 should exist");
+        assert_eq!(intent_1.asset.token_standard, TokenStandardV3::ICRC1);
+        assert_eq!(intent_1.asset.network_fee, Some(Nat::from(100u64)));
         let intent_2 = withdraw_action
             .intents
             .iter()
             .find(|intent| intent.label == generate_intent_asset_label(link.link_type, ledger_id_2))
             .expect("intent for ledger 2 should exist");
+        assert_eq!(intent_2.asset.token_standard, TokenStandardV3::ICRC2);
+        assert_eq!(intent_2.asset.network_fee, Some(Nat::from(200u64)));
 
         match intent_1
             .intent_tx_data

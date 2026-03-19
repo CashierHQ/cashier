@@ -209,8 +209,7 @@ export class FeeService {
         direction === FlowDirection.OUTGOING
           ? BigInt(intentFees.intent_total_amount) +
             BigInt(intentFees.intent_total_network_fee)
-          : BigInt(intentFees.intent_total_amount) -
-            BigInt(intentFees.intent_user_fee);
+          : BigInt(intentFees.intent_total_amount);
 
       const amountUi = parseBalanceUnits(assetAmount, decimals);
       const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;

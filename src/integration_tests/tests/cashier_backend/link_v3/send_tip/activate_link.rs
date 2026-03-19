@@ -227,6 +227,10 @@ async fn it_should_succeed_activate_icp_token_tip_link() {
             test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
             "Link balance is incorrect"
         );
+        assert_eq!(
+            result.link.asset_info[0].available_amount,
+            Some(icp_link_balance.clone())
+        );
 
         // Assert: Treasury account balance
         let fee_treasury_account = fee_treasury_account();
@@ -305,6 +309,10 @@ async fn it_should_succeed_activate_icrc_token_tip_link() {
                 1,
             ),
             "Link balance is incorrect"
+        );
+        assert_eq!(
+            result.link.asset_info[0].available_amount,
+            Some(ckbtc_link_balance.clone())
         );
 
         // Assert: Fee treasury balance after activation

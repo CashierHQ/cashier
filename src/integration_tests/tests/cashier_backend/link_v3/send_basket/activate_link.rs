@@ -264,6 +264,10 @@ async fn it_should_succeed_activate_icp_token_basket_link_v3() {
             ),
             "Link balance is incorrect"
         );
+        assert_eq!(
+            result.link.asset_info[0].available_amount,
+            Some(icp_link_balance.clone())
+        );
 
         let fee_treasury_account = fee_treasury_account();
         let icp_fee_treasury_balance = icp_ledger_client
@@ -343,6 +347,10 @@ async fn it_should_succeed_activate_icrc_token_basket_link_v3() {
                 1
             ),
             "Link balance is incorrect"
+        );
+        assert_eq!(
+            result.link.asset_info[1].available_amount,
+            Some(ckbtc_link_balance.clone())
         );
 
         let fee_treasury_account = fee_treasury_account();

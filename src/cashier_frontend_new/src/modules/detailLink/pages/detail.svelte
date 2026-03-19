@@ -31,7 +31,10 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import {
+    calculateLinkInfoAssetsWithTokenInfo,
+    calculateUsageInfoAssetsWithTokenInfo,
+  } from "$modules/detailLink/utils/usageInfo";
   import {
     getLinkTypeText,
     isPaymentLinkType,
@@ -123,29 +126,15 @@
 
   // Convert link.asset_info to assetsWithTokenInfo format
   const assetsWithTokenInfo = $derived.by(() => {
-    if (
-      !linkStore ||
-      !linkStore.link?.asset_info ||
-      linkStore.link.asset_info.length === 0
-    ) {
-      return [];
-    }
+    return calculateUsageInfoAssetsWithTokenInfo(
+      linkStore?.link,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
 
-    const assets = linkStore.link.asset_info
-      .map((assetInfo) => {
-        const assetAddress = assetInfo.asset.address?.toString();
-        if (!assetAddress) return null;
-        return {
-          address: assetAddress,
-          amount: assetInfo.amount_per_link_use_action,
-        };
-      })
-      .filter(
-        (item): item is { address: string; amount: bigint } => item !== null,
-      );
-
-    return calculateAssetsWithTokenInfo(
-      assets,
+  const linkInfoAssetsWithTokenInfo = $derived.by(() => {
+    return calculateLinkInfoAssetsWithTokenInfo(
+      linkStore?.link,
       walletStore.findTokenByAddress.bind(walletStore),
     );
   });
@@ -493,7 +482,7 @@
       <!-- Block 1: Link Info -->
       <LinkInfoSection
         {linkTypeText}
-        {assetsWithTokenInfo}
+        assetsWithTokenInfo={linkInfoAssetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
         {isPaymentLink}
@@ -512,7 +501,6 @@
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
-        maxUse={Number(linkStore.link.link_use_action_max_count)}
         useCount={Number(linkStore.link.link_use_action_counter)}
       />
 

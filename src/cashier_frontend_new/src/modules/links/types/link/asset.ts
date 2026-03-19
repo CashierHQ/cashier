@@ -46,11 +46,18 @@ export class AssetInfo {
   asset: Asset;
   amount_per_link_use_action: bigint;
   label: string;
+  available_amount?: bigint;
 
-  constructor(asset: Asset, amount_per_link_use_action: bigint, label: string) {
+  constructor(
+    asset: Asset,
+    amount_per_link_use_action: bigint,
+    label: string,
+    available_amount?: bigint,
+  ) {
     this.asset = asset;
     this.amount_per_link_use_action = amount_per_link_use_action;
     this.label = label;
+    this.available_amount = available_amount;
   }
 }
 
@@ -76,6 +83,7 @@ export class AssetInfoMapper {
       AssetMapper.fromSharedType(a.asset),
       a.amount,
       a.label,
+      a.available_amount,
     );
   }
 }

@@ -213,6 +213,8 @@ pub struct AssetInfo {
     pub label: String,
     /// Amount in base units (Nat)
     pub amount: Nat,
+    /// Available amount in base units (Nat)
+    pub available_amount: Option<Nat>,
 }
 
 /// Represents a single intent within an action

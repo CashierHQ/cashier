@@ -235,6 +235,10 @@ async fn it_should_succeed_activate_icp_token_airdrop_link_v3() {
             ),
             "Link balance is incorrect"
         );
+        assert_eq!(
+            result.link.asset_info[0].available_amount,
+            Some(icp_link_balance.clone())
+        );
 
         // Assert: Fee treasury balance after activation
         let fee_treasury_account = fee_treasury_account();
@@ -314,6 +318,10 @@ async fn it_should_succeed_activate_icrc_token_airdrop_link_v3() {
                 max_use_count,
             ),
             "Link balance is incorrect"
+        );
+        assert_eq!(
+            result.link.asset_info[0].available_amount,
+            Some(ckbtc_link_balance.clone())
         );
 
         // Assert: Fee treasury balance after activation
