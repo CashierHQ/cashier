@@ -201,7 +201,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     },
                     symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
                     name: "Chain Key USD Coin".to_string(),
-                    decimals: 8,
+                    decimals: 6,
                     enabled_by_default: true,
                 },
                 RegistryToken {
