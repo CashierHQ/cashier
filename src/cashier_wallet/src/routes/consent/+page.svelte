@@ -1,74 +1,86 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte'
+  import { onMount, onDestroy } from "svelte";
 
-  let consentId = ''
-  let method = ''
-  let params: unknown = undefined
-  let dappOrigin = ''
-  let loading = true
-  let error = ''
+  let consentId = "";
+  let method = "";
+  let params: unknown = undefined;
+  let dappOrigin = "";
+  let loading = true;
+  let error = "";
 
-  let channel: BroadcastChannel
+  let channel: BroadcastChannel;
 
   onMount(() => {
-    consentId = new URLSearchParams(window.location.search).get('id') ?? ''
+    consentId = new URLSearchParams(window.location.search).get("id") ?? "";
 
     if (!consentId) {
-      error = 'Missing consent ID — this page should not be opened directly.'
-      loading = false
-      return
+      error = "Missing consent ID — this page should not be opened directly.";
+      loading = false;
+      return;
     }
 
-    channel = new BroadcastChannel('wallet-consent')
+    channel = new BroadcastChannel("wallet-consent");
 
     channel.onmessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; consentId?: string; method?: string; params?: unknown; dappOrigin?: string }
-      if (data?.type === 'consent_data' && data?.consentId === consentId) {
-        method = data.method ?? ''
-        params = data.params
-        dappOrigin = data.dappOrigin ?? ''
-        loading = false
+      const data = event.data as {
+        type?: string;
+        consentId?: string;
+        method?: string;
+        params?: unknown;
+        dappOrigin?: string;
+      };
+      if (data?.type === "consent_data" && data?.consentId === consentId) {
+        method = data.method ?? "";
+        params = data.params;
+        dappOrigin = data.dappOrigin ?? "";
+        loading = false;
       }
-    }
+    };
 
     // Ask the hidden iframe (same origin) for the operation details
-    channel.postMessage({ type: 'consent_get', consentId })
+    channel.postMessage({ type: "consent_get", consentId });
 
     // Fallback: if no data arrives within 5 s, show an error
     setTimeout(() => {
       if (loading) {
-        error = 'Consent data not received — the request may have expired.'
-        loading = false
+        error = "Consent data not received — the request may have expired.";
+        loading = false;
       }
-    }, 5000)
-  })
+    }, 5000);
+  });
 
   onDestroy(() => {
-    channel?.close()
-  })
+    channel?.close();
+  });
 
   function approve() {
     // Notify the hidden iframe (same-origin BroadcastChannel — cannot be faked by DApp)
-    channel?.postMessage({ type: 'consent_approved', consentId })
+    channel?.postMessage({ type: "consent_approved", consentId });
     // Notify the SDK opener using the actual requesting DApp origin as targetOrigin.
     // This ensures delivery works regardless of which DApp triggered the consent flow.
-    window.opener?.postMessage({ type: 'consent_approved', consentId }, dappOrigin)
-    window.close()
+    window.opener?.postMessage(
+      { type: "consent_approved", consentId },
+      dappOrigin,
+    );
+    window.close();
   }
 
   function reject() {
-    channel?.postMessage({ type: 'consent_rejected', consentId })
-    window.opener?.postMessage({ type: 'consent_rejected', consentId }, dappOrigin)
-    window.close()
+    channel?.postMessage({ type: "consent_rejected", consentId });
+    window.opener?.postMessage(
+      { type: "consent_rejected", consentId },
+      dappOrigin,
+    );
+    window.close();
   }
 
   function formatParams(p: unknown): string {
     // Strip consentId from display — it's an internal implementation detail
-    if (typeof p === 'object' && p !== null) {
-      const { consentId: _omit, ...display } = p as Record<string, unknown>
-      return JSON.stringify(display, null, 2)
+    if (typeof p === "object" && p !== null) {
+      const { consentId: _omit, ...display } = p as Record<string, unknown>;
+      return JSON.stringify(display, null, 2);
     }
-    return JSON.stringify(p, null, 2)
+    return JSON.stringify(p, null, 2);
   }
 </script>
 
@@ -80,7 +92,9 @@
   {:else if error}
     <div class="card error-card">
       <p>{error}</p>
-      <button class="btn btn-reject" on:click={() => window.close()}>Close</button>
+      <button class="btn btn-reject" on:click={() => window.close()}
+        >Close</button
+      >
     </div>
   {:else}
     <div class="card">
@@ -106,7 +120,8 @@
       {/if}
 
       <p class="warning">
-        Only approve if you trust this request. This action will be executed immediately.
+        Only approve if you trust this request. This action will be executed
+        immediately.
       </p>
 
       <div class="actions">
@@ -124,7 +139,8 @@
     height: 100%;
     overflow: hidden;
     background: #f5f7fa;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
   main {

@@ -17,7 +17,10 @@ const outputPath = resolve(
 
 // Per-environment wallet frontend origins
 const WALLET_ORIGINS = {
-  dev: ["https://qpyyt-4aaaa-aaaam-aifza-cai.icp0.io", "https://dev.cashierapp.io"],
+  dev: [
+    "https://qpyyt-4aaaa-aaaam-aifza-cai.icp0.io",
+    "https://dev.cashierapp.io",
+  ],
   staging: [],
   production: ["https://cashierapp.io", "https://www.cashierapp.io"],
   local_dev: [],
@@ -31,10 +34,9 @@ if (!mode) {
 
 const envOrigins = WALLET_ORIGINS[mode] || [];
 
-const content = JSON.stringify({ alternativeOrigins: envOrigins }, null, 4) + "\n";
+const content =
+  JSON.stringify({ alternativeOrigins: envOrigins }, null, 4) + "\n";
 
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, content, "utf-8");
-console.log(
-  `[ii-origins] Generated for ${mode}: ${envOrigins.length} origins`,
-);
+console.log(`[ii-origins] Generated for ${mode}: ${envOrigins.length} origins`);

@@ -1,0 +1,20 @@
+node_modules
+.svelte-kit
+build
+dist
+target
+.dfx
+*.did
+*.wasm
+
+# Generated code
+src/cashier_frontend_new/src/lib/generated/*
+src/cashier_frontend_new/src/lib/paraglide/**
+src/cashier_frontend_new/src/lib/shadcn/**
+src/lib/cashier_shared/generated/**
+
+# Coverage
+coverage
+
+# Lock files
+pnpm-lock.yaml

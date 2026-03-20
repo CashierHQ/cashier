@@ -1,80 +1,80 @@
 {
-	"name": "@cashier-wallet/wallet-sdk",
-	"version": "0.1.0",
-	"description": "Framework-agnostic wallet SDK for Cashier Wallet",
-	"keywords": [
-		"wallet",
-		"sdk",
-		"iframe",
-		"internet-computer",
-		"icp",
-		"icrc",
-		"web3",
-		"postmessage",
-		"json-rpc"
-	],
-	"license": "MIT",
-	"type": "module",
-	"main": "dist/index.cjs",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"require": "./dist/index.cjs"
-		}
-	},
-	"files": [
-		"dist"
-	],
-	"publishConfig": {
-		"access": "public"
-	},
-	"scripts": {
-		"build": "tsup",
-		"dev": "tsup --watch",
-		"prepublishOnly": "pnpm run build",
-		"version:minor": "pnpm version minor --no-git-tag-version",
-		"publish:minor": "pnpm run version:minor && pnpm publish --no-git-checks"
-	},
-	"devDependencies": {
-		"@dfinity/agent": "^2.4.1",
-		"@dfinity/principal": "^2.4.1",
-		"@slide-computer/signer": "^3.20.0",
-		"@slide-computer/signer-agent": "^3.20.0",
-		"@slide-computer/signer-web": "^3.20.0",
-		"@windoge98/plug-n-play": "^0.1.0-beta.25",
-		"tsup": "^8.5.1",
-		"typescript": "^5.9.2"
-	},
-	"peerDependencies": {
-		"@dfinity/agent": ">=2.0.0",
-		"@dfinity/principal": ">=2.0.0",
-		"@slide-computer/signer": ">=3.0.0 <4",
-		"@slide-computer/signer-agent": ">=3.0.0 <4",
-		"@slide-computer/signer-web": ">=3.0.0 <4",
-		"@windoge98/plug-n-play": ">=0.1.0-beta.0"
-	},
-	"peerDependenciesMeta": {
-		"@dfinity/agent": {
-			"optional": true
-		},
-		"@dfinity/principal": {
-			"optional": true
-		},
-		"@windoge98/plug-n-play": {
-			"optional": true
-		},
-		"@slide-computer/signer": {
-			"optional": true
-		},
-		"@slide-computer/signer-agent": {
-			"optional": true
-		},
-		"@slide-computer/signer-web": {
-			"optional": true
-		}
-	},
-	"packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  "name": "@cashier-wallet/wallet-sdk",
+  "version": "0.1.0",
+  "description": "Framework-agnostic wallet SDK for Cashier Wallet",
+  "keywords": [
+    "wallet",
+    "sdk",
+    "iframe",
+    "internet-computer",
+    "icp",
+    "icrc",
+    "web3",
+    "postmessage",
+    "json-rpc"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "pnpm run build",
+    "version:minor": "pnpm version minor --no-git-tag-version",
+    "publish:minor": "pnpm run version:minor && pnpm publish --no-git-checks"
+  },
+  "devDependencies": {
+    "@dfinity/agent": "^2.4.1",
+    "@dfinity/principal": "^2.4.1",
+    "@slide-computer/signer": "^3.20.0",
+    "@slide-computer/signer-agent": "^3.20.0",
+    "@slide-computer/signer-web": "^3.20.0",
+    "@windoge98/plug-n-play": "^0.1.0-beta.25",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "@dfinity/agent": ">=2.0.0",
+    "@dfinity/principal": ">=2.0.0",
+    "@slide-computer/signer": ">=3.0.0 <4",
+    "@slide-computer/signer-agent": ">=3.0.0 <4",
+    "@slide-computer/signer-web": ">=3.0.0 <4",
+    "@windoge98/plug-n-play": ">=0.1.0-beta.0"
+  },
+  "peerDependenciesMeta": {
+    "@dfinity/agent": {
+      "optional": true
+    },
+    "@dfinity/principal": {
+      "optional": true
+    },
+    "@windoge98/plug-n-play": {
+      "optional": true
+    },
+    "@slide-computer/signer": {
+      "optional": true
+    },
+    "@slide-computer/signer-agent": {
+      "optional": true
+    },
+    "@slide-computer/signer-web": {
+      "optional": true
+    }
+  },
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
 }

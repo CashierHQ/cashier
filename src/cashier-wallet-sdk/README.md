@@ -40,6 +40,7 @@ DApp  ──postMessage──▶  Wallet iframe (rpc-handler)
 ```
 
 **Key properties:**
+
 - Zero framework dependencies — works with React, Vue, Svelte, plain HTML
 - Private keys never leave the wallet origin
 - Consent for sensitive operations is shown inside the wallet's own popup (cannot be spoofed by the DApp)
@@ -72,35 +73,35 @@ pnpm add @cashier-wallet/wallet-sdk
 ## Quick Start
 
 ```typescript
-import { WalletSDK } from '@cashier-wallet/wallet-sdk'
+import { WalletSDK } from "@cashier-wallet/wallet-sdk";
 
 // 1. Create the SDK instance — no config needed for the default wallet
-const sdk = new WalletSDK()
+const sdk = new WalletSDK();
 
 // 2. Listen for auth changes (fires on login, logout, and initial session restore)
-sdk.on('authChange', ({ authenticated, principal }) => {
+sdk.on("authChange", ({ authenticated, principal }) => {
   if (authenticated) {
-    console.log('Logged in as', principal)
+    console.log("Logged in as", principal);
   }
-})
+});
 
 // 3. Mount — creates the hidden iframe and performs the ICRC-29 handshake
-await sdk.mount(document.body)
+await sdk.mount(document.body);
 
 // 4. Log in via Internet Identity
-await sdk.login()
+await sdk.login();
 
 // 5. Transfer tokens — opens a wallet consent popup before executing
 const { blockIndex } = await sdk.icrc1Transfer({
-  canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
-  to: 'aaaaa-aa',
-  amount: BigInt(10_000) // in smallest unit (e8s for ICP)
-})
+  canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  to: "aaaaa-aa",
+  amount: BigInt(10_000), // in smallest unit (e8s for ICP)
+});
 
-console.log('Transfer complete, block index:', blockIndex)
+console.log("Transfer complete, block index:", blockIndex);
 
 // 6. Clean up when the page unmounts
-sdk.unmount()
+sdk.unmount();
 ```
 
 ### Local development
@@ -108,7 +109,7 @@ sdk.unmount()
 The default wallet origin is `http://localhost:5177`. When developing locally against a different port or a staging environment, pass `walletOrigin` explicitly:
 
 ```typescript
-const sdk = new WalletSDK({ walletOrigin: 'http://localhost:5177' })
+const sdk = new WalletSDK({ walletOrigin: "http://localhost:5177" });
 ```
 
 ---
@@ -130,6 +131,7 @@ The user sees nothing at this stage. The SDK silently sets up a connection to th
    a. Creates an `RpcClient` targeting the wallet origin.
 
    b. Creates a zero-size, invisible `<iframe>` pointing at `walletOrigin` and appends it to `container`:
+
    ```
    position:absolute; width:0; height:0; border:0; visibility:hidden;
    ```
@@ -137,9 +139,9 @@ The user sees nothing at this stage. The SDK silently sets up a connection to th
    c. Once the iframe fires its `load` event, sends a JSON-RPC `connect` request with a 1-second timeout. Retries up to **5 times** to handle the race condition where the iframe's `load` event fires before the SvelteKit app inside it has hydrated.
 
    d. On a successful handshake response the SDK:
-      - Sets `connected = true`
-      - Emits `'connected'`
-      - Calls `_refreshAuth()` which queries `is_authenticated` and, if a session exists, also queries `get_principal`, then emits `'authChange'`
+   - Sets `connected = true`
+   - Emits `'connected'`
+   - Calls `_refreshAuth()` which queries `is_authenticated` and, if a session exists, also queries `get_principal`, then emits `'authChange'`
 
    e. `mount()` resolves once the handshake succeeds. It rejects if all 5 retries fail.
 
@@ -178,9 +180,14 @@ The user clicks a "Login" button in the DApp. A single browser popup opens and i
 4. The user authenticates with Internet Identity. II creates a delegated identity scoped to the wallet origin and stores it in the wallet's IndexedDB.
 
 5. The wallet popup receives the `onSuccess` callback. It sends:
+
    ```javascript
-   window.opener.postMessage({ type: 'wallet_auth_complete', principal }, dappOrigin)
+   window.opener.postMessage(
+     { type: "wallet_auth_complete", principal },
+     dappOrigin,
+   );
    ```
+
    Then calls `window.close()`.
 
 6. Back in the SDK, the `message` listener fires. The SDK calls `_refreshAuth()`:
@@ -329,6 +336,7 @@ A consent popup opens showing "Method: sign_message" and the message text in the
 Identical consent flow to [Get Principal](#5-get-principal) with `method = 'sign_message'` and `params = { message }`.
 
 On execution (Phase 3):
+
 - The wallet calls `identity.sign(TextEncoder.encode(message))`
 - The delegated identity (from Internet Identity) signs using the user's key material
 - Returns `{ signature: hexString, principal: textPrincipal }`
@@ -348,6 +356,7 @@ A consent popup opens showing "Method: icrc1_balance_of" and the canister ID. Th
 Identical consent flow with `method = 'icrc1_balance_of'` and `params = { canisterId, owner? }`.
 
 On execution:
+
 - The wallet builds an `HttpAgent` authenticated with the delegated identity, targeting `https://icp-api.io`
 - Calls `icrc1_balance_of({ owner: Principal.fromText(owner), subaccount: [] })` as a **query** call on the token's ledger canister
 - Returns `{ balance: bigintAsString }`
@@ -367,6 +376,7 @@ The user fills in a recipient principal, canister ID, and amount in the DApp. A 
 Identical three-phase consent flow with `method = 'icrc1_transfer'` and `params = { canisterId, to, amount }` (amount is serialised as a string since `bigint` cannot be transported over JSON).
 
 On execution:
+
 - The wallet builds an authenticated `HttpAgent`
 - Calls `icrc1_transfer(...)` as an **update** call — this is an on-chain write and incurs a transaction fee
 - On `Ok(blockIndex)` → responds `{ blockIndex: bigintAsString }`
@@ -393,22 +403,22 @@ sdk.icrc1Transfer({ canisterId, to, amount })
 
 Subscribe and unsubscribe with `sdk.on(event, handler)` and `sdk.off(event, handler)`. The SDK does not depend on any framework — handlers are called synchronously in registration order.
 
-| Event | Payload | When it fires |
-|---|---|---|
-| `connected` | `undefined` | ICRC-29 handshake with the wallet iframe succeeds (inside `mount()`) |
-| `disconnected` | `undefined` | `sdk.unmount()` is called |
-| `authChange` | `{ authenticated: boolean; principal: string }` | Session state changes: after `mount()` (if a prior session exists), after `login()`, after `logout()` |
+| Event          | Payload                                         | When it fires                                                                                         |
+| -------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `connected`    | `undefined`                                     | ICRC-29 handshake with the wallet iframe succeeds (inside `mount()`)                                  |
+| `disconnected` | `undefined`                                     | `sdk.unmount()` is called                                                                             |
+| `authChange`   | `{ authenticated: boolean; principal: string }` | Session state changes: after `mount()` (if a prior session exists), after `login()`, after `logout()` |
 
 **Example — Svelte reactive state without framework coupling:**
 
 ```typescript
-let authenticated = false
-let principal = ''
+let authenticated = false;
+let principal = "";
 
-sdk.on('authChange', ({ authenticated: a, principal: p }) => {
-  authenticated = a
-  principal = p
-})
+sdk.on("authChange", ({ authenticated: a, principal: p }) => {
+  authenticated = a;
+  principal = p;
+});
 ```
 
 **Example — React:**
@@ -416,12 +426,12 @@ sdk.on('authChange', ({ authenticated: a, principal: p }) => {
 ```typescript
 useEffect(() => {
   const handler = ({ authenticated, principal }: AuthState) => {
-    setAuthenticated(authenticated)
-    setPrincipal(principal)
-  }
-  sdk.on('authChange', handler)
-  return () => sdk.off('authChange', handler)
-}, [])
+    setAuthenticated(authenticated);
+    setPrincipal(principal);
+  };
+  sdk.on("authChange", handler);
+  return () => sdk.off("authChange", handler);
+}, []);
 ```
 
 ---
@@ -436,28 +446,28 @@ new WalletSDK(config?: WalletSDKConfig)
 
 The entire config object is optional. Calling `new WalletSDK()` with no arguments uses the built-in default wallet origin.
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
+| Parameter             | Type     | Default                 | Description                                                                    |
+| --------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------ |
 | `config.walletOrigin` | `string` | `http://localhost:5177` | Full origin of the wallet app. Override for staging or production deployments. |
 
 ---
 
 ### Lifecycle
 
-| Method | Signature | Returns | Consent | Description |
-|---|---|---|---|---|
-| `mount` | `mount(container: HTMLElement)` | `Promise<void>` | No | Creates the hidden iframe, runs the ICRC-29 handshake, restores session. Must be called before any other method. |
-| `unmount` | `unmount()` | `void` | No | Removes the iframe and tears down all listeners. Call when the component/page unmounts. |
+| Method    | Signature                       | Returns         | Consent | Description                                                                                                      |
+| --------- | ------------------------------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mount`   | `mount(container: HTMLElement)` | `Promise<void>` | No      | Creates the hidden iframe, runs the ICRC-29 handshake, restores session. Must be called before any other method. |
+| `unmount` | `unmount()`                     | `void`          | No      | Removes the iframe and tears down all listeners. Call when the component/page unmounts.                          |
 
 ---
 
 ### Authentication
 
-| Method | Signature | Returns | Consent | Description |
-|---|---|---|---|---|
-| `login` | `login()` | `Promise<{ principal: string }>` | No | Opens a wallet popup that immediately auto-triggers Internet Identity. Resolves with the principal once the user completes authentication. |
-| `logout` | `logout()` | `Promise<void>` | No | Clears the wallet session. Emits `authChange`. |
-| `isAuthenticated` | `isAuthenticated()` | `Promise<boolean>` | No | Queries the wallet for the current session status. |
+| Method            | Signature           | Returns                          | Consent | Description                                                                                                                                |
+| ----------------- | ------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `login`           | `login()`           | `Promise<{ principal: string }>` | No      | Opens a wallet popup that immediately auto-triggers Internet Identity. Resolves with the principal once the user completes authentication. |
+| `logout`          | `logout()`          | `Promise<void>`                  | No      | Clears the wallet session. Emits `authChange`.                                                                                             |
+| `isAuthenticated` | `isAuthenticated()` | `Promise<boolean>`               | No      | Queries the wallet for the current session status.                                                                                         |
 
 ---
 
@@ -465,20 +475,20 @@ The entire config object is optional. Calling `new WalletSDK()` with no argument
 
 All methods below require `mount()` to have completed and the user to be authenticated. They open a consent popup before executing.
 
-| Method | Signature | Returns | Description |
-|---|---|---|---|
-| `getPrincipal` | `getPrincipal()` | `Promise<string>` | Returns the authenticated principal as a text string. |
-| `signMessage` | `signMessage(message: string)` | `Promise<SignResult>` | Signs a UTF-8 message with the delegated identity. Returns `{ signature: string, principal: string }`. |
-| `icrc1BalanceOf` | `icrc1BalanceOf(canisterId: string, owner?: string)` | `Promise<bigint>` | Queries the ICRC-1 token balance. `owner` defaults to the authenticated principal. |
-| `icrc1Transfer` | `icrc1Transfer(params: TransferParams)` | `Promise<TransferResult>` | Executes an on-chain ICRC-1 transfer. Returns `{ blockIndex: bigint }`. |
+| Method           | Signature                                            | Returns                   | Description                                                                                            |
+| ---------------- | ---------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `getPrincipal`   | `getPrincipal()`                                     | `Promise<string>`         | Returns the authenticated principal as a text string.                                                  |
+| `signMessage`    | `signMessage(message: string)`                       | `Promise<SignResult>`     | Signs a UTF-8 message with the delegated identity. Returns `{ signature: string, principal: string }`. |
+| `icrc1BalanceOf` | `icrc1BalanceOf(canisterId: string, owner?: string)` | `Promise<bigint>`         | Queries the ICRC-1 token balance. `owner` defaults to the authenticated principal.                     |
+| `icrc1Transfer`  | `icrc1Transfer(params: TransferParams)`              | `Promise<TransferResult>` | Executes an on-chain ICRC-1 transfer. Returns `{ blockIndex: bigint }`.                                |
 
 **`TransferParams`:**
 
 ```typescript
 interface TransferParams {
-  canisterId: string  // ICRC-1 token ledger canister ID
-  to: string          // recipient principal as text
-  amount: bigint      // amount in smallest token unit (e.g. 10_000 e8s = 0.0001 ICP)
+  canisterId: string; // ICRC-1 token ledger canister ID
+  to: string; // recipient principal as text
+  amount: bigint; // amount in smallest token unit (e.g. 10_000 e8s = 0.0001 ICP)
 }
 ```
 
@@ -486,9 +496,9 @@ interface TransferParams {
 
 ### Utility
 
-| Method | Signature | Returns | Consent | Description |
-|---|---|---|---|---|
-| `ping` | `ping()` | `Promise<string>` | No | Health check. Returns `"pong"` from the wallet. Useful to verify the bridge is live. |
+| Method | Signature | Returns           | Consent | Description                                                                          |
+| ------ | --------- | ----------------- | ------- | ------------------------------------------------------------------------------------ |
+| `ping` | `ping()`  | `Promise<string>` | No      | Health check. Returns `"pong"` from the wallet. Useful to verify the bridge is live. |
 
 ---
 
@@ -507,22 +517,25 @@ Returns `this` for chaining.
 
 All errors extend `WalletError` which extends `Error`. They carry a numeric `code` property for programmatic handling.
 
-| Class | Code | When thrown |
-|---|---|---|
-| `WalletError` | varies | Base class — any wallet-level error |
-| `UserRejectedError` | `4001` | User clicked Reject in the consent popup |
-| `NotAuthenticatedError` | `4100` | Wallet refuses the request because no session exists |
-| `MethodNotFoundError` | `-32601` | The wallet does not recognise the method |
-| `NotConnectedError` | `-1` | A wallet method was called before `mount()` completed |
-| `ConsentTimeoutError` | `4002` | User closed the consent popup without making a decision |
+| Class                   | Code     | When thrown                                             |
+| ----------------------- | -------- | ------------------------------------------------------- |
+| `WalletError`           | varies   | Base class — any wallet-level error                     |
+| `UserRejectedError`     | `4001`   | User clicked Reject in the consent popup                |
+| `NotAuthenticatedError` | `4100`   | Wallet refuses the request because no session exists    |
+| `MethodNotFoundError`   | `-32601` | The wallet does not recognise the method                |
+| `NotConnectedError`     | `-1`     | A wallet method was called before `mount()` completed   |
+| `ConsentTimeoutError`   | `4002`   | User closed the consent popup without making a decision |
 
 **Handling errors:**
 
 ```typescript
-import { UserRejectedError, ConsentTimeoutError } from '@cashier-wallet/wallet-sdk'
+import {
+  UserRejectedError,
+  ConsentTimeoutError,
+} from "@cashier-wallet/wallet-sdk";
 
 try {
-  await sdk.icrc1Transfer({ canisterId, to, amount })
+  await sdk.icrc1Transfer({ canisterId, to, amount });
 } catch (err) {
   if (err instanceof UserRejectedError) {
     // user said no — show a dismissible notice, do not retry automatically
@@ -530,7 +543,7 @@ try {
     // popup was closed — ask the user to try again
   } else {
     // unexpected error — log and surface to user
-    console.error(err)
+    console.error(err);
   }
 }
 ```
@@ -592,12 +605,14 @@ Wallet consent popup (walletOrigin/consent?id=xxx)
 The three-phase protocol ensures the wallet executes a sensitive operation **only after the user has explicitly approved it inside the wallet origin**:
 
 **Phase 1 — Registration (`consent_prepare`)**
+
 - SDK generates `consentId = crypto.randomUUID()`
 - Sends RPC `consent_prepare` to the wallet iframe with `{ method, params, consentId }`
 - Wallet creates a `PendingConsent` entry: stores method and params, creates a `Promise` whose resolve/reject callbacks are held in the `pendingConsents` Map
 - Responds `{ ok: true }`
 
 **Phase 2 — User decision (consent popup)**
+
 - SDK opens `walletOrigin/consent?id=consentId` as a small popup
 - Popup (wallet origin) opens its own `BroadcastChannel('wallet-consent')`
 - Popup sends `consent_get` → iframe replies `consent_data` with method and params
@@ -609,6 +624,7 @@ The three-phase protocol ensures the wallet executes a sensitive operation **onl
 - Popup calls `window.close()`
 
 **Phase 3 — Execution**
+
 - SDK sends the actual RPC (e.g. `icrc1_transfer`) with `consentId` included in params
 - Wallet looks up the `PendingConsent`, awaits `approvalPromise`
 - Because Phase 2 already resolved it (or will imminently via BroadcastChannel), execution proceeds immediately — the `await` handles any residual race condition between the two message paths
@@ -628,11 +644,11 @@ The Internet Identity session (delegation) is written to **IndexedDB** by the wa
 
 ### Security properties
 
-| Property | Mechanism |
-|---|---|
-| Private keys never leave wallet origin | All signing and ledger calls run inside the wallet iframe/popup; DApp receives only results |
-| Consent cannot be faked by a DApp | Consent UI runs at the wallet origin (visible in browser URL bar); approval travels via same-origin BroadcastChannel |
-| Responses only accepted from wallet origin | `RpcClient` validates `event.origin === walletOrigin` on every incoming message |
-| Requests only accepted from DApp origin | `rpc-handler` validates `event.origin` against `ALLOWED_ORIGINS` on every incoming message |
-| One-time consent tokens | Each `consentId` is a UUID consumed once; replaying it after execution returns an error |
-| Login popup cannot be clickjacked | `window.open()` creates a top-level browsing context; attackers cannot overlay it with a fake UI |
+| Property                                   | Mechanism                                                                                                            |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Private keys never leave wallet origin     | All signing and ledger calls run inside the wallet iframe/popup; DApp receives only results                          |
+| Consent cannot be faked by a DApp          | Consent UI runs at the wallet origin (visible in browser URL bar); approval travels via same-origin BroadcastChannel |
+| Responses only accepted from wallet origin | `RpcClient` validates `event.origin === walletOrigin` on every incoming message                                      |
+| Requests only accepted from DApp origin    | `rpc-handler` validates `event.origin` against `ALLOWED_ORIGINS` on every incoming message                           |
+| One-time consent tokens                    | Each `consentId` is a UUID consumed once; replaying it after execution returns an error                              |
+| Login popup cannot be clickjacked          | `window.open()` creates a top-level browsing context; attackers cannot overlay it with a fake UI                     |

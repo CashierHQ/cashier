@@ -19,7 +19,7 @@
 
 // These types are imported from generated types
 // @ts-ignore - Will be replaced during generation
-import { IntentParticipants, TokenStandard } from '../generated/ts/types.js';
+import { IntentParticipants, TokenStandard } from "../generated/ts/types.js";
 
 /**
  * Calculate the total amount for an intent based on participants.
@@ -36,7 +36,7 @@ export function calculateIntentTotalAmount(
   userInputAmount: bigint = 0n,
   maxUse: number = 1,
   linkCreationFee: bigint = 0n,
-  linkMaxAssetAmount: bigint = 0n
+  linkMaxAssetAmount: bigint = 0n,
 ): bigint {
   switch (participants) {
     case IntentParticipants.CreatorToTreasury:
@@ -78,17 +78,17 @@ export function calculateIntentTotalNetworkFee(
   participants: IntentParticipants,
   tokenStandard: TokenStandard,
   assetNetworkFee: bigint,
-  maxUse: number = 1
+  maxUse: number = 1,
 ): bigint {
   const inboundFee = calculateIntentInboundNetworkFee(
     participants,
     tokenStandard,
-    assetNetworkFee
+    assetNetworkFee,
   );
   const outboundFee = calculateIntentOutboundNetworkFee(
     participants,
     assetNetworkFee,
-    maxUse
+    maxUse,
   );
   return inboundFee + outboundFee;
 }
@@ -104,7 +104,7 @@ export function calculateIntentTotalNetworkFee(
 export function calculateIntentInboundNetworkFee(
   participants: IntentParticipants,
   tokenStandard: TokenStandard,
-  assetNetworkFee: bigint
+  assetNetworkFee: bigint,
 ): bigint {
   const inboundMultiplier = tokenStandard === TokenStandard.ICRC2 ? 2n : 1n;
   switch (participants) {
@@ -138,7 +138,7 @@ export function calculateIntentInboundNetworkFee(
 export function calculateIntentOutboundNetworkFee(
   participants: IntentParticipants,
   assetNetworkFee: bigint,
-  maxUse: number = 1
+  maxUse: number = 1,
 ): bigint {
   switch (participants) {
     case IntentParticipants.CreatorToTreasury:
@@ -176,7 +176,7 @@ export function calculateIntentOutboundNetworkFee(
 export function calculateIntentUserFee(
   participants: IntentParticipants,
   intentTotalAmount: bigint,
-  intentTotalNetworkFee: bigint
+  intentTotalNetworkFee: bigint,
 ): bigint {
   switch (participants) {
     case IntentParticipants.CreatorToTreasury:
@@ -233,19 +233,19 @@ export interface FeeResult {
 export function calculateIntentFees(input: FeeInput): FeeResult {
   // Parse bigint values if they're strings
   const userInputAmount =
-    typeof input.user_input_amount === 'string'
+    typeof input.user_input_amount === "string"
       ? BigInt(input.user_input_amount)
       : (input.user_input_amount ?? 0n);
   const linkCreationFee =
-    typeof input.link_creation_fee === 'string'
+    typeof input.link_creation_fee === "string"
       ? BigInt(input.link_creation_fee)
       : (input.link_creation_fee ?? 0n);
   const assetNetworkFee =
-    typeof input.asset_network_fee === 'string'
+    typeof input.asset_network_fee === "string"
       ? BigInt(input.asset_network_fee)
       : input.asset_network_fee;
   const linkMaxAssetAmount =
-    typeof input.link_max_asset_amount === 'string'
+    typeof input.link_max_asset_amount === "string"
       ? BigInt(input.link_max_asset_amount)
       : (input.link_max_asset_amount ?? 0n);
   const maxUse = input.max_use ?? 1;
@@ -255,20 +255,20 @@ export function calculateIntentFees(input: FeeInput): FeeResult {
     userInputAmount,
     maxUse,
     linkCreationFee,
-    linkMaxAssetAmount
+    linkMaxAssetAmount,
   );
 
   const totalNetworkFee = calculateIntentTotalNetworkFee(
     input.intent_participants,
     input.token_standard,
     assetNetworkFee,
-    maxUse
+    maxUse,
   );
 
   const userFee = calculateIntentUserFee(
     input.intent_participants,
     totalAmount,
-    totalNetworkFee
+    totalNetworkFee,
   );
 
   return {

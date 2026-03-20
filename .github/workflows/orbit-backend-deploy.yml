@@ -6,15 +6,15 @@ on:
       - main
       - staging
     paths:
-      - 'src/cashier_backend/**'
-      - 'src/token_storage/**'
-      - 'src/transaction_manager/**'
+      - "src/cashier_backend/**"
+      - "src/token_storage/**"
+      - "src/transaction_manager/**"
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Deployment mode'
+        description: "Deployment mode"
         required: true
-        default: 'upgrade'
+        default: "upgrade"
         type: choice
         options:
           - reinstall

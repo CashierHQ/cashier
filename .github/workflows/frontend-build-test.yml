@@ -5,8 +5,8 @@ on:
     branches: [main, dev, staging]
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/cashier_frontend_new/**'
-      - '!src/cashier_frontend_new/src/lib/generated/**'
+      - "src/cashier_frontend_new/**"
+      - "!src/cashier_frontend_new/src/lib/generated/**"
 
 concurrency:
   group: frontend-${{ github.workflow }}-${{ github.ref }}
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: "22.x"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -51,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: "22.x"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4

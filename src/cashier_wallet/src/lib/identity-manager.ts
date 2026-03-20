@@ -1,28 +1,28 @@
-import { AuthClient } from '@dfinity/auth-client'
-import type { Identity } from '@dfinity/agent'
+import { AuthClient } from "@dfinity/auth-client";
+import type { Identity } from "@dfinity/agent";
 import { PUBLIC_CASHIER_ORIGIN } from "$env/static/public";
 
 // Internet Identity URL — https://id.ai is an alias for https://identity.ic0.app
-const II_URL = 'https://id.ai'
+const II_URL = "https://id.ai";
 
 // Cashier frontend origin — wallet uses this as derivationOrigin so II derives
 // the same principal as the cashier app. Set per-environment via PUBLIC_CASHIER_ORIGIN.
 const CASHIER_ORIGIN = PUBLIC_CASHIER_ORIGIN || undefined;
 
-let authClient: AuthClient | null = null
+let authClient: AuthClient | null = null;
 
 /**
  * Creates and caches the AuthClient singleton.
  * Safe to call multiple times — returns existing instance.
  */
 export async function initAuthClient(): Promise<AuthClient> {
-  if (authClient) return authClient
+  if (authClient) return authClient;
   try {
-    authClient = await AuthClient.create()
+    authClient = await AuthClient.create();
   } catch (e) {
-    throw new Error(`AuthClient init failed: ${e}`)
+    throw new Error(`AuthClient init failed: ${e}`);
   }
-  return authClient
+  return authClient;
 }
 
 /**
@@ -33,12 +33,12 @@ export async function initAuthClient(): Promise<AuthClient> {
  *   from that origin (e.g. the DApp's own origin), ensuring consistency across
  *   wallet and direct-II login flows.
  */
-export async function login(derivationOrigin?: string): Promise<{ ok: boolean; error?: string }> {
-  let ac: AuthClient
+export async function login(): Promise<{ ok: boolean; error?: string }> {
+  let ac: AuthClient;
   try {
-    ac = await initAuthClient()
+    ac = await initAuthClient();
   } catch (e) {
-    return { ok: false, error: `AuthClient init: ${e}` }
+    return { ok: false, error: `AuthClient init: ${e}` };
   }
   return new Promise((resolve) => {
     try {
@@ -47,21 +47,21 @@ export async function login(derivationOrigin?: string): Promise<{ ok: boolean; e
         ...(CASHIER_ORIGIN ? { derivationOrigin: CASHIER_ORIGIN } : {}),
         onSuccess: () => resolve({ ok: true }),
         onError: (err) => {
-          const msg = typeof err === 'string' ? err : String(err)
-          console.error('[identity-manager] login error:', msg)
-          resolve({ ok: false, error: msg })
-        }
-      })
+          const msg = typeof err === "string" ? err : String(err);
+          console.error("[identity-manager] login error:", msg);
+          resolve({ ok: false, error: msg });
+        },
+      });
     } catch (e) {
-      resolve({ ok: false, error: `login call failed: ${e}` })
+      resolve({ ok: false, error: `login call failed: ${e}` });
     }
-  })
+  });
 }
 
 /** Log out of the current Internet Identity session and clear the stored delegation. */
 export async function logout(): Promise<void> {
-  const ac = await initAuthClient()
-  await ac.logout()
+  const ac = await initAuthClient();
+  await ac.logout();
 }
 
 /**
@@ -69,7 +69,7 @@ export async function logout(): Promise<void> {
  * @returns The active `Identity`, or `null` if the AuthClient has not been initialised.
  */
 export function getIdentity(): Identity | null {
-  return authClient?.getIdentity() ?? null
+  return authClient?.getIdentity() ?? null;
 }
 
 /**
@@ -77,8 +77,8 @@ export function getIdentity(): Identity | null {
  * created by other contexts (e.g. popup tab login).
  */
 export async function refreshAuthClient(): Promise<void> {
-  authClient = null
-  await initAuthClient()
+  authClient = null;
+  await initAuthClient();
 }
 
 /**
@@ -86,6 +86,6 @@ export async function refreshAuthClient(): Promise<void> {
  * @returns `true` if authenticated, `false` if not initialised or session has expired.
  */
 export async function isAuthenticated(): Promise<boolean> {
-  if (!authClient) return false
-  return authClient.isAuthenticated()
+  if (!authClient) return false;
+  return authClient.isAuthenticated();
 }

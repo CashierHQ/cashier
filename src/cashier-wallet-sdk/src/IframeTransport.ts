@@ -1,40 +1,43 @@
-import type { Channel, Transport } from '@slide-computer/signer'
-import { HeartbeatClient, PostMessageChannel } from '@slide-computer/signer-web'
+import type { Channel, Transport } from "@slide-computer/signer";
+import {
+  HeartbeatClient,
+  PostMessageChannel,
+} from "@slide-computer/signer-web";
 
 export interface IframeTransportOptions {
   /**
    * Full origin URL of the wallet application.
    * @example 'https://wallet.cashierapp.io'
    */
-  url: string
+  url: string;
   /**
    * Time in milliseconds before the ICRC-29 channel establishment times out.
    * @default 30000
    */
-  establishTimeout?: number
+  establishTimeout?: number;
   /**
    * Time in milliseconds without a heartbeat before the channel is considered
    * disconnected. Must be longer than the slowest expected IC update call
    * (~10 s on mainnet) to prevent premature channel closure during icrc49_call_canister.
    * @default 30000
    */
-  disconnectTimeout?: number
+  disconnectTimeout?: number;
   /**
    * Status polling rate in ms (matches HeartbeatClient default).
    * @default 300
    */
-  statusPollingRate?: number
+  statusPollingRate?: number;
   /**
    * Container element to append the hidden iframe to.
    * @default document.body
    */
-  container?: HTMLElement
+  container?: HTMLElement;
 }
 
 export class IframeTransportError extends Error {
   constructor(message: string) {
-    super(message)
-    Object.setPrototypeOf(this, IframeTransportError.prototype)
+    super(message);
+    Object.setPrototypeOf(this, IframeTransportError.prototype);
   }
 }
 
@@ -49,17 +52,17 @@ export class IframeTransportError extends Error {
  */
 export class IframeTransport implements Transport {
   private readonly options: Required<
-    Omit<IframeTransportOptions, 'container'>
-  > & { container?: HTMLElement }
+    Omit<IframeTransportOptions, "container">
+  > & { container?: HTMLElement };
 
-  private iframe: HTMLIFrameElement | null = null
+  private iframe: HTMLIFrameElement | null = null;
 
   constructor(options: IframeTransportOptions) {
     // Validate origin
     try {
-      new URL(options.url)
+      new URL(options.url);
     } catch {
-      throw new IframeTransportError(`Invalid wallet URL: ${options.url}`)
+      throw new IframeTransportError(`Invalid wallet URL: ${options.url}`);
     }
 
     this.options = {
@@ -68,7 +71,7 @@ export class IframeTransport implements Transport {
       disconnectTimeout: options.disconnectTimeout ?? 30_000,
       statusPollingRate: options.statusPollingRate ?? 300,
       container: options.container,
-    }
+    };
   }
 
   /**
@@ -79,11 +82,11 @@ export class IframeTransport implements Transport {
    * calls for the lifetime of the transport.
    */
   async establishChannel(): Promise<Channel> {
-    const signerWindow = await this.ensureIframe()
-    const signerOrigin = new URL(this.options.url).origin
+    const signerWindow = await this.ensureIframe();
+    const signerOrigin = new URL(this.options.url).origin;
 
     return new Promise<Channel>((resolve, reject) => {
-      let channel: PostMessageChannel | undefined
+      let channel: PostMessageChannel | undefined;
 
       new HeartbeatClient({
         signerWindow,
@@ -96,23 +99,23 @@ export class IframeTransport implements Transport {
             signerOrigin: origin || signerOrigin,
             // Disable focus management — the wallet is a hidden iframe
             manageFocus: false,
-          })
-          resolve(channel)
+          });
+          resolve(channel);
         },
         onEstablishTimeout: () => {
           reject(
             new IframeTransportError(
-              'ICRC-29 channel could not be established within the timeout. ' +
-                'Ensure the wallet is running and responding to icrc29_status.',
+              "ICRC-29 channel could not be established within the timeout. " +
+                "Ensure the wallet is running and responding to icrc29_status.",
             ),
-          )
+          );
         },
         onDisconnect: () => {
           // Channel disconnected — callers will receive an error on next send()
-          channel?.close().catch(() => {})
+          channel?.close().catch(() => {});
         },
-      })
-    })
+      });
+    });
   }
 
   /**
@@ -120,8 +123,8 @@ export class IframeTransport implements Transport {
    * Call this when the PNP adapter disconnects.
    */
   destroy(): void {
-    this.iframe?.remove()
-    this.iframe = null
+    this.iframe?.remove();
+    this.iframe = null;
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────
@@ -129,36 +132,38 @@ export class IframeTransport implements Transport {
   /** Create (or reuse) the hidden iframe and wait for it to load. */
   private ensureIframe(): Promise<Window> {
     if (this.iframe?.contentWindow) {
-      return Promise.resolve(this.iframe.contentWindow)
+      return Promise.resolve(this.iframe.contentWindow);
     }
 
     return new Promise<Window>((resolve, reject) => {
-      const iframe = document.createElement('iframe')
-      iframe.src = this.options.url
+      const iframe = document.createElement("iframe");
+      iframe.src = this.options.url;
       // Hidden but still active — display:none suppresses message events in
       // some older browsers, so we use size/visibility instead.
       iframe.style.cssText =
-        'position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;' +
-        'border:0;opacity:0;pointer-events:none;'
-      iframe.title = 'Cashier Wallet bridge'
+        "position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;" +
+        "border:0;opacity:0;pointer-events:none;";
+      iframe.title = "Cashier Wallet bridge";
       // Allow the iframe to open consent popups for ICRC-49 consent flow
-      iframe.allow = 'popups; popups-to-escape-sandbox'
+      iframe.allow = "popups; popups-to-escape-sandbox";
 
       iframe.addEventListener(
-        'load',
+        "load",
         () => {
           if (!iframe.contentWindow) {
-            reject(new IframeTransportError('iframe contentWindow not available'))
-            return
+            reject(
+              new IframeTransportError("iframe contentWindow not available"),
+            );
+            return;
           }
-          this.iframe = iframe
-          resolve(iframe.contentWindow)
+          this.iframe = iframe;
+          resolve(iframe.contentWindow);
         },
         { once: true },
-      )
+      );
 
-      const container = this.options.container ?? document.body
-      container.appendChild(iframe)
-    })
+      const container = this.options.container ?? document.body;
+      container.appendChild(iframe);
+    });
   }
 }

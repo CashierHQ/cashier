@@ -1,14 +1,14 @@
 name: Deploy all canisters to dev
 on:
   pull_request:
-      branches:
-          - dev
-      types:
-          - closed
+    branches:
+      - dev
+    types:
+      - closed
   push:
-      branches:
-          - feature/standalone-wallet-and-ask
-          - feature/standalone-wallet-deployment
+    branches:
+      - feature/standalone-wallet-and-ask
+      - feature/standalone-wallet-deployment
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-            node-version: "22"
+          node-version: "22"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -79,7 +79,7 @@ jobs:
 
       - name: Deploy to dev environment
         env:
-            DFX_WARNING: -mainnet_plaintext_identity
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           owner=$(dfx identity get-principal)
           backend_log_filter="global,cashier=debug"

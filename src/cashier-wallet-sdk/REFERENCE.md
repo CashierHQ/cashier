@@ -96,8 +96,6 @@ sequenceDiagram
     HiddenIframe-->>DApp: blockIndex: 42
 ```
 
-
-
 ---
 
 ## Exported Items
@@ -107,7 +105,7 @@ sequenceDiagram
 The primary entry point. One instance per page is the normal pattern.
 
 ```typescript
-import { WalletSDK } from '@cashier-wallet/wallet-sdk'
+import { WalletSDK } from "@cashier-wallet/wallet-sdk";
 ```
 
 #### Constructor
@@ -116,11 +114,9 @@ import { WalletSDK } from '@cashier-wallet/wallet-sdk'
 new WalletSDK(config?: WalletSDKConfig)
 ```
 
-
 | Parameter             | Type                | Default                 | Description                                                            |
 | --------------------- | ------------------- | ----------------------- | ---------------------------------------------------------------------- |
 | `config.walletOrigin` | `string` (optional) | `http://localhost:5177` | Full origin of the hosted wallet app. Override for staging/production. |
-
 
 The constructor is synchronous. It only stores configuration — no network activity or DOM manipulation occurs until `mount()` is called.
 
@@ -138,9 +134,9 @@ Creates a hidden `<iframe>` pointing at `walletOrigin`, appends it to `container
 - Rejects if the handshake fails after 5 retries.
 
 ```typescript
-await sdk.mount(document.body)
+await sdk.mount(document.body);
 // or mount inside a specific container element
-await sdk.mount(document.getElementById('wallet-bridge')!)
+await sdk.mount(document.getElementById("wallet-bridge")!);
 ```
 
 ---
@@ -153,10 +149,13 @@ Call this when the page or component that owns the SDK instance is torn down.
 
 ```typescript
 // SvelteKit / Svelte
-onDestroy(() => sdk.unmount())
+onDestroy(() => sdk.unmount());
 
 // React
-useEffect(() => { sdk.mount(ref.current!); return () => sdk.unmount() }, [])
+useEffect(() => {
+  sdk.mount(ref.current!);
+  return () => sdk.unmount();
+}, []);
 ```
 
 ---
@@ -171,8 +170,8 @@ Opens the wallet in a popup window. The wallet auto-triggers Internet Identity o
 - Throws `Error('WalletSDK: login popup was blocked')` if the browser blocks the popup (typically because it was not triggered directly from a user gesture).
 
 ```typescript
-const { principal } = await sdk.login()
-console.log('Logged in as', principal)
+const { principal } = await sdk.login();
+console.log("Logged in as", principal);
 ```
 
 ---
@@ -182,7 +181,7 @@ console.log('Logged in as', principal)
 Clears the session in the wallet's IndexedDB (via the hidden iframe). Emits `authChange` with `{ authenticated: false, principal: '' }`.
 
 ```typescript
-await sdk.logout()
+await sdk.logout();
 ```
 
 ---
@@ -195,7 +194,7 @@ Queries the hidden iframe for the current session status without any UI interact
 - Throws `NotConnectedError` if `mount()` has not been called.
 
 ```typescript
-const ok = await sdk.isAuthenticated()
+const ok = await sdk.isAuthenticated();
 ```
 
 ---
@@ -217,7 +216,7 @@ All methods in this section:
 Returns the authenticated principal as a text string. Requires consent.
 
 ```typescript
-const principal = await sdk.getPrincipal()
+const principal = await sdk.getPrincipal();
 // "rdmx6-jaaaa-aaaaa-aaadq-cai"
 ```
 
@@ -228,15 +227,13 @@ const principal = await sdk.getPrincipal()
 Signs an arbitrary UTF-8 message with the user's delegated identity. Returns the hex-encoded signature and the principal. Requires consent.
 
 ```typescript
-const { signature, principal } = await sdk.signMessage('hello world')
+const { signature, principal } = await sdk.signMessage("hello world");
 ```
-
 
 | Return field | Type     | Description                       |
 | ------------ | -------- | --------------------------------- |
 | `signature`  | `string` | Hex-encoded signature bytes       |
 | `principal`  | `string` | Principal of the signing identity |
-
 
 ---
 
@@ -245,16 +242,14 @@ const { signature, principal } = await sdk.signMessage('hello world')
 Queries the ICRC-1 token balance for the given canister. `owner` defaults to the authenticated principal if omitted. Requires consent.
 
 ```typescript
-const balance = await sdk.icrc1BalanceOf('ryjl3-tyaaa-aaaaa-aaaba-cai')
+const balance = await sdk.icrc1BalanceOf("ryjl3-tyaaa-aaaaa-aaaba-cai");
 // 10_000_000n  (e8s)
 ```
-
 
 | Parameter    | Type                | Description                                        |
 | ------------ | ------------------- | -------------------------------------------------- |
 | `canisterId` | `string`            | ICRC-1 token ledger canister ID                    |
 | `owner`      | `string` (optional) | Principal to query; defaults to authenticated user |
-
 
 ---
 
@@ -264,15 +259,14 @@ Executes an on-chain ICRC-1 token transfer. Requires consent.
 
 ```typescript
 const { blockIndex } = await sdk.icrc1Transfer({
-  canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
-  to: 'aaaaa-aa',
-  amount: BigInt(10_000),  // 0.0001 ICP in e8s
-})
-console.log('Block index:', blockIndex)
+  canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  to: "aaaaa-aa",
+  amount: BigInt(10_000), // 0.0001 ICP in e8s
+});
+console.log("Block index:", blockIndex);
 ```
 
 `TransferParams`:
-
 
 | Field        | Type     | Description                                            |
 | ------------ | -------- | ------------------------------------------------------ |
@@ -280,14 +274,11 @@ console.log('Block index:', blockIndex)
 | `to`         | `string` | Recipient principal as text                            |
 | `amount`     | `bigint` | Amount in the token's smallest unit (e.g. e8s for ICP) |
 
-
 `TransferResult`:
-
 
 | Field        | Type     | Description                           |
 | ------------ | -------- | ------------------------------------- |
 | `blockIndex` | `bigint` | Block height of the accepted transfer |
-
 
 ---
 
@@ -296,7 +287,7 @@ console.log('Block index:', blockIndex)
 Health check — sends a `ping` RPC to the hidden iframe and returns `"pong"`. No consent required. Useful for verifying the connection is alive.
 
 ```typescript
-const pong = await sdk.ping()  // "pong"
+const pong = await sdk.ping(); // "pong"
 ```
 
 ---
@@ -309,11 +300,11 @@ Register a listener for an SDK event. Returns `this` for chaining.
 
 ```typescript
 sdk
-  .on('authChange', ({ authenticated, principal }) => {
-    console.log(authenticated ? `Logged in as ${principal}` : 'Logged out')
+  .on("authChange", ({ authenticated, principal }) => {
+    console.log(authenticated ? `Logged in as ${principal}` : "Logged out");
   })
-  .on('connected', () => console.log('Wallet bridge ready'))
-  .on('disconnected', () => console.log('Wallet bridge torn down'))
+  .on("connected", () => console.log("Wallet bridge ready"))
+  .on("disconnected", () => console.log("Wallet bridge torn down"));
 ```
 
 ---
@@ -323,7 +314,7 @@ sdk
 Remove a previously registered listener.
 
 ```typescript
-sdk.off('authChange', myHandler)
+sdk.off("authChange", myHandler);
 ```
 
 ---
@@ -333,7 +324,7 @@ sdk.off('authChange', myHandler)
 Low-level JSON-RPC 2.0 client over `postMessage`. `WalletSDK` uses this internally. It is exported for advanced use cases (e.g. building a custom SDK layer or sending proprietary RPC methods directly).
 
 ```typescript
-import { RpcClient } from '@cashier-wallet/wallet-sdk'
+import { RpcClient } from "@cashier-wallet/wallet-sdk";
 ```
 
 #### Constructor
@@ -351,8 +342,8 @@ Registers a `window.message` listener scoped to `targetOrigin`. Does not send an
 Sets the target window to send messages to. Call this after the iframe or popup has loaded.
 
 ```typescript
-const client = new RpcClient('http://localhost:5177')
-client.connect(iframe.contentWindow!)
+const client = new RpcClient("http://localhost:5177");
+client.connect(iframe.contentWindow!);
 ```
 
 ---
@@ -361,13 +352,11 @@ client.connect(iframe.contentWindow!)
 
 Sends a JSON-RPC 2.0 request and returns a promise that resolves with the `result` field, or rejects with a `WalletError` if the response contains an `error` field.
 
-
 | Parameter   | Type      | Default     | Description                                                      |
 | ----------- | --------- | ----------- | ---------------------------------------------------------------- |
 | `method`    | `string`  | —           | RPC method name                                                  |
 | `params`    | `unknown` | `undefined` | Optional params object                                           |
 | `timeoutMs` | `number`  | `15000`     | Milliseconds before the request is rejected with a timeout error |
-
 
 ---
 
@@ -389,9 +378,8 @@ import {
   MethodNotFoundError,
   NotConnectedError,
   ConsentTimeoutError,
-} from '@cashier-wallet/wallet-sdk'
+} from "@cashier-wallet/wallet-sdk";
 ```
-
 
 | Class                   | Code     | When thrown                                                      |
 | ----------------------- | -------- | ---------------------------------------------------------------- |
@@ -401,7 +389,6 @@ import {
 | `MethodNotFoundError`   | `-32601` | The wallet does not recognise the requested RPC method           |
 | `NotConnectedError`     | `-1`     | `mount()` has not been called or the iframe is not yet connected |
 | `ConsentTimeoutError`   | `4002`   | The consent popup was closed without a decision                  |
-
 
 Typical error handling pattern:
 
@@ -447,7 +434,7 @@ import type {
   RpcResponse,
   RpcError,
   ConsentChannelMessage,
-} from '@cashier-wallet/wallet-sdk'
+} from "@cashier-wallet/wallet-sdk";
 ```
 
 ---
@@ -458,7 +445,7 @@ Constructor options.
 
 ```typescript
 interface WalletSDKConfig {
-  walletOrigin?: string  // default: "http://localhost:5177"
+  walletOrigin?: string; // default: "http://localhost:5177"
 }
 ```
 
@@ -470,9 +457,9 @@ Event map used by `on()` and `off()`. The key is the event name; the value is th
 
 ```typescript
 interface WalletSDKEvents {
-  connected: undefined       // ICRC-29 handshake succeeded
-  disconnected: undefined    // sdk.unmount() was called
-  authChange: AuthState      // session state changed (login or logout)
+  connected: undefined; // ICRC-29 handshake succeeded
+  disconnected: undefined; // sdk.unmount() was called
+  authChange: AuthState; // session state changed (login or logout)
 }
 ```
 
@@ -484,8 +471,8 @@ Payload of the `authChange` event.
 
 ```typescript
 interface AuthState {
-  authenticated: boolean
-  principal: string  // empty string when authenticated is false
+  authenticated: boolean;
+  principal: string; // empty string when authenticated is false
 }
 ```
 
@@ -497,8 +484,8 @@ Return type of `signMessage()`.
 
 ```typescript
 interface SignResult {
-  signature: string   // hex-encoded signature
-  principal: string   // text representation of the signing principal
+  signature: string; // hex-encoded signature
+  principal: string; // text representation of the signing principal
 }
 ```
 
@@ -510,9 +497,9 @@ Input to `icrc1Transfer()`.
 
 ```typescript
 interface TransferParams {
-  canisterId: string  // ICRC-1 ledger canister ID
-  to: string          // recipient principal as text
-  amount: bigint      // amount in smallest token unit (e8s for ICP)
+  canisterId: string; // ICRC-1 ledger canister ID
+  to: string; // recipient principal as text
+  amount: bigint; // amount in smallest token unit (e8s for ICP)
 }
 ```
 
@@ -524,7 +511,7 @@ Return type of `icrc1Transfer()`.
 
 ```typescript
 interface TransferResult {
-  blockIndex: bigint  // block height of the accepted transfer
+  blockIndex: bigint; // block height of the accepted transfer
 }
 ```
 
@@ -536,9 +523,9 @@ Informational shape returned by the wallet on a successful `connect` handshake (
 
 ```typescript
 interface ConnectInfo {
-  status: string
-  walletOrigin: string
-  version: string
+  status: string;
+  walletOrigin: string;
+  version: string;
 }
 ```
 
@@ -550,22 +537,22 @@ JSON-RPC 2.0 wire types used internally by `RpcClient`. Exposed for integrators 
 
 ```typescript
 interface RpcRequest {
-  jsonrpc: '2.0'
-  id: string
-  method: string
-  params?: unknown
+  jsonrpc: "2.0";
+  id: string;
+  method: string;
+  params?: unknown;
 }
 
 interface RpcResponse {
-  jsonrpc: '2.0'
-  id: string
-  result?: unknown
-  error?: RpcError
+  jsonrpc: "2.0";
+  id: string;
+  result?: unknown;
+  error?: RpcError;
 }
 
 interface RpcError {
-  code: number
-  message: string
+  code: number;
+  message: string;
 }
 ```
 
@@ -577,15 +564,29 @@ Union type for all messages exchanged over the `BroadcastChannel('wallet-consent
 
 ```typescript
 type ConsentChannelMessage =
-  | ConsentGetMessage       // popup → iframe: "send me the data for this consentId"
-  | ConsentDataMessage      // iframe → popup: operation details
-  | ConsentApprovedMessage  // popup → iframe: user approved
-  | ConsentRejectedMessage  // popup → iframe: user rejected
+  | ConsentGetMessage // popup → iframe: "send me the data for this consentId"
+  | ConsentDataMessage // iframe → popup: operation details
+  | ConsentApprovedMessage // popup → iframe: user approved
+  | ConsentRejectedMessage; // popup → iframe: user rejected
 
-interface ConsentGetMessage      { type: 'consent_get';      consentId: string }
-interface ConsentDataMessage     { type: 'consent_data';     consentId: string; method: string; params: unknown }
-interface ConsentApprovedMessage { type: 'consent_approved'; consentId: string }
-interface ConsentRejectedMessage { type: 'consent_rejected'; consentId: string }
+interface ConsentGetMessage {
+  type: "consent_get";
+  consentId: string;
+}
+interface ConsentDataMessage {
+  type: "consent_data";
+  consentId: string;
+  method: string;
+  params: unknown;
+}
+interface ConsentApprovedMessage {
+  type: "consent_approved";
+  consentId: string;
+}
+interface ConsentRejectedMessage {
+  type: "consent_rejected";
+  consentId: string;
+}
 ```
 
 ---
@@ -596,14 +597,12 @@ interface ConsentRejectedMessage { type: 'consent_rejected'; consentId: string }
 
 Before `@cashier-wallet/wallet-sdk` was created, the DApp owned all wallet integration code directly. This code lived in four files inside `apps/dapp/src/lib/`:
 
-
 | File                  | Lines | Responsibility                                                    |
 | --------------------- | ----- | ----------------------------------------------------------------- |
 | `wallet-bridge.ts`    | ~200  | iframe injection, ICRC-29 handshake, auth state, popup management |
 | `rpc-client.ts`       | ~90   | JSON-RPC 2.0 client (pending map, timeout, origin filter)         |
 | `consent-store.ts`    | ~40   | Svelte `writable` store tracking pending consent queue            |
 | `ConsentModal.svelte` | ~80   | DApp-rendered approve/reject overlay                              |
-
 
 The DApp also had direct dependencies on `@dfinity/agent` and `@dfinity/principal` to construct principal objects and parse RPC responses.
 
@@ -618,53 +617,57 @@ The DApp also had direct dependencies on `@dfinity/agent` and `@dfinity/principa
 ```typescript
 // apps/dapp/src/lib/wallet-bridge.ts  (deleted)
 export async function mountWallet(container: HTMLElement) {
-  const iframe = document.createElement('iframe')
-  iframe.src = WALLET_ORIGIN
-  iframe.style.cssText = 'position:absolute;width:0;height:0;border:0;'
+  const iframe = document.createElement("iframe");
+  iframe.src = WALLET_ORIGIN;
+  iframe.style.cssText = "position:absolute;width:0;height:0;border:0;";
 
   await new Promise<void>((resolve, reject) => {
-    iframe.addEventListener('load', async () => {
-      rpcClient.connect(iframe.contentWindow!)
+    iframe.addEventListener("load", async () => {
+      rpcClient.connect(iframe.contentWindow!);
       for (let i = 0; i < 5; i++) {
         try {
-          await rpcClient.request('connect', undefined, 1000)
-          resolve()
-          return
-        } catch { /* retry */ }
+          await rpcClient.request("connect", undefined, 1000);
+          resolve();
+          return;
+        } catch {
+          /* retry */
+        }
       }
-      reject(new Error('handshake failed'))
-    })
-    container.appendChild(iframe)
-  })
+      reject(new Error("handshake failed"));
+    });
+    container.appendChild(iframe);
+  });
 }
 
 // apps/dapp/src/lib/rpc-client.ts  (deleted)
-export const rpcClient = new RpcClient(WALLET_ORIGIN) // ~90 lines of boilerplate
+export const rpcClient = new RpcClient(WALLET_ORIGIN); // ~90 lines of boilerplate
 
 // +page.svelte  (before)
-import { mountWallet } from '$lib/wallet-bridge'
-import { rpcClient } from '$lib/rpc-client'
-import { PUBLIC_WALLET_ORIGIN } from '$env/static/public'
+import { mountWallet } from "$lib/wallet-bridge";
+import { rpcClient } from "$lib/rpc-client";
+import { PUBLIC_WALLET_ORIGIN } from "$env/static/public";
 
 onMount(async () => {
-  await mountWallet(bridgeContainer)
+  await mountWallet(bridgeContainer);
   // ...manual auth state tracking...
-})
+});
 ```
 
 **After — three lines:**
 
 ```typescript
 // +page.svelte  (now)
-import { WalletSDK } from '@cashier-wallet/wallet-sdk'
+import { WalletSDK } from "@cashier-wallet/wallet-sdk";
 
-const sdk = new WalletSDK()   // walletOrigin defaults to localhost:5177
+const sdk = new WalletSDK(); // walletOrigin defaults to localhost:5177
 
 onMount(async () => {
-  sdk.on('authChange', ({ authenticated, principal }) => { /* update UI */ })
-  await sdk.mount(bridgeContainer)
-})
-onDestroy(() => sdk.unmount())
+  sdk.on("authChange", ({ authenticated, principal }) => {
+    /* update UI */
+  });
+  await sdk.mount(bridgeContainer);
+});
+onDestroy(() => sdk.unmount());
 ```
 
 ---
@@ -676,17 +679,17 @@ onDestroy(() => sdk.unmount())
 ```typescript
 // apps/dapp/src/lib/wallet-bridge.ts  (deleted)
 export async function login(): Promise<string> {
-  const tab = window.open(PUBLIC_WALLET_ORIGIN, '_blank')
-  if (!tab) throw new Error('popup blocked')
+  const tab = window.open(PUBLIC_WALLET_ORIGIN, "_blank");
+  if (!tab) throw new Error("popup blocked");
 
   return new Promise((resolve) => {
-    window.addEventListener('message', function handler(e) {
-      if (e.origin !== PUBLIC_WALLET_ORIGIN) return
-      if (e.data?.type !== 'wallet_auth_complete') return
-      window.removeEventListener('message', handler)
-      resolve(e.data.principal)
-    })
-  })
+    window.addEventListener("message", function handler(e) {
+      if (e.origin !== PUBLIC_WALLET_ORIGIN) return;
+      if (e.data?.type !== "wallet_auth_complete") return;
+      window.removeEventListener("message", handler);
+      resolve(e.data.principal);
+    });
+  });
   // then separately call rpcClient.request('is_authenticated')
   // then call rpcClient.request('get_principal')
   // then update local state...
@@ -696,7 +699,7 @@ export async function login(): Promise<string> {
 **After — one call:**
 
 ```typescript
-const { principal } = await sdk.login()
+const { principal } = await sdk.login();
 // authChange event fires automatically; no manual postMessage wiring
 ```
 
@@ -709,12 +712,12 @@ const { principal } = await sdk.login()
 ```typescript
 // apps/dapp/src/lib/consent-store.ts  (deleted)
 // Svelte-specific writable store; only worked in Svelte apps
-import { writable } from 'svelte/store'
-export const pendingConsent = writable<ConsentRequest | null>(null)
+import { writable } from "svelte/store";
+export const pendingConsent = writable<ConsentRequest | null>(null);
 
 // +page.svelte  (before) — DApp rendered the modal
 // ConsentModal.svelte was a DApp component; could be bypassed by DApp code
-import ConsentModal from '$lib/ConsentModal.svelte'
+import ConsentModal from "$lib/ConsentModal.svelte";
 
 // To transfer, the DApp would:
 // 1. Show ConsentModal (DApp-controlled — spoofable)
@@ -728,10 +731,10 @@ import ConsentModal from '$lib/ConsentModal.svelte'
 ```typescript
 // Single method call — consent runs inside the wallet origin
 const { blockIndex } = await sdk.icrc1Transfer({
-  canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
+  canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
   to: recipientPrincipal,
   amount: BigInt(10_000),
-})
+});
 // The consent UI was rendered at walletOrigin/consent — the DApp cannot
 // tamper with it, and the browser URL bar shows the wallet's origin
 ```
@@ -740,14 +743,12 @@ const { blockIndex } = await sdk.icrc1Transfer({
 
 ### Dependency footprint comparison
 
-
 |                                     | Before                                      | After                            |
 | ----------------------------------- | ------------------------------------------- | -------------------------------- |
 | Files in DApp `src/lib/`            | 4 wallet files (400+ lines)                 | 0                                |
 | Direct `@dfinity/*` imports in DApp | `@dfinity/agent`, `@dfinity/principal`      | None                             |
 | Framework coupling                  | Svelte stores (`writable`) in consent logic | None — pure TypeScript           |
 | Consent security                    | DApp-rendered UI (spoofable)                | Wallet-origin popup (unfakeable) |
-
 
 ---
 
@@ -757,12 +758,10 @@ const { blockIndex } = await sdk.icrc1Transfer({
 
 The SDK uses two independent messaging channels:
 
-
 | Channel                              | Direction              | Purpose                                                 |
 | ------------------------------------ | ---------------------- | ------------------------------------------------------- |
 | `window.postMessage`                 | DApp ↔ wallet iframe   | All JSON-RPC 2.0 method calls and responses             |
 | `BroadcastChannel('wallet-consent')` | iframe ↔ consent popup | Consent data fetch and approval/rejection notifications |
-
 
 The `BroadcastChannel` is only accessible to pages running at the same origin as the wallet. The DApp cannot read or write to it. This is what prevents a compromised DApp from forging a consent approval — the iframe only executes the sensitive RPC after receiving `consent_approved` on the `BroadcastChannel`, not on `postMessage`.
 
@@ -837,8 +836,8 @@ To bridge this race, `mount()` retries the handshake up to `HANDSHAKE_RETRIES = 
 ```typescript
 for (let i = 0; i < HANDSHAKE_RETRIES; i++) {
   try {
-    await client.request('connect', undefined, HANDSHAKE_TIMEOUT_MS)
-    break  // success
+    await client.request("connect", undefined, HANDSHAKE_TIMEOUT_MS);
+    break; // success
   } catch {
     // timeout — try again
   }
@@ -849,7 +848,6 @@ for (let i = 0; i < HANDSHAKE_RETRIES; i++) {
 
 ### Security properties
 
-
 | Property                               | Mechanism                                                                                                                             |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Private keys never leave wallet origin | All signing happens inside the iframe or popup; only the result (signature / block index) crosses `postMessage`                       |
@@ -859,5 +857,3 @@ for (let i = 0; i < HANDSHAKE_RETRIES; i++) {
 | Unique per-operation consentId         | `crypto.randomUUID()` per call prevents replay — an old approval cannot be reused for a different operation                           |
 | iframe popup blocked detection         | If `window.open()` returns `null`, the SDK throws immediately rather than silently hanging                                            |
 | Popup closed without decision          | A `setInterval` poll detects `popup.closed === true` and rejects with `ConsentTimeoutError` so the promise does not hang indefinitely |
-
-

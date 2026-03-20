@@ -14,63 +14,66 @@
  */
 
 export interface PendingConsent {
-  method: string
-  params: unknown
+  method: string;
+  params: unknown;
   /** Origin of the DApp that initiated this request, shown to the user in the consent popup */
-  dappOrigin: string
+  dappOrigin: string;
   /** Resolves when the user approves in the consent popup */
-  approvalPromise: Promise<void>
+  approvalPromise: Promise<void>;
   /** Internal — called by BroadcastChannel handler on approval */
-  _approve: () => void
+  _approve: () => void;
   /** Internal — called by BroadcastChannel handler on rejection */
-  _reject: (reason: string) => void
+  _reject: (reason: string) => void;
 }
 
 /** Active pending consents keyed by consentId */
-export const pendingConsents = new Map<string, PendingConsent>()
+export const pendingConsents = new Map<string, PendingConsent>();
 
 /** Auto-expire pending consents after this duration to prevent map leaks. */
-const CONSENT_TTL_MS = 5 * 60 * 1_000
+const CONSENT_TTL_MS = 5 * 60 * 1_000;
 
 /** BroadcastChannel shared between the hidden iframe and the consent popup */
-export const consentChannel = new BroadcastChannel('wallet-consent')
+export const consentChannel = new BroadcastChannel("wallet-consent");
 
 consentChannel.onmessage = (event: MessageEvent) => {
-  const { type, consentId } = (event.data ?? {}) as { type?: string; consentId?: string }
-  if (!type || !consentId) return
+  const { type, consentId } = (event.data ?? {}) as {
+    type?: string;
+    consentId?: string;
+  };
+  if (!type || !consentId) return;
 
-  const consent = pendingConsents.get(consentId)
+  const consent = pendingConsents.get(consentId);
 
   switch (type) {
-    case 'consent_get': {
+    case "consent_get": {
       // Popup is asking for the operation details so it can render the UI
       if (consent) {
         consentChannel.postMessage({
-          type: 'consent_data',
+          type: "consent_data",
           consentId,
           method: consent.method,
           params: consent.params,
-          dappOrigin: consent.dappOrigin
-        })
+          dappOrigin: consent.dappOrigin,
+        });
       }
-      break
+      break;
     }
-    case 'consent_approved': {
+    case "consent_approved": {
       if (consent) {
-        consent._approve()
+        consent._approve();
         // Do not delete here — rpc-handler needs the entry when Phase 3 RPC arrives
       }
-      break
+      break;
     }
-    case 'consent_rejected': {
+    case "consent_rejected": {
       if (consent) {
-        consent._reject('User rejected the request')
+        consent._reject("User rejected the request");
         // Do not delete here — rpc-handler cleans up after the awaited promise rejects
       }
-      break
+      break;
     }
   }
-}
+};
 
 /**
  * Register a new pending consent.
@@ -81,25 +84,32 @@ export function createPendingConsent(
   consentId: string,
   method: string,
   params: unknown,
-  dappOrigin: string
+  dappOrigin: string,
 ): void {
-  let _approve!: () => void
-  let _reject!: (reason: string) => void
+  let _approve!: () => void;
+  let _reject!: (reason: string) => void;
 
   const approvalPromise = new Promise<void>((resolve, reject) => {
-    _approve = resolve
-    _reject = (reason) => reject(new Error(reason))
-  })
+    _approve = resolve;
+    _reject = (reason) => reject(new Error(reason));
+  });
 
-  pendingConsents.set(consentId, { method, params, dappOrigin, approvalPromise, _approve, _reject })
+  pendingConsents.set(consentId, {
+    method,
+    params,
+    dappOrigin,
+    approvalPromise,
+    _approve,
+    _reject,
+  });
 
   // Auto-expire after TTL to prevent leaks when the popup is blocked or the
   // DApp crashes before Phase 3 arrives.
   setTimeout(() => {
-    const entry = pendingConsents.get(consentId)
+    const entry = pendingConsents.get(consentId);
     if (entry) {
-      entry._reject('Consent request expired')
-      pendingConsents.delete(consentId)
+      entry._reject("Consent request expired");
+      pendingConsents.delete(consentId);
     }
-  }, CONSENT_TTL_MS)
+  }, CONSENT_TTL_MS);
 }

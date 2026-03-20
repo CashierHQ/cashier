@@ -103,26 +103,26 @@ npm run generate:functions
 ```typescript
 // Import types
 import {
-	Intent,
-	IntentParticipants,
-	TokenStandard,
-	FeeCalculationInput,
-} from '../shared/generated/ts';
+  Intent,
+  IntentParticipants,
+  TokenStandard,
+  FeeCalculationInput,
+} from "../shared/generated/ts";
 
 // Import functions
 import {
-	calculateIntentFees,
-	calculateIntentTotalAmount,
-	calculateIntentTotalNetworkFee,
-} from '../shared/generated/ts';
+  calculateIntentFees,
+  calculateIntentTotalAmount,
+  calculateIntentTotalNetworkFee,
+} from "../shared/generated/ts";
 
 // Calculate fees
 const result = calculateIntentFees({
-	intent_participants: IntentParticipants.CreatorToLink,
-	token_standard: TokenStandard.ICRC2,
-	user_input_amount: 100000n,
-	max_use: 3,
-	asset_network_fee: 10000n,
+  intent_participants: IntentParticipants.CreatorToLink,
+  token_standard: TokenStandard.ICRC2,
+  user_input_amount: 100000n,
+  max_use: 3,
+  asset_network_fee: 10000n,
 });
 
 console.log(result.intent_total_amount); // "300000"

@@ -4,22 +4,22 @@ This guide explains the automated CI/CD deployment workflow for the Cashier proj
 
 ## 📋 Table of Contents
 
--   [Overview](#overview)
--   [Environment Strategy](#environment-strategy)
--   [Deployment Triggers](#deployment-triggers)
--   [Version Management](#version-management)
--   [Release Process](#release-process)
--   [Branch Strategy](#branch-strategy)
--   [Examples](#examples)
--   [Troubleshooting](#troubleshooting)
+- [Overview](#overview)
+- [Environment Strategy](#environment-strategy)
+- [Deployment Triggers](#deployment-triggers)
+- [Version Management](#version-management)
+- [Release Process](#release-process)
+- [Branch Strategy](#branch-strategy)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
 
 ## 🎯 Overview
 
 The Cashier project uses an automated CI/CD pipeline that deploys to three environments based on branch activity and pull requests:
 
--   **🧪 Dev Environment**: For development and feature testing
--   **🔧 Staging Environment**: For pre-production testing
--   **🚀 Production Environment**: For live releases with version management
+- **🧪 Dev Environment**: For development and feature testing
+- **🔧 Staging Environment**: For pre-production testing
+- **🚀 Production Environment**: For live releases with version management
 
 ## 🏗️ Environment Strategy
 
@@ -58,8 +58,8 @@ VITE_TOKEN_STORAGE_CANISTER_ID=<prod_token_storage_id>
 
 **Triggers on:**
 
--   Direct push to ANY branch
--   Pull requests to any branch (except main/staging)
+- Direct push to ANY branch
+- Pull requests to any branch (except main/staging)
 
 **Examples:**
 
@@ -77,7 +77,7 @@ git push origin hotfix/fix-claim-button  # ✅ Deploys to dev
 
 **Triggers on:**
 
--   Pull requests to `staging` branch only
+- Pull requests to `staging` branch only
 
 **Examples:**
 
@@ -96,8 +96,8 @@ git push origin feature/new-feature
 
 **Triggers on:**
 
--   Pull requests to `main` branch only
--   **Automatically bumps version** (patch increment)
+- Pull requests to `main` branch only
+- **Automatically bumps version** (patch increment)
 
 **Examples:**
 
@@ -164,28 +164,28 @@ chmod +x scripts/release.sh
 
 1. **Feature Development**
 
-    ```bash
-    # Work on feature branch
-    git checkout -b feature/payment-improvements
-    # ... make changes ...
-    git push origin feature/payment-improvements
-    # ✅ Auto-deploys to dev for testing
-    ```
+   ```bash
+   # Work on feature branch
+   git checkout -b feature/payment-improvements
+   # ... make changes ...
+   git push origin feature/payment-improvements
+   # ✅ Auto-deploys to dev for testing
+   ```
 
 2. **Staging Release**
 
-    ```bash
-    # Create PR to staging
-    # feature/payment-improvements → staging
-    # ✅ Auto-deploys to staging for pre-production testing
-    ```
+   ```bash
+   # Create PR to staging
+   # feature/payment-improvements → staging
+   # ✅ Auto-deploys to staging for pre-production testing
+   ```
 
 3. **Production Release**
-    ```bash
-    # Create PR to main
-    # staging → main
-    # ✅ Auto-bumps version and deploys to production
-    ```
+   ```bash
+   # Create PR to main
+   # staging → main
+   # ✅ Auto-bumps version and deploys to production
+   ```
 
 ### Emergency Hotfixes
 
@@ -291,21 +291,21 @@ git push origin experiment/new-ui-design
 
 **1. Deployment not triggering**
 
--   Check if changes are in `src/cashier_frontend_new/**` path
--   Verify branch naming and PR target branch
--   Check GitHub Actions logs
+- Check if changes are in `src/cashier_frontend_new/**` path
+- Verify branch naming and PR target branch
+- Check GitHub Actions logs
 
 **2. Version bump failing**
 
--   Ensure GitHub token has write permissions
--   Check if package.json is properly formatted
--   Verify no merge conflicts in package.json
+- Ensure GitHub token has write permissions
+- Check if package.json is properly formatted
+- Verify no merge conflicts in package.json
 
 **3. Build failures**
 
--   Check environment variables are set in GitHub Secrets
--   Verify DFX identity configuration
--   Review build logs for specific errors
+- Check environment variables are set in GitHub Secrets
+- Verify DFX identity configuration
+- Review build logs for specific errors
 
 ### Debug Commands
 
@@ -329,10 +329,10 @@ npx yaml-lint .github/workflows/frontend-deploy.yml
 
 ## 📚 Related Documentation
 
--   [GitHub Actions Workflow](../.github/workflows/frontend-deploy.yml)
--   [Release Script](../scripts/release.sh)
--   [Environment Configuration](../README.md#deployment-setup)
--   [Backend Deployment](../src/cashier_backend/README.md)
+- [GitHub Actions Workflow](../.github/workflows/frontend-deploy.yml)
+- [Release Script](../scripts/release.sh)
+- [Environment Configuration](../README.md#deployment-setup)
+- [Backend Deployment](../src/cashier_backend/README.md)
 
 ---
 

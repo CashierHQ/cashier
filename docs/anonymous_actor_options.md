@@ -53,13 +53,17 @@ const actor = this.#getActor({ anonymous: actorOptions?.anonymous });
 Fetch a public link anonymously (no identity attached):
 
 ```ts
-const resp = await cashierBackendService.getLink("link-id-123", undefined, { anonymous: true });
+const resp = await cashierBackendService.getLink("link-id-123", undefined, {
+  anonymous: true,
+});
 ```
 
 Use anonymous actor to fetch link details without action:
 
 ```ts
-const resp = await cashierBackendService.getLinkWithoutAction("link-id-123", { anonymous: true });
+const resp = await cashierBackendService.getLinkWithoutAction("link-id-123", {
+  anonymous: true,
+});
 ```
 
 Attempting to call an authenticated-only endpoint with `anonymous: true` will

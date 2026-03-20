@@ -1,13 +1,13 @@
-export { WalletSDK } from './WalletSDK'
-export { RpcClient } from './RpcClient'
+export { WalletSDK } from "./WalletSDK";
+export { RpcClient } from "./RpcClient";
 export {
   WalletError,
   UserRejectedError,
   NotAuthenticatedError,
   MethodNotFoundError,
   NotConnectedError,
-  ConsentTimeoutError
-} from './errors'
+  ConsentTimeoutError,
+} from "./errors";
 export type {
   WalletSDKConfig,
   WalletSDKEvents,
@@ -19,13 +19,13 @@ export type {
   RpcRequest,
   RpcResponse,
   RpcError,
-  ConsentChannelMessage
-} from './types'
+  ConsentChannelMessage,
+} from "./types";
 
 // ── ICRC-29 iframe transport (used by PNP adapters in consuming apps) ────
-export { IframeTransport } from './IframeTransport'
-export type { IframeTransportOptions } from './IframeTransport'
+export { IframeTransport } from "./IframeTransport";
+export type { IframeTransportOptions } from "./IframeTransport";
 
 // ── PNP adapter for Cashier Wallet ────────────────────────────────────────
-export { CashierWalletSignerAdapter } from './CashierWalletSignerAdapter'
-export type { CashierWalletAdapterConfig } from './CashierWalletSignerAdapter'
+export { CashierWalletSignerAdapter } from "./CashierWalletSignerAdapter";
+export type { CashierWalletAdapterConfig } from "./CashierWalletSignerAdapter";
