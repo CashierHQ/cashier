@@ -9,6 +9,13 @@ use token_storage_types::{bitcoin::ckbtc_minter::GetBtcAddressArg, error::Canist
 pub struct IcCkBtcMinterClient;
 
 impl CkBtcMinterTrait for IcCkBtcMinterClient {
+    /// Get the BTC address for a given principal from the CKBTC minter canister
+    /// # Arguments
+    /// * `user` - The principal ID of the user
+    /// * `ckbtc_minter` - The principal ID of the CKBTC minter canister
+    /// # Returns
+    /// * `Ok(String)` containing the BTC address if successful
+    /// * `Err(CanisterError)` if there is an error
     async fn get_btc_address(
         &self,
         user: Principal,

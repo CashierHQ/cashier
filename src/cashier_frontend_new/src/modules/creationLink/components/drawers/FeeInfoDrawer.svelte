@@ -29,6 +29,7 @@
     onBack?: (viaClose?: boolean) => void;
     onOpenChange?: (open: boolean) => void;
     feesBreakdown: FeeBreakdownItem[];
+    prioritizeNetworkFees?: boolean;
   };
 
   let {
@@ -37,6 +38,7 @@
     onBack,
     onOpenChange,
     feesBreakdown,
+    prioritizeNetworkFees = true,
   }: Props = $props();
 
   function handleClose() {
@@ -112,25 +114,27 @@
     <div
       class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex flex-col gap-4"
     >
-      <!-- Network fees -->
-      {#each networkFeesView as fee (fee.tokenAddress)}
-        <div>
-          <div class="flex justify-between items-center">
-            <span class="text-[14px] font-medium">{fee.name}</span>
-            <div class="flex items-center gap-1">
-              <span class="text-[14px] font-normal">
-                {fee.feeAmountFormatted}
-                {fee.tokenSymbol}
-              </span>
+      {#if prioritizeNetworkFees}
+        <!-- Network fees -->
+        {#each networkFeesView as fee (fee.tokenAddress)}
+          <div>
+            <div class="flex justify-between items-center">
+              <span class="text-[14px] font-medium">{fee.name}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[14px] font-normal">
+                  {fee.feeAmountFormatted}
+                  {fee.tokenSymbol}
+                </span>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${fee.usdFormatted}
+              </p>
             </div>
           </div>
-          <div class="flex justify-end">
-            <p class="text-[10px] font-normal text-[#b6b6b6]">
-              ~${fee.usdFormatted}
-            </p>
-          </div>
-        </div>
-      {/each}
+        {/each}
+      {/if}
 
       <!-- Link creation fee -->
       {#if linkCreationFeeView}
@@ -175,6 +179,28 @@
           </div>
         {/if}
       {/each}
+
+      {#if !prioritizeNetworkFees}
+        <!-- Network fees -->
+        {#each networkFeesView as fee (fee.tokenAddress)}
+          <div>
+            <div class="flex justify-between items-center">
+              <span class="text-[14px] font-medium">{fee.name}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[14px] font-normal">
+                  {fee.feeAmountFormatted}
+                  {fee.tokenSymbol}
+                </span>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${fee.usdFormatted}
+              </p>
+            </div>
+          </div>
+        {/each}
+      {/if}
     </div>
 
     <Button

@@ -213,7 +213,7 @@ class TokenStorageService {
    * @param isImporting Flag indicating if the transaction is for importing BTC
    * @returns BridgeTransaction or error message
    */
-  public async createBridgeTransaction(
+  public async createImportBridgeTransaction(
     senderBtcAddress: string,
     receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
@@ -257,6 +257,50 @@ class TokenStorageService {
   }
 
   /**
+   * Create an export bridge transaction to withdrawl BTC from ckBTC on ICP
+   * @param receiverBtcAddress The BTC address of the receiver
+   * @param amount The amount of BTC to withdraw
+   * @param withdrawalFee The withdrawal fee in satoshis
+   * @param btcFee The BTC network fee in satoshis
+   * @returns BridgeTransaction or error message
+   */
+  public async createExportBridgeTransaction(
+    receiverBtcAddress: string,
+    amount: bigint,
+    withdrawalFee: bigint,
+    btcFee: bigint,
+  ): Promise<Result<BridgeTransaction, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs =
+        BridgeTransactionMapper.toCreateExportBridgeTransactionArgs(
+          authState.account?.owner || "",
+          receiverBtcAddress,
+          amount,
+          withdrawalFee,
+          btcFee,
+        );
+
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      if ("Ok" in res) {
+        const bridgeTransaction =
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res.Ok);
+        return Ok(bridgeTransaction);
+      }
+
+      return Err(
+        `Error creating export bridge transaction: ${JSON.stringify(res.Err)}`,
+      );
+    } catch (err) {
+      return Err(`Error creating export bridge transaction: ${err}`);
+    }
+  }
+
+  /**
    * Get bridge transactions with pagination
    * @param start The starting index for pagination
    * @param limit The maximum number of transactions to retrieve
@@ -286,6 +330,7 @@ class TokenStorageService {
         (tx: tokenStorage.UserBridgeTransactionDto) =>
           BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
       );
+
       return bridgeTransactions;
     } catch (err) {
       throw new Error(`Error fetching bridge transactions: ${err}`);
@@ -324,24 +369,28 @@ class TokenStorageService {
    * Update a bridge transaction's details
    * @param bridgeId the bridge transaction ID
    * @param status the new status of the bridge transaction
+   * @param ckbtc_block_id the ckBTC ledger burn block index for export tracking
    * @param block_id the block ID where the transaction was confirmed
    * @param block_timestamp the timestamp of the block where the transaction was confirmed
    * @param confirmations list of Bitcoin blocks confirming the transaction
    * @param btc_txid the Bitcoin transaction ID
    * @param deposit_fee ckBTC deposit fee
    * @param withdrawal_fee ckBTC withdrawal fee
+   * @param btc_fee Bitcoin network fee
    * @param retry_times number of retry attempts for updating balance
    * @returns updated BridgeTransaction or error message
    */
   public async updateBridgeTransaction(
     bridgeId: string,
     status: BridgeTransactionStatus | null = null,
+    ckbtc_block_id: bigint | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] = [],
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
+    btc_fee: bigint | null = null,
     retry_times: number | null = null,
   ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
@@ -353,12 +402,14 @@ class TokenStorageService {
       const updateArgs = BridgeTransactionMapper.toUpdateBridgeTransactionArgs(
         bridgeId,
         status,
+        ckbtc_block_id,
         block_id,
         block_timestamp,
         confirmations,
         btc_txid,
         deposit_fee,
         withdrawal_fee,
+        btc_fee,
         retry_times,
       );
 

@@ -279,6 +279,7 @@ describe("BitcoinTransactionMapper", () => {
         bridge_type: { Import: null },
         deposit_fee: [depositFee],
         withdrawal_fee: [withdrawalFee],
+        btc_fee: [],
         created_at_ts: 1704067200n,
       });
     });
@@ -312,6 +313,7 @@ describe("BitcoinTransactionMapper", () => {
         bridge_type: { Export: null },
         deposit_fee: [depositFee],
         withdrawal_fee: [withdrawalFee],
+        btc_fee: [],
         created_at_ts: 1704067200n,
       });
     });

@@ -36,6 +36,7 @@ export type Asset = { 'IC' : { 'address' : Principal } };
 export interface AssetInfo {
   'asset' : Asset_1,
   'label' : string,
+  'available_amount' : [] | [bigint],
   'amount' : bigint,
 }
 export interface AssetInfoDto {

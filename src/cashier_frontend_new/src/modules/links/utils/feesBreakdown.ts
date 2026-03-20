@@ -17,7 +17,7 @@ export type FeeBreakdownItem = {
   usdAmount: number;
 };
 
-type FindTokenByAddress = (
+export type FindTokenByAddress = (
   address: string,
 ) => Result<TokenWithPriceAndBalance, Error>;
 

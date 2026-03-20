@@ -48,6 +48,7 @@ export type SerializedLink = {
     asset: { chain: string; address?: string };
     amount_per_link_use_action: bigint;
     label: string;
+    available_amount?: bigint;
   }>;
   link_type: LinkTypeValue;
   create_at: bigint;
@@ -118,6 +119,7 @@ export class LinkMapper {
               },
               amount_per_link_use_action: a.amount_per_link_use_action,
               label: a.label,
+              available_amount: a.available_amount,
             };
           }),
           link_type: link.link_type,
@@ -149,6 +151,7 @@ export class LinkMapper {
               assetInstance,
               a.amount_per_link_use_action,
               a.label,
+              a.available_amount,
             );
           }
           throw new Error(

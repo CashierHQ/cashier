@@ -1,7 +1,12 @@
+import * as ckBTCMinter from "$lib/generated/ckbtc_minter/ckbtc_minter.did";
 import {
   type BridgeTransaction,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
+import {
+  RetrieveBtcStatusKind,
+  type RetrieveBtcStatus,
+} from "$modules/bitcoin/types/ckbtc_minter";
 
 /**
  * Group bridge transactions by their creation date.
@@ -54,4 +59,66 @@ export const enrichBridgeTransactionWithUsdValue = (
       total_amount_usd: total_amount_usd,
     };
   });
+};
+
+/**
+ * Map the RetrieveBtcStatusV2 returned by the ckBTC Minter canister to the RetrieveBtcStatus used in the frontend.
+ * @param status
+ * @returns
+ */
+export const mapRetrieveBtcStatus = (
+  status: ckBTCMinter.RetrieveBtcStatusV2,
+): RetrieveBtcStatus => {
+  if ("Signing" in status) {
+    return { kind: RetrieveBtcStatusKind.Signing, txid: null };
+  }
+  if ("Sending" in status) {
+    return {
+      kind: RetrieveBtcStatusKind.Sending,
+      txid: txidToHex(status.Sending.txid),
+    };
+  }
+  if ("Submitted" in status) {
+    return {
+      kind: RetrieveBtcStatusKind.Submitted,
+      txid: txidToHex(status.Submitted.txid),
+    };
+  }
+  if ("Confirmed" in status) {
+    return {
+      kind: RetrieveBtcStatusKind.Confirmed,
+      txid: txidToHex(status.Confirmed.txid),
+    };
+  }
+  if ("Pending" in status) {
+    return { kind: RetrieveBtcStatusKind.Pending, txid: null };
+  }
+  if ("Unknown" in status) {
+    return { kind: RetrieveBtcStatusKind.Unknown, txid: null };
+  }
+  if ("AmountTooLow" in status) {
+    return { kind: RetrieveBtcStatusKind.AmountTooLow, txid: null };
+  }
+  if ("WillReimburse" in status) {
+    return { kind: RetrieveBtcStatusKind.WillReimburse, txid: null };
+  }
+  if ("Reimbursed" in status) {
+    return { kind: RetrieveBtcStatusKind.Reimbursed, txid: null };
+  }
+
+  throw new Error("Unknown retrieve BTC status");
+};
+
+/**
+ * Convert a txid represented as a Uint8Array or number array to a hexadecimal string.
+ * @param txid
+ * @returns
+ */
+export const txidToHex = (txid: Uint8Array | number[]): string => {
+  const bytes = Array.from(txid);
+  return bytes
+    .slice()
+    .reverse()
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 };

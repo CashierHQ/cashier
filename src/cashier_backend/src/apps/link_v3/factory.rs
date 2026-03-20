@@ -112,6 +112,7 @@ mod tests {
             },
             label: "asset".to_string(),
             amount: candid::Nat::from(1000u64),
+            available_amount: None,
         }
     }
 

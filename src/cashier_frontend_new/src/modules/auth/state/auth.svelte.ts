@@ -79,6 +79,12 @@ const CONFIG: CreatePnpArgs = {
       config: {
         walletOrigin: CASHIER_WALLET_ORIGIN,
         host: HOST_ICP,
+        // Only set derivationOrigin in production — II (https://identity.ic0.app)
+        // must be able to GET /.well-known/ii-alternative-origins from this origin
+        // to verify the relationship. That fetch is blocked by browsers when the
+        // DApp runs on HTTP (localhost), so we skip it for non-production builds.
+        derivationOrigin:
+          BUILD_TYPE === "production" ? "https://cashierapp.io" : undefined,
       },
     },
   },
@@ -186,6 +192,14 @@ export const authState = {
    */
   get isReady() {
     return isReady;
+  },
+
+  /**
+   * ID of the currently connected wallet adapter, or null if not connected.
+   * e.g. "cashier" for the standalone wallet, "iiSigner" for Internet Identity.
+   */
+  get connectedWalletId() {
+    return walletConnect.current.id;
   },
 
   /**

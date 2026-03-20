@@ -1,8 +1,9 @@
 import { Cbor, HttpAgent, polling } from '@dfinity/agent'
 import { Principal } from '@dfinity/principal'
+import { env } from '$env/dynamic/public'
 import { getIdentity } from './identity-manager'
 
-const IC_HOST = 'https://icp-api.io'
+const IC_HOST = env.PUBLIC_ICP_HOST ?? 'https://icp-api.io'
 
 interface Signable {
   sign(blob: Uint8Array | ArrayBuffer): Promise<ArrayBuffer>
@@ -42,14 +43,14 @@ export interface CallCanisterParams {
   canisterId: string
   /** Method name to call. */
   method: string
-  /** Base64-encoded Candid argument bytes. */
+  /** Base64-encoded Candid argument bytes (ICRC-49). */
   arg: string
 }
 
 export interface CallCanisterResult {
-  /** Base64-encoded CBOR contentMap of the signed update envelope. */
+  /** Base64-encoded CBOR contentMap of the signed update envelope (ICRC-49). */
   contentMap: string
-  /** Base64-encoded DER certificate returned from read_state. */
+  /** Base64-encoded IC certificate returned from read_state (ICRC-49). */
   certificate: string
 }
 
@@ -69,6 +70,10 @@ export async function callCanister(
   const canisterId = Principal.fromText(params.canisterId)
   const argBytes = base64ToBytes(params.arg)
 
+  console.log(
+    `[cashier-wallet-instance] Submitting update call — ${params.method} on ${params.canisterId} via ${IC_HOST}`,
+  )
+
   // Create a fresh agent so the addTransform callback doesn't leak across calls
   const agent = HttpAgent.createSync({ identity, host: IC_HOST })
 
@@ -83,9 +88,11 @@ export async function callCanister(
     methodName: params.method,
     arg: argBytes,
   })
+  console.log('[cashier-wallet-instance] Call submitted to IC, polling for response...')
 
   const { pollForResponse, defaultStrategy } = polling
   await pollForResponse(agent, canisterId, submitResponse.requestId, defaultStrategy())
+  console.log('[cashier-wallet-instance] IC response received, reading certificate...')
 
   const { certificate } = await agent.readState(canisterId, {
     paths: [
@@ -98,6 +105,7 @@ export async function callCanister(
 
   if (!contentMap) throw new Error('contentMap was not captured by transform')
 
+  console.log('[cashier-wallet-instance] Certificate obtained — ICRC-49 result ready')
   return {
     contentMap: bytesToBase64(new Uint8Array(contentMap)),
     certificate: bytesToBase64(new Uint8Array(certificate)),
@@ -115,15 +123,22 @@ function bufferToHex(buffer: ArrayBuffer): string {
     .join('')
 }
 
-/** Decode a standard base64 string to a Uint8Array. */
+/**
+ * Decode base64 to bytes. Accepts both standard base64 and base64url.
+ * Signer-agent expects the same format as IIChannel: standard base64 (toBase64).
+ */
 function base64ToBytes(b64: string): Uint8Array {
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes
+  const normalized = b64.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
+  const binary = atob(padded)
+  const out = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i)
+  return out
 }
 
-/** Encode a Uint8Array as a standard base64 string. */
+/**
+ * Encode bytes as standard base64. Must match IIChannel/signer-agent expectations.
+ */
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
   for (const b of bytes) binary += String.fromCharCode(b)

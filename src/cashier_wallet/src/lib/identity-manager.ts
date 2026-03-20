@@ -27,9 +27,13 @@ export async function initAuthClient(): Promise<AuthClient> {
 
 /**
  * Opens Internet Identity popup for user authentication.
- * Returns true on success, false on failure or cancellation.
+ *
+ * @param derivationOrigin - optional derivation origin forwarded from the DApp.
+ *   When set, II will derive the same principal as if the user logged in directly
+ *   from that origin (e.g. the DApp's own origin), ensuring consistency across
+ *   wallet and direct-II login flows.
  */
-export async function login(): Promise<{ ok: boolean; error?: string }> {
+export async function login(derivationOrigin?: string): Promise<{ ok: boolean; error?: string }> {
   let ac: AuthClient
   try {
     ac = await initAuthClient()

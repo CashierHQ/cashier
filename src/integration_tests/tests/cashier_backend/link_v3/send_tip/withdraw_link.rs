@@ -180,7 +180,7 @@ async fn it_should_withdraw_icp_token_tip_link_successfully() {
         let intent1 = &action.intents[0];
         assert_eq!(intent1.intent_state, IntentStateShared::Created);
         assert_eq!(intent1.source_address_type, AddressTypeShared::Link);
-        assert_eq!(intent1.dest_address_type, AddressTypeShared::User);
+        assert_eq!(intent1.dest_address_type, AddressTypeShared::Creator);
         assert_eq!(intent1.dest_address, creator);
         assert_eq!(intent1.amount, tip_amount);
 
@@ -195,6 +195,7 @@ async fn it_should_withdraw_icp_token_tip_link_successfully() {
         let process_action_result = process_action_result.unwrap();
         let link = process_action_result.link;
         assert_eq!(link.link_state, LinkStateShared::Ended);
+        assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
         let action = process_action_result.action;
         assert_eq!(action.action_state, ActionStateShared::Success);
 
@@ -288,7 +289,7 @@ async fn it_should_withdraw_icrc_token_tip_link_successfully() {
         let intent1 = &action.intents[0];
         assert_eq!(intent1.intent_state, IntentStateShared::Created);
         assert_eq!(intent1.source_address_type, AddressTypeShared::Link);
-        assert_eq!(intent1.dest_address_type, AddressTypeShared::User);
+        assert_eq!(intent1.dest_address_type, AddressTypeShared::Creator);
         assert_eq!(intent1.dest_address, creator);
         assert_eq!(intent1.amount, tip_amount);
 
@@ -303,6 +304,7 @@ async fn it_should_withdraw_icrc_token_tip_link_successfully() {
         let process_action_result = process_action_result.unwrap();
         let link = process_action_result.link;
         assert_eq!(link.link_state, LinkStateShared::Ended);
+        assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
         let action = process_action_result.action;
         assert_eq!(action.action_state, ActionStateShared::Success);
 

@@ -7,11 +7,6 @@
     "production": "eyuy4-gqaaa-aaaam-aekrq-cai",
     "staging": "jjio5-5aaaa-aaaam-adhaq-cai"
   },
-  "cashier_frontend_new": {
-    "dev": "bepcz-nyaaa-aaaam-aekoa-cai",
-    "production": "jg57n-xyaaa-aaaam-admqq-cai",
-    "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
-  },
   "token_storage": {
     "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
     "production": "d2fvt-giaaa-aaaam-aen4q-cai",
@@ -19,5 +14,10 @@
   },
   "cashier_wallet": {
     "dev": "qpyyt-4aaaa-aaaam-aifza-cai"
+  },
+  "cashier_frontend_new": {
+    "dev": "bepcz-nyaaa-aaaam-aekoa-cai",
+    "production": "jg57n-xyaaa-aaaam-admqq-cai",
+    "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
   }
 }

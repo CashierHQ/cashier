@@ -13,6 +13,7 @@ function makeSampleLink(id = "link-1", title = "Test Tip Link") {
     Asset.IC(assetAddress),
     BigInt(5000000),
     "SEND_TIP_ASSET",
+    BigInt(4900000),
   );
 
   return new Link(
@@ -54,6 +55,9 @@ describe("LinkMapper serde", () => {
     expect(deserialized.asset_info[0].amount_per_link_use_action).toBe(
       link.asset_info[0].amount_per_link_use_action,
     );
+    expect(deserialized.asset_info[0].available_amount).toBe(
+      link.asset_info[0].available_amount,
+    );
     expect(deserialized.asset_info[0].asset.chain).toBe(
       link.asset_info[0].asset.chain,
     );
@@ -85,6 +89,9 @@ describe("LinkMapper serde", () => {
     expect(parsed.asset_info[0].label).toBe(link.asset_info[0].label);
     expect(parsed.asset_info[0].amount_per_link_use_action).toBe(
       link.asset_info[0].amount_per_link_use_action,
+    );
+    expect(parsed.asset_info[0].available_amount).toBe(
+      link.asset_info[0].available_amount,
     );
     expect(parsed.asset_info[0].asset.chain).toBe(
       link.asset_info[0].asset.chain,

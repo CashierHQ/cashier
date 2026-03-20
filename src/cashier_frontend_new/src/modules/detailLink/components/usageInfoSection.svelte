@@ -12,25 +12,13 @@
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    maxUse?: number;
     useCount?: number;
   };
 
-  let {
-    assetsWithTokenInfo,
-    failedImageLoads,
-    onImageError,
-    maxUse,
-    useCount,
-  }: Props = $props();
+  let { assetsWithTokenInfo, failedImageLoads, onImageError, useCount }: Props =
+    $props();
 
   const linkUseActionCounter = $derived(useCount ?? 0);
-  const maxUseValue = $derived(maxUse ?? 1);
-
-  // Calculate remaining uses
-  const remainingUses: number = $derived(
-    Math.max(0, (maxUseValue ?? 1) - linkUseActionCounter),
-  );
 </script>
 
 <div>
@@ -50,7 +38,7 @@
             <div class="flex flex-col items-end gap-1">
               <div class="flex items-center gap-2">
                 <p class="text-sm">
-                  {formatNumber(asset.amount * remainingUses)}
+                  {formatNumber(asset.amount)}
                   {asset.token.symbol}
                 </p>
                 <TokenIcon
@@ -64,7 +52,7 @@
               </div>
               {#if asset.usdValue > 0}
                 <p class="text-xs text-gray-500">
-                  ~${formatUsdAmount(asset.usdValue * remainingUses)}
+                  ~${formatUsdAmount(asset.usdValue)}
                 </p>
               {/if}
             </div>

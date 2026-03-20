@@ -122,6 +122,7 @@ async fn it_should_succeed_get_link_details_with_create_action_succeeded() {
         let link = get_link_result.link;
         assert_eq!(link.id, link_id);
         assert_eq!(link.link_state, LinkStateShared::Active);
+        assert!(link.asset_info[0].available_amount.is_some());
         let action = get_link_result.action.unwrap();
         assert_eq!(action.action_state, ActionStateShared::Success);
         assert_eq!(action.intents.len(), 2);
