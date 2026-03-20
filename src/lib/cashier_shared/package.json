@@ -26,12 +26,12 @@
 		"generate": "tsx scripts/generate.ts",
 		"generate:types": "tsx scripts/generate.ts --types-only",
 		"generate:functions": "tsx scripts/generate.ts --functions-only",
-		"build": "npm run generate && tsc",
+		"build": "pnpm run generate && tsc",
 		"clean": "rm -rf generated/ts generated/rust",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:rust": "cargo test -p cashier_shared",
-		"test:all": "npm test && npm run test:rust"
+		"test:all": "pnpm test && pnpm run test:rust"
 	},
   "devDependencies": {
     "@dfinity/principal": "^2.4.0",
