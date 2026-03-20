@@ -26,8 +26,7 @@ check_code:
 # Runs prettier, lint, and type checks on the frontend code
 [group('code_check')]
 frontend_check_code: install_frontend_deps
-    cd {{FRONTEND_DIR_NEW}} && pnpm lint
-    # Copy .env.dev for svelte-check type generation, run check, cleanup
-    cd {{FRONTEND_DIR_NEW}} && cp .env.dev .env && pnpm check || (rm -f .env && exit 1)
-    rm -f {{FRONTEND_DIR_NEW}}/.env
-    cd {{FRONTEND_DIR_NEW}} && pnpm knip
+    pnpm format:check
+    # recursively lint all packages in the monorepo. It fails if any of the checks fail
+    pnpm -r run lint
+    pnpm knip

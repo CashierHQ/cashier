@@ -1,0 +1,17 @@
+{
+  "workspaces": {
+    "src/cashier_frontend_new": {
+      "entry": ["src/main.ts", "src/**/*.svelte"],
+      "ignore": [
+        "src/lib/generated/**",
+        "src/lib/paraglide/**",
+        "src/lib/shadcn/**"
+      ]
+    },
+    "src/cashier_wallet": {
+      "entry": ["src/main.ts", "src/**/*.svelte"],
+      "ignore": []
+    }
+  },
+  "ignore": ["src/lib/cashier_shared/**"]
+}

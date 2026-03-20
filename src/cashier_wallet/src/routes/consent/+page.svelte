@@ -77,7 +77,7 @@
   function formatParams(p: unknown): string {
     // Strip consentId from display — it's an internal implementation detail
     if (typeof p === "object" && p !== null) {
-      const { consentId: _omit, ...display } = p as Record<string, unknown>;
+      const { consentId: _unused, ...display } = p as Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-unused-vars
       return JSON.stringify(display, null, 2);
     }
     return JSON.stringify(p, null, 2);

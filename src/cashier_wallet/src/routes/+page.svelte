@@ -159,7 +159,7 @@
         </p>
       {:else}
         <ul style="list-style: none; padding: 0; margin: 0;">
-          {#each requestLog as entry}
+          {#each requestLog as entry (entry.time + entry.method)}
             <li style="padding: 2px 0; font-size: 0.85em;">
               <span style="color: #888;">[{entry.time}]</span>
               <span style="color: #0066cc;">{entry.method}</span>
