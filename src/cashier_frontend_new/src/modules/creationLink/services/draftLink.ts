@@ -26,7 +26,12 @@ export class DraftLinkService {
       );
     }
     try {
-      draftLinkRepository.save([createResult.unwrap()], principalId.toText());
+      const draftLink = createResult.unwrap();
+      draftLinkRepository.create({
+        id: draftLink.id,
+        draftLink,
+        owner: principalId.toText(),
+      });
     } catch (error) {
       return Err(new Error("Failed to save draft link: " + error));
     }

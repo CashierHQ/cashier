@@ -18,10 +18,13 @@
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
@@ -40,7 +43,6 @@
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
-  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
@@ -80,6 +82,7 @@
   let lastClickWasOnButton = $state(false);
   let shouldShowCongratulations = $state(false);
   let detailsLandingTracked = $state(false);
+  let showFeeInfoDrawer = $state(false);
 
   // Track Link details page load (Withdraw funnel)
   $effect(() => {
@@ -141,8 +144,7 @@
 
   // Build assetAndFee from action (from backend) for CREATE_LINK state.
   // Same source as LinkTxCart - fees from backend action, not frontend forecast.
-  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
-  const assetAndFeeFromAction = $derived.by(() => {
+  const createLinkActionAssetAndFee = $derived.by(() => {
     if (
       !linkStore ||
       !linkStore.link ||
@@ -154,8 +156,6 @@
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-    const maxUse = Number(linkStore.link.link_use_action_max_count);
-
     // Primary: use action from backend (logged-in user)
     if (linkStore.action) {
       const walletPrincipal = authState.account?.owner;
@@ -169,7 +169,25 @@
       );
     }
 
-    // Fallback: action missing (anonymous) - use forecast from link.asset_info
+    return [];
+  });
+
+  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
+  const createLinkForecastAssetAndFee = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK ||
+      linkStore.action
+    ) {
+      return [];
+    }
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const maxUse = Number(linkStore.link.link_use_action_max_count);
+
     if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
       return [];
     }
@@ -195,11 +213,43 @@
 
   // Total fees in USD from backend action (CREATE_LINK state)
   const totalFeesUsd = $derived.by(() => {
-    return assetAndFeeFromAction.reduce(
+    const feesSource =
+      createLinkActionAssetAndFee.length > 0
+        ? createLinkActionAssetAndFee
+        : createLinkForecastAssetAndFee;
+
+    return feesSource.reduce(
       (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
   });
+
+  const createLinkFeesBreakdown = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK
+    ) {
+      return [];
+    }
+
+    if (createLinkActionAssetAndFee.length > 0) {
+      return feeService.buildBreakdown(
+        createLinkActionAssetAndFee,
+        walletStore.query.data ?? [],
+      );
+    }
+
+    return buildPreviewFeesBreakdown(
+      createLinkForecastAssetAndFee,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  function handleFeeBreakdownClick() {
+    if (createLinkFeesBreakdown.length === 0) return;
+    showFeeInfoDrawer = true;
+  }
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
@@ -506,7 +556,12 @@
 
       <!-- Block 6: Share Link or Fees Breakdown -->
       {#if linkStore.link.state === LinkState.CREATE_LINK}
-        <FeesBreakdownSection {totalFeesUsd} />
+        <FeesBreakdownSection
+          {totalFeesUsd}
+          onBreakdownClick={createLinkFeesBreakdown.length > 0
+            ? handleFeeBreakdownClick
+            : undefined}
+        />
       {:else}
         <ShareLinkSection {link} />
       {/if}
@@ -591,6 +646,11 @@
       {/if}
     </div>
   </div>
+
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    feesBreakdown={createLinkFeesBreakdown}
+  />
 {/if}
 
 {#if showTxCart && linkStore && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}

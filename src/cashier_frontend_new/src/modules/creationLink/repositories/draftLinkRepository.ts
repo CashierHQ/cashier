@@ -57,6 +57,29 @@ export class DraftLinkRepository {
   }
 
   /**
+   * Save a draft link to localStorage
+   * @param id local identifier for the draft link
+   * @param owner owner identifier for saving
+   * @param draftLink SharedLink object to save
+   */
+  create({
+    id,
+    owner,
+    draftLink,
+  }: {
+    id: string;
+    owner: string;
+    draftLink: SharedLink;
+  }) {
+    const links = this.load(owner);
+    const idx = links.findIndex((x) => String(x.id) === id);
+    if (idx >= 0) links[idx] = draftLink;
+    else links.push(draftLink);
+
+    this.save(links, owner);
+  }
+
+  /**
    * Update an existing temporary link in localStorage
    * @param id local identifier for the temp link
    * @param updateTempLink object containing state and/or createLinkData to update
