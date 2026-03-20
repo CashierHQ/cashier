@@ -1,16 +1,18 @@
 <script lang="ts">
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
-  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
@@ -98,6 +100,20 @@
     return "Unlock";
   });
 
+  const feesBreakdown = $derived.by(() => {
+    return buildPreviewFeesBreakdown(
+      forecastLinkCreationFees,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  let showFeeInfoDrawer = $state(false);
+
+  function handleFeeBreakdownClick() {
+    if (feesBreakdown.length === 0) return;
+    showFeeInfoDrawer = true;
+  }
+
   // Track failed image loads
   let failedImageLoads = $state<Set<string>>(new Set());
 
@@ -151,5 +167,12 @@
   {/if}
 
   <!-- Block 4: Fees Breakdown -->
-  <FeesBreakdownSection {totalFeesUsd} />
+  <FeesBreakdownSection
+    {totalFeesUsd}
+    onBreakdownClick={feesBreakdown.length > 0
+      ? handleFeeBreakdownClick
+      : undefined}
+  />
 </div>
+
+<FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} />
