@@ -92,6 +92,7 @@ export interface GetUserBridgeTransactionsInputArg {
   'status' : [] | [BridgeTransactionStatus],
   'limit' : [] | [number],
   'start' : [] | [number],
+  'bridge_type' : [] | [BridgeType],
 }
 export interface GetUserNftInput {
   'limit' : [] | [number],

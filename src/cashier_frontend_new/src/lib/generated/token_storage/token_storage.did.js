@@ -214,6 +214,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : IDL.Opt(BridgeTransactionStatus),
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
+    'bridge_type' : IDL.Opt(BridgeType),
   });
   const Result_10 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const GetUserNftInput = IDL.Record({
