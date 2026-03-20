@@ -3,11 +3,16 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
-  import { BridgeType } from "$modules/bitcoin/types/bridge_transaction";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
-  import { Copy, Info } from "lucide-svelte";
+  import {
+    ArrowLeftRight,
+    Coins,
+    Copy,
+    Hourglass,
+    LayoutList,
+  } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   const btcAddress = $derived.by(() => bridgeStore.btcAddress);
@@ -17,12 +22,7 @@
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
-  const importBridgeTxs = $derived.by(
-    () =>
-      bridgeStore.bridgeTxs?.filter(
-        (bridge) => bridge.bridge_type === BridgeType.Import,
-      ) ?? [],
-  );
+  const importBridgeTxs = $derived.by(() => bridgeStore.importBridgeTxs ?? []);
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -46,7 +46,7 @@
   }
 
   function handleLoadMore() {
-    bridgeStore.loadMore();
+    bridgeStore.loadMoreImports();
   }
 </script>
 
@@ -81,28 +81,38 @@
     >
       {locale.t("wallet.send.addressBitcoinExample")}
     </div>
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("bitcoin.receive.btcAddress.warning1")}
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-1.5">
+        <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+        <div
+          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {locale.t("bitcoin.receive.btcAddress.warning1")}
+        </div>
       </div>
-    </div>
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("bitcoin.receive.btcAddress.warning2")}
+      <div class="flex items-center gap-1.5">
+        <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+        <div
+          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {locale.t("bitcoin.receive.btcAddress.warning2")}
+        </div>
       </div>
-    </div>
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("bitcoin.receive.btcAddress.warning3")}
+      <div class="flex items-center gap-1.5">
+        <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+        <div
+          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {locale.t("bitcoin.receive.btcAddress.warning3")}
+        </div>
       </div>
-    </div>
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("bitcoin.receive.btcAddress.warning4")}
+      <div class="flex items-center gap-1.5">
+        <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+        <div
+          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+          {locale.t("bitcoin.receive.btcAddress.warning4")}
+        </div>
       </div>
     </div>
   </div>
@@ -113,7 +123,7 @@
   </div>
   <BridgeList
     bridgeTxs={importBridgeTxs}
-    hasMore={bridgeStore.hasMore}
+    hasMore={bridgeStore.hasMoreImports}
     emptyText={locale.t("wallet.receive.noBtcImportTxs")}
     onSelectBridge={handleSelectBridge}
     onLoadMore={handleLoadMore}
