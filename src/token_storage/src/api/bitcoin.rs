@@ -73,7 +73,13 @@ pub async fn user_get_bridge_transactions(
     let user = msg_caller();
     state
         .user_ckbtc
-        .get_bridge_transactions(user, input.start, input.limit, input.status)
+        .get_bridge_transactions(
+            user,
+            input.start,
+            input.limit,
+            input.status,
+            input.bridge_type,
+        )
         .await
 }
 

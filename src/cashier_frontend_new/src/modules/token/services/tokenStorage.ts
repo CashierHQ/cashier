@@ -9,6 +9,7 @@ import {
   BridgeTransactionMapper,
   BridgeTransactionStatus,
   type BridgeTransaction,
+  type BridgeTypeValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
 import {
@@ -311,6 +312,7 @@ class TokenStorageService {
     start: number,
     limit: number,
     status: BridgeTransactionStatus | null = null,
+    bridgeType: BridgeTypeValue | null = null,
   ): Promise<BridgeTransaction[]> {
     const actor = this.#getActor();
     if (!actor) {
@@ -323,6 +325,9 @@ class TokenStorageService {
         limit: [limit],
         status: status
           ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
+          : [],
+        bridge_type: bridgeType
+          ? [BridgeTransactionMapper.toBridgeTypeCanister(bridgeType)]
           : [],
       });
 

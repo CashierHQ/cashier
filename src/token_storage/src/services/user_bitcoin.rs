@@ -3,7 +3,10 @@
 
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::{bridge_address::BridgeAddress, bridge_transaction::BridgeTransactionStatus},
+    bitcoin::{
+        bridge_address::BridgeAddress,
+        bridge_transaction::{BridgeTransactionStatus, BridgeType},
+    },
     dto::bitcoin::{
         CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
     },
@@ -138,10 +141,11 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         start: Option<u32>,
         limit: Option<u32>,
         status: Option<BridgeTransactionStatus>,
+        bridge_type: Option<BridgeType>,
     ) -> Vec<UserBridgeTransactionDto> {
         let transactions = self
             .user_bridge_transaction_repository
-            .get_bridge_transactions(&user, start, limit, status);
+            .get_bridge_transactions(&user, start, limit, status, bridge_type);
         transactions
             .into_iter()
             .map(UserBridgeTransactionDto::from)
@@ -430,10 +434,10 @@ mod tests {
 
         // Act
         let transactions_page_1 = service
-            .get_bridge_transactions(user_id, Some(0), Some(2), None)
+            .get_bridge_transactions(user_id, Some(0), Some(2), None, None)
             .await;
         let transactions_page_2 = service
-            .get_bridge_transactions(user_id, Some(2), Some(2), None)
+            .get_bridge_transactions(user_id, Some(2), Some(2), None, None)
             .await;
 
         // Assert
@@ -443,5 +447,80 @@ mod tests {
         assert_eq!(transactions_page_2.len(), 2);
         assert_eq!(transactions_page_2[0].bridge_id, "bridge2");
         assert_eq!(transactions_page_2[1].bridge_id, "bridge1");
+    }
+
+    #[tokio::test]
+    async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let service = UserCkBtcService::new(&repo, mock_minter);
+        for i in 0..3 {
+            let import_input = CreateBridgeTransactionInputArg {
+                btc_txid: Some(format!("txid_import_{}", i)),
+                icp_address: random_principal_id(),
+                btc_address: format!("btc_import_{}", i),
+                bridge_type: BridgeType::Import,
+                asset_infos: vec![],
+                deposit_fee: None,
+                withdrawal_fee: None,
+                btc_fee: None,
+                created_at_ts: 0,
+            };
+            let mut import_tx = BridgeTransactionFactory::from_create_input(import_input).unwrap();
+            import_tx.bridge_id = format!("import{}", i);
+            repo.user_bridge_transaction()
+                .upsert_bridge_transaction(user_id, import_tx.bridge_id.clone(), import_tx)
+                .unwrap();
+
+            let export_input = CreateBridgeTransactionInputArg {
+                btc_txid: None,
+                icp_address: random_principal_id(),
+                btc_address: format!("btc_export_{}", i),
+                bridge_type: BridgeType::Export,
+                asset_infos: vec![BridgeAssetInfo {
+                    asset_type: BridgeAssetType::BTC,
+                    asset_id: "ckbtc".to_string(),
+                    amount: Nat::from(1000u64),
+                    decimals: 8,
+                }],
+                deposit_fee: None,
+                withdrawal_fee: Some(Nat::from(450u64)),
+                btc_fee: Some(Nat::from(1200u64)),
+                created_at_ts: 0,
+            };
+            let mut export_tx = BridgeTransactionFactory::from_create_input(export_input).unwrap();
+            export_tx.bridge_id = format!("export{}", i);
+            repo.user_bridge_transaction()
+                .upsert_bridge_transaction(user_id, export_tx.bridge_id.clone(), export_tx)
+                .unwrap();
+        }
+
+        // Act
+        let import_txs = service
+            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Import))
+            .await;
+
+        // Assert
+        assert_eq!(import_txs.len(), 3);
+        assert!(
+            import_txs
+                .iter()
+                .all(|tx| tx.bridge_type == BridgeType::Import)
+        );
+
+        // Act
+        let export_txs = service
+            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Export))
+            .await;
+
+        // Assert
+        assert_eq!(export_txs.len(), 3);
+        assert!(
+            export_txs
+                .iter()
+                .all(|tx| tx.bridge_type == BridgeType::Export)
+        );
     }
 }

@@ -224,6 +224,21 @@ export class BridgeTransactionMapper {
   }
 
   /**
+   * Map frontend BridgeTypeValue to token storage BridgeType canister format
+   * @param bridgeType
+   * @returns tokenStorage.BridgeType
+   */
+  public static toBridgeTypeCanister(
+    bridgeType: BridgeTypeValue,
+  ): tokenStorage.BridgeType {
+    if (bridgeType === BridgeType.Import) {
+      return { Import: null };
+    } else {
+      return { Export: null };
+    }
+  }
+
+  /**
    * Map token storage BridgeTransactionStatus to frontend BridgeTransactionStatusValue
    * @param status
    * @returns BridgeTransactionStatusValue

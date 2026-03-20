@@ -40,6 +40,7 @@ pub struct GetUserBridgeTransactionsInputArg {
     pub start: Option<u32>,
     pub limit: Option<u32>,
     pub status: Option<BridgeTransactionStatus>,
+    pub bridge_type: Option<BridgeType>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -45,6 +45,17 @@ class BridgeStore {
   #allBridges: BridgeTransactionWithUsdValue[] = [];
   #currentPage = 0;
   hasMore = $state<boolean>(true);
+
+  #importBridgeTxQuery;
+  #allImportBridges: BridgeTransactionWithUsdValue[] = [];
+  #importCurrentPage = 0;
+  hasMoreImports = $state<boolean>(true);
+
+  #exportBridgeTxQuery;
+  #allExportBridges: BridgeTransactionWithUsdValue[] = [];
+  #exportCurrentPage = 0;
+  hasMoreExports = $state<boolean>(true);
+
   processPendingTxsTask: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -79,6 +90,78 @@ class BridgeStore {
       },
       refetchInterval: 30_000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    this.#importBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Import,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreImports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#importCurrentPage === 0) {
+          this.#allImportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allImportBridges.slice(0, start);
+          this.#allImportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allImportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletBridgeStore_importBridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    this.#exportBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Export,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreExports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#exportCurrentPage === 0) {
+          this.#allExportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allExportBridges.slice(0, start);
+          this.#allExportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allExportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletBridgeStore_exportBridgeTxs"],
       storageType: "sessionStorage",
     });
 
@@ -124,6 +207,8 @@ class BridgeStore {
           });
 
           this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
         }
@@ -153,8 +238,16 @@ class BridgeStore {
     return this.#bridgeTxQuery.data;
   }
 
+  get importBridgeTxs() {
+    return this.#importBridgeTxQuery.data;
+  }
+
+  get exportBridgeTxs() {
+    return this.#exportBridgeTxQuery.data;
+  }
+
   /**
-   * Load more bridges for pagination
+   * Load more bridges for pagination (unified history)
    */
   public loadMore() {
     if (!this.hasMore) {
@@ -165,14 +258,48 @@ class BridgeStore {
   }
 
   /**
+   * Load more import bridges for pagination (Receive page)
+   */
+  public loadMoreImports() {
+    if (!this.hasMoreImports) {
+      return;
+    }
+    this.#importCurrentPage += 1;
+    this.#importBridgeTxQuery.refresh();
+  }
+
+  /**
+   * Load more export bridges for pagination (Send page)
+   */
+  public loadMoreExports() {
+    if (!this.hasMoreExports) {
+      return;
+    }
+    this.#exportCurrentPage += 1;
+    this.#exportBridgeTxQuery.refresh();
+  }
+
+  /**
    * Reset the bridge store to initial state
    */
   public reset() {
     this.#btcAddress.current = null;
+
     this.#currentPage = 0;
     this.#allBridges = [];
     this.hasMore = true;
     this.#bridgeTxQuery.reset();
+
+    this.#importCurrentPage = 0;
+    this.#allImportBridges = [];
+    this.hasMoreImports = true;
+    this.#importBridgeTxQuery.reset();
+
+    this.#exportCurrentPage = 0;
+    this.#allExportBridges = [];
+    this.hasMoreExports = true;
+    this.#exportBridgeTxQuery.reset();
+
     this.#mempoolTxQuery.reset();
 
     // Clear interval on reset
@@ -254,6 +381,7 @@ class BridgeStore {
         );
       } else {
         this.#bridgeTxQuery.refresh();
+        this.#importBridgeTxQuery.refresh();
       }
     });
   }
@@ -353,6 +481,7 @@ class BridgeStore {
       );
       if (updateResult.isOk()) {
         this.#bridgeTxQuery.refresh();
+        this.#importBridgeTxQuery.refresh();
       }
       return;
     }
@@ -457,6 +586,7 @@ class BridgeStore {
           );
         } else {
           this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
         }
       }
     }
@@ -505,6 +635,7 @@ class BridgeStore {
           );
         } else {
           this.#bridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
         }
       } else if (
         status.kind === RetrieveBtcStatusKind.AmountTooLow ||
@@ -518,6 +649,7 @@ class BridgeStore {
         );
         if (updateResult.isOk()) {
           this.#bridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
         }
       }
       return;
@@ -588,6 +720,7 @@ class BridgeStore {
 
     if (updateResult.isOk()) {
       this.#bridgeTxQuery.refresh();
+      this.#exportBridgeTxQuery.refresh();
     }
   }
 }
