@@ -258,19 +258,20 @@ jobs:
               return;
             }
 
-            // Get changed files
-            const { data: files } = await github.rest.pulls.listFiles({
+            // Get changed files (paginated to handle PRs with 100+ files)
+            const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number
+              pull_number: context.issue.number,
+              per_page: 100
             });
 
             const changedPaths = files.map(f => f.filename);
             console.log('Changed files:', changedPaths);
 
             // Define path patterns (must match deploy workflow paths)
-            const backendPaths = ['src/cashier_backend/', 'src/token_storage/', 'src/transaction_manager/'];
-            const frontendPaths = ['src/cashier_frontend_new/'];
+            const backendPaths = ['src/cashier_backend/', 'src/token_storage/', 'src/transaction_manager/', '.github/workflows/orbit-backend-deploy.yml'];
+            const frontendPaths = ['src/cashier_frontend_new/', '.github/workflows/orbit-frontend-deploy.yml'];
 
             const hasBackendChanges = changedPaths.some(p =>
               backendPaths.some(bp => p.startsWith(bp))
