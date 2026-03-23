@@ -12,6 +12,7 @@
     Copy,
     Hourglass,
     LayoutList,
+    RefreshCw,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -47,6 +48,19 @@
 
   function handleLoadMore() {
     bridgeStore.loadMoreImports();
+  }
+
+  const isRefreshing = $derived.by(() => bridgeStore.isRefreshing);
+
+  async function handleRefresh() {
+    const result = await bridgeStore.manualRefreshBalance();
+    if (result.isErr()) {
+      toast.error(locale.t("bitcoin.receive.refreshError"));
+    } else if (result.unwrap() === 0) {
+      toast.info(locale.t("bitcoin.receive.noIncomingBalance"));
+    } else {
+      toast.success(locale.t("bitcoin.receive.refreshSuccess"));
+    }
   }
 </script>
 
@@ -116,10 +130,18 @@
       </div>
     </div>
   </div>
-  <div class="mt-6">
+  <div class="mt-6 flex items-center justify-between">
     <Label class="text-base font-semibold">
       {locale.t("bitcoin.receive.history")}
     </Label>
+    <button
+      onclick={handleRefresh}
+      disabled={isRefreshing}
+      class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50"
+      title={locale.t("bitcoin.receive.refreshTooltip")}
+    >
+      <RefreshCw size={16} class={isRefreshing ? "animate-spin" : ""} />
+    </button>
   </div>
   <BridgeList
     bridgeTxs={importBridgeTxs}

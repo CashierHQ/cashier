@@ -57,6 +57,7 @@ class BridgeStore {
   hasMoreExports = $state<boolean>(true);
 
   processPendingTxsTask: NodeJS.Timeout | null = null;
+  isRefreshing = $state<boolean>(false);
 
   constructor() {
     this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
@@ -518,7 +519,7 @@ class BridgeStore {
         Number(currentTipHeight) - Number(btcTx.block_id) + 1 >=
         Number(ckBTCMinterInfo.min_confirmations)
       ) {
-        const update = await ckBTCMinterService.updateBalance();
+        const update = await ckBTCMinterService.updateBalanceWithMintedInfo();
         if (update.isErr()) {
           console.error(
             "Failed to update ckBTC balance during bridge processing:",
@@ -721,6 +722,94 @@ class BridgeStore {
     if (updateResult.isOk()) {
       this.#bridgeTxQuery.refresh();
       this.#exportBridgeTxQuery.refresh();
+    }
+  }
+  /**
+   * Manually trigger a ckBTC balance refresh.
+   * Calls update_balance on the ckBTC minter and creates a Completed import
+   * bridge transaction for each newly minted UTXO found.
+   * @returns Ok(count) where count is the number of minted UTXOs processed,
+   *          Ok(0) when no incoming balance was found, or Err on failure.
+   */
+  async manualRefreshBalance(): Promise<Result<number, string>> {
+    this.isRefreshing = true;
+    try {
+      const mintedResult =
+        await ckBTCMinterService.updateBalanceWithMintedInfo();
+      if (mintedResult.isErr()) {
+        return Err(mintedResult.unwrapErr());
+      }
+
+      const mintedInfos = mintedResult.unwrap();
+      if (mintedInfos.length === 0) {
+        return Ok(0);
+      }
+
+      const btcAddress = this.btcAddress;
+      if (!btcAddress) {
+        return Err("BTC address not available");
+      }
+
+      const depositFee = await ckBTCMinterService.getDepositFee();
+      const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
+      const tipHeightResult = await mempoolService.getTipHeight();
+      const currentTipHeight = tipHeightResult.isOk()
+        ? Number(tipHeightResult.unwrap())
+        : null;
+
+      for (const mintedInfo of mintedInfos) {
+        const createResult =
+          await tokenStorageService.createManualImportBridgeTransaction(
+            btcAddress,
+            mintedInfo.mintedAmount,
+            mintedInfo.blockIndex,
+            depositFee,
+            mintedInfo.btcTxid,
+          );
+        if (createResult.isErr()) {
+          console.error(
+            "Failed to create manual import bridge:",
+            createResult.unwrapErr(),
+          );
+          continue;
+        }
+
+        if (currentTipHeight !== null && ckBTCMinterInfo) {
+          const maxHeight = Math.min(
+            currentTipHeight,
+            mintedInfo.btcHeight + ckBTCMinterInfo.min_confirmations - 1,
+          );
+          const confirmingBlocks =
+            await mempoolService.getLatestBlocksFromHeight(
+              maxHeight,
+              mintedInfo.btcHeight,
+            );
+          if (confirmingBlocks.length > 0) {
+            const updateResult =
+              await tokenStorageService.updateBridgeTransaction(
+                createResult.unwrap().bridge_id,
+                null,
+                null,
+                BigInt(mintedInfo.btcHeight),
+                confirmingBlocks[0].block_timestamp,
+                confirmingBlocks,
+              );
+            if (updateResult.isErr()) {
+              console.error(
+                "Failed to set confirmations on manual import bridge:",
+                updateResult.unwrapErr(),
+              );
+            }
+          }
+        }
+      }
+
+      this.#bridgeTxQuery.refresh();
+      this.#importBridgeTxQuery.refresh();
+
+      return Ok(mintedInfos.length);
+    } finally {
+      this.isRefreshing = false;
     }
   }
 }

@@ -258,6 +258,67 @@ class TokenStorageService {
   }
 
   /**
+   * Create an import bridge transaction for the manual refresh flow.
+   * The bridge is identified by the ckBTC ledger block index from the minted
+   * UTXO and created as Completed, with the BTC txid populated from the UTXO.
+   * Block confirmations should be set via updateBridgeTransaction after creation.
+   * @param btcAddress The user's BTC deposit address
+   * @param mintedAmount The amount of ckBTC minted (in satoshis)
+   * @param ckbtcBlockId The ckBTC ledger block index of the mint transaction
+   * @param depositFee The deposit fee in satoshis
+   * @param btcTxid The hex-encoded Bitcoin transaction ID of the minted UTXO
+   * @returns BridgeTransaction or error message
+   */
+  public async createManualImportBridgeTransaction(
+    btcAddress: string,
+    mintedAmount: bigint,
+    ckbtcBlockId: bigint,
+    depositFee: bigint,
+    btcTxid: string,
+  ): Promise<Result<BridgeTransaction, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs: tokenStorage.CreateBridgeTransactionInputArg = {
+        btc_txid: [btcTxid],
+        icp_address: Principal.fromText(authState.account?.owner || ""),
+        btc_address: btcAddress,
+        asset_infos: [
+          {
+            asset_type: { BTC: null },
+            asset_id: "UTXO",
+            amount: mintedAmount,
+            decimals: 8,
+          },
+        ],
+        bridge_type: { Import: null },
+        deposit_fee: [depositFee],
+        withdrawal_fee: [],
+        btc_fee: [],
+        created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+        ckbtc_block_id: [ckbtcBlockId],
+        status: [{ Completed: null }],
+      };
+
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      if ("Ok" in res) {
+        const bridgeTransaction =
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res.Ok);
+        return Ok(bridgeTransaction);
+      }
+
+      return Err(
+        `Error creating manual import bridge transaction: ${JSON.stringify(res.Err)}`,
+      );
+    } catch (err) {
+      return Err(`Error creating manual import bridge transaction: ${err}`);
+    }
+  }
+
+  /**
    * Create an export bridge transaction to withdrawl BTC from ckBTC on ICP
    * @param receiverBtcAddress The BTC address of the receiver
    * @param amount The amount of BTC to withdraw

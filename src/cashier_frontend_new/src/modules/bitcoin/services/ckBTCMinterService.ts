@@ -2,6 +2,7 @@ import * as ckBTCMinter from "$lib/generated/ckbtc_minter/ckbtc_minter.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import {
+  type MintedUtxoInfo,
   type MinterInfo,
   type RetrieveBtcStatus,
   type RetrieveBtcStatusByAccountItem,
@@ -73,22 +74,54 @@ export class CkBTCMinterService {
   }
 
   /**
-   * Update the balance in the ckBTC Minter canister for the current user.
-   * @returns Result with the number of updated balances or an error message.
+   * Call update_balance and return info about all successfully minted UTXOs.
+   * Used by the manual refresh flow to detect confirmed incoming BTC.
+   * Returns an empty array (Ok([])) when no UTXOs were minted.
+   * @returns Result with array of MintedUtxoInfo or an error message.
    */
-  async updateBalance(): Promise<Result<number, string>> {
+  async updateBalanceWithMintedInfo(): Promise<
+    Result<MintedUtxoInfo[], string>
+  > {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
     }
     try {
       const result = await actor.update_balance({ owner: [], subaccount: [] });
-
-      if ("Ok" in result) {
-        return Ok(result.Ok.length);
-      } else {
+      if ("Err" in result) {
+        // NoNewUtxos is not a real error — treat it as an empty minted list
+        if ("NoNewUtxos" in result.Err) {
+          return Ok([]);
+        }
         return Err("Failed to update balance: " + JSON.stringify(result.Err));
       }
+      const mintedInfos: MintedUtxoInfo[] = result.Ok.filter(
+        (status) => "Minted" in status,
+      ).map((status) => {
+        const minted = (
+          status as {
+            Minted: {
+              block_index: bigint;
+              minted_amount: bigint;
+              utxo: {
+                height: number;
+                outpoint: { txid: Uint8Array | number[] };
+              };
+            };
+          }
+        ).Minted;
+        const txidBytes = Array.from(minted.utxo.outpoint.txid);
+        const btcTxid = txidBytes
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        return {
+          blockIndex: minted.block_index,
+          mintedAmount: minted.minted_amount,
+          btcTxid,
+          btcHeight: minted.utxo.height,
+        };
+      });
+      return Ok(mintedInfos);
     } catch (error) {
       return Err("Error updating balance: " + (error as Error).message);
     }

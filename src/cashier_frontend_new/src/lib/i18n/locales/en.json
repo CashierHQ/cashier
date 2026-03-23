@@ -477,7 +477,11 @@
         "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant."
-      }
+      },
+      "noIncomingBalance": "No incoming BTC balance found.",
+      "refreshSuccess": "Balance refreshed successfully.",
+      "refreshError": "Failed to refresh balance. Please try again.",
+      "refreshTooltip": "Refresh balance"
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",

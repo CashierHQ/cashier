@@ -431,6 +431,8 @@ export class BridgeTransactionMapper {
       withdrawal_fee: [withdrawalFee],
       btc_fee: [btcFee],
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+      ckbtc_block_id: [],
+      status: [],
     };
   }
 }
