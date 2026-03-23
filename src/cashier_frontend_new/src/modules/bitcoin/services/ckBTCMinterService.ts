@@ -110,7 +110,10 @@ export class CkBTCMinterService {
             };
           }
         ).Minted;
-        const txidBytes = Array.from(minted.utxo.outpoint.txid);
+        // ckBTC minter returns outpoint.txid in little-endian (internal Bitcoin)
+        // byte order; reverse to get the display txid used by block explorers
+        // and the mempool API.
+        const txidBytes = Array.from(minted.utxo.outpoint.txid).reverse();
         const btcTxid = txidBytes
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");

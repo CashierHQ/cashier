@@ -169,13 +169,13 @@ describe("CkBTCMinterService", () => {
       expect(mintedInfos[0]).toEqual({
         blockIndex: 123n,
         mintedAmount: 50000n,
-        btcTxid: "deadbeef",
+        btcTxid: "efbeadde", // [0xde, 0xad, 0xbe, 0xef] reversed to display order
         btcHeight: 840000,
       });
       expect(mintedInfos[1]).toEqual({
         blockIndex: 456n,
         mintedAmount: 30000n,
-        btcTxid: "cafe",
+        btcTxid: "feca", // [0xca, 0xfe] reversed to display order
         btcHeight: 840001,
       });
     });
