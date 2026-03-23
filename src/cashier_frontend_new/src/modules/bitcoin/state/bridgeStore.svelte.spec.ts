@@ -703,6 +703,114 @@ describe("BridgeStore", () => {
       );
     });
 
+    it("it_should_skip_when_existing_bridge_is_already_completed", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      const mintedInfo = fixture_of_minted_utxo_info({ btcTxid: "abc123" });
+      mockUpdateBalanceWithMintedInfo.mockResolvedValue(Ok([mintedInfo]));
+      mockGetDepositFee.mockResolvedValue(1_000n);
+      mockGetMinterInfo.mockResolvedValue(fixture_of_minter_info());
+      mockGetTipHeight.mockResolvedValue(Err("unavailable"));
+      // Existing bridge with same btcTxid, already Completed
+      mockQueryInstances[0].data = [
+        {
+          ...fixture_of_import_bridge({
+            btc_txid: "abc123",
+            status: BridgeTransactionStatus.Completed,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+
+      // Act
+      const result = await bridgeStore.manualRefreshBalance();
+
+      // Assert
+      expect(result.isOk()).toBe(true);
+      expect(mockCreateManualImportBridgeTransaction).not.toHaveBeenCalled();
+      expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
+    });
+
+    it("it_should_update_existing_pending_bridge_to_completed_with_confirmations", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      const mintedInfo = fixture_of_minted_utxo_info({
+        btcTxid: "abc123",
+        btcHeight: 840_000,
+      });
+      mockUpdateBalanceWithMintedInfo.mockResolvedValue(Ok([mintedInfo]));
+      mockGetDepositFee.mockResolvedValue(1_000n);
+      mockGetMinterInfo.mockResolvedValue(
+        fixture_of_minter_info({ min_confirmations: 6 }),
+      );
+      mockGetTipHeight.mockResolvedValue(Ok(840_005n));
+      const confirmingBlocks = fixture_of_confirming_blocks(840_000, 6);
+      mockGetLatestBlocksFromHeight.mockResolvedValue(confirmingBlocks);
+      const existingBridge = fixture_of_import_bridge({
+        bridge_id: "import_abc123",
+        btc_txid: "abc123",
+        status: BridgeTransactionStatus.Pending,
+        block_timestamp: null,
+      });
+      mockQueryInstances[0].data = [{ ...existingBridge, total_amount_usd: 0 }];
+      mockUpdateBridgeTransaction.mockResolvedValue(
+        Ok({ ...existingBridge, status: BridgeTransactionStatus.Completed }),
+      );
+
+      // Act
+      const result = await bridgeStore.manualRefreshBalance();
+
+      // Assert
+      expect(result.isOk()).toBe(true);
+      expect(mockCreateManualImportBridgeTransaction).not.toHaveBeenCalled();
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "import_abc123",
+        BridgeTransactionStatus.Completed,
+        null,
+        840_000n,
+        confirmingBlocks[0].block_timestamp,
+        confirmingBlocks,
+      );
+    });
+
+    it("it_should_update_existing_pending_bridge_to_completed_without_confirmations_when_mempool_unavailable", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      const mintedInfo = fixture_of_minted_utxo_info({
+        btcTxid: "abc123",
+        btcHeight: 840_000,
+      });
+      mockUpdateBalanceWithMintedInfo.mockResolvedValue(Ok([mintedInfo]));
+      mockGetDepositFee.mockResolvedValue(1_000n);
+      mockGetMinterInfo.mockResolvedValue(fixture_of_minter_info());
+      mockGetTipHeight.mockResolvedValue(Err("unavailable")); // no tip → skip confirmations
+      const existingBridge = fixture_of_import_bridge({
+        bridge_id: "import_abc123",
+        btc_txid: "abc123",
+        status: BridgeTransactionStatus.Pending,
+        block_timestamp: 1_704_000_000n,
+      });
+      mockQueryInstances[0].data = [{ ...existingBridge, total_amount_usd: 0 }];
+      mockUpdateBridgeTransaction.mockResolvedValue(
+        Ok({ ...existingBridge, status: BridgeTransactionStatus.Completed }),
+      );
+
+      // Act
+      const result = await bridgeStore.manualRefreshBalance();
+
+      // Assert
+      expect(result.isOk()).toBe(true);
+      expect(mockCreateManualImportBridgeTransaction).not.toHaveBeenCalled();
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "import_abc123",
+        BridgeTransactionStatus.Completed,
+        null,
+        840_000n,
+        1_704_000_000n, // falls back to existingBridge.block_timestamp
+        [],
+      );
+    });
+
     it("it_should_set_block_confirmations_on_created_bridges", async () => {
       // Arrange
       mockPersistedValues["btcAddress"] = "tb1qreceiver";

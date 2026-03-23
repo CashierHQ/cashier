@@ -758,6 +758,51 @@ class BridgeStore {
         : null;
 
       for (const mintedInfo of mintedInfos) {
+        // Fetch confirming blocks (needed for both create and update paths)
+        let confirmingBlocks: BitcoinBlock[] = [];
+        if (currentTipHeight !== null && ckBTCMinterInfo) {
+          const maxHeight = Math.min(
+            currentTipHeight,
+            mintedInfo.btcHeight + ckBTCMinterInfo.min_confirmations - 1,
+          );
+          confirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
+            maxHeight,
+            mintedInfo.btcHeight,
+          );
+        }
+
+        // Check if a bridge for this BTC txid already exists (created by the
+        // automatic mempool polling flow while the user was away)
+        const existingBridge = (this.bridgeTxs ?? []).find(
+          (tx) => tx.btc_txid === mintedInfo.btcTxid,
+        );
+
+        if (existingBridge) {
+          if (existingBridge.status === BridgeTransactionStatus.Completed) {
+            continue;
+          }
+          // Update existing Pending bridge to Completed with confirmation blocks
+          const updateResult =
+            await tokenStorageService.updateBridgeTransaction(
+              existingBridge.bridge_id,
+              BridgeTransactionStatus.Completed,
+              null,
+              BigInt(mintedInfo.btcHeight),
+              confirmingBlocks.length > 0
+                ? confirmingBlocks[0].block_timestamp
+                : (existingBridge.block_timestamp ?? 0n),
+              confirmingBlocks,
+            );
+          if (updateResult.isErr()) {
+            console.error(
+              "Failed to update existing bridge to Completed:",
+              updateResult.unwrapErr(),
+            );
+          }
+          continue;
+        }
+
+        // No existing bridge — create a new one
         const createResult =
           await tokenStorageService.createManualImportBridgeTransaction(
             btcAddress,
@@ -774,32 +819,21 @@ class BridgeStore {
           continue;
         }
 
-        if (currentTipHeight !== null && ckBTCMinterInfo) {
-          const maxHeight = Math.min(
-            currentTipHeight,
-            mintedInfo.btcHeight + ckBTCMinterInfo.min_confirmations - 1,
-          );
-          const confirmingBlocks =
-            await mempoolService.getLatestBlocksFromHeight(
-              maxHeight,
-              mintedInfo.btcHeight,
+        if (confirmingBlocks.length > 0) {
+          const updateResult =
+            await tokenStorageService.updateBridgeTransaction(
+              createResult.unwrap().bridge_id,
+              null,
+              null,
+              BigInt(mintedInfo.btcHeight),
+              confirmingBlocks[0].block_timestamp,
+              confirmingBlocks,
             );
-          if (confirmingBlocks.length > 0) {
-            const updateResult =
-              await tokenStorageService.updateBridgeTransaction(
-                createResult.unwrap().bridge_id,
-                null,
-                null,
-                BigInt(mintedInfo.btcHeight),
-                confirmingBlocks[0].block_timestamp,
-                confirmingBlocks,
-              );
-            if (updateResult.isErr()) {
-              console.error(
-                "Failed to set confirmations on manual import bridge:",
-                updateResult.unwrapErr(),
-              );
-            }
+          if (updateResult.isErr()) {
+            console.error(
+              "Failed to set confirmations on manual import bridge:",
+              updateResult.unwrapErr(),
+            );
           }
         }
       }
