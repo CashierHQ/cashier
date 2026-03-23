@@ -18,6 +18,12 @@ pub struct CreateBridgeTransactionInputArg {
     pub withdrawal_fee: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
+    /// ckBTC ledger block index of the mint transaction.
+    /// Used by the manual refresh flow when no btc_txid is available.
+    pub ckbtc_block_id: Option<u64>,
+    /// Override the initial bridge status. If None, the default status for the
+    /// bridge type is used (Import → Pending, Export → Created).
+    pub status: Option<BridgeTransactionStatus>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
