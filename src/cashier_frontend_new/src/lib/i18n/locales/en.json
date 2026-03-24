@@ -249,7 +249,8 @@
           "failedToCreateWithdrawAction": "Failed to create withdraw action.",
           "withdrawActionCreated": "Withdraw action created successfully.",
           "transactionSuccess": "Transaction success!",
-          "transactionFailed": "Transaction failed!"
+          "transactionFailed": "Transaction failed!",
+          "balanceSyncSuccess": "Balance synced successfully."
         },
         "endLinkConfirm": {
           "title": "End link",

@@ -532,6 +532,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_14],
         [],
       ),
+    'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),
   });
 };
 export const init = ({ IDL }) => {

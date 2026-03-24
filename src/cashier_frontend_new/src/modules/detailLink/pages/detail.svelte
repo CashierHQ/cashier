@@ -76,6 +76,7 @@
   let failedImageLoads = $state<Set<string>>(new Set());
   let isEndingLink = $state(false);
   let isCreatingWithdraw = $state(false);
+  let isSyncingBalance = $state(false);
   let showFirstEndLinkConfirm = $state(false);
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
@@ -394,6 +395,27 @@
     }
   }
 
+  async function handleSyncAssetBalance() {
+    if (
+      !linkStore?.syncAssetBalanceCache ||
+      (linkStore.link?.state !== LinkState.ACTIVE &&
+        linkStore.link?.state !== LinkState.INACTIVE)
+    )
+      return;
+    isSyncingBalance = true;
+    try {
+      await linkStore.syncAssetBalanceCache();
+      await linkStore.refreshAsync();
+      toast.success(
+        locale.t("links.linkForm.detail.messages.balanceSyncSuccess"),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      isSyncingBalance = false;
+    }
+  }
+
   function onCloseDrawer() {
     showTxCart = false;
   }
@@ -552,6 +574,8 @@
         {failedImageLoads}
         onImageError={handleImageError}
         useCount={Number(linkStore.link.link_use_action_counter)}
+        onRefresh={handleSyncAssetBalance}
+        isRefreshing={isSyncingBalance}
       />
 
       <!-- Block 6: Share Link or Fees Breakdown -->
