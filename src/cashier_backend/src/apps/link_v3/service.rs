@@ -10,6 +10,7 @@ use cashier_backend_types::{
         action::{CreateActionResponseV3, ProcessActionResponseV3},
         link::{
             CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     repository::{
@@ -21,6 +22,7 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
+use cashier_common::utils::get_link_account;
 use cashier_shared::{
     AddressType as SharedAddressType,
     types::{Action as SharedAction, ActionType as SharedActionType},
@@ -33,8 +35,8 @@ use transaction_manager::{
 use crate::{
     apps::{
         action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
-        token_balance::traits::TokenBalanceFetcher, token_fee::traits::TokenFeeCache,
-        token_standard::traits::TokenStandardCache,
+        link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
+        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
     },
     repositories::{self, Repositories},
 };
@@ -388,6 +390,56 @@ impl<R: Repositories> LinkV3Service<R> {
         })
     }
 
+    /// Syncs the asset balance cache for a link by querying actual token balances from the ledger.
+    /// # Arguments
+    /// * `caller` - The principal of the user triggering the sync (must be the link creator)
+    /// * `canister_id` - The canister ID used to derive the link subaccount
+    /// * `link_id` - The unique identifier of the link
+    /// * `token_balance_service` - Service used to fetch token balances
+    /// # Returns
+    /// * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
+    /// * `Err(CanisterError)` - If link not found, access denied, or balance fetch fails
+    pub async fn sync_asset_balance_cache<B>(
+        &mut self,
+        caller: Principal,
+        canister_id: Principal,
+        link_id: &str,
+        token_balance_service: B,
+    ) -> Result<SyncAssetBalanceCacheResponseV3, CanisterError>
+    where
+        B: TokenBalanceFetcher,
+    {
+        let mut link = self
+            .link_v3_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can sync asset balance cache".to_string(),
+            ));
+        }
+
+        let link_account = get_link_account(&link.id, canister_id)?;
+        let asset_principals = link_v3_asset_principals(&link);
+
+        let balance_map = token_balance_service
+            .get_batch_token_balances(&link_account.into(), &asset_principals)
+            .await?;
+
+        for asset_info in &mut link.asset_info {
+            if let Some(balance) = balance_map.get(&asset_info.asset.address) {
+                asset_info.available_amount = Some(balance.clone());
+            }
+        }
+
+        self.link_v3_repository.update(link.clone());
+
+        Ok(SyncAssetBalanceCacheResponseV3 {
+            link: link.to_shared(),
+        })
+    }
+
     /// Disables a link by its ID.
     /// # Arguments
     /// * `caller` - The principal of the user disabling the link
@@ -452,7 +504,10 @@ mod tests {
         link::v1::LinkType,
         link::v3::{LinkState, LinkV3},
     };
-    use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, test_utils::random_principal_id};
+    use cashier_common::{
+        constant::ICP_CANISTER_PRINCIPAL,
+        test_utils::{random_id_string, random_principal_id},
+    };
     use cashier_shared::types::{
         Action as SharedAction, ActionState as SharedActionState, ActionType as SharedActionType,
         AddressType as SharedAddressType, Asset as SharedAsset, Intent as SharedIntent,
@@ -1039,5 +1094,111 @@ mod tests {
             response.link.link_state,
             cashier_shared::types::LinkState::Inactive
         );
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_sync_asset_balance_cache_due_to_link_not_found() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let caller = random_principal_id();
+        let canister_id = random_principal_id();
+        let token_balance_service = MockTokenBalanceService::new();
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(
+                caller,
+                canister_id,
+                "non-existent-link",
+                token_balance_service,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_sync_asset_balance_cache_due_to_unauthorized() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let non_creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Active);
+        service.link_v3_repository.create(link);
+        let token_balance_service = MockTokenBalanceService::new();
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(non_creator, canister_id, "link-1", token_balance_service)
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_sync_asset_balance_cache_due_to_token_balance_fetch_failure() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = ICP_CANISTER_PRINCIPAL;
+        let token_principal = random_principal_id();
+        let link_id = random_id_string();
+        let link = LinkV3 {
+            asset_info: vec![fixture_of_asset_info_v3(
+                token_principal,
+                Nat::from(1_000u64),
+            )],
+            ..fixture_of_link_v3(&link_id, creator, LinkState::Active)
+        };
+        service.link_v3_repository.create(link);
+        // MockTokenBalanceService with no balances set — will return error for any token
+        let token_balance_service = MockTokenBalanceService::new();
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(creator, canister_id, &link_id, token_balance_service)
+            .await;
+
+        // Assert
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn it_should_sync_asset_balance_cache() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = ICP_CANISTER_PRINCIPAL;
+        let token_principal = random_principal_id();
+        let link_id = random_id_string();
+        let link = LinkV3 {
+            asset_info: vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(500u64)),
+                ..fixture_of_asset_info_v3(token_principal, Nat::from(1_000u64))
+            }],
+            ..fixture_of_link_v3(&link_id, creator, LinkState::Active)
+        };
+        service.link_v3_repository.create(link);
+        let actual_balance = Nat::from(850u64);
+        let mut token_balance_service = MockTokenBalanceService::new();
+        token_balance_service.set_balance(token_principal, actual_balance.clone());
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(creator, canister_id, &link_id, token_balance_service)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        let updated_asset = response.link.asset_info.first().unwrap();
+        assert_eq!(updated_asset.available_amount, Some(actual_balance));
     }
 }
