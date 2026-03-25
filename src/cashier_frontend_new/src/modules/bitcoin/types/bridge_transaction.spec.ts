@@ -678,4 +678,26 @@ describe("BridgeTransactionMapper", () => {
       expect(result.created_at_ts).toBeTypeOf("bigint");
     });
   });
+
+  describe("toBridgeTypeCanister", () => {
+    it("it_should_map_bridge_type_import_to_canister_format", () => {
+      // Act
+      const result = BridgeTransactionMapper.toBridgeTypeCanister(
+        BridgeType.Import,
+      );
+
+      // Assert
+      expect(result).toEqual({ Import: null });
+    });
+
+    it("it_should_map_bridge_type_export_to_canister_format", () => {
+      // Act
+      const result = BridgeTransactionMapper.toBridgeTypeCanister(
+        BridgeType.Export,
+      );
+
+      // Assert
+      expect(result).toEqual({ Export: null });
+    });
+  });
 });

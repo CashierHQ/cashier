@@ -471,13 +471,17 @@
         "warning1": "Receive BTC from Coinbase, Xverse, Ledger, etc.",
         "warning2": "BTC is auto converted to ckBTC on arrival.",
         "warning3": "0.000001 BTC import fee.",
-        "warning4": "Transfer time ~ 1 hour. Track progress below."
+        "warning4": "Transfer time ~1 hour. Track progress below."
       },
       "icpAddress": {
         "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant."
-      }
+      },
+      "noIncomingBalance": "No incoming BTC balance found.",
+      "refreshSuccess": "Balance refreshed successfully.",
+      "refreshError": "Failed to refresh balance. Please try again.",
+      "refreshTooltip": "Refresh balance"
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",
@@ -488,7 +492,7 @@
       "failed": "Failed",
       "icpAddress": {
         "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
-        "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP.",
+        "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant."
       },
       "btcAddress": {
@@ -496,7 +500,7 @@
         "warning2": "Minimum 0.00005 BTC.",
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
-        "warning5": "Transfer time ~ 1 hour. Track the progress below."
+        "warning5": "Transfer time ~1 hour. Track the progress below."
       }
     },
     "txCart": {
