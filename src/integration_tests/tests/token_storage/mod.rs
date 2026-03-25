@@ -4,6 +4,7 @@ use crate::utils::with_pocket_ic_context;
 
 pub mod admin;
 pub mod bitcoin;
+pub mod init_and_upgrade;
 pub mod inspect_message;
 pub mod nft;
 pub mod token;
