@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { initRpcHandler } from '$lib/rpc-handler'
-  import { initIcrc29Handler, setWalletReady } from '$lib/icrc29-handler'
+  import { initOisySigner, disconnectSigner } from '$lib/oisy-signer-init'
   import { login, logout, isAuthenticated, getIdentity, initAuthClient } from '$lib/identity-manager'
 
   let authenticated = false
@@ -33,9 +33,11 @@
         ].slice(0, 50)
       })
 
-      // Start the ICRC-29/25/27/49 listener (used by cashier_frontend_new via PNP)
-      setWalletReady()
-      initIcrc29Handler()
+      // Start the OISY Signer for ICRC-29/25/27/49 (used by cashier_frontend_new via PNP).
+      // Only initialise if the user is already authenticated; re-initialised after login.
+      if (authenticated) {
+        await initOisySigner()
+      }
     }
 
     // Reply to wallet_check_auth polls from the DApp adapter.
@@ -79,11 +81,15 @@
       if (window.opener) {
         window.opener.postMessage({ type: 'wallet_auth_complete', principal }, '*')
         window.close()
+      } else if (!isLoginPopup) {
+        // Running as iframe — (re-)initialise the OISY Signer with the new identity
+        await initOisySigner()
       }
     }
   }
 
   async function handleLogout() {
+    disconnectSigner()
     await logout()
     authenticated = false
     principal = ''

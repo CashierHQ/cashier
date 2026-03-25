@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cashier-wallet/wallet-sdk": "workspace:*",
@@ -14,14 +16,19 @@
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@types/node": "^25.4.0",
+    "jsdom": "^27.0.0",
     "svelte": "^4.2.7",
-    "vite": "^5.0.3"
+    "vite": "^5.0.3",
+    "vitest": "^3.2.0"
   },
   "dependencies": {
     "@dfinity/agent": "^2.4.1",
     "@dfinity/auth-client": "^2.4.1",
     "@dfinity/candid": "^2.4.1",
     "@dfinity/identity": "^2.4.1",
-    "@dfinity/principal": "^2.4.1"
+    "@dfinity/oisy-wallet-signer": "^0.0.2",
+    "@dfinity/principal": "^2.4.1",
+    "marked": "^15.0.0",
+    "zod": "^3.23.8"
   }
 }

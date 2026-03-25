@@ -127,12 +127,21 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     })
     console.log('[cashier-sdk-adapter] ICRC-29 channel established')
 
-    // Phase 3 — request permissions
+    // Phase 3 — request permissions (shows ICRC-25 permission prompt in wallet)
     console.log('[cashier-sdk-adapter] Requesting permissions (icrc27_accounts, icrc49_call_canister)...')
-    await this.signer.requestPermissions([
-      { method: 'icrc27_accounts' },
-      { method: 'icrc49_call_canister' },
-    ])
+    try {
+      await this.signer.requestPermissions([
+        { method: 'icrc27_accounts' },
+        { method: 'icrc49_call_canister' },
+      ])
+    } catch (e: unknown) {
+      // ICRC-25 error code 3001 (ACTION_ABORTED) means user denied permissions
+      const code = (e as { code?: number })?.code
+      if (code === 3001 || String(e).toLowerCase().includes('abort') || String(e).toLowerCase().includes('denied')) {
+        throw new Error('User denied wallet permissions')
+      }
+      throw e
+    }
     console.log('[cashier-sdk-adapter] Permissions granted')
 
     // Phase 4 — verify accounts

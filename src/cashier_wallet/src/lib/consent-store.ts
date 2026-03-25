@@ -32,44 +32,49 @@ export const pendingConsents = new Map<string, PendingConsent>()
 /** Auto-expire pending consents after this duration to prevent map leaks. */
 const CONSENT_TTL_MS = 5 * 60 * 1_000
 
-/** BroadcastChannel shared between the hidden iframe and the consent popup */
-export const consentChannel = new BroadcastChannel('wallet-consent')
+let _consentChannel: BroadcastChannel | null = null
 
-consentChannel.onmessage = (event: MessageEvent) => {
-  const { type, consentId } = (event.data ?? {}) as { type?: string; consentId?: string }
-  if (!type || !consentId) return
+function getConsentChannel(): BroadcastChannel {
+  if (!_consentChannel) {
+    _consentChannel = new BroadcastChannel('wallet-consent')
+    _consentChannel.onmessage = (event: MessageEvent) => {
+      const { type, consentId } = (event.data ?? {}) as { type?: string; consentId?: string }
+      if (!type || !consentId) return
 
-  const consent = pendingConsents.get(consentId)
+      const consent = pendingConsents.get(consentId)
 
-  switch (type) {
-    case 'consent_get': {
-      // Popup is asking for the operation details so it can render the UI
-      if (consent) {
-        consentChannel.postMessage({
-          type: 'consent_data',
-          consentId,
-          method: consent.method,
-          params: consent.params,
-          dappOrigin: consent.dappOrigin
-        })
+      switch (type) {
+        case 'consent_get': {
+          // Popup is asking for the operation details so it can render the UI
+          if (consent) {
+            _consentChannel!.postMessage({
+              type: 'consent_data',
+              consentId,
+              method: consent.method,
+              params: consent.params,
+              dappOrigin: consent.dappOrigin
+            })
+          }
+          break
+        }
+        case 'consent_approved': {
+          if (consent) {
+            consent._approve()
+            // Do not delete here — rpc-handler needs the entry when Phase 3 RPC arrives
+          }
+          break
+        }
+        case 'consent_rejected': {
+          if (consent) {
+            consent._reject('User rejected the request')
+            // Do not delete here — rpc-handler cleans up after the awaited promise rejects
+          }
+          break
+        }
       }
-      break
-    }
-    case 'consent_approved': {
-      if (consent) {
-        consent._approve()
-        // Do not delete here — rpc-handler needs the entry when Phase 3 RPC arrives
-      }
-      break
-    }
-    case 'consent_rejected': {
-      if (consent) {
-        consent._reject('User rejected the request')
-        // Do not delete here — rpc-handler cleans up after the awaited promise rejects
-      }
-      break
     }
   }
+  return _consentChannel
 }
 
 /**
@@ -91,6 +96,7 @@ export function createPendingConsent(
     _reject = (reason) => reject(new Error(reason))
   })
 
+  getConsentChannel() // ensure channel is listening before popup opens
   pendingConsents.set(consentId, { method, params, dappOrigin, approvalPromise, _approve, _reject })
 
   // Auto-expire after TTL to prevent leaks when the popup is blocked or the
