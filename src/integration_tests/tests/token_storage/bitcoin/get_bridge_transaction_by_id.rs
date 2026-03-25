@@ -24,6 +24,8 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         withdrawal_fee: None,
         btc_fee: None,
         created_at_ts: 0,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -43,6 +45,8 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         withdrawal_fee: Some(450u64.into()),
         btc_fee: Some(1200u64.into()),
         created_at_ts: 100,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 

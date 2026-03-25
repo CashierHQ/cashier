@@ -45,7 +45,19 @@ class BridgeStore {
   #allBridges: BridgeTransactionWithUsdValue[] = [];
   #currentPage = 0;
   hasMore = $state<boolean>(true);
+
+  #importBridgeTxQuery;
+  #allImportBridges: BridgeTransactionWithUsdValue[] = [];
+  #importCurrentPage = 0;
+  hasMoreImports = $state<boolean>(true);
+
+  #exportBridgeTxQuery;
+  #allExportBridges: BridgeTransactionWithUsdValue[] = [];
+  #exportCurrentPage = 0;
+  hasMoreExports = $state<boolean>(true);
+
   processPendingTxsTask: NodeJS.Timeout | null = null;
+  isRefreshing = $state<boolean>(false);
 
   constructor() {
     this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
@@ -79,6 +91,78 @@ class BridgeStore {
       },
       refetchInterval: 30_000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    this.#importBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Import,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreImports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#importCurrentPage === 0) {
+          this.#allImportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allImportBridges.slice(0, start);
+          this.#allImportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allImportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletBridgeStore_importBridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    this.#exportBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Export,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreExports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#exportCurrentPage === 0) {
+          this.#allExportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allExportBridges.slice(0, start);
+          this.#allExportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allExportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletBridgeStore_exportBridgeTxs"],
       storageType: "sessionStorage",
     });
 
@@ -124,6 +208,8 @@ class BridgeStore {
           });
 
           this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
         }
@@ -153,8 +239,16 @@ class BridgeStore {
     return this.#bridgeTxQuery.data;
   }
 
+  get importBridgeTxs() {
+    return this.#importBridgeTxQuery.data;
+  }
+
+  get exportBridgeTxs() {
+    return this.#exportBridgeTxQuery.data;
+  }
+
   /**
-   * Load more bridges for pagination
+   * Load more bridges for pagination (unified history)
    */
   public loadMore() {
     if (!this.hasMore) {
@@ -165,14 +259,48 @@ class BridgeStore {
   }
 
   /**
+   * Load more import bridges for pagination (Receive page)
+   */
+  public loadMoreImports() {
+    if (!this.hasMoreImports) {
+      return;
+    }
+    this.#importCurrentPage += 1;
+    this.#importBridgeTxQuery.refresh();
+  }
+
+  /**
+   * Load more export bridges for pagination (Send page)
+   */
+  public loadMoreExports() {
+    if (!this.hasMoreExports) {
+      return;
+    }
+    this.#exportCurrentPage += 1;
+    this.#exportBridgeTxQuery.refresh();
+  }
+
+  /**
    * Reset the bridge store to initial state
    */
   public reset() {
     this.#btcAddress.current = null;
+
     this.#currentPage = 0;
     this.#allBridges = [];
     this.hasMore = true;
     this.#bridgeTxQuery.reset();
+
+    this.#importCurrentPage = 0;
+    this.#allImportBridges = [];
+    this.hasMoreImports = true;
+    this.#importBridgeTxQuery.reset();
+
+    this.#exportCurrentPage = 0;
+    this.#allExportBridges = [];
+    this.hasMoreExports = true;
+    this.#exportBridgeTxQuery.reset();
+
     this.#mempoolTxQuery.reset();
 
     // Clear interval on reset
@@ -254,6 +382,7 @@ class BridgeStore {
         );
       } else {
         this.#bridgeTxQuery.refresh();
+        this.#importBridgeTxQuery.refresh();
       }
     });
   }
@@ -353,6 +482,7 @@ class BridgeStore {
       );
       if (updateResult.isOk()) {
         this.#bridgeTxQuery.refresh();
+        this.#importBridgeTxQuery.refresh();
       }
       return;
     }
@@ -389,7 +519,7 @@ class BridgeStore {
         Number(currentTipHeight) - Number(btcTx.block_id) + 1 >=
         Number(ckBTCMinterInfo.min_confirmations)
       ) {
-        const update = await ckBTCMinterService.updateBalance();
+        const update = await ckBTCMinterService.updateBalanceWithMintedInfo();
         if (update.isErr()) {
           console.error(
             "Failed to update ckBTC balance during bridge processing:",
@@ -457,6 +587,7 @@ class BridgeStore {
           );
         } else {
           this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
         }
       }
     }
@@ -505,6 +636,7 @@ class BridgeStore {
           );
         } else {
           this.#bridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
         }
       } else if (
         status.kind === RetrieveBtcStatusKind.AmountTooLow ||
@@ -518,6 +650,7 @@ class BridgeStore {
         );
         if (updateResult.isOk()) {
           this.#bridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
         }
       }
       return;
@@ -588,6 +721,129 @@ class BridgeStore {
 
     if (updateResult.isOk()) {
       this.#bridgeTxQuery.refresh();
+      this.#exportBridgeTxQuery.refresh();
+    }
+  }
+  /**
+   * Manually trigger a ckBTC balance refresh.
+   * Calls update_balance on the ckBTC minter and creates a Completed import
+   * bridge transaction for each newly minted UTXO found.
+   * @returns Ok(count) where count is the number of minted UTXOs processed,
+   *          Ok(0) when no incoming balance was found, or Err on failure.
+   */
+  async manualRefreshBalance(): Promise<Result<number, string>> {
+    this.isRefreshing = true;
+    try {
+      const mintedResult =
+        await ckBTCMinterService.updateBalanceWithMintedInfo();
+      if (mintedResult.isErr()) {
+        return Err(mintedResult.unwrapErr());
+      }
+
+      const mintedInfos = mintedResult.unwrap();
+      if (mintedInfos.length === 0) {
+        return Ok(0);
+      }
+
+      const btcAddress = this.btcAddress;
+      if (!btcAddress) {
+        return Err("BTC address not available");
+      }
+
+      const depositFee = await ckBTCMinterService.getDepositFee();
+      const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
+      const tipHeightResult = await mempoolService.getTipHeight();
+      const currentTipHeight = tipHeightResult.isOk()
+        ? Number(tipHeightResult.unwrap())
+        : null;
+
+      for (const mintedInfo of mintedInfos) {
+        // Fetch confirming blocks (needed for both create and update paths)
+        let confirmingBlocks: BitcoinBlock[] = [];
+        if (currentTipHeight !== null && ckBTCMinterInfo) {
+          const maxHeight = Math.min(
+            currentTipHeight,
+            mintedInfo.btcHeight + ckBTCMinterInfo.min_confirmations - 1,
+          );
+          confirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
+            maxHeight,
+            mintedInfo.btcHeight,
+          );
+        }
+
+        // Check if a bridge for this BTC txid already exists (created by the
+        // automatic mempool polling flow while the user was away)
+        const existingBridge = (this.bridgeTxs ?? []).find(
+          (tx) => tx.btc_txid === mintedInfo.btcTxid,
+        );
+
+        if (existingBridge) {
+          if (existingBridge.status === BridgeTransactionStatus.Completed) {
+            continue;
+          }
+          // Update existing Pending bridge to Completed with confirmation blocks
+          const updateResult =
+            await tokenStorageService.updateBridgeTransaction(
+              existingBridge.bridge_id,
+              BridgeTransactionStatus.Completed,
+              null,
+              BigInt(mintedInfo.btcHeight),
+              confirmingBlocks.length > 0
+                ? confirmingBlocks[0].block_timestamp
+                : (existingBridge.block_timestamp ?? 0n),
+              confirmingBlocks,
+            );
+          if (updateResult.isErr()) {
+            console.error(
+              "Failed to update existing bridge to Completed:",
+              updateResult.unwrapErr(),
+            );
+          }
+          continue;
+        }
+
+        // No existing bridge — create a new one
+        const createResult =
+          await tokenStorageService.createManualImportBridgeTransaction(
+            btcAddress,
+            mintedInfo.mintedAmount,
+            mintedInfo.blockIndex,
+            depositFee,
+            mintedInfo.btcTxid,
+          );
+        if (createResult.isErr()) {
+          console.error(
+            "Failed to create manual import bridge:",
+            createResult.unwrapErr(),
+          );
+          continue;
+        }
+
+        if (confirmingBlocks.length > 0) {
+          const updateResult =
+            await tokenStorageService.updateBridgeTransaction(
+              createResult.unwrap().bridge_id,
+              null,
+              null,
+              BigInt(mintedInfo.btcHeight),
+              confirmingBlocks[0].block_timestamp,
+              confirmingBlocks,
+            );
+          if (updateResult.isErr()) {
+            console.error(
+              "Failed to set confirmations on manual import bridge:",
+              updateResult.unwrapErr(),
+            );
+          }
+        }
+      }
+
+      this.#bridgeTxQuery.refresh();
+      this.#importBridgeTxQuery.refresh();
+
+      return Ok(mintedInfos.length);
+    } finally {
+      this.isRefreshing = false;
     }
   }
 }

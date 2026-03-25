@@ -14,7 +14,14 @@
     ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { ChevronDown, Copy, Info } from "lucide-svelte";
+  import {
+    Bitcoin,
+    ChevronDown,
+    Copy,
+    Hourglass,
+    Info,
+    LayoutList,
+  } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -204,22 +211,30 @@
           </div>
         {/if}
         {#if isBTC}
-          <div class="flex items-start gap-1.5">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.receive.icpAddress.warning1")}
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.receive.icpAddress.warning1")}
+              </div>
             </div>
-          </div>
-          <div class="flex items-start gap-1.5">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.receive.icpAddress.warning2")}
+            <div class="flex items-center gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.receive.icpAddress.warning2")}
+              </div>
             </div>
-          </div>
-          <div class="flex items-start gap-1.5">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.receive.icpAddress.warning3")}
+            <div class="flex items-center gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.receive.icpAddress.warning3")}
+              </div>
             </div>
           </div>
         {/if}

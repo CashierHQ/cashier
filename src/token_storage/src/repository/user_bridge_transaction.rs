@@ -7,7 +7,7 @@ use ic_mple_structures::{DefaultMemoryImpl, VirtualMemory};
 use ic_mple_utils::store::Storage;
 use std::{cell::RefCell, thread::LocalKey};
 use token_storage_types::bitcoin::bridge_transaction::{
-    BridgeTransaction, BridgeTransactionCodec, BridgeTransactionStatus,
+    BridgeTransaction, BridgeTransactionCodec, BridgeTransactionStatus, BridgeType,
 };
 
 // Store for UserBridgeRepository
@@ -92,11 +92,15 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         start: Option<u32>,
         limit: Option<u32>,
         status: Option<BridgeTransactionStatus>,
+        bridge_type: Option<BridgeType>,
     ) -> Vec<BridgeTransaction> {
         self.bridge_transaction_store.with_borrow(|store| {
             let mut transactions = store.get(user_id).unwrap_or_default();
             if let Some(status_filter) = status {
                 transactions.retain(|tx| tx.status == status_filter);
+            }
+            if let Some(bridge_type_filter) = bridge_type {
+                transactions.retain(|tx| tx.bridge_type == bridge_type_filter);
             }
 
             // reverse the transactions array
@@ -160,7 +164,7 @@ mod tests {
             .unwrap();
 
         // Assert
-        let transactions = repo.get_bridge_transactions(&user_id, None, None, None);
+        let transactions = repo.get_bridge_transactions(&user_id, None, None, None, None);
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions[0], bridge_tx_1);
     }
@@ -206,7 +210,7 @@ mod tests {
             .unwrap();
 
         // Assert
-        let transactions = repo.get_bridge_transactions(&user_id, None, None, None);
+        let transactions = repo.get_bridge_transactions(&user_id, None, None, None, None);
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions[0], bridge_tx);
         assert_eq!(transactions[0].status, BridgeTransactionStatus::Completed);
@@ -248,10 +252,12 @@ mod tests {
         }
 
         // Act: Get first 2 transactions
-        let transactions_page_1 = repo.get_bridge_transactions(&user_id, Some(0), Some(2), None);
+        let transactions_page_1 =
+            repo.get_bridge_transactions(&user_id, Some(0), Some(2), None, None);
 
         // Act: Get next 2 transactions
-        let transactions_page_2 = repo.get_bridge_transactions(&user_id, Some(2), Some(2), None);
+        let transactions_page_2 =
+            repo.get_bridge_transactions(&user_id, Some(2), Some(2), None, None);
 
         // Assert
         assert_eq!(transactions_page_1.len(), 2);
@@ -304,5 +310,122 @@ mod tests {
 
         // Assert
         assert_eq!(retrieved_tx, bridge_tx);
+    }
+
+    fn fixture_of_bridge_transaction(
+        bridge_id: &str,
+        bridge_type: BridgeType,
+    ) -> BridgeTransaction {
+        BridgeTransaction {
+            bridge_id: bridge_id.to_string(),
+            icp_address: random_principal_id(),
+            btc_address: "btc1".to_string(),
+            bridge_type,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "btc".to_string(),
+                amount: Nat::from(1000u64),
+                decimals: 8,
+            }],
+            btc_txid: Some("txid1".to_string()),
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: vec![],
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            total_amount: None,
+            created_at_ts: 10000u64,
+            retry_times: 0,
+            status: BridgeTransactionStatus::Created,
+        }
+    }
+
+    #[test]
+    fn it_should_get_bridge_transactions_filtered_by_bridge_type_import() {
+        // Arrange
+        let mut repo = TestRepositories::new().user_bridge_transaction();
+        let user_id = random_principal_id();
+        let import_tx_1 = fixture_of_bridge_transaction("import1", BridgeType::Import);
+        let import_tx_2 = fixture_of_bridge_transaction("import2", BridgeType::Import);
+        let export_tx_1 = fixture_of_bridge_transaction("export1", BridgeType::Export);
+        let export_tx_2 = fixture_of_bridge_transaction("export2", BridgeType::Export);
+        repo.upsert_bridge_transaction(user_id, import_tx_1.bridge_id.clone(), import_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, import_tx_2.bridge_id.clone(), import_tx_2)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_1.bridge_id.clone(), export_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_2.bridge_id.clone(), export_tx_2)
+            .unwrap();
+
+        // Act
+        let transactions =
+            repo.get_bridge_transactions(&user_id, None, None, None, Some(BridgeType::Import));
+
+        // Assert
+        assert_eq!(transactions.len(), 2);
+        assert!(
+            transactions
+                .iter()
+                .all(|tx| tx.bridge_type == BridgeType::Import)
+        );
+    }
+
+    #[test]
+    fn it_should_get_bridge_transactions_filtered_by_bridge_type_export() {
+        // Arrange
+        let mut repo = TestRepositories::new().user_bridge_transaction();
+        let user_id = random_principal_id();
+        let import_tx_1 = fixture_of_bridge_transaction("import1", BridgeType::Import);
+        let import_tx_2 = fixture_of_bridge_transaction("import2", BridgeType::Import);
+        let export_tx_1 = fixture_of_bridge_transaction("export1", BridgeType::Export);
+        let export_tx_2 = fixture_of_bridge_transaction("export2", BridgeType::Export);
+        repo.upsert_bridge_transaction(user_id, import_tx_1.bridge_id.clone(), import_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, import_tx_2.bridge_id.clone(), import_tx_2)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_1.bridge_id.clone(), export_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_2.bridge_id.clone(), export_tx_2)
+            .unwrap();
+
+        // Act
+        let transactions =
+            repo.get_bridge_transactions(&user_id, None, None, None, Some(BridgeType::Export));
+
+        // Assert
+        assert_eq!(transactions.len(), 2);
+        assert!(
+            transactions
+                .iter()
+                .all(|tx| tx.bridge_type == BridgeType::Export)
+        );
+    }
+
+    #[test]
+    fn it_should_get_bridge_transactions_with_no_bridge_type_filter() {
+        // Arrange
+        let mut repo = TestRepositories::new().user_bridge_transaction();
+        let user_id = random_principal_id();
+        let import_tx_1 = fixture_of_bridge_transaction("import1", BridgeType::Import);
+        let import_tx_2 = fixture_of_bridge_transaction("import2", BridgeType::Import);
+        let export_tx_1 = fixture_of_bridge_transaction("export1", BridgeType::Export);
+        let export_tx_2 = fixture_of_bridge_transaction("export2", BridgeType::Export);
+        repo.upsert_bridge_transaction(user_id, import_tx_1.bridge_id.clone(), import_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, import_tx_2.bridge_id.clone(), import_tx_2)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_1.bridge_id.clone(), export_tx_1)
+            .unwrap();
+        repo.upsert_bridge_transaction(user_id, export_tx_2.bridge_id.clone(), export_tx_2)
+            .unwrap();
+
+        // Act
+        let transactions = repo.get_bridge_transactions(&user_id, None, None, None, None);
+
+        // Assert
+        assert_eq!(transactions.len(), 4);
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_common::test_utils::random_principal_id;
 use ic_mple_client::CanisterClientError;
 use token_storage_types::{
@@ -25,6 +25,8 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         withdrawal_fee: None,
         btc_fee: None,
         created_at_ts: 0,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -44,6 +46,8 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         withdrawal_fee: Some(450u64.into()),
         btc_fee: Some(1200u64.into()),
         created_at_ts: 100,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -196,6 +200,101 @@ async fn it_should_create_export_bridge_transaction() {
         assert_eq!(bridge_transaction.withdrawal_fee, Some(450u64.into()));
         assert_eq!(bridge_transaction.btc_fee, Some(1200u64.into()));
         assert_eq!(bridge_transaction.status, BridgeTransactionStatus::Created);
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_create_import_bridge_without_btc_txid_or_ckbtc_block_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: caller,
+            btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
+            asset_infos: vec![],
+            bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected canister call to succeed with inner error"
+        );
+        let bridge_result = result.unwrap();
+        assert!(bridge_result.is_err());
+        assert!(matches!(
+            bridge_result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "btc_txid or ckbtc_block_id is required for import"
+        ));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_import_bridge_with_ckbtc_block_id_and_completed_status() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let ckbtc_block_id = 42u64;
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: caller,
+            btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "UTXO".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Import,
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: Some(ckbtc_block_id),
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Expected successful bridge transaction creation"
+        );
+        let bridge_result = result.unwrap();
+        assert!(bridge_result.is_ok());
+        let bridge = bridge_result.unwrap();
+        assert_eq!(bridge.bridge_type, BridgeType::Import);
+        assert_eq!(bridge.btc_txid, None);
+        assert_eq!(bridge.ckbtc_block_id, Some(ckbtc_block_id));
+        assert_eq!(bridge.status, BridgeTransactionStatus::Completed);
+        assert_eq!(bridge.bridge_id, format!("import_ckbtc_{}", ckbtc_block_id));
+
         Ok(())
     })
     .await
