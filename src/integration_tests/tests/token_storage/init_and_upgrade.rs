@@ -9,9 +9,7 @@ use token_storage_types::{
 
 use crate::{
     constant::ICP_PRINCIPAL,
-    utils::{
-        get_token_storage_canister_bytecode, principal::TestUser, with_pocket_ic_context,
-    },
+    utils::{get_token_storage_canister_bytecode, principal::TestUser, with_pocket_ic_context},
 };
 
 /// Test: init registers default tokens at startup
@@ -153,9 +151,7 @@ async fn should_upgrade_upsert_existing_token() {
         let updated_icp = RegistryToken {
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
-                index_id: Some(
-                    Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
-                ),
+                index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
                 fee: Nat::from(10_000u64),
                 supported_standards: vec![
                     IcrcStandard::ICRC1,
