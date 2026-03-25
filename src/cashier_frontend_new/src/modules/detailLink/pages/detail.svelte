@@ -30,14 +30,14 @@
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getGuardContext } from "$modules/guard/context.svelte";
-  import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionType } from "$modules/links/types/action/actionType";
-  import { LinkState } from "$modules/links/types/link/linkState";
   import {
     calculateLinkInfoAssetsWithTokenInfo,
     calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
+  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import { LinkState } from "$modules/links/types/link/linkState";
   import {
     getLinkTypeText,
     isPaymentLinkType,
@@ -405,7 +405,6 @@
     isSyncingBalance = true;
     try {
       await linkStore.syncAssetBalanceCache();
-      await linkStore.refreshAsync();
       toast.success(
         locale.t("links.linkForm.detail.messages.balanceSyncSuccess"),
       );

@@ -188,7 +188,7 @@ export class LinkDetailStoreV3 {
       throw new Error(`Failed to sync asset balance cache: ${result.error}`);
     }
 
-    this.query.refresh();
+    await this.query.refreshAsync();
   }
 
   /**
@@ -212,6 +212,6 @@ export class LinkDetailStoreV3 {
       throw new Error(`Failed to active link: ${result.error}`);
     }
 
-    this.query.refresh();
+    await this.query.refreshAsync();
   }
 }
