@@ -52,7 +52,7 @@
       }};
       symbol = "ckUSDC";
       name = "Chain Key USD Coin";
-      decimals = 8: nat8;
+      decimals = 6: nat8;
       enabled_by_default = true;
     };
     record {
