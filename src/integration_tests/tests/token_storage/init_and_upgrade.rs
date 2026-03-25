@@ -16,11 +16,13 @@ use crate::{
 #[tokio::test]
 async fn should_init_with_default_tokens() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let client = ctx.new_token_storage_client(TestUser::TokenStorageAdmin.get_principal());
 
+        // Act
         let tokens = client.list_tokens().await.unwrap().unwrap();
 
-        // Verify default tokens registered during init
+        // Assert
         assert!(!tokens.tokens.is_empty());
         assert!(tokens.tokens.iter().any(|t| t.symbol == "ICP"));
         assert!(tokens.tokens.iter().any(|t| t.symbol == "ckBTC"));
@@ -36,11 +38,14 @@ async fn should_init_with_default_tokens() {
 #[tokio::test]
 async fn should_init_with_admin_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
 
+        // Act
         let permissions = admin_client.admin_permissions_get(admin).await.unwrap();
 
+        // Assert
         assert_eq!(
             vec![token_storage_types::auth::Permission::Admin],
             permissions
@@ -56,14 +61,12 @@ async fn should_init_with_admin_permissions() {
 #[tokio::test]
 async fn should_upgrade_with_tokens_upsert() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
-
-        // Get token count before upgrade
         let before = admin_client.list_tokens().await.unwrap().unwrap();
         let before_count = before.tokens.len();
 
-        // Upgrade with a new token
         let new_token = RegistryToken {
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(),
@@ -80,6 +83,7 @@ async fn should_upgrade_with_tokens_upsert() {
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
 
+        // Act
         ctx.upgrade_canister(
             ctx.token_storage_principal,
             None,
@@ -91,7 +95,7 @@ async fn should_upgrade_with_tokens_upsert() {
         )
         .await;
 
-        // Verify new token was added
+        // Assert
         let after = admin_client.list_tokens().await.unwrap().unwrap();
         assert!(after.tokens.len() > before_count);
         assert!(after.tokens.iter().any(|t| t.symbol == "NEWTKN"));
@@ -106,15 +110,15 @@ async fn should_upgrade_with_tokens_upsert() {
 #[tokio::test]
 async fn should_upgrade_without_tokens_preserve_registry() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
-
         let before = admin_client.list_tokens().await.unwrap().unwrap();
 
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
 
-        // Upgrade without tokens field
+        // Act
         ctx.upgrade_canister(
             ctx.token_storage_principal,
             None,
@@ -126,7 +130,7 @@ async fn should_upgrade_without_tokens_preserve_registry() {
         )
         .await;
 
-        // Verify existing tokens preserved
+        // Assert
         let after = admin_client.list_tokens().await.unwrap().unwrap();
         assert_eq!(before.tokens.len(), after.tokens.len());
         assert!(after.tokens.iter().any(|t| t.symbol == "ICP"));
@@ -141,13 +145,13 @@ async fn should_upgrade_without_tokens_preserve_registry() {
 #[tokio::test]
 async fn should_upgrade_upsert_existing_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
 
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
 
-        // Upgrade with ICP token using updated name
         let updated_icp = RegistryToken {
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
@@ -165,6 +169,7 @@ async fn should_upgrade_upsert_existing_token() {
             enabled_by_default: true,
         };
 
+        // Act
         ctx.upgrade_canister(
             ctx.token_storage_principal,
             None,
@@ -176,7 +181,7 @@ async fn should_upgrade_upsert_existing_token() {
         )
         .await;
 
-        // Verify ICP token now has ICRC3 standard
+        // Assert
         let after = admin_client.list_tokens().await.unwrap().unwrap();
         let icp = after.tokens.iter().find(|t| t.symbol == "ICP").unwrap();
         match &icp.details {
