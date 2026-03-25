@@ -21,6 +21,42 @@
     };
     record {
       details = variant { IC = record {
+        ledger_id = principal "mxzaz-hqaaa-aaaar-qaada-cai";
+        index_id = opt principal "n5wcd-faaaa-aaaar-qaaea-cai";
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckBTC";
+      name = "Chain Key Bitcoin";
+      decimals = 8: nat8;
+      enabled_by_default = true;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ss2fx-dyaaa-aaaar-qacoq-cai";
+        index_id = opt principal "s3zol-vqaaa-aaaar-qacpa-cai";
+        fee = 2000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckETH";
+      name = "Chain Key Ethereum";
+      decimals = 18: nat8;
+      enabled_by_default = true;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xevnm-gaaaa-aaaar-qafnq-cai";
+        index_id = opt principal "xrs4b-hiaaa-aaaar-qafoa-cai";
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckUSDC";
+      name = "Chain Key USD Coin";
+      decimals = 8: nat8;
+      enabled_by_default = true;
+    };
+    record {
+      details = variant { IC = record {
         ledger_id = principal "vpyot-zqaaa-aaaaa-qavaq-cai";
         index_id = null;
         fee = 1 : nat;
@@ -2805,18 +2841,6 @@
     };
     record {
       details = variant { IC = record {
-        ledger_id = principal "mxzaz-hqaaa-aaaar-qaada-cai";
-        index_id = opt principal "n5wcd-faaaa-aaaar-qaaea-cai";
-        fee = 10 : nat;
-        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
-      }};
-      symbol = "ckBTC";
-      name = "Chain Key Bitcoin";
-      decimals = 8: nat8;
-      enabled_by_default = true;
-    };
-    record {
-      details = variant { IC = record {
         ledger_id = principal "apia6-jaaaa-aaaar-qabma-cai";
         index_id = null;
         fee = 10000000000 : nat;
@@ -2826,18 +2850,6 @@
       name = "Chain key Sepolia Ethereum";
       decimals = 18: nat8;
       enabled_by_default = false;
-    };
-    record {
-      details = variant { IC = record {
-        ledger_id = principal "ss2fx-dyaaa-aaaar-qacoq-cai";
-        index_id = opt principal "s3zol-vqaaa-aaaar-qacpa-cai";
-        fee = 2000000000000 : nat;
-        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
-      }};
-      symbol = "ckETH";
-      name = "Chain Key Ethereum";
-      decimals = 18: nat8;
-      enabled_by_default = true;
     };
     record {
       details = variant { IC = record {
@@ -2922,18 +2934,6 @@
       name = "HOPE•YOU•GET•RICH";
       decimals = 2: nat8;
       enabled_by_default = false;
-    };
-    record {
-      details = variant { IC = record {
-        ledger_id = principal "xevnm-gaaaa-aaaar-qafnq-cai";
-        index_id = opt principal "xrs4b-hiaaa-aaaar-qafoa-cai";
-        fee = 10000 : nat;
-        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
-      }};
-      symbol = "ckUSDC";
-      name = "Chain Key USD Coin";
-      decimals = 8: nat8;
-      enabled_by_default = true;
     };
     record {
       details = variant { IC = record {
