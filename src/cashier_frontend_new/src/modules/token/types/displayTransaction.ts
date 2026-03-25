@@ -1,7 +1,7 @@
 import { isTransactionOutgoing } from "$modules/wallet/utils/transactionDisplayType";
 import type { TokenWithPriceAndBalance } from "./tokenMetadata";
 import type { TokenTransaction } from "./tokenTransaction";
-import type { TransactionKindValue } from "./transactionKind";
+import { TransactionKind, type TransactionKindValue } from "./transactionKind";
 
 /**
  * Display-friendly transaction for UI rendering
@@ -38,6 +38,13 @@ export class DisplayTransactionMapper {
     if (!userPrincipal) return [];
 
     return txs.flatMap((tx) => {
+      if (
+        tx.kind === TransactionKind.BURN ||
+        tx.kind === TransactionKind.APPROVE
+      ) {
+        return [];
+      }
+
       const outgoingResult = isTransactionOutgoing(
         tx,
         tokenDetails,

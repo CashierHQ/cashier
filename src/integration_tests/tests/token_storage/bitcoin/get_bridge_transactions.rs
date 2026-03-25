@@ -23,6 +23,8 @@ fn import_bridge_input(caller: Principal, txid: String) -> CreateBridgeTransacti
         withdrawal_fee: None,
         btc_fee: None,
         created_at_ts: 0,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -42,6 +44,8 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         withdrawal_fee: Some(450u64.into()),
         btc_fee: Some(1200u64.into()),
         created_at_ts: 1,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -54,6 +58,7 @@ async fn it_should_fail_user_get_bridge_transactions_due_to_anonymous_caller() {
             start: None,
             limit: None,
             status: None,
+            bridge_type: None,
         };
 
         // Act
@@ -95,6 +100,7 @@ async fn it_should_get_bridge_transactions() {
             start: Some(0),
             limit: Some(2),
             status: None,
+            bridge_type: None,
         };
         let result1 = token_storage_client
             .user_get_bridge_transactions(input1)
@@ -104,6 +110,7 @@ async fn it_should_get_bridge_transactions() {
             start: Some(2),
             limit: Some(2),
             status: None,
+            bridge_type: None,
         };
         let result2 = token_storage_client
             .user_get_bridge_transactions(input2)
@@ -167,6 +174,7 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
                 start: Some(0),
                 limit: Some(10),
                 status: Some(BridgeTransactionStatus::Pending),
+                bridge_type: None,
             })
             .await
             .unwrap();
@@ -181,6 +189,7 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
                 start: Some(0),
                 limit: Some(10),
                 status: Some(BridgeTransactionStatus::Created),
+                bridge_type: None,
             })
             .await
             .unwrap();
@@ -188,6 +197,100 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
         // Assert
         assert_eq!(created_bridges.len(), 1);
         assert_eq!(created_bridges[0].bridge_id, export_bridge.bridge_id);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+
+        let import_bridge_1 = token_storage_client
+            .user_create_bridge_transaction(import_bridge_input(
+                caller,
+                "txid_import_1".to_string(),
+            ))
+            .await
+            .unwrap()
+            .unwrap();
+        let import_bridge_2 = token_storage_client
+            .user_create_bridge_transaction(import_bridge_input(
+                caller,
+                "txid_import_2".to_string(),
+            ))
+            .await
+            .unwrap()
+            .unwrap();
+        let export_bridge_1 = token_storage_client
+            .user_create_bridge_transaction(export_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act: filter by Import
+        let import_results = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: Some(BridgeType::Import),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(import_results.len(), 2);
+        assert!(
+            import_results
+                .iter()
+                .all(|tx| tx.bridge_type == BridgeType::Import)
+        );
+        assert!(
+            import_results
+                .iter()
+                .any(|tx| tx.bridge_id == import_bridge_1.bridge_id)
+        );
+        assert!(
+            import_results
+                .iter()
+                .any(|tx| tx.bridge_id == import_bridge_2.bridge_id)
+        );
+
+        // Act: filter by Export
+        let export_results = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: Some(BridgeType::Export),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(export_results.len(), 1);
+        assert_eq!(export_results[0].bridge_type, BridgeType::Export);
+        assert_eq!(export_results[0].bridge_id, export_bridge_1.bridge_id);
+
+        // Act: no filter returns all
+        let all_results = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: None,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(all_results.len(), 3);
 
         Ok(())
     })

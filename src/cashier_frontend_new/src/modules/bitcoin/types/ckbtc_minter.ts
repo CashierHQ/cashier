@@ -59,3 +59,17 @@ export type MinterInfo = {
   retrieve_btc_min_amount: bigint;
   min_confirmations: number;
 };
+
+/**
+ * MintedUtxoInfo represents a successfully minted UTXO returned by update_balance.
+ * blockIndex is the ckBTC ledger block index of the mint transaction.
+ * mintedAmount is the amount of ckBTC minted (in satoshis).
+ * btcTxid is the hex-encoded Bitcoin transaction ID of the UTXO.
+ * btcHeight is the Bitcoin block height at which the UTXO was confirmed.
+ */
+export type MintedUtxoInfo = {
+  blockIndex: bigint;
+  mintedAmount: bigint;
+  btcTxid: string;
+  btcHeight: number;
+};
