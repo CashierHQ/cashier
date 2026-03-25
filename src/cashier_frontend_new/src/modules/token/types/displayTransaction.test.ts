@@ -14,9 +14,8 @@ import { Ok, Err } from "ts-results-es";
 
 const mockedIsTransactionOutgoing = vi.mocked(isTransactionOutgoing);
 
-const USER_PRINCIPAL = "aaaaa-aa";
-
-function createTx(
+// Fixtures
+function fixture_of_token_transaction(
   kind: string,
   amount: bigint,
   timestampMs: number,
@@ -29,7 +28,7 @@ function createTx(
   };
 }
 
-function createToken(decimals = 8): TokenWithPriceAndBalance {
+function fixture_of_token(decimals = 8): TokenWithPriceAndBalance {
   return {
     name: "Test Token",
     symbol: "TEST",
@@ -43,52 +42,132 @@ function createToken(decimals = 8): TokenWithPriceAndBalance {
   };
 }
 
+const USER_PRINCIPAL = "aaaaa-aa";
+
 describe("DisplayTransactionMapper", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("fromTokenTransaction", () => {
-    it("returns empty array if tokenDetails undefined", () => {
-      const txs = [createTx(TransactionKind.TRANSFER, 100n, 1000)];
+    it("it_should_fail_map_due_to_missing_token_details", () => {
+      // Arrange
+      const txs = [
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 100n, 1000),
+      ];
+
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
         txs,
         USER_PRINCIPAL,
         undefined,
       );
+
+      // Assert
       expect(result).toEqual([]);
     });
 
-    it("returns empty array if userPrincipal undefined", () => {
-      const txs = [createTx(TransactionKind.TRANSFER, 100n, 1000)];
+    it("it_should_fail_map_due_to_missing_user_principal", () => {
+      // Arrange
+      const txs = [
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 100n, 1000),
+      ];
+
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
         txs,
         undefined,
-        createToken(),
+        fixture_of_token(),
       );
+
+      // Assert
       expect(result).toEqual([]);
     });
 
-    it("returns empty array for empty tx list", () => {
+    it("it_should_return_empty_for_empty_tx_list", () => {
+      // Arrange
+      const txs: TokenTransaction[] = [];
+
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
-        [],
+        txs,
         USER_PRINCIPAL,
-        createToken(),
+        fixture_of_token(),
       );
+
+      // Assert
       expect(result).toEqual([]);
     });
 
-    it("maps outgoing transaction correctly", () => {
+    it("it_should_filter_out_burn_and_approve_transactions", () => {
+      // Arrange
       mockedIsTransactionOutgoing.mockReturnValue(Ok(true));
-      const txs = [createTx(TransactionKind.TRANSFER, 100000000n, 1700000000)];
-      const token = createToken(8);
+      const txs = [
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 100n, 1000),
+        fixture_of_token_transaction(TransactionKind.BURN, 200n, 2000),
+        fixture_of_token_transaction(TransactionKind.MINT, 300n, 3000),
+        fixture_of_token_transaction(TransactionKind.APPROVE, 400n, 4000),
+      ];
 
+      // Act
+      const result = DisplayTransactionMapper.fromTokenTransaction(
+        txs,
+        USER_PRINCIPAL,
+        fixture_of_token(),
+      );
+
+      // Assert
+      expect(result.map((r) => r.kind)).toEqual([
+        TransactionKind.TRANSFER,
+        TransactionKind.MINT,
+      ]);
+    });
+
+    it("it_should_filter_out_transactions_with_undeterminable_direction", () => {
+      // Arrange
+      mockedIsTransactionOutgoing
+        .mockReturnValueOnce(Ok(true))
+        .mockReturnValueOnce(Err(new Error("Cannot determine direction")))
+        .mockReturnValueOnce(Ok(false));
+      const txs = [
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 100n, 1000),
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 200n, 2000),
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 300n, 3000),
+      ];
+
+      // Act
+      const result = DisplayTransactionMapper.fromTokenTransaction(
+        txs,
+        USER_PRINCIPAL,
+        fixture_of_token(),
+      );
+
+      // Assert
+      expect(result).toHaveLength(2);
+      expect(result[0].timestamp).toBe(1000);
+      expect(result[1].timestamp).toBe(3000);
+    });
+
+    it("it_should_map_outgoing_transfer_transaction", () => {
+      // Arrange
+      mockedIsTransactionOutgoing.mockReturnValue(Ok(true));
+      const txs = [
+        fixture_of_token_transaction(
+          TransactionKind.TRANSFER,
+          100000000n,
+          1700000000,
+        ),
+      ];
+      const token = fixture_of_token(8);
+
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
         txs,
         USER_PRINCIPAL,
         token,
       );
 
+      // Assert
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         kind: TransactionKind.TRANSFER,
@@ -98,17 +177,26 @@ describe("DisplayTransactionMapper", () => {
       });
     });
 
-    it("maps incoming transaction correctly", () => {
+    it("it_should_map_incoming_mint_transaction", () => {
+      // Arrange
       mockedIsTransactionOutgoing.mockReturnValue(Ok(false));
-      const txs = [createTx(TransactionKind.MINT, 250000000n, 1700000001)];
-      const token = createToken(8);
+      const txs = [
+        fixture_of_token_transaction(
+          TransactionKind.MINT,
+          250000000n,
+          1700000001,
+        ),
+      ];
+      const token = fixture_of_token(8);
 
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
         txs,
         USER_PRINCIPAL,
         token,
       );
 
+      // Assert
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         kind: TransactionKind.MINT,
@@ -118,62 +206,23 @@ describe("DisplayTransactionMapper", () => {
       });
     });
 
-    it("filters out transactions with error result", () => {
-      mockedIsTransactionOutgoing
-        .mockReturnValueOnce(Ok(true))
-        .mockReturnValueOnce(Err(new Error("Cannot determine direction")))
-        .mockReturnValueOnce(Ok(false));
-
+    it("it_should_apply_token_decimals_to_amount", () => {
+      // Arrange
+      mockedIsTransactionOutgoing.mockReturnValue(Ok(true));
       const txs = [
-        createTx(TransactionKind.TRANSFER, 100n, 1000),
-        createTx(TransactionKind.TRANSFER, 200n, 2000), // This one errors
-        createTx(TransactionKind.TRANSFER, 300n, 3000),
+        fixture_of_token_transaction(TransactionKind.TRANSFER, 1000000n, 1000),
       ];
-      const token = createToken(8);
+      const token = fixture_of_token(6);
 
+      // Act
       const result = DisplayTransactionMapper.fromTokenTransaction(
         txs,
         USER_PRINCIPAL,
         token,
       );
 
-      expect(result).toHaveLength(2);
-      expect(result[0].timestamp).toBe(1000);
-      expect(result[1].timestamp).toBe(3000);
-    });
-
-    it("handles different decimals correctly", () => {
-      mockedIsTransactionOutgoing.mockReturnValue(Ok(true));
-      const txs = [createTx(TransactionKind.BURN, 1000000n, 1000)];
-      const token = createToken(6); // 6 decimals
-
-      const result = DisplayTransactionMapper.fromTokenTransaction(
-        txs,
-        USER_PRINCIPAL,
-        token,
-      );
-
+      // Assert
       expect(result[0].amount).toBe(1); // 1000000 / 10^6
-    });
-
-    it("preserves all transaction kinds", () => {
-      mockedIsTransactionOutgoing.mockReturnValue(Ok(true));
-      const kinds = [
-        TransactionKind.TRANSFER,
-        TransactionKind.MINT,
-        TransactionKind.BURN,
-        TransactionKind.APPROVE,
-      ];
-      const txs = kinds.map((kind, i) => createTx(kind, 100n, i * 1000));
-      const token = createToken();
-
-      const result = DisplayTransactionMapper.fromTokenTransaction(
-        txs,
-        USER_PRINCIPAL,
-        token,
-      );
-
-      expect(result.map((r) => r.kind)).toEqual(kinds);
     });
   });
 });

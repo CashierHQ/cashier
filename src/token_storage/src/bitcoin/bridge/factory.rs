@@ -70,13 +70,20 @@ impl BridgeTransactionFactory {
             btc_fee = Some(fee);
         }
 
+        let mut ckbtc_block_id = None;
+
         if input.bridge_type == BridgeType::Import {
             if let Some(txid) = &input.btc_txid {
+                // Normal mempool-driven import: bridge ID derived from BTC txid
                 bridge_id = format!("import_{}", txid);
                 btc_txid = Some(txid.clone());
+            } else if let Some(block_id) = input.ckbtc_block_id {
+                // Manual refresh import: bridge ID derived from ckBTC block index
+                bridge_id = format!("import_ckbtc_{}", block_id);
+                ckbtc_block_id = Some(block_id);
             } else {
                 return Err(CanisterError::ValidationErrors(
-                    "btc_txid is required for import".to_string(),
+                    "btc_txid or ckbtc_block_id is required for import".to_string(),
                 ));
             }
 
@@ -109,10 +116,15 @@ impl BridgeTransactionFactory {
             ));
         }
 
-        let mut status = BridgeTransactionStatus::Created;
-        if input.bridge_type == BridgeType::Import {
-            status = BridgeTransactionStatus::Pending;
-        }
+        // Determine initial status: use caller-provided override if present,
+        // otherwise default to Pending for Import and Created for Export.
+        let status = input
+            .status
+            .unwrap_or(if input.bridge_type == BridgeType::Import {
+                BridgeTransactionStatus::Pending
+            } else {
+                BridgeTransactionStatus::Created
+            });
 
         Ok(BridgeTransaction {
             bridge_id,
@@ -121,7 +133,7 @@ impl BridgeTransactionFactory {
             bridge_type: input.bridge_type,
             asset_infos,
             btc_txid,
-            ckbtc_block_id: None,
+            ckbtc_block_id,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -156,6 +168,8 @@ mod tests {
             withdrawal_fee: None,
             btc_fee: None,
             created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
         };
 
         // Act
@@ -194,6 +208,8 @@ mod tests {
             withdrawal_fee: Some(Nat::from(450u64)),
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
+            ckbtc_block_id: None,
+            status: None,
         };
 
         // Act
@@ -229,6 +245,8 @@ mod tests {
             withdrawal_fee: Some(Nat::from(450u64)),
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
+            ckbtc_block_id: None,
+            status: None,
         };
 
         // Act
@@ -241,5 +259,259 @@ mod tests {
             CanisterError::ValidationErrors(message)
                 if message == "btc_txid must not be set when creating an export bridge"
         ));
+    }
+
+    #[test]
+    fn it_should_fail_create_export_bridge_with_deposit_fee() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Export,
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "deposit_fee must not be set for export bridges"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_create_export_bridge_without_withdrawal_fee() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Export,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: Some(Nat::from(1200u64)),
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "withdrawal_fee is required for export bridges"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_create_export_bridge_without_btc_fee() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "ckbtc".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Export,
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "btc_fee is required for export bridges"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_create_export_bridge_without_asset_infos() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "bc1qreceiver".to_string(),
+            asset_infos: vec![],
+            bridge_type: BridgeType::Export,
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "asset_infos is required for export bridges"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_create_import_bridge_without_btc_txid_or_ckbtc_block_id() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "test_btc_address".to_string(),
+            asset_infos: vec![],
+            bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "btc_txid or ckbtc_block_id is required for import"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_create_import_bridge_due_to_insufficient_amount_for_deposit_fee() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_txid".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "test_btc_address".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "UTXO".to_string(),
+                amount: Nat::from(500u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Import,
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+        };
+
+        // Act
+        let result = BridgeTransactionFactory::from_create_input(input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "No asset with sufficient amount to cover deposit fee"
+        ));
+    }
+
+    #[test]
+    fn it_should_create_import_bridge_via_ckbtc_block_id() {
+        // Arrange
+        let icp_address = random_principal_id();
+        let block_id = 42u64;
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address,
+            btc_address: "test_btc_address".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::BTC,
+                asset_id: "UTXO".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Import,
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: Some(block_id),
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+
+        // Act
+        let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
+
+        // Assert
+        assert_eq!(transaction.bridge_id, format!("import_ckbtc_{}", block_id));
+        assert_eq!(transaction.btc_txid, None);
+        assert_eq!(transaction.ckbtc_block_id, Some(block_id));
+        assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
+        // deposit fee is deducted from asset amount
+        assert_eq!(transaction.asset_infos[0].amount, Nat::from(49_000u64));
+    }
+
+    #[test]
+    fn it_should_create_import_bridge_with_status_override() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_txid".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "test_btc_address".to_string(),
+            asset_infos: vec![],
+            bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: Some(BridgeTransactionStatus::Completed),
+        };
+
+        // Act
+        let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
+
+        // Assert
+        assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
     }
 }

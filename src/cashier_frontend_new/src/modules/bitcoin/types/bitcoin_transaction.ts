@@ -136,6 +136,8 @@ export class BitcoinTransactionMapper {
       withdrawal_fee: [withdrawalFee],
       btc_fee: [],
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
+      ckbtc_block_id: [],
+      status: [],
     };
   }
 }

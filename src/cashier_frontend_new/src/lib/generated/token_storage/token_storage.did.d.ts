@@ -78,12 +78,14 @@ export type ChainTokenDetails = {
     }
   };
 export interface CreateBridgeTransactionInputArg {
+  'status' : [] | [BridgeTransactionStatus],
   'asset_infos' : Array<BridgeAssetInfo>,
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,
   'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
+  'ckbtc_block_id' : [] | [bigint],
   'btc_address' : string,
   'bridge_type' : BridgeType,
   'deposit_fee' : [] | [bigint],
@@ -92,6 +94,7 @@ export interface GetUserBridgeTransactionsInputArg {
   'status' : [] | [BridgeTransactionStatus],
   'limit' : [] | [number],
   'start' : [] | [number],
+  'bridge_type' : [] | [BridgeType],
 }
 export interface GetUserNftInput {
   'limit' : [] | [number],
