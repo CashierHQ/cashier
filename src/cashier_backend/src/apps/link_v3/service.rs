@@ -420,6 +420,12 @@ impl<R: Repositories> LinkV3Service<R> {
             ));
         }
 
+        if link.state != LinkState::Active && link.state != LinkState::Inactive {
+            return Err(CanisterError::ValidationErrors(
+                "Only active or inactive links can have their balance cache synced".to_string(),
+            ));
+        }
+
         let link_account = get_link_account(&link.id, canister_id)?;
         let asset_principals = link_v3_asset_principals(&link);
 
@@ -622,6 +628,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_fail_create_link_due_to_non_create_action_type() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -630,6 +637,7 @@ mod tests {
         let (token_fee_service, token_standard_service, token_balance_service) =
             fixture_of_services(1_000_000);
 
+        // Act
         let result = service
             .create_link(
                 fixture_of_create_link_input_v3(
@@ -648,11 +656,13 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::InvalidInput(_))));
     }
 
     #[tokio::test]
     async fn it_should_fail_create_action_due_to_missing_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -663,6 +673,7 @@ mod tests {
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
+        // Act
         let result = service
             .create_action(
                 "missing-link",
@@ -682,14 +693,17 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[tokio::test]
     async fn it_should_fail_process_action_due_to_missing_action() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
 
+        // Act
         let result = service
             .process_action(
                 random_principal_id(),
@@ -701,14 +715,17 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[tokio::test]
     async fn it_should_fail_get_link_details_due_to_missing_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let service = LinkV3Service::new(&repositories);
 
+        // Act
         let result = service
             .get_link_details(
                 random_principal_id(),
@@ -718,47 +735,58 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[test]
     fn it_should_fail_disable_link_due_to_missing_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
 
+        // Act
         let result = service.disable_link(random_principal_id(), "missing-link");
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[test]
     fn it_should_fail_disable_link_due_to_unauthorized_caller() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
         let link = fixture_of_link_v3("link-1", creator, LinkState::Active);
         service.link_v3_repository.create(link);
 
+        // Act
         let result = service.disable_link(random_principal_id(), "link-1");
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
     }
 
     #[test]
     fn it_should_fail_disable_link_due_to_non_active_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
         let link = fixture_of_link_v3("link-1", creator, LinkState::Created);
         service.link_v3_repository.create(link);
 
+        // Act
         let result = service.disable_link(creator, "link-1");
 
+        // Assert
         assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
     }
 
     #[tokio::test]
     async fn it_should_succeed_create_action_for_icrc1_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -786,6 +814,7 @@ mod tests {
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
+        // Act
         let result = service
             .create_action(
                 &link_id,
@@ -805,6 +834,7 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(result.is_ok());
         let response = result.expect("create_action should succeed for icrc1");
         assert_eq!(response.action.action_type, SharedActionType::CreateLink);
@@ -819,6 +849,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_succeed_create_action_for_icrc2_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -846,6 +877,7 @@ mod tests {
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC2]);
 
+        // Act
         let result = service
             .create_action(
                 &link_id,
@@ -865,6 +897,7 @@ mod tests {
             )
             .await;
 
+        // Assert
         assert!(result.is_ok());
         let response = result.expect("create_action should succeed for icrc2");
         assert_eq!(response.action.action_type, SharedActionType::CreateLink);
@@ -879,6 +912,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_succeed_create_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -898,6 +932,7 @@ mod tests {
             .token_storage_client
             .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
 
+        // Act
         let response = service
             .create_link(
                 fixture_of_create_link_input_v3(
@@ -917,6 +952,7 @@ mod tests {
             .await
             .expect("create link should succeed");
 
+        // Assert
         assert_eq!(response.link.creator, creator);
         assert_eq!(response.action.action_type, SharedActionType::CreateLink);
         assert_eq!(response.link.link_type, SharedLinkType::SendTip);
@@ -924,6 +960,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_succeed_process_action() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -962,6 +999,7 @@ mod tests {
             .await
             .expect("create link should succeed");
 
+        // Act
         let processed = service
             .process_action(
                 creator,
@@ -974,6 +1012,7 @@ mod tests {
             .await
             .expect("process action should succeed");
 
+        // Assert
         assert!(processed.is_success);
         assert_eq!(
             processed.link.link_state,
@@ -983,6 +1022,7 @@ mod tests {
 
     #[tokio::test]
     async fn it_should_succeed_get_links() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -1015,17 +1055,20 @@ mod tests {
             .await
             .expect("create link should succeed");
 
+        // Act
         let response = service
             .get_links(creator, None)
             .await
             .expect("get links should succeed");
 
+        // Assert
         assert_eq!(response.data.len(), 1);
         assert_eq!(response.data[0].id, created.link.id);
     }
 
     #[tokio::test]
     async fn it_should_succeed_get_link_details_with_action() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -1058,6 +1101,7 @@ mod tests {
             .await
             .expect("create link should succeed");
 
+        // Act
         let response = service
             .get_link_details(
                 creator,
@@ -1070,6 +1114,7 @@ mod tests {
             .await
             .expect("get link details should succeed");
 
+        // Assert
         assert_eq!(response.link.id, created.link.id);
         assert!(response.action.is_some());
         assert_eq!(
@@ -1080,16 +1125,19 @@ mod tests {
 
     #[test]
     fn it_should_succeed_disable_link() {
+        // Arrange
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
         let link = fixture_of_link_v3("link-1", creator, LinkState::Active);
         service.link_v3_repository.create(link);
 
+        // Act
         let response = service
             .disable_link(creator, "link-1")
             .expect("disable link should succeed");
 
+        // Assert
         assert_eq!(
             response.link.link_state,
             cashier_shared::types::LinkState::Inactive
@@ -1200,5 +1248,75 @@ mod tests {
         let response = result.unwrap();
         let updated_asset = response.link.asset_info.first().unwrap();
         assert_eq!(updated_asset.available_amount, Some(actual_balance));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_sync_asset_balance_cache_due_to_invalid_state_created() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Created);
+        service.link_v3_repository.create(link);
+        let token_balance_service = MockTokenBalanceService::new();
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(creator, canister_id, "link-1", token_balance_service)
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_sync_asset_balance_cache_due_to_invalid_state_ended() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let link = fixture_of_link_v3("link-1", creator, LinkState::Ended);
+        service.link_v3_repository.create(link);
+        let token_balance_service = MockTokenBalanceService::new();
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(creator, canister_id, "link-1", token_balance_service)
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::ValidationErrors(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_sync_asset_balance_cache_for_inactive_link() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = ICP_CANISTER_PRINCIPAL;
+        let token_principal = random_principal_id();
+        let link_id = random_id_string();
+        let link = LinkV3 {
+            asset_info: vec![fixture_of_asset_info_v3(
+                token_principal,
+                Nat::from(1_000u64),
+            )],
+            ..fixture_of_link_v3(&link_id, creator, LinkState::Inactive)
+        };
+        service.link_v3_repository.create(link);
+        let actual_balance = Nat::from(850u64);
+        let mut token_balance_service = MockTokenBalanceService::new();
+        token_balance_service.set_balance(token_principal, actual_balance.clone());
+
+        // Act
+        let result = service
+            .sync_asset_balance_cache(creator, canister_id, &link_id, token_balance_service)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
     }
 }
