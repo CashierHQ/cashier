@@ -22,6 +22,8 @@ jobs:
       # Step 1: Checkout repo so scripts are available for all steps
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch full history + all branches
 
       # Step 2: Check all CI checks passed
       - name: Check all CI checks passed
