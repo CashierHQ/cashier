@@ -65,6 +65,16 @@ fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
     );
     state.set_ckbtc_minter_id(upgrade_data.ckbtc_minter_id);
 
+    if let Some(tokens) = upgrade_data.tokens {
+        info!("[post_upgrade] Upserting {} tokens", tokens.len());
+        match state.token_registry.add_bulk_tokens(tokens) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error upserting tokens on upgrade: {e}");
+            }
+        }
+    }
+
     info!("[post_upgrade] Starting Token Storage");
     init_ic_rand();
 }
