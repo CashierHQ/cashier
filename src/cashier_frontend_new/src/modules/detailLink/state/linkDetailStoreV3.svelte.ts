@@ -172,6 +172,26 @@ export class LinkDetailStoreV3 {
   }
 
   /**
+   * Sync the asset balance cache for the link by querying actual token balances from the ledger.
+   * @returns void
+   * @throws Error when link is missing or backend call fails
+   */
+  async syncAssetBalanceCache() {
+    if (!this.sharedLink) {
+      throw new Error("Link is missing");
+    }
+
+    const result = await cashierBackendService.syncAssetBalanceCacheV3(
+      this.sharedLink.id,
+    );
+    if (result.isErr()) {
+      throw new Error(`Failed to sync asset balance cache: ${result.error}`);
+    }
+
+    await this.query.refreshAsync();
+  }
+
+  /**
    * Disable the link from active -> inactive state
    * @returns void
    * @throws Error when link is missing or not active and backend call fails
@@ -192,6 +212,6 @@ export class LinkDetailStoreV3 {
       throw new Error(`Failed to active link: ${result.error}`);
     }
 
-    this.query.refresh();
+    await this.query.refreshAsync();
   }
 }

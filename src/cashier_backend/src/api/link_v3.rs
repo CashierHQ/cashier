@@ -12,7 +12,7 @@ use cashier_backend_types::{
         },
         link::{
             CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3,
+            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
         },
     },
     repository::keys::RequestLockKey,
@@ -193,6 +193,30 @@ async fn get_link_details_v3(
 
     link_v3_service
         .get_link_details(msg_caller(), link_id, options, transaction_manager_v3)
+        .await
+}
+
+/// Syncs the asset balance cache for a link by querying actual token balances.
+/// Only the link creator can trigger this.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link
+/// # Returns
+/// * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
+/// * `Err(CanisterError)` - If link not found, access denied, or balance fetch fails
+#[update(guard = "is_not_anonymous")]
+async fn user_sync_asset_balance_cache(
+    link_id: &str,
+) -> Result<SyncAssetBalanceCacheResponseV3, CanisterError> {
+    info!("[user_sync_asset_balance_cache]");
+    debug!("[user_sync_asset_balance_cache] link_id: {link_id}");
+
+    let mut link_v3_service = get_state().link_v3_service;
+    let token_balance_service = get_state().token_balance_service;
+    let canister_id = get_state().env.id();
+    let caller = msg_caller();
+
+    link_v3_service
+        .sync_asset_balance_cache(caller, canister_id, link_id, token_balance_service)
         .await
 }
 

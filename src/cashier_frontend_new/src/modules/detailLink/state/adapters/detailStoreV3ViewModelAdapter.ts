@@ -80,6 +80,10 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
     await this.detailStore.disableLink();
   }
 
+  async syncAssetBalanceCache() {
+    await this.detailStore.syncAssetBalanceCache();
+  }
+
   async refreshAsync() {
     await this.detailStore.query.refreshAsync();
   }

@@ -32,6 +32,11 @@ pub struct DisableLinkResponseV3 {
     pub link: LinkShared,
 }
 
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct SyncAssetBalanceCacheResponseV3 {
+    pub link: LinkShared,
+}
+
 pub type GetLinksResponseV3 = PaginateResult<LinkShared>;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
