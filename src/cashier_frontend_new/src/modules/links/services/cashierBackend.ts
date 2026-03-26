@@ -264,6 +264,30 @@ class CanisterBackendService {
   }
 
   /**
+   * Sync the asset balance cache for a link by querying actual token balances.
+   * Only the link creator can trigger this.
+   * @param linkId The ID of the link to sync.
+   * @returns A Result containing the updated link data or an Error.
+   */
+  async syncAssetBalanceCacheV3(
+    linkId: string,
+  ): Promise<Result<cashierBackend.DisableLinkResponseV3, Error>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_sync_asset_balance_cache(linkId);
+
+    return responseToResult<
+      cashierBackend.DisableLinkResponseV3,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_10).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
+  }
+
+  /**
    * Disable an existing link using the V3 API.
    * @param linkId The ID of the link to disable.
    * @returns A Result containing DisableLinkResponseV3 or an Error.

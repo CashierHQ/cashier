@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   queryState: {
     data: undefined as unknown,
     refresh: vi.fn(),
+    refreshAsync: vi.fn(),
   },
   managedStateOptions: undefined as
     | {
@@ -392,7 +393,7 @@ describe("LinkDetailStoreV3", () => {
       await store.disableLink();
 
       expect(mocks.disableLinkV3).toHaveBeenCalledWith("link-1");
-      expect(mocks.queryState.refresh).toHaveBeenCalled();
+      expect(mocks.queryState.refreshAsync).toHaveBeenCalled();
     });
   });
 });

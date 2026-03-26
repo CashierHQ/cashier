@@ -13,7 +13,7 @@ use cashier_backend_types::{
         },
         link::{
             CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3,
+            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
         },
     },
     service::link::PaginateInput,
@@ -165,6 +165,24 @@ impl LinkTestFixtureV3 {
             .as_ref()
             .unwrap()
             .user_get_links_v3(options)
+            .await
+            .unwrap()
+    }
+
+    /// Sync asset balance cache v3
+    /// # Arguments
+    /// * `link_id` - The ID of the link to sync
+    /// # Returns
+    /// * `SyncAssetBalanceCacheResponseV3` - The updated link data
+    /// * `CanisterError` - Error if the sync fails
+    pub async fn sync_asset_balance_cache_v3(
+        &self,
+        link_id: &str,
+    ) -> Result<SyncAssetBalanceCacheResponseV3, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_sync_asset_balance_cache(link_id)
             .await
             .unwrap()
     }
