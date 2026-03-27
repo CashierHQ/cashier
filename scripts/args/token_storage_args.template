@@ -58,7 +58,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vpyot-zqaaa-aaaaa-qavaq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -70,7 +70,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6yaih-jyaaa-aaaab-aaxia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -82,7 +82,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ithic-qaaaa-aaaab-qc7vq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -94,7 +94,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "xwuv6-lyaaa-aaaad-aaena-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -106,7 +106,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "nxd7c-niaaa-aaaae-qaawa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -118,7 +118,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jy3uz-6iaaa-aaaaf-qao3a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -130,7 +130,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "b2pon-6aaaa-aaaag-abp6q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -142,7 +142,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "agtsn-xyaaa-aaaag-ak3kq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
       }};
@@ -154,7 +154,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "q624g-niaaa-aaaag-alfyq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -166,7 +166,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mjjyq-5yaaa-aaaag-atsnq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -178,7 +178,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "l67es-4iaaa-aaaag-atvda-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -190,7 +190,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ktra4-taaaa-aaaag-atveq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -202,7 +202,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "zbneb-7aaaa-aaaag-at2nq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -214,7 +214,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "z2iye-fyaaa-aaaag-at2pa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -226,7 +226,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "r5ola-uyaaa-aaaag-at3za-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -238,7 +238,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "2virr-waaaa-aaaag-at5ya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -250,7 +250,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "eayyd-iiaaa-aaaah-adtea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -262,7 +262,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pi6cs-kqaaa-aaaah-advfa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -274,7 +274,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "iozql-7iaaa-aaaah-advvq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 420 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -286,7 +286,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "cp4zx-yiaaa-aaaah-aqzea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -298,7 +298,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fnnuy-yqaaa-aaaah-aq6ja-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -310,7 +310,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "maqfl-kaaaa-aaaah-arfyq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -322,7 +322,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "zc5ct-kaaaa-aaaah-qddga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -334,7 +334,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ggi4a-wyaaa-aaaai-actqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -346,7 +346,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ry5ih-gaaaa-aaaai-aqayq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -358,7 +358,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ly36x-wiaaa-aaaai-aqj7q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -370,7 +370,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "xafvr-biaaa-aaaai-aql5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -382,7 +382,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6qfxa-ryaaa-aaaai-qbhsq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC3 } };
       }};
@@ -394,7 +394,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "imeri-bqaaa-aaaai-qnpla-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -406,7 +406,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "j5lhj-xyaaa-aaaai-qpfeq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1483370 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -418,7 +418,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "k762w-hiaaa-aaaai-qpfpq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -430,7 +430,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "o3mvq-caaaa-aaaai-qpfua-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 2000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -442,7 +442,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6zn6a-cyaaa-aaaai-q3m3q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 500000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -454,7 +454,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jwcfb-hyaaa-aaaaj-aac4q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 200000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -466,7 +466,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "aiavr-dyaaa-aaaaj-azt5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -490,7 +490,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "anbw7-hqaaa-aaaaj-az7ra-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -502,7 +502,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "w5t77-riaaa-aaaaj-a2mda-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -514,7 +514,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "o6v37-3iaaa-aaaaj-qa4fa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -526,7 +526,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "przbn-baaaa-aaaaj-qnshq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 25 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -538,7 +538,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bpqth-gaaaa-aaaaj-qntfq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 25 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -550,7 +550,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pmlt4-pqaaa-aaaak-aewmq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -562,7 +562,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pcj6u-uaaaa-aaaak-aewnq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -574,7 +574,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ph45x-riaaa-aaaak-afabq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -586,7 +586,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ifnqy-rqaaa-aaaak-afhmq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -598,7 +598,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "5s2p2-4qaaa-aaaak-afitq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -610,7 +610,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "75bwl-diaaa-aaaak-afi7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -622,7 +622,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "unvj5-dqaaa-aaaak-afjbq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 50000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -634,7 +634,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "wqihv-qyaaa-aaaak-afjoa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -646,7 +646,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "tmt5q-3qaaa-aaaak-afjrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -658,7 +658,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "rynye-6qaaa-aaaak-afj7q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -670,7 +670,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "gfa5z-iaaaa-aaaak-afkaq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -682,7 +682,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "edypu-bqaaa-aaaak-afknq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 4200 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -694,7 +694,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "brbyz-riaaa-aaaak-afkta-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -706,7 +706,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jncxy-2qaaa-aaaak-aflhq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -718,7 +718,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kbvhp-rqaaa-aaaak-aflnq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -730,7 +730,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kttqw-5aaaa-aaaak-afloq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -742,7 +742,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "nattc-jqaaa-aaaak-afl5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -754,7 +754,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "nwd3n-qaaaa-aaaak-afmda-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -766,7 +766,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "o2ul2-3aaaa-aaaak-afmja-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 4206900000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -778,7 +778,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dbjc3-biaaa-aaaak-afnaq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -790,7 +790,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dikjh-xaaaa-aaaak-afnba-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -802,7 +802,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "czaxy-piaaa-aaaak-afneq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -814,7 +814,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "eapww-ziaaa-aaaak-afnqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -826,7 +826,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "obaqf-viaaa-aaaak-ak3na-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -838,7 +838,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3kf65-giaaa-aaaak-qcw2q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -850,7 +850,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "sr5fw-zqaaa-aaaak-qig5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 2500000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -862,7 +862,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "egjwt-lqaaa-aaaak-qi2aa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -874,7 +874,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jizbq-3qaaa-aaaak-qubga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -886,7 +886,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vurva-zqaaa-aaaak-quezq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -898,7 +898,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "iwv6l-6iaaa-aaaal-ajjjq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 50000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -910,7 +910,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lzvx6-nqaaa-aaaal-ajo6q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 420000000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -922,7 +922,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7xkvf-zyaaa-aaaal-ajvra-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -934,7 +934,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "42v33-hyaaa-aaaal-aspca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -946,7 +946,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "uwihq-liaaa-aaaal-qcbrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -958,7 +958,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "n6tkf-tqaaa-aaaal-qsneq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -970,7 +970,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7wg6b-yaaaa-aaaal-qsofq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -982,7 +982,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7rrmx-tyaaa-aaaal-qsraq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -994,7 +994,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "73f6j-5iaaa-aaaal-qsw4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1006,7 +1006,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "xa275-diaaa-aaaam-ab4pq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1018,7 +1018,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mwgzv-jqaaa-aaaam-acfha-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -1030,7 +1030,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bu6jl-aqaaa-aaaam-aciaa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1042,7 +1042,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "cnoir-kyaaa-aaaam-acijq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1054,7 +1054,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "epev2-gaaaa-aaaam-aci7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1066,7 +1066,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "u2mpw-6yaaa-aaaam-aclrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1078,7 +1078,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bq6c7-tqaaa-aaaam-acqya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1090,7 +1090,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lnezh-4aaaa-aaaam-acrba-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1102,7 +1102,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lydik-5iaaa-aaaam-acrcq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1114,7 +1114,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3j5nq-qqaaa-aaaam-acvrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1126,7 +1126,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lfqod-3aaaa-aaaam-ac2rq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1138,7 +1138,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "esbhr-giaaa-aaaam-ac4jq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1150,7 +1150,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mwen2-oqaaa-aaaam-adaca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1162,7 +1162,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "spdsf-5yaaa-aaaam-adcnq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1174,7 +1174,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dguc4-6aaaa-aaaam-adg2q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1186,7 +1186,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "m4q7e-aaaaa-aaaam-adh6q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1198,7 +1198,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ypkpu-uaaaa-aaaam-adihq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1210,7 +1210,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hjfd4-eqaaa-aaaam-adkmq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1250 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
       }};
@@ -1222,7 +1222,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "4pylg-ciaaa-aaaam-adqea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1234,7 +1234,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "744yc-gqaaa-aaaam-adxra-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1246,7 +1246,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pmvba-2aaaa-aaaam-adyta-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1258,7 +1258,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hzvf5-hqaaa-aaaam-adzga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1270,7 +1270,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fnlaj-cqaaa-aaaam-adzia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1282,7 +1282,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "f7nxq-oaaaa-aaaam-adzla-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1294,7 +1294,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ehect-aaaaa-aaaam-adzpa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1306,7 +1306,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "26d5m-tiaaa-aaaam-ad3aq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1318,7 +1318,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "felsj-5qaaa-aaaam-aenia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 200000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1330,7 +1330,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hdqmr-qyaaa-aaaam-qbgxq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1342,7 +1342,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "f6ncz-dqaaa-aaaam-qbgya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1354,7 +1354,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fcjyi-uqaaa-aaaam-qbg2a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1366,7 +1366,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ffi64-ziaaa-aaaam-qbg2q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1378,7 +1378,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "eig2s-waaaa-aaaam-qbg5a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1390,7 +1390,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6fvyi-faaaa-aaaam-qbiga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1402,7 +1402,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "je4he-eqaaa-aaaam-qbl3a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1414,7 +1414,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "n44gr-qyaaa-aaaam-qbuha-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 15000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1426,7 +1426,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "npnnq-naaaa-aaaam-qb7va-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1438,7 +1438,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "2cxs5-rqaaa-aaaam-qcapq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1450,7 +1450,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "e3qnc-cyaaa-aaaam-qccaa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1462,7 +1462,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fw6jm-nqaaa-aaaam-qcchq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1474,7 +1474,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ewfzi-bqaaa-aaaam-qcf4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1486,7 +1486,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ixraq-4iaaa-aaaam-qci5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1498,7 +1498,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "b5zx2-caaaa-aaaam-qcjma-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1510,7 +1510,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7nlx3-baaaa-aaaam-qcuhq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1522,7 +1522,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "2rqn6-kiaaa-aaaam-qcuya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1534,7 +1534,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3jzy5-eiaaa-aaaam-qcu4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1546,7 +1546,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "337pe-iyaaa-aaaam-qcu7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1558,7 +1558,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "qznhl-eqaaa-aaaam-qcvcq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1570,7 +1570,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "to7lz-viaaa-aaaam-qcvka-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1582,7 +1582,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dasnq-xiaaa-aaaam-qcwga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1594,7 +1594,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fcyq3-3qaaa-aaaam-qcwqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1606,7 +1606,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "e5qdm-yiaaa-aaaam-qcwua-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1618,7 +1618,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "egv7j-cqaaa-aaaam-qcwwq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1630,7 +1630,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hndjk-eiaaa-aaaam-qcw4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1642,7 +1642,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hdbec-7yaaa-aaaam-qcw5a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1654,7 +1654,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pwba7-ciaaa-aaaam-qcxia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1666,7 +1666,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ixhus-2iaaa-aaaam-qcxya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1678,7 +1678,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "icaf7-3aaaa-aaaam-qcx3q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1690,7 +1690,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "4k7jk-vyaaa-aaaam-qcyaa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1702,7 +1702,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3my3t-aaaaa-aaaam-qcyqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1714,7 +1714,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "rwdg7-ciaaa-aaaam-qczja-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1726,7 +1726,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "p6vx3-fiaaa-aaaam-qc4yq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1738,7 +1738,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "esfs4-sqaaa-aaaam-qc5ea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1750,7 +1750,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "aoryq-uyaaa-aaaam-qdaaq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1762,7 +1762,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dqa76-tiaaa-aaaam-qdajq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1774,7 +1774,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mnfes-aqaaa-aaaam-qdbna-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1786,7 +1786,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "k2iiu-naaaa-aaaam-qdbya-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1798,7 +1798,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "iddzk-liaaa-aaaam-qdgka-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1810,7 +1810,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3om6e-iqaaa-aaaam-qdo4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1822,7 +1822,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ck73f-syaaa-aaaam-qdtea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1834,7 +1834,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "atuk3-uqaaa-aaaam-qduwa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1846,7 +1846,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "4zmwe-paaaa-aaaam-qdwxa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1858,7 +1858,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kqkoi-fqaaa-aaaam-qdzba-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1870,7 +1870,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3imqk-saaaa-aaaam-qd2ia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1882,7 +1882,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "qdi6h-hiaaa-aaaam-qeqqa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1894,7 +1894,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "qroj6-lyaaa-aaaam-qeqta-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1906,7 +1906,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "2qqix-tiaaa-aaaam-qeria-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1918,7 +1918,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fua74-fyaaa-aaaan-qecrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1930,7 +1930,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "rh2pm-ryaaa-aaaan-qeniq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -1942,7 +1942,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hbjjz-kaaaa-aaaan-qiocq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -1954,7 +1954,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vi5vh-wyaaa-aaaan-qizxa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -1966,7 +1966,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ghvlc-vqaaa-aaaan-qlsca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -1978,7 +1978,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "iczfn-iiaaa-aaaan-qltcq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -1990,7 +1990,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7tvr6-fqaaa-aaaan-qmira-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 420 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2002,7 +2002,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "z3hpp-qaaaa-aaaan-qzmqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2014,7 +2014,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kqigp-jiaaa-aaaan-qzqsq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 42000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2026,7 +2026,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "i2s4q-syaaa-aaaan-qz4sq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
       }};
@@ -2038,7 +2038,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "zix77-6qaaa-aaaao-a4pwq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2050,7 +2050,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kz5t3-pyaaa-aaaap-ab2qq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2062,7 +2062,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "zzsnb-aaaaa-aaaap-ag66q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 5 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2074,7 +2074,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "wexwn-tyaaa-aaaap-ag72a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2086,7 +2086,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "wkv3f-iiaaa-aaaap-ag73a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2098,7 +2098,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "nznw5-iyaaa-aaaap-ahava-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2110,7 +2110,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6phnw-ryaaa-aaaap-ahibq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2122,7 +2122,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ol6zb-5iaaa-aaaap-ahmra-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 112 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2134,7 +2134,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3mpua-viaaa-aaaap-ahpba-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2146,7 +2146,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "r7bws-hiaaa-aaaap-ahr4q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2158,7 +2158,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ob475-vyaaa-aaaap-ahuia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2170,7 +2170,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "dfg2l-2yaaa-aaaap-akpsa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2182,7 +2182,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bd6ig-tiaaa-aaaap-akp7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 50000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2194,7 +2194,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "3am6i-sqaaa-aaaap-anveq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2206,7 +2206,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ysy5f-2qaaa-aaaap-qkmmq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2218,7 +2218,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ku7bj-lyaaa-aaaap-qpocq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2230,7 +2230,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "k25mb-qiaaa-aaaap-qpodq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2242,7 +2242,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "57uyz-cyaaa-aaaap-qpvgq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2254,7 +2254,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7jkyx-oiaaa-aaaap-qpzeq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2266,7 +2266,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "4f5ia-fiaaa-aaaap-qpzoq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2278,7 +2278,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "b3d2q-ayaaa-aaaap-qqcfq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2290,7 +2290,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "zfcdd-tqaaa-aaaaq-aaaga-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2302,7 +2302,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "2ouva-viaaa-aaaaq-aaamq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2314,7 +2314,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7ajy4-sqaaa-aaaaq-aaaqa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2326,7 +2326,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "73mez-iiaaa-aaaaq-aaasq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2338,7 +2338,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6rdgd-kyaaa-aaaaq-aaavq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2350,7 +2350,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "4c4fd-caaaa-aaaaq-aaa3a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2362,7 +2362,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "xsi2v-cyaaa-aaaaq-aabfq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2374,7 +2374,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vtrom-gqaaa-aaaaq-aabia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2386,7 +2386,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "uf2wh-taaaa-aaaaq-aabna-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2398,7 +2398,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "rxdbk-dyaaa-aaaaq-aabtq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2410,7 +2410,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "qbizb-wiaaa-aaaaq-aabwq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2422,7 +2422,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "sotaq-jqaaa-aaaaq-aab2a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 } };
       }};
@@ -2434,7 +2434,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "tyyy3-4aaaa-aaaaq-aab7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2446,7 +2446,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "emww2-4yaaa-aaaaq-aacbq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2458,7 +2458,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "f54if-eqaaa-aaaaq-aacea-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2470,7 +2470,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hvgxa-wqaaa-aaaaq-aacia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2482,7 +2482,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hhaaz-2aaaa-aaaaq-aacla-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2494,7 +2494,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "gemj7-oyaaa-aaaaq-aacnq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2506,7 +2506,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ddsp7-7iaaa-aaaaq-aacqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2518,7 +2518,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "druyg-tyaaa-aaaaq-aactq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2530,7 +2530,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ca6gz-lqaaa-aaaaq-aacwa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2542,7 +2542,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "atbfz-diaaa-aaaaq-aacyq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2554,7 +2554,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bliq2-niaaa-aaaaq-aac4q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2566,7 +2566,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bzohd-byaaa-aaaaq-aac7q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2578,7 +2578,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "k45jy-aiaaa-aaaaq-aadcq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2590,7 +2590,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lrtnw-paaaa-aaaaq-aadfa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2614,7 +2614,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jcmow-hyaaa-aaaaq-aadlq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2626,7 +2626,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "np5km-uyaaa-aaaaq-aadrq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 5000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2638,7 +2638,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "m6xut-mqaaa-aaaaq-aadua-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2650,7 +2650,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mmrdk-aaaaa-aaaaq-aadxa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2674,7 +2674,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "p3dpy-ryaaa-aaaaq-aad7q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2686,7 +2686,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "p7vqo-eyaaa-aaaaq-aaeca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2698,7 +2698,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "o4zzi-qaaaa-aaaaq-aaeeq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2710,7 +2710,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "oj6if-riaaa-aaaaq-aaeha-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 500000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2722,7 +2722,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "mih44-vaaaa-aaaaq-aaekq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2734,7 +2734,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ifwyg-gaaaa-aaaaq-aaeqq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2746,7 +2746,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ixqp7-kqaaa-aaaaq-aaetq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2758,7 +2758,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "jg2ra-syaaa-aaaaq-aaewa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2770,7 +2770,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "lvfsa-2aaaa-aaaaq-aaeyq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2782,7 +2782,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kknbx-zyaaa-aaaaq-aae4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2794,7 +2794,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "kylwo-viaaa-aaaaq-aae7a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 420 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2806,7 +2806,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "b5yyv-uyaaa-aaaaq-aafca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2818,7 +2818,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "um5iw-rqaaa-aaaaq-qaaba-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2842,7 +2842,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "apia6-jaaaa-aaaar-qabma-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2854,7 +2854,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "uxr6i-cyaaa-aaaar-qacyq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2866,7 +2866,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "uztta-ziaaa-aaaar-qaczq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2878,7 +2878,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vizn7-baaaa-aaaar-qac4a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2890,7 +2890,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "vb2gd-xiaaa-aaaar-qac5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2902,7 +2902,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6ejiy-wyaaa-aaaar-qadaq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 0 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
       }};
@@ -2914,7 +2914,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "yfumr-cyaaa-aaaar-qaela-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 4000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2926,7 +2926,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "77xez-aaaaa-aaaar-qaezq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2938,7 +2938,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "r52mc-qaaaa-aaaar-qafzq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 200000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2950,7 +2950,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "hw4ru-taaaa-aaaar-qagdq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2962,7 +2962,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "g4tto-rqaaa-aaaar-qageq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2974,7 +2974,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "gaxj7-gqaaa-aaaar-qaggq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2986,7 +2986,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "etik7-oiaaa-aaaar-qagia-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -2998,7 +2998,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ebo5g-cyaaa-aaaar-qagla-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 34000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3010,7 +3010,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "fxffn-xiaaa-aaaar-qagoa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100000000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3022,7 +3022,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "a6zof-5iaaa-aaaar-qagsa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 100 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3034,7 +3034,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "buwm7-7yaaa-aaaar-qagva-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3046,7 +3046,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "bptq2-faaaa-aaaar-qagxq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3058,7 +3058,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "cngnf-vqaaa-aaaar-qag4q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3070,7 +3070,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "j2tuh-yqaaa-aaaar-qahcq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3082,7 +3082,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ilzky-ayaaa-aaaar-qahha-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3094,7 +3094,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "pe5t5-diaaa-aaaar-qahwa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3106,7 +3106,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "nza5v-qaaaa-aaaar-qahzq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3118,7 +3118,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "y3qt2-4iaaa-aaaar-qaifa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000000000000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3130,7 +3130,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "6c7su-kiaaa-aaaar-qaira-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3142,7 +3142,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "eazb6-tqaaa-aaaar-qan2a-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3154,7 +3154,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "sx3gz-hqaaa-aaaar-qaoca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3166,7 +3166,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "xla44-myaaa-aaaar-qao5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3178,7 +3178,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "5kijx-siaaa-aaaar-qaqda-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3190,7 +3190,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "53nhb-haaaa-aaaar-qbn5q-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3202,7 +3202,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "ij33n-oiaaa-aaaar-qbooa-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3214,7 +3214,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "io25z-dqaaa-aaaar-qbooq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 20 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3226,7 +3226,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "7pail-xaaaa-aaaas-aabmq-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 1000000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
       }};
@@ -3238,7 +3238,7 @@
     record {
       details = variant { IC = record {
         ledger_id = principal "oqvo3-qqaaa-aaaas-aibca-cai";
-        index_id = null;
+        index_id = null : opt principal;
         fee = 10000 : nat;
         supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
       }};
