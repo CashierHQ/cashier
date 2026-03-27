@@ -167,11 +167,17 @@ export interface TokenRegistryMetadata {
   'last_updated' : bigint,
   'version' : bigint,
 }
+export type TokenStorageArgs = { 'Upgrade' : TokenStorageUpgradeData } |
+  { 'Init' : TokenStorageInitData };
 export interface TokenStorageInitData {
   'owner' : Principal,
   'tokens' : [] | [Array<RegistryToken>],
   'ckbtc_minter_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
+}
+export interface TokenStorageUpgradeData {
+  'tokens' : [] | [Array<RegistryToken>],
+  'ckbtc_minter_id' : Principal,
 }
 export interface UpdateBridgeTransactionInputArg {
   'retry_times' : [] | [number],

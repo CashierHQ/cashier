@@ -4,12 +4,16 @@
 use cashier_common::random::init_ic_rand;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
-use token_storage_types::init::{TokenStorageInitData, TokenStorageUpgradeData};
+use token_storage_types::init::TokenStorageArgs;
 
 use crate::{api::state::get_state, services::auth::Permission};
 
 #[init]
-fn init(init_data: TokenStorageInitData) {
+fn init(args: TokenStorageArgs) {
+    let init_data = match args {
+        TokenStorageArgs::Init(data) => data,
+        _ => ic_cdk::trap("Expected Init variant for canister init"),
+    };
     let log_config = init_data.log_settings.unwrap_or_default();
     let mut state = get_state();
 
@@ -52,7 +56,11 @@ fn init(init_data: TokenStorageInitData) {
 fn pre_upgrade() {}
 
 #[post_upgrade]
-fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
+fn post_upgrade(args: TokenStorageArgs) {
+    let upgrade_data = match args {
+        TokenStorageArgs::Upgrade(data) => data,
+        _ => ic_cdk::trap("Expected Upgrade variant for canister upgrade"),
+    };
     let mut state = get_state();
 
     if let Err(err) = state.log_service.init(None) {

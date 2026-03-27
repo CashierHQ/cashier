@@ -1,0 +1,4 @@
+(variant { Upgrade = record {
+  ckbtc_minter_id= principal "__CKBTC_MINTER_ID__";
+__TOKENS__
+}})

@@ -1,0 +1,10 @@
+(variant { Init = record {
+  log_settings=opt record {
+    enable_console=opt true;
+    in_memory_records=opt 10000;
+    log_filter=opt "__LOG_FILTER__";
+  };
+  owner=principal "__OWNER__";
+  ckbtc_minter_id= principal "__CKBTC_MINTER_ID__";
+__TOKENS__
+}})

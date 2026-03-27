@@ -20,6 +20,10 @@ export const idlFactory = ({ IDL }) => {
     'details' : ChainTokenDetails,
     'symbol' : IDL.Text,
   });
+  const TokenStorageUpgradeData = IDL.Record({
+    'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
+    'ckbtc_minter_id' : IDL.Principal,
+  });
   const LogServiceSettings = IDL.Record({
     'log_filter' : IDL.Opt(IDL.Text),
     'in_memory_records' : IDL.Opt(IDL.Nat64),
@@ -31,6 +35,10 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'ckbtc_minter_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
+  });
+  const TokenStorageArgs = IDL.Variant({
+    'Upgrade' : TokenStorageUpgradeData,
+    'Init' : TokenStorageInitData,
   });
   const TokenRegistryMetadata = IDL.Record({
     'last_updated' : IDL.Nat64,
@@ -350,6 +358,10 @@ export const init = ({ IDL }) => {
     'details' : ChainTokenDetails,
     'symbol' : IDL.Text,
   });
+  const TokenStorageUpgradeData = IDL.Record({
+    'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
+    'ckbtc_minter_id' : IDL.Principal,
+  });
   const LogServiceSettings = IDL.Record({
     'log_filter' : IDL.Opt(IDL.Text),
     'in_memory_records' : IDL.Opt(IDL.Nat64),
@@ -362,5 +374,9 @@ export const init = ({ IDL }) => {
     'ckbtc_minter_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
-  return [TokenStorageInitData];
+  const TokenStorageArgs = IDL.Variant({
+    'Upgrade' : TokenStorageUpgradeData,
+    'Init' : TokenStorageInitData,
+  });
+  return [TokenStorageArgs];
 };

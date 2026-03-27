@@ -3,7 +3,7 @@
 
 use candid::{Nat, Principal};
 use token_storage_types::{
-    init::TokenStorageUpgradeData,
+    init::{TokenStorageArgs, TokenStorageUpgradeData},
     token::{ChainTokenDetails, IcrcStandard, RegistryToken},
 };
 
@@ -88,10 +88,10 @@ async fn should_upgrade_with_tokens_upsert() {
             ctx.token_storage_principal,
             None,
             get_token_storage_canister_bytecode(),
-            (TokenStorageUpgradeData {
+            (TokenStorageArgs::Upgrade(TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
                 tokens: Some(vec![new_token]),
-            },),
+            }),),
         )
         .await;
 
@@ -123,10 +123,10 @@ async fn should_upgrade_without_tokens_preserve_registry() {
             ctx.token_storage_principal,
             None,
             get_token_storage_canister_bytecode(),
-            (TokenStorageUpgradeData {
+            (TokenStorageArgs::Upgrade(TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
                 tokens: None,
-            },),
+            }),),
         )
         .await;
 
@@ -174,10 +174,10 @@ async fn should_upgrade_upsert_existing_token() {
             ctx.token_storage_principal,
             None,
             get_token_storage_canister_bytecode(),
-            (TokenStorageUpgradeData {
+            (TokenStorageArgs::Upgrade(TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
                 tokens: Some(vec![updated_icp]),
-            },),
+            }),),
         )
         .await;
 

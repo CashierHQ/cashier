@@ -70,15 +70,30 @@ build_backend_args owner token_storage_canister_id log_filter file_name:
     scripts/args/backend_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
-# Build token_storage canister args and save to file
+# Build token_storage canister INIT args (for install/reinstall mode)
+# Usage: just build_token_storage_init_args <owner_principal> <log_filter> <ckbtc_minter_principal> <output_file>
+# Example: just build_token_storage_init_args "useor-pyaaa-aaaad-ac2ya-cai" "global,cashier=debug,token_storage=debug" "mqygn-kiaaa-aaaar-qaadq-cai" token_storage_args.txt
 [group('orbit')]
-build_token_storage_args owner log_filter ckbtc_minter_id file_name:
+build_token_storage_init_args owner log_filter ckbtc_minter_id file_name:
   #!/usr/bin/env bash
   sed \
     -e 's/__OWNER__/{{owner}}/g' \
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     -e 's/__CKBTC_MINTER_ID__/{{ckbtc_minter_id}}/g' \
-    scripts/args/token_storage_args.template \
+    scripts/args/token_storage_init_args.template \
+    | sed -e '/__TOKENS__/r scripts/args/token_storage_tokens.template' -e '/__TOKENS__/d' \
+    | tr -d '\n' | tr -s ' ' > {{file_name}}
+
+# Build token_storage canister UPGRADE args (for upgrade mode)
+# Usage: just build_token_storage_upgrade_args <ckbtc_minter_principal> <output_file>
+# Example: just build_token_storage_upgrade_args "mqygn-kiaaa-aaaar-qaadq-cai" token_storage_args.txt
+[group('orbit')]
+build_token_storage_upgrade_args ckbtc_minter_id file_name:
+  #!/usr/bin/env bash
+  sed \
+    -e 's/__CKBTC_MINTER_ID__/{{ckbtc_minter_id}}/g' \
+    scripts/args/token_storage_upgrade_args.template \
+    | sed -e '/__TOKENS__/r scripts/args/token_storage_tokens.template' -e '/__TOKENS__/d' \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Encode candid args and compute SHA-256 checksum of the raw bytes

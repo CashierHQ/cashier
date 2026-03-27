@@ -30,7 +30,7 @@ use std::{
 };
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::{
-    init::TokenStorageInitData,
+    init::{TokenStorageArgs, TokenStorageInitData},
     token::{ChainTokenDetails, IcrcStandard, RegistryToken},
 };
 
@@ -144,7 +144,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
         &client,
         None,
         get_token_storage_canister_bytecode(),
-        &(TokenStorageInitData {
+        &(TokenStorageArgs::Init(TokenStorageInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::TokenStorageAdmin.get_principal(),
             tokens: Some(vec![
@@ -218,7 +218,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
             ]),
             ckbtc_minter_id: ckbtc_minter_principal,
-        }),
+        })),
     )
     .await;
 

@@ -4,6 +4,13 @@ use serde::Deserialize;
 
 use crate::token::RegistryToken;
 
+/// Canister argument enum for both init and upgrade
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub enum TokenStorageArgs {
+    Init(TokenStorageInitData),
+    Upgrade(TokenStorageUpgradeData),
+}
+
 /// These are the arguments which are taken by the token_storage canister init fn
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct TokenStorageInitData {

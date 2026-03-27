@@ -156,7 +156,14 @@ jobs:
           ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
           token_storage_canister_id=${{ vars.TOKEN_STORAGE_CANISTER_ID }}
           just build_backend_args "$owner" "$token_storage_canister_id" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
-          just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args.txt
+
+          # Use init or upgrade template based on deploy mode
+          if [ "${{ env.MODE }}" = "install" ] || [ "${{ env.MODE }}" = "reinstall" ]; then
+            just build_token_storage_init_args "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args.txt
+          else
+            just build_token_storage_upgrade_args "$ckbtc_minter_id" token_storage_args.txt
+          fi
+
           echo "Backend args:"
           cat backend_args.txt
           echo ""
