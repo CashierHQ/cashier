@@ -202,17 +202,17 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
       token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
   })" {{network}}
 
-# Deploys the token_storage canister
-# params 
+# Deploys the token_storage canister (init mode - install/reinstall)
+# params
 # owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug" mode="":
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
-  dfx deploy token_storage --argument "(record {
+  dfx deploy token_storage --argument "(variant { Init = record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       tokens = opt vec {
@@ -270,7 +270,20 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
       };
       ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
-  })" {{network}} {{mode}} --yes
+  }})" {{network}} --yes
+
+# Upgrades the token_storage canister
+# params
+# network: dfx network flag, e.g. --network=dev
+[private]
+dfx_upgrade_token_storage network="":
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy token_storage --argument "(variant { Upgrade = record {
+      ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
+      tokens = null;
+  }})" {{network}} --mode=upgrade --yes
 
 # Deploy Gate canister
 # params:
@@ -607,4 +620,4 @@ dfx_mainnet_deploy_token_storage:
   set -e
 
   export OWNER=$(dfx identity get-principal)
-  just dfx_deploy_token_storage "${OWNER}" "--network=ic" "global,cashier=debug,token_storage=debug" "--mode=upgrade"
+  just dfx_upgrade_token_storage "--network=ic"
