@@ -466,7 +466,9 @@ describe("LinkCreationStoreV3", () => {
 
   describe("dispose", () => {
     it("should be safe to call multiple times", () => {
-      const store = new LinkCreationStoreV3(makeDraftLink({ id: "dispose-v3" }));
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({ id: "dispose-v3" }),
+      );
       expect(() => {
         store.dispose();
         store.dispose();

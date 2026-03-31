@@ -1,11 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  vi,
-} from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { LinkState } from "../../links/types/link/linkState";
 import { LinkType } from "../../links/types/link/linkType";

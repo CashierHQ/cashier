@@ -90,19 +90,18 @@
   });
 
   // Token map for fee forecast: wallet list + synthetic ICP when missing (forecast requires ICP for creation fee row)
-  const tokensForFeeForecast = $derived.by((): Record<
-    string,
-    TokenWithPriceAndBalance
-  > => {
-    const map: Record<string, TokenWithPriceAndBalance> = Object.fromEntries(
-      (walletStore.query.data ?? []).map((t) => [t.address, t]),
-    );
-    const icpAddr = feeService.getLinkCreationFee().tokenAddress;
-    if (!map[icpAddr]) {
-      map[icpAddr] = syntheticIcpTokenForFees();
-    }
-    return map;
-  });
+  const tokensForFeeForecast = $derived.by(
+    (): Record<string, TokenWithPriceAndBalance> => {
+      const map: Record<string, TokenWithPriceAndBalance> = Object.fromEntries(
+        (walletStore.query.data ?? []).map((t) => [t.address, t]),
+      );
+      const icpAddr = feeService.getLinkCreationFee().tokenAddress;
+      if (!map[icpAddr]) {
+        map[icpAddr] = syntheticIcpTokenForFees();
+      }
+      return map;
+    },
+  );
 
   // Forecast link creation fees for preview
   const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {

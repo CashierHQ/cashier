@@ -508,7 +508,6 @@
       {/if}
     </div>
   </div>
-
 {/if}
 
 {#if showTxCart && linkStore && linkStore.action && linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW}
