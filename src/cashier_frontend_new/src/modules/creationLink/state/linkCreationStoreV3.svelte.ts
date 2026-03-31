@@ -56,6 +56,7 @@ export class LinkCreationStoreV3 {
   #backendAction = $state<SharedAction | undefined>();
   #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
+  #draftSyncDispose: (() => void) | undefined;
 
   constructor(draftLink: SharedLink) {
     this.#id = draftLink.id;
@@ -63,14 +64,23 @@ export class LinkCreationStoreV3 {
 
     this.#draftLink = draftLink;
 
-    $effect(() => {
-      // Access reactive state to track changes
-      void this.#draftLink;
-      void this.#state;
+    // $effect.root: constructor may run from async code (e.g. RouteGuard fetch);
+    // nested $effect alone would throw effect_orphan after await.
+    this.#draftSyncDispose = $effect.root(() => {
+      $effect(() => {
+        // Access reactive state to track changes
+        void this.#draftLink;
+        void this.#state;
 
-      // Sync on changes (async, no await needed in effect)
-      this.syncDraftLinkToStorage();
+        // Sync on changes (async, no await needed in effect)
+        this.syncDraftLinkToStorage();
+      });
     });
+  }
+
+  dispose(): void {
+    this.#draftSyncDispose?.();
+    this.#draftSyncDispose = undefined;
   }
 
   get state(): LinkCreationStateV3 {

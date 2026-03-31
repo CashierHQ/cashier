@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+} from "vitest";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { LinkState } from "../../links/types/link/linkState";
 import { LinkType } from "../../links/types/link/linkType";
@@ -87,6 +94,7 @@ describe("LinkCreationStore", () => {
   });
 
   afterEach(() => {
+    store.dispose();
     vi.restoreAllMocks();
   });
 
@@ -124,6 +132,7 @@ describe("LinkCreationStore", () => {
       expect(newStore.createLinkData.title).toBe("Test Link");
       expect(newStore.createLinkData.maxUse).toBe(5);
       expect(newStore.state.step).toBe(LinkStep.ADD_ASSET);
+      newStore.dispose();
     });
 
     it("should initialize with CHOOSING_TYPE state", () => {
@@ -142,6 +151,7 @@ describe("LinkCreationStore", () => {
       const newStore = new LinkCreationStore(tempLink);
 
       expect(newStore.state.step).toBe(LinkStep.CHOOSE_TYPE);
+      newStore.dispose();
     });
 
     it("should initialize with PREVIEW state", () => {
@@ -160,6 +170,7 @@ describe("LinkCreationStore", () => {
       const newStore = new LinkCreationStore(tempLink);
 
       expect(newStore.state.step).toBe(LinkStep.PREVIEW);
+      newStore.dispose();
     });
 
     it("should initialize with CREATE_LINK state", () => {
@@ -178,6 +189,7 @@ describe("LinkCreationStore", () => {
       const newStore = new LinkCreationStore(tempLink);
 
       expect(newStore.state.step).toBe(LinkStep.CREATED);
+      newStore.dispose();
     });
 
     it("should initialize with link and action as undefined", () => {
@@ -197,6 +209,28 @@ describe("LinkCreationStore", () => {
 
       expect(newStore.link).toBeUndefined();
       expect(newStore.action).toBeUndefined();
+      newStore.dispose();
+    });
+  });
+
+  describe("dispose", () => {
+    it("should be safe to call multiple times", () => {
+      const tempLink = new TempLink(
+        "dispose-test",
+        BigInt(Date.now()),
+        LinkState.CHOOSING_TYPE,
+        new CreateLinkData({
+          title: "",
+          linkType: LinkType.TIP,
+          assets: [],
+          maxUse: 1,
+        }),
+      );
+      const s = new LinkCreationStore(tempLink);
+      expect(() => {
+        s.dispose();
+        s.dispose();
+      }).not.toThrow();
     });
   });
 
@@ -243,6 +277,7 @@ describe("LinkCreationStore", () => {
         },
         owner: "test-owner",
       });
+      store.dispose();
     });
 
     it("should sync temp link when called with ADD_ASSET state", async () => {
@@ -270,6 +305,7 @@ describe("LinkCreationStore", () => {
         },
         owner: "test-owner",
       });
+      store.dispose();
     });
 
     it("should sync temp link when called with PREVIEW state", async () => {
@@ -297,6 +333,7 @@ describe("LinkCreationStore", () => {
         },
         owner: "test-owner",
       });
+      store.dispose();
     });
 
     it("should not sync when step is CREATED", async () => {
@@ -317,6 +354,7 @@ describe("LinkCreationStore", () => {
       await store.syncTempLink();
 
       expect(tempLinkRepository.update).not.toHaveBeenCalled();
+      store.dispose();
     });
 
     it("should not sync when authState.account is undefined", async () => {
@@ -341,6 +379,7 @@ describe("LinkCreationStore", () => {
       await store.syncTempLink();
 
       expect(tempLinkRepository.update).not.toHaveBeenCalled();
+      store.dispose();
     });
   });
 

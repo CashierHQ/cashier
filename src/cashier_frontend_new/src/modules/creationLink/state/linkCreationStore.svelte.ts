@@ -46,6 +46,7 @@ export class LinkCreationStore {
   public link_shared = $state<SharedLink | undefined>();
   public action_shared = $state<SharedAction | undefined>();
   #id = $state<string>();
+  #tempSyncDispose: (() => void) | undefined;
 
   constructor(tempLink: TempLink) {
     this.#id = tempLink.id;
@@ -55,14 +56,21 @@ export class LinkCreationStore {
     this.link = undefined;
     this.action = undefined;
 
-    $effect(() => {
-      // Access reactive state to track changes
-      void this.createLinkData;
-      void this.#state;
+    this.#tempSyncDispose = $effect.root(() => {
+      $effect(() => {
+        // Access reactive state to track changes
+        void this.createLinkData;
+        void this.#state;
 
-      // Sync on changes (async, no await needed in effect)
-      this.syncTempLink();
+        // Sync on changes (async, no await needed in effect)
+        this.syncTempLink();
+      });
     });
+  }
+
+  dispose(): void {
+    this.#tempSyncDispose?.();
+    this.#tempSyncDispose = undefined;
   }
 
   get state(): LinkCreationState {

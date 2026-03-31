@@ -3,6 +3,7 @@ import { GuardContext } from "./context.svelte";
 import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 
 // Mock the auth and userProfile modules using vi.hoisted
 const { mockAuthState, mockUserProfile } = vi.hoisted(() => ({
@@ -133,6 +134,101 @@ describe("GuardContext", () => {
       context.setLinkCreationStore(mockStore);
 
       expect(context.linkCreationStore).toBe(mockStore);
+    });
+
+    it("should clear linkCreationStore when set to null", () => {
+      const mockStore = { link: null } as unknown as LinkCreationStore;
+      context.setLinkCreationStore(mockStore);
+      context.setLinkCreationStore(null);
+
+      expect(context.linkCreationStore).toBeNull();
+    });
+
+    it("should call dispose on previous store when replacing", () => {
+      const disposeA = vi.fn();
+      const disposeB = vi.fn();
+      const storeA = {
+        link: null,
+        dispose: disposeA,
+      } as unknown as LinkCreationStore;
+      const storeB = {
+        link: null,
+        dispose: disposeB,
+      } as unknown as LinkCreationStore;
+
+      context.setLinkCreationStore(storeA);
+      context.setLinkCreationStore(storeB);
+
+      expect(disposeA).toHaveBeenCalledOnce();
+      expect(disposeB).not.toHaveBeenCalled();
+      expect(context.linkCreationStore).toBe(storeB);
+    });
+
+    it("should call dispose when clearing with null after a store with dispose", () => {
+      const dispose = vi.fn();
+      const storeWithDispose = {
+        link: null,
+        dispose,
+      } as unknown as LinkCreationStore;
+
+      context.setLinkCreationStore(storeWithDispose);
+      context.setLinkCreationStore(null);
+
+      expect(dispose).toHaveBeenCalledOnce();
+      expect(context.linkCreationStore).toBeNull();
+    });
+  });
+
+  describe("setLinkCreationStoreV3", () => {
+    it("should set linkCreationStoreV3", () => {
+      const mockStore = {
+        state: { step: "CHOOSE_TYPE" },
+      } as unknown as LinkCreationStoreV3;
+      context.setLinkCreationStoreV3(mockStore);
+
+      expect(context.linkCreationStoreV3).toBe(mockStore);
+    });
+
+    it("should clear linkCreationStoreV3 when set to null", () => {
+      const mockStore = {
+        state: { step: "CHOOSE_TYPE" },
+      } as unknown as LinkCreationStoreV3;
+      context.setLinkCreationStoreV3(mockStore);
+      context.setLinkCreationStoreV3(null);
+
+      expect(context.linkCreationStoreV3).toBeNull();
+    });
+
+    it("should call dispose on previous V3 store when replacing", () => {
+      const disposeA = vi.fn();
+      const disposeB = vi.fn();
+      const storeA = {
+        state: { step: "PREVIEW" },
+        dispose: disposeA,
+      } as unknown as LinkCreationStoreV3;
+      const storeB = {
+        state: { step: "PREVIEW" },
+        dispose: disposeB,
+      } as unknown as LinkCreationStoreV3;
+
+      context.setLinkCreationStoreV3(storeA);
+      context.setLinkCreationStoreV3(storeB);
+
+      expect(disposeA).toHaveBeenCalledOnce();
+      expect(disposeB).not.toHaveBeenCalled();
+    });
+
+    it("should call dispose when clearing V3 with null", () => {
+      const dispose = vi.fn();
+      const store = {
+        state: { step: "CREATED" },
+        dispose,
+      } as unknown as LinkCreationStoreV3;
+
+      context.setLinkCreationStoreV3(store);
+      context.setLinkCreationStoreV3(null);
+
+      expect(dispose).toHaveBeenCalledOnce();
     });
   });
 
