@@ -14,6 +14,22 @@ const tokenImageCache = new SvelteMap<string, string>();
 const loadingAddresses = new Set<string>();
 
 /**
+ * IC Explorer image CDN does not send Access-Control-Allow-Origin.
+ * Browser fetch() and canvas export after <img> load therefore always fail from our origin.
+ * Using the HTTPS URL as cache value is correct: <img src> loads without CORS.
+ */
+function isIcExplorerTokenImageUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return (
+      u.hostname === "api.icexplorer.io" && u.pathname.startsWith("/images/")
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get cached token image if available
  * This function is reactive - SvelteMap provides reactivity automatically
  * @param address Token address (canister ID)
@@ -60,6 +76,13 @@ export async function loadTokenImage(
   loadingAddresses.add(address);
 
   try {
+    if (isIcExplorerTokenImageUrl(imageUrl)) {
+      tokenImageCache.set(address, imageUrl);
+      const preload = new Image();
+      preload.src = imageUrl;
+      return;
+    }
+
     // First, try to fetch as blob (works with octet-stream and all content types)
     try {
       const response = await fetch(imageUrl, {
@@ -92,13 +115,8 @@ export async function loadTokenImage(
       // Store data URL in cache - this prevents any future network requests
       tokenImageCache.set(address, dataUrl);
       return;
-    } catch (fetchError) {
+    } catch {
       // If fetch fails (e.g., CORS or network error), fall back to Image object
-      console.warn(
-        `[ImageCache] Fetch failed for ${address}, trying Image fallback:`,
-        fetchError,
-      );
-
       // Fallback: Use Image object to load image
       const img = new Image();
 
@@ -118,11 +136,8 @@ export async function loadTokenImage(
               resolve();
               return;
             }
-          } catch (canvasError) {
-            console.warn(
-              `[ImageCache] Canvas conversion failed for ${address}:`,
-              canvasError,
-            );
+          } catch {
+            // Cross-origin image without CORS: canvas is tainted; keep original URL
           }
 
           // If canvas conversion failed, store original URL
@@ -159,11 +174,7 @@ export async function loadTokenImage(
         }
       });
     }
-  } catch (error) {
-    console.warn(
-      `[ImageCache] Failed to load image for token ${address}:`,
-      error,
-    );
+  } catch {
     // Don't throw - continue loading other images
   } finally {
     // Remove from loading set
