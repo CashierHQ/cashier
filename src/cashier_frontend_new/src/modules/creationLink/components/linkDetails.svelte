@@ -15,37 +15,8 @@
   } from "$modules/links/utils/linkItemHelpers";
   import { feeService } from "$modules/shared/services/feeService";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { ICP_LEDGER_FEE } from "$modules/token/constants";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { TokenStandard } from "$modules/token/types/tokenStandard";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { toast } from "svelte-sonner";
-  import { Ok } from "ts-results-es";
-
-  function syntheticIcpTokenForFees(): TokenWithPriceAndBalance {
-    const cfg = feeService.getLinkCreationFee();
-    return {
-      name: "Internet Computer",
-      symbol: cfg.symbol,
-      address: cfg.tokenAddress,
-      decimals: cfg.decimals,
-      enabled: true,
-      fee: ICP_LEDGER_FEE,
-      is_default: true,
-      balance: 0n,
-      priceUSD: 0,
-      tokenStandards: [TokenStandard.ICRC1],
-    };
-  }
-
-  function findTokenForFeeBreakdown(address: string) {
-    const fromWallet = walletStore.findTokenByAddress(address);
-    if (fromWallet.isOk()) return fromWallet;
-    if (address === feeService.getLinkCreationFee().tokenAddress) {
-      return Ok(syntheticIcpTokenForFees());
-    }
-    return fromWallet;
-  }
 
   const {
     link,
@@ -89,28 +60,18 @@
     );
   });
 
-  // Token map for fee forecast: wallet list + synthetic ICP when missing (forecast requires ICP for creation fee row)
-  const tokensForFeeForecast = $derived.by(
-    (): Record<string, TokenWithPriceAndBalance> => {
-      const map: Record<string, TokenWithPriceAndBalance> = Object.fromEntries(
-        (walletStore.query.data ?? []).map((t) => [t.address, t]),
-      );
-      const icpAddr = feeService.getLinkCreationFee().tokenAddress;
-      if (!map[icpAddr]) {
-        map[icpAddr] = syntheticIcpTokenForFees();
-      }
-      return map;
-    },
-  );
-
   // Forecast link creation fees for preview
   const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
     if (!link.assets || link.assets.length === 0) return [];
 
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+
     const forecastResult = feeService.forecastLinkCreationFees(
       link.assets,
       link.maxUse,
-      tokensForFeeForecast,
+      tokens,
     );
 
     if (forecastResult.isErr()) {
@@ -142,7 +103,7 @@
   const feesBreakdown = $derived.by(() => {
     return buildPreviewFeesBreakdown(
       forecastLinkCreationFees,
-      findTokenForFeeBreakdown,
+      walletStore.findTokenByAddress.bind(walletStore),
     );
   });
 

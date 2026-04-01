@@ -16,10 +16,20 @@
     AnalyticsEvent,
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
+  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+  import type {
+    AddAssetItem,
+    GenericCreationLinkStoreVM,
+  } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
@@ -33,11 +43,17 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkStep } from "$modules/links/types/linkStep";
   import {
     getLinkTypeText,
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
+  import { feeService } from "$modules/shared/services/feeService";
+  import type {
+    AssetAndFeeList,
+    ForecastAssetAndFee,
+  } from "$modules/shared/types/feeService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
@@ -75,7 +91,24 @@
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
   let lastClickWasOnButton = $state(false);
+  let shouldShowCongratulations = $state(false);
   let detailsLandingTracked = $state(false);
+  let showFeeInfoDrawer = $state(false);
+
+  function assetAndFeeListToForecastShape(
+    list: AssetAndFeeList,
+  ): ForecastAssetAndFee[] {
+    return list.map((item) => ({
+      asset: {
+        label: item.asset.label,
+        symbol: item.asset.symbol,
+        address: item.asset.address,
+        amount: item.asset.amountFormattedStr,
+        usdValueStr: item.asset.usdValueStr,
+      },
+      fee: item.fee,
+    }));
+  }
 
   // Track Link details page load (Withdraw funnel)
   $effect(() => {
@@ -103,10 +136,16 @@
     }
   });
 
-  // Transfer-pending links belong on the create flow, not detail (bookmarks / direct URL)
+  // Watch for link state change from CREATE_LINK to ACTIVE to show congratulations drawer
   $effect(() => {
-    if (linkStore?.link?.state === LinkState.CREATE_LINK) {
-      goto(resolve(`/link/create/${id}`), { replaceState: true });
+    if (
+      linkStore &&
+      shouldShowCongratulations &&
+      linkStore.link &&
+      linkStore.link.state === LinkState.ACTIVE
+    ) {
+      showCongratulationsDrawer = true;
+      shouldShowCongratulations = false;
     }
   });
 
@@ -129,10 +168,176 @@
     );
   });
 
+  // Build assetAndFee from action (from backend) for CREATE_LINK state.
+  // Same source as LinkTxCart - fees from backend action, not frontend forecast.
+  const createLinkActionAssetAndFee = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK
+    ) {
+      return [];
+    }
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    // Primary: use action from backend (logged-in user)
+    if (linkStore.action) {
+      const walletPrincipal = authState.account?.owner;
+      if (!walletPrincipal) return [];
+
+      return feeService.buildFromAction(
+        linkStore.action,
+        Number(linkStore.link.link_use_action_max_count),
+        tokens,
+        walletPrincipal,
+      );
+    }
+
+    return [];
+  });
+
+  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
+  const createLinkForecastAssetAndFee = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK ||
+      linkStore.action
+    ) {
+      return [];
+    }
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const maxUse = Number(linkStore.link.link_use_action_max_count);
+
+    if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
+      return [];
+    }
+
+    const linkAssets: CreateLinkAsset[] = linkStore.link.asset_info
+      .map((ai) => {
+        const address = ai.asset.address?.toString();
+        if (!address) return null;
+        return new CreateLinkAsset(address, ai.amount_per_link_use_action);
+      })
+      .filter((a): a is CreateLinkAsset => a !== null);
+
+    const result = feeService.forecastLinkCreationFees(
+      linkAssets,
+      maxUse,
+      tokens,
+    );
+    if (result.isErr()) {
+      return [];
+    }
+    return result.unwrap();
+  });
+
+  // Total fees in USD from backend action (CREATE_LINK state)
+  const totalFeesUsd = $derived.by(() => {
+    const feesSource =
+      createLinkActionAssetAndFee.length > 0
+        ? createLinkActionAssetAndFee
+        : createLinkForecastAssetAndFee;
+
+    return feesSource.reduce(
+      (total, item) => total + (item.fee?.usdValue ?? 0),
+      0,
+    );
+  });
+
+  const createLinkFeesBreakdown = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK
+    ) {
+      return [];
+    }
+
+    if (createLinkActionAssetAndFee.length > 0) {
+      return feeService.buildBreakdown(
+        createLinkActionAssetAndFee,
+        walletStore.query.data ?? [],
+      );
+    }
+
+    return buildPreviewFeesBreakdown(
+      createLinkForecastAssetAndFee,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  function handleFeeBreakdownClick() {
+    if (createLinkFeesBreakdown.length === 0) return;
+    showFeeInfoDrawer = true;
+  }
+
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
     if (!linkStore || !linkStore.link) return false;
     return isSendLinkType(linkStore.link.link_type);
+  });
+
+  /** Rows for YouSendPreview: backend action when present, else forecast (e.g. logged out). */
+  const createLinkYouSendForecastRows = $derived.by((): ForecastAssetAndFee[] => {
+    if (
+      !linkStore?.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK ||
+      !isSendLink
+    ) {
+      return [];
+    }
+    if (createLinkActionAssetAndFee.length > 0) {
+      return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
+    }
+    return createLinkForecastAssetAndFee;
+  });
+
+  /** Minimal VM so YouSendPreview can read createLinkData (maxUse, linkType) like linkDetails.svelte. */
+  const youSendPreviewLinkVm = $derived.by(():
+    | GenericCreationLinkStoreVM
+    | undefined => {
+    const l = linkStore?.link;
+    if (
+      !linkStore ||
+      !l ||
+      l.state !== LinkState.CREATE_LINK ||
+      !isSendLink
+    ) {
+      return undefined;
+    }
+    const addons: AddAssetItem[] = (l.asset_info ?? [])
+      .map((ai) => {
+        const addr = ai.asset.address?.toText();
+        if (!addr) return null;
+        return {
+          address: addr,
+          useAmount: ai.amount_per_link_use_action,
+        };
+      })
+      .filter((x): x is AddAssetItem => x !== null);
+
+    return {
+      id: l.id,
+      backendId: l.id,
+      step: LinkStep.CREATED,
+      linkType: l.link_type,
+      createLinkData: {
+        title: l.title ?? "",
+        linkType: l.link_type,
+        assets: addons,
+        maxUse: Number(l.link_use_action_max_count),
+      },
+      action: linkStore.action,
+      setLinkType: () => {},
+      goNext: async () => {},
+      goBack: async () => {},
+    };
   });
 
   // Check if link type is receive link
@@ -162,6 +367,7 @@
   // Transaction lock status based on link state
   // ACTIVE -> Unlock (can end link, copy link)
   // INACTIVE -> Lock (can withdraw)
+  // CREATE_LINK -> Unlock (can create)
   const transactionLockStatus = $derived.by(() => {
     if (!linkStore || !linkStore.link)
       return locale.t("links.linkForm.preview.transactionLockUnlock");
@@ -173,6 +379,8 @@
         return locale.t("links.linkForm.preview.transactionLockLock");
       case LinkState.INACTIVE_ENDED:
         return locale.t("links.linkForm.preview.transactionLockEnded");
+      case LinkState.CREATE_LINK:
+        return locale.t("links.linkForm.preview.transactionLockUnlock");
       default:
         return locale.t("links.linkForm.preview.transactionLockUnlock");
     }
@@ -293,6 +501,10 @@
     showTxCart = false;
   }
 
+  function openDrawer() {
+    showTxCart = true;
+  }
+
   async function createWithdrawAction() {
     if (!linkStore) throw new Error("Link store is missing");
     if (linkStore.link) {
@@ -355,6 +567,8 @@
   async function handleProcessAction(): Promise<ProcessActionResult> {
     if (!linkStore) throw new Error("Link store is missing");
 
+    // Store previous state to check if it was CREATE_LINK
+    const wasCreateLink = linkStore.link?.state === LinkState.CREATE_LINK;
     const wasWithdraw =
       linkStore.action?.type === ActionType.WITHDRAW && linkStore.link;
 
@@ -366,11 +580,21 @@
           BE_link_id: linkStore.link.id ?? "",
         });
       }
+      // Set flag to show congratulations if link was in CREATE_LINK state
+      if (wasCreateLink) {
+        shouldShowCongratulations = true;
+      }
 
       // Store already updated by processAction (e.g. setFromProcessResult for withdraw)
       toast.success(
         locale.t("links.linkForm.detail.messages.transactionSuccess"),
       );
+
+      // Check immediately if state is already ACTIVE (in case refresh was fast)
+      if (wasCreateLink && linkStore.link?.state === LinkState.ACTIVE) {
+        showCongratulationsDrawer = true;
+        shouldShowCongratulations = false;
+      }
     } else {
       toast.error(locale.t("links.linkForm.detail.messages.transactionFailed"));
     }
@@ -384,10 +608,11 @@
       linkStore.action &&
       linkStore.action.state !== ActionState.SUCCESS
     ) {
-      // Open txCart for INACTIVE (withdraw) actions
+      // Open txCart for CREATE_LINK or INACTIVE (withdraw) actions
       if (
-        linkStore.link.state === LinkState.INACTIVE &&
-        linkStore.action.type === ActionType.WITHDRAW
+        linkStore.link.state === LinkState.CREATE_LINK ||
+        (linkStore.link.state === LinkState.INACTIVE &&
+          linkStore.action.type === ActionType.WITHDRAW)
       ) {
         showTxCart = true;
       }
@@ -424,18 +649,37 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 5: Usage Info -->
-      <UsageInfoSection
-        {assetsWithTokenInfo}
-        {failedImageLoads}
-        onImageError={handleImageError}
-        useCount={Number(linkStore.link.link_use_action_counter)}
-        onRefresh={handleSyncAssetBalance}
-        isRefreshing={isSyncingBalance}
-      />
+      <!-- Block 3 (send + Transfer Pending): You Send — same as linkDetails preview; else Usage Info -->
+      {#if linkStore.link.state === LinkState.CREATE_LINK && isSendLink && youSendPreviewLinkVm}
+        <YouSendPreview
+          forecastAssetAndFee={createLinkYouSendForecastRows}
+          {failedImageLoads}
+          onImageError={handleImageError}
+          isClickable={true}
+          link={youSendPreviewLinkVm}
+        />
+      {:else}
+        <UsageInfoSection
+          {assetsWithTokenInfo}
+          {failedImageLoads}
+          onImageError={handleImageError}
+          useCount={Number(linkStore.link.link_use_action_counter)}
+          onRefresh={handleSyncAssetBalance}
+          isRefreshing={isSyncingBalance}
+        />
+      {/if}
 
-      <!-- Block 6: Share Link -->
-      <ShareLinkSection {link} />
+      <!-- Block 6: Share Link or Fees Breakdown -->
+      {#if linkStore.link.state === LinkState.CREATE_LINK}
+        <FeesBreakdownSection
+          {totalFeesUsd}
+          onBreakdownClick={createLinkFeesBreakdown.length > 0
+            ? handleFeeBreakdownClick
+            : undefined}
+        />
+      {:else}
+        <ShareLinkSection {link} />
+      {/if}
     {/if}
 
     <div
@@ -506,11 +750,25 @@
           {locale.t("links.status.ended")}
         </Button>
       {/if}
+      {#if linkStore.link.state === LinkState.CREATE_LINK}
+        <Button
+          onclick={openDrawer}
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+          type="button"
+        >
+          {locale.t("links.linkForm.detail.create")}
+        </Button>
+      {/if}
     </div>
   </div>
+
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    feesBreakdown={createLinkFeesBreakdown}
+  />
 {/if}
 
-{#if showTxCart && linkStore && linkStore.action && linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW}
+{#if showTxCart && linkStore && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
   <LinkTxCart
     isOpen={showTxCart}
     source={{

@@ -6,7 +6,6 @@
     GroupedLink,
     UnifiedLinkItem,
   } from "$modules/links/types/linkList";
-  import { LinkState } from "$modules/links/types/link/linkState";
   import { formatDate } from "$modules/shared/utils/formatDate";
 
   const {
@@ -16,12 +15,10 @@
   } = $props();
 
   function handleLinkClick(link: UnifiedLinkItem) {
-    const openCreateFlow =
-      !link.isCreated || link.state === LinkState.CREATE_LINK;
-    if (openCreateFlow) {
-      goto(resolve(`/link/create/${link.id}`));
-    } else {
+    if (link.isCreated) {
       goto(resolve(`/link/detail/${link.id}`));
+    } else {
+      goto(resolve(`/link/create/${link.id}`));
     }
   }
 </script>

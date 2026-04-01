@@ -70,19 +70,11 @@ export class GuardContext {
     this.userLinkStoreV3 = store;
   }
 
-  setLinkCreationStore(store: LinkCreationStore | null) {
-    const prev = this.linkCreationStore;
-    if (prev && prev !== store) {
-      (prev as LinkCreationStore & { dispose?: () => void }).dispose?.();
-    }
+  setLinkCreationStore(store: LinkCreationStore) {
     this.linkCreationStore = store;
   }
 
-  setLinkCreationStoreV3(store: LinkCreationStoreV3 | null) {
-    const prev = this.linkCreationStoreV3;
-    if (prev && prev !== store) {
-      (prev as LinkCreationStoreV3 & { dispose?: () => void }).dispose?.();
-    }
+  setLinkCreationStoreV3(store: LinkCreationStoreV3) {
     this.linkCreationStoreV3 = store;
   }
 
