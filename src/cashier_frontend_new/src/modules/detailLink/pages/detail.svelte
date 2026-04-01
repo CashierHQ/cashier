@@ -283,7 +283,6 @@
     return isSendLinkType(linkStore.link.link_type);
   });
 
-  /** Rows for YouSendPreview: backend action when present, else forecast (e.g. logged out). */
   const createLinkYouSendForecastRows = $derived.by(
     (): ForecastAssetAndFee[] => {
       if (
@@ -300,7 +299,6 @@
     },
   );
 
-  /** Minimal VM so YouSendPreview can read createLinkData (maxUse, linkType) like linkDetails.svelte. */
   const youSendPreviewLinkVm = $derived.by(
     (): GenericCreationLinkStoreVM | undefined => {
       const l = linkStore?.link;
@@ -651,7 +649,6 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 3 (send + Transfer Pending): You Send — same as linkDetails preview; else Usage Info -->
       {#if linkStore.link.state === LinkState.CREATE_LINK && isSendLink && youSendPreviewLinkVm}
         <YouSendPreview
           forecastAssetAndFee={createLinkYouSendForecastRows}
