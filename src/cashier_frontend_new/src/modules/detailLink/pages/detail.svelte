@@ -284,61 +284,63 @@
   });
 
   /** Rows for YouSendPreview: backend action when present, else forecast (e.g. logged out). */
-  const createLinkYouSendForecastRows = $derived.by((): ForecastAssetAndFee[] => {
-    if (
-      !linkStore?.link ||
-      linkStore.link.state !== LinkState.CREATE_LINK ||
-      !isSendLink
-    ) {
-      return [];
-    }
-    if (createLinkActionAssetAndFee.length > 0) {
-      return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
-    }
-    return createLinkForecastAssetAndFee;
-  });
+  const createLinkYouSendForecastRows = $derived.by(
+    (): ForecastAssetAndFee[] => {
+      if (
+        !linkStore?.link ||
+        linkStore.link.state !== LinkState.CREATE_LINK ||
+        !isSendLink
+      ) {
+        return [];
+      }
+      if (createLinkActionAssetAndFee.length > 0) {
+        return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
+      }
+      return createLinkForecastAssetAndFee;
+    },
+  );
 
   /** Minimal VM so YouSendPreview can read createLinkData (maxUse, linkType) like linkDetails.svelte. */
-  const youSendPreviewLinkVm = $derived.by(():
-    | GenericCreationLinkStoreVM
-    | undefined => {
-    const l = linkStore?.link;
-    if (
-      !linkStore ||
-      !l ||
-      l.state !== LinkState.CREATE_LINK ||
-      !isSendLink
-    ) {
-      return undefined;
-    }
-    const addons: AddAssetItem[] = (l.asset_info ?? [])
-      .map((ai) => {
-        const addr = ai.asset.address?.toText();
-        if (!addr) return null;
-        return {
-          address: addr,
-          useAmount: ai.amount_per_link_use_action,
-        };
-      })
-      .filter((x): x is AddAssetItem => x !== null);
+  const youSendPreviewLinkVm = $derived.by(
+    (): GenericCreationLinkStoreVM | undefined => {
+      const l = linkStore?.link;
+      if (
+        !linkStore ||
+        !l ||
+        l.state !== LinkState.CREATE_LINK ||
+        !isSendLink
+      ) {
+        return undefined;
+      }
+      const addons: AddAssetItem[] = (l.asset_info ?? [])
+        .map((ai) => {
+          const addr = ai.asset.address?.toText();
+          if (!addr) return null;
+          return {
+            address: addr,
+            useAmount: ai.amount_per_link_use_action,
+          };
+        })
+        .filter((x): x is AddAssetItem => x !== null);
 
-    return {
-      id: l.id,
-      backendId: l.id,
-      step: LinkStep.CREATED,
-      linkType: l.link_type,
-      createLinkData: {
-        title: l.title ?? "",
+      return {
+        id: l.id,
+        backendId: l.id,
+        step: LinkStep.CREATED,
         linkType: l.link_type,
-        assets: addons,
-        maxUse: Number(l.link_use_action_max_count),
-      },
-      action: linkStore.action,
-      setLinkType: () => {},
-      goNext: async () => {},
-      goBack: async () => {},
-    };
-  });
+        createLinkData: {
+          title: l.title ?? "",
+          linkType: l.link_type,
+          assets: addons,
+          maxUse: Number(l.link_use_action_max_count),
+        },
+        action: linkStore.action,
+        setLinkType: () => {},
+        goNext: async () => {},
+        goBack: async () => {},
+      };
+    },
+  );
 
   // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
