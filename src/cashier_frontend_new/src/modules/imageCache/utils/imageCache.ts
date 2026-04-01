@@ -13,11 +13,6 @@ const tokenImageCache = new SvelteMap<string, string>();
 // Track which addresses are currently being loaded to prevent duplicate requests
 const loadingAddresses = new Set<string>();
 
-/**
- * IC Explorer image CDN does not send Access-Control-Allow-Origin.
- * Browser fetch() and canvas export after <img> load therefore always fail from our origin.
- * Using the HTTPS URL as cache value is correct: <img src> loads without CORS.
- */
 function isIcExplorerTokenImageUrl(url: string): boolean {
   try {
     const u = new URL(url);
