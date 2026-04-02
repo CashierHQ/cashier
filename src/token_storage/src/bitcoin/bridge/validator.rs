@@ -275,6 +275,32 @@ mod tests {
         }
     }
 
+    fn fixture_of_runes_export_create_input(
+        icp_address: Principal,
+    ) -> CreateBridgeTransactionInputArg {
+        CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address,
+            btc_address: "bc1qrunesreceiver".to_string(),
+            bridge_type: BridgeType::Export,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
+        }
+    }
+
     /// Create a bridge from `input`, store it, and return its bridge_id.
     fn store_bridge(
         repo: &TestRepositories,
@@ -378,6 +404,21 @@ mod tests {
     }
 
     #[test]
+    fn it_should_validate_create_runes_export_bridge() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let input = fixture_of_runes_export_create_input(random_principal_id());
+
+        // Act
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn it_should_fail_validate_create_runes_import_bridge_due_to_duplicate() {
         // Arrange
         let repo = TestRepositories::new();
@@ -458,6 +499,42 @@ mod tests {
             CanisterError::ValidationErrors(message)
                 if message == "Confirmed status is only allowed for Rune import bridges"
         ));
+    }
+
+    #[test]
+    fn it_should_validate_update_runes_export_bridge_to_pending() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let bridge_id = store_bridge(
+            &repo,
+            user_id,
+            fixture_of_runes_export_create_input(random_principal_id()),
+        );
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(900u64)),
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: Some("ticket-1".to_string()),
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let result =
+            validator.validate_update_bridge_transaction(user_id, &bridge_id, &update_input);
+
+        // Assert
+        assert!(result.is_ok());
     }
 
     #[test]

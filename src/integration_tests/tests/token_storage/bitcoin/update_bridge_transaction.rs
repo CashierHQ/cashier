@@ -101,6 +101,30 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
     }
 }
 
+fn fixture_of_runes_export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: None,
+        icp_address: caller,
+        btc_address: "tb1qrunesexportreceiver000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: Nat::from(125_000u64),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Export,
+        deposit_fee: None,
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 300,
+        ckbtc_block_id: None,
+        status: None,
+        omnity_ticket_id: None,
+        vin: None,
+        vout: None,
+    }
+}
+
 #[tokio::test]
 async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
@@ -628,6 +652,61 @@ async fn it_should_update_runes_import_bridge_transaction() {
                 vout: 3,
             }])
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_update_runes_export_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let created_bridge = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_export_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id.clone(),
+            btc_txid: Some("btc-runes-export-txid-1".to_string()),
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(900u64)),
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: Some("ticket-runes-export-1".to_string()),
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(update_input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let updated = result.unwrap().unwrap();
+        assert_eq!(updated.bridge_id, created_bridge.bridge_id);
+        assert_eq!(updated.status, BridgeTransactionStatus::Pending);
+        assert_eq!(
+            updated.btc_txid,
+            Some("btc-runes-export-txid-1".to_string())
+        );
+        assert_eq!(
+            updated.omnity_ticket_id,
+            Some("ticket-runes-export-1".to_string())
+        );
+        assert_eq!(updated.withdrawal_fee, Some(Nat::from(900u64)));
+        assert_eq!(updated.asset_infos[0].asset_type, BridgeAssetType::Runes);
 
         Ok(())
     })

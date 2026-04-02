@@ -85,6 +85,30 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
     }
 }
 
+fn fixture_of_runes_export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: None,
+        icp_address: caller,
+        btc_address: "tb1qrunesexportreceiver000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: 125_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Export,
+        deposit_fee: None,
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 300,
+        ckbtc_block_id: None,
+        status: None,
+        omnity_ticket_id: None,
+        vin: None,
+        vout: None,
+    }
+}
+
 #[tokio::test]
 async fn it_should_fail_user_get_bridge_transactions_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
@@ -419,6 +443,46 @@ async fn it_should_get_confirmed_runes_bridge_transactions() {
             transactions[0].omnity_ticket_id,
             Some("rune_txid_123".to_string())
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_runes_export_bridge_transactions() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let created = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_export_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: Some(BridgeType::Export),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, created.bridge_id);
+        assert_eq!(transactions[0].bridge_type, BridgeType::Export);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(transactions[0].status, BridgeTransactionStatus::Created);
+        assert_eq!(transactions[0].omnity_ticket_id, None);
 
         Ok(())
     })

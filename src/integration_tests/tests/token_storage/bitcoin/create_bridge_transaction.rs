@@ -87,6 +87,30 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
     }
 }
 
+fn fixture_of_runes_export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: None,
+        icp_address: caller,
+        btc_address: "tb1qrunesexportreceiver000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: 125_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Export,
+        deposit_fee: None,
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 300,
+        ckbtc_block_id: None,
+        status: None,
+        omnity_ticket_id: None,
+        vin: None,
+        vout: None,
+    }
+}
+
 #[tokio::test]
 async fn it_should_fail_create_import_bridge_transaction_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
@@ -443,6 +467,39 @@ async fn it_should_create_runes_import_bridge_transaction() {
                 vout: 1,
             }])
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_runes_export_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let input = fixture_of_runes_export_bridge_input(caller);
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let bridge = result.unwrap().unwrap();
+        assert_eq!(bridge.icp_address, caller);
+        assert_eq!(bridge.bridge_type, BridgeType::Export);
+        assert_eq!(bridge.status, BridgeTransactionStatus::Created);
+        assert_eq!(bridge.btc_txid, None);
+        assert_eq!(bridge.omnity_ticket_id, None);
+        assert_eq!(bridge.asset_infos.len(), 1);
+        assert_eq!(bridge.asset_infos[0].asset_type, BridgeAssetType::Runes);
+        assert_eq!(bridge.asset_infos[0].asset_id, "UNCOMMON•GOODS".to_string());
+        assert_eq!(bridge.withdrawal_fee, None);
+        assert_eq!(bridge.btc_fee, None);
 
         Ok(())
     })

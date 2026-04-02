@@ -3,7 +3,9 @@
 
 use candid::Nat;
 use token_storage_types::{
-    bitcoin::bridge_transaction::{BridgeTransaction, BridgeTransactionStatus, BridgeType},
+    bitcoin::bridge_transaction::{
+        BridgeAssetType, BridgeTransaction, BridgeTransactionStatus, BridgeType,
+    },
     dto::bitcoin::CreateBridgeTransactionInputArg,
     error::CanisterError,
 };
@@ -21,6 +23,12 @@ impl BridgeTransactionFactory {
     pub fn from_create_input(
         input: CreateBridgeTransactionInputArg,
     ) -> Result<BridgeTransaction, CanisterError> {
+        let is_runes_export = input.bridge_type == BridgeType::Export
+            && input
+                .asset_infos
+                .iter()
+                .any(|asset| matches!(asset.asset_type, BridgeAssetType::Runes));
+
         if input.bridge_type == BridgeType::Export {
             if input.btc_txid.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -34,13 +42,13 @@ impl BridgeTransactionFactory {
                 ));
             }
 
-            if input.withdrawal_fee.is_none() {
+            if input.withdrawal_fee.is_none() && !is_runes_export {
                 return Err(CanisterError::ValidationErrors(
                     "withdrawal_fee is required for export bridges".to_string(),
                 ));
             }
 
-            if input.btc_fee.is_none() {
+            if input.btc_fee.is_none() && !is_runes_export {
                 return Err(CanisterError::ValidationErrors(
                     "btc_fee is required for export bridges".to_string(),
                 ));
@@ -641,5 +649,52 @@ mod tests {
         // Assert
         assert_eq!(transaction.status, BridgeTransactionStatus::Confirmed);
         assert_eq!(transaction.omnity_ticket_id, Some("rune_txid".to_string()));
+    }
+
+    #[test]
+    fn it_should_create_runes_export_bridge_transaction_from_input() {
+        // Arrange
+        let icp_address = random_principal_id();
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address,
+            btc_address: "bc1qrunesreceiver".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(125_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Export,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 123,
+            ckbtc_block_id: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
+
+        // Assert
+        assert_eq!(transaction.icp_address, icp_address);
+        assert_eq!(transaction.btc_address, "bc1qrunesreceiver".to_string());
+        assert_eq!(transaction.bridge_type, BridgeType::Export);
+        assert_eq!(transaction.status, BridgeTransactionStatus::Created);
+        assert_eq!(transaction.asset_infos.len(), 1);
+        assert_eq!(
+            transaction.asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(transaction.asset_infos[0].asset_id, "UNCOMMON•GOODS");
+        assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
+        assert_eq!(transaction.withdrawal_fee, None);
+        assert_eq!(transaction.btc_fee, None);
+        assert_eq!(transaction.omnity_ticket_id, None);
+        assert_eq!(transaction.btc_txid, None);
     }
 }
