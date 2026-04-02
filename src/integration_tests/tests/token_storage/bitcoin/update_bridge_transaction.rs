@@ -28,6 +28,7 @@ fn fixture_of_import_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -51,6 +52,7 @@ fn fixture_of_export_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -87,6 +89,7 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
         created_at_ts: 200,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: Some(vec![UTXO {
             txid: "vin-txid-1".to_string(),
             vout: 0,

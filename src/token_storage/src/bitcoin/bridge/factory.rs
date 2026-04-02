@@ -144,7 +144,7 @@ impl BridgeTransactionFactory {
             created_at_ts: input.created_at_ts,
             retry_times: 0,
             status,
-            omnity_ticket_id: None,
+            omnity_ticket_id: input.omnity_ticket_id,
             vin: input.vin,
             vout: input.vout,
         })
@@ -188,6 +188,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -230,6 +231,7 @@ mod tests {
             created_at_ts: 123,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -269,6 +271,7 @@ mod tests {
             created_at_ts: 123,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -305,6 +308,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -341,6 +345,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -377,6 +382,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -408,6 +414,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -439,6 +446,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -475,6 +483,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -513,6 +522,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: Some(block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -544,6 +554,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -577,6 +588,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: Some(vin.clone()),
             vout: Some(vout.clone()),
         };
@@ -596,5 +608,38 @@ mod tests {
             BridgeAssetType::Runes
         );
         assert_eq!(transaction.asset_infos[0].amount, Nat::from(49_000u64));
+    }
+
+    #[test]
+    fn it_should_create_confirmed_runes_import_bridge_with_omnity_ticket_id() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("rune_txid".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "tb1qruneaddress".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: Some(BridgeTransactionStatus::Confirmed),
+            omnity_ticket_id: Some("rune_txid".to_string()),
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
+
+        // Assert
+        assert_eq!(transaction.status, BridgeTransactionStatus::Confirmed);
+        assert_eq!(transaction.omnity_ticket_id, Some("rune_txid".to_string()));
     }
 }

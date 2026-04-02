@@ -139,6 +139,7 @@ pub enum BridgeAssetType {
 pub enum BridgeTransactionStatus {
     Created,
     Pending,
+    Confirmed,
     Completed,
     Failed,
 }

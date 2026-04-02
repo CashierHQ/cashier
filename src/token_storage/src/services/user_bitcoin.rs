@@ -196,6 +196,7 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         }
@@ -219,6 +220,7 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         }
@@ -242,6 +244,7 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: Some(vec![UTXO {
                 txid: "vin-txid-1".to_string(),
                 vout: 0,
@@ -341,6 +344,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -456,6 +460,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: Some(ckbtc_block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -505,6 +510,28 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_create_confirmed_runes_import_bridge_transaction() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let mut input = fixture_of_runes_import_create_input();
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("test_rune_btc_txid".to_string());
+
+        // Act
+        let result = service.create_bridge_transaction(user_id, input).await.unwrap();
+
+        // Assert
+        assert_eq!(result.status, BridgeTransactionStatus::Confirmed);
+        assert_eq!(
+            result.omnity_ticket_id,
+            Some("test_rune_btc_txid".to_string())
+        );
+    }
+
+    #[tokio::test]
     async fn it_should_fail_create_runes_import_bridge_transaction_due_to_factory_error() {
         // Arrange
         let repo = TestRepositories::new();
@@ -528,6 +555,7 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -929,6 +957,7 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                omnity_ticket_id: None,
                 vin: None,
                 vout: None,
             };
@@ -976,6 +1005,7 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                omnity_ticket_id: None,
                 vin: None,
                 vout: None,
             };
@@ -1002,6 +1032,7 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                omnity_ticket_id: None,
                 vin: None,
                 vout: None,
             };

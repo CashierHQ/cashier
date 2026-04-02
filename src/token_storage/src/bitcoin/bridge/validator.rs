@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::bridge_transaction::{BridgeTransactionStatus, BridgeType},
+    bitcoin::bridge_transaction::{BridgeAssetType, BridgeTransactionStatus, BridgeType},
     dto::bitcoin::{CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg},
     error::CanisterError,
 };
@@ -36,6 +36,29 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
         user_id: Principal,
         input: &CreateBridgeTransactionInputArg,
     ) -> Result<(), CanisterError> {
+        if let Some(status) = input.status.clone()
+            && status == BridgeTransactionStatus::Confirmed
+        {
+            let is_rune_import = input.bridge_type == BridgeType::Import
+                && input
+                    .asset_infos
+                    .iter()
+                    .any(|asset| asset.asset_type == BridgeAssetType::Runes);
+
+            if !is_rune_import {
+                return Err(CanisterError::ValidationErrors(
+                    "Confirmed status is only allowed for Rune import bridges".to_string(),
+                ));
+            }
+
+            if input.omnity_ticket_id.is_none() {
+                return Err(CanisterError::ValidationErrors(
+                    "omnity_ticket_id is required when creating a confirmed Rune import bridge"
+                        .to_string(),
+                ));
+            }
+        }
+
         if input.bridge_type == BridgeType::Import {
             let new_bridge_transaction =
                 BridgeTransactionFactory::from_create_input(input.clone())?;
@@ -190,6 +213,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         }
@@ -213,6 +237,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         }
@@ -238,6 +263,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: Some(vec![UTXO {
                 txid: "vin-txid-1".to_string(),
                 vout: 0,
@@ -281,6 +307,7 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None, // neither btc_txid nor ckbtc_block_id
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -368,6 +395,68 @@ mod tests {
             result.unwrap_err(),
             CanisterError::ValidationErrors(message)
                 if message == "A bridge transaction with the same btc_txid already exists"
+        ));
+    }
+
+    #[test]
+    fn it_should_validate_create_confirmed_runes_import_bridge_with_omnity_ticket_id() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let mut input = fixture_of_runes_import_create_input(random_principal_id());
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("rune-txid-1".to_string());
+
+        // Act
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_fail_validate_create_confirmed_bridge_due_to_missing_omnity_ticket_id() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let mut input = fixture_of_runes_import_create_input(random_principal_id());
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = None;
+
+        // Act
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message
+                    == "omnity_ticket_id is required when creating a confirmed Rune import bridge"
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_validate_create_confirmed_bridge_due_to_non_rune_import() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let mut input = fixture_of_import_create_input(random_principal_id());
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("txid-1".to_string());
+
+        // Act
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "Confirmed status is only allowed for Rune import bridges"
         ));
     }
 

@@ -27,6 +27,7 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -50,6 +51,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -73,6 +75,7 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
         created_at_ts: 200,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: Some(vec![UTXO {
             txid: "vin-txid-1".to_string(),
             vout: 0,
@@ -257,6 +260,7 @@ async fn it_should_fail_create_import_bridge_without_btc_txid_or_ckbtc_block_id(
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -309,6 +313,7 @@ async fn it_should_create_import_bridge_with_ckbtc_block_id_and_completed_status
             created_at_ts: 0,
             ckbtc_block_id: Some(ckbtc_block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
             vin: None,
             vout: None,
         };
@@ -331,6 +336,33 @@ async fn it_should_create_import_bridge_with_ckbtc_block_id_and_completed_status
         assert_eq!(bridge.ckbtc_block_id, Some(ckbtc_block_id));
         assert_eq!(bridge.status, BridgeTransactionStatus::Completed);
         assert_eq!(bridge.bridge_id, format!("import_ckbtc_{}", ckbtc_block_id));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_confirmed_runes_import_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let mut input = fixture_of_runes_import_bridge_input(caller);
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("rune_txid_123".to_string());
+
+        // Act
+        let result = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let bridge = result.unwrap().unwrap();
+        assert_eq!(bridge.status, BridgeTransactionStatus::Confirmed);
+        assert_eq!(bridge.omnity_ticket_id, Some("rune_txid_123".to_string()));
 
         Ok(())
     })

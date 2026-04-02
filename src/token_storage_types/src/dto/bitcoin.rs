@@ -25,6 +25,8 @@ pub struct CreateBridgeTransactionInputArg {
     /// Override the initial bridge status. If None, the default status for the
     /// bridge type is used (Import → Pending, Export → Created).
     pub status: Option<BridgeTransactionStatus>,
+    /// Omnity platform ticket id for Runes bridging.
+    pub omnity_ticket_id: Option<String>,
     /// Input UTXOs of the Bitcoin transaction used for bridging.
     pub vin: Option<Vec<UTXO>>,
     /// Output UTXOs of the Bitcoin transaction used for bridging.

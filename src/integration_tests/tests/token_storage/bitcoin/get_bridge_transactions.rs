@@ -25,6 +25,7 @@ fn import_bridge_input(caller: Principal, txid: String) -> CreateBridgeTransacti
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -48,6 +49,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 1,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -71,6 +73,7 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
         created_at_ts: 200,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: Some(vec![UTXO {
             txid: "vin-txid-1".to_string(),
             vout: 0,
@@ -374,6 +377,47 @@ async fn it_should_get_runes_bridge_transactions() {
                 txid: "vout-txid-1".to_string(),
                 vout: 1,
             }])
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_confirmed_runes_bridge_transactions() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let mut input = fixture_of_runes_import_bridge_input(caller);
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("rune_txid_123".to_string());
+        let created = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: Some(BridgeTransactionStatus::Confirmed),
+                bridge_type: Some(BridgeType::Import),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, created.bridge_id);
+        assert_eq!(transactions[0].status, BridgeTransactionStatus::Confirmed);
+        assert_eq!(
+            transactions[0].omnity_ticket_id,
+            Some("rune_txid_123".to_string())
         );
 
         Ok(())

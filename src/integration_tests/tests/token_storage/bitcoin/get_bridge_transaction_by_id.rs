@@ -26,6 +26,7 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -49,6 +50,7 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: None,
         vout: None,
     }
@@ -72,6 +74,7 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
         created_at_ts: 200,
         ckbtc_block_id: None,
         status: None,
+        omnity_ticket_id: None,
         vin: Some(vec![UTXO {
             txid: "vin-txid-1".to_string(),
             vout: 0,
@@ -219,6 +222,38 @@ async fn it_should_get_runes_import_bridge_transaction_by_id() {
                 vout: 1,
             }])
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_confirmed_runes_import_bridge_transaction_by_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let mut input = fixture_of_runes_import_bridge_input(caller);
+        input.status = Some(BridgeTransactionStatus::Confirmed);
+        input.omnity_ticket_id = Some("rune_txid_123".to_string());
+        let created_bridge = token_storage_client
+            .user_create_bridge_transaction(input)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let result = token_storage_client
+            .user_get_bridge_transaction_by_id(created_bridge.bridge_id.clone())
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let bridge = result.unwrap().unwrap();
+        assert_eq!(bridge.status, BridgeTransactionStatus::Confirmed);
+        assert_eq!(bridge.omnity_ticket_id, Some("rune_txid_123".to_string()));
 
         Ok(())
     })
