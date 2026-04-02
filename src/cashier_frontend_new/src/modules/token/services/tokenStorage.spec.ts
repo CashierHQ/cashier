@@ -10,6 +10,16 @@ const { mockBuildActor, mockUserCreateBridgeTransaction } = vi.hoisted(() => ({
   mockUserCreateBridgeTransaction: vi.fn(),
 }));
 
+const {
+  mockValidateLedgerCanister,
+  mockValidateIndexCanister,
+  mockUserAddToken,
+} = vi.hoisted(() => ({
+  mockValidateLedgerCanister: vi.fn(),
+  mockValidateIndexCanister: vi.fn(),
+  mockUserAddToken: vi.fn(),
+}));
+
 // Mock auth state
 vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: {
@@ -27,6 +37,23 @@ vi.mock("$lib/generated/token_storage/token_storage.did", () => ({
 vi.mock("$modules/shared/constants", () => ({
   TOKEN_STORAGE_CANISTER_ID: "aaaaa-aa",
 }));
+
+vi.mock("$modules/token/services/canisterValidation", () => ({
+  validateLedgerCanister: mockValidateLedgerCanister,
+  validateIndexCanister: mockValidateIndexCanister,
+  ValidationError: {
+    BACKEND_ERROR: "BACKEND_ERROR",
+    INVALID_LEDGER: "INVALID_LEDGER",
+    INVALID_INDEX_CANISTER: "INVALID_INDEX_CANISTER",
+    INDEX_LEDGER_MISMATCH: "INDEX_LEDGER_MISMATCH",
+    TOKEN_EXISTS: "TOKEN_EXISTS",
+  },
+}));
+
+vi.mock("ts-results-es", async () => {
+  const actual = await vi.importActual("ts-results-es");
+  return actual;
+});
 
 // Fixtures
 function fixture_of_bridge_transaction_dto(
@@ -149,5 +176,70 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
     // Assert
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toContain("Error creating manual import bridge");
+  });
+});
+
+describe("TokenStorageService.addToken", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockValidateLedgerCanister.mockResolvedValue({ isErr: () => false });
+    mockValidateIndexCanister.mockResolvedValue({ isErr: () => false });
+  });
+
+  it("should send rune metadata when adding a rune token", async () => {
+    mockUserAddToken.mockResolvedValue({ Ok: null });
+    mockBuildActor.mockReturnValue({
+      user_add_token: mockUserAddToken,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+
+    const result = await tokenStorageService.addToken(
+      Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+      "qhbym-qaaaa-aaaaa-aaafq-cai",
+      [],
+      true,
+      "UNCOMMON•GOODS",
+      "omnity-rune-id",
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(mockUserAddToken).toHaveBeenCalledWith({
+      token_id: {
+        IC: { ledger_id: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai") },
+      },
+      index_id: ["qhbym-qaaaa-aaaaa-aaafq-cai"],
+      is_rune: [true],
+      rune_info: [{ rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id" }],
+    });
+  });
+
+  it("should omit rune metadata when adding a non-rune token", async () => {
+    mockUserAddToken.mockResolvedValue({ Ok: null });
+    mockBuildActor.mockReturnValue({
+      user_add_token: mockUserAddToken,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+
+    const result = await tokenStorageService.addToken(
+      Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+      undefined,
+      [],
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(mockUserAddToken).toHaveBeenCalledWith({
+      token_id: {
+        IC: { ledger_id: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai") },
+      },
+      index_id: [],
+      is_rune: [],
+      rune_info: [],
+    });
   });
 });

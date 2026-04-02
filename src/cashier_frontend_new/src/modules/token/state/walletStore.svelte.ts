@@ -216,11 +216,17 @@ class WalletStore {
    * Add a new token to the wallet with validation
    * @param address Token canister ID
    * @param indexId Optional index canister ID for the token
+   * @param isRune Whether the token is a Bitcoin Rune bridged via Omnity
+   * @param runeId The Rune ID (e.g. UNCOMMON•GOODS), required when isRune is true
+   * @param runeTokenId The Omnity token identifier, required when isRune is true
    * @returns Result with void on success or ValidationError on failure
    */
   async addToken(
     address: string,
     indexId?: string,
+    isRune?: boolean,
+    runeId?: string,
+    runeTokenId?: string,
   ): Promise<Result<void, ValidationErrorType>> {
     const token = Principal.fromText(address);
 
@@ -232,6 +238,9 @@ class WalletStore {
       token,
       indexId,
       existingTokens,
+      isRune,
+      runeId,
+      runeTokenId,
     );
 
     if (result.isOk()) {

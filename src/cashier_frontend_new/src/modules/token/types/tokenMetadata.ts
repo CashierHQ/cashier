@@ -13,6 +13,11 @@ export type TokenMetadata = {
   is_default: boolean;
   indexId?: string;
   tokenStandards?: TokenStandard[];
+  isRune?: boolean;
+  runeInfo?: {
+    runeId: string;
+    tokenId: string;
+  };
 };
 
 /**

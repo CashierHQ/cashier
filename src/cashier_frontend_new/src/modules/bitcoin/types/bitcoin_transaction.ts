@@ -127,10 +127,12 @@ export class BitcoinTransactionMapper {
     }
 
     return {
+      vin: [],
       btc_txid: [bitcoinTransaction.txid],
       icp_address: Principal.fromText(icpAddress),
       btc_address: btcAddress,
       asset_infos: asset_infos,
+      vout: [],
       bridge_type: isImporting ? { Import: null } : { Export: null },
       deposit_fee: [depositFee],
       withdrawal_fee: [withdrawalFee],

@@ -382,6 +382,7 @@ export class BridgeTransactionMapper {
       retry_times !== null ? [retry_times] : [];
 
     return {
+      vin: [],
       bridge_id: bridgeId,
       status: status
         ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
@@ -390,7 +391,9 @@ export class BridgeTransactionMapper {
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
+      vout: [],
       btc_txid: btc_txid_arg,
+      omnity_ticket_id: [],
       deposit_fee: deposit_fee_arg,
       withdrawal_fee: withdrawal_fee_arg,
       btc_fee: btc_fee_arg,
@@ -415,6 +418,7 @@ export class BridgeTransactionMapper {
     btcFee: bigint,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     return {
+      vin: [],
       btc_txid: [],
       icp_address: Principal.fromText(icpAddress),
       btc_address: btcAddress,
@@ -427,6 +431,7 @@ export class BridgeTransactionMapper {
         },
       ],
       bridge_type: { Export: null },
+      vout: [],
       deposit_fee: [],
       withdrawal_fee: [withdrawalFee],
       btc_fee: [btcFee],

@@ -7,7 +7,7 @@ describe("parseListTokens", () => {
   it("should throw an error for Err response", () => {
     // Arrange
     const response: tokenStorage.Result_5 = {
-      Err: "Some error occurred",
+      Err: { HandleLogicError: "Some error occurred" },
     };
 
     // Act & Assert
@@ -57,6 +57,8 @@ describe("parseListTokens", () => {
               },
             },
             is_default: true,
+            is_rune: [],
+            rune_info: [],
           },
         ],
       },
@@ -77,6 +79,8 @@ describe("parseListTokens", () => {
         is_default: true,
         indexId: undefined,
         tokenStandards: [],
+        isRune: undefined,
+        runeInfo: undefined,
       },
     ]);
   });
@@ -112,6 +116,8 @@ describe("parseListTokens", () => {
               },
             },
             is_default: false,
+            is_rune: [],
+            rune_info: [],
           },
         ],
       },
@@ -132,6 +138,67 @@ describe("parseListTokens", () => {
         is_default: false,
         indexId: mockIndexPrincipal.toText(),
         tokenStandards: [],
+        isRune: undefined,
+        runeInfo: undefined,
+      },
+    ]);
+  });
+
+  it("should parse rune metadata when present", () => {
+    // Arrange
+    const mockPrincipal = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    const response: tokenStorage.Result_5 = {
+      Ok: {
+        need_update_version: false,
+        perference: [],
+        tokens: [
+          {
+            id: { IC: { ledger_id: mockPrincipal } },
+            name: "Rune Token",
+            symbol: "RUNE",
+            decimals: 8,
+            balance: [],
+            enabled: false,
+            chain: { IC: null },
+            string_id: `IC:${mockPrincipal.toText()}`,
+            details: {
+              IC: {
+                fee: 10n,
+                ledger_id: mockPrincipal,
+                index_id: [],
+                supported_standards: [],
+              },
+            },
+            is_default: false,
+            is_rune: [true],
+            rune_info: [
+              { rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id" },
+            ],
+          },
+        ],
+      },
+    };
+
+    // Act
+    const result = parseListTokens(response);
+
+    // Assert
+    expect(result).toEqual([
+      {
+        address: mockPrincipal.toText(),
+        name: "Rune Token",
+        symbol: "RUNE",
+        decimals: 8,
+        enabled: false,
+        fee: 10n,
+        is_default: false,
+        indexId: undefined,
+        tokenStandards: [],
+        isRune: true,
+        runeInfo: {
+          runeId: "UNCOMMON•GOODS",
+          tokenId: "omnity-rune-id",
+        },
       },
     ]);
   });

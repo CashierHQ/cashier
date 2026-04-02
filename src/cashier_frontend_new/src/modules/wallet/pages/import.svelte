@@ -1,23 +1,23 @@
 <script lang="ts">
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
-  import { getTokenLogo } from "$modules/imageCache";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { getTokenLogo } from "$modules/imageCache";
+  import NavBar from "$modules/token/components/navBar.svelte";
   import {
-    validateLedgerCanister,
     validateIndexCanister,
+    validateLedgerCanister,
   } from "$modules/token/services/canisterValidation";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     MOCK_NETWORKS,
     SECURITY_LEARN_MORE_URL,
   } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
   import { getValidationErrorMessage } from "$modules/wallet/utils/validationErrorMessage";
+  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     onNavigateBack: () => void;
@@ -31,6 +31,9 @@
   let contractAddress = $state("");
   let indexCanisterId = $state("");
   let isLoading = $state(false);
+  let isRune = $state(false);
+  let runeId = $state("");
+  let runeTokenId = $state("");
 
   // Token metadata fetched from ledger canister
   let tokenData = $state({ name: "", symbol: "", address: "" });
@@ -84,6 +87,13 @@
     if (indexCanisterId.trim()) {
       if (isValidPrincipal(indexCanisterId).isErr()) {
         toast.error(locale.t("wallet.import.errors.invalidIndexCanisterId"));
+        return;
+      }
+    }
+
+    if (isRune) {
+      if (!runeId.trim() || !runeTokenId.trim()) {
+        toast.error(locale.t("wallet.import.errors.runeFieldsRequired"));
         return;
       }
     }
@@ -144,6 +154,9 @@
       const result = await walletStore.addToken(
         contractAddress.trim(),
         indexCanisterId.trim() || undefined,
+        isRune || undefined,
+        runeId.trim() || undefined,
+        runeTokenId.trim() || undefined,
       );
 
       if (result.isErr()) {
@@ -251,6 +264,48 @@
             <Clipboard size={20} />
           </button>
         </div>
+      </div>
+
+      <!-- Rune Token Toggle -->
+      <div class="space-y-3">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            bind:checked={isRune}
+            class="w-4 h-4 rounded border-gray-300 text-green focus:ring-green"
+          />
+          <span class="text-sm font-medium"
+            >{locale.t("wallet.import.isRune")}</span
+          >
+        </label>
+
+        {#if isRune}
+          <!-- Rune ID -->
+          <div class="space-y-1">
+            <Label class="text-sm font-medium"
+              >{locale.t("wallet.import.runeId")}</Label
+            >
+            <input
+              type="text"
+              bind:value={runeId}
+              class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
+              placeholder="UNCOMMON•GOODS"
+            />
+          </div>
+
+          <!-- Rune Token ID -->
+          <div class="space-y-1">
+            <Label class="text-sm font-medium"
+              >{locale.t("wallet.import.runeTokenId")}</Label
+            >
+            <input
+              type="text"
+              bind:value={runeTokenId}
+              class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
+              placeholder="Omnity token identifier"
+            />
+          </div>
+        {/if}
       </div>
 
       <!-- Continue Button -->

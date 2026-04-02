@@ -83,12 +83,18 @@ class TokenStorageService {
    * @param address The principal address of the token to add.
    * @param indexId Optional index canister ID for the token.
    * @param existingTokens List of existing token addresses for duplicate check.
+   * @param isRune Whether the token is a Bitcoin Rune bridged via Omnity.
+   * @param runeId The Rune ID (e.g. UNCOMMON•GOODS), required when isRune is true.
+   * @param runeTokenId The Omnity token identifier, required when isRune is true.
    * @returns Result with void on success or ValidationError on failure.
    */
   public async addToken(
     address: Principal,
     indexId?: string,
     existingTokens?: string[],
+    isRune?: boolean,
+    runeId?: string,
+    runeTokenId?: string,
   ): Promise<Result<void, ValidationErrorType>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -121,6 +127,11 @@ class TokenStorageService {
       const res = await actor.user_add_token({
         token_id: { IC: { ledger_id: address } },
         index_id: indexId ? [indexId] : [],
+        is_rune: isRune ? [true] : [],
+        rune_info:
+          isRune && runeId && runeTokenId
+            ? [{ rune_id: runeId, token_id: runeTokenId }]
+            : [],
       });
 
       if ("Err" in res) {
@@ -283,6 +294,7 @@ class TokenStorageService {
 
     try {
       const inputArgs: tokenStorage.CreateBridgeTransactionInputArg = {
+        vin: [],
         btc_txid: [btcTxid],
         icp_address: Principal.fromText(authState.account?.owner || ""),
         btc_address: btcAddress,
@@ -295,6 +307,7 @@ class TokenStorageService {
           },
         ],
         bridge_type: { Import: null },
+        vout: [],
         deposit_fee: [depositFee],
         withdrawal_fee: [],
         btc_fee: [],

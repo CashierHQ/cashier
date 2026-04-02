@@ -14,7 +14,14 @@ export function parseListTokens(
   response: tokenStorage.Result_5,
 ): TokenMetadata[] {
   if ("Err" in response) {
-    throw new Error(`Error fetching tokens: ${response.Err}`);
+    const [errorKind, errorValue] = Object.entries(response.Err)[0];
+    const errorMessage =
+      typeof errorValue === "string"
+        ? errorValue
+        : errorValue === null
+          ? errorKind
+          : JSON.stringify(errorValue);
+    throw new Error(`Error fetching tokens: ${errorMessage}`);
   }
 
   const result = response.Ok;
@@ -43,6 +50,13 @@ export function parseListTokens(
             is_default: token.is_default,
             indexId,
             tokenStandards,
+            isRune: fromNullable(token.is_rune),
+            runeInfo: fromNullable(token.rune_info)
+              ? {
+                  runeId: fromNullable(token.rune_info)!.rune_id,
+                  tokenId: fromNullable(token.rune_info)!.token_id,
+                }
+              : undefined,
           };
         },
       });

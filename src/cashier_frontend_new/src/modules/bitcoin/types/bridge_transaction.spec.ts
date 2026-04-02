@@ -17,6 +17,7 @@ describe("BridgeTransactionMapper", () => {
     it("should convert complete bridge transaction with all fields", () => {
       // Arrange
       const mockDto: tokenStorage.UserBridgeTransactionDto = {
+        vin: [],
         bridge_id: "bridge_123",
         icp_address: Principal.fromText("aaaaa-aa"),
         btc_address: "bc1qsender123",
@@ -44,6 +45,8 @@ describe("BridgeTransactionMapper", () => {
         ],
         retry_times: 0,
         status: { Created: null },
+        vout: [],
+        omnity_ticket_id: [],
       };
 
       // Act
@@ -85,6 +88,7 @@ describe("BridgeTransactionMapper", () => {
     it("should handle empty optional fields (unconfirmed transaction)", () => {
       // Arrange
       const mockDto: tokenStorage.UserBridgeTransactionDto = {
+        vin: [],
         bridge_id: "bridge_456",
         icp_address: Principal.fromText("aaaaa-aa"),
         btc_address: "bc1qreceiver",
@@ -102,6 +106,8 @@ describe("BridgeTransactionMapper", () => {
         block_confirmations: [],
         retry_times: 2,
         status: { Pending: null },
+        vout: [],
+        omnity_ticket_id: [],
       };
 
       // Act
@@ -125,6 +131,7 @@ describe("BridgeTransactionMapper", () => {
     it("should handle multiple asset types", () => {
       // Arrange
       const mockDto: tokenStorage.UserBridgeTransactionDto = {
+        vin: [],
         bridge_id: "bridge_789",
         icp_address: Principal.fromText("aaaaa-aa"),
         btc_address: "bc1qmulti",
@@ -161,6 +168,8 @@ describe("BridgeTransactionMapper", () => {
         block_confirmations: [],
         retry_times: 0,
         status: { Completed: null },
+        vout: [],
+        omnity_ticket_id: [],
       };
 
       // Act
@@ -177,6 +186,7 @@ describe("BridgeTransactionMapper", () => {
     it("should handle failed transaction status", () => {
       // Arrange
       const mockDto: tokenStorage.UserBridgeTransactionDto = {
+        vin: [],
         bridge_id: "bridge_failed",
         icp_address: Principal.fromText("aaaaa-aa"),
         btc_address: "bc1qfailed",
@@ -194,6 +204,8 @@ describe("BridgeTransactionMapper", () => {
         block_confirmations: [],
         retry_times: 5,
         status: { Failed: null },
+        vout: [],
+        omnity_ticket_id: [],
       };
 
       // Act
