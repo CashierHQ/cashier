@@ -39,6 +39,7 @@
   import { tokenStorageService } from "$modules/token/services/tokenStorage";
   import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
+  import SendRunes from "$modules/bitcoin/components/sendRunes.svelte";
 
   type Props = {
     initialToken?: string;
@@ -111,6 +112,10 @@
   );
 
   const isCkBtc = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isRune = $derived(
+    !!selectedTokenObj?.isRune && !!selectedTokenObj?.runeInfo,
+  );
+  const isBitcoinBridgeToken = $derived(isCkBtc || isRune);
 
   const isMaxAvailable = $derived(maxAmount > 0);
   const isLoading = $derived(
@@ -212,7 +217,7 @@
       return;
     }
 
-    if (isCkBtc && nativeBtcAddress.trim()) {
+    if (isBitcoinBridgeToken && nativeBtcAddress.trim()) {
       const result = walletSendStore.validateSend({
         selectedToken,
         receiveAddress: nativeBtcAddress,
@@ -224,7 +229,7 @@
       if (result.isErr()) {
         toast.error(result.error);
       } else {
-        await handleCreateExportBridge();
+        await handleCreateBridgeExport();
       }
       return;
     }
@@ -244,7 +249,18 @@
     }
   }
 
-  async function handleCreateExportBridge() {
+  async function handleCreateBridgeExport() {
+    if (isCkBtc) {
+      await handleCreateCkBtcExportBridge();
+      return;
+    }
+
+    if (isRune) {
+      await handleCreateRuneExportBridge();
+    }
+  }
+
+  async function handleCreateCkBtcExportBridge() {
     if (!selectedTokenObj || amount <= 0) {
       return;
     }
@@ -304,6 +320,42 @@
     }
   }
 
+  async function handleCreateRuneExportBridge() {
+    if (
+      !selectedTokenObj?.isRune ||
+      !selectedTokenObj.runeInfo ||
+      amount <= 0
+    ) {
+      return;
+    }
+
+    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
+    isCreatingExportBridge = true;
+    try {
+      const createResult =
+        await tokenStorageService.createRuneExportBridgeTransaction({
+          receiverBtcAddress: nativeBtcAddress.trim(),
+          runeId: selectedTokenObj.runeInfo.runeId,
+          amount: amountBigInt,
+          decimals: selectedTokenObj.decimals,
+        });
+
+      if (createResult.isErr()) {
+        toast.error(createResult.unwrapErr());
+        return;
+      }
+
+      bridgeSource = {
+        bridge: createResult.unwrap(),
+      };
+      showConfirmDrawer = true;
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      isCreatingExportBridge = false;
+    }
+  }
+
   /**
    * Handle successful transaction from txCart
    * For WalletSource, result is always bigint (block index)
@@ -327,7 +379,9 @@
       usdAmount = "";
       lastBlockId = null;
       bridgeSource = null;
-      void btcBridgeStore.fetchBtcAddress();
+      if (isCkBtc) {
+        void btcBridgeStore.fetchBtcAddress();
+      }
     }
   }
 </script>
@@ -356,105 +410,107 @@
         onSelectToken={handleSelectToken}
       />
 
-      <div>
-        <label
-          for="receive-address-input"
-          class="block text-sm font-medium mb-2"
-        >
-          {isCkBtc
-            ? locale.t("wallet.send.ckbtcIcpAddressLabel")
-            : locale.t("wallet.send.receiveAddressLabel")}
-        </label>
+      {#if !isRune}
+        <div>
+          <label
+            for="receive-address-input"
+            class="block text-sm font-medium mb-2"
+          >
+            {isCkBtc
+              ? locale.t("wallet.send.ckbtcIcpAddressLabel")
+              : locale.t("wallet.send.receiveAddressLabel")}
+          </label>
 
-        {#if shouldShowAddressTypeSelector}
-          <div class="flex gap-1.5 mb-2">
+          {#if shouldShowAddressTypeSelector}
+            <div class="flex gap-1.5 mb-2">
+              <button
+                onclick={handleSetReceiveTypePrincipal}
+                class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
+                ReceiveAddressType.PRINCIPAL
+                  ? 'border-[#36A18B] bg-green-50'
+                  : 'border-gray-300 hover:border-gray-400'}"
+              >
+                {locale.t("wallet.send.principalId")}
+              </button>
+              <button
+                onclick={handleSetReceiveTypeAccountId}
+                class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
+                ReceiveAddressType.ACCOUNT_ID
+                  ? 'border-[#36A18B] bg-green-50'
+                  : 'border-gray-300 hover:border-gray-400'}"
+              >
+                {locale.t("wallet.send.accountId")}
+              </button>
+            </div>
+          {/if}
+
+          <div class="relative">
+            <input
+              id="receive-address-input"
+              type="text"
+              bind:value={receiveAddress}
+              class="w-full p-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
+              placeholder={locale.t("wallet.send.addressPlaceholder")}
+            />
             <button
-              onclick={handleSetReceiveTypePrincipal}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              ReceiveAddressType.PRINCIPAL
-                ? 'border-[#36A18B] bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'}"
+              onclick={() => handlePasteIntoField("icp")}
+              class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#36A18B] text-sm font-medium hover:text-[#2d8a75] transition-colors"
             >
-              {locale.t("wallet.send.principalId")}
-            </button>
-            <button
-              onclick={handleSetReceiveTypeAccountId}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              ReceiveAddressType.ACCOUNT_ID
-                ? 'border-[#36A18B] bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'}"
-            >
-              {locale.t("wallet.send.accountId")}
+              <Clipboard size={16} />
             </button>
           </div>
-        {/if}
-
-        <div class="relative">
-          <input
-            id="receive-address-input"
-            type="text"
-            bind:value={receiveAddress}
-            class="w-full p-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
-            placeholder={locale.t("wallet.send.addressPlaceholder")}
-          />
-          <button
-            onclick={() => handlePasteIntoField("icp")}
-            class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#36A18B] text-sm font-medium hover:text-[#2d8a75] transition-colors"
+          <div
+            class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
           >
-            <Clipboard size={16} />
-          </button>
-        </div>
-        <div
-          class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
-        >
+            {#if isCkBtc}
+              {locale.t("wallet.send.addressPrincipleExample")}
+            {:else}
+              {locale.t(
+                receiveType === ReceiveAddressType.PRINCIPAL
+                  ? "wallet.send.addressPrincipleExample"
+                  : "wallet.send.addressAccountExample",
+              )}
+            {/if}
+          </div>
           {#if isCkBtc}
-            {locale.t("wallet.send.addressPrincipleExample")}
-          {:else}
-            {locale.t(
-              receiveType === ReceiveAddressType.PRINCIPAL
-                ? "wallet.send.addressPrincipleExample"
-                : "wallet.send.addressAccountExample",
-            )}
+            <div class="flex flex-col gap-1.5 mt-2">
+              <div class="flex items-center gap-1.5">
+                <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.icpAddress.warning1")}
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.icpAddress.warning2")}
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.icpAddress.warning3")}
+                </div>
+              </div>
+            </div>
+          {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
+            <div class="flex items-start gap-1.5 mt-2">
+              <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-sm text-green">
+                {locale.t("wallet.send.principleIdInfoText")}
+              </div>
+            </div>
           {/if}
         </div>
-        {#if isCkBtc}
-          <div class="flex flex-col gap-1.5 mt-2">
-            <div class="flex items-center gap-1.5">
-              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.icpAddress.warning1")}
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.icpAddress.warning2")}
-              </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.icpAddress.warning3")}
-              </div>
-            </div>
-          </div>
-        {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("wallet.send.principleIdInfoText")}
-            </div>
-          </div>
-        {/if}
-      </div>
+      {/if}
 
-      {#if isCkBtc}
+      {#if isBitcoinBridgeToken}
         <div>
           <label
             for="native-btc-address-input"
@@ -527,7 +583,14 @@
           </div>
         </div>
 
-        <SendBTC />
+        {#if isCkBtc}
+          <SendBTC />
+        {:else if isRune}
+          <SendRunes
+            token={selectedTokenObj}
+            minConfirmations={btcBridgeStore.minConfirmations}
+          />
+        {/if}
       {/if}
 
       <div

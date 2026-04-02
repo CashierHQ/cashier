@@ -356,7 +356,7 @@ class TokenStorageService {
   }
 
   /**
-   * Create an export bridge transaction to withdrawl BTC from ckBTC on ICP
+   * Create an export bridge transaction to withdraw BTC from ckBTC on ICP
    * @param receiverBtcAddress The BTC address of the receiver
    * @param amount The amount of BTC to withdraw
    * @param withdrawalFee The withdrawal fee in satoshis
@@ -396,6 +396,50 @@ class TokenStorageService {
       );
     } catch (err) {
       return Err(`Error creating export bridge transaction: ${err}`);
+    }
+  }
+
+  /**
+   * Create a Rune export bridge transaction
+   * @param receiverBtcAddress The BTC address of the receiver
+   * @param runeId The ID of the Rune being withdrawn (e.g. UNCOMMON•GOODS)
+   * @param amount The amount of the Rune being withdrawn (in smallest unit, e.g. satoshis)
+   * @param decimals The number of decimals for the Rune (e.g. 8 for satoshis)
+   * @returns BridgeTransaction or error message
+   */
+  public async createRuneExportBridgeTransaction(args: {
+    receiverBtcAddress: string;
+    runeId: string;
+    amount: bigint;
+    decimals: number;
+  }): Promise<Result<BridgeTransaction, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs =
+        BridgeTransactionMapper.toCreateRuneExportBridgeTransactionArgs(
+          authState.account?.owner || "",
+          args.receiverBtcAddress,
+          args.runeId,
+          args.amount,
+          args.decimals,
+        );
+
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      if ("Ok" in res) {
+        return Ok(
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res.Ok),
+        );
+      }
+
+      return Err(
+        `Error creating Rune export bridge transaction: ${JSON.stringify(res.Err)}`,
+      );
+    } catch (err) {
+      return Err(`Error creating Rune export bridge transaction: ${err}`);
     }
   }
 

@@ -6,6 +6,7 @@ import {
 } from "$modules/bitcoin/constants";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { omnityBitcoinService } from "$modules/bitcoin/services/omnityBitcoinService";
+import { omnityHubService } from "$modules/bitcoin/services/omnityHubService";
 import { omnityRunesIndexerService } from "$modules/bitcoin/services/omnityRunesIndexerService";
 import {
   type BitcoinBlock,
@@ -42,6 +43,11 @@ class RuneBridgeStore {
   #allImportBridges: BridgeTransactionWithUsdValue[] = [];
   #importCurrentPage = 0;
   hasMoreImports = $state<boolean>(true);
+
+  #exportBridgeTxQuery;
+  #allExportBridges: BridgeTransactionWithUsdValue[] = [];
+  #exportCurrentPage = 0;
+  hasMoreExports = $state<boolean>(true);
 
   processPendingTxsTask: NodeJS.Timeout | null = null;
   isRefreshing = $state<boolean>(false);
@@ -115,6 +121,41 @@ class RuneBridgeStore {
       storageType: "sessionStorage",
     });
 
+    this.#exportBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Export,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreExports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#exportCurrentPage === 0) {
+          this.#allExportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allExportBridges.slice(0, start);
+          this.#allExportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allExportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletRuneBridgeStore_exportBridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
     $effect.root(() => {
       $effect(() => {
         if (authState.account == null) {
@@ -131,6 +172,7 @@ class RuneBridgeStore {
 
           this.#bridgeTxQuery.refresh();
           this.#importBridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
         }
@@ -150,12 +192,24 @@ class RuneBridgeStore {
     return this.#importBridgeTxQuery.data;
   }
 
+  get exportBridgeTxs() {
+    return this.#exportBridgeTxQuery.data;
+  }
+
   public loadMoreImports() {
     if (!this.hasMoreImports) {
       return;
     }
     this.#importCurrentPage += 1;
     this.#importBridgeTxQuery.refresh();
+  }
+
+  public loadMoreExports() {
+    if (!this.hasMoreExports) {
+      return;
+    }
+    this.#exportCurrentPage += 1;
+    this.#exportBridgeTxQuery.refresh();
   }
 
   public reset() {
@@ -170,6 +224,11 @@ class RuneBridgeStore {
     this.#allImportBridges = [];
     this.hasMoreImports = true;
     this.#importBridgeTxQuery.reset();
+
+    this.#exportCurrentPage = 0;
+    this.#allExportBridges = [];
+    this.hasMoreExports = true;
+    this.#exportBridgeTxQuery.reset();
 
     if (this.processPendingTxsTask) {
       clearInterval(this.processPendingTxsTask);
@@ -206,6 +265,28 @@ class RuneBridgeStore {
     return bridgeTxs.filter((bridge) =>
       bridge.asset_infos.some(
         (asset) =>
+          bridge.bridge_type === BridgeType.Import &&
+          asset.asset_type === BridgeAssetType.Runes &&
+          asset.asset_id === token.runeInfo?.runeId,
+      ),
+    );
+  }
+
+  getExportBridgeTransactionsForToken(
+    token?: Pick<
+      TokenWithPriceAndBalance,
+      "address" | "isRune" | "runeInfo"
+    > | null,
+  ): BridgeTransactionWithUsdValue[] {
+    const bridgeTxs = this.exportBridgeTxs ?? [];
+    if (!token?.isRune || !token.runeInfo) {
+      return [];
+    }
+
+    return bridgeTxs.filter((bridge) =>
+      bridge.asset_infos.some(
+        (asset) =>
+          bridge.bridge_type === BridgeType.Export &&
           asset.asset_type === BridgeAssetType.Runes &&
           asset.asset_id === token.runeInfo?.runeId,
       ),
@@ -357,6 +438,7 @@ class RuneBridgeStore {
 
     this.#bridgeTxQuery.refresh();
     this.#importBridgeTxQuery.refresh();
+    this.#exportBridgeTxQuery.refresh();
   }
 
   createPendingBridgeTransactionsTask(): NodeJS.Timeout {
@@ -384,6 +466,22 @@ class RuneBridgeStore {
 
       for (const runeBridgeTx of runeBridgeTxs) {
         await this.processRuneImportBridgeTransaction(runeBridgeTx);
+      }
+
+      const pendingExportTxs = await tokenStorageService.getBridgeTransactions(
+        0,
+        10,
+        BridgeTransactionStatus.Pending,
+        BridgeType.Export,
+      );
+      const runeExportTxs = pendingExportTxs.filter((bridge) =>
+        bridge.asset_infos.some(
+          (asset) => asset.asset_type === BridgeAssetType.Runes,
+        ),
+      );
+
+      for (const runeExportTx of runeExportTxs) {
+        await this.processRuneExportBridgeTransaction(runeExportTx);
       }
     }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
@@ -499,6 +597,7 @@ class RuneBridgeStore {
         if (setTicketResult.isOk()) {
           this.#bridgeTxQuery.refresh();
           this.#importBridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
         }
       }
       return;
@@ -524,7 +623,74 @@ class RuneBridgeStore {
       if (completeResult.isOk()) {
         this.#bridgeTxQuery.refresh();
         this.#importBridgeTxQuery.refresh();
+        this.#exportBridgeTxQuery.refresh();
       }
+    }
+  }
+
+  async processRuneExportBridgeTransaction(
+    bridgeTx: BridgeTransaction,
+  ): Promise<void> {
+    let btcTxId = bridgeTx.btc_txid;
+
+    if (!btcTxId && bridgeTx.omnity_ticket_id) {
+      const queryTxHashResult = await omnityHubService.queryTxHash(
+        bridgeTx.omnity_ticket_id,
+      );
+      if (queryTxHashResult.isOk()) {
+        const updateResult = await tokenStorageService.updateBridgeTransaction(
+          bridgeTx.bridge_id,
+          null,
+          null,
+          null,
+          null,
+          [],
+          queryTxHashResult.unwrap(),
+        );
+        if (updateResult.isOk()) {
+          btcTxId = queryTxHashResult.unwrap();
+          this.#bridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
+        }
+      }
+    }
+
+    if (!btcTxId) {
+      return;
+    }
+
+    const btcTxResult = await mempoolService.getTransactionById(btcTxId);
+    if (btcTxResult.isErr()) {
+      return;
+    }
+
+    const btcTx = btcTxResult.unwrap();
+    const currentTipHeightResult = await mempoolService.getTipHeight();
+    const currentTipHeight = currentTipHeightResult.isOk()
+      ? Number(currentTipHeightResult.unwrap())
+      : null;
+
+    let updatedConfirmingBlocks: BitcoinBlock[] = [];
+    if (btcTx.block_id && currentTipHeight !== null) {
+      updatedConfirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
+        currentTipHeight,
+        Number(btcTx.block_id),
+      );
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      bridgeTx.bridge_id,
+      null,
+      null,
+      btcTx.block_id,
+      btcTx.block_timestamp,
+      updatedConfirmingBlocks,
+      btcTxId,
+    );
+
+    if (updateResult.isOk()) {
+      this.#bridgeTxQuery.refresh();
+      this.#exportBridgeTxQuery.refresh();
     }
   }
 
@@ -634,6 +800,7 @@ class RuneBridgeStore {
 
       this.#bridgeTxQuery.refresh();
       this.#importBridgeTxQuery.refresh();
+      this.#exportBridgeTxQuery.refresh();
 
       return Ok(createdCount);
     } finally {

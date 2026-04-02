@@ -247,3 +247,65 @@ describe("TokenStorageService.addToken", () => {
     });
   });
 });
+
+describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("it_should_create_rune_export_bridge_transaction", async () => {
+    // Arrange
+    const dto = fixture_of_bridge_transaction_dto({
+      bridge_id: "export_rune_123",
+      bridge_type: { Export: null },
+      asset_infos: [
+        {
+          asset_type: { Runes: null },
+          asset_id: "UNCOMMON•GOODS",
+          amount: 1_200n,
+          decimals: 8,
+        },
+      ],
+      status: { Created: null },
+      total_amount: [1_200n],
+      ckbtc_block_id: [],
+      deposit_fee: [],
+      withdrawal_fee: [],
+      btc_fee: [],
+    });
+    mockUserCreateBridgeTransaction.mockResolvedValue({ Ok: dto });
+    mockBuildActor.mockReturnValue({
+      user_create_bridge_transaction: mockUserCreateBridgeTransaction,
+    });
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+
+    // Act
+    const result = await tokenStorageService.createRuneExportBridgeTransaction({
+      receiverBtcAddress: "tb1qreceiver",
+      runeId: "UNCOMMON•GOODS",
+      amount: 1_200n,
+      decimals: 8,
+    });
+
+    // Assert
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().bridge_type).toBe("Export");
+    expect(result.unwrap().status).toBe("Created");
+
+    const callArgs = mockUserCreateBridgeTransaction.mock.calls[0][0];
+    expect(callArgs.bridge_type).toEqual({ Export: null });
+    expect(callArgs.asset_infos).toEqual([
+      {
+        asset_type: { Runes: null },
+        asset_id: "UNCOMMON•GOODS",
+        amount: 1_200n,
+        decimals: 8,
+      },
+    ]);
+    expect(callArgs.status).toEqual([{ Created: null }]);
+    expect(callArgs.withdrawal_fee).toEqual([]);
+    expect(callArgs.btc_fee).toEqual([]);
+  });
+});

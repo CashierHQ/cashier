@@ -143,13 +143,35 @@ export class IcrcLedgerService {
     memo: Uint8Array | number[],
     createdAtTime: bigint,
   ): Promise<bigint> {
+    return this.approveSpender(
+      CKBTC_MINTER_CANISTER_ID,
+      amount,
+      memo,
+      createdAtTime,
+    );
+  }
+
+  /**
+   * Approve a spender to spend tokens on behalf of the current account.
+   * @param spenderCanisterId The canister ID of the spender.
+   * @param amount The amount of tokens to approve.
+   * @param memo The memo for the approval transaction.
+   * @param createdAtTime The creation time of the approval transaction.
+   * @returns The approval block index on success.
+   */
+  public async approveSpender(
+    spenderCanisterId: string,
+    amount: bigint,
+    memo: Uint8Array | number[],
+    createdAtTime: bigint,
+  ): Promise<bigint> {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
     }
 
     const result = await actor.icrc2_approve({
-      spender: this.#getSpender(Principal.fromText(CKBTC_MINTER_CANISTER_ID)),
+      spender: this.#getSpender(Principal.fromText(spenderCanisterId)),
       amount,
       fee: [this.#fee],
       memo: [memo],
@@ -199,6 +221,17 @@ export class IcrcLedgerService {
    * @returns The allowance amount for the ckBTC minter.
    */
   public async getAllowanceForCkBtcMinter(): Promise<bigint> {
+    return this.getAllowanceForSpender(CKBTC_MINTER_CANISTER_ID);
+  }
+
+  /**
+   * Get the allowance granted to a specific spender for the current account.
+   * @param spenderCanisterId The canister ID of the spender.
+   * @returns The allowance amount for the specified spender.
+   */
+  public async getAllowanceForSpender(
+    spenderCanisterId: string,
+  ): Promise<bigint> {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
@@ -206,7 +239,7 @@ export class IcrcLedgerService {
 
     const result = await actor.icrc2_allowance({
       account: this.#getAccount(),
-      spender: this.#getSpender(Principal.fromText(CKBTC_MINTER_CANISTER_ID)),
+      spender: this.#getSpender(Principal.fromText(spenderCanisterId)),
     });
 
     return result.allowance;

@@ -481,4 +481,45 @@ export class BridgeTransactionMapper {
       omnity_ticket_id: [],
     };
   }
+
+  /**
+   * Create export bridge transaction input argument for Rune assets
+   * @param icpAddress
+   * @param btcAddress
+   * @param runeId
+   * @param amount
+   * @param decimals
+   * @returns
+   */
+  public static toCreateRuneExportBridgeTransactionArgs(
+    icpAddress: string,
+    btcAddress: string,
+    runeId: string,
+    amount: bigint,
+    decimals: number,
+  ): tokenStorage.CreateBridgeTransactionInputArg {
+    return {
+      vin: [],
+      btc_txid: [],
+      icp_address: Principal.fromText(icpAddress),
+      btc_address: btcAddress,
+      asset_infos: [
+        {
+          asset_type: { Runes: null },
+          asset_id: runeId,
+          amount,
+          decimals,
+        },
+      ],
+      bridge_type: { Export: null },
+      vout: [],
+      deposit_fee: [],
+      withdrawal_fee: [],
+      btc_fee: [],
+      created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+      ckbtc_block_id: [],
+      status: [{ Created: null }],
+      omnity_ticket_id: [],
+    };
+  }
 }

@@ -49,9 +49,10 @@
     return locale.t("bitcoin.receive.unknown");
   });
   let amount = $derived.by(() => {
+    const firstAsset = bridge.asset_infos[0];
     if (bridge.total_amount) {
-      // Assuming total_amount is in satoshis for BTC
-      return (Number(bridge.total_amount) / 100_000_000).toFixed(8);
+      const decimals = firstAsset?.decimals ?? 8;
+      return (Number(bridge.total_amount) / 10 ** decimals).toFixed(decimals);
     }
     return "0";
   });
