@@ -1,5 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
+import { omnityHubService } from "$modules/bitcoin/services/omnityHubService";
 import { omnityIcpService } from "$modules/bitcoin/services/omnityIcpService";
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
@@ -22,6 +23,7 @@ import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
 import { SvelteSet } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -422,6 +424,78 @@ export class BridgeTxCartStore {
     return Ok(this.bridgeTransaction);
   }
 
+  async #failRuneBridge(
+    errorMessage: string,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const failResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Failed,
+    );
+    if (failResult.isErr()) {
+      return Err(failResult.unwrapErr());
+    }
+
+    await this.refreshAsync();
+    return Err(errorMessage);
+  }
+
+  async #recoverRuneExportWithExistingTicket(
+    runeTokenId: string,
+    withdrawalFee: bigint,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const now = BigInt(currentSecondTimestamp());
+    const oneDayAgo = now - 86_400n;
+
+    const ticketsResult = await omnityHubService.getTxsWithAccount({
+      sender: this.bridgeTransaction.icp_address,
+      receiver: this.bridgeTransaction.btc_address,
+      tokenId: runeTokenId,
+      timeRange: [oneDayAgo, now],
+      start: 0n,
+      limit: 100n,
+    });
+    if (ticketsResult.isErr()) {
+      return this.#failRuneBridge(ticketsResult.unwrapErr());
+    }
+
+    const allBridges = await tokenStorageService.getBridgeTransactions(0, 100);
+    const seenTicketIds = new SvelteSet(
+      allBridges
+        .map((bridge) => bridge.omnity_ticket_id)
+        .filter((ticketId): ticketId is string => !!ticketId),
+    );
+
+    const unseenTickets = ticketsResult
+      .unwrap()
+      .filter(
+        (ticket) =>
+          ticket.token === runeTokenId &&
+          ticket.receiver === this.bridgeTransaction?.btc_address &&
+          !seenTicketIds.has(ticket.ticket_id) &&
+          "Redeem" in ticket.action,
+      )
+      .sort((left, right) => Number(right.ticket_time - left.ticket_time));
+
+    if (unseenTickets.length === 0) {
+      return this.#failRuneBridge(
+        "Unable to recover Rune export bridge transaction.",
+      );
+    }
+
+    return this.#updateRuneBridgeToPending(
+      unseenTickets[0].ticket_id,
+      withdrawalFee,
+    );
+  }
+
   /**
    * Recover pending export bridge by checking the retrieval request status from the ckBTC minter
    * @returns Result containing the updated bridge transaction or an error message.
@@ -560,7 +634,7 @@ export class BridgeTxCartStore {
       approvalCreatedAtTime,
     );
     if (icpApprovalResult.isErr()) {
-      return icpApprovalResult;
+      return this.#failRuneBridge(icpApprovalResult.unwrapErr());
     }
 
     const runeApprovalResult = await this.#approveSpenderWithAllowanceRecovery(
@@ -571,7 +645,7 @@ export class BridgeTxCartStore {
       approvalCreatedAtTime,
     );
     if (runeApprovalResult.isErr()) {
-      return runeApprovalResult;
+      return this.#failRuneBridge(runeApprovalResult.unwrapErr());
     }
 
     const ticketResult = await omnityIcpService.generateTicketV2({
@@ -583,7 +657,10 @@ export class BridgeTxCartStore {
       receiver: this.bridgeTransaction.btc_address,
     });
     if (ticketResult.isErr()) {
-      return Err(ticketResult.unwrapErr());
+      return this.#recoverRuneExportWithExistingTicket(
+        runeToken.runeInfo.tokenId,
+        redeemFee,
+      );
     }
 
     return this.#updateRuneBridgeToPending(ticketResult.unwrap(), redeemFee);

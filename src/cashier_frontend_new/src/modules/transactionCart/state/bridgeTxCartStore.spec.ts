@@ -21,6 +21,7 @@ const {
   mockUpdateBridgeTransaction,
   mockGetRedeemFee,
   mockGenerateTicketV2,
+  mockGetTxsWithAccount,
   MockIcrcLedgerService,
   walletTokensRef,
 } = vi.hoisted(() => {
@@ -36,6 +37,7 @@ const {
   const mockUpdateBridgeTransaction = vi.fn();
   const mockGetRedeemFee = vi.fn();
   const mockGenerateTicketV2 = vi.fn();
+  const mockGetTxsWithAccount = vi.fn();
   const walletTokensRef = { value: [] as Array<Record<string, unknown>> };
 
   const MockIcrcLedgerService = vi.fn(() => ({
@@ -58,6 +60,7 @@ const {
     mockUpdateBridgeTransaction,
     mockGetRedeemFee,
     mockGenerateTicketV2,
+    mockGetTxsWithAccount,
     MockIcrcLedgerService,
     walletTokensRef,
   };
@@ -82,6 +85,12 @@ vi.mock("$modules/bitcoin/services/omnityIcpService", () => ({
   omnityIcpService: {
     getRedeemFee: mockGetRedeemFee,
     generateTicketV2: mockGenerateTicketV2,
+  },
+}));
+
+vi.mock("$modules/bitcoin/services/omnityHubService", () => ({
+  omnityHubService: {
+    getTxsWithAccount: mockGetTxsWithAccount,
   },
 }));
 
@@ -175,6 +184,7 @@ describe("BridgeTxCartStore", () => {
     mockRetrieveBtcStatusV2ByAccount.mockResolvedValue(Ok([]));
     mockGetRedeemFee.mockResolvedValue(Ok(20_000n));
     mockGenerateTicketV2.mockResolvedValue(Ok("ticket-123"));
+    mockGetTxsWithAccount.mockResolvedValue(Ok([]));
     walletTokensRef.value = [];
   });
 
@@ -381,6 +391,355 @@ describe("BridgeTxCartStore", () => {
         null,
         null,
         "ticket-123",
+      );
+    });
+
+    it("should_continue_rune_export_when_icp_approval_fails_but_allowance_is_sufficient", async () => {
+      const runeExportBridge = fixture_of_bridge_transaction({
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = runeExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(runeExportBridge));
+      mockApproveSpender
+        .mockRejectedValueOnce(new Error("approve failed"))
+        .mockResolvedValueOnce(20n);
+      mockGetAllowanceForSpender.mockResolvedValueOnce(20_000n);
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: { runeId: "UNCOMMON•GOODS", tokenId: "omnity-rune-id" },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+      const result = await store.executeExport();
+
+      expect(result.isOk()).toBe(true);
+      expect(mockGenerateTicketV2).toHaveBeenCalled();
+    });
+
+    it("should_continue_rune_export_when_rune_approval_fails_but_allowance_is_sufficient", async () => {
+      const runeExportBridge = fixture_of_bridge_transaction({
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = runeExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(runeExportBridge));
+      mockApproveSpender
+        .mockResolvedValueOnce(10n)
+        .mockRejectedValueOnce(new Error("approve failed"));
+      mockGetAllowanceForSpender.mockResolvedValueOnce(1_200n);
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: { runeId: "UNCOMMON•GOODS", tokenId: "omnity-rune-id" },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+      const result = await store.executeExport();
+
+      expect(result.isOk()).toBe(true);
+      expect(mockGenerateTicketV2).toHaveBeenCalled();
+    });
+
+    it("should_mark_rune_export_failed_when_icp_allowance_is_insufficient", async () => {
+      const runeExportBridge = fixture_of_bridge_transaction({
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = runeExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(runeExportBridge));
+      mockApproveSpender.mockRejectedValueOnce(new Error("approve failed"));
+      mockGetAllowanceForSpender.mockResolvedValueOnce(1n);
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: { runeId: "UNCOMMON•GOODS", tokenId: "omnity-rune-id" },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+      const result = await store.executeExport();
+
+      expect(result.isErr()).toBe(true);
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "bridge_1",
+        BridgeTransactionStatus.Failed,
+      );
+    });
+
+    it("should_recover_rune_export_to_pending_when_generate_ticket_fails_but_unseen_ticket_exists", async () => {
+      const runeExportBridge = fixture_of_bridge_transaction({
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = runeExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(runeExportBridge));
+      mockGenerateTicketV2.mockResolvedValueOnce(Err("generation failed"));
+      mockGetBridgeTransactions.mockResolvedValue([
+        fixture_of_bridge_transaction({
+          bridge_id: "existing-bridge",
+          omnity_ticket_id: "seen-ticket",
+        }),
+      ]);
+      mockGetTxsWithAccount.mockResolvedValue(
+        Ok([
+          {
+            token: "omnity-rune-id",
+            action: { Redeem: null },
+            dst_chain: "Bitcoin",
+            memo: [],
+            ticket_id: "older-ticket",
+            sender: ["aaaaa-aa"],
+            ticket_time: 1_700_000_000n,
+            ticket_type: { Normal: null },
+            src_chain: "eICP",
+            amount: "1200",
+            receiver: "tb1qreceiver",
+          },
+          {
+            token: "omnity-rune-id",
+            action: { Redeem: null },
+            dst_chain: "Bitcoin",
+            memo: [],
+            ticket_id: "new-ticket",
+            sender: ["aaaaa-aa"],
+            ticket_time: 1_700_000_100n,
+            ticket_type: { Normal: null },
+            src_chain: "eICP",
+            amount: "1200",
+            receiver: "tb1qreceiver",
+          },
+          {
+            token: "omnity-rune-id",
+            action: { Redeem: null },
+            dst_chain: "Bitcoin",
+            memo: [],
+            ticket_id: "seen-ticket",
+            sender: ["aaaaa-aa"],
+            ticket_time: 1_700_000_200n,
+            ticket_type: { Normal: null },
+            src_chain: "eICP",
+            amount: "1200",
+            receiver: "tb1qreceiver",
+          },
+        ]),
+      );
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: { runeId: "UNCOMMON•GOODS", tokenId: "omnity-rune-id" },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+      const result = await store.executeExport();
+
+      expect(result.isOk()).toBe(true);
+      expect(mockGetTxsWithAccount).toHaveBeenCalled();
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "bridge_1",
+        BridgeTransactionStatus.Pending,
+        null,
+        null,
+        null,
+        [],
+        null,
+        null,
+        20_000n,
+        null,
+        null,
+        "new-ticket",
+      );
+    });
+
+    it("should_mark_rune_export_failed_when_generate_ticket_fails_and_no_unseen_ticket_exists", async () => {
+      const runeExportBridge = fixture_of_bridge_transaction({
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = runeExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(runeExportBridge));
+      mockGenerateTicketV2.mockResolvedValueOnce(Err("generation failed"));
+      mockGetBridgeTransactions.mockResolvedValue([
+        fixture_of_bridge_transaction({
+          bridge_id: "existing-bridge",
+          omnity_ticket_id: "seen-ticket",
+        }),
+      ]);
+      mockGetTxsWithAccount.mockResolvedValue(
+        Ok([
+          {
+            token: "omnity-rune-id",
+            action: { Redeem: null },
+            dst_chain: "Bitcoin",
+            memo: [],
+            ticket_id: "seen-ticket",
+            sender: ["aaaaa-aa"],
+            ticket_time: 1_700_000_000n,
+            ticket_type: { Normal: null },
+            src_chain: "eICP",
+            amount: "1200",
+            receiver: "tb1qreceiver",
+          },
+        ]),
+      );
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: { runeId: "UNCOMMON•GOODS", tokenId: "omnity-rune-id" },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+      const result = await store.executeExport();
+
+      expect(result.isErr()).toBe(true);
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "bridge_1",
+        BridgeTransactionStatus.Failed,
       );
     });
   });

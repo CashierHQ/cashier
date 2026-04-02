@@ -3,10 +3,13 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockBuildActor, mockQueryTxHash } = vi.hoisted(() => ({
-  mockBuildActor: vi.fn(),
-  mockQueryTxHash: vi.fn(),
-}));
+const { mockBuildActor, mockQueryTxHash, mockGetTxsWithAccount } = vi.hoisted(
+  () => ({
+    mockBuildActor: vi.fn(),
+    mockQueryTxHash: vi.fn(),
+    mockGetTxsWithAccount: vi.fn(),
+  }),
+);
 
 vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: {
@@ -31,6 +34,7 @@ describe("OmnityHubService", () => {
     mockQueryTxHash.mockResolvedValue({ Ok: "btc-txid-123" });
     mockBuildActor.mockReturnValue({
       query_tx_hash: mockQueryTxHash,
+      get_txs_with_account: mockGetTxsWithAccount,
     });
 
     const { omnityHubService } = await import("./omnityHubService");
@@ -39,5 +43,50 @@ describe("OmnityHubService", () => {
     expect(result.isOk()).toBe(true);
     expect(result.unwrap()).toBe("btc-txid-123");
     expect(mockQueryTxHash).toHaveBeenCalledWith("ticket-123");
+  });
+
+  it("should_return_tickets_for_account_query", async () => {
+    mockGetTxsWithAccount.mockResolvedValue({
+      Ok: [
+        {
+          token: "omnity-rune-id",
+          action: { Redeem: null },
+          dst_chain: "Bitcoin",
+          memo: [],
+          ticket_id: "ticket-123",
+          sender: ["aaaaa-aa"],
+          ticket_time: 1_700_000_000n,
+          ticket_type: { Normal: null },
+          src_chain: "eICP",
+          amount: "1200",
+          receiver: "tb1qreceiver",
+        },
+      ],
+    });
+    mockBuildActor.mockReturnValue({
+      query_tx_hash: mockQueryTxHash,
+      get_txs_with_account: mockGetTxsWithAccount,
+    });
+
+    const { omnityHubService } = await import("./omnityHubService");
+    const result = await omnityHubService.getTxsWithAccount({
+      sender: "aaaaa-aa",
+      receiver: "tb1qreceiver",
+      tokenId: "omnity-rune-id",
+      timeRange: [1_699_913_600n, 1_700_000_000n],
+      start: 0n,
+      limit: 100n,
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toHaveLength(1);
+    expect(mockGetTxsWithAccount).toHaveBeenCalledWith(
+      ["aaaaa-aa"],
+      ["tb1qreceiver"],
+      ["omnity-rune-id"],
+      [[1_699_913_600n, 1_700_000_000n]],
+      0n,
+      100n,
+    );
   });
 });
