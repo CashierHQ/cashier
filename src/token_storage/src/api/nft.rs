@@ -13,7 +13,8 @@ use token_storage_types::{
 /// # Arguments
 /// * `input` - The input containing the NFT to be added
 /// # Returns
-/// * `UserNftDto` - The added NFT with user information
+/// * `Ok(UserNftDto)` - The added NFT with user information
+/// * `Err(CanisterError)` - An error message if the NFT could not be added
 #[update(guard = "is_not_anonymous")]
 pub async fn user_add_nft(input: AddUserNftInput) -> Result<UserNftDto, CanisterError> {
     let mut state = get_state();

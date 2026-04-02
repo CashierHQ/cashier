@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_common::random::init_ic_rand;
-use ic_cdk::{init, post_upgrade, pre_upgrade};
+use ic_cdk::{api::time, init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
 use token_storage_types::init::{TokenStorageInitData, TokenStorageUpgradeData};
 
@@ -29,7 +29,7 @@ fn init(init_data: TokenStorageInitData) {
         info!("[init] Set {} default tokens", tokens.len());
         debug!("[init] Default tokens: {tokens:?}");
 
-        match state.token_registry.add_bulk_tokens(tokens) {
+        match state.token_registry.add_bulk_tokens(tokens, time()) {
             Ok(_) => {}
             Err(e) => {
                 error!("Error adding tokens: {e}");
@@ -67,7 +67,7 @@ fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
 
     if let Some(tokens) = upgrade_data.tokens {
         info!("[post_upgrade] Upserting {} tokens", tokens.len());
-        match state.token_registry.add_bulk_tokens(tokens) {
+        match state.token_registry.add_bulk_tokens(tokens, time()) {
             Ok(_) => {}
             Err(e) => {
                 error!("Error upserting tokens on upgrade: {e}");

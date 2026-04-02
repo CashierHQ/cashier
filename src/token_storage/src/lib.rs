@@ -8,3 +8,4 @@ mod ext;
 mod icrc7;
 mod repository;
 mod services;
+mod token;

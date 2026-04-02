@@ -1,11 +1,12 @@
-use std::borrow::Cow;
-use std::fmt::Display;
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::CandidType;
+use candid::{CandidType, Nat};
 use cashier_common::chain::Chain;
 use cashier_macros::storable;
 use ic_mple_structures::{Codec, RefCodec};
 use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, fmt::Display};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
 
@@ -277,11 +278,13 @@ pub struct TokenDto {
 pub struct AddTokenInput {
     pub token_id: TokenId,
     pub index_id: Option<String>,
+    pub is_rune: Option<bool>,
+    pub rune_info: Option<RuneInfo>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct AddTokensInput {
-    pub token_ids: Vec<TokenId>,
+    pub token_ids: Vec<AddTokenInput>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
@@ -396,6 +399,14 @@ pub struct UserTokens {
 pub struct TokenBalance {
     pub balance: u128,
     pub last_updated: u64, // Timestamp
+}
+
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct TokenMetadata {
+    pub name: String,
+    pub fee: Nat,
+    pub decimals: u8,
+    pub symbol: String,
 }
 
 #[storable]

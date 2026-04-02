@@ -1,13 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::{cell::RefCell, thread::LocalKey};
-
 use candid::Principal;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
+use std::{cell::RefCell, thread::LocalKey};
 
 use crate::{
     bitcoin::ckbtc::ic_ckbtc_minter_client::IcCkBtcMinterClient,
+    ext::icrc::IcTokenMetadataFetcher,
     icrc7::ic_icrc7_validator::ICIcrc7Validator,
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
@@ -36,6 +36,7 @@ pub struct CanisterState {
     pub user_token: UserTokenService<ThreadlocalRepositories>,
     pub user_nft: UserNftService<ThreadlocalRepositories, ICIcrc7Validator>,
     pub user_ckbtc: UserCkBtcService<ThreadlocalRepositories, IcCkBtcMinterClient>,
+    pub token_metadata_fetcher: IcTokenMetadataFetcher,
 }
 
 impl CanisterState {
@@ -44,6 +45,7 @@ impl CanisterState {
         let repo = ThreadlocalRepositories;
         let ic_icrc7_validator = ICIcrc7Validator;
         let ckbtc_minter_client = IcCkBtcMinterClient;
+        let token_metadata_fetcher = IcTokenMetadataFetcher;
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -54,6 +56,7 @@ impl CanisterState {
             user_token: UserTokenService::new(&repo),
             user_nft: UserNftService::new(&repo, ic_icrc7_validator),
             user_ckbtc: UserCkBtcService::new(&repo, ckbtc_minter_client),
+            token_metadata_fetcher,
         }
     }
 
