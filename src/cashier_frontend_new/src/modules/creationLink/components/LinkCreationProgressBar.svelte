@@ -14,7 +14,7 @@
 </script>
 
 <div class="flex w-full mb-3" role="presentation">
-  {#each Array(SEGMENT_COUNT) as _, i (i)}
+  {#each [...Array(SEGMENT_COUNT).keys()] as i (i)}
     <div
       class="h-[6px] rounded-full mx-[2px] transition-all duration-300 {clampedFilled >=
       i + 1
