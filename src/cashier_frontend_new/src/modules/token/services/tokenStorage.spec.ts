@@ -84,6 +84,9 @@ function fixture_of_bridge_transaction_dto(
     total_amount: [50000n],
     retry_times: 0,
     status: { Completed: null },
+    omnity_ticket_id: [],
+    vin: [],
+    vout: [],
     ...overrides,
   };
 }

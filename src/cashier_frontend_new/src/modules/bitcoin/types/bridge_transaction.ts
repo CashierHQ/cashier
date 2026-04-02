@@ -34,8 +34,16 @@ export type BridgeTransaction = {
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
+  omnity_ticket_id: string | null;
+  vin: BridgeUtxo[];
+  vout: BridgeUtxo[];
   retry_times: number;
   status: BridgeTransactionStatusValue;
+};
+
+export type BridgeUtxo = {
+  txid: string;
+  vout: number;
 };
 
 /**
@@ -155,6 +163,19 @@ export class BridgeTransactionMapper {
       }));
     }
 
+    let omnity_ticket_id = null;
+    const data_omnity_ticket_id = data.omnity_ticket_id as [] | [string];
+    if (data_omnity_ticket_id.length === 1) {
+      omnity_ticket_id = data_omnity_ticket_id[0];
+    }
+
+    const vin = (data.vin as [] | [tokenStorage.UTXO[]]).flatMap(
+      (utxos) => utxos,
+    );
+    const vout = (data.vout as [] | [tokenStorage.UTXO[]]).flatMap(
+      (utxos) => utxos,
+    );
+
     return {
       bridge_id: data.bridge_id,
       icp_address: data.icp_address.toText(),
@@ -180,6 +201,9 @@ export class BridgeTransactionMapper {
       block_id,
       block_timestamp,
       confirmations,
+      omnity_ticket_id,
+      vin,
+      vout,
       retry_times: data.retry_times,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
@@ -360,6 +384,9 @@ export class BridgeTransactionMapper {
     withdrawal_fee: bigint | null = null,
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
+    omnity_ticket_id: string | null = null,
+    vin: BridgeUtxo[] = [],
+    vout: BridgeUtxo[] = [],
   ): tokenStorage.UpdateBridgeTransactionInputArg {
     const ckbtc_block_id_arg: [] | [bigint] =
       ckbtc_block_id !== null ? [ckbtc_block_id] : [];
@@ -380,9 +407,13 @@ export class BridgeTransactionMapper {
     const btc_fee_arg: [] | [bigint] = btc_fee !== null ? [btc_fee] : [];
     const retry_times_arg: [] | [number] =
       retry_times !== null ? [retry_times] : [];
+    const omnity_ticket_id_arg: [] | [string] =
+      omnity_ticket_id !== null ? [omnity_ticket_id] : [];
+    const vin_arg: [] | [tokenStorage.UTXO[]] = vin.length > 0 ? [vin] : [];
+    const vout_arg: [] | [tokenStorage.UTXO[]] = vout.length > 0 ? [vout] : [];
 
     return {
-      vin: [],
+      vin: vin_arg,
       bridge_id: bridgeId,
       status: status
         ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
@@ -391,9 +422,9 @@ export class BridgeTransactionMapper {
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
-      vout: [],
+      vout: vout_arg,
       btc_txid: btc_txid_arg,
-      omnity_ticket_id: [],
+      omnity_ticket_id: omnity_ticket_id_arg,
       deposit_fee: deposit_fee_arg,
       withdrawal_fee: withdrawal_fee_arg,
       btc_fee: btc_fee_arg,

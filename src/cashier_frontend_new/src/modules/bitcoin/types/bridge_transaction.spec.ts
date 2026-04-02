@@ -80,6 +80,9 @@ describe("BridgeTransactionMapper", () => {
           { block_id: 800000n, block_timestamp: 1704067100n },
           { block_id: 800001n, block_timestamp: 1704067700n },
         ],
+        omnity_ticket_id: null,
+        vin: [],
+        vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
       });
@@ -341,6 +344,9 @@ describe("BridgeTransactionMapper", () => {
         block_id: 800000n,
         block_timestamp: 1704067100n,
         confirmations: [],
+        omnity_ticket_id: null,
+        vin: [],
+        vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Completed,
       };
@@ -392,6 +398,9 @@ describe("BridgeTransactionMapper", () => {
         block_id: null,
         block_timestamp: null,
         confirmations: [],
+        omnity_ticket_id: null,
+        vin: [],
+        vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Pending,
       };
@@ -432,6 +441,9 @@ describe("BridgeTransactionMapper", () => {
         block_id: null,
         block_timestamp: null,
         confirmations: [],
+        omnity_ticket_id: null,
+        vin: [],
+        vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
       };
@@ -481,6 +493,9 @@ describe("BridgeTransactionMapper", () => {
         block_id: null,
         block_timestamp: null,
         confirmations: [],
+        omnity_ticket_id: null,
+        vin: [],
+        vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
       };
@@ -576,6 +591,9 @@ describe("BridgeTransactionMapper", () => {
         deposit_fee: [1000n],
         withdrawal_fee: [2000n],
         btc_fee: [3000n],
+        omnity_ticket_id: [],
+        vin: [],
+        vout: [],
         retry_times: [3],
       });
     });
@@ -611,6 +629,9 @@ describe("BridgeTransactionMapper", () => {
         deposit_fee: [],
         withdrawal_fee: [],
         btc_fee: [],
+        omnity_ticket_id: [],
+        vin: [],
+        vout: [],
         retry_times: [],
       });
     });

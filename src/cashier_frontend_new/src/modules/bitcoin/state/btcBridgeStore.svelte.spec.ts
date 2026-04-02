@@ -32,6 +32,9 @@ function fixture_of_import_bridge(
     block_id: null,
     block_timestamp: null,
     confirmations: [],
+    omnity_ticket_id: null,
+    vin: [],
+    vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
     ...overrides,
@@ -59,6 +62,9 @@ function fixture_of_export_bridge(
     block_id: null,
     block_timestamp: null,
     confirmations: [],
+    omnity_ticket_id: null,
+    vin: [],
+    vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
     ...overrides,
@@ -113,18 +119,24 @@ function fixture_of_confirming_blocks(
 // Hoist mock functions so they are available inside vi.mock factories
 const {
   mockGetBtcAddress,
+  mockGetRuneAddress,
   mockGetBridgeTransactions,
   mockUpdateBridgeTransaction,
   mockCreateManualImportBridgeTransaction,
   mockCreateImportBridgeTransaction,
+  mockCreateRuneImportBridgeTransaction,
   mockGetMinterInfo,
   mockGetDepositFee,
   mockUpdateBalanceWithMintedInfo,
   mockRetrieveBtcStatusV2,
   mockGetMempoolTxs,
   mockGetTransactionById,
+  mockGetAddressUtxos,
   mockGetTipHeight,
   mockGetLatestBlocksFromHeight,
+  mockGenerateTicket,
+  mockGenerateTicketStatus,
+  mockGetRuneBalancesForOutputs,
   mockQueryInstances,
   mockPersistedValues,
   authAccountRef,
@@ -137,18 +149,24 @@ const {
   };
   return {
     mockGetBtcAddress: vi.fn(),
+    mockGetRuneAddress: vi.fn(),
     mockGetBridgeTransactions: vi.fn(),
     mockUpdateBridgeTransaction: vi.fn(),
     mockCreateManualImportBridgeTransaction: vi.fn(),
     mockCreateImportBridgeTransaction: vi.fn(),
+    mockCreateRuneImportBridgeTransaction: vi.fn(),
     mockGetMinterInfo: vi.fn(),
     mockGetDepositFee: vi.fn(),
     mockUpdateBalanceWithMintedInfo: vi.fn(),
     mockRetrieveBtcStatusV2: vi.fn(),
     mockGetMempoolTxs: vi.fn(),
     mockGetTransactionById: vi.fn(),
+    mockGetAddressUtxos: vi.fn(),
     mockGetTipHeight: vi.fn(),
     mockGetLatestBlocksFromHeight: vi.fn(),
+    mockGenerateTicket: vi.fn(),
+    mockGenerateTicketStatus: vi.fn(),
+    mockGetRuneBalancesForOutputs: vi.fn(),
     // Order in constructor: [0] bridgeTxQuery, [1] importBridgeTxQuery,
     //                        [2] exportBridgeTxQuery, [3] mempoolTxQuery
     mockQueryInstances: [] as MockQuery[],
@@ -168,6 +186,8 @@ vi.mock("$modules/bitcoin/constants", () => ({
 
 vi.mock("$modules/token/constants", () => ({
   CKBTC_CANISTER_ID: "mxzaz-hqaaa-aaaar-qaada-cai",
+  ICP_LEDGER_CANISTER_ID: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  ICP_LEDGER_FEE: 10_000n,
 }));
 
 vi.mock("$modules/shared/constants", () => ({
@@ -185,11 +205,13 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
 vi.mock("$modules/token/services/tokenStorage", () => ({
   tokenStorageService: {
     getBtcAddress: mockGetBtcAddress,
+    getRuneAddress: mockGetRuneAddress,
     getBridgeTransactions: mockGetBridgeTransactions,
     updateBridgeTransaction: mockUpdateBridgeTransaction,
     createManualImportBridgeTransaction:
       mockCreateManualImportBridgeTransaction,
     createImportBridgeTransaction: mockCreateImportBridgeTransaction,
+    createRuneImportBridgeTransaction: mockCreateRuneImportBridgeTransaction,
     getBridgeTransactionById: vi.fn(),
   },
 }));
@@ -208,8 +230,28 @@ vi.mock("$modules/bitcoin/services/mempoolService", () => ({
   mempoolService: {
     getMempoolTxs: mockGetMempoolTxs,
     getTransactionById: mockGetTransactionById,
+    getAddressUtxos: mockGetAddressUtxos,
     getTipHeight: mockGetTipHeight,
     getLatestBlocksFromHeight: mockGetLatestBlocksFromHeight,
+  },
+}));
+
+vi.mock("$modules/bitcoin/services/omnityBitcoinService", () => ({
+  omnityBitcoinService: {
+    generateTicket: mockGenerateTicket,
+    generateTicketStatus: mockGenerateTicketStatus,
+  },
+}));
+
+vi.mock("$modules/bitcoin/services/omnityRunesIndexerService", () => ({
+  omnityRunesIndexerService: {
+    getRuneBalancesForOutputs: mockGetRuneBalancesForOutputs,
+  },
+}));
+
+vi.mock("$modules/token/state/walletStore.svelte", () => ({
+  walletStore: {
+    query: { data: [] },
   },
 }));
 
@@ -261,7 +303,7 @@ vi.mock("runed", () => ({
 }));
 
 // Import store after all mocks are in place
-import { bridgeStore } from "./bridgeStore.svelte";
+import { btcBridgeStore } from "./btcBridgeStore.svelte";
 
 describe("BridgeStore", () => {
   beforeEach(() => {
@@ -285,7 +327,7 @@ describe("BridgeStore", () => {
       mockGetBtcAddress.mockResolvedValue(Err("Minter error"));
 
       // Act
-      const result = await bridgeStore.fetchBtcAddress();
+      const result = await btcBridgeStore.fetchBtcAddress();
 
       // Assert
       expect(result).toBeNull();
@@ -296,7 +338,7 @@ describe("BridgeStore", () => {
       mockGetBtcAddress.mockResolvedValue(Ok("tb1qreceiver"));
 
       // Act
-      const result = await bridgeStore.fetchBtcAddress();
+      const result = await btcBridgeStore.fetchBtcAddress();
 
       // Assert
       expect(result).toBe("tb1qreceiver");
@@ -309,7 +351,7 @@ describe("BridgeStore", () => {
       mockGetMinterInfo.mockRejectedValue(new Error("Canister unreachable"));
 
       // Act
-      const result = await bridgeStore.fetchMinterInfo();
+      const result = await btcBridgeStore.fetchMinterInfo();
 
       // Assert
       expect(result).toBeNull();
@@ -321,7 +363,7 @@ describe("BridgeStore", () => {
       mockGetMinterInfo.mockResolvedValue(minterInfo);
 
       // Act
-      const result = await bridgeStore.fetchMinterInfo();
+      const result = await btcBridgeStore.fetchMinterInfo();
 
       // Assert
       expect(result).toEqual(minterInfo);
@@ -335,7 +377,7 @@ describe("BridgeStore", () => {
 
       // Act
       const result =
-        await bridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
+        await btcBridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
 
       // Assert
       expect(result.isErr()).toBe(true);
@@ -355,7 +397,7 @@ describe("BridgeStore", () => {
 
       // Act
       const result =
-        await bridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
+        await btcBridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -371,7 +413,7 @@ describe("BridgeStore", () => {
 
       // Act
       const result =
-        await bridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
+        await btcBridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -385,7 +427,7 @@ describe("BridgeStore", () => {
       // Arrange — mockQueryInstances[0] is bridgeTxQuery, data is null by default
 
       // Act
-      const result = bridgeStore.isMempoolTxProcessed("abc123");
+      const result = btcBridgeStore.isMempoolTxProcessed("abc123");
 
       // Assert
       expect(result).toBe(false);
@@ -398,7 +440,7 @@ describe("BridgeStore", () => {
       ];
 
       // Act
-      const result = bridgeStore.isMempoolTxProcessed("abc123");
+      const result = btcBridgeStore.isMempoolTxProcessed("abc123");
 
       // Assert
       expect(result).toBe(true);
@@ -412,7 +454,7 @@ describe("BridgeStore", () => {
       mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
 
       // Act
-      await bridgeStore.processImportBridgeTransaction(bridge);
+      await btcBridgeStore.processImportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
@@ -431,7 +473,7 @@ describe("BridgeStore", () => {
       mockGetTransactionById.mockResolvedValue(Err("Network error"));
 
       // Act
-      await bridgeStore.processImportBridgeTransaction(bridge);
+      await btcBridgeStore.processImportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
@@ -451,7 +493,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      await bridgeStore.processImportBridgeTransaction(bridge);
+      await btcBridgeStore.processImportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
@@ -474,7 +516,7 @@ describe("BridgeStore", () => {
       mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
 
       // Act
-      await bridgeStore.processImportBridgeTransaction(bridge);
+      await btcBridgeStore.processImportBridgeTransaction(bridge);
 
       // Assert
       expect(mockGetLatestBlocksFromHeight).toHaveBeenCalledWith(
@@ -518,7 +560,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      await bridgeStore.processImportBridgeTransaction(bridge);
+      await btcBridgeStore.processImportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBalanceWithMintedInfo).toHaveBeenCalled();
@@ -548,7 +590,7 @@ describe("BridgeStore", () => {
       mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
 
       // Act
-      await bridgeStore.processExportBridgeTransaction(bridge);
+      await btcBridgeStore.processExportBridgeTransaction(bridge);
 
       // Assert
       expect(mockRetrieveBtcStatusV2).toHaveBeenCalledWith(42n);
@@ -574,7 +616,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      await bridgeStore.processExportBridgeTransaction(bridge);
+      await btcBridgeStore.processExportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
@@ -591,7 +633,7 @@ describe("BridgeStore", () => {
       });
 
       // Act
-      await bridgeStore.processExportBridgeTransaction(bridge);
+      await btcBridgeStore.processExportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
@@ -621,7 +663,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      await bridgeStore.processExportBridgeTransaction(bridge);
+      await btcBridgeStore.processExportBridgeTransaction(bridge);
 
       // Assert
       expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
@@ -643,7 +685,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isErr()).toBe(true);
@@ -655,7 +697,7 @@ describe("BridgeStore", () => {
       mockUpdateBalanceWithMintedInfo.mockResolvedValue(Ok([]));
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -669,7 +711,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isErr()).toBe(true);
@@ -689,7 +731,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -723,7 +765,7 @@ describe("BridgeStore", () => {
       ];
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -758,7 +800,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -796,7 +838,7 @@ describe("BridgeStore", () => {
       );
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);
@@ -832,7 +874,7 @@ describe("BridgeStore", () => {
       mockUpdateBridgeTransaction.mockResolvedValue(Ok(createdBridge));
 
       // Act
-      const result = await bridgeStore.manualRefreshBalance();
+      const result = await btcBridgeStore.manualRefreshBalance();
 
       // Assert
       expect(result.isOk()).toBe(true);

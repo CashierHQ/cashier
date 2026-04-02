@@ -10,6 +10,7 @@ import {
   BridgeTransactionStatus,
   type BridgeTransaction,
   type BridgeTypeValue,
+  type BridgeUtxo,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
 import {
@@ -216,6 +217,28 @@ class TokenStorageService {
   }
 
   /**
+   * Get the Rune deposit address associated with the user's wallet.
+   * @returns Rune address on success or error message on failure
+   */
+  public async getRuneAddress(): Promise<Result<string, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const res = await actor.user_get_rune_address();
+      if ("Ok" in res) {
+        return Ok(res.Ok);
+      } else {
+        return Err(`Error fetching Rune address: ${JSON.stringify(res.Err)}`);
+      }
+    } catch (err) {
+      return Err(`Error fetching Rune address: ${err}`);
+    }
+  }
+
+  /**
    * Create a bridge transaction to import BTC into ICP
    * @param senderBtcAddress The BTC address of the sender
    * @param receiverBtcAddress The BTC address of the receiver
@@ -376,6 +399,70 @@ class TokenStorageService {
   }
 
   /**
+   * Create a Rune import bridge transaction
+   * @param btcAddress The user's BTC deposit address
+   * @param runeId The ID of the Rune being deposited (e.g. UNCOMMON•GOODS)
+   * @param amount The amount of the Rune being deposited (in smallest unit, e.g. satoshis)
+   * @param decimals The number of decimals for the Rune (e.g. 8 for satoshis)
+   * @param btcTxid The hex-encoded Bitcoin transaction ID of the Rune deposit
+   * @param vin Optional list of UTXOs used as inputs for the deposit transaction, required if the transaction has more than 1 input
+   * @param vout Optional list of UTXOs used as outputs for the deposit transaction, required if the transaction has more than 1 output
+   * @returns BridgeTransaction or error message
+   */
+  public async createRuneImportBridgeTransaction(args: {
+    btcAddress: string;
+    runeId: string;
+    amount: bigint;
+    decimals: number;
+    btcTxid: string;
+    vin?: BridgeUtxo[];
+    vout?: BridgeUtxo[];
+  }): Promise<Result<BridgeTransaction, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs: tokenStorage.CreateBridgeTransactionInputArg = {
+        vin: args.vin && args.vin.length > 0 ? [args.vin] : [],
+        btc_txid: [args.btcTxid],
+        icp_address: Principal.fromText(authState.account?.owner || ""),
+        btc_address: args.btcAddress,
+        asset_infos: [
+          {
+            asset_type: { Runes: null },
+            asset_id: args.runeId,
+            amount: args.amount,
+            decimals: args.decimals,
+          },
+        ],
+        bridge_type: { Import: null },
+        vout: args.vout && args.vout.length > 0 ? [args.vout] : [],
+        deposit_fee: [],
+        withdrawal_fee: [],
+        btc_fee: [],
+        created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+        ckbtc_block_id: [],
+        status: [],
+      };
+
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      if ("Ok" in res) {
+        return Ok(
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res.Ok),
+        );
+      }
+
+      return Err(
+        `Error creating Rune import bridge transaction: ${JSON.stringify(res.Err)}`,
+      );
+    } catch (err) {
+      return Err(`Error creating Rune import bridge transaction: ${err}`);
+    }
+  }
+
+  /**
    * Get bridge transactions with pagination
    * @param start The starting index for pagination
    * @param limit The maximum number of transactions to retrieve
@@ -471,6 +558,9 @@ class TokenStorageService {
     withdrawal_fee: bigint | null = null,
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
+    omnity_ticket_id: string | null = null,
+    vin: BridgeUtxo[] = [],
+    vout: BridgeUtxo[] = [],
   ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -490,6 +580,9 @@ class TokenStorageService {
         withdrawal_fee,
         btc_fee,
         retry_times,
+        omnity_ticket_id,
+        vin,
+        vout,
       );
 
       const res = await actor.user_update_bridge_transaction(updateArgs);

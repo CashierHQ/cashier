@@ -37,7 +37,7 @@
   } from "$modules/transactionCart/types/transactionSource";
   import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
   import { tokenStorageService } from "$modules/token/services/tokenStorage";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
 
   type Props = {
@@ -327,7 +327,7 @@
       usdAmount = "";
       lastBlockId = null;
       bridgeSource = null;
-      void bridgeStore.fetchBtcAddress();
+      void btcBridgeStore.fetchBtcAddress();
     }
   }
 </script>
@@ -577,7 +577,7 @@
   <BridgeTxCart
     source={bridgeSource}
     bind:isOpen={showConfirmDrawer}
-    minConfirmations={bridgeStore.minConfirmations}
+    minConfirmations={btcBridgeStore.minConfirmations}
     onCloseDrawer={handleCloseDrawer}
   />
 {/if}

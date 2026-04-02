@@ -5,6 +5,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
+  import ReceiveRunes from "$modules/bitcoin/components/receiveRunes.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { TokenIcon } from "$modules/imageCache";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
@@ -70,7 +71,9 @@
       : "",
   );
 
-  const isBTC = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isBridgeToken = $derived(
+    selectedToken === CKBTC_CANISTER_ID || !!selectedTokenObj?.isRune,
+  );
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
@@ -112,7 +115,7 @@
 <div class="px-4 grow-1 flex flex-col">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      {#if !isBTC}
+      {#if !isBridgeToken}
         <div class="flex items-start gap-1.5">
           <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
           <div class="text-sm text-green">
@@ -164,7 +167,7 @@
 
       <div class="space-y-2">
         <Label class="text-base font-semibold">
-          {#if isBTC}
+          {#if isBridgeToken}
             {locale.t("wallet.receive.ckBtcIcpAddressLabel")}
           {:else if selectedTokenObj}
             {locale
@@ -195,7 +198,7 @@
         <div
           class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
-          {#if isBTC}
+          {#if isBridgeToken}
             {locale.t("wallet.send.addressPrincipleExample")}
           {/if}
         </div>
@@ -210,7 +213,7 @@
             </button>
           </div>
         {/if}
-        {#if isBTC}
+        {#if isBridgeToken}
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-1.5">
               <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
@@ -240,8 +243,10 @@
         {/if}
       </div>
 
-      {#if isBTC}
-        <ReceiveBTC />
+      {#if selectedToken === CKBTC_CANISTER_ID}
+        <ReceiveBTC tokenSymbol={selectedTokenObj?.symbol} />
+      {:else if selectedTokenObj?.isRune}
+        <ReceiveRunes token={selectedTokenObj} />
       {/if}
 
       <div class="flex-grow-1 flex flex-col justify-end items-center">

@@ -31,7 +31,7 @@
     BridgeType,
     type BridgeTransaction,
   } from "$modules/bitcoin/types/bridge_transaction";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
@@ -84,10 +84,27 @@
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   const isCkBtc = $derived(tokenAddress === CKBTC_CANISTER_ID);
-  const minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
+  const isRune = $derived(!!tokenDetails?.isRune && !!tokenDetails?.runeInfo);
+  const minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
+
+  function matchesSelectedBridgeToken(bridge: BridgeTransaction): boolean {
+    if (isCkBtc) {
+      return bridge.asset_infos.some((asset) => asset.asset_type === "BTC");
+    }
+
+    if (isRune && tokenDetails?.runeInfo) {
+      return bridge.asset_infos.some(
+        (asset) =>
+          asset.asset_type === "Runes" &&
+          asset.asset_id === tokenDetails.runeInfo?.runeId,
+      );
+    }
+
+    return false;
+  }
 
   async function loadBridgeTransactions(page: number, append: boolean) {
-    if (!isCkBtc) {
+    if (!isCkBtc && !isRune) {
       bridgeTransactions = [];
       bridgeHasMore = false;
       bridgeError = null;
@@ -107,6 +124,9 @@
         start,
         BRIDGE_PAGE_SIZE,
       );
+      const filtered = fetched.filter((bridge) =>
+        matchesSelectedBridgeToken(bridge),
+      );
 
       bridgeHasMore = fetched.length >= BRIDGE_PAGE_SIZE;
       if (append) {
@@ -115,10 +135,10 @@
         );
         bridgeTransactions = [
           ...bridgeTransactions,
-          ...fetched.filter((bridge) => !existingIds.has(bridge.bridge_id)),
+          ...filtered.filter((bridge) => !existingIds.has(bridge.bridge_id)),
         ];
       } else {
-        bridgeTransactions = fetched;
+        bridgeTransactions = filtered;
       }
       bridgePage = page;
     } catch (error) {
@@ -151,7 +171,7 @@
   });
 
   $effect(() => {
-    if (isCkBtc) {
+    if (isCkBtc || isRune) {
       void loadBridgeTransactions(0, false);
     } else {
       bridgeTransactions = [];
@@ -179,24 +199,26 @@
       usdValue: calculateUsdValue(tx.amount),
     }));
 
-    const bridgeHistory = isCkBtc
-      ? bridgeTransactions.map((bridge) => {
-          const amount = bridge.total_amount
-            ? Number(bridge.total_amount) / 10 ** (tokenDetails?.decimals ?? 8)
-            : 0;
+    const bridgeHistory =
+      isCkBtc || isRune
+        ? bridgeTransactions.map((bridge) => {
+            const amount = bridge.total_amount
+              ? Number(bridge.total_amount) /
+                10 ** (tokenDetails?.decimals ?? 8)
+              : 0;
 
-          return {
-            id: `bridge-${bridge.bridge_id}`,
-            kind: TransactionKind.TRANSFER,
-            isOutgoing: bridge.bridge_type === BridgeType.Export,
-            amount,
-            timestamp: Number(bridge.created_at_ts) * 1000,
-            label: getBridgeLabel(bridge),
-            usdValue: calculateUsdValue(amount),
-            bridge,
-          };
-        })
-      : [];
+            return {
+              id: `bridge-${bridge.bridge_id}`,
+              kind: TransactionKind.TRANSFER,
+              isOutgoing: bridge.bridge_type === BridgeType.Export,
+              amount,
+              timestamp: Number(bridge.created_at_ts) * 1000,
+              label: getBridgeLabel(bridge),
+              usdValue: calculateUsdValue(amount),
+              bridge,
+            };
+          })
+        : [];
 
     return [...tokenTransactions, ...bridgeHistory].sort(
       (a, b) => b.timestamp - a.timestamp,
@@ -232,7 +254,7 @@
       tasks.push(historyStore.loadMore());
     }
 
-    if (isCkBtc && bridgeHasMore && !bridgeIsLoadingMore) {
+    if ((isCkBtc || isRune) && bridgeHasMore && !bridgeIsLoadingMore) {
       tasks.push(loadBridgeTransactions(bridgePage + 1, true));
     }
 

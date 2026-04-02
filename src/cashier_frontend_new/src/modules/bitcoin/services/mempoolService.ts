@@ -138,6 +138,23 @@ class MempoolService {
       return [];
     }
   }
+
+  /**
+   * Get current UTXOs for an address.
+   * @param address Bitcoin address
+   * @returns address UTXO references in txid:vout form
+   */
+  async getAddressUtxos(address: string): Promise<Result<string[], string>> {
+    try {
+      const response = await this.#fetchWithFallback(
+        `/address/${address}/utxo`,
+      );
+      const data: Array<{ txid: string; vout: number }> = await response.json();
+      return Ok(data.map((utxo) => `${utxo.txid}:${utxo.vout}`));
+    } catch (error) {
+      return Err(`Error fetching address UTXOs: ${(error as Error).message}`);
+    }
+  }
 }
 
 export const mempoolService = new MempoolService();

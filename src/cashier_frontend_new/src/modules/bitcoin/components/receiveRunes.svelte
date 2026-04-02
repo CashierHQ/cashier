@@ -2,8 +2,9 @@
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
-  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
+  import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import {
@@ -17,23 +18,23 @@
   import { toast } from "svelte-sonner";
 
   type Props = {
-    tokenSymbol?: string | null;
+    token: TokenWithPriceAndBalance | null;
   };
 
-  let { tokenSymbol = null }: Props = $props();
+  let { token }: Props = $props();
 
-  const depositAddress = $derived.by(() => btcBridgeStore.btcAddress);
+  const depositAddress = $derived.by(() => runeBridgeStore.runeAddress);
   const shortenDepositAddress = $derived.by(() =>
     transformShortAddress(depositAddress || ""),
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
-  let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
-  const importBridgeTxs = $derived.by(
-    () => btcBridgeStore.importBridgeTxs ?? [],
+  const minConfirmations = 0;
+  const importBridgeTxs = $derived.by(() =>
+    runeBridgeStore.getImportBridgeTransactionsForToken(token),
   );
-  const hasMoreImports = $derived.by(() => btcBridgeStore.hasMoreImports);
-  const isRefreshing = $derived.by(() => btcBridgeStore.isRefreshing);
+  const hasMoreImports = $derived.by(() => runeBridgeStore.hasMoreImports);
+  const isRefreshing = $derived.by(() => runeBridgeStore.isRefreshing);
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -57,11 +58,16 @@
   }
 
   function handleLoadMore() {
-    btcBridgeStore.loadMoreImports();
+    runeBridgeStore.loadMoreImports();
   }
 
   async function handleRefresh() {
-    const result = await btcBridgeStore.manualRefreshBalance();
+    if (!token || !token.runeInfo) {
+      toast.error(locale.t("bitcoin.receive.refreshError"));
+      return;
+    }
+
+    const result = await runeBridgeStore.manualRefreshBalance(token);
 
     if (result.isErr()) {
       toast.error(locale.t("bitcoin.receive.refreshError"));
@@ -76,14 +82,16 @@
 <div>
   <div class="mb-6 flex justify-center">
     <Label class="text-base font-semibold">
-      {locale.t("bitcoin.receive.title")}
+      {locale
+        .t("wallet.receive.btcAddress")
+        .replace("{{token}}", token?.symbol ?? "Runes")}
     </Label>
   </div>
   <div class="space-y-4">
     <Label class="text-base font-semibold">
       {locale
         .t("wallet.receive.btcAddress")
-        .replace("{{token}}", tokenSymbol ?? "BTC")}
+        .replace("{{token}}", token?.symbol ?? "Runes")}
     </Label>
 
     <div class="relative">
@@ -157,7 +165,7 @@
   <BridgeList
     bridgeTxs={importBridgeTxs}
     hasMore={hasMoreImports}
-    emptyText={locale.t("wallet.receive.noBtcImportTxs")}
+    emptyText={locale.t("wallet.receive.noBtcImportTxs").replace("BTC", "Rune")}
     onSelectBridge={handleSelectBridge}
     onLoadMore={handleLoadMore}
   />

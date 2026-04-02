@@ -1,0 +1,643 @@
+import { managedState } from "$lib/managedState";
+import { authState } from "$modules/auth/state/auth.svelte";
+import {
+  BRIDGE_PAGE_SIZE,
+  MEMPOOL_API_POOLING_INTERVAL_SECONDS,
+} from "$modules/bitcoin/constants";
+import { mempoolService } from "$modules/bitcoin/services/mempoolService";
+import { omnityBitcoinService } from "$modules/bitcoin/services/omnityBitcoinService";
+import { omnityRunesIndexerService } from "$modules/bitcoin/services/omnityRunesIndexerService";
+import {
+  type BitcoinBlock,
+  type BitcoinTransaction,
+} from "$modules/bitcoin/types/bitcoin_transaction";
+import {
+  BridgeAssetType,
+  BridgeTransactionStatus,
+  BridgeType,
+  type BridgeUtxo,
+  type BridgeTransaction,
+  type BridgeTransactionWithUsdValue,
+} from "$modules/bitcoin/types/bridge_transaction";
+import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
+import { CKBTC_CANISTER_ID } from "$modules/token/constants";
+import { tokenStorageService } from "$modules/token/services/tokenStorage";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { PersistedState } from "runed";
+import { Err, Ok, type Result } from "ts-results-es";
+
+class RuneBridgeStore {
+  #runeAddress: PersistedState<string | null> = new PersistedState(
+    "runeAddress",
+    null,
+  );
+  #bridgeTxQuery;
+  #allBridges: BridgeTransactionWithUsdValue[] = [];
+  #currentPage = 0;
+  hasMore = $state<boolean>(true);
+
+  #importBridgeTxQuery;
+  #allImportBridges: BridgeTransactionWithUsdValue[] = [];
+  #importCurrentPage = 0;
+  hasMoreImports = $state<boolean>(true);
+
+  processPendingTxsTask: NodeJS.Timeout | null = null;
+  isRefreshing = $state<boolean>(false);
+
+  constructor() {
+    this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#currentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMore = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#currentPage === 0) {
+          this.#allBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allBridges.slice(0, start);
+          this.#allBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletRuneBridgeStore_bridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    this.#importBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
+      queryFn: async () => {
+        const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          start,
+          BRIDGE_PAGE_SIZE,
+          null,
+          BridgeType.Import,
+        );
+
+        if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
+          this.hasMoreImports = false;
+        }
+
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+        const enrichedBridgeTxs = enrichBridgeTransactionWithUsdValue(
+          bridgeTxs,
+          btcPriceUSD,
+        );
+
+        if (this.#importCurrentPage === 0) {
+          this.#allImportBridges = enrichedBridgeTxs;
+        } else {
+          const previousBridges = this.#allImportBridges.slice(0, start);
+          this.#allImportBridges = [...previousBridges, ...enrichedBridgeTxs];
+        }
+
+        return this.#allImportBridges;
+      },
+      refetchInterval: 30_000,
+      persistedKey: ["walletRuneBridgeStore_importBridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
+    $effect.root(() => {
+      $effect(() => {
+        if (authState.account == null) {
+          this.reset();
+        } else {
+          if (this.processPendingTxsTask) {
+            clearInterval(this.processPendingTxsTask);
+            this.processPendingTxsTask = null;
+          }
+
+          this.fetchRuneAddress().then((address) => {
+            this.#runeAddress.current = address;
+          });
+
+          this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+          this.processPendingTxsTask =
+            this.createPendingBridgeTransactionsTask();
+        }
+      });
+    });
+  }
+
+  get runeAddress() {
+    return this.#runeAddress.current;
+  }
+
+  get bridgeTxs() {
+    return this.#bridgeTxQuery.data;
+  }
+
+  get importBridgeTxs() {
+    return this.#importBridgeTxQuery.data;
+  }
+
+  public loadMoreImports() {
+    if (!this.hasMoreImports) {
+      return;
+    }
+    this.#importCurrentPage += 1;
+    this.#importBridgeTxQuery.refresh();
+  }
+
+  public reset() {
+    this.#runeAddress.current = null;
+
+    this.#currentPage = 0;
+    this.#allBridges = [];
+    this.hasMore = true;
+    this.#bridgeTxQuery.reset();
+
+    this.#importCurrentPage = 0;
+    this.#allImportBridges = [];
+    this.hasMoreImports = true;
+    this.#importBridgeTxQuery.reset();
+
+    if (this.processPendingTxsTask) {
+      clearInterval(this.processPendingTxsTask);
+      this.processPendingTxsTask = null;
+    }
+  }
+
+  async fetchRuneAddress(): Promise<string | null> {
+    try {
+      const result = await tokenStorageService.getRuneAddress();
+      if (result.isErr()) {
+        throw new Error(
+          `Get Rune address error: ${JSON.stringify(result.unwrapErr())}`,
+        );
+      }
+      return result.unwrap();
+    } catch (error) {
+      console.error("Failed to fetch Rune address:", error);
+      return null;
+    }
+  }
+
+  getImportBridgeTransactionsForToken(
+    token?: Pick<
+      TokenWithPriceAndBalance,
+      "address" | "isRune" | "runeInfo"
+    > | null,
+  ): BridgeTransactionWithUsdValue[] {
+    const bridgeTxs = this.importBridgeTxs ?? [];
+    if (!token?.isRune || !token.runeInfo) {
+      return [];
+    }
+
+    return bridgeTxs.filter((bridge) =>
+      bridge.asset_infos.some(
+        (asset) =>
+          asset.asset_type === BridgeAssetType.Runes &&
+          asset.asset_id === token.runeInfo?.runeId,
+      ),
+    );
+  }
+
+  async lookupMempoolTransactionByAddress(
+    address: string,
+  ): Promise<Result<BitcoinTransaction[], string>> {
+    const txIdsResult = await mempoolService.getMempoolTxs();
+    if (txIdsResult.isErr()) {
+      return Err(`Get mempool tx IDs failed: ${txIdsResult.unwrapErr()}`);
+    }
+
+    const txIds = txIdsResult.unwrap();
+    const transactionTasks = txIds.map(async (txid) => {
+      const txResult = await mempoolService.getTransactionById(txid);
+      if (txResult.isErr()) {
+        return null;
+      }
+      return txResult.unwrap();
+    });
+
+    const transactions = await Promise.all(transactionTasks);
+    return Ok(
+      transactions.filter(
+        (tx): tx is BitcoinTransaction =>
+          tx !== null && tx.vout.some((output) => output.address === address),
+      ),
+    );
+  }
+
+  #getRuneTokens(): TokenWithPriceAndBalance[] {
+    return (walletStore.query.data ?? []).filter(
+      (token): token is TokenWithPriceAndBalance =>
+        !!token.isRune && !!token.runeInfo,
+    );
+  }
+
+  #toUtxoRefsFromVin(bitcoinTransaction: BitcoinTransaction): string[] {
+    return bitcoinTransaction.vin.map((input) => `${input.txid}:${input.vout}`);
+  }
+
+  #toMatchedOutputUtxos(
+    bitcoinTransaction: BitcoinTransaction,
+    address: string,
+  ): BridgeUtxo[] {
+    return bitcoinTransaction.vout
+      .map((output, index) => ({ output, index }))
+      .filter(
+        ({ output }) => output.address.toLowerCase() === address.toLowerCase(),
+      )
+      .map(({ index }) => ({
+        txid: bitcoinTransaction.txid,
+        vout: index,
+      }));
+  }
+
+  async #lookupRuneBalancesForOutputs(outputs: string[]) {
+    const result =
+      await omnityRunesIndexerService.getRuneBalancesForOutputs(outputs);
+    if (result.isErr()) {
+      return [];
+    }
+
+    return result
+      .unwrap()
+      .flatMap((entry) => (entry.length === 1 ? entry[0] : []));
+  }
+
+  #findRuneBridgeByTxidAndRuneId(txid: string, runeId: string) {
+    return (this.bridgeTxs ?? []).find(
+      (bridge) =>
+        bridge.btc_txid === txid &&
+        bridge.asset_infos.some(
+          (asset) =>
+            asset.asset_type === BridgeAssetType.Runes &&
+            asset.asset_id === runeId,
+        ),
+    );
+  }
+
+  async processRuneMempoolTransactions(): Promise<void> {
+    const runeAddress = this.runeAddress;
+    if (!runeAddress) {
+      return;
+    }
+
+    const runeTokens = this.#getRuneTokens();
+    if (runeTokens.length === 0) {
+      return;
+    }
+
+    const mempoolTxsResult =
+      await this.lookupMempoolTransactionByAddress(runeAddress);
+    if (mempoolTxsResult.isErr()) {
+      return;
+    }
+
+    for (const btcTx of mempoolTxsResult.unwrap()) {
+      const inputOutputs = this.#toUtxoRefsFromVin(btcTx);
+      if (inputOutputs.length === 0) {
+        continue;
+      }
+
+      const runeBalances =
+        await this.#lookupRuneBalancesForOutputs(inputOutputs);
+      const matchedVout = this.#toMatchedOutputUtxos(btcTx, runeAddress);
+
+      for (const token of runeTokens) {
+        const runeId = token.runeInfo?.runeId;
+        if (
+          !runeId ||
+          this.#findRuneBridgeByTxidAndRuneId(btcTx.txid, runeId)
+        ) {
+          continue;
+        }
+
+        const matchedBalance = runeBalances.find(
+          (balance) => balance.rune_id === runeId,
+        );
+        if (!matchedBalance) {
+          continue;
+        }
+
+        const createBridgeResult =
+          await tokenStorageService.createRuneImportBridgeTransaction({
+            btcAddress: runeAddress,
+            runeId,
+            amount: matchedBalance.amount,
+            decimals: token.decimals,
+            btcTxid: btcTx.txid,
+            vin: btcTx.vin.map((input) => ({
+              txid: input.txid,
+              vout: input.vout,
+            })),
+            vout: matchedVout,
+          });
+
+        if (createBridgeResult.isErr()) {
+          console.error(
+            `Failed to create Rune bridge transaction for BTC TXID ${btcTx.txid}:`,
+            createBridgeResult.unwrapErr(),
+          );
+          continue;
+        }
+      }
+    }
+
+    this.#bridgeTxQuery.refresh();
+    this.#importBridgeTxQuery.refresh();
+  }
+
+  createPendingBridgeTransactionsTask(): NodeJS.Timeout {
+    return setInterval(async () => {
+      await this.processRuneMempoolTransactions();
+
+      const pendingTxs = await tokenStorageService.getBridgeTransactions(
+        0,
+        10,
+        BridgeTransactionStatus.Pending,
+      );
+
+      const pendingRuneTx = pendingTxs.find((bridge) =>
+        bridge.asset_infos.some(
+          (asset) => asset.asset_type === BridgeAssetType.Runes,
+        ),
+      );
+
+      if (!pendingRuneTx) {
+        return;
+      }
+
+      await this.processRuneImportBridgeTransaction(pendingRuneTx);
+    }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
+  }
+
+  async processRuneImportBridgeTransaction(
+    bridgeTx: BridgeTransaction,
+  ): Promise<void> {
+    const btcTxId = bridgeTx.btc_txid;
+    if (!btcTxId) {
+      return;
+    }
+
+    const btcTxResult = await mempoolService.getTransactionById(btcTxId);
+    if (btcTxResult.isErr()) {
+      return;
+    }
+
+    const btcTx = btcTxResult.unwrap();
+    const currentTipHeightResult = await mempoolService.getTipHeight();
+    const currentTipHeight = currentTipHeightResult.isOk()
+      ? Number(currentTipHeightResult.unwrap())
+      : null;
+
+    let updatedConfirmingBlocks: BitcoinBlock[] = [];
+    if (btcTx.block_id && currentTipHeight !== null) {
+      updatedConfirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
+        currentTipHeight,
+        Number(btcTx.block_id),
+      );
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      bridgeTx.bridge_id,
+      null,
+      null,
+      btcTx.block_id,
+      btcTx.block_timestamp,
+      updatedConfirmingBlocks,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      bridgeTx.vin,
+      bridgeTx.vout.length > 0
+        ? bridgeTx.vout
+        : this.#toMatchedOutputUtxos(btcTx, bridgeTx.btc_address),
+    );
+
+    if (updateResult.isErr()) {
+      console.error(
+        `Failed to update Rune bridge confirmations for ${bridgeTx.bridge_id}:`,
+        updateResult.unwrapErr(),
+      );
+      return;
+    }
+
+    const outputRefs = (
+      bridgeTx.vout.length > 0
+        ? bridgeTx.vout
+        : this.#toMatchedOutputUtxos(btcTx, bridgeTx.btc_address)
+    ).map((utxo) => `${utxo.txid}:${utxo.vout}`);
+
+    if (!bridgeTx.omnity_ticket_id) {
+      const runeBalances = await this.#lookupRuneBalancesForOutputs(outputRefs);
+      const runeAsset = bridgeTx.asset_infos.find(
+        (asset) => asset.asset_type === BridgeAssetType.Runes,
+      );
+
+      const matchedBalance = runeBalances.find(
+        (balance) => balance.rune_id === runeAsset?.asset_id,
+      );
+
+      if (!matchedBalance) {
+        const failResult = await tokenStorageService.updateBridgeTransaction(
+          bridgeTx.bridge_id,
+          BridgeTransactionStatus.Failed,
+        );
+        if (failResult.isOk()) {
+          this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+        }
+        return;
+      }
+
+      const generateTicketResult = await omnityBitcoinService.generateTicket({
+        txid: btcTxId,
+        target_chain_id: "eICP",
+        amount: matchedBalance.amount,
+        receiver: authState.account?.owner || "",
+        rune_id: matchedBalance.rune_id,
+      });
+
+      if (generateTicketResult.isOk()) {
+        const setTicketResult =
+          await tokenStorageService.updateBridgeTransaction(
+            bridgeTx.bridge_id,
+            null,
+            null,
+            null,
+            null,
+            [],
+            null,
+            null,
+            null,
+            null,
+            null,
+            btcTxId,
+            [],
+            [],
+          );
+        if (setTicketResult.isOk()) {
+          this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+        }
+      }
+      return;
+    }
+
+    const ticketStatusResult = await omnityBitcoinService.generateTicketStatus(
+      bridgeTx.omnity_ticket_id,
+    );
+    if (ticketStatusResult.isErr()) {
+      return;
+    }
+
+    const ticketStatus = ticketStatusResult.unwrap();
+    if ("Finalized" in ticketStatus) {
+      const completeResult = await tokenStorageService.updateBridgeTransaction(
+        bridgeTx.bridge_id,
+        BridgeTransactionStatus.Completed,
+      );
+      if (completeResult.isOk()) {
+        this.#bridgeTxQuery.refresh();
+        this.#importBridgeTxQuery.refresh();
+      }
+    }
+  }
+
+  async manualRefreshBalance(
+    token: Pick<TokenWithPriceAndBalance, "decimals" | "runeInfo">,
+  ): Promise<Result<number, string>> {
+    this.isRefreshing = true;
+
+    try {
+      const runeAddress = this.runeAddress;
+      if (!runeAddress) {
+        return Err("Rune address not available");
+      }
+
+      const runeId = token.runeInfo?.runeId;
+      if (!runeId) {
+        return Err("Rune metadata not available");
+      }
+
+      const utxoResult = await mempoolService.getAddressUtxos(runeAddress);
+      if (utxoResult.isErr()) {
+        return Err(utxoResult.unwrapErr());
+      }
+
+      const existingUtxos = new Set(
+        this.getImportBridgeTransactionsForToken({
+          address: "",
+          isRune: true,
+          runeInfo: token.runeInfo,
+        }).flatMap((bridge) =>
+          bridge.vout.map((utxo) => `${utxo.txid}:${utxo.vout}`),
+        ),
+      );
+
+      const unseenUtxos = utxoResult
+        .unwrap()
+        .filter((utxo) => !existingUtxos.has(utxo));
+
+      if (unseenUtxos.length === 0) {
+        return Ok(0);
+      }
+
+      let createdCount = 0;
+      for (const outpoint of unseenUtxos) {
+        const runeBalancesResult =
+          await omnityRunesIndexerService.getRuneBalancesForOutputs([outpoint]);
+        if (runeBalancesResult.isErr()) {
+          continue;
+        }
+
+        const balance = runeBalancesResult
+          .unwrap()
+          .flatMap((entry) => (entry.length === 1 ? entry[0] : []))
+          .find((item) => item.rune_id === runeId);
+        if (!balance) {
+          continue;
+        }
+
+        const txid = outpoint.split(":")[0] ?? unseenUtxos[0]?.split(":")[0];
+        if (!txid) {
+          continue;
+        }
+
+        const ticketResult = await omnityBitcoinService.generateTicket({
+          txid,
+          target_chain_id: "eICP",
+          amount: balance.amount,
+          receiver: authState.account?.owner || "",
+          rune_id: runeId,
+        });
+        if (ticketResult.isErr()) {
+          continue;
+        }
+
+        const createResult =
+          await tokenStorageService.createRuneImportBridgeTransaction({
+            btcAddress: runeAddress,
+            runeId,
+            amount: balance.amount,
+            decimals: token.decimals,
+            btcTxid: txid,
+            vout: unseenUtxos
+              .filter((utxo) => utxo.startsWith(`${txid}:`))
+              .map((utxo) => {
+                const [utxoTxid, vout] = utxo.split(":");
+                return { txid: utxoTxid, vout: Number(vout) };
+              }),
+          });
+
+        if (createResult.isErr()) {
+          continue;
+        }
+
+        const updateResult = await tokenStorageService.updateBridgeTransaction(
+          createResult.unwrap().bridge_id,
+          null,
+          null,
+          null,
+          null,
+          [],
+          null,
+          null,
+          null,
+          null,
+          null,
+          txid,
+          [],
+          [],
+        );
+        if (updateResult.isOk()) {
+          createdCount += 1;
+        }
+      }
+
+      this.#bridgeTxQuery.refresh();
+      this.#importBridgeTxQuery.refresh();
+
+      return Ok(createdCount);
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+}
+
+export const runeBridgeStore = new RuneBridgeStore();
