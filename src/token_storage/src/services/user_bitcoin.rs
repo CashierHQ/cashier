@@ -180,6 +180,7 @@ mod tests {
     use token_storage_types::bitcoin::bridge_address::BridgeAddress;
     use token_storage_types::bitcoin::bridge_transaction::{
         BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+        UTXO,
     };
 
     fn fixture_of_import_create_input() -> CreateBridgeTransactionInputArg {
@@ -220,6 +221,35 @@ mod tests {
             status: None,
             vin: None,
             vout: None,
+        }
+    }
+
+    fn fixture_of_runes_import_create_input() -> CreateBridgeTransactionInputArg {
+        CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_rune_btc_txid".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "tb1qrunebridgeaddress".to_string(),
+            bridge_type: BridgeType::Import,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: Some(Nat::from(1_000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 100_000,
+            ckbtc_block_id: None,
+            status: None,
+            vin: Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }]),
         }
     }
 
@@ -353,6 +383,31 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_fail_create_runes_import_bridge_transaction_due_to_duplicate_import() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let input = fixture_of_runes_import_create_input();
+        service
+            .create_bridge_transaction(user_id, input.clone())
+            .await
+            .unwrap();
+
+        // Act
+        let result = service.create_bridge_transaction(user_id, input).await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "A bridge transaction with the same btc_txid already exists"
+        ));
+    }
+
+    #[tokio::test]
     async fn it_should_create_import_bridge_transaction() {
         // Arrange
         let repo = TestRepositories::new();
@@ -422,6 +477,74 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_create_runes_import_bridge_transaction() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let input = fixture_of_runes_import_create_input();
+
+        // Act
+        let result = service
+            .create_bridge_transaction(user_id, input.clone())
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.icp_address, input.icp_address);
+        assert_eq!(result.btc_address, input.btc_address);
+        assert_eq!(result.bridge_type, BridgeType::Import);
+        assert_eq!(result.btc_txid, input.btc_txid);
+        assert_eq!(result.status, BridgeTransactionStatus::Pending);
+        assert_eq!(result.asset_infos.len(), 1);
+        assert_eq!(result.asset_infos[0].asset_type, BridgeAssetType::Runes);
+        assert_eq!(result.vin, input.vin);
+        assert_eq!(result.vout, input.vout);
+        assert_eq!(result.total_amount, Some(Nat::from(49_000u64)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_runes_import_bridge_transaction_due_to_factory_error() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: None,
+            icp_address: random_principal_id(),
+            btc_address: "tb1qrunebridgeaddress".to_string(),
+            bridge_type: BridgeType::Import,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: Some(Nat::from(1_000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 100_000,
+            ckbtc_block_id: None,
+            status: None,
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let result = service.create_bridge_transaction(user_id, input).await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "btc_txid or ckbtc_block_id is required for import"
+        ));
+    }
+
+    #[tokio::test]
     async fn it_should_fail_update_bridge_transaction_due_to_bridge_not_found() {
         // Arrange
         let repo = TestRepositories::new();
@@ -481,6 +604,94 @@ mod tests {
             omnity_ticket_id: None,
             vin: None,
             vout: None,
+        };
+
+        // Act
+        let result = service
+            .update_bridge_transaction(user_id, update_input)
+            .await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "status is already set to the same value"
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_update_runes_import_bridge_transaction_due_to_bridge_not_found() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: "nonexistent-rune-bridge".to_string(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: Some("omnity-ticket-1".to_string()),
+            vin: Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }]),
+        };
+
+        // Act
+        let result = service
+            .update_bridge_transaction(user_id, update_input)
+            .await;
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), CanisterError::NotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_update_runes_import_bridge_transaction_due_to_validator_error() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let created = service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: Some("omnity-ticket-1".to_string()),
+            vin: Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }]),
         };
 
         // Act
@@ -637,6 +848,68 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_update_runes_import_bridge_transaction() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let created = service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: Some("omnity-ticket-1".to_string()),
+            vin: Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }]),
+        };
+
+        // Act
+        let updated = service
+            .update_bridge_transaction(user_id, update_input)
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(updated.status, BridgeTransactionStatus::Completed);
+        assert_eq!(
+            updated.omnity_ticket_id,
+            Some("omnity-ticket-1".to_string())
+        );
+        assert_eq!(
+            updated.vin,
+            Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }])
+        );
+        assert_eq!(
+            updated.vout,
+            Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }])
+        );
+    }
+
+    #[tokio::test]
     async fn it_should_get_bridge_transactions_with_pagination() {
         // Arrange
         let repo = TestRepositories::new();
@@ -767,6 +1040,46 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_get_runes_bridge_transactions() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let created = service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+
+        // Act
+        let transactions = service
+            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Import))
+            .await;
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, created.bridge_id);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(
+            transactions[0].vin,
+            Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }])
+        );
+        assert_eq!(
+            transactions[0].vout,
+            Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }])
+        );
+    }
+
+    #[tokio::test]
     async fn it_should_get_bridge_transaction_by_id() {
         // Arrange
         let repo = TestRepositories::new();
@@ -786,6 +1099,47 @@ mod tests {
         // Assert
         assert!(result.is_some());
         assert_eq!(result.unwrap().bridge_id, created.bridge_id);
+    }
+
+    #[tokio::test]
+    async fn it_should_get_runes_bridge_transaction_by_id() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let created = service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+
+        // Act
+        let result = service
+            .get_bridge_transaction_by_id(user_id, created.bridge_id.clone())
+            .await;
+
+        // Assert
+        assert!(result.is_some());
+        let transaction = result.unwrap();
+        assert_eq!(transaction.bridge_id, created.bridge_id);
+        assert_eq!(
+            transaction.asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(
+            transaction.vin,
+            Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }])
+        );
+        assert_eq!(
+            transaction.vout,
+            Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }])
+        );
     }
 
     #[tokio::test]

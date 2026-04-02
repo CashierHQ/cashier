@@ -6,7 +6,7 @@ use cashier_common::test_utils::random_id_string;
 use ic_mple_client::CanisterClientError;
 use token_storage_types::{
     bitcoin::bridge_transaction::{
-        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType, UTXO,
     },
     dto::bitcoin::CreateBridgeTransactionInputArg,
 };
@@ -51,6 +51,35 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         status: None,
         vin: None,
         vout: None,
+    }
+}
+
+fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: Some("rune_txid_123".to_string()),
+        icp_address: caller,
+        btc_address: "tb1qrunereceiver0000000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: 50_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Import,
+        deposit_fee: Some(1_000u64.into()),
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 200,
+        ckbtc_block_id: None,
+        status: None,
+        vin: Some(vec![UTXO {
+            txid: "vin-txid-1".to_string(),
+            vout: 0,
+        }]),
+        vout: Some(vec![UTXO {
+            txid: "vout-txid-1".to_string(),
+            vout: 1,
+        }]),
     }
 }
 
@@ -143,6 +172,53 @@ async fn it_should_get_export_bridge_transaction_by_id() {
         assert_eq!(bridge.bridge_id, created_bridge.bridge_id);
         assert_eq!(bridge.bridge_type, BridgeType::Export);
         assert_eq!(bridge.status, BridgeTransactionStatus::Created);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_runes_import_bridge_transaction_by_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let created_bridge = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let result = token_storage_client
+            .user_get_bridge_transaction_by_id(created_bridge.bridge_id.clone())
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let bridge = result.unwrap();
+        assert!(bridge.is_some());
+        let bridge = bridge.unwrap();
+        assert_eq!(bridge.bridge_id, created_bridge.bridge_id);
+        assert_eq!(bridge.bridge_type, BridgeType::Import);
+        assert_eq!(bridge.asset_infos[0].asset_type, BridgeAssetType::Runes);
+        assert_eq!(bridge.omnity_ticket_id, None);
+        assert_eq!(
+            bridge.vin,
+            Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }])
+        );
+        assert_eq!(
+            bridge.vout,
+            Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }])
+        );
 
         Ok(())
     })

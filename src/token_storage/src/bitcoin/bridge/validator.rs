@@ -174,7 +174,7 @@ mod tests {
     use candid::{Nat, Principal};
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::bitcoin::bridge_transaction::{
-        BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus,
+        BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, UTXO,
     };
 
     fn fixture_of_import_create_input(icp_address: Principal) -> CreateBridgeTransactionInputArg {
@@ -215,6 +215,37 @@ mod tests {
             status: None,
             vin: None,
             vout: None,
+        }
+    }
+
+    fn fixture_of_runes_import_create_input(
+        icp_address: Principal,
+    ) -> CreateBridgeTransactionInputArg {
+        CreateBridgeTransactionInputArg {
+            btc_txid: Some("rune-txid-1".to_string()),
+            icp_address,
+            btc_address: "tb1qrunebridgeaddress".to_string(),
+            bridge_type: BridgeType::Import,
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+            vin: Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }]),
         }
     }
 
@@ -317,6 +348,27 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_fail_validate_create_runes_import_bridge_due_to_duplicate() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let input = fixture_of_runes_import_create_input(random_principal_id());
+        store_bridge(&repo, user_id, input.clone());
+
+        // Act
+        let result = validator.validate_create_bridge_transaction(user_id, &input);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(message)
+                if message == "A bridge transaction with the same btc_txid already exists"
+        ));
     }
 
     #[test]
@@ -952,5 +1004,47 @@ mod tests {
                 .validate_update_bridge_transaction(user_id, &bridge_id, &completed_input)
                 .is_ok()
         );
+    }
+
+    #[test]
+    fn it_should_validate_update_runes_import_bridge_with_omnity_ticket_id_vin_and_vout() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let bridge_id = store_bridge(
+            &repo,
+            user_id,
+            fixture_of_runes_import_create_input(random_principal_id()),
+        );
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: Some("omnity-ticket-1".to_string()),
+            vin: Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }]),
+        };
+
+        // Act
+        let result =
+            validator.validate_update_bridge_transaction(user_id, &bridge_id, &update_input);
+
+        // Assert
+        assert!(result.is_ok());
     }
 }

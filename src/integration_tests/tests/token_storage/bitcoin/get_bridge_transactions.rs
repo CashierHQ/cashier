@@ -5,7 +5,7 @@ use candid::Principal;
 use ic_mple_client::CanisterClientError;
 use token_storage_types::{
     bitcoin::bridge_transaction::{
-        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+        BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType, UTXO,
     },
     dto::bitcoin::{CreateBridgeTransactionInputArg, GetUserBridgeTransactionsInputArg},
 };
@@ -50,6 +50,35 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         status: None,
         vin: None,
         vout: None,
+    }
+}
+
+fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: Some("rune_txid_123".to_string()),
+        icp_address: caller,
+        btc_address: "tb1qrunereceiver0000000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: 50_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Import,
+        deposit_fee: Some(1_000u64.into()),
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 200,
+        ckbtc_block_id: None,
+        status: None,
+        vin: Some(vec![UTXO {
+            txid: "vin-txid-1".to_string(),
+            vout: 0,
+        }]),
+        vout: Some(vec![UTXO {
+            txid: "vout-txid-1".to_string(),
+            vout: 1,
+        }]),
     }
 }
 
@@ -295,6 +324,57 @@ async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
 
         // Assert
         assert_eq!(all_results.len(), 3);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_runes_bridge_transactions() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let created = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: Some(BridgeType::Import),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, created.bridge_id);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(
+            transactions[0].vin,
+            Some(vec![UTXO {
+                txid: "vin-txid-1".to_string(),
+                vout: 0,
+            }])
+        );
+        assert_eq!(
+            transactions[0].vout,
+            Some(vec![UTXO {
+                txid: "vout-txid-1".to_string(),
+                vout: 1,
+            }])
+        );
 
         Ok(())
     })

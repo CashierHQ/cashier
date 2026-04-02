@@ -145,8 +145,8 @@ impl BridgeTransactionFactory {
             retry_times: 0,
             status,
             omnity_ticket_id: None,
-            vin: None,
-            vout: None,
+            vin: input.vin,
+            vout: input.vout,
         })
     }
 }
@@ -155,7 +155,22 @@ impl BridgeTransactionFactory {
 mod tests {
     use super::*;
     use cashier_common::test_utils::random_principal_id;
-    use token_storage_types::bitcoin::bridge_transaction::{BridgeAssetInfo, BridgeAssetType};
+    use token_storage_types::bitcoin::bridge_transaction::{
+        BridgeAssetInfo, BridgeAssetType, UTXO,
+    };
+
+    fn fixture_of_utxos(prefix: &str) -> Vec<UTXO> {
+        vec![
+            UTXO {
+                txid: format!("{prefix}_txid_1"),
+                vout: 0,
+            },
+            UTXO {
+                txid: format!("{prefix}_txid_2"),
+                vout: 1,
+            },
+        ]
+    }
 
     #[test]
     fn it_should_create_import_bridge_transaction_from_input() {
@@ -538,5 +553,48 @@ mod tests {
 
         // Assert
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
+    }
+
+    #[test]
+    fn it_should_create_runes_import_bridge_with_vin_and_vout() {
+        // Arrange
+        let vin = fixture_of_utxos("vin");
+        let vout = fixture_of_utxos("vout");
+        let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("rune_txid".to_string()),
+            icp_address: random_principal_id(),
+            btc_address: "tb1qruneaddress".to_string(),
+            asset_infos: vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(50_000u64),
+                decimals: 8,
+            }],
+            bridge_type: BridgeType::Import,
+            deposit_fee: Some(Nat::from(1_000u64)),
+            withdrawal_fee: None,
+            btc_fee: None,
+            created_at_ts: 0,
+            ckbtc_block_id: None,
+            status: None,
+            vin: Some(vin.clone()),
+            vout: Some(vout.clone()),
+        };
+
+        // Act
+        let transaction = BridgeTransactionFactory::from_create_input(input).unwrap();
+
+        // Assert
+        assert_eq!(transaction.bridge_id, "import_rune_txid".to_string());
+        assert_eq!(transaction.btc_txid, Some("rune_txid".to_string()));
+        assert_eq!(transaction.status, BridgeTransactionStatus::Pending);
+        assert_eq!(transaction.vin, Some(vin));
+        assert_eq!(transaction.vout, Some(vout));
+        assert_eq!(transaction.asset_infos.len(), 1);
+        assert_eq!(
+            transaction.asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+        assert_eq!(transaction.asset_infos[0].amount, Nat::from(49_000u64));
     }
 }

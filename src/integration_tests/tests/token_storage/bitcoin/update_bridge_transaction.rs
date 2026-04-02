@@ -7,6 +7,7 @@ use ic_mple_client::CanisterClientError;
 use token_storage_types::{
     bitcoin::bridge_transaction::{
         BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
+        UTXO,
     },
     dto::bitcoin::{CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg},
     error::CanisterError,
@@ -66,6 +67,35 @@ fn fixture_of_block_confirmations() -> Vec<BlockConfirmation> {
             block_timestamp: 1620000600,
         },
     ]
+}
+
+fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: Some("rune_txid_123".to_string()),
+        icp_address: caller,
+        btc_address: "tb1qrunereceiver0000000000000000000000000".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "UNCOMMON•GOODS".to_string(),
+            amount: Nat::from(50_000u64),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Import,
+        deposit_fee: Some(Nat::from(1_000u64)),
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 200,
+        ckbtc_block_id: None,
+        status: None,
+        vin: Some(vec![UTXO {
+            txid: "vin-txid-1".to_string(),
+            vout: 0,
+        }]),
+        vout: Some(vec![UTXO {
+            txid: "vout-txid-1".to_string(),
+            vout: 1,
+        }]),
+    }
 }
 
 #[tokio::test]
@@ -527,6 +557,75 @@ async fn it_should_update_export_bridge_transaction() {
             complete_transaction.btc_txid,
             Some("btc-export-txid-1".to_string())
         );
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_update_runes_import_bridge_transaction() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let created_bridge = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created_bridge.bridge_id.clone(),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: Some("omnity-ticket-1".to_string()),
+            vin: Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }]),
+            vout: Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }]),
+        };
+
+        // Act
+        let result = token_storage_client
+            .user_update_bridge_transaction(update_input)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let updated = result.unwrap().unwrap();
+        assert_eq!(updated.bridge_id, created_bridge.bridge_id);
+        assert_eq!(updated.status, BridgeTransactionStatus::Completed);
+        assert_eq!(
+            updated.omnity_ticket_id,
+            Some("omnity-ticket-1".to_string())
+        );
+        assert_eq!(
+            updated.vin,
+            Some(vec![UTXO {
+                txid: "updated-vin-txid".to_string(),
+                vout: 2,
+            }])
+        );
+        assert_eq!(
+            updated.vout,
+            Some(vec![UTXO {
+                txid: "updated-vout-txid".to_string(),
+                vout: 3,
+            }])
+        );
+
         Ok(())
     })
     .await
