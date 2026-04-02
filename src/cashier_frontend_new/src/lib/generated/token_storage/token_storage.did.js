@@ -158,6 +158,7 @@ export const idlFactory = ({ IDL }) => {
   const UTXO = IDL.Record({ 'txid' : IDL.Text, 'vout' : IDL.Nat32 });
   const BridgeTransactionStatus = IDL.Variant({
     'Failed' : IDL.Null,
+    'Confirmed' : IDL.Null,
     'Created' : IDL.Null,
     'Completed' : IDL.Null,
     'Pending' : IDL.Null,
@@ -181,6 +182,7 @@ export const idlFactory = ({ IDL }) => {
     'vout' : IDL.Opt(IDL.Vec(UTXO)),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
+    'omnity_ticket_id' : IDL.Opt(IDL.Text),
     'created_at_ts' : IDL.Nat64,
     'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),

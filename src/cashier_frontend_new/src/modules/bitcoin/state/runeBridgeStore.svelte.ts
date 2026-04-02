@@ -363,23 +363,28 @@ class RuneBridgeStore {
     return setInterval(async () => {
       await this.processRuneMempoolTransactions();
 
-      const pendingTxs = await tokenStorageService.getBridgeTransactions(
-        0,
-        10,
-        BridgeTransactionStatus.Pending,
-      );
+      const [pendingTxs, confirmedTxs] = await Promise.all([
+        tokenStorageService.getBridgeTransactions(
+          0,
+          10,
+          BridgeTransactionStatus.Pending,
+        ),
+        tokenStorageService.getBridgeTransactions(
+          0,
+          10,
+          BridgeTransactionStatus.Confirmed,
+        ),
+      ]);
 
-      const pendingRuneTx = pendingTxs.find((bridge) =>
+      const runeBridgeTxs = [...pendingTxs, ...confirmedTxs].filter((bridge) =>
         bridge.asset_infos.some(
           (asset) => asset.asset_type === BridgeAssetType.Runes,
         ),
       );
 
-      if (!pendingRuneTx) {
-        return;
+      for (const runeBridgeTx of runeBridgeTxs) {
+        await this.processRuneImportBridgeTransaction(runeBridgeTx);
       }
-
-      await this.processRuneImportBridgeTransaction(pendingRuneTx);
     }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
 
@@ -443,7 +448,7 @@ class RuneBridgeStore {
         : this.#toMatchedOutputUtxos(btcTx, bridgeTx.btc_address)
     ).map((utxo) => `${utxo.txid}:${utxo.vout}`);
 
-    if (!bridgeTx.omnity_ticket_id) {
+    if (bridgeTx.status === BridgeTransactionStatus.Pending) {
       const runeBalances = await this.#lookupRuneBalancesForOutputs(outputRefs);
       const runeAsset = bridgeTx.asset_infos.find(
         (asset) => asset.asset_type === BridgeAssetType.Runes,
@@ -477,7 +482,7 @@ class RuneBridgeStore {
         const setTicketResult =
           await tokenStorageService.updateBridgeTransaction(
             bridgeTx.bridge_id,
-            null,
+            BridgeTransactionStatus.Confirmed,
             null,
             null,
             null,
@@ -496,6 +501,10 @@ class RuneBridgeStore {
           this.#importBridgeTxQuery.refresh();
         }
       }
+      return;
+    }
+
+    if (!bridgeTx.omnity_ticket_id) {
       return;
     }
 
@@ -558,31 +567,44 @@ class RuneBridgeStore {
         return Ok(0);
       }
 
+      const runeBalancesResult =
+        await omnityRunesIndexerService.getRuneBalancesForOutputs(unseenUtxos);
+      if (runeBalancesResult.isErr()) {
+        return Err(runeBalancesResult.unwrapErr());
+      }
+
+      const outputsByTxid: Record<string, string[]> = {};
+      const matchedBalances = runeBalancesResult
+        .unwrap()
+        .flatMap((entry, index) => {
+          const outpoint = unseenUtxos[index];
+          const txid = outpoint?.split(":")[0];
+          if (!outpoint || !txid) {
+            return [];
+          }
+          outputsByTxid[txid] = [...(outputsByTxid[txid] ?? []), outpoint];
+
+          return (entry.length === 1 ? entry[0] : [])
+            .filter((item) => item.rune_id === runeId)
+            .map((item) => ({ txid, balance: item }));
+        });
+
+      if (matchedBalances.length === 0) {
+        return Ok(0);
+      }
+
+      const aggregatedBalances: Record<string, bigint> = {};
+      for (const { txid, balance } of matchedBalances) {
+        aggregatedBalances[txid] =
+          (aggregatedBalances[txid] ?? 0n) + balance.amount;
+      }
+
       let createdCount = 0;
-      for (const outpoint of unseenUtxos) {
-        const runeBalancesResult =
-          await omnityRunesIndexerService.getRuneBalancesForOutputs([outpoint]);
-        if (runeBalancesResult.isErr()) {
-          continue;
-        }
-
-        const balance = runeBalancesResult
-          .unwrap()
-          .flatMap((entry) => (entry.length === 1 ? entry[0] : []))
-          .find((item) => item.rune_id === runeId);
-        if (!balance) {
-          continue;
-        }
-
-        const txid = outpoint.split(":")[0] ?? unseenUtxos[0]?.split(":")[0];
-        if (!txid) {
-          continue;
-        }
-
+      for (const [txid, amount] of Object.entries(aggregatedBalances)) {
         const ticketResult = await omnityBitcoinService.generateTicket({
           txid,
           target_chain_id: "eICP",
-          amount: balance.amount,
+          amount,
           receiver: authState.account?.owner || "",
           rune_id: runeId,
         });
@@ -594,38 +616,18 @@ class RuneBridgeStore {
           await tokenStorageService.createRuneImportBridgeTransaction({
             btcAddress: runeAddress,
             runeId,
-            amount: balance.amount,
+            amount,
             decimals: token.decimals,
             btcTxid: txid,
-            vout: unseenUtxos
-              .filter((utxo) => utxo.startsWith(`${txid}:`))
-              .map((utxo) => {
-                const [utxoTxid, vout] = utxo.split(":");
-                return { txid: utxoTxid, vout: Number(vout) };
-              }),
+            status: BridgeTransactionStatus.Confirmed,
+            omnity_ticket_id: txid,
+            vout: (outputsByTxid[txid] ?? []).map((utxo) => {
+              const [utxoTxid, vout] = utxo.split(":");
+              return { txid: utxoTxid, vout: Number(vout) };
+            }),
           });
 
-        if (createResult.isErr()) {
-          continue;
-        }
-
-        const updateResult = await tokenStorageService.updateBridgeTransaction(
-          createResult.unwrap().bridge_id,
-          null,
-          null,
-          null,
-          null,
-          [],
-          null,
-          null,
-          null,
-          null,
-          null,
-          txid,
-          [],
-          [],
-        );
-        if (updateResult.isOk()) {
+        if (createResult.isOk()) {
           createdCount += 1;
         }
       }

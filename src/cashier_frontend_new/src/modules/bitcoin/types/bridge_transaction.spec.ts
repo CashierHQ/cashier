@@ -301,6 +301,14 @@ describe("BridgeTransactionMapper", () => {
       expect(result).toBe(BridgeTransactionStatus.Completed);
     });
 
+    it("should convert Confirmed status", () => {
+      const result =
+        BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage({
+          Confirmed: null,
+        });
+      expect(result).toBe(BridgeTransactionStatus.Confirmed);
+    });
+
     it("should convert Failed status", () => {
       const result =
         BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage({
@@ -462,6 +470,11 @@ describe("BridgeTransactionMapper", () => {
       result = BridgeTransactionMapper.toAssetItems(baseTransaction);
       expect(result[0].state).toBe(AssetProcessState.PROCESSING);
 
+      // Test Confirmed status
+      baseTransaction.status = BridgeTransactionStatus.Confirmed;
+      result = BridgeTransactionMapper.toAssetItems(baseTransaction);
+      expect(result[0].state).toBe(AssetProcessState.PROCESSING);
+
       // Test Completed status
       baseTransaction.status = BridgeTransactionStatus.Completed;
       result = BridgeTransactionMapper.toAssetItems(baseTransaction);
@@ -531,6 +544,13 @@ describe("BridgeTransactionMapper", () => {
         BridgeTransactionStatus.Completed,
       );
       expect(result).toEqual({ Completed: null });
+    });
+
+    it("should convert Confirmed status to canister format", () => {
+      const result = BridgeTransactionMapper.toBridgeTransactionStatusCanister(
+        BridgeTransactionStatus.Confirmed,
+      );
+      expect(result).toEqual({ Confirmed: null });
     });
 
     it("should convert Failed status to canister format", () => {
@@ -700,6 +720,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result.deposit_fee).toEqual([]);
       expect(result.withdrawal_fee).toEqual([450n]);
       expect(result.btc_fee).toEqual([1200n]);
+      expect(result.omnity_ticket_id).toEqual([]);
       expect(result.asset_infos).toEqual([
         {
           asset_type: { BTC: null },

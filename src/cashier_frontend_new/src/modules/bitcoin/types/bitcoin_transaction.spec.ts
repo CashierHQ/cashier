@@ -285,6 +285,7 @@ describe("BitcoinTransactionMapper", () => {
         created_at_ts: 1704067200n,
         ckbtc_block_id: [],
         status: [],
+        omnity_ticket_id: [],
       });
     });
 
@@ -323,6 +324,7 @@ describe("BitcoinTransactionMapper", () => {
         created_at_ts: 1704067200n,
         ckbtc_block_id: [],
         status: [],
+        omnity_ticket_id: [],
       });
     });
 

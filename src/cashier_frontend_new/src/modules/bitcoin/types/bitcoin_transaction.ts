@@ -140,6 +140,7 @@ export class BitcoinTransactionMapper {
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
       ckbtc_block_id: [],
       status: [],
+      omnity_ticket_id: [],
     };
   }
 }

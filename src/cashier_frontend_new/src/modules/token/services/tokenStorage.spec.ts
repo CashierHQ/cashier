@@ -152,6 +152,7 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
     expect(callArgs.status).toEqual([{ Completed: null }]);
     expect(callArgs.btc_txid).toEqual(["deadbeef"]);
     expect(callArgs.deposit_fee).toEqual([1000n]);
+    expect(callArgs.omnity_ticket_id).toEqual([]);
   });
 
   it("it_should_fail_create_manual_import_bridge_due_to_canister_error", async () => {

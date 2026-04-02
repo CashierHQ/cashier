@@ -499,7 +499,7 @@ describe("RuneBridgeStore", () => {
       expect(mockUpdateBridgeTransaction).toHaveBeenNthCalledWith(
         2,
         bridge.bridge_id,
-        null,
+        BridgeTransactionStatus.Confirmed,
         null,
         null,
         null,
@@ -518,6 +518,7 @@ describe("RuneBridgeStore", () => {
     it("it_should_do_complete_rune_import_bridge_transaction_when_ticket_is_finalized", async () => {
       // Arrange
       const bridge = fixture_of_rune_bridge({
+        status: BridgeTransactionStatus.Confirmed,
         omnity_ticket_id: "abc123",
       });
       mockGetTransactionById.mockResolvedValue(
@@ -585,9 +586,6 @@ describe("RuneBridgeStore", () => {
       mockCreateRuneImportBridgeTransaction.mockResolvedValue(
         Ok(fixture_of_rune_bridge({ bridge_id: "import_rune_manual" })),
       );
-      mockUpdateBridgeTransaction.mockResolvedValue(
-        Ok(fixture_of_rune_bridge({ bridge_id: "import_rune_manual" })),
-      );
 
       // Act
       const result = await runeBridgeStore.manualRefreshBalance(
@@ -610,24 +608,11 @@ describe("RuneBridgeStore", () => {
         amount: 1200n,
         decimals: 8,
         btcTxid: "abc123",
+        status: BridgeTransactionStatus.Confirmed,
+        omnity_ticket_id: "abc123",
         vout: [{ txid: "abc123", vout: 1 }],
       });
-      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
-        "import_rune_manual",
-        null,
-        null,
-        null,
-        null,
-        [],
-        null,
-        null,
-        null,
-        null,
-        null,
-        "abc123",
-        [],
-        [],
-      );
+      expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
     });
   });
 });

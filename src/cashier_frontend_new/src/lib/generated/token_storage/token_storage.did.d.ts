@@ -24,6 +24,7 @@ export type BridgeAssetType = { 'BTC' : null } |
   { 'Runes' : null } |
   { 'Ordinals' : null };
 export type BridgeTransactionStatus = { 'Failed' : null } |
+  { 'Confirmed' : null } |
   { 'Created' : null } |
   { 'Completed' : null } |
   { 'Pending' : null };
@@ -86,6 +87,7 @@ export interface CreateBridgeTransactionInputArg {
   'vout' : [] | [Array<UTXO>],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
+  'omnity_ticket_id' : [] | [string],
   'created_at_ts' : bigint,
   'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],

@@ -88,6 +88,7 @@ export type BridgeTypeValue =
 export class BridgeTransactionStatus {
   static readonly Created = "Created";
   static readonly Pending = "Pending";
+  static readonly Confirmed = "Confirmed";
   static readonly Completed = "Completed";
   static readonly Failed = "Failed";
 }
@@ -95,6 +96,7 @@ export class BridgeTransactionStatus {
 export type BridgeTransactionStatusValue =
   | typeof BridgeTransactionStatus.Created
   | typeof BridgeTransactionStatus.Pending
+  | typeof BridgeTransactionStatus.Confirmed
   | typeof BridgeTransactionStatus.Completed
   | typeof BridgeTransactionStatus.Failed;
 
@@ -274,6 +276,8 @@ export class BridgeTransactionMapper {
       return BridgeTransactionStatus.Created;
     } else if ("Pending" in status) {
       return BridgeTransactionStatus.Pending;
+    } else if ("Confirmed" in status) {
+      return BridgeTransactionStatus.Confirmed;
     } else if ("Completed" in status) {
       return BridgeTransactionStatus.Completed;
     } else if ("Failed" in status) {
@@ -295,7 +299,10 @@ export class BridgeTransactionMapper {
       state = AssetProcessState.SUCCEED;
     } else if (bridge.status === BridgeTransactionStatus.Failed) {
       state = AssetProcessState.FAILED;
-    } else if (bridge.status === BridgeTransactionStatus.Pending) {
+    } else if (
+      bridge.status === BridgeTransactionStatus.Pending ||
+      bridge.status === BridgeTransactionStatus.Confirmed
+    ) {
       state = AssetProcessState.PROCESSING;
     }
     let direction = FlowDirection.INCOMING;
@@ -348,6 +355,8 @@ export class BridgeTransactionMapper {
         return { Created: null };
       case BridgeTransactionStatus.Pending:
         return { Pending: null };
+      case BridgeTransactionStatus.Confirmed:
+        return { Confirmed: null };
       case BridgeTransactionStatus.Completed:
         return { Completed: null };
       case BridgeTransactionStatus.Failed:
@@ -469,6 +478,7 @@ export class BridgeTransactionMapper {
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
       ckbtc_block_id: [],
       status: [],
+      omnity_ticket_id: [],
     };
   }
 }

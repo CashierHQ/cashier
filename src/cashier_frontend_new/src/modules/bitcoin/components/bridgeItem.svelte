@@ -20,7 +20,10 @@
         return locale.t("bitcoin.receive.imported");
       } else if (bridge.status === BridgeTransactionStatus.Failed) {
         return locale.t("bitcoin.receive.failed");
-      } else if (bridge.status === BridgeTransactionStatus.Pending) {
+      } else if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
         return locale.t("bitcoin.receive.importing");
       } else if (bridge.status === BridgeTransactionStatus.Created) {
         return locale.t("bitcoin.receive.created");
@@ -32,7 +35,10 @@
         return locale.t("bitcoin.send.exported");
       } else if (bridge.status === BridgeTransactionStatus.Failed) {
         return locale.t("bitcoin.send.failed");
-      } else if (bridge.status === BridgeTransactionStatus.Pending) {
+      } else if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
         return locale.t("bitcoin.send.exporting");
       } else if (bridge.status === BridgeTransactionStatus.Created) {
         return locale.t("bitcoin.send.created");

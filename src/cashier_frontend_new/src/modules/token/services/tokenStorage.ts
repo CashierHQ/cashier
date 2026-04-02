@@ -337,6 +337,7 @@ class TokenStorageService {
         created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
         ckbtc_block_id: [ckbtcBlockId],
         status: [{ Completed: null }],
+        omnity_ticket_id: [],
       };
 
       const res = await actor.user_create_bridge_transaction(inputArgs);
@@ -415,6 +416,8 @@ class TokenStorageService {
     amount: bigint;
     decimals: number;
     btcTxid: string;
+    status?: BridgeTransactionStatus;
+    omnity_ticket_id?: string;
     vin?: BridgeUtxo[];
     vout?: BridgeUtxo[];
   }): Promise<Result<BridgeTransaction, string>> {
@@ -444,7 +447,14 @@ class TokenStorageService {
         btc_fee: [],
         created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
         ckbtc_block_id: [],
-        status: [],
+        status: args.status
+          ? [
+              BridgeTransactionMapper.toBridgeTransactionStatusCanister(
+                args.status,
+              ),
+            ]
+          : [],
+        omnity_ticket_id: args.omnity_ticket_id ? [args.omnity_ticket_id] : [],
       };
 
       const res = await actor.user_create_bridge_transaction(inputArgs);
