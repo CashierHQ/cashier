@@ -18,6 +18,7 @@
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
+  import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
@@ -623,6 +624,9 @@
 {#if linkStore && linkStore.link}
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
     <DetailLinkHeader linkTitle={linkStore.link.title} {onBack} />
+    {#if linkStore.link.state === LinkState.CREATE_LINK}
+      <LinkCreationProgressBar filledCount={3} />
+    {/if}
     {#if errorMessage}
       <div
         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -682,7 +686,7 @@
     {/if}
 
     <div
-      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
+      class="flex-none w-[95%] mx-auto px-2 left-0 right-0 z-10 mt-auto pt-2 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
@@ -711,7 +715,7 @@
     </div>
 
     <div
-      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4"
+      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
@@ -875,7 +879,7 @@
             class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
           >
             <div
-              class="flex-none msx w-[95%] max-w-[516px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
+              class="flex-none msx w-[95%] max-w-[510px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
               <Button
                 id="copy-link-button-modal"
