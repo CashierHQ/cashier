@@ -124,8 +124,6 @@ mod tests {
 
         // Assert
         assert!(!result);
-        assert!(
-            !settings_repository.read(|settings| settings.inspect_message_enabled)
-        );
+        assert!(!settings_repository.read(|settings| settings.inspect_message_enabled));
     }
 }

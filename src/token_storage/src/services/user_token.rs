@@ -321,7 +321,12 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not found in registry"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("not found in registry")
+        );
     }
 
     #[test]
@@ -368,7 +373,9 @@ mod tests {
             false,
         );
         let extra_token_id = extra_token.details.token_id();
-        registry_repository.register_token(default_token.clone()).unwrap();
+        registry_repository
+            .register_token(default_token.clone())
+            .unwrap();
         registry_repository.register_token(extra_token).unwrap();
         metadata_repository.increase_version(1);
 
@@ -380,7 +387,11 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(token_list.version, 2);
         assert_eq!(token_list.enable_list.len(), 2);
-        assert!(token_list.enable_list.contains(&default_token.details.token_id()));
+        assert!(
+            token_list
+                .enable_list
+                .contains(&default_token.details.token_id())
+        );
         assert!(token_list.enable_list.contains(&extra_token_id));
     }
 
@@ -460,7 +471,10 @@ mod tests {
         registry_repository.register_token(token.clone()).unwrap();
         metadata_repository.increase_version(1);
         user_token_repository
-            .update_token_list(user_id, &fixture_of_user_token_list(vec![token_id.clone()], 2))
+            .update_token_list(
+                user_id,
+                &fixture_of_user_token_list(vec![token_id.clone()], 2),
+            )
             .unwrap();
 
         // Act
@@ -502,7 +516,9 @@ mod tests {
         registry_repository
             .register_token(existing_enabled_token)
             .unwrap();
-        registry_repository.register_token(new_enabled_token).unwrap();
+        registry_repository
+            .register_token(new_enabled_token)
+            .unwrap();
         registry_repository.register_token(disabled_token).unwrap();
         metadata_repository.increase_version(1);
         metadata_repository.increase_version(2);

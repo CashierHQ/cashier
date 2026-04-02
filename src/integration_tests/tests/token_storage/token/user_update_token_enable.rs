@@ -86,7 +86,12 @@ async fn it_should_do_user_update_token_enable_for_non_default_token() {
         let doge_after_disable = tokens_after_disable
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should exist after disable");
         assert!(!doge_after_disable.enabled);
 
@@ -94,7 +99,12 @@ async fn it_should_do_user_update_token_enable_for_non_default_token() {
         let doge_after_enable = tokens_after_enable
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should exist after enable");
         assert!(doge_after_enable.enabled);
 

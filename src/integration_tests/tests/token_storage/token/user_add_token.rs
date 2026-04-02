@@ -118,7 +118,12 @@ async fn it_should_do_user_add_token_with_valid_rune_info() {
         let doge_in_list = list_result
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should appear in list");
         assert_eq!(doge_in_list.is_rune, Some(true));
         assert_eq!(
@@ -160,7 +165,12 @@ async fn it_should_do_user_add_non_rune_token_without_rune_info() {
         let doge_in_list = list_result
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should appear in list");
         assert_eq!(doge_in_list.is_rune, None);
         assert_eq!(doge_in_list.rune_info, None);

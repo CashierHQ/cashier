@@ -63,7 +63,12 @@ async fn it_should_do_list_tokens_with_rune_metadata() {
         let doge_in_list = token_list
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should appear in list");
         assert_eq!(doge_in_list.is_rune, Some(true));
         assert_eq!(doge_in_list.rune_info, Some(fixture_of_rune_info()));
@@ -100,7 +105,12 @@ async fn it_should_do_list_tokens_with_user_enabled_token() {
         let doge_in_list = token_list
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should appear in list");
         assert!(doge_in_list.enabled);
 

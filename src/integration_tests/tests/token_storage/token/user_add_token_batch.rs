@@ -82,7 +82,12 @@ async fn it_should_do_user_add_token_batch_with_valid_rune_info() {
         let doge_in_list = list_result
             .tokens
             .iter()
-            .find(|token| token.id == TokenId::IC { ledger_id: *doge_token })
+            .find(|token| {
+                token.id
+                    == TokenId::IC {
+                        ledger_id: *doge_token,
+                    }
+            })
             .expect("DOGE token should appear in list");
         assert_eq!(doge_in_list.is_rune, Some(true));
         assert_eq!(
@@ -134,14 +139,14 @@ async fn it_should_do_user_add_token_batch_with_only_valid_registry_tokens() {
 
         // Assert
         assert!(result.is_ok());
-        assert!(list_result
-            .tokens
-            .iter()
-            .any(|token| token.id == TokenId::IC { ledger_id: *doge_token }));
-        assert!(list_result
-            .tokens
-            .iter()
-            .any(|token| token.id == TokenId::IC { ledger_id: icp_token }));
+        assert!(list_result.tokens.iter().any(|token| token.id
+            == TokenId::IC {
+                ledger_id: *doge_token
+            }));
+        assert!(list_result.tokens.iter().any(|token| token.id
+            == TokenId::IC {
+                ledger_id: icp_token
+            }));
 
         Ok(())
     })

@@ -55,7 +55,8 @@ async fn it_should_do_get_token_by_id_with_two_supported_standards() {
         let token_details = result.unwrap();
         match token_details.details {
             ChainTokenDetails::IC {
-                supported_standards, ..
+                supported_standards,
+                ..
             } => {
                 assert_eq!(
                     supported_standards,
@@ -87,7 +88,8 @@ async fn it_should_do_get_token_by_id_with_one_supported_standard() {
         let token_details = result.unwrap();
         match token_details.details {
             ChainTokenDetails::IC {
-                supported_standards, ..
+                supported_standards,
+                ..
             } => {
                 assert_eq!(supported_standards, vec![IcrcStandard::ICRC1]);
             }

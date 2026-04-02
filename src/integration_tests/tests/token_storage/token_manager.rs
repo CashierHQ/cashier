@@ -183,7 +183,12 @@ async fn should_not_allow_user_to_update_token_standards() {
         assert!(result.is_ok());
         let inner_result = result.unwrap();
         assert!(inner_result.is_err());
-        assert!(inner_result.unwrap_err().to_string().contains("NotAuthorized"));
+        assert!(
+            inner_result
+                .unwrap_err()
+                .to_string()
+                .contains("NotAuthorized")
+        );
 
         Ok(())
     })
@@ -241,7 +246,12 @@ async fn should_verify_three_role_access_control() {
         assert!(user_result.is_ok());
         let inner_result = user_result.unwrap();
         assert!(inner_result.is_err());
-        assert!(inner_result.unwrap_err().to_string().contains("NotAuthorized"));
+        assert!(
+            inner_result
+                .unwrap_err()
+                .to_string()
+                .contains("NotAuthorized")
+        );
 
         Ok(())
     })

@@ -200,6 +200,7 @@ impl<R: Repositories> TokenRegistryService<R> {
     /// # Returns
     /// * `Ok(TokenId)` - The ID of the updated token if successful
     /// * `Err(CanisterError)` - An error if the update failed (e.g. token not found, failed to fetch token metadata)
+    #[allow(dead_code)]
     pub async fn update_token_metadata<F>(
         &mut self,
         input: TokenId,
@@ -707,7 +708,7 @@ mod tests {
 
     #[test]
     fn it_should_do_list_tokens_without_needing_update_when_user_token_list_version_matches_registry()
-    {
+     {
         // Arrange
         let repo = TestRepositories::new();
         let mut service = TokenRegistryService::new(&repo);
@@ -865,7 +866,9 @@ mod tests {
                 decimals: 18,
                 symbol: "NEWICP".to_string(),
             }),
-            Ok(fixture_of_supported_standard_records(vec!["ICRC-1", "ICRC-2"])),
+            Ok(fixture_of_supported_standard_records(vec![
+                "ICRC-1", "ICRC-2",
+            ])),
         );
         service
             .register_new_token(

@@ -68,9 +68,11 @@ use token_storage_types::{
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
+#[allow(dead_code)]
 #[storable]
 pub struct BalanceCache(HashMap<TokenId, TokenBalance>);
 
+#[allow(dead_code)]
 #[storable]
 pub enum BalanceCacheCodec {
     V1(BalanceCache),

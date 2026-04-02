@@ -304,9 +304,8 @@ mod tests {
         let user_id = Principal::anonymous();
         let existing_token_id = fixture_of_token_id(Principal::anonymous());
         let new_token_id_1 = fixture_of_token_id(Principal::management_canister());
-        let new_token_id_2 = fixture_of_token_id(
-            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        );
+        let new_token_id_2 =
+            fixture_of_token_id(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap());
         let token_list = fixture_of_user_token_list(vec![existing_token_id.clone()]);
         user_token_repository
             .update_token_list(user_id, &token_list)
