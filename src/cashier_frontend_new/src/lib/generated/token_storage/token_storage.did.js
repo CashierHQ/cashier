@@ -30,6 +30,7 @@ export const idlFactory = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const TokenStorageInitData = IDL.Record({
+    'omnity_bitcoin_id' : IDL.Principal,
     'owner' : IDL.Principal,
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'ckbtc_minter_id' : IDL.Principal,
@@ -307,6 +308,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'user_get_btc_address' : IDL.Func([], [Result_8], []),
     'user_get_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
+    'user_get_rune_address' : IDL.Func([], [Result_8], []),
     'user_sync_token_list' : IDL.Func([], [Result_2], []),
     'user_update_bridge_transaction' : IDL.Func(
         [UpdateBridgeTransactionInputArg],
@@ -347,6 +349,7 @@ export const init = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const TokenStorageInitData = IDL.Record({
+    'omnity_bitcoin_id' : IDL.Principal,
     'owner' : IDL.Principal,
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'ckbtc_minter_id' : IDL.Principal,

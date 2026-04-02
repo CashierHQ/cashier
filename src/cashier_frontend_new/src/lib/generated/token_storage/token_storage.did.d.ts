@@ -173,6 +173,7 @@ export interface TokenRegistryMetadata {
   'version' : bigint,
 }
 export interface TokenStorageInitData {
+  'omnity_bitcoin_id' : Principal,
   'owner' : Principal,
   'tokens' : [] | [Array<RegistryToken>],
   'ckbtc_minter_id' : Principal,
@@ -369,6 +370,13 @@ export interface _SERVICE {
    * * `Vec<NftDto>` - List of NFTs owned by the user
    */
   'user_get_nfts' : ActorMethod<[GetUserNftInput], Array<Nft>>,
+  /**
+   * Retrieves the Rune deposit address associated with the calling user.
+   * # Returns
+   * * `Ok(String)` - The Rune deposit address of the user
+   * * `Err(CanisterError)` - An error if the address cannot be retrieved
+   */
+  'user_get_rune_address' : ActorMethod<[], Result_8>,
   /**
    * Sync the user's token list with the registry, adding any new tokens from the registry to the user's list
    * # Returns
