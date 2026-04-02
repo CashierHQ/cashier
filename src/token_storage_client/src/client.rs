@@ -151,6 +151,15 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         self.client.update("user_get_btc_address", ()).await
     }
 
+    /// Retrieves the Rune deposit address associated with the calling user
+    /// # Returns
+    /// * `String` - The Rune deposit address of the user, or a CanisterError
+    pub async fn user_get_rune_address(
+        &self,
+    ) -> CanisterClientResult<Result<String, CanisterError>> {
+        self.client.update("user_get_rune_address", ()).await
+    }
+
     /// Creates a new bridge transaction for the calling user
     /// # Arguments
     /// * `input` - The input data for creating the bridge transaction

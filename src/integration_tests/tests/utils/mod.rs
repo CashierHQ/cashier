@@ -52,6 +52,12 @@ struct SharedPrincipals {
     icrc7_ledger: Principal,
     ckbtc_minter: Principal,
     ckbtc_kyt: Principal,
+    #[serde(default = "default_omnity_bitcoin_principal")]
+    omnity_bitcoin: Principal,
+}
+
+fn default_omnity_bitcoin_principal() -> Principal {
+    Principal::management_canister()
 }
 
 /// Base path for PocketIC test state directories
@@ -228,6 +234,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                 },
             ]),
             ckbtc_minter_id: ckbtc_minter_principal,
+            omnity_bitcoin_id: Principal::management_canister(),
         }),
     )
     .await;
@@ -342,6 +349,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
         icrc7_ledger: icrc7_ledger_principal,
         ckbtc_minter: ckbtc_minter_principal,
         ckbtc_kyt: ckbtc_kyt_principal,
+        omnity_bitcoin: Principal::management_canister(),
     }
 }
 
@@ -397,6 +405,7 @@ where
         icrc7_ledger_principal: principals.icrc7_ledger,
         ckbtc_minter_principal: principals.ckbtc_minter,
         ckbtc_kyt_principal: principals.ckbtc_kyt,
+        omnity_bitcoin_principal: principals.omnity_bitcoin,
     })
     .await;
 
@@ -422,6 +431,7 @@ pub struct PocketIcTestContext {
     pub icrc7_ledger_principal: Principal,
     pub ckbtc_minter_principal: Principal,
     pub ckbtc_kyt_principal: Principal,
+    pub omnity_bitcoin_principal: Principal,
 }
 
 impl PocketIcTestContext {

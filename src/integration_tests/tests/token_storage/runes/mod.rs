@@ -1,12 +1,4 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-mod api;
-mod bitcoin;
-mod build_data;
-mod ext;
-mod icrc7;
-mod repository;
-mod runes;
-mod services;
-mod token;
+pub mod user_get_rune_address;
