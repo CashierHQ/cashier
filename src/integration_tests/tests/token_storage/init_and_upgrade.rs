@@ -78,6 +78,8 @@ async fn should_upgrade_with_tokens_upsert() {
             name: "New Test Token".to_string(),
             decimals: 8,
             enabled_by_default: false,
+            is_rune: None,
+            rune_info: None,
         };
 
         let ckbtc_minter_principal =
@@ -167,6 +169,8 @@ async fn should_upgrade_upsert_existing_token() {
             name: "Internet Computer".to_string(),
             decimals: 8,
             enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
         };
 
         // Act

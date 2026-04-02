@@ -26,6 +26,8 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 
@@ -47,6 +49,8 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 

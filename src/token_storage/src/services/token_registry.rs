@@ -78,6 +78,8 @@ impl<R: Repositories> TokenRegistryService<R> {
                         supported_standards,
                     },
                     enabled_by_default: false,
+                    is_rune: None,
+                    rune_info: None,
                 };
                 self.registry_repository
                     .register_token(registry_token, &mut self.metadata_repository)

@@ -161,6 +161,8 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     name: "Internet Computer".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
+                    is_rune: None,
+                    rune_info: None,
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
@@ -175,6 +177,8 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     name: "Chain Key Bitcoin".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
+                    is_rune: None,
+                    rune_info: None,
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
@@ -189,6 +193,8 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     name: "Chain Key Ethereum".to_string(),
                     decimals: 18,
                     enabled_by_default: true,
+                    is_rune: None,
+                    rune_info: None,
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
@@ -203,6 +209,8 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     name: "Chain Key USD Coin".to_string(),
                     decimals: 6,
                     enabled_by_default: true,
+                    is_rune: None,
+                    rune_info: None,
                 },
                 RegistryToken {
                     details: ChainTokenDetails::IC {
@@ -215,6 +223,8 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     name: "Test Internet Computer".to_string(),
                     decimals: 8,
                     enabled_by_default: true,
+                    is_rune: None,
+                    rune_info: None,
                 },
             ]),
             ckbtc_minter_id: ckbtc_minter_principal,

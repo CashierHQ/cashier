@@ -27,6 +27,8 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 
@@ -48,6 +50,8 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 
@@ -224,6 +228,8 @@ async fn it_should_fail_create_import_bridge_without_btc_txid_or_ckbtc_block_id(
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -274,6 +280,8 @@ async fn it_should_create_import_bridge_with_ckbtc_block_id_and_completed_status
             created_at_ts: 0,
             ckbtc_block_id: Some(ckbtc_block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            vin: None,
+            vout: None,
         };
 
         // Act

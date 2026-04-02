@@ -129,6 +129,14 @@ impl ChainTokenDetails {
     }
 }
 
+/// Rune-specific metadata required for the Omnity bridge import/export workflow.
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RuneInfo {
+    pub rune_id: String,
+    pub token_id: String,
+}
+
 // Central registry token definition
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
@@ -138,6 +146,10 @@ pub struct RegistryToken {
     pub decimals: u8,
     pub details: ChainTokenDetails,
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
+    /// Whether this token represents a Bitcoin Rune.
+    pub is_rune: Option<bool>,
+    /// Rune-specific bridge metadata, present only when `is_rune` is `Some(true)`.
+    pub rune_info: Option<RuneInfo>,
 }
 
 /// V1 snapshot of ChainTokenDetails (before supported_standards)
@@ -162,10 +174,22 @@ pub struct RegistryTokenV1 {
     pub enabled_by_default: bool,
 }
 
+/// V2 snapshot of RegistryToken (before is_rune / rune_info fields)
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryTokenV2 {
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub details: ChainTokenDetails,
+    pub enabled_by_default: bool,
+}
+
 #[storable]
 pub enum RegistryTokenCodec {
     V1(RegistryTokenV1),
-    V2(RegistryToken),
+    V2(RegistryTokenV2),
+    V3(RegistryToken),
 }
 
 impl Codec<RegistryToken> for RegistryTokenCodec {
@@ -188,14 +212,25 @@ impl Codec<RegistryToken> for RegistryTokenCodec {
                         supported_standards: vec![IcrcStandard::ICRC1],
                     },
                     enabled_by_default: old.enabled_by_default,
+                    is_rune: None,
+                    rune_info: None,
                 }
             }
-            RegistryTokenCodec::V2(token) => token,
+            RegistryTokenCodec::V2(old) => RegistryToken {
+                symbol: old.symbol,
+                name: old.name,
+                decimals: old.decimals,
+                details: old.details,
+                enabled_by_default: old.enabled_by_default,
+                is_rune: None,
+                rune_info: None,
+            },
+            RegistryTokenCodec::V3(token) => token,
         }
     }
 
     fn encode(dest: RegistryToken) -> Self {
-        RegistryTokenCodec::V2(dest)
+        RegistryTokenCodec::V3(dest)
     }
 }
 
@@ -213,6 +248,8 @@ impl From<RegistryToken> for TokenDto {
             balance: None,
             details: token.details, // Directly use the enum
             is_default: token.enabled_by_default,
+            is_rune: token.is_rune,
+            rune_info: token.rune_info,
         }
     }
 }
@@ -232,6 +269,8 @@ pub struct TokenDto {
     pub balance: Option<u128>,
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
     pub is_default: bool,
+    pub is_rune: Option<bool>,
+    pub rune_info: Option<RuneInfo>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
@@ -287,6 +326,8 @@ pub struct RegisterTokenInput {
     pub decimals: u8,
     pub enabled_by_default: bool,
     pub fee: Option<candid::Nat>,
+    pub is_rune: Option<bool>,
+    pub rune_info: Option<RuneInfo>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -298,6 +339,8 @@ pub struct AddTokenItem {
     pub name: String,
     pub decimals: u8,
     pub fee: Option<candid::Nat>,
+    pub is_rune: Option<bool>,
+    pub rune_info: Option<RuneInfo>,
 }
 
 impl From<RegisterTokenInput> for AddTokenItem {
@@ -310,6 +353,8 @@ impl From<RegisterTokenInput> for AddTokenItem {
             name: input.name,
             decimals: input.decimals,
             fee: input.fee,
+            is_rune: input.is_rune,
+            rune_info: input.rune_info,
         }
     }
 }
@@ -327,6 +372,8 @@ impl From<AddTokenItem> for RegisterTokenInput {
             decimals: item.decimals,
             enabled_by_default: false, // Default value
             fee: item.fee,
+            is_rune: item.is_rune,
+            rune_info: item.rune_info,
         }
     }
 }
@@ -484,7 +531,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_roundtrip_v2_codec() {
+    fn it_should_roundtrip_v3_codec() {
         use ic_mple_structures::Storable;
 
         let token = RegistryToken {
@@ -498,6 +545,8 @@ mod tests {
                 supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
             },
             enabled_by_default: false,
+            is_rune: None,
+            rune_info: None,
         };
 
         // Encode → serialize → deserialize → decode

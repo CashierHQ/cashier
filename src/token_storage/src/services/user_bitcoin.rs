@@ -182,8 +182,6 @@ mod tests {
         BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, BridgeType,
     };
 
-    // ── Fixtures ─────────────────────────────────────────────────────────────
-
     fn fixture_of_import_create_input() -> CreateBridgeTransactionInputArg {
         CreateBridgeTransactionInputArg {
             btc_txid: Some("test_btc_txid".to_string()),
@@ -197,6 +195,8 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         }
     }
 
@@ -218,10 +218,10 @@ mod tests {
             created_at_ts: 100_000,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         }
     }
-
-    // ── get_btc_address ───────────────────────────────────────────────────────
 
     #[tokio::test]
     async fn it_should_fail_get_btc_address_due_to_minter_error() {
@@ -292,8 +292,6 @@ mod tests {
         assert_eq!(address, "cached_address");
     }
 
-    // ── create_bridge_transaction ─────────────────────────────────────────────
-
     #[tokio::test]
     async fn it_should_fail_create_bridge_transaction_due_to_factory_error() {
         // Arrange — import with neither btc_txid nor ckbtc_block_id
@@ -313,6 +311,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -401,6 +401,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: Some(ckbtc_block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -418,8 +420,6 @@ mod tests {
         // deposit fee (1000) deducted from asset amount (50_000)
         assert_eq!(result.total_amount, Some(Nat::from(49_000u64)));
     }
-
-    // ── update_bridge_transaction ─────────────────────────────────────────────
 
     #[tokio::test]
     async fn it_should_fail_update_bridge_transaction_due_to_bridge_not_found() {
@@ -440,6 +440,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -475,6 +478,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending), // same as current
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -524,6 +530,9 @@ mod tests {
             btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -583,6 +592,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
         let pending = service
             .update_bridge_transaction(user_id, pending_input)
@@ -610,6 +622,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
         let completed = service
             .update_bridge_transaction(user_id, completed_input)
@@ -620,8 +635,6 @@ mod tests {
         assert_eq!(completed.btc_txid, Some("btc-txid-1".to_string()));
         assert_eq!(completed.status, BridgeTransactionStatus::Completed);
     }
-
-    // ── get_bridge_transactions ────────────────────────────────────────────────
 
     #[tokio::test]
     async fn it_should_get_bridge_transactions_with_pagination() {
@@ -643,6 +656,8 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                vin: None,
+                vout: None,
             };
             let mut tx = BridgeTransactionFactory::from_create_input(input).unwrap();
             tx.bridge_id = format!("bridge{}", i);
@@ -688,6 +703,8 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                vin: None,
+                vout: None,
             };
             let mut import_tx = BridgeTransactionFactory::from_create_input(import_input).unwrap();
             import_tx.bridge_id = format!("import{}", i);
@@ -712,6 +729,8 @@ mod tests {
                 created_at_ts: 0,
                 ckbtc_block_id: None,
                 status: None,
+                vin: None,
+                vout: None,
             };
             let mut export_tx = BridgeTransactionFactory::from_create_input(export_input).unwrap();
             export_tx.bridge_id = format!("export{}", i);
@@ -746,8 +765,6 @@ mod tests {
                 .all(|tx| tx.bridge_type == BridgeType::Export)
         );
     }
-
-    // ── get_bridge_transaction_by_id ──────────────────────────────────────────
 
     #[tokio::test]
     async fn it_should_get_bridge_transaction_by_id() {

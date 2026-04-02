@@ -144,6 +144,9 @@ impl BridgeTransactionFactory {
             created_at_ts: input.created_at_ts,
             retry_times: 0,
             status,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         })
     }
 }
@@ -170,6 +173,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -210,6 +215,8 @@ mod tests {
             created_at_ts: 123,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -247,6 +254,8 @@ mod tests {
             created_at_ts: 123,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -281,6 +290,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -315,6 +326,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -349,6 +362,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -378,6 +393,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -407,6 +424,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -441,6 +460,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -477,6 +498,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: Some(block_id),
             status: Some(BridgeTransactionStatus::Completed),
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -506,6 +529,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: Some(BridgeTransactionStatus::Completed),
+            vin: None,
+            vout: None,
         };
 
         // Act

@@ -190,6 +190,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         }
     }
 
@@ -211,6 +213,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None,
             status: None,
+            vin: None,
+            vout: None,
         }
     }
 
@@ -246,6 +250,8 @@ mod tests {
             created_at_ts: 0,
             ckbtc_block_id: None, // neither btc_txid nor ckbtc_block_id
             status: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -331,6 +337,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -378,6 +387,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -424,6 +436,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -470,6 +485,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -516,6 +534,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -566,6 +587,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -612,6 +636,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -651,6 +678,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -690,6 +720,9 @@ mod tests {
             btc_fee: Some(Nat::from(1500u64)),
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -736,6 +769,9 @@ mod tests {
             btc_fee: None,
             retry_times: Some(2), // same value, not increasing
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -775,6 +811,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -821,6 +860,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Failed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -861,6 +903,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Assert
@@ -896,6 +941,9 @@ mod tests {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Assert

@@ -7,6 +7,37 @@ use ic_mple_structures::Codec;
 
 use crate::dto::bitcoin::UpdateBridgeTransactionInputArg;
 
+/// A Bitcoin UTXO (Unspent Transaction Output) reference.
+#[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
+#[storable]
+pub struct UTXO {
+    pub txid: String,
+    pub vout: u32,
+}
+
+/// V1 snapshot of BridgeTransaction (before omnity_ticket_id / vin / vout fields).
+#[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
+#[storable]
+pub struct BridgeTransactionV1 {
+    pub bridge_id: String,
+    pub icp_address: Principal,
+    pub btc_address: String,
+    pub bridge_type: BridgeType,
+    pub asset_infos: Vec<BridgeAssetInfo>,
+    pub btc_txid: Option<String>,
+    pub ckbtc_block_id: Option<u64>,
+    pub block_id: Option<u64>,
+    pub block_timestamp: Option<u64>,
+    pub block_confirmations: Vec<BlockConfirmation>,
+    pub deposit_fee: Option<Nat>,
+    pub withdrawal_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
+    pub created_at_ts: u64,
+    pub total_amount: Option<Nat>,
+    pub retry_times: u8,
+    pub status: BridgeTransactionStatus,
+}
+
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
 pub struct BridgeTransaction {
@@ -27,6 +58,12 @@ pub struct BridgeTransaction {
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
     pub status: BridgeTransactionStatus,
+    /// Omnity platform ticket id for Runes bridging.
+    pub omnity_ticket_id: Option<String>,
+    /// Input UTXOs of the Bitcoin transaction used for bridging.
+    pub vin: Option<Vec<UTXO>>,
+    /// Output UTXOs of the Bitcoin transaction used for bridging.
+    pub vout: Option<Vec<UTXO>>,
 }
 
 impl BridgeTransaction {
@@ -60,6 +97,15 @@ impl BridgeTransaction {
         }
         if let Some(status) = input.status {
             self.status = status;
+        }
+        if let Some(omnity_ticket_id) = input.omnity_ticket_id {
+            self.omnity_ticket_id = Some(omnity_ticket_id);
+        }
+        if let Some(vin) = input.vin {
+            self.vin = Some(vin);
+        }
+        if let Some(vout) = input.vout {
+            self.vout = Some(vout);
         }
     }
 }
@@ -106,18 +152,44 @@ pub struct BlockConfirmation {
 
 #[storable]
 pub enum BridgeTransactionCodec {
-    V1(Vec<BridgeTransaction>),
+    V1(Vec<BridgeTransactionV1>),
+    V2(Vec<BridgeTransaction>),
 }
 
 impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
     fn decode(source: Self) -> Vec<BridgeTransaction> {
         match source {
-            BridgeTransactionCodec::V1(tx) => tx,
+            BridgeTransactionCodec::V1(txs) => txs
+                .into_iter()
+                .map(|tx| BridgeTransaction {
+                    bridge_id: tx.bridge_id,
+                    icp_address: tx.icp_address,
+                    btc_address: tx.btc_address,
+                    bridge_type: tx.bridge_type,
+                    asset_infos: tx.asset_infos,
+                    btc_txid: tx.btc_txid,
+                    ckbtc_block_id: tx.ckbtc_block_id,
+                    block_id: tx.block_id,
+                    block_timestamp: tx.block_timestamp,
+                    block_confirmations: tx.block_confirmations,
+                    deposit_fee: tx.deposit_fee,
+                    withdrawal_fee: tx.withdrawal_fee,
+                    btc_fee: tx.btc_fee,
+                    created_at_ts: tx.created_at_ts,
+                    total_amount: tx.total_amount,
+                    retry_times: tx.retry_times,
+                    status: tx.status,
+                    omnity_ticket_id: None,
+                    vin: None,
+                    vout: None,
+                })
+                .collect(),
+            BridgeTransactionCodec::V2(txs) => txs,
         }
     }
 
     fn encode(dest: Vec<BridgeTransaction>) -> Self {
-        BridgeTransactionCodec::V1(dest)
+        BridgeTransactionCodec::V2(dest)
     }
 }
 
@@ -147,6 +219,9 @@ mod tests {
             created_at_ts: 0,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let block_confirmations = vec![
@@ -171,6 +246,9 @@ mod tests {
             btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act

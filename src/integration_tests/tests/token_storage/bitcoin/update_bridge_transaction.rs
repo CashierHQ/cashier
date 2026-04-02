@@ -27,6 +27,8 @@ fn fixture_of_import_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         created_at_ts: 0,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 
@@ -48,6 +50,8 @@ fn fixture_of_export_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         created_at_ts: 100,
         ckbtc_block_id: None,
         status: None,
+        vin: None,
+        vout: None,
     }
 }
 
@@ -82,6 +86,9 @@ async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
             btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -121,6 +128,9 @@ async fn it_should_fail_update_bridge_transaction_due_to_missing_bridge_transact
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -173,6 +183,9 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_existing_block_i
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let _initial_update_result = token_storage_client
@@ -193,6 +206,9 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_existing_block_i
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -244,6 +260,9 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_non_increasing_r
             btc_fee: None,
             retry_times: Some(1),
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let _initial_update_result = token_storage_client
@@ -264,6 +283,9 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_non_increasing_r
             btc_fee: None,
             retry_times: Some(1),
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -315,6 +337,9 @@ async fn it_should_fail_update_export_bridge_transaction_due_to_existing_ckbtc_b
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let _initial_update_result = token_storage_client
@@ -335,6 +360,9 @@ async fn it_should_fail_update_export_bridge_transaction_due_to_existing_ckbtc_b
             btc_fee: None,
             retry_times: None,
             status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act
@@ -389,6 +417,9 @@ async fn it_should_update_import_bridge_transaction() {
             btc_fee: Some(Nat::from(300u32)),
             retry_times: Some(2),
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let update_result = token_storage_client
@@ -443,6 +474,9 @@ async fn it_should_update_export_bridge_transaction() {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let pending_result = token_storage_client
@@ -473,6 +507,9 @@ async fn it_should_update_export_bridge_transaction() {
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         let complete_result = token_storage_client
