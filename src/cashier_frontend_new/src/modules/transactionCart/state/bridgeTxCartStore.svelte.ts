@@ -285,7 +285,11 @@ export class BridgeTxCartStore {
    * @returns The approval memo as a Uint8Array.
    */
   #toApprovalMemo(bridgeId: string): Uint8Array {
-    return new TextEncoder().encode(bridgeId);
+    // Keep the memo deterministic but bounded to the ledger memo limit.
+    const bridgeIdBytes = new TextEncoder().encode(bridgeId);
+    const memo = new Uint8Array(32);
+    memo.set(bridgeIdBytes.slice(0, memo.length));
+    return memo;
   }
 
   /**
@@ -350,10 +354,16 @@ export class BridgeTxCartStore {
         createdAtTime,
       );
       return Ok(undefined);
-    } catch {
+    } catch (approvalError) {
+      console.error(
+        `Error occurred while approving spender ${spenderCanisterId}:`,
+        approvalError,
+      );
       try {
         const allowance =
           await ledgerService.getAllowanceForSpender(spenderCanisterId);
+        console.log(`Allowance for spender ${spenderCanisterId}:`, allowance);
+
         if (allowance < amount) {
           return Err("Approval amount is lower than required allowance.");
         }
@@ -439,6 +449,10 @@ export class BridgeTxCartStore {
 
     if (!this.canRetryFailedBridge) {
       return Err("Bridge transaction is not retryable.");
+    }
+
+    if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+      return this.#retryFailedRuneExport();
     }
 
     const updateResult = await tokenStorageService.updateBridgeTransaction(
@@ -654,11 +668,11 @@ export class BridgeTxCartStore {
     return this.#updateBridgeToPending(retrieveResult.unwrap());
   }
 
-  async #executeRuneExport(): Promise<
+  async #runRuneExportFaultToleranceFlow(): Promise<
     Result<BridgeTransactionWithUsdValue, string>
   > {
     console.log(
-      `Executing Rune export for bridge transaction`,
+      `Running Rune export fault tolerance flow for bridge transaction`,
       this.bridgeTransaction,
     );
     if (!this.bridgeTransaction) {
@@ -726,5 +740,17 @@ export class BridgeTxCartStore {
     }
 
     return this.#updateRuneBridgeToPending(ticketResult.unwrap(), redeemFee);
+  }
+
+  async #executeRuneExport(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    return this.#runRuneExportFaultToleranceFlow();
+  }
+
+  async #retryFailedRuneExport(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    return this.#runRuneExportFaultToleranceFlow();
   }
 }

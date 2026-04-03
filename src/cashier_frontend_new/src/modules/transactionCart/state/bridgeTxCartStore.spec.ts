@@ -808,5 +808,81 @@ describe("BridgeTxCartStore", () => {
       expect(result.unwrapErr()).toBe("Bridge transaction is not retryable.");
       expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
     });
+
+    it("should_retry_failed_rune_export_via_fault_tolerance_flow", async () => {
+      const failedRuneExportBridge = fixture_of_bridge_transaction({
+        bridge_type: BridgeType.Export,
+        status: BridgeTransactionStatus.Failed,
+        asset_infos: [
+          {
+            asset_type: BridgeAssetType.Runes,
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1_200n,
+            decimals: 8,
+          },
+        ],
+        total_amount: 1_200n,
+      });
+      let currentBridgeTransaction = failedRuneExportBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(failedRuneExportBridge));
+      walletTokensRef.value = [
+        {
+          address: "rune-ledger-id",
+          name: "Uncommon Goods",
+          symbol: "UG",
+          decimals: 8,
+          fee: 10n,
+          enabled: true,
+          is_default: false,
+          isRune: true,
+          runeInfo: {
+            runeId: "UNCOMMON•GOODS",
+            tokenId: "omnity-rune-id",
+          },
+        },
+      ];
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+
+      const result = await store.retryFailedBridge();
+
+      expect(result.isOk()).toBe(true);
+      expect(mockGenerateTicketV2).toHaveBeenCalledWith({
+        action: { Redeem: null },
+        token_id: "omnity-rune-id",
+        from_subaccount: [],
+        target_chain_id: "Bitcoin",
+        amount: 1_200n,
+        receiver: "tb1qreceiver",
+      });
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "bridge_1",
+        BridgeTransactionStatus.Pending,
+        null,
+        null,
+        null,
+        [],
+        null,
+        null,
+        20_000n,
+        null,
+        null,
+        "ticket-123",
+      );
+    });
   });
 });
