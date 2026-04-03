@@ -456,7 +456,7 @@ describe("RuneBridgeStore", () => {
       expect(mockCreateRuneImportBridgeTransaction).toHaveBeenCalledWith({
         btcAddress: "tb1qruneaddress",
         runeId: "UNCOMMON•GOODS",
-        amount: 1200n,
+        amount: 0n,
         decimals: 8,
         btcTxid: "abc123",
         vin: [{ txid: "prevtxid", vout: 0 }],
@@ -489,7 +489,7 @@ describe("RuneBridgeStore", () => {
   });
 
   describe("processRuneImportBridgeTransaction", () => {
-    it("it_should_fail_process_rune_import_bridge_transaction_due_to_missing_rune_balance", async () => {
+    it("it_should_keep_pending_rune_import_bridge_when_rune_balance_is_not_indexed_yet", async () => {
       // Arrange
       const bridge = fixture_of_rune_bridge();
       mockGetTransactionById.mockResolvedValue(
@@ -507,6 +507,23 @@ describe("RuneBridgeStore", () => {
 
       // Assert
       expect(mockUpdateBridgeTransaction).toHaveBeenNthCalledWith(
+        1,
+        bridge.bridge_id,
+        null,
+        null,
+        840_000n,
+        1_704_000_000n,
+        fixture_of_confirming_blocks(840_000, 6),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        bridge.vin,
+        bridge.vout,
+      );
+      expect(mockUpdateBridgeTransaction).not.toHaveBeenNthCalledWith(
         2,
         bridge.bridge_id,
         BridgeTransactionStatus.Failed,
@@ -556,6 +573,14 @@ describe("RuneBridgeStore", () => {
         "abc123",
         [],
         [],
+        [
+          {
+            asset_type: "Runes",
+            asset_id: "UNCOMMON•GOODS",
+            amount: 1200n,
+            decimals: 8,
+          },
+        ],
       );
     });
 

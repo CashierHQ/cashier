@@ -188,6 +188,7 @@ export interface UpdateBridgeTransactionInputArg {
   'status' : [] | [BridgeTransactionStatus],
   'block_confirmations' : [] | [Array<BlockConfirmation>],
   'block_id' : [] | [bigint],
+  'asset_infos' : [] | [Array<BridgeAssetInfo>],
   'vout' : [] | [Array<UTXO>],
   'btc_txid' : [] | [string],
   'omnity_ticket_id' : [] | [string],

@@ -743,4 +743,70 @@ describe("BridgeTxCartStore", () => {
       );
     });
   });
+
+  describe("retryFailedBridge", () => {
+    it("should_update_failed_bridge_back_to_pending", async () => {
+      const failedBridge = fixture_of_bridge_transaction({
+        bridge_type: BridgeType.Import,
+        status: BridgeTransactionStatus.Failed,
+      });
+      let currentBridgeTransaction = failedBridge;
+      mockManagedState.mockImplementation(({ queryFn }) => ({
+        data: currentBridgeTransaction,
+        refresh: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+        refreshAsync: vi.fn(async () => {
+          const result = await queryFn();
+          currentBridgeTransaction = result;
+          return result;
+        }),
+      }));
+      mockGetBridgeTransactionById.mockResolvedValue(Ok(failedBridge));
+
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+
+      const result = await store.retryFailedBridge();
+
+      expect(result.isOk()).toBe(true);
+      expect(mockUpdateBridgeTransaction).toHaveBeenCalledWith(
+        "bridge_1",
+        BridgeTransactionStatus.Pending,
+        null,
+        null,
+        null,
+        [],
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [],
+        [],
+        [
+          {
+            asset_type: BridgeAssetType.BTC,
+            asset_id: "ckbtc",
+            amount: 0n,
+            decimals: 8,
+          },
+        ],
+      );
+    });
+
+    it("should_fail_when_bridge_is_not_failed", async () => {
+      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const store = new BridgeTxCartStore("bridge_1");
+
+      const result = await store.retryFailedBridge();
+
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe("Bridge transaction is not retryable.");
+      expect(mockUpdateBridgeTransaction).not.toHaveBeenCalled();
+    });
+  });
 });

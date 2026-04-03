@@ -90,6 +90,10 @@ export class BridgeTxCartStore {
     );
   }
 
+  get canRetryFailedBridge() {
+    return this.bridgeTransaction?.status === BridgeTransactionStatus.Failed;
+  }
+
   /**
    * Get outgoing assets for the bridge transaction
    * @returns Array of AssetAndFee representing outgoing assets
@@ -412,6 +416,53 @@ export class BridgeTxCartStore {
       null,
       omnityTicketId,
     );
+    if (updateResult.isErr()) {
+      return Err(updateResult.unwrapErr());
+    }
+
+    await this.refreshAsync();
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction refresh failed.");
+    }
+
+    return Ok(this.bridgeTransaction);
+  }
+
+  async retryFailedBridge(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    console.log(`Retrying failed bridge transaction`, this.bridgeTransaction);
+
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    if (!this.canRetryFailedBridge) {
+      return Err("Bridge transaction is not retryable.");
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Pending,
+      null,
+      null,
+      null,
+      [],
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      [],
+      [],
+      this.bridgeTransaction.asset_infos.map((assetInfo) => ({
+        ...assetInfo,
+        amount: 0n,
+      })),
+    );
+    console.log(`Update bridge transaction to pending result:`, updateResult);
+
     if (updateResult.isErr()) {
       return Err(updateResult.unwrapErr());
     }

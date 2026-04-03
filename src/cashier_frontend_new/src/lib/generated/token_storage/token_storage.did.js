@@ -238,6 +238,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : IDL.Opt(BridgeTransactionStatus),
     'block_confirmations' : IDL.Opt(IDL.Vec(BlockConfirmation)),
     'block_id' : IDL.Opt(IDL.Nat64),
+    'asset_infos' : IDL.Opt(IDL.Vec(BridgeAssetInfo)),
     'vout' : IDL.Opt(IDL.Vec(UTXO)),
     'btc_txid' : IDL.Opt(IDL.Text),
     'omnity_ticket_id' : IDL.Opt(IDL.Text),

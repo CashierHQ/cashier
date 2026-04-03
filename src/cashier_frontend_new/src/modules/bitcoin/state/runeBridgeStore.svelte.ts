@@ -427,7 +427,7 @@ class RuneBridgeStore {
           await tokenStorageService.createRuneImportBridgeTransaction({
             btcAddress: runeAddress,
             runeId,
-            amount: matchedBalance.amount,
+            amount: 0n,
             decimals: token.decimals,
             btcTxid: btcTx.txid,
             vin: btcTx.vin.map((input) => ({
@@ -575,14 +575,9 @@ class RuneBridgeStore {
       );
 
       if (!matchedBalance) {
-        const failResult = await tokenStorageService.updateBridgeTransaction(
-          bridgeTx.bridge_id,
-          BridgeTransactionStatus.Failed,
+        console.warn(
+          `Rune balance for bridge ${bridgeTx.bridge_id} is not indexed yet; keeping bridge pending and retrying later.`,
         );
-        if (failResult.isOk()) {
-          this.#bridgeTxQuery.refresh();
-          this.#importBridgeTxQuery.refresh();
-        }
         return;
       }
 
@@ -611,6 +606,12 @@ class RuneBridgeStore {
             btcTxId,
             [],
             [],
+            bridgeTx.asset_infos.map((assetInfo) =>
+              assetInfo.asset_type === BridgeAssetType.Runes &&
+              assetInfo.asset_id === matchedBalance.rune_id
+                ? { ...assetInfo, amount: matchedBalance.amount }
+                : assetInfo,
+            ),
           );
         if (setTicketResult.isOk()) {
           this.#bridgeTxQuery.refresh();

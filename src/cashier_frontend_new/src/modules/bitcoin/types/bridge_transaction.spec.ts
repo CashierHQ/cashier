@@ -578,6 +578,14 @@ describe("BridgeTransactionMapper", () => {
       const withdrawal_fee = 2000n;
       const btc_fee = 3000n;
       const retry_times = 3;
+      const asset_infos = [
+        {
+          asset_type: BridgeAssetType.Runes,
+          asset_id: "UNCOMMON•GOODS",
+          amount: 125000n,
+          decimals: 8,
+        },
+      ];
 
       // Act
       const result = BridgeTransactionMapper.toUpdateBridgeTransactionArgs(
@@ -592,11 +600,25 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee,
         btc_fee,
         retry_times,
+        null,
+        [],
+        [],
+        asset_infos,
       );
 
       // Assert
       expect(result).toEqual({
         bridge_id: bridgeId,
+        asset_infos: [
+          [
+            {
+              asset_type: { Runes: null },
+              asset_id: "UNCOMMON•GOODS",
+              amount: 125000n,
+              decimals: 8,
+            },
+          ],
+        ],
         status: [{ Completed: null }],
         ckbtc_block_id: [700000n],
         block_id: [800000n],
@@ -640,6 +662,7 @@ describe("BridgeTransactionMapper", () => {
       // Assert
       expect(result).toEqual({
         bridge_id: bridgeId,
+        asset_infos: [],
         status: [],
         ckbtc_block_id: [],
         block_id: [],
@@ -669,6 +692,7 @@ describe("BridgeTransactionMapper", () => {
 
       // Assert
       expect(result.bridge_id).toBe(bridgeId);
+      expect(result.asset_infos).toEqual([]);
       expect(result.status).toEqual([{ Pending: null }]);
       expect(result.ckbtc_block_id).toEqual([]);
       expect(result.block_id).toEqual([]);
@@ -697,6 +721,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result.block_confirmations).toEqual([
         [{ block_id: 800000n, block_timestamp: 1704067200n }],
       ]);
+      expect(result.asset_infos).toEqual([]);
     });
   });
 

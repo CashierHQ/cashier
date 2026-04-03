@@ -6,6 +6,7 @@ import {
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  type BridgeAssetInfo,
   BridgeTransactionMapper,
   BridgeTransactionStatus,
   type BridgeTransaction,
@@ -615,6 +616,7 @@ class TokenStorageService {
     omnity_ticket_id: string | null = null,
     vin: BridgeUtxo[] = [],
     vout: BridgeUtxo[] = [],
+    asset_infos: BridgeAssetInfo[] = [],
   ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -637,6 +639,7 @@ class TokenStorageService {
         omnity_ticket_id,
         vin,
         vout,
+        asset_infos,
       );
 
       const res = await actor.user_update_bridge_transaction(updateArgs);

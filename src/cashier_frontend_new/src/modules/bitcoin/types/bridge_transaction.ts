@@ -265,6 +265,23 @@ export class BridgeTransactionMapper {
   }
 
   /**
+   * Map frontend BridgeAssetTypeValue to token storage BridgeAssetType canister format
+   * @param assetType
+   * @returns tokenStorage.BridgeAssetType
+   */
+  public static toBridgeAssetTypeCanister(
+    assetType: BridgeAssetTypeValue,
+  ): tokenStorage.BridgeAssetType {
+    if (assetType === BridgeAssetType.BTC) {
+      return { BTC: null };
+    } else if (assetType === BridgeAssetType.Runes) {
+      return { Runes: null };
+    } else {
+      return { Ordinals: null };
+    }
+  }
+
+  /**
    * Map token storage BridgeTransactionStatus to frontend BridgeTransactionStatusValue
    * @param status
    * @returns BridgeTransactionStatusValue
@@ -396,7 +413,22 @@ export class BridgeTransactionMapper {
     omnity_ticket_id: string | null = null,
     vin: BridgeUtxo[] = [],
     vout: BridgeUtxo[] = [],
+    asset_infos: BridgeAssetInfo[] = [],
   ): tokenStorage.UpdateBridgeTransactionInputArg {
+    const asset_infos_arg: [] | [tokenStorage.BridgeAssetInfo[]] =
+      asset_infos.length > 0
+        ? [
+            asset_infos.map((assetInfo) => ({
+              asset_type:
+                BridgeTransactionMapper.toBridgeAssetTypeCanister(
+                  assetInfo.asset_type,
+                ),
+              asset_id: assetInfo.asset_id,
+              amount: assetInfo.amount,
+              decimals: assetInfo.decimals,
+            })),
+          ]
+        : [];
     const ckbtc_block_id_arg: [] | [bigint] =
       ckbtc_block_id !== null ? [ckbtc_block_id] : [];
     const block_id_arg: [] | [bigint] = block_id !== null ? [block_id] : [];
@@ -422,6 +454,7 @@ export class BridgeTransactionMapper {
     const vout_arg: [] | [tokenStorage.UTXO[]] = vout.length > 0 ? [vout] : [];
 
     return {
+      asset_infos: asset_infos_arg,
       vin: vin_arg,
       bridge_id: bridgeId,
       status: status
