@@ -273,7 +273,7 @@
 </script>
 
 <div class="space-y-4 mt-8">
-  {#if !hasIndexCanister && !isCkBtc}
+  {#if !hasIndexCanister && !isCkBtc && !isRune}
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
     </p>
@@ -346,7 +346,7 @@
       </div>
     {/each}
 
-    {#if historyStore?.hasMore || (isCkBtc && bridgeHasMore)}
+    {#if historyStore?.hasMore || ((isCkBtc || isRune) && bridgeHasMore)}
       <div class="flex justify-center pt-4">
         <button
           onclick={handleLoadMore}

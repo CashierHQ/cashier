@@ -16,16 +16,16 @@ import {
   BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
-  type BridgeUtxo,
   type BridgeTransaction,
   type BridgeTransactionWithUsdValue,
+  type BridgeUtxo,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { PersistedState } from "runed";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -296,21 +296,24 @@ class RuneBridgeStore {
   async lookupMempoolTransactionByAddress(
     address: string,
   ): Promise<Result<BitcoinTransaction[], string>> {
-    const addressTxsResult = await mempoolService.getAddressTransactions(
-      address,
-    );
+    const addressTxsResult =
+      await mempoolService.getAddressTransactions(address);
     if (addressTxsResult.isErr()) {
       return Err(
         `Get address transactions failed: ${addressTxsResult.unwrapErr()}`,
       );
     }
 
+    console.log(`Address txs result`, addressTxsResult.unwrap());
+
     return Ok(
-      addressTxsResult.unwrap().filter(
-        (tx) =>
-          !tx.is_confirmed &&
-          tx.vout.some((output) => output.address === address),
-      ),
+      addressTxsResult
+        .unwrap()
+        .filter(
+          (tx) =>
+            !tx.is_confirmed &&
+            tx.vout.some((output) => output.address === address),
+        ),
     );
   }
 
@@ -332,7 +335,9 @@ class RuneBridgeStore {
     return bitcoinTransaction.vout
       .map((output, index) => ({ output, index }))
       .filter(
-        ({ output }) => output.address.toLowerCase() === address.toLowerCase(),
+        ({ output }) =>
+          output.address &&
+          output.address.toLowerCase() === address.toLowerCase(),
       )
       .map(({ index }) => ({
         txid: bitcoinTransaction.txid,
@@ -365,6 +370,7 @@ class RuneBridgeStore {
   }
 
   async processRuneMempoolTransactions(): Promise<void> {
+    console.log("Processing Rune mempool transactions...");
     const runeAddress = this.runeAddress;
     if (!runeAddress) {
       return;
@@ -381,15 +387,25 @@ class RuneBridgeStore {
       return;
     }
 
+    console.log(
+      `Mempool transactions for address ${runeAddress}:`,
+      mempoolTxsResult.unwrap(),
+    );
+
     for (const btcTx of mempoolTxsResult.unwrap()) {
       const inputOutputs = this.#toUtxoRefsFromVin(btcTx);
       if (inputOutputs.length === 0) {
         continue;
       }
 
+      console.log(`input utxos`, inputOutputs);
+
       const runeBalances =
         await this.#lookupRuneBalancesForOutputs(inputOutputs);
+      console.log(`Rune balances for inputs`, runeBalances);
+
       const matchedVout = this.#toMatchedOutputUtxos(btcTx, runeAddress);
+      console.log(`Matched output utxos`, matchedVout);
 
       for (const token of runeTokens) {
         const runeId = token.runeInfo?.runeId;
@@ -438,6 +454,7 @@ class RuneBridgeStore {
 
   createPendingBridgeTransactionsTask(): NodeJS.Timeout {
     return setInterval(async () => {
+      console.log("Checking pending Rune bridge transactions in mempool...");
       await this.processRuneMempoolTransactions();
 
       const [pendingTxs, confirmedTxs] = await Promise.all([
@@ -457,6 +474,11 @@ class RuneBridgeStore {
         bridge.asset_infos.some(
           (asset) => asset.asset_type === BridgeAssetType.Runes,
         ),
+      );
+
+      console.log(
+        `Pending and confirmed Rune bridge transactions:`,
+        runeBridgeTxs,
       );
 
       for (const runeBridgeTx of runeBridgeTxs) {
@@ -484,6 +506,8 @@ class RuneBridgeStore {
   async processRuneImportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
+    console.log(`Processing Rune bridge transaction`, bridgeTx);
+
     const btcTxId = bridgeTx.btc_txid;
     if (!btcTxId) {
       return;
@@ -528,11 +552,10 @@ class RuneBridgeStore {
     );
 
     if (updateResult.isErr()) {
-      console.error(
+      console.warn(
         `Failed to update Rune bridge confirmations for ${bridgeTx.bridge_id}:`,
         updateResult.unwrapErr(),
       );
-      return;
     }
 
     const outputRefs = (
@@ -596,29 +619,36 @@ class RuneBridgeStore {
         }
       }
       return;
-    }
+    } else if (bridgeTx.status === BridgeTransactionStatus.Confirmed) {
+      if (!bridgeTx.omnity_ticket_id) {
+        return;
+      }
 
-    if (!bridgeTx.omnity_ticket_id) {
-      return;
-    }
+      const ticketStatusResult =
+        await omnityBitcoinService.generateTicketStatus(
+          bridgeTx.omnity_ticket_id,
+        );
+      if (ticketStatusResult.isErr()) {
+        return;
+      }
 
-    const ticketStatusResult = await omnityBitcoinService.generateTicketStatus(
-      bridgeTx.omnity_ticket_id,
-    );
-    if (ticketStatusResult.isErr()) {
-      return;
-    }
-
-    const ticketStatus = ticketStatusResult.unwrap();
-    if ("Finalized" in ticketStatus) {
-      const completeResult = await tokenStorageService.updateBridgeTransaction(
-        bridgeTx.bridge_id,
-        BridgeTransactionStatus.Completed,
+      console.log(
+        `Ticket status for ticket ID ${bridgeTx.omnity_ticket_id}:`,
+        ticketStatusResult.unwrap(),
       );
-      if (completeResult.isOk()) {
-        this.#bridgeTxQuery.refresh();
-        this.#importBridgeTxQuery.refresh();
-        this.#exportBridgeTxQuery.refresh();
+
+      const ticketStatus = ticketStatusResult.unwrap();
+      if ("Finalized" in ticketStatus) {
+        const completeResult =
+          await tokenStorageService.updateBridgeTransaction(
+            bridgeTx.bridge_id,
+            BridgeTransactionStatus.Completed,
+          );
+        if (completeResult.isOk()) {
+          this.#bridgeTxQuery.refresh();
+          this.#importBridgeTxQuery.refresh();
+          this.#exportBridgeTxQuery.refresh();
+        }
       }
     }
   }
@@ -705,10 +735,16 @@ class RuneBridgeStore {
         return Err("Rune metadata not available");
       }
 
+      console.log(
+        `Manually refreshing balance for Rune ID ${runeId} at address ${runeAddress}...`,
+      );
+
       const utxoResult = await mempoolService.getAddressUtxos(runeAddress);
       if (utxoResult.isErr()) {
         return Err(utxoResult.unwrapErr());
       }
+
+      console.log(`UTXOs for address ${runeAddress}:`, utxoResult.unwrap());
 
       const existingUtxos = new Set(
         this.getImportBridgeTransactionsForToken({
@@ -720,6 +756,8 @@ class RuneBridgeStore {
         ),
       );
 
+      console.log(`Existing UTXOs in bridge transactions:`, existingUtxos);
+
       const unseenUtxos = utxoResult
         .unwrap()
         .filter((utxo) => !existingUtxos.has(utxo));
@@ -728,11 +766,18 @@ class RuneBridgeStore {
         return Ok(0);
       }
 
+      console.log(`Unseen UTXOs to check for Rune balances:`, unseenUtxos);
+
       const runeBalancesResult =
         await omnityRunesIndexerService.getRuneBalancesForOutputs(unseenUtxos);
       if (runeBalancesResult.isErr()) {
         return Err(runeBalancesResult.unwrapErr());
       }
+
+      console.log(
+        `Rune balances for unseen UTXOs:`,
+        runeBalancesResult.unwrap(),
+      );
 
       const outputsByTxid: Record<string, string[]> = {};
       const matchedBalances = runeBalancesResult
@@ -787,6 +832,11 @@ class RuneBridgeStore {
               return { txid: utxoTxid, vout: Number(vout) };
             }),
           });
+
+        console.log(
+          `Create bridge transaction result for txid ${txid}:`,
+          createResult,
+        );
 
         if (createResult.isOk()) {
           createdCount += 1;

@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import { OMNITY_ICP_CANISTER_ID } from "$modules/bitcoin/constants";
 import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
 import { omnityHubService } from "$modules/bitcoin/services/omnityHubService";
 import { omnityIcpService } from "$modules/bitcoin/services/omnityIcpService";
@@ -11,9 +12,9 @@ import {
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
-import { OMNITY_ICP_CANISTER_ID } from "$modules/bitcoin/constants";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
+import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
 import {
   CKBTC_CANISTER_ID,
   ICP_LEDGER_CANISTER_ID,
@@ -21,9 +22,8 @@ import {
 } from "$modules/token/constants";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
-import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { SvelteSet } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -606,6 +606,10 @@ export class BridgeTxCartStore {
   async #executeRuneExport(): Promise<
     Result<BridgeTransactionWithUsdValue, string>
   > {
+    console.log(
+      `Executing Rune export for bridge transaction`,
+      this.bridgeTransaction,
+    );
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction not found.");
     }
@@ -626,6 +630,8 @@ export class BridgeTxCartStore {
     }
 
     const redeemFee = redeemFeeResult.unwrap();
+    console.log(`Redeem fee for Rune export:`, redeemFee);
+
     const icpApprovalResult = await this.#approveSpenderWithAllowanceRecovery(
       this.#buildIcpLedgerService(),
       OMNITY_ICP_CANISTER_ID,
@@ -633,6 +639,8 @@ export class BridgeTxCartStore {
       approvalMemo,
       approvalCreatedAtTime,
     );
+    console.log(`icp approval result:`, icpApprovalResult);
+
     if (icpApprovalResult.isErr()) {
       return this.#failRuneBridge(icpApprovalResult.unwrapErr());
     }
@@ -644,6 +652,7 @@ export class BridgeTxCartStore {
       approvalMemo,
       approvalCreatedAtTime,
     );
+    console.log(`rune approval result:`, runeApprovalResult);
     if (runeApprovalResult.isErr()) {
       return this.#failRuneBridge(runeApprovalResult.unwrapErr());
     }
@@ -656,6 +665,8 @@ export class BridgeTxCartStore {
       amount: this.bridgeTransaction.total_amount,
       receiver: this.bridgeTransaction.btc_address,
     });
+    console.log(`Generate ticketV2 result for Rune export:`, ticketResult);
+
     if (ticketResult.isErr()) {
       return this.#recoverRuneExportWithExistingTicket(
         runeToken.runeInfo.tokenId,

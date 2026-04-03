@@ -2,6 +2,7 @@
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -29,7 +30,7 @@
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
-  const minConfirmations = 0;
+  let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
   const importBridgeTxs = $derived.by(() =>
     runeBridgeStore.getImportBridgeTransactionsForToken(token),
   );
