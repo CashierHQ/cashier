@@ -18,6 +18,10 @@ on:
           - reinstall
           - upgrade
           - install
+      sha:
+        description: 'Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -70,6 +74,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Use explicit SHA when provided (passed by fast-forward trigger) to avoid
+          # race condition where branch ref cache returns pre-merge commit
+          ref: ${{ inputs.sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
