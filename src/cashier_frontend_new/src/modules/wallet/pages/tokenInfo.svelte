@@ -114,6 +114,39 @@
               {tokenDetails.address}
             </span>
           </div>
+
+          {#if tokenDetails.isRune && tokenDetails.runeInfo}
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">Is Rune</span>
+              <input
+                type="checkbox"
+                checked={true}
+                disabled
+                aria-label="Is Rune"
+                class="h-4 w-4 accent-green cursor-not-allowed"
+              />
+            </div>
+
+            <div class="flex justify-between items-center gap-4">
+              <span class="text-gray-700">Rune ID</span>
+              <span
+                title={tokenDetails.runeInfo.runeId}
+                class="font-medium text-gray-900 text-right break-all"
+              >
+                {tokenDetails.runeInfo.runeId}
+              </span>
+            </div>
+
+            <div class="flex justify-between items-center gap-4">
+              <span class="text-gray-700">Rune Token ID</span>
+              <span
+                title={tokenDetails.runeInfo.tokenId}
+                class="font-medium text-gray-900 text-right break-all"
+              >
+                {tokenDetails.runeInfo.tokenId}
+              </span>
+            </div>
+          {/if}
         </div>
       </div>
 
