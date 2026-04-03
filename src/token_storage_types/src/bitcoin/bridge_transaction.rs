@@ -68,6 +68,15 @@ pub struct BridgeTransaction {
 
 impl BridgeTransaction {
     pub fn update(&mut self, input: UpdateBridgeTransactionInputArg) {
+        if let Some(asset_infos) = input.asset_infos {
+            let mut total_amount = Nat::from(0u32);
+            for asset_info in &asset_infos {
+                total_amount += asset_info.amount.clone();
+            }
+
+            self.asset_infos = asset_infos;
+            self.total_amount = Some(total_amount);
+        }
         if let Some(btc_txid) = input.btc_txid {
             self.btc_txid = Some(btc_txid);
         }
@@ -237,6 +246,12 @@ mod tests {
         ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "test_bridge_id".to_string(),
+            asset_infos: Some(vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(1200u32),
+                decimals: 8,
+            }]),
             btc_txid: Some("new_btc_txid".to_string()),
             ckbtc_block_id: Some(99u64),
             block_id: Some(100u64),
@@ -256,6 +271,9 @@ mod tests {
         transaction.update(update_input);
 
         // Assert
+        assert_eq!(transaction.asset_infos.len(), 1);
+        assert_eq!(transaction.asset_infos[0].amount, Nat::from(1200u32));
+        assert_eq!(transaction.total_amount, Some(Nat::from(1200u32)));
         assert_eq!(transaction.btc_txid, Some("new_btc_txid".to_string()));
         assert_eq!(transaction.ckbtc_block_id, Some(99u64));
         assert_eq!(transaction.block_id, Some(100u64));

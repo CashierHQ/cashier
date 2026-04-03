@@ -110,6 +110,29 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             ));
         }
 
+        if let Some(asset_infos) = input.asset_infos.clone() {
+            if asset_infos.len() != existing_transaction.asset_infos.len() {
+                return Err(CanisterError::ValidationErrors(
+                    "asset_infos length cannot be changed".to_string(),
+                ));
+            }
+
+            for (existing_asset, updated_asset) in existing_transaction
+                .asset_infos
+                .iter()
+                .zip(asset_infos.iter())
+            {
+                if existing_asset.asset_type != updated_asset.asset_type
+                    || existing_asset.asset_id != updated_asset.asset_id
+                    || existing_asset.decimals != updated_asset.decimals
+                {
+                    return Err(CanisterError::ValidationErrors(
+                        "asset_infos metadata cannot be changed".to_string(),
+                    ));
+                }
+            }
+        }
+
         if let Some(_ckbtc_block_id) = input.ckbtc_block_id
             && existing_transaction.ckbtc_block_id.is_some()
         {
@@ -514,6 +537,7 @@ mod tests {
         );
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -545,6 +569,7 @@ mod tests {
         let user_id = random_principal_id();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "nonexistent-id".to_string(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -595,6 +620,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: Some("new-txid".to_string()),
             ckbtc_block_id: None,
             block_id: None,
@@ -644,6 +670,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(99u64),
             block_id: None,
@@ -693,6 +720,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(840_001u64),
@@ -742,6 +770,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -795,6 +824,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -844,6 +874,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -886,6 +917,7 @@ mod tests {
         // withdrawal_fee is already set by the export fixture (450)
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -928,6 +960,7 @@ mod tests {
         // btc_fee is already set by the export fixture (1200)
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -977,6 +1010,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -1019,6 +1053,7 @@ mod tests {
         // Import bridge starts as Pending
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -1068,6 +1103,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -1111,6 +1147,7 @@ mod tests {
         // Act — transition Created → Pending (set ckbtc_block_id)
         let pending_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(42),
             block_id: None,
@@ -1146,6 +1183,7 @@ mod tests {
         // Act — transition Pending → Completed (set btc_txid, block_id, etc.)
         let completed_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: Some("btc-txid-1".to_string()),
             ckbtc_block_id: None,
             block_id: Some(840_000),
@@ -1185,6 +1223,7 @@ mod tests {
         );
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -1204,6 +1243,48 @@ mod tests {
                 txid: "updated-vout-txid".to_string(),
                 vout: 3,
             }]),
+        };
+
+        // Act
+        let result =
+            validator.validate_update_bridge_transaction(user_id, &bridge_id, &update_input);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_validate_update_bridge_asset_amount_only() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let bridge_id = store_bridge(
+            &repo,
+            user_id,
+            fixture_of_runes_import_create_input(random_principal_id()),
+        );
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            asset_infos: Some(vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(2_400u64),
+                decimals: 8,
+            }]),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
         };
 
         // Act

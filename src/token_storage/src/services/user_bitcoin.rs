@@ -608,6 +608,7 @@ mod tests {
         let mut service = UserCkBtcService::new(&repo, mock_minter);
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "nonexistent".to_string(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -646,6 +647,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -684,6 +686,7 @@ mod tests {
         let mut service = UserCkBtcService::new(&repo, mock_minter);
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "nonexistent-rune-bridge".to_string(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -728,6 +731,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -786,6 +790,7 @@ mod tests {
         ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(100u64),
@@ -848,6 +853,7 @@ mod tests {
         // Act — transition Created → Pending (ckBTC withdrawal submitted)
         let pending_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(42u64),
             block_id: None,
@@ -875,6 +881,7 @@ mod tests {
         // Act — transition Pending → Completed (BTC confirmed on-chain)
         let completed_input = UpdateBridgeTransactionInputArg {
             bridge_id: pending.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: Some("btc-txid-1".to_string()),
             ckbtc_block_id: None,
             block_id: Some(840_000u64),
@@ -915,6 +922,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -1003,6 +1011,7 @@ mod tests {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: Some("btc-txid-runes-export".to_string()),
             ckbtc_block_id: None,
             block_id: None,
@@ -1033,6 +1042,51 @@ mod tests {
         );
         assert_eq!(updated.withdrawal_fee, Some(Nat::from(900u64)));
         assert_eq!(updated.asset_infos[0].asset_type, BridgeAssetType::Runes);
+    }
+
+    #[tokio::test]
+    async fn it_should_update_bridge_asset_amounts() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let created = service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: created.bridge_id.clone(),
+            asset_infos: Some(vec![BridgeAssetInfo {
+                asset_type: BridgeAssetType::Runes,
+                asset_id: "UNCOMMON•GOODS".to_string(),
+                amount: Nat::from(2_400u64),
+                decimals: 8,
+            }]),
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let updated = service
+            .update_bridge_transaction(user_id, update_input)
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(updated.asset_infos[0].amount, Nat::from(2_400u64));
+        assert_eq!(updated.total_amount, Some(Nat::from(2_400u64)));
     }
 
     #[tokio::test]

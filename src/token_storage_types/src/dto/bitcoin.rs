@@ -36,6 +36,7 @@ pub struct CreateBridgeTransactionInputArg {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdateBridgeTransactionInputArg {
     pub bridge_id: String,
+    pub asset_infos: Option<Vec<BridgeAssetInfo>>,
     pub btc_txid: Option<String>,
     pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
