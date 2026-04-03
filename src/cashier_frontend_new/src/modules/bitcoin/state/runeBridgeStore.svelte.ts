@@ -482,10 +482,12 @@ class RuneBridgeStore {
         ),
       ]);
 
-      const runeBridgeTxs = [...pendingTxs, ...confirmedTxs].filter((bridge) =>
-        bridge.asset_infos.some(
-          (asset) => asset.asset_type === BridgeAssetType.Runes,
-        ),
+      const runeBridgeTxs = [...pendingTxs, ...confirmedTxs].filter(
+        (bridge) =>
+          bridge.bridge_type === BridgeType.Import &&
+          bridge.asset_infos.some(
+            (asset) => asset.asset_type === BridgeAssetType.Runes,
+          ),
       );
 
       console.log(
@@ -518,7 +520,7 @@ class RuneBridgeStore {
   async processRuneImportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
-    console.log(`Processing Rune bridge transaction`, bridgeTx);
+    console.log(`Processing import Rune bridge transaction`, bridgeTx);
 
     const btcTxId = bridgeTx.btc_txid;
     if (!btcTxId) {
@@ -669,6 +671,8 @@ class RuneBridgeStore {
   async processRuneExportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
+    console.log(`Processing export Rune bridge transaction`, bridgeTx);
+
     let btcTxId = bridgeTx.btc_txid;
 
     if (!btcTxId && bridgeTx.omnity_ticket_id) {
@@ -676,6 +680,8 @@ class RuneBridgeStore {
         bridgeTx.omnity_ticket_id,
       );
       if (queryTxHashResult.isOk()) {
+        btcTxId = queryTxHashResult.unwrap();
+        console.log("btc txid from Omnity Hub:", btcTxId);
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
           null,
@@ -683,13 +689,22 @@ class RuneBridgeStore {
           null,
           null,
           [],
-          queryTxHashResult.unwrap(),
+          btcTxId,
         );
         if (updateResult.isOk()) {
-          btcTxId = queryTxHashResult.unwrap();
           this.#bridgeTxQuery.refresh();
           this.#exportBridgeTxQuery.refresh();
+        } else {
+          console.warn(
+            `Failed to update Rune export bridge ${bridgeTx.bridge_id} with Omnity btc_txid:`,
+            updateResult.unwrapErr(),
+          );
         }
+      } else {
+        console.warn(
+          `Failed to query Rune export btc_txid from Omnity Hub for ${bridgeTx.bridge_id}:`,
+          queryTxHashResult.unwrapErr(),
+        );
       }
     }
 

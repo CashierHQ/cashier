@@ -749,5 +749,56 @@ describe("RuneBridgeStore", () => {
         "btc-txid-123",
       );
     });
+
+    it("it_should_continue_syncing_rune_export_bridge_when_initial_btc_txid_persist_fails", async () => {
+      const bridge = fixture_of_rune_bridge({
+        bridge_type: BridgeType.Export,
+        status: BridgeTransactionStatus.Pending,
+        btc_txid: null,
+        omnity_ticket_id: "ticket-123",
+      });
+      mockQueryTxHash.mockResolvedValue(Ok("btc-txid-123"));
+      mockGetTransactionById.mockResolvedValue(
+        Ok(
+          fixture_of_bitcoin_transaction({
+            txid: "btc-txid-123",
+            block_id: 840_100n,
+            block_timestamp: 1_704_000_100n,
+          }),
+        ),
+      );
+      mockGetTipHeight.mockResolvedValue(Ok(840_110n));
+      mockGetLatestBlocksFromHeight.mockResolvedValue(
+        fixture_of_confirming_blocks(840_100, 3),
+      );
+      mockUpdateBridgeTransaction
+        .mockResolvedValueOnce(Err("persist failed"))
+        .mockResolvedValueOnce(Ok(bridge));
+
+      await runeBridgeStore.processRuneExportBridgeTransaction(bridge);
+
+      expect(mockQueryTxHash).toHaveBeenCalledWith("ticket-123");
+      expect(mockGetTransactionById).toHaveBeenCalledWith("btc-txid-123");
+      expect(mockUpdateBridgeTransaction).toHaveBeenNthCalledWith(
+        1,
+        bridge.bridge_id,
+        null,
+        null,
+        null,
+        null,
+        [],
+        "btc-txid-123",
+      );
+      expect(mockUpdateBridgeTransaction).toHaveBeenNthCalledWith(
+        2,
+        bridge.bridge_id,
+        null,
+        null,
+        840_100n,
+        1_704_000_100n,
+        fixture_of_confirming_blocks(840_100, 3),
+        "btc-txid-123",
+      );
+    });
   });
 });
