@@ -358,25 +358,20 @@ class BtcBridgeStore {
   async lookupMempoolTransactionByAddress(
     address: string,
   ): Promise<Result<BitcoinTransaction[], string>> {
-    const txIdsResult = await mempoolService.getMempoolTxs();
-    if (txIdsResult.isErr()) {
-      return Err(`Get mempool tx IDs failed: ${txIdsResult.unwrapErr()}`);
+    const addressTxsResult = await mempoolService.getAddressTransactions(
+      address,
+    );
+    if (addressTxsResult.isErr()) {
+      return Err(
+        `Get address transactions failed: ${addressTxsResult.unwrapErr()}`,
+      );
     }
 
-    const txIds = txIdsResult.unwrap();
-    const transactionTasks = txIds.map(async (txid) => {
-      const txResult = await mempoolService.getTransactionById(txid);
-      if (txResult.isErr()) {
-        return null;
-      }
-      return txResult.unwrap();
-    });
-
-    const transactions = await Promise.all(transactionTasks);
     return Ok(
-      transactions.filter(
-        (tx): tx is BitcoinTransaction =>
-          tx !== null && tx.vout.some((output) => output.address === address),
+      addressTxsResult.unwrap().filter(
+        (tx) =>
+          !tx.is_confirmed &&
+          tx.vout.some((output) => output.address === address),
       ),
     );
   }

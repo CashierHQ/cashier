@@ -129,7 +129,7 @@ const {
   mockGetDepositFee,
   mockUpdateBalanceWithMintedInfo,
   mockRetrieveBtcStatusV2,
-  mockGetMempoolTxs,
+  mockGetAddressTransactions,
   mockGetTransactionById,
   mockGetAddressUtxos,
   mockGetTipHeight,
@@ -159,7 +159,7 @@ const {
     mockGetDepositFee: vi.fn(),
     mockUpdateBalanceWithMintedInfo: vi.fn(),
     mockRetrieveBtcStatusV2: vi.fn(),
-    mockGetMempoolTxs: vi.fn(),
+    mockGetAddressTransactions: vi.fn(),
     mockGetTransactionById: vi.fn(),
     mockGetAddressUtxos: vi.fn(),
     mockGetTipHeight: vi.fn(),
@@ -228,7 +228,7 @@ vi.mock("$modules/bitcoin/services/ckBTCMinterService", () => ({
 
 vi.mock("$modules/bitcoin/services/mempoolService", () => ({
   mempoolService: {
-    getMempoolTxs: mockGetMempoolTxs,
+    getAddressTransactions: mockGetAddressTransactions,
     getTransactionById: mockGetTransactionById,
     getAddressUtxos: mockGetAddressUtxos,
     getTipHeight: mockGetTipHeight,
@@ -373,7 +373,7 @@ describe("BridgeStore", () => {
   describe("lookupMempoolTransactionByAddress", () => {
     it("it_should_fail_lookup_mempool_transaction_due_to_mempool_error", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Err("Network error"));
+      mockGetAddressTransactions.mockResolvedValue(Err("Network error"));
 
       // Act
       const result =
@@ -381,18 +381,18 @@ describe("BridgeStore", () => {
 
       // Assert
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toContain("Get mempool tx IDs failed");
+      expect(result.unwrapErr()).toContain("Get address transactions failed");
     });
 
     it("it_should_return_empty_when_no_txs_match_address", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Ok(["txid1"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([
           fixture_of_bitcoin_transaction({
+            is_confirmed: false,
             vout: [{ address: "tb1qother", value: 50_000n }],
           }),
-        ),
+        ]),
       );
 
       // Act
@@ -406,9 +406,8 @@ describe("BridgeStore", () => {
 
     it("it_should_return_txs_matching_address", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Ok(["txid1"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(fixture_of_bitcoin_transaction()),
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
       );
 
       // Act
@@ -419,6 +418,18 @@ describe("BridgeStore", () => {
       expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toHaveLength(1);
       expect(result.unwrap()[0].txid).toBe("abc123");
+    });
+
+    it("it_should_filter_out_confirmed_transactions", async () => {
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: true })]),
+      );
+
+      const result =
+        await btcBridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
+
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toHaveLength(0);
     });
   });
 

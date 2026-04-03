@@ -109,7 +109,7 @@ const {
   mockGetBridgeTransactions,
   mockUpdateBridgeTransaction,
   mockCreateRuneImportBridgeTransaction,
-  mockGetMempoolTxs,
+  mockGetAddressTransactions,
   mockGetTransactionById,
   mockGetAddressUtxos,
   mockGetTipHeight,
@@ -135,7 +135,7 @@ const {
     mockGetBridgeTransactions: vi.fn(),
     mockUpdateBridgeTransaction: vi.fn(),
     mockCreateRuneImportBridgeTransaction: vi.fn(),
-    mockGetMempoolTxs: vi.fn(),
+    mockGetAddressTransactions: vi.fn(),
     mockGetTransactionById: vi.fn(),
     mockGetAddressUtxos: vi.fn(),
     mockGetTipHeight: vi.fn(),
@@ -180,7 +180,7 @@ vi.mock("$modules/token/services/tokenStorage", () => ({
 
 vi.mock("$modules/bitcoin/services/mempoolService", () => ({
   mempoolService: {
-    getMempoolTxs: mockGetMempoolTxs,
+    getAddressTransactions: mockGetAddressTransactions,
     getTransactionById: mockGetTransactionById,
     getAddressUtxos: mockGetAddressUtxos,
     getTipHeight: mockGetTipHeight,
@@ -377,7 +377,7 @@ describe("RuneBridgeStore", () => {
   describe("lookupMempoolTransactionByAddress", () => {
     it("it_should_fail_lookup_mempool_transaction_due_to_mempool_error", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Err("Network error"));
+      mockGetAddressTransactions.mockResolvedValue(Err("Network error"));
 
       // Act
       const result =
@@ -387,14 +387,13 @@ describe("RuneBridgeStore", () => {
 
       // Assert
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toContain("Get mempool tx IDs failed");
+      expect(result.unwrapErr()).toContain("Get address transactions failed");
     });
 
     it("it_should_do_lookup_mempool_transactions_by_address", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Ok(["abc123"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(fixture_of_bitcoin_transaction()),
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
       );
 
       // Act
@@ -407,6 +406,20 @@ describe("RuneBridgeStore", () => {
       expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toHaveLength(1);
       expect(result.unwrap()[0].txid).toBe("abc123");
+    });
+
+    it("it_should_filter_out_confirmed_transactions", async () => {
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: true })]),
+      );
+
+      const result =
+        await runeBridgeStore.lookupMempoolTransactionByAddress(
+          "tb1qruneaddress",
+        );
+
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toHaveLength(0);
     });
   });
 
@@ -426,9 +439,8 @@ describe("RuneBridgeStore", () => {
       // Arrange
       mockPersistedValues["runeAddress"] = "tb1qruneaddress";
       walletTokensRef.value = [fixture_of_rune_token()];
-      mockGetMempoolTxs.mockResolvedValue(Ok(["abc123"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(fixture_of_bitcoin_transaction()),
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
       );
       mockGetRuneBalancesForOutputs.mockResolvedValue(
         Ok([[[fixture_of_rune_balance()]]]),
@@ -461,9 +473,8 @@ describe("RuneBridgeStore", () => {
       mockQueryInstances[0].data = [
         { ...fixture_of_rune_bridge(), total_amount_usd: 0 },
       ];
-      mockGetMempoolTxs.mockResolvedValue(Ok(["abc123"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(fixture_of_bitcoin_transaction()),
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
       );
       mockGetRuneBalancesForOutputs.mockResolvedValue(
         Ok([[[fixture_of_rune_balance()]]]),
