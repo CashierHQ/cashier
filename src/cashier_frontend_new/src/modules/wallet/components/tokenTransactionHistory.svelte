@@ -128,7 +128,9 @@
         matchesSelectedBridgeToken(bridge),
       );
 
-      bridgeHasMore = fetched.length >= BRIDGE_PAGE_SIZE;
+      bridgeHasMore =
+        fetched.length >= BRIDGE_PAGE_SIZE &&
+        filtered.length >= BRIDGE_PAGE_SIZE;
       if (append) {
         const existingIds = new SvelteSet(
           bridgeTransactions.map((bridge) => bridge.bridge_id),

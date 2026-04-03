@@ -293,6 +293,18 @@ class RuneBridgeStore {
     );
   }
 
+  hasMoreExportBridgeTransactionsForToken(
+    token?: Pick<
+      TokenWithPriceAndBalance,
+      "address" | "isRune" | "runeInfo"
+    > | null,
+  ): boolean {
+    return (
+      this.hasMoreExports &&
+      this.getExportBridgeTransactionsForToken(token).length >= BRIDGE_PAGE_SIZE
+    );
+  }
+
   async lookupMempoolTransactionByAddress(
     address: string,
   ): Promise<Result<BitcoinTransaction[], string>> {

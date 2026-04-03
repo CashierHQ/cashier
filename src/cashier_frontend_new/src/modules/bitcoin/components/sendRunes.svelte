@@ -21,6 +21,9 @@
   const exportBridgeTxs = $derived.by(() =>
     runeBridgeStore.getExportBridgeTransactionsForToken(token),
   );
+  const hasMoreExportBridgeTxs = $derived.by(() =>
+    runeBridgeStore.hasMoreExportBridgeTransactionsForToken(token),
+  );
 
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
@@ -52,7 +55,7 @@
 
   <BridgeList
     bridgeTxs={exportBridgeTxs as BridgeTransactionWithUsdValue[]}
-    hasMore={runeBridgeStore.hasMoreExports}
+    hasMore={hasMoreExportBridgeTxs}
     emptyText={locale.t("wallet.send.noBtcExportTxs")}
     onSelectBridge={handleSelectBridge}
     onLoadMore={handleLoadMore}
