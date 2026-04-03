@@ -59,6 +59,7 @@ async fn should_init_with_admin_permissions() {
 
 /// Test: upgrade with tokens upserts them into registry
 #[tokio::test]
+#[ignore = "token upsert on upgrade temporarily removed (fixbug/temporary-remove-update-tokens-on-upgrade)"]
 async fn should_upgrade_with_tokens_upsert() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -143,6 +144,7 @@ async fn should_upgrade_without_tokens_preserve_registry() {
 
 /// Test: upgrade with existing token updates it (upsert behavior)
 #[tokio::test]
+#[ignore = "token upsert on upgrade temporarily removed (fixbug/temporary-remove-update-tokens-on-upgrade)"]
 async fn should_upgrade_upsert_existing_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
