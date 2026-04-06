@@ -3,6 +3,7 @@ CKBTC_LEDGER_ID:="mxzaz-hqaaa-aaaar-qaada-cai"
 CKBTC_INDEXER_ID:="n5wcd-faaaa-aaaar-qaaea-cai"
 CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
 CKBTC_KYT_ID:="o6ude-eyaaa-aaaar-qal6a-cai"
+OMNITY_BITCOIN_ID:="7rvjr-3qaaa-aaaar-qaeyq-cai"
 
 # Start the local dfx server
 [group('dfx')]
@@ -270,6 +271,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
       };
       ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
+      omnity_bitcoin_id = principal \"{{OMNITY_BITCOIN_ID}}\";
   })" {{network}} {{mode}} --yes
 
 # Deploy Gate canister
