@@ -359,4 +359,26 @@ describe("TokenTransactionHistory", () => {
 
     expect(mockRuneSetRuneId).toHaveBeenCalledWith(null);
   });
+
+  it("it_should_show_created_label_for_created_export_bridge", () => {
+    btcStoreRef.value.bridgesHistory = [
+      fixture_of_bridge({
+        bridge_id: "bridge-export-created",
+        bridge_type: "Export",
+        status: "Created",
+      }),
+    ];
+
+    render(TokenTransactionHistory, {
+      props: {
+        tokenAddress: "mxzaz-hqaaa-aaaar-qaada-cai",
+        tokenDetails: fixture_of_btc_token(),
+      },
+    });
+
+    expect(screen.getByText("bitcoin.send.created")).toBeInTheDocument();
+    expect(
+      screen.queryByText("bitcoin.send.exporting"),
+    ).not.toBeInTheDocument();
+  });
 });

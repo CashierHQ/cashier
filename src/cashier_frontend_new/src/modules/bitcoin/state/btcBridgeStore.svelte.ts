@@ -27,7 +27,6 @@ import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 import { PersistedState } from "runed";
-import { SvelteMap } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -241,17 +240,23 @@ class BtcBridgeStore {
   }
 
   get bridgesHistory() {
-    const bridgeMap = new SvelteMap<string, BridgeTransactionWithUsdValue>();
+    const dedupedBridges = [
+      ...(this.importBridgeTxs ?? []),
+      ...(this.exportBridgeTxs ?? []),
+    ].reduce<BridgeTransactionWithUsdValue[]>((acc, bridge) => {
+      if (
+        acc.some(
+          (existingBridge) => existingBridge.bridge_id === bridge.bridge_id,
+        )
+      ) {
+        return acc;
+      }
 
-    for (const bridge of this.importBridgeTxs ?? []) {
-      bridgeMap.set(bridge.bridge_id, bridge);
-    }
+      acc.push(bridge);
+      return acc;
+    }, []);
 
-    for (const bridge of this.exportBridgeTxs ?? []) {
-      bridgeMap.set(bridge.bridge_id, bridge);
-    }
-
-    return Array.from(bridgeMap.values()).sort((a, b) =>
+    return dedupedBridges.sort((a, b) =>
       Number(b.created_at_ts - a.created_at_ts),
     );
   }

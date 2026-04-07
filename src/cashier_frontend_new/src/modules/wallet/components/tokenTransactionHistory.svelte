@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import {
     getWalletHistoryStore,
     type WalletHistoryStore,
@@ -33,7 +34,6 @@
   import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
-  import { SvelteMap } from "svelte/reactivity";
 
   interface Props {
     tokenAddress: string;
@@ -82,14 +82,48 @@
 
   function getBridgeLabel(bridge: BridgeTransaction): string {
     if (bridge.bridge_type === BridgeType.Import) {
-      return bridge.status === BridgeTransactionStatus.Completed
-        ? locale.t("bitcoin.receive.imported")
-        : locale.t("bitcoin.receive.importing");
+      if (bridge.status === BridgeTransactionStatus.Completed) {
+        return locale.t("bitcoin.receive.imported");
+      }
+
+      if (bridge.status === BridgeTransactionStatus.Failed) {
+        return locale.t("bitcoin.receive.failed");
+      }
+
+      if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
+        return locale.t("bitcoin.receive.importing");
+      }
+
+      if (bridge.status === BridgeTransactionStatus.Created) {
+        return locale.t("bitcoin.receive.created");
+      }
+
+      return locale.t("bitcoin.receive.unknown");
     }
 
-    return bridge.status === BridgeTransactionStatus.Completed
-      ? locale.t("bitcoin.send.exported")
-      : locale.t("bitcoin.send.exporting");
+    if (bridge.status === BridgeTransactionStatus.Completed) {
+      return locale.t("bitcoin.send.exported");
+    }
+
+    if (bridge.status === BridgeTransactionStatus.Failed) {
+      return locale.t("bitcoin.send.failed");
+    }
+
+    if (
+      bridge.status === BridgeTransactionStatus.Pending ||
+      bridge.status === BridgeTransactionStatus.Confirmed
+    ) {
+      return locale.t("bitcoin.send.exporting");
+    }
+
+    if (bridge.status === BridgeTransactionStatus.Created) {
+      return locale.t("bitcoin.send.created");
+    }
+
+    return locale.t("bitcoin.receive.unknown");
   }
 
   $effect(() => {
@@ -109,10 +143,10 @@
 
     const runeId = tokenDetails?.runeInfo?.runeId ?? null;
     runeBridgeStore.setRuneId(runeId);
+  });
 
-    return () => {
-      runeBridgeStore.setRuneId(null);
-    };
+  onDestroy(() => {
+    runeBridgeStore.setRuneId(null);
   });
 
   const bridgeTransactions = $derived.by(() => {
@@ -206,17 +240,17 @@
   });
 
   const transactionsByDate = $derived.by(() => {
-    const grouped = new SvelteMap<string, HistoryItem[]>();
+    const grouped: Record<string, HistoryItem[]> = {};
 
     transactions.forEach((tx) => {
       const dateKey = getDateKey(tx.timestamp);
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, []);
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
       }
-      grouped.get(dateKey)!.push(tx);
+      grouped[dateKey].push(tx);
     });
 
-    return Array.from(grouped.entries()).map(([, txs]) => ({
+    return Object.values(grouped).map((txs) => ({
       date: formatDate(txs[0].timestamp),
       transactions: txs,
     }));

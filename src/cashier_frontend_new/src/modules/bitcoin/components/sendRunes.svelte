@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
@@ -29,10 +30,10 @@
     const runeId =
       token?.isRune && token.runeInfo ? token.runeInfo.runeId : null;
     runeBridgeStore.setRuneId(runeId);
+  });
 
-    return () => {
-      runeBridgeStore.setRuneId(null);
-    };
+  onDestroy(() => {
+    runeBridgeStore.setRuneId(null);
   });
 
   let showBridgeTxCart = $state(false);

@@ -460,7 +460,7 @@ describe("BridgeStore", () => {
 
       expect(btcBridgeStore.bridgesHistory).toHaveLength(1);
       expect(btcBridgeStore.bridgesHistory[0].bridge_type).toBe(
-        BridgeType.Export,
+        BridgeType.Import,
       );
     });
 
