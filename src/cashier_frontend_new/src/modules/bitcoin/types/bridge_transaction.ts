@@ -419,10 +419,9 @@ export class BridgeTransactionMapper {
       asset_infos.length > 0
         ? [
             asset_infos.map((assetInfo) => ({
-              asset_type:
-                BridgeTransactionMapper.toBridgeAssetTypeCanister(
-                  assetInfo.asset_type,
-                ),
+              asset_type: BridgeTransactionMapper.toBridgeAssetTypeCanister(
+                assetInfo.asset_type,
+              ),
               asset_id: assetInfo.asset_id,
               amount: assetInfo.amount,
               decimals: assetInfo.decimals,

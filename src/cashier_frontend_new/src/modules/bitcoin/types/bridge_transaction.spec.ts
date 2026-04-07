@@ -4,6 +4,7 @@ import {
   BridgeTransactionMapper,
   BridgeTransactionStatus,
   BridgeType,
+  type BridgeAssetInfo,
   type BridgeTransaction,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
@@ -578,7 +579,7 @@ describe("BridgeTransactionMapper", () => {
       const withdrawal_fee = 2000n;
       const btc_fee = 3000n;
       const retry_times = 3;
-      const asset_infos = [
+      const asset_infos: BridgeAssetInfo[] = [
         {
           asset_type: BridgeAssetType.Runes,
           asset_id: "UNCOMMON•GOODS",

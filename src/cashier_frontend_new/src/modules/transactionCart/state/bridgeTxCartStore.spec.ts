@@ -837,7 +837,9 @@ describe("BridgeTxCartStore", () => {
           return result;
         }),
       }));
-      mockGetBridgeTransactionById.mockResolvedValue(Ok(failedRuneExportBridge));
+      mockGetBridgeTransactionById.mockResolvedValue(
+        Ok(failedRuneExportBridge),
+      );
       walletTokensRef.value = [
         {
           address: "rune-ledger-id",

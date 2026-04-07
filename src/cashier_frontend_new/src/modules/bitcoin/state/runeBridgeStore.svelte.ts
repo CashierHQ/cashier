@@ -29,6 +29,9 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { PersistedState } from "runed";
 import { Err, Ok, type Result } from "ts-results-es";
 
+/**
+ * Runes bridges store
+ */
 class RuneBridgeStore {
   #runeAddress: PersistedState<string | null> = new PersistedState(
     "runeAddress",
@@ -55,6 +58,10 @@ class RuneBridgeStore {
   constructor() {
     this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#currentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
@@ -88,6 +95,10 @@ class RuneBridgeStore {
 
     this.#importBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
@@ -123,6 +134,10 @@ class RuneBridgeStore {
 
     this.#exportBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
