@@ -54,14 +54,14 @@ impl<R: Repositories> TokenRegistryService<R> {
     /// # Arguments
     /// * `caller` - The principal of the caller
     /// * `user_preferences` - The user's preferences, if available
-    /// * `user_token_list_result` - The result of fetching the user's token list
+    /// * `user_token_list` - The user's token list, if available
     /// # Returns
     /// * `TokenListResponse` - The token list response tailored to the caller
     pub fn list_tokens(
         &self,
         caller: Principal,
         user_preferences: Option<UserPreference>,
-        user_token_list_result: Result<UserTokenList, CanisterError>,
+        user_token_list: Option<UserTokenList>,
     ) -> TokenListResponse {
         let registry_tokens = self.registry_repository.list_tokens();
         let registry_metadata = self.get_metadata();
@@ -74,8 +74,8 @@ impl<R: Repositories> TokenRegistryService<R> {
             };
         }
 
-        match user_token_list_result {
-            Ok(list) => {
+        match user_token_list {
+            Some(list) => {
                 let need_update_version = list.version < registry_metadata.version;
 
                 if list.enable_list.is_empty() {
@@ -116,7 +116,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     }
                 }
             }
-            Err(_) => TokenListResponse {
+            None => TokenListResponse {
                 tokens: registry_tokens.into_iter().map(TokenDto::from).collect(),
                 need_update_version: true,
                 perference: user_preferences,
@@ -575,11 +575,7 @@ mod tests {
             .unwrap();
 
         // Act
-        let result = service.list_tokens(
-            Principal::anonymous(),
-            None,
-            Err(CanisterError::AnonymousCall),
-        );
+        let result = service.list_tokens(Principal::anonymous(), None, None);
 
         // Assert
         assert_eq!(result.tokens.len(), 2);
@@ -619,9 +615,7 @@ mod tests {
         let result = service.list_tokens(
             Principal::management_canister(),
             Some(user_preference.clone()),
-            Err(CanisterError::HandleLogicError(
-                "user token list is not init".to_string(),
-            )),
+            None,
         );
 
         // Assert
@@ -651,7 +645,7 @@ mod tests {
         let result = service.list_tokens(
             Principal::management_canister(),
             Some(user_preference.clone()),
-            Ok(UserTokenList {
+            Some(UserTokenList {
                 version: 2,
                 enable_list: std::collections::HashSet::new(),
             }),
@@ -690,7 +684,7 @@ mod tests {
         let result = service.list_tokens(
             Principal::management_canister(),
             Some(user_preference.clone()),
-            Ok(UserTokenList {
+            Some(UserTokenList {
                 version: 1,
                 enable_list: vec![token_2_id.clone()].into_iter().collect(),
             }),
@@ -727,7 +721,7 @@ mod tests {
         let result = service.list_tokens(
             Principal::management_canister(),
             Some(user_preference.clone()),
-            Ok(UserTokenList {
+            Some(UserTokenList {
                 version: 2,
                 enable_list: vec![token_id.clone()].into_iter().collect(),
             }),
@@ -756,13 +750,7 @@ mod tests {
             .unwrap();
 
         // Act
-        let result = service.list_tokens(
-            Principal::management_canister(),
-            None,
-            Err(CanisterError::HandleLogicError(
-                "user token list is not init".to_string(),
-            )),
-        );
+        let result = service.list_tokens(Principal::management_canister(), None, None);
 
         // Assert
         assert_eq!(result.tokens.len(), 1);

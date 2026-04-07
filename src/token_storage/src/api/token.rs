@@ -161,15 +161,15 @@ pub fn list_tokens() -> Result<TokenListResponse, CanisterError> {
     let token_registry_service = state.token_registry;
     let user_preference_service = state.user_preference;
     let user_token_service = state.user_token;
-    let user_preferences = (caller != Principal::anonymous())
-        .then(|| user_preference_service.get_preferences(&caller));
-    let user_token_list_result = if caller == Principal::anonymous() {
-        Err(CanisterError::AnonymousCall)
-    } else {
-        user_token_service.get_token_list(&caller)
-    };
 
-    Ok(token_registry_service.list_tokens(caller, user_preferences, user_token_list_result))
+    if caller == Principal::anonymous() {
+        return Ok(token_registry_service.list_tokens(caller, None, None));
+    }
+
+    let user_preferences = Some(user_preference_service.get_preferences(&caller));
+    let user_token_list = user_token_service.get_token_list(&caller).ok();
+
+    Ok(token_registry_service.list_tokens(caller, user_preferences, user_token_list))
 }
 
 /// Sync the user's token list with the registry, adding any new tokens from the registry to the user's list
