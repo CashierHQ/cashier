@@ -321,9 +321,6 @@
   }
 
   async function handleCreateRuneExportBridge() {
-    console.log(
-      `Create rune export bridge with amount: ${amount}, nativeBtcAddress: ${nativeBtcAddress}`,
-    );
     if (
       !selectedTokenObj?.isRune ||
       !selectedTokenObj.runeInfo ||

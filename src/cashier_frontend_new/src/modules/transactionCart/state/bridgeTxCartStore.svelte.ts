@@ -362,7 +362,6 @@ export class BridgeTxCartStore {
       try {
         const allowance =
           await ledgerService.getAllowanceForSpender(spenderCanisterId);
-        console.log(`Allowance for spender ${spenderCanisterId}:`, allowance);
 
         if (allowance < amount) {
           return Err("Approval amount is lower than required allowance.");
@@ -441,8 +440,6 @@ export class BridgeTxCartStore {
   async retryFailedBridge(): Promise<
     Result<BridgeTransactionWithUsdValue, string>
   > {
-    console.log(`Retrying failed bridge transaction`, this.bridgeTransaction);
-
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction not found.");
     }
@@ -475,7 +472,6 @@ export class BridgeTxCartStore {
         amount: 0n,
       })),
     );
-    console.log(`Update bridge transaction to pending result:`, updateResult);
 
     if (updateResult.isErr()) {
       return Err(updateResult.unwrapErr());
@@ -671,10 +667,6 @@ export class BridgeTxCartStore {
   async #runRuneExportFaultToleranceFlow(): Promise<
     Result<BridgeTransactionWithUsdValue, string>
   > {
-    console.log(
-      `Running Rune export fault tolerance flow for bridge transaction`,
-      this.bridgeTransaction,
-    );
     if (!this.bridgeTransaction) {
       return Err("Bridge transaction not found.");
     }
@@ -695,7 +687,6 @@ export class BridgeTxCartStore {
     }
 
     const redeemFee = redeemFeeResult.unwrap();
-    console.log(`Redeem fee for Rune export:`, redeemFee);
 
     const icpApprovalResult = await this.#approveSpenderWithAllowanceRecovery(
       this.#buildIcpLedgerService(),
@@ -704,7 +695,6 @@ export class BridgeTxCartStore {
       approvalMemo,
       approvalCreatedAtTime,
     );
-    console.log(`icp approval result:`, icpApprovalResult);
 
     if (icpApprovalResult.isErr()) {
       return this.#failRuneBridge(icpApprovalResult.unwrapErr());
@@ -717,7 +707,6 @@ export class BridgeTxCartStore {
       approvalMemo,
       approvalCreatedAtTime,
     );
-    console.log(`rune approval result:`, runeApprovalResult);
     if (runeApprovalResult.isErr()) {
       return this.#failRuneBridge(runeApprovalResult.unwrapErr());
     }
@@ -730,7 +719,6 @@ export class BridgeTxCartStore {
       amount: this.bridgeTransaction.total_amount,
       receiver: this.bridgeTransaction.btc_address,
     });
-    console.log(`Generate ticketV2 result for Rune export:`, ticketResult);
 
     if (ticketResult.isErr()) {
       return this.#recoverRuneExportWithExistingTicket(

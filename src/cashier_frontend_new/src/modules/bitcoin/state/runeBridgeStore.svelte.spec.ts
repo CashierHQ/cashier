@@ -3,6 +3,7 @@ import {
   BridgeTransactionStatus,
   BridgeType,
   type BridgeTransaction,
+  type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok } from "ts-results-es";
@@ -220,18 +221,6 @@ vi.mock("$modules/token/state/walletStore.svelte", () => ({
   },
 }));
 
-vi.mock("$modules/token/state/tokenPriceStore.svelte", () => ({
-  tokenPriceStore: { getTokenPriceByCanisterId: vi.fn().mockReturnValue(null) },
-}));
-
-vi.mock("$modules/bitcoin/utils", () => ({
-  enrichBridgeTransactionWithUsdValue: vi
-    .fn()
-    .mockImplementation((txs: BridgeTransaction[]) =>
-      txs.map((tx) => ({ ...tx, total_amount_usd: 0 })),
-    ),
-}));
-
 vi.mock("$lib/managedState", () => ({
   managedState: vi
     .fn()
@@ -316,7 +305,8 @@ describe("RuneBridgeStore", () => {
       runeBridgeStore.setRuneId("UNCOMMON•GOODS");
       mockGetBridgeTransactions.mockResolvedValue([fixture_of_rune_bridge()]);
 
-      const result = await mockQueryInstances[1].queryFn();
+      const result =
+        (await mockQueryInstances[1].queryFn()) as BridgeTransactionWithUsdValue[];
 
       expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
         0,
@@ -327,6 +317,7 @@ describe("RuneBridgeStore", () => {
         "UNCOMMON•GOODS",
       );
       expect(result).toHaveLength(1);
+      expect(result[0].total_amount_usd).toBe(0);
     });
 
     it("it_should_return_empty_import_bridge_transactions_when_rune_id_is_null", async () => {
@@ -352,7 +343,8 @@ describe("RuneBridgeStore", () => {
         }),
       ]);
 
-      const result = await mockQueryInstances[2].queryFn();
+      const result =
+        (await mockQueryInstances[2].queryFn()) as BridgeTransactionWithUsdValue[];
 
       expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
         0,
@@ -363,6 +355,7 @@ describe("RuneBridgeStore", () => {
         "UNCOMMON•GOODS",
       );
       expect(result).toHaveLength(1);
+      expect(result[0].total_amount_usd).toBe(0);
     });
 
     it("it_should_return_empty_export_bridge_transactions_when_rune_id_is_null", async () => {
@@ -382,7 +375,8 @@ describe("RuneBridgeStore", () => {
       authAccountRef.value = { owner: "aaaaa-aa" };
       mockGetBridgeTransactions.mockResolvedValue([fixture_of_rune_bridge()]);
 
-      const result = await mockQueryInstances[0].queryFn();
+      const result =
+        (await mockQueryInstances[0].queryFn()) as BridgeTransactionWithUsdValue[];
 
       expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
         0,
@@ -392,6 +386,7 @@ describe("RuneBridgeStore", () => {
         "Runes",
       );
       expect(result).toHaveLength(1);
+      expect(result[0].total_amount_usd).toBe(0);
     });
   });
 
