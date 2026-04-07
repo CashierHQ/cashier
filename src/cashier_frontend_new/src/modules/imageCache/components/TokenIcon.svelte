@@ -23,6 +23,15 @@
     fallbackText,
   }: Props = $props();
 
+  /**
+   * Local state is required because parent `failedImageLoads` is often a `Set`.
+   * Mutating a `Set` in-place doesn't always trigger Svelte reactivity upstream,
+   * which can leave a broken <img> rendered forever. We still call `onImageError`
+   * so parents can cache failures, but we also switch to fallback immediately.
+   */
+  let localFailed = $state(false);
+  let loaded = $state(false);
+
   // Size mapping
   const sizeClasses: Record<string, string> = {
     xs: "w-4 h-4",
@@ -42,10 +51,10 @@
   };
 
   // Get size class - use predefined or custom
-  const sizeClass = sizeClasses[size] || size;
+  const sizeClass = $derived(sizeClasses[size] || size);
 
   // Get text size class
-  const textSizeClass = textSizeClasses[size] || "text-xs";
+  const textSizeClass = $derived(textSizeClasses[size] || "text-xs");
 
   // Get logo URL - check ImageCache first, then fallback to external URL
   // Priority: 1) logo prop, 2) ImageCache, 3) external URL
@@ -69,10 +78,15 @@
   });
 
   // Check if image failed to load
-  const hasFailed = $derived(failedImageLoads.has(address));
+  const hasFailed = $derived(localFailed || failedImageLoads.has(address));
 
   function handleImageError() {
+    localFailed = true;
     onImageError(address);
+  }
+
+  function handleImageLoad() {
+    loaded = true;
   }
 
   // Get fallback text - use custom fallbackText or first letter of symbol
@@ -81,17 +95,24 @@
   );
 </script>
 
-{#if !hasFailed}
-  <img
-    src={imageSrc}
-    alt={symbol}
-    class="{sizeClass} overflow-hidden {className}"
-    onerror={handleImageError}
-  />
-{:else}
-  <div
-    class="{sizeClass} bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden {className}"
-  >
-    {fallbackDisplay}
-  </div>
-{/if}
+<div class="relative {sizeClass} {className}">
+  {#if hasFailed || !loaded}
+    <div
+      class="absolute inset-0 bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
+    >
+      {fallbackDisplay}
+    </div>
+  {/if}
+
+  {#if !hasFailed}
+    <img
+      src={imageSrc}
+      alt={symbol}
+      class="absolute inset-0 w-full h-full rounded-full overflow-hidden object-cover {loaded
+        ? 'opacity-100'
+        : 'opacity-0'}"
+      onerror={handleImageError}
+      onload={handleImageLoad}
+    />
+  {/if}
+</div>
