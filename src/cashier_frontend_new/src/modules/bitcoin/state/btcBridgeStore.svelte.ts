@@ -12,6 +12,7 @@ import {
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
   type BridgeTransaction,
@@ -26,6 +27,7 @@ import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 import { PersistedState } from "runed";
+import { SvelteMap } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -70,6 +72,9 @@ class BtcBridgeStore {
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
           BRIDGE_PAGE_SIZE,
+          null,
+          null,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -110,6 +115,7 @@ class BtcBridgeStore {
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Import,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -150,6 +156,7 @@ class BtcBridgeStore {
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Export,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -231,6 +238,46 @@ class BtcBridgeStore {
 
   get exportBridgeTxs() {
     return this.#exportBridgeTxQuery.data;
+  }
+
+  get bridgesHistory() {
+    const bridgeMap = new SvelteMap<string, BridgeTransactionWithUsdValue>();
+
+    for (const bridge of this.importBridgeTxs ?? []) {
+      bridgeMap.set(bridge.bridge_id, bridge);
+    }
+
+    for (const bridge of this.exportBridgeTxs ?? []) {
+      bridgeMap.set(bridge.bridge_id, bridge);
+    }
+
+    return Array.from(bridgeMap.values()).sort((a, b) =>
+      Number(b.created_at_ts - a.created_at_ts),
+    );
+  }
+
+  get hasMoreBridgesHistory() {
+    return this.hasMoreImports || this.hasMoreExports;
+  }
+
+  get isLoadingBridgesHistory() {
+    return (
+      this.#importBridgeTxQuery.isLoading || this.#exportBridgeTxQuery.isLoading
+    );
+  }
+
+  get bridgesHistoryError() {
+    return this.#importBridgeTxQuery.error ?? this.#exportBridgeTxQuery.error;
+  }
+
+  public loadMoreBridgesHistory() {
+    if (this.hasMoreImports) {
+      this.loadMoreImports();
+    }
+
+    if (this.hasMoreExports) {
+      this.loadMoreExports();
+    }
   }
 
   /**

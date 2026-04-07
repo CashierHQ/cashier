@@ -31,11 +31,21 @@
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
-  const importBridgeTxs = $derived.by(() =>
-    runeBridgeStore.getImportBridgeTransactionsForToken(token),
+  const importBridgeTxs = $derived.by(
+    () => runeBridgeStore.importBridgeTxs ?? [],
   );
   const hasMoreImports = $derived.by(() => runeBridgeStore.hasMoreImports);
   const isRefreshing = $derived.by(() => runeBridgeStore.isRefreshing);
+
+  $effect(() => {
+    const runeId =
+      token?.isRune && token.runeInfo ? token.runeInfo.runeId : null;
+    runeBridgeStore.setRuneId(runeId);
+
+    return () => {
+      runeBridgeStore.setRuneId(null);
+    };
+  });
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);

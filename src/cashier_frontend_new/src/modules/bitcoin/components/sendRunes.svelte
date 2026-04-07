@@ -18,12 +18,22 @@
 
   let { token, minConfirmations }: Props = $props();
 
-  const exportBridgeTxs = $derived.by(() =>
-    runeBridgeStore.getExportBridgeTransactionsForToken(token),
+  const exportBridgeTxs = $derived.by(
+    () => runeBridgeStore.exportBridgeTxs ?? [],
   );
-  const hasMoreExportBridgeTxs = $derived.by(() =>
-    runeBridgeStore.hasMoreExportBridgeTransactionsForToken(token),
+  const hasMoreExportBridgeTxs = $derived.by(
+    () => runeBridgeStore.hasMoreExports,
   );
+
+  $effect(() => {
+    const runeId =
+      token?.isRune && token.runeInfo ? token.runeInfo.runeId : null;
+    runeBridgeStore.setRuneId(runeId);
+
+    return () => {
+      runeBridgeStore.setRuneId(null);
+    };
+  });
 
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);

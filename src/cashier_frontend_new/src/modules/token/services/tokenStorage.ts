@@ -6,6 +6,7 @@ import {
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  type BridgeAssetTypeValue,
   type BridgeAssetInfo,
   BridgeTransactionMapper,
   BridgeTransactionStatus,
@@ -529,6 +530,8 @@ class TokenStorageService {
     limit: number,
     status: BridgeTransactionStatus | null = null,
     bridgeType: BridgeTypeValue | null = null,
+    assetType: BridgeAssetTypeValue | null = null,
+    runeId: string | null = null,
   ): Promise<BridgeTransaction[]> {
     const actor = this.#getActor();
     if (!actor) {
@@ -545,6 +548,10 @@ class TokenStorageService {
         bridge_type: bridgeType
           ? [BridgeTransactionMapper.toBridgeTypeCanister(bridgeType)]
           : [],
+        asset_type: assetType
+          ? [BridgeTransactionMapper.toBridgeAssetTypeCanister(assetType)]
+          : [],
+        rune_id: runeId ? [runeId] : [],
       });
 
       const bridgeTransactions = res.map(

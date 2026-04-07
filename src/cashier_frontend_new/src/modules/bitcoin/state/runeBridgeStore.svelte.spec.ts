@@ -125,6 +125,9 @@ const {
 } = vi.hoisted(() => {
   type MockQuery = {
     data: unknown;
+    queryFn: () => Promise<unknown>;
+    isLoading: boolean;
+    error: unknown;
     refresh: ReturnType<typeof vi.fn>;
     reset: ReturnType<typeof vi.fn>;
     refreshAsync: ReturnType<typeof vi.fn>;
@@ -230,16 +233,21 @@ vi.mock("$modules/bitcoin/utils", () => ({
 }));
 
 vi.mock("$lib/managedState", () => ({
-  managedState: vi.fn().mockImplementation(() => {
-    const instance = {
-      data: null as unknown,
-      refresh: vi.fn(),
-      reset: vi.fn(),
-      refreshAsync: vi.fn(),
-    };
-    mockQueryInstances.push(instance);
-    return instance;
-  }),
+  managedState: vi
+    .fn()
+    .mockImplementation((config: { queryFn: () => Promise<unknown> }) => {
+      const instance = {
+        data: null as unknown,
+        queryFn: config.queryFn,
+        isLoading: false,
+        error: undefined as unknown,
+        refresh: vi.fn(),
+        reset: vi.fn(),
+        refreshAsync: vi.fn(),
+      };
+      mockQueryInstances.push(instance);
+      return instance;
+    }),
 }));
 
 vi.mock("runed", () => ({
@@ -268,6 +276,8 @@ describe("RuneBridgeStore", () => {
     mockPersistedValues["runeAddress"] = null;
     for (const q of mockQueryInstances) {
       q.data = null;
+      q.isLoading = false;
+      q.error = undefined;
     }
     vi.useFakeTimers();
   });
@@ -301,76 +311,184 @@ describe("RuneBridgeStore", () => {
   });
 
   describe("getImportBridgeTransactionsForToken", () => {
-    it("it_should_fail_get_import_bridge_transactions_for_token_due_to_missing_rune_metadata", () => {
-      // Arrange
-      mockQueryInstances[1].data = [
-        { ...fixture_of_rune_bridge(), total_amount_usd: 0 },
-      ];
+    it("it_should_query_import_bridge_transactions_for_selected_rune", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+      mockGetBridgeTransactions.mockResolvedValue([fixture_of_rune_bridge()]);
 
-      // Act
-      const result = runeBridgeStore.getImportBridgeTransactionsForToken({
-        address: "rune-ledger-id",
-        isRune: false,
-        runeInfo: undefined,
-      });
+      const result = await mockQueryInstances[1].queryFn();
 
-      // Assert
-      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        BridgeType.Import,
+        "Runes",
+        "UNCOMMON•GOODS",
+      );
+      expect(result).toHaveLength(1);
     });
 
-    it("it_should_do_get_import_bridge_transactions_for_matching_rune", () => {
-      // Arrange
+    it("it_should_return_empty_import_bridge_transactions_when_rune_id_is_null", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      runeBridgeStore.setRuneId(null);
+
+      const result = await mockQueryInstances[1].queryFn();
+
+      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).not.toHaveBeenCalled();
+      expect(runeBridgeStore.hasMoreImports).toBe(false);
+    });
+  });
+
+  describe("exportBridgeTxQuery", () => {
+    it("it_should_query_export_bridge_transactions_for_selected_rune", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+      mockGetBridgeTransactions.mockResolvedValue([
+        fixture_of_rune_bridge({
+          bridge_type: BridgeType.Export,
+          status: BridgeTransactionStatus.Created,
+        }),
+      ]);
+
+      const result = await mockQueryInstances[2].queryFn();
+
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        BridgeType.Export,
+        "Runes",
+        "UNCOMMON•GOODS",
+      );
+      expect(result).toHaveLength(1);
+    });
+
+    it("it_should_return_empty_export_bridge_transactions_when_rune_id_is_null", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      runeBridgeStore.setRuneId(null);
+
+      const result = await mockQueryInstances[2].queryFn();
+
+      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).not.toHaveBeenCalled();
+      expect(runeBridgeStore.hasMoreExports).toBe(false);
+    });
+  });
+
+  describe("bridgeTxQuery", () => {
+    it("it_should_query_only_rune_bridge_transactions", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      mockGetBridgeTransactions.mockResolvedValue([fixture_of_rune_bridge()]);
+
+      const result = await mockQueryInstances[0].queryFn();
+
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        null,
+        "Runes",
+      );
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  describe("setRuneId", () => {
+    it("it_should_update_rune_id_and_refresh_import_export_queries", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+
+      expect(runeBridgeStore.rune_id).toBe("UNCOMMON•GOODS");
+      expect(mockQueryInstances[1].refresh).toHaveBeenCalledTimes(1);
+      expect(mockQueryInstances[2].refresh).toHaveBeenCalledTimes(1);
+      expect(runeBridgeStore.hasMoreImports).toBe(true);
+      expect(runeBridgeStore.hasMoreExports).toBe(true);
+    });
+
+    it("it_should_not_refresh_queries_when_rune_id_does_not_change", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+      vi.clearAllMocks();
+
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+
+      expect(mockQueryInstances[1].refresh).not.toHaveBeenCalled();
+      expect(mockQueryInstances[2].refresh).not.toHaveBeenCalled();
+    });
+
+    it("it_should_clear_rune_id_on_reset", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+
+      runeBridgeStore.reset();
+
+      expect(runeBridgeStore.rune_id).toBeNull();
+      expect(mockQueryInstances[0].reset).toHaveBeenCalled();
+      expect(mockQueryInstances[1].reset).toHaveBeenCalled();
+      expect(mockQueryInstances[2].reset).toHaveBeenCalled();
+    });
+  });
+
+  describe("bridgesHistory", () => {
+    it("it_should_merge_import_and_export_bridges_for_selected_rune", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
       mockQueryInstances[1].data = [
-        { ...fixture_of_rune_bridge(), total_amount_usd: 0 },
         {
           ...fixture_of_rune_bridge({
-            bridge_id: "import_other",
-            asset_infos: [
-              {
-                asset_type: "Runes",
-                asset_id: "DOG•GO•TO•THE•MOON",
-                amount: 500n,
-                decimals: 8,
-              },
-            ],
+            bridge_id: "import_rune_old",
+            created_at_ts: 1_704_067_200n,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+      mockQueryInstances[2].data = [
+        {
+          ...fixture_of_rune_bridge({
+            bridge_id: "export_rune_new",
+            bridge_type: BridgeType.Export,
+            created_at_ts: 1_704_067_300n,
           }),
           total_amount_usd: 0,
         },
       ];
 
-      // Act
-      const result = runeBridgeStore.getImportBridgeTransactionsForToken(
-        fixture_of_rune_token(),
-      );
-
-      // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].bridge_id).toBe("import_rune_abc123");
+      expect(
+        runeBridgeStore.bridgesHistory.map((bridge) => bridge.bridge_id),
+      ).toEqual(["export_rune_new", "import_rune_old"]);
     });
-  });
 
-  describe("getExportBridgeTransactionsForToken", () => {
-    it("it_should_get_export_bridge_transactions_for_selected_rune_token", () => {
-      // Arrange
-      const exportBridge = fixture_of_rune_bridge({
-        bridge_type: BridgeType.Export,
-        status: BridgeTransactionStatus.Created,
-      });
-      mockQueryInstances[2].data = [exportBridge];
+    it("it_should_return_empty_bridges_history_when_rune_id_is_null", () => {
+      runeBridgeStore.setRuneId(null);
+      mockQueryInstances[1].data = null;
+      mockQueryInstances[2].data = null;
 
-      // Act
-      const result = runeBridgeStore.getExportBridgeTransactionsForToken({
-        address: "rune-ledger-id",
-        isRune: true,
-        runeInfo: {
-          runeId: "UNCOMMON•GOODS",
-          tokenId: "omnity-rune-id",
-        },
-      });
+      expect(runeBridgeStore.bridgesHistory).toEqual([]);
+    });
 
-      // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].bridge_type).toBe("Export");
+    it("it_should_return_combined_rune_bridge_history_helpers", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+      mockQueryInstances[1].isLoading = true;
+      mockQueryInstances[2].error = new Error("rune bridge error");
+      runeBridgeStore.hasMoreImports = true;
+      runeBridgeStore.hasMoreExports = false;
+
+      expect(runeBridgeStore.isLoadingBridgesHistory).toBe(true);
+      expect(runeBridgeStore.bridgesHistoryError).toEqual(
+        mockQueryInstances[2].error,
+      );
+      expect(runeBridgeStore.hasMoreBridgesHistory).toBe(true);
+    });
+
+    it("it_should_load_more_combined_rune_bridge_history", () => {
+      runeBridgeStore.setRuneId("UNCOMMON•GOODS");
+      const importSpy = vi.spyOn(runeBridgeStore, "loadMoreImports");
+      const exportSpy = vi.spyOn(runeBridgeStore, "loadMoreExports");
+      runeBridgeStore.hasMoreImports = true;
+      runeBridgeStore.hasMoreExports = true;
+
+      runeBridgeStore.loadMoreBridgesHistory();
+
+      expect(importSpy).toHaveBeenCalledTimes(1);
+      expect(exportSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -464,6 +582,7 @@ describe("RuneBridgeStore", () => {
       });
       expect(mockQueryInstances[0].refresh).toHaveBeenCalled();
       expect(mockQueryInstances[1].refresh).toHaveBeenCalled();
+      expect(mockQueryInstances[2].refresh).toHaveBeenCalled();
     });
 
     it("it_should_fail_do_process_rune_mempool_transactions_due_to_existing_bridge", async () => {
@@ -874,6 +993,22 @@ describe("RuneBridgeStore", () => {
 
       // Assert
       expect(mockGetBridgeTransactions).toHaveBeenCalled();
+      expect(mockGetBridgeTransactions).toHaveBeenNthCalledWith(
+        1,
+        0,
+        1,
+        BridgeTransactionStatus.Pending,
+        null,
+        "Runes",
+      );
+      expect(mockGetBridgeTransactions).toHaveBeenNthCalledWith(
+        2,
+        0,
+        1,
+        BridgeTransactionStatus.Confirmed,
+        null,
+        "Runes",
+      );
       expect(mockGetTransactionById).not.toHaveBeenCalled();
 
       clearInterval(handle);

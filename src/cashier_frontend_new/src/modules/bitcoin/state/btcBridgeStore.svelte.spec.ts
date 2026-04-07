@@ -4,6 +4,7 @@ import type {
   BitcoinVin,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
   type BridgeTransaction,
@@ -149,6 +150,9 @@ const {
 } = vi.hoisted(() => {
   type MockQuery = {
     data: unknown;
+    queryFn: () => Promise<unknown>;
+    isLoading: boolean;
+    error: unknown;
     refresh: ReturnType<typeof vi.fn>;
     reset: ReturnType<typeof vi.fn>;
     refreshAsync: ReturnType<typeof vi.fn>;
@@ -279,16 +283,21 @@ vi.mock("$modules/bitcoin/utils", () => ({
 
 // managedState mock — returns a controllable instance per call, stored in mockQueryInstances
 vi.mock("$lib/managedState", () => ({
-  managedState: vi.fn().mockImplementation(() => {
-    const instance = {
-      data: null as unknown,
-      refresh: vi.fn(),
-      reset: vi.fn(),
-      refreshAsync: vi.fn(),
-    };
-    mockQueryInstances.push(instance);
-    return instance;
-  }),
+  managedState: vi
+    .fn()
+    .mockImplementation((config: { queryFn: () => Promise<unknown> }) => {
+      const instance = {
+        data: null as unknown,
+        queryFn: config.queryFn,
+        isLoading: false,
+        error: undefined as unknown,
+        refresh: vi.fn(),
+        reset: vi.fn(),
+        refreshAsync: vi.fn(),
+      };
+      mockQueryInstances.push(instance);
+      return instance;
+    }),
 }));
 
 // PersistedState mock — allows tests to directly manipulate persisted values via mockPersistedValues
@@ -319,6 +328,8 @@ describe("BridgeStore", () => {
     mockPersistedValues["ckbtcMinterMinConfirmations"] = null;
     for (const q of mockQueryInstances) {
       q.data = null;
+      q.isLoading = false;
+      q.error = undefined;
     }
     vi.useFakeTimers();
   });
@@ -348,6 +359,134 @@ describe("BridgeStore", () => {
 
       // Assert
       expect(result).toBe("tb1qreceiver");
+    });
+  });
+
+  describe("bridge queries", () => {
+    it("it_should_query_all_bridges_with_btc_asset_filter", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      mockGetBridgeTransactions.mockResolvedValue([]);
+
+      const result = await mockQueryInstances[0].queryFn();
+
+      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        null,
+        BridgeAssetType.BTC,
+      );
+    });
+
+    it("it_should_query_import_bridges_with_btc_asset_filter", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      mockGetBridgeTransactions.mockResolvedValue([]);
+
+      const result = await mockQueryInstances[1].queryFn();
+
+      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        BridgeType.Import,
+        BridgeAssetType.BTC,
+      );
+    });
+
+    it("it_should_query_export_bridges_with_btc_asset_filter", async () => {
+      authAccountRef.value = { owner: "aaaaa-aa" };
+      mockGetBridgeTransactions.mockResolvedValue([]);
+
+      const result = await mockQueryInstances[2].queryFn();
+
+      expect(result).toEqual([]);
+      expect(mockGetBridgeTransactions).toHaveBeenCalledWith(
+        0,
+        10,
+        null,
+        BridgeType.Export,
+        BridgeAssetType.BTC,
+      );
+    });
+  });
+
+  describe("bridgesHistory", () => {
+    it("it_should_merge_import_and_export_bridges_in_descending_timestamp_order", () => {
+      mockQueryInstances[1].data = [
+        {
+          ...fixture_of_import_bridge({
+            bridge_id: "import_old",
+            created_at_ts: 1_704_067_200n,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+      mockQueryInstances[2].data = [
+        {
+          ...fixture_of_export_bridge({
+            bridge_id: "export_new",
+            created_at_ts: 1_704_067_300n,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+
+      expect(
+        btcBridgeStore.bridgesHistory.map((bridge) => bridge.bridge_id),
+      ).toEqual(["export_new", "import_old"]);
+    });
+
+    it("it_should_deduplicate_bridges_history_by_bridge_id", () => {
+      mockQueryInstances[1].data = [
+        {
+          ...fixture_of_import_bridge({
+            bridge_id: "bridge_duplicate",
+            created_at_ts: 1_704_067_200n,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+      mockQueryInstances[2].data = [
+        {
+          ...fixture_of_export_bridge({
+            bridge_id: "bridge_duplicate",
+            created_at_ts: 1_704_067_300n,
+          }),
+          total_amount_usd: 0,
+        },
+      ];
+
+      expect(btcBridgeStore.bridgesHistory).toHaveLength(1);
+      expect(btcBridgeStore.bridgesHistory[0].bridge_type).toBe(
+        BridgeType.Export,
+      );
+    });
+
+    it("it_should_return_combined_bridge_history_helpers", () => {
+      mockQueryInstances[1].isLoading = true;
+      mockQueryInstances[2].error = new Error("bridge error");
+      btcBridgeStore.hasMoreImports = false;
+      btcBridgeStore.hasMoreExports = true;
+
+      expect(btcBridgeStore.isLoadingBridgesHistory).toBe(true);
+      expect(btcBridgeStore.bridgesHistoryError).toEqual(
+        mockQueryInstances[2].error,
+      );
+      expect(btcBridgeStore.hasMoreBridgesHistory).toBe(true);
+    });
+
+    it("it_should_load_more_combined_bridge_history_for_imports_and_exports", () => {
+      const importSpy = vi.spyOn(btcBridgeStore, "loadMoreImports");
+      const exportSpy = vi.spyOn(btcBridgeStore, "loadMoreExports");
+      btcBridgeStore.hasMoreImports = true;
+      btcBridgeStore.hasMoreExports = true;
+
+      btcBridgeStore.loadMoreBridgesHistory();
+
+      expect(importSpy).toHaveBeenCalledTimes(1);
+      expect(exportSpy).toHaveBeenCalledTimes(1);
     });
   });
 

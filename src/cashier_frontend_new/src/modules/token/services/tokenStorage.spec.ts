@@ -5,9 +5,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Principal } from "@dfinity/principal";
 
 // Hoisted mock functions
-const { mockBuildActor, mockUserCreateBridgeTransaction } = vi.hoisted(() => ({
+const {
+  mockBuildActor,
+  mockUserCreateBridgeTransaction,
+  mockUserGetBridgeTransactions,
+} = vi.hoisted(() => ({
   mockBuildActor: vi.fn(),
   mockUserCreateBridgeTransaction: vi.fn(),
+  mockUserGetBridgeTransactions: vi.fn(),
 }));
 
 const {
@@ -307,5 +312,121 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
     expect(callArgs.status).toEqual([{ Created: null }]);
     expect(callArgs.withdrawal_fee).toEqual([]);
     expect(callArgs.btc_fee).toEqual([]);
+  });
+});
+
+describe("TokenStorageService.getBridgeTransactions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should omit optional filters when not provided", async () => {
+    mockUserGetBridgeTransactions.mockResolvedValue([]);
+    mockBuildActor.mockReturnValue({
+      user_get_bridge_transactions: mockUserGetBridgeTransactions,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+
+    await tokenStorageService.getBridgeTransactions(0, 10);
+
+    expect(mockUserGetBridgeTransactions).toHaveBeenCalledWith({
+      start: [0],
+      limit: [10],
+      status: [],
+      bridge_type: [],
+      asset_type: [],
+      rune_id: [],
+    });
+  });
+
+  it("should send rune asset type filter", async () => {
+    mockUserGetBridgeTransactions.mockResolvedValue([]);
+    mockBuildActor.mockReturnValue({
+      user_get_bridge_transactions: mockUserGetBridgeTransactions,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+    const { BridgeAssetType } = await import(
+      "$modules/bitcoin/types/bridge_transaction"
+    );
+
+    await tokenStorageService.getBridgeTransactions(
+      0,
+      10,
+      null,
+      null,
+      BridgeAssetType.Runes,
+    );
+
+    expect(mockUserGetBridgeTransactions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        asset_type: [{ Runes: null }],
+        rune_id: [],
+      }),
+    );
+  });
+
+  it("should send rune_id filter", async () => {
+    mockUserGetBridgeTransactions.mockResolvedValue([]);
+    mockBuildActor.mockReturnValue({
+      user_get_bridge_transactions: mockUserGetBridgeTransactions,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+
+    await tokenStorageService.getBridgeTransactions(
+      0,
+      10,
+      null,
+      null,
+      null,
+      "UNCOMMON•GOODS",
+    );
+
+    expect(mockUserGetBridgeTransactions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        asset_type: [],
+        rune_id: ["UNCOMMON•GOODS"],
+      }),
+    );
+  });
+
+  it("should send combined bridge_type, asset_type, and rune_id filters", async () => {
+    mockUserGetBridgeTransactions.mockResolvedValue([]);
+    mockBuildActor.mockReturnValue({
+      user_get_bridge_transactions: mockUserGetBridgeTransactions,
+    });
+
+    const { tokenStorageService } = await import(
+      "$modules/token/services/tokenStorage"
+    );
+    const { BridgeAssetType, BridgeType } = await import(
+      "$modules/bitcoin/types/bridge_transaction"
+    );
+
+    await tokenStorageService.getBridgeTransactions(
+      20,
+      10,
+      null,
+      BridgeType.Import,
+      BridgeAssetType.Runes,
+      "UNCOMMON•GOODS",
+    );
+
+    expect(mockUserGetBridgeTransactions).toHaveBeenCalledWith({
+      start: [20],
+      limit: [10],
+      status: [],
+      bridge_type: [{ Import: null }],
+      asset_type: [{ Runes: null }],
+      rune_id: ["UNCOMMON•GOODS"],
+    });
   });
 });

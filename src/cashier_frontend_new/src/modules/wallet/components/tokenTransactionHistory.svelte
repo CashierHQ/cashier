@@ -24,17 +24,16 @@
     type TransactionKindValue,
     DisplayTransactionMapper,
   } from "$modules/token/types/index";
-  import { tokenStorageService } from "$modules/token/services/tokenStorage";
-  import { BRIDGE_PAGE_SIZE } from "$modules/bitcoin/constants";
   import {
     BridgeTransactionStatus,
     BridgeType,
     type BridgeTransaction,
   } from "$modules/bitcoin/types/bridge_transaction";
   import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
+  import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
-  import { SvelteMap, SvelteSet } from "svelte/reactivity";
+  import { SvelteMap } from "svelte/reactivity";
 
   interface Props {
     tokenAddress: string;
@@ -75,81 +74,11 @@
 
   // Create store when indexId is available, recreate when token changes
   let historyStore = $state<WalletHistoryStore | null>(null);
-  let bridgeTransactions = $state<BridgeTransaction[]>([]);
-  let bridgeHasMore = $state(true);
-  let bridgeIsLoading = $state(false);
-  let bridgeIsLoadingMore = $state(false);
-  let bridgeError = $state<string | null>(null);
-  let bridgePage = $state(0);
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   const isCkBtc = $derived(tokenAddress === CKBTC_CANISTER_ID);
   const isRune = $derived(!!tokenDetails?.isRune && !!tokenDetails?.runeInfo);
   const minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
-
-  function matchesSelectedBridgeToken(bridge: BridgeTransaction): boolean {
-    if (isCkBtc) {
-      return bridge.asset_infos.some((asset) => asset.asset_type === "BTC");
-    }
-
-    if (isRune && tokenDetails?.runeInfo) {
-      return bridge.asset_infos.some(
-        (asset) =>
-          asset.asset_type === "Runes" &&
-          asset.asset_id === tokenDetails.runeInfo?.runeId,
-      );
-    }
-
-    return false;
-  }
-
-  async function loadBridgeTransactions(page: number, append: boolean) {
-    if (!isCkBtc && !isRune) {
-      bridgeTransactions = [];
-      bridgeHasMore = false;
-      bridgeError = null;
-      return;
-    }
-
-    if (append) {
-      bridgeIsLoadingMore = true;
-    } else {
-      bridgeIsLoading = true;
-    }
-    bridgeError = null;
-
-    try {
-      const start = page * BRIDGE_PAGE_SIZE;
-      const fetched = await tokenStorageService.getBridgeTransactions(
-        start,
-        BRIDGE_PAGE_SIZE,
-      );
-      const filtered = fetched.filter((bridge) =>
-        matchesSelectedBridgeToken(bridge),
-      );
-
-      bridgeHasMore =
-        fetched.length >= BRIDGE_PAGE_SIZE &&
-        filtered.length >= BRIDGE_PAGE_SIZE;
-      if (append) {
-        const existingIds = new SvelteSet(
-          bridgeTransactions.map((bridge) => bridge.bridge_id),
-        );
-        bridgeTransactions = [
-          ...bridgeTransactions,
-          ...filtered.filter((bridge) => !existingIds.has(bridge.bridge_id)),
-        ];
-      } else {
-        bridgeTransactions = filtered;
-      }
-      bridgePage = page;
-    } catch (error) {
-      bridgeError = String(error);
-    } finally {
-      bridgeIsLoading = false;
-      bridgeIsLoadingMore = false;
-    }
-  }
 
   function getBridgeLabel(bridge: BridgeTransaction): string {
     if (bridge.bridge_type === BridgeType.Import) {
@@ -173,16 +102,65 @@
   });
 
   $effect(() => {
-    if (isCkBtc || isRune) {
-      void loadBridgeTransactions(0, false);
-    } else {
-      bridgeTransactions = [];
-      bridgeHasMore = false;
-      bridgeIsLoading = false;
-      bridgeIsLoadingMore = false;
-      bridgeError = null;
-      bridgePage = 0;
+    if (!isRune) {
+      runeBridgeStore.setRuneId(null);
+      return;
     }
+
+    const runeId = tokenDetails?.runeInfo?.runeId ?? null;
+    runeBridgeStore.setRuneId(runeId);
+
+    return () => {
+      runeBridgeStore.setRuneId(null);
+    };
+  });
+
+  const bridgeTransactions = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.bridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.bridgesHistory;
+    }
+
+    return [];
+  });
+
+  const bridgeHasMore = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.hasMoreBridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.hasMoreBridgesHistory;
+    }
+
+    return false;
+  });
+
+  const bridgeIsLoading = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.isLoadingBridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.isLoadingBridgesHistory;
+    }
+
+    return false;
+  });
+
+  const bridgeError = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.bridgesHistoryError;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.bridgesHistoryError;
+    }
+
+    return undefined;
   });
 
   // Transform TokenTransaction[] to DisplayTransaction[]
@@ -256,8 +234,14 @@
       tasks.push(historyStore.loadMore());
     }
 
-    if ((isCkBtc || isRune) && bridgeHasMore && !bridgeIsLoadingMore) {
-      tasks.push(loadBridgeTransactions(bridgePage + 1, true));
+    if ((isCkBtc || isRune) && bridgeHasMore && !bridgeIsLoading) {
+      tasks.push(
+        Promise.resolve(
+          isCkBtc
+            ? btcBridgeStore.loadMoreBridgesHistory()
+            : runeBridgeStore.loadMoreBridgesHistory(),
+        ),
+      );
     }
 
     await Promise.all(tasks);
@@ -352,10 +336,10 @@
       <div class="flex justify-center pt-4">
         <button
           onclick={handleLoadMore}
-          disabled={historyStore?.isLoadingMore || bridgeIsLoadingMore}
+          disabled={historyStore?.isLoadingMore || bridgeIsLoading}
           class="px-4 py-2 text-sm text-green border border-green rounded-lg hover:bg-green/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {#if historyStore?.isLoadingMore || bridgeIsLoadingMore}
+          {#if historyStore?.isLoadingMore || bridgeIsLoading}
             <LoaderCircle class="w-4 h-4 animate-spin" />
             {locale.t("wallet.tokenInfo.loading")}
           {:else}

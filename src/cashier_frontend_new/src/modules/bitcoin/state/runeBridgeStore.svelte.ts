@@ -28,6 +28,7 @@ import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { PersistedState } from "runed";
+import { SvelteMap } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -38,6 +39,7 @@ class RuneBridgeStore {
     "runeAddress",
     null,
   );
+  rune_id = $state<string | null>(null);
   #bridgeTxQuery;
   #allBridges: BridgeTransactionWithUsdValue[] = [];
   #currentPage = 0;
@@ -68,6 +70,9 @@ class RuneBridgeStore {
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
           BRIDGE_PAGE_SIZE,
+          null,
+          null,
+          BridgeAssetType.Runes,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -100,6 +105,11 @@ class RuneBridgeStore {
         if (!authState.account?.owner) {
           return [];
         }
+        if (!this.rune_id) {
+          this.hasMoreImports = false;
+          this.#allImportBridges = [];
+          return [];
+        }
 
         const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
@@ -107,6 +117,8 @@ class RuneBridgeStore {
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Import,
+          BridgeAssetType.Runes,
+          this.rune_id,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -139,6 +151,11 @@ class RuneBridgeStore {
         if (!authState.account?.owner) {
           return [];
         }
+        if (!this.rune_id) {
+          this.hasMoreExports = false;
+          this.#allExportBridges = [];
+          return [];
+        }
 
         const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
@@ -146,6 +163,8 @@ class RuneBridgeStore {
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Export,
+          BridgeAssetType.Runes,
+          this.rune_id,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -219,6 +238,84 @@ class RuneBridgeStore {
     return this.#exportBridgeTxQuery.data;
   }
 
+  get bridgesHistory() {
+    if (!this.rune_id) {
+      return [];
+    }
+
+    const bridgeMap = new SvelteMap<string, BridgeTransactionWithUsdValue>();
+
+    for (const bridge of this.importBridgeTxs ?? []) {
+      bridgeMap.set(bridge.bridge_id, bridge);
+    }
+
+    for (const bridge of this.exportBridgeTxs ?? []) {
+      bridgeMap.set(bridge.bridge_id, bridge);
+    }
+
+    return Array.from(bridgeMap.values()).sort((a, b) =>
+      Number(b.created_at_ts - a.created_at_ts),
+    );
+  }
+
+  get hasMoreBridgesHistory() {
+    if (!this.rune_id) {
+      return false;
+    }
+
+    return this.hasMoreImports || this.hasMoreExports;
+  }
+
+  get isLoadingBridgesHistory() {
+    if (!this.rune_id) {
+      return false;
+    }
+
+    return (
+      this.#importBridgeTxQuery.isLoading || this.#exportBridgeTxQuery.isLoading
+    );
+  }
+
+  get bridgesHistoryError() {
+    if (!this.rune_id) {
+      return undefined;
+    }
+
+    return this.#importBridgeTxQuery.error ?? this.#exportBridgeTxQuery.error;
+  }
+
+  public loadMoreBridgesHistory() {
+    if (!this.rune_id) {
+      return;
+    }
+
+    if (this.hasMoreImports) {
+      this.loadMoreImports();
+    }
+
+    if (this.hasMoreExports) {
+      this.loadMoreExports();
+    }
+  }
+
+  public setRuneId(runeId: string | null) {
+    if (this.rune_id === runeId) {
+      return;
+    }
+
+    this.rune_id = runeId;
+    this.#importCurrentPage = 0;
+    this.#allImportBridges = [];
+    this.hasMoreImports = true;
+
+    this.#exportCurrentPage = 0;
+    this.#allExportBridges = [];
+    this.hasMoreExports = true;
+
+    this.#importBridgeTxQuery.refresh();
+    this.#exportBridgeTxQuery.refresh();
+  }
+
   public loadMoreImports() {
     if (!this.hasMoreImports) {
       return;
@@ -237,6 +334,7 @@ class RuneBridgeStore {
 
   public reset() {
     this.#runeAddress.current = null;
+    this.rune_id = null;
 
     this.#currentPage = 0;
     this.#allBridges = [];
@@ -281,60 +379,6 @@ class RuneBridgeStore {
       console.error("Failed to fetch Rune address:", error);
       return null;
     }
-  }
-
-  getImportBridgeTransactionsForToken(
-    token?: Pick<
-      TokenWithPriceAndBalance,
-      "address" | "isRune" | "runeInfo"
-    > | null,
-  ): BridgeTransactionWithUsdValue[] {
-    const bridgeTxs = this.importBridgeTxs ?? [];
-    if (!token?.isRune || !token.runeInfo) {
-      return [];
-    }
-
-    return bridgeTxs.filter((bridge) =>
-      bridge.asset_infos.some(
-        (asset) =>
-          bridge.bridge_type === BridgeType.Import &&
-          asset.asset_type === BridgeAssetType.Runes &&
-          asset.asset_id === token.runeInfo?.runeId,
-      ),
-    );
-  }
-
-  getExportBridgeTransactionsForToken(
-    token?: Pick<
-      TokenWithPriceAndBalance,
-      "address" | "isRune" | "runeInfo"
-    > | null,
-  ): BridgeTransactionWithUsdValue[] {
-    const bridgeTxs = this.exportBridgeTxs ?? [];
-    if (!token?.isRune || !token.runeInfo) {
-      return [];
-    }
-
-    return bridgeTxs.filter((bridge) =>
-      bridge.asset_infos.some(
-        (asset) =>
-          bridge.bridge_type === BridgeType.Export &&
-          asset.asset_type === BridgeAssetType.Runes &&
-          asset.asset_id === token.runeInfo?.runeId,
-      ),
-    );
-  }
-
-  hasMoreExportBridgeTransactionsForToken(
-    token?: Pick<
-      TokenWithPriceAndBalance,
-      "address" | "isRune" | "runeInfo"
-    > | null,
-  ): boolean {
-    return (
-      this.hasMoreExports &&
-      this.getExportBridgeTransactionsForToken(token).length >= BRIDGE_PAGE_SIZE
-    );
   }
 
   /**
@@ -553,19 +597,19 @@ class RuneBridgeStore {
           0,
           1,
           BridgeTransactionStatus.Pending,
+          null,
+          BridgeAssetType.Runes,
         ),
         tokenStorageService.getBridgeTransactions(
           0,
           1,
           BridgeTransactionStatus.Confirmed,
+          null,
+          BridgeAssetType.Runes,
         ),
       ]);
 
-      const bridgeTx = [...pendingTxs, ...confirmedTxs].find((bridge) =>
-        bridge.asset_infos.some(
-          (asset) => asset.asset_type === BridgeAssetType.Runes,
-        ),
-      );
+      const bridgeTx = [...pendingTxs, ...confirmedTxs][0];
 
       if (!bridgeTx) {
         return;
@@ -854,13 +898,18 @@ class RuneBridgeStore {
       console.log(`UTXOs for address ${runeAddress}:`, utxoResult.unwrap());
 
       const existingUtxos = new Set(
-        this.getImportBridgeTransactionsForToken({
-          address: "",
-          isRune: true,
-          runeInfo: token.runeInfo,
-        }).flatMap((bridge) =>
-          bridge.vout.map((utxo) => `${utxo.txid}:${utxo.vout}`),
-        ),
+        (this.importBridgeTxs ?? [])
+          .filter((bridge) =>
+            bridge.asset_infos.some(
+              (asset) =>
+                bridge.bridge_type === BridgeType.Import &&
+                asset.asset_type === BridgeAssetType.Runes &&
+                asset.asset_id === runeId,
+            ),
+          )
+          .flatMap((bridge) =>
+            bridge.vout.map((utxo) => `${utxo.txid}:${utxo.vout}`),
+          ),
       );
 
       console.log(`Existing UTXOs in bridge transactions:`, existingUtxos);
