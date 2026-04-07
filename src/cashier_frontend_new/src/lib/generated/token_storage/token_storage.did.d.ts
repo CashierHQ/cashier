@@ -98,8 +98,10 @@ export interface CreateBridgeTransactionInputArg {
 }
 export interface GetUserBridgeTransactionsInputArg {
   'status' : [] | [BridgeTransactionStatus],
+  'asset_type' : [] | [BridgeAssetType],
   'limit' : [] | [number],
   'start' : [] | [number],
+  'rune_id' : [] | [string],
   'bridge_type' : [] | [BridgeType],
 }
 export interface GetUserNftInput {

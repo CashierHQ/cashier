@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::bitcoin::bridge_transaction::{
-    BlockConfirmation, BridgeAssetInfo, BridgeTransaction, BridgeTransactionStatus, BridgeType,
-    UTXO,
+    BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransaction,
+    BridgeTransactionStatus, BridgeType, UTXO,
 };
 use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
@@ -55,12 +55,38 @@ pub struct UpdateBridgeTransactionInputArg {
     pub vout: Option<Vec<UTXO>>,
 }
 
+/// Filter parameters for `get_bridge_transactions`.
+#[derive(Clone, Debug, Default)]
+pub struct GetBridgeTransactionsFilter {
+    pub status: Option<BridgeTransactionStatus>,
+    pub bridge_type: Option<BridgeType>,
+    /// Filter by asset type (e.g. BTC-only or Runes-only).
+    pub asset_type: Option<BridgeAssetType>,
+    /// Filter by specific rune asset ID (matches against asset_infos[*].asset_id).
+    pub rune_id: Option<String>,
+}
+
+impl From<&GetUserBridgeTransactionsInputArg> for GetBridgeTransactionsFilter {
+    fn from(input: &GetUserBridgeTransactionsInputArg) -> Self {
+        Self {
+            status: input.status.clone(),
+            bridge_type: input.bridge_type.clone(),
+            asset_type: input.asset_type.clone(),
+            rune_id: input.rune_id.clone(),
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GetUserBridgeTransactionsInputArg {
     pub start: Option<u32>,
     pub limit: Option<u32>,
     pub status: Option<BridgeTransactionStatus>,
     pub bridge_type: Option<BridgeType>,
+    /// Filter by asset type (e.g. BTC-only or Runes-only).
+    pub asset_type: Option<BridgeAssetType>,
+    /// Filter by specific rune asset ID (matches against asset_infos[*].asset_id).
+    pub rune_id: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

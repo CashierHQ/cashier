@@ -133,6 +133,7 @@ async fn it_should_fail_update_bridge_transaction_due_to_anonymous_caller() {
         let block_confirmations = fixture_of_block_confirmations();
         let input = UpdateBridgeTransactionInputArg {
             bridge_id: random_id_string(),
+            asset_infos: None,
             btc_txid: Some("exampletxid0000000000000000000000000000000000".to_string()),
             ckbtc_block_id: None,
             block_id: Some(100u64),
@@ -175,6 +176,7 @@ async fn it_should_fail_update_bridge_transaction_due_to_missing_bridge_transact
         let token_storage_client = ctx.new_token_storage_client(caller);
         let input = UpdateBridgeTransactionInputArg {
             bridge_id: random_id_string(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(200u64),
@@ -230,6 +232,7 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_existing_block_i
 
         let initial_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(200u64),
@@ -253,6 +256,7 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_existing_block_i
 
         let invalid_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id,
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(201u64),
@@ -307,6 +311,7 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_non_increasing_r
 
         let initial_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -330,6 +335,7 @@ async fn it_should_fail_update_import_bridge_transaction_due_to_non_increasing_r
 
         let invalid_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id,
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -384,6 +390,7 @@ async fn it_should_fail_update_export_bridge_transaction_due_to_existing_ckbtc_b
 
         let initial_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(42u64),
             block_id: None,
@@ -407,6 +414,7 @@ async fn it_should_fail_update_export_bridge_transaction_due_to_existing_ckbtc_b
 
         let invalid_update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id,
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(43u64),
             block_id: None,
@@ -464,6 +472,7 @@ async fn it_should_update_import_bridge_transaction() {
         let block_confirmations = fixture_of_block_confirmations();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id,
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: Some(200u64),
@@ -521,6 +530,7 @@ async fn it_should_update_export_bridge_transaction() {
         // Act
         let update_pending_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: Some(42u64),
             block_id: None,
@@ -551,6 +561,7 @@ async fn it_should_update_export_bridge_transaction() {
         // Act
         let update_complete_input = UpdateBridgeTransactionInputArg {
             bridge_id: pending_transaction.bridge_id,
+            asset_infos: None,
             btc_txid: Some("btc-export-txid-1".to_string()),
             ckbtc_block_id: None,
             block_id: Some(840_000u64),
@@ -603,6 +614,7 @@ async fn it_should_update_runes_import_bridge_transaction() {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: None,
             ckbtc_block_id: None,
             block_id: None,
@@ -672,6 +684,7 @@ async fn it_should_update_runes_export_bridge_transaction() {
             .unwrap();
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_bridge.bridge_id.clone(),
+            asset_infos: None,
             btc_txid: Some("btc-runes-export-txid-1".to_string()),
             ckbtc_block_id: None,
             block_id: None,

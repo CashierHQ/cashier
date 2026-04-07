@@ -3,12 +3,10 @@
 
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::{
-        bridge_address::BridgeAddress,
-        bridge_transaction::{BridgeTransactionStatus, BridgeType},
-    },
+    bitcoin::bridge_address::BridgeAddress,
     dto::bitcoin::{
-        CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
+        CreateBridgeTransactionInputArg, GetBridgeTransactionsFilter,
+        UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
     },
     error::CanisterError,
 };
@@ -140,12 +138,11 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         user: Principal,
         start: Option<u32>,
         limit: Option<u32>,
-        status: Option<BridgeTransactionStatus>,
-        bridge_type: Option<BridgeType>,
+        filter: GetBridgeTransactionsFilter,
     ) -> Vec<UserBridgeTransactionDto> {
         let transactions = self
             .user_bridge_transaction_repository
-            .get_bridge_transactions(&user, start, limit, status, bridge_type);
+            .get_bridge_transactions(&user, start, limit, filter);
         transactions
             .into_iter()
             .map(UserBridgeTransactionDto::from)
@@ -1122,10 +1119,20 @@ mod tests {
 
         // Act
         let page_1 = service
-            .get_bridge_transactions(user_id, Some(0), Some(2), None, None)
+            .get_bridge_transactions(
+                user_id,
+                Some(0),
+                Some(2),
+                GetBridgeTransactionsFilter::default(),
+            )
             .await;
         let page_2 = service
-            .get_bridge_transactions(user_id, Some(2), Some(2), None, None)
+            .get_bridge_transactions(
+                user_id,
+                Some(2),
+                Some(2),
+                GetBridgeTransactionsFilter::default(),
+            )
             .await;
 
         // Assert
@@ -1197,7 +1204,15 @@ mod tests {
 
         // Act
         let import_txs = service
-            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Import))
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    bridge_type: Some(BridgeType::Import),
+                    ..Default::default()
+                },
+            )
             .await;
 
         // Assert
@@ -1210,7 +1225,15 @@ mod tests {
 
         // Act
         let export_txs = service
-            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Export))
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    bridge_type: Some(BridgeType::Export),
+                    ..Default::default()
+                },
+            )
             .await;
 
         // Assert
@@ -1236,7 +1259,15 @@ mod tests {
 
         // Act
         let transactions = service
-            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Import))
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    bridge_type: Some(BridgeType::Import),
+                    ..Default::default()
+                },
+            )
             .await;
 
         // Assert
@@ -1276,7 +1307,15 @@ mod tests {
 
         // Act
         let transactions = service
-            .get_bridge_transactions(user_id, None, None, None, Some(BridgeType::Export))
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    bridge_type: Some(BridgeType::Export),
+                    ..Default::default()
+                },
+            )
             .await;
 
         // Assert
@@ -1397,5 +1436,116 @@ mod tests {
 
         // Assert
         assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn it_should_get_bridge_transactions_filtered_by_asset_type_btc() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        // Export fixture has asset_type: BTC; import fixture has empty asset_infos
+        service
+            .create_bridge_transaction(user_id, fixture_of_export_create_input())
+            .await
+            .unwrap();
+        service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+
+        // Act
+        let transactions = service
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    asset_type: Some(BridgeAssetType::BTC),
+                    ..Default::default()
+                },
+            )
+            .await;
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::BTC
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_get_bridge_transactions_filtered_by_asset_type_runes() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        service
+            .create_bridge_transaction(user_id, fixture_of_export_create_input())
+            .await
+            .unwrap();
+        service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+
+        // Act
+        let transactions = service
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    asset_type: Some(BridgeAssetType::Runes),
+                    ..Default::default()
+                },
+            )
+            .await;
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+    }
+
+    #[tokio::test]
+    async fn it_should_get_bridge_transactions_filtered_by_rune_id() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mock_minter = MockCkBtcMinterClient::new();
+        let user_id = random_principal_id();
+        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        service
+            .create_bridge_transaction(user_id, fixture_of_runes_import_create_input())
+            .await
+            .unwrap();
+        let mut second_rune_input = fixture_of_runes_export_create_input();
+        second_rune_input.asset_infos[0].asset_id = "DOG•GO•TO•THE•MOON".to_string();
+        service
+            .create_bridge_transaction(user_id, second_rune_input)
+            .await
+            .unwrap();
+
+        // Act
+        let transactions = service
+            .get_bridge_transactions(
+                user_id,
+                None,
+                None,
+                GetBridgeTransactionsFilter {
+                    rune_id: Some("UNCOMMON•GOODS".to_string()),
+                    ..Default::default()
+                },
+            )
+            .await;
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].asset_infos[0].asset_id, "UNCOMMON•GOODS");
     }
 }

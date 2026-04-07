@@ -119,6 +119,8 @@ async fn it_should_fail_user_get_bridge_transactions_due_to_anonymous_caller() {
             limit: None,
             status: None,
             bridge_type: None,
+            asset_type: None,
+            rune_id: None,
         };
 
         // Act
@@ -161,6 +163,8 @@ async fn it_should_get_bridge_transactions() {
             limit: Some(2),
             status: None,
             bridge_type: None,
+            asset_type: None,
+            rune_id: None,
         };
         let result1 = token_storage_client
             .user_get_bridge_transactions(input1)
@@ -171,6 +175,8 @@ async fn it_should_get_bridge_transactions() {
             limit: Some(2),
             status: None,
             bridge_type: None,
+            asset_type: None,
+            rune_id: None,
         };
         let result2 = token_storage_client
             .user_get_bridge_transactions(input2)
@@ -235,6 +241,8 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
                 limit: Some(10),
                 status: Some(BridgeTransactionStatus::Pending),
                 bridge_type: None,
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -250,6 +258,8 @@ async fn it_should_get_bridge_transactions_filtered_by_status_for_import_and_exp
                 limit: Some(10),
                 status: Some(BridgeTransactionStatus::Created),
                 bridge_type: None,
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -300,6 +310,8 @@ async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
                 limit: Some(10),
                 status: None,
                 bridge_type: Some(BridgeType::Import),
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -329,6 +341,8 @@ async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
                 limit: Some(10),
                 status: None,
                 bridge_type: Some(BridgeType::Export),
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -345,6 +359,8 @@ async fn it_should_get_bridge_transactions_filtered_by_bridge_type() {
                 limit: Some(10),
                 status: None,
                 bridge_type: None,
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -377,6 +393,8 @@ async fn it_should_get_runes_bridge_transactions() {
                 limit: Some(10),
                 status: None,
                 bridge_type: Some(BridgeType::Import),
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -431,6 +449,8 @@ async fn it_should_get_confirmed_runes_bridge_transactions() {
                 limit: Some(10),
                 status: Some(BridgeTransactionStatus::Confirmed),
                 bridge_type: Some(BridgeType::Import),
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -469,6 +489,8 @@ async fn it_should_get_runes_export_bridge_transactions() {
                 limit: Some(10),
                 status: None,
                 bridge_type: Some(BridgeType::Export),
+                asset_type: None,
+                rune_id: None,
             })
             .await
             .unwrap();
@@ -483,6 +505,196 @@ async fn it_should_get_runes_export_bridge_transactions() {
         );
         assert_eq!(transactions[0].status, BridgeTransactionStatus::Created);
         assert_eq!(transactions[0].omnity_ticket_id, None);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+fn fixture_of_second_runes_import_bridge_input(
+    caller: Principal,
+) -> CreateBridgeTransactionInputArg {
+    CreateBridgeTransactionInputArg {
+        btc_txid: Some("rune_txid_456".to_string()),
+        icp_address: caller,
+        btc_address: "tb1qrunereceiver0000000000000000000000001".to_string(),
+        asset_infos: vec![BridgeAssetInfo {
+            asset_type: BridgeAssetType::Runes,
+            asset_id: "DOG•GO•TO•THE•MOON".to_string(),
+            amount: 10_000u64.into(),
+            decimals: 8,
+        }],
+        bridge_type: BridgeType::Import,
+        deposit_fee: Some(1_000u64.into()),
+        withdrawal_fee: None,
+        btc_fee: None,
+        created_at_ts: 300,
+        ckbtc_block_id: None,
+        status: None,
+        omnity_ticket_id: None,
+        vin: None,
+        vout: None,
+    }
+}
+
+#[tokio::test]
+async fn it_should_get_bridge_transactions_filtered_by_asset_type_btc() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        // Export bridge has asset_type: BTC; import bridge has empty asset_infos
+        let btc_export = token_storage_client
+            .user_create_bridge_transaction(export_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+        token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: None,
+                asset_type: Some(BridgeAssetType::BTC),
+                rune_id: None,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, btc_export.bridge_id);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::BTC
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_bridge_transactions_filtered_by_asset_type_runes() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        token_storage_client
+            .user_create_bridge_transaction(import_bridge_input(caller, "btc_txid_0".to_string()))
+            .await
+            .unwrap()
+            .unwrap();
+        let rune_created = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: None,
+                asset_type: Some(BridgeAssetType::Runes),
+                rune_id: None,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, rune_created.bridge_id);
+        assert_eq!(
+            transactions[0].asset_infos[0].asset_type,
+            BridgeAssetType::Runes
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_bridge_transactions_filtered_by_rune_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        let first_rune = token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+        token_storage_client
+            .user_create_bridge_transaction(fixture_of_second_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: None,
+                asset_type: None,
+                rune_id: Some("UNCOMMON•GOODS".to_string()),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].bridge_id, first_rune.bridge_id);
+        assert_eq!(transactions[0].asset_infos[0].asset_id, "UNCOMMON•GOODS");
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_no_bridge_transactions_when_rune_id_does_not_match() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token_storage_client = ctx.new_token_storage_client(caller);
+        token_storage_client
+            .user_create_bridge_transaction(fixture_of_runes_import_bridge_input(caller))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Act
+        let transactions = token_storage_client
+            .user_get_bridge_transactions(GetUserBridgeTransactionsInputArg {
+                start: Some(0),
+                limit: Some(10),
+                status: None,
+                bridge_type: None,
+                asset_type: None,
+                rune_id: Some("NONEXISTENT•RUNE".to_string()),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(transactions.len(), 0);
 
         Ok(())
     })

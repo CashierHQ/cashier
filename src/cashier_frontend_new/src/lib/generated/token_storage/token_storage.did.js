@@ -223,8 +223,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetUserBridgeTransactionsInputArg = IDL.Record({
     'status' : IDL.Opt(BridgeTransactionStatus),
+    'asset_type' : IDL.Opt(BridgeAssetType),
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
+    'rune_id' : IDL.Opt(IDL.Text),
     'bridge_type' : IDL.Opt(BridgeType),
   });
   const Result_8 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
