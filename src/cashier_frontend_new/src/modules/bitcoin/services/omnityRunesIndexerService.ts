@@ -1,6 +1,10 @@
 import * as omnityRunesIndexer from "$lib/generated/omnity_runes_indexer/omnity_runes_indexer.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { OMNITY_RUNES_INDEXER_CANISTER_ID } from "$modules/bitcoin/constants";
+import {
+  RuneBalanceMapper,
+  type RuneBalance,
+} from "$modules/bitcoin/types/runes";
 import { Err, Ok, type Result } from "ts-results-es";
 
 class OmnityRunesIndexerService {
@@ -18,7 +22,7 @@ class OmnityRunesIndexerService {
    */
   public async getRuneBalancesForOutputs(
     outputs: string[],
-  ): Promise<Result<Array<[] | [omnityRunesIndexer.RuneBalance[]]>, string>> {
+  ): Promise<Result<Array<[] | [RuneBalance[]]>, string>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err("User is not authenticated");
@@ -27,7 +31,15 @@ class OmnityRunesIndexerService {
     try {
       const result = await actor.get_rune_balances_for_outputs(outputs);
       if ("Ok" in result) {
-        return Ok(result.Ok);
+        return Ok(
+          result.Ok.map((entry) =>
+            entry.length === 1
+              ? ([entry[0].map(RuneBalanceMapper.fromOmnityRuneBalance)] as [
+                  RuneBalance[],
+                ])
+              : ([] as []),
+          ),
+        );
       }
 
       return Err(`Error fetching Rune balances: ${JSON.stringify(result.Err)}`);

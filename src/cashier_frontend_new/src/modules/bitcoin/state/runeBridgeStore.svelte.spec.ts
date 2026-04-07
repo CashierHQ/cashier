@@ -488,6 +488,65 @@ describe("RuneBridgeStore", () => {
     });
   });
 
+  describe("createMempoolTransactionTask", () => {
+    it("it_should_not_process_when_rune_address_is_null", async () => {
+      // Arrange — runeAddress is null by default
+      const handle = runeBridgeStore.createMempoolTransactionTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetAddressTransactions).not.toHaveBeenCalled();
+
+      clearInterval(handle);
+    });
+
+    it("it_should_not_create_bridge_when_mempool_lookup_fails", async () => {
+      // Arrange
+      mockPersistedValues["runeAddress"] = "tb1qruneaddress";
+      walletTokensRef.value = [fixture_of_rune_token()];
+      mockGetAddressTransactions.mockResolvedValue(Err("Network error"));
+      const handle = runeBridgeStore.createMempoolTransactionTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetAddressTransactions).toHaveBeenCalled();
+      expect(mockCreateRuneImportBridgeTransaction).not.toHaveBeenCalled();
+
+      clearInterval(handle);
+    });
+
+    it("it_should_fetch_and_process_rune_mempool_txs_on_interval", async () => {
+      // Arrange
+      mockPersistedValues["runeAddress"] = "tb1qruneaddress";
+      walletTokensRef.value = [fixture_of_rune_token()];
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
+      );
+      mockGetRuneBalancesForOutputs.mockResolvedValue(
+        Ok([[[fixture_of_rune_balance()]]]),
+      );
+      mockCreateRuneImportBridgeTransaction.mockResolvedValue(
+        Ok(fixture_of_rune_bridge()),
+      );
+      const handle = runeBridgeStore.createMempoolTransactionTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetAddressTransactions).toHaveBeenCalledWith(
+        "tb1qruneaddress",
+      );
+      expect(mockCreateRuneImportBridgeTransaction).toHaveBeenCalled();
+
+      clearInterval(handle);
+    });
+  });
+
   describe("processRuneImportBridgeTransaction", () => {
     it("it_should_keep_pending_rune_import_bridge_when_rune_balance_is_not_indexed_yet", async () => {
       // Arrange
@@ -719,6 +778,7 @@ describe("RuneBridgeStore", () => {
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
         btc_txid: "btc-txid-123",
+        omnity_ticket_id: "ticket-123",
       });
       mockGetTransactionById.mockResolvedValue(
         Ok(
@@ -751,6 +811,7 @@ describe("RuneBridgeStore", () => {
     });
 
     it("it_should_continue_syncing_rune_export_bridge_when_initial_btc_txid_persist_fails", async () => {
+      // Arrange
       const bridge = fixture_of_rune_bridge({
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
@@ -799,6 +860,83 @@ describe("RuneBridgeStore", () => {
         fixture_of_confirming_blocks(840_100, 3),
         "btc-txid-123",
       );
+    });
+  });
+
+  describe("createPendingBridgeTransactionsTask", () => {
+    it("it_should_not_process_when_no_rune_bridges_found", async () => {
+      // Arrange
+      mockGetBridgeTransactions.mockResolvedValue([]);
+      const handle = runeBridgeStore.createPendingBridgeTransactionsTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetBridgeTransactions).toHaveBeenCalled();
+      expect(mockGetTransactionById).not.toHaveBeenCalled();
+
+      clearInterval(handle);
+    });
+
+    it("it_should_process_import_bridge_when_pending_rune_import_bridge_found", async () => {
+      // Arrange
+      const bridge = fixture_of_rune_bridge({
+        bridge_type: BridgeType.Import,
+        status: BridgeTransactionStatus.Pending,
+        btc_txid: "abc123",
+      });
+      mockGetBridgeTransactions
+        .mockResolvedValueOnce([bridge])
+        .mockResolvedValue([]);
+      mockGetTransactionById.mockResolvedValue(
+        Ok(fixture_of_bitcoin_transaction()),
+      );
+      mockGetTipHeight.mockResolvedValue(Ok(840_006n));
+      mockGetLatestBlocksFromHeight.mockResolvedValue(
+        fixture_of_confirming_blocks(840_000, 6),
+      );
+      mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
+      mockGetRuneBalancesForOutputs.mockResolvedValue(Ok([[]]));
+      const handle = runeBridgeStore.createPendingBridgeTransactionsTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetTransactionById).toHaveBeenCalledWith("abc123");
+
+      clearInterval(handle);
+    });
+
+    it("it_should_process_export_bridge_when_pending_rune_export_bridge_found", async () => {
+      // Arrange
+      const bridge = fixture_of_rune_bridge({
+        bridge_type: BridgeType.Export,
+        status: BridgeTransactionStatus.Pending,
+        btc_txid: "export-txid",
+        omnity_ticket_id: "ticket-export-123",
+      });
+      mockGetBridgeTransactions
+        .mockResolvedValueOnce([bridge])
+        .mockResolvedValue([]);
+      mockGetTransactionById.mockResolvedValue(
+        Ok(fixture_of_bitcoin_transaction({ txid: "export-txid" })),
+      );
+      mockGetTipHeight.mockResolvedValue(Ok(840_006n));
+      mockGetLatestBlocksFromHeight.mockResolvedValue(
+        fixture_of_confirming_blocks(840_000, 6),
+      );
+      mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
+      const handle = runeBridgeStore.createPendingBridgeTransactionsTask();
+
+      // Act
+      await vi.advanceTimersByTimeAsync(60 * 1000);
+
+      // Assert
+      expect(mockGetTransactionById).toHaveBeenCalledWith("export-txid");
+
+      clearInterval(handle);
     });
   });
 });

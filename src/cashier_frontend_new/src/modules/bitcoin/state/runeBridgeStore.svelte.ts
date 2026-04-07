@@ -20,6 +20,7 @@ import {
   type BridgeTransactionWithUsdValue,
   type BridgeUtxo,
 } from "$modules/bitcoin/types/bridge_transaction";
+import { type RuneBalance } from "$modules/bitcoin/types/runes";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
@@ -53,6 +54,7 @@ class RuneBridgeStore {
   hasMoreExports = $state<boolean>(true);
 
   processPendingTxsTask: NodeJS.Timeout | null = null;
+  mempoolTxsTask: NodeJS.Timeout | null = null;
   isRefreshing = $state<boolean>(false);
 
   constructor() {
@@ -181,6 +183,11 @@ class RuneBridgeStore {
             this.processPendingTxsTask = null;
           }
 
+          if (this.mempoolTxsTask) {
+            clearInterval(this.mempoolTxsTask);
+            this.mempoolTxsTask = null;
+          }
+
           this.fetchRuneAddress().then((address) => {
             this.#runeAddress.current = address;
           });
@@ -190,6 +197,7 @@ class RuneBridgeStore {
           this.#exportBridgeTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
+          this.mempoolTxsTask = this.createMempoolTransactionTask();
         }
       });
     });
@@ -245,12 +253,21 @@ class RuneBridgeStore {
     this.hasMoreExports = true;
     this.#exportBridgeTxQuery.reset();
 
+    if (this.mempoolTxsTask) {
+      clearInterval(this.mempoolTxsTask);
+      this.mempoolTxsTask = null;
+    }
+
     if (this.processPendingTxsTask) {
       clearInterval(this.processPendingTxsTask);
       this.processPendingTxsTask = null;
     }
   }
 
+  /**
+   * Fetch Rune address from token storage canister
+   * @returns
+   */
   async fetchRuneAddress(): Promise<string | null> {
     try {
       const result = await tokenStorageService.getRuneAddress();
@@ -320,82 +337,20 @@ class RuneBridgeStore {
     );
   }
 
-  async lookupMempoolTransactionByAddress(
-    address: string,
-  ): Promise<Result<BitcoinTransaction[], string>> {
-    const addressTxsResult =
-      await mempoolService.getAddressTransactions(address);
-    if (addressTxsResult.isErr()) {
-      return Err(
-        `Get address transactions failed: ${addressTxsResult.unwrapErr()}`,
-      );
-    }
-
-    console.log(`Address txs result`, addressTxsResult.unwrap());
-
-    return Ok(
-      addressTxsResult
-        .unwrap()
-        .filter(
-          (tx) =>
-            !tx.is_confirmed &&
-            tx.vout.some((output) => output.address === address),
-        ),
-    );
+  /**
+   * Create a scheduled task to fetch and process Rune mempool transactions
+   * @returns
+   */
+  createMempoolTransactionTask(): NodeJS.Timeout {
+    return setInterval(async () => {
+      await this.processRuneMempoolTransactions();
+    }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
 
-  #getRuneTokens(): TokenWithPriceAndBalance[] {
-    return (walletStore.query.data ?? []).filter(
-      (token): token is TokenWithPriceAndBalance =>
-        !!token.isRune && !!token.runeInfo,
-    );
-  }
-
-  #toUtxoRefsFromVin(bitcoinTransaction: BitcoinTransaction): string[] {
-    return bitcoinTransaction.vin.map((input) => `${input.txid}:${input.vout}`);
-  }
-
-  #toMatchedOutputUtxos(
-    bitcoinTransaction: BitcoinTransaction,
-    address: string,
-  ): BridgeUtxo[] {
-    return bitcoinTransaction.vout
-      .map((output, index) => ({ output, index }))
-      .filter(
-        ({ output }) =>
-          output.address &&
-          output.address.toLowerCase() === address.toLowerCase(),
-      )
-      .map(({ index }) => ({
-        txid: bitcoinTransaction.txid,
-        vout: index,
-      }));
-  }
-
-  async #lookupRuneBalancesForOutputs(outputs: string[]) {
-    const result =
-      await omnityRunesIndexerService.getRuneBalancesForOutputs(outputs);
-    if (result.isErr()) {
-      return [];
-    }
-
-    return result
-      .unwrap()
-      .flatMap((entry) => (entry.length === 1 ? entry[0] : []));
-  }
-
-  #findRuneBridgeByTxidAndRuneId(txid: string, runeId: string) {
-    return (this.bridgeTxs ?? []).find(
-      (bridge) =>
-        bridge.btc_txid === txid &&
-        bridge.asset_infos.some(
-          (asset) =>
-            asset.asset_type === BridgeAssetType.Runes &&
-            asset.asset_id === runeId,
-        ),
-    );
-  }
-
+  /**
+   * Process Rune import bridge transaction automatically by utilizing the mempool API to lookup mempool transactions for the Rune address, then create the bridge transaction accordingly.
+   * @returns
+   */
   async processRuneMempoolTransactions(): Promise<void> {
     console.log("Processing Rune mempool transactions...");
     const runeAddress = this.runeAddress;
@@ -425,14 +380,10 @@ class RuneBridgeStore {
         continue;
       }
 
-      console.log(`input utxos`, inputOutputs);
-
       const runeBalances =
         await this.#lookupRuneBalancesForOutputs(inputOutputs);
-      console.log(`Rune balances for inputs`, runeBalances);
 
       const matchedVout = this.#toMatchedOutputUtxos(btcTx, runeAddress);
-      console.log(`Matched output utxos`, matchedVout);
 
       for (const token of runeTokens) {
         const runeId = token.runeInfo?.runeId;
@@ -479,59 +430,160 @@ class RuneBridgeStore {
     this.#exportBridgeTxQuery.refresh();
   }
 
+  /**
+   * Lookup mempool transactions associated with the Rune address
+   * @param address
+   * @returns
+   */
+  async lookupMempoolTransactionByAddress(
+    address: string,
+  ): Promise<Result<BitcoinTransaction[], string>> {
+    const addressTxsResult =
+      await mempoolService.getAddressTransactions(address);
+    if (addressTxsResult.isErr()) {
+      return Err(
+        `Get address transactions failed: ${addressTxsResult.unwrapErr()}`,
+      );
+    }
+
+    console.log(`Address txs result`, addressTxsResult.unwrap());
+
+    return Ok(
+      addressTxsResult
+        .unwrap()
+        .filter(
+          (tx) =>
+            !tx.is_confirmed &&
+            tx.vout.some((output) => output.address === address),
+        ),
+    );
+  }
+
+  /**
+   * Get Runes tokens list from wallet store
+   * @returns runes tokens list
+   */
+  #getRuneTokens(): TokenWithPriceAndBalance[] {
+    return (walletStore.query.data ?? []).filter(
+      (token): token is TokenWithPriceAndBalance =>
+        !!token.isRune && !!token.runeInfo,
+    );
+  }
+
+  /**
+   * Extract input UTXOs from btc transaction
+   * @param bitcoinTransaction
+   * @returns UTXO references in the format of "txid:vout"
+   */
+  #toUtxoRefsFromVin(bitcoinTransaction: BitcoinTransaction): string[] {
+    return bitcoinTransaction.vin.map((input) => `${input.txid}:${input.vout}`);
+  }
+
+  /**
+   * Filter out the UTXOs sent to the Rune address from the btc transaction
+   * @param bitcoinTransaction
+   * @param address
+   * @returns matched output UTXOs
+   */
+  #toMatchedOutputUtxos(
+    bitcoinTransaction: BitcoinTransaction,
+    address: string,
+  ): BridgeUtxo[] {
+    return bitcoinTransaction.vout
+      .map((output, index) => ({ output, index }))
+      .filter(
+        ({ output }) =>
+          output.address &&
+          output.address.toLowerCase() === address.toLowerCase(),
+      )
+      .map(({ index }) => ({
+        txid: bitcoinTransaction.txid,
+        vout: index,
+      }));
+  }
+
+  /**
+   * Fetch the Rune balances for the given UTXOs by querying the Omnity Runes indexer
+   * @param outputs
+   * @returns
+   */
+  async #lookupRuneBalancesForOutputs(
+    outputs: string[],
+  ): Promise<RuneBalance[]> {
+    const result =
+      await omnityRunesIndexerService.getRuneBalancesForOutputs(outputs);
+    if (result.isErr()) {
+      return [];
+    }
+
+    return result
+      .unwrap()
+      .flatMap((entry) => (entry.length === 1 ? entry[0] : []));
+  }
+
+  /**
+   * Find if there is an existing bridge transaction for the given BTC txid and Rune ID to prevent duplicate bridge creation
+   * @param txid
+   * @param runeId
+   * @returns the matched bridge transaction if found, otherwise undefined
+   */
+  #findRuneBridgeByTxidAndRuneId(
+    txid: string,
+    runeId: string,
+  ): BridgeTransactionWithUsdValue | undefined {
+    return (this.bridgeTxs ?? []).find(
+      (bridge) =>
+        bridge.btc_txid === txid &&
+        bridge.asset_infos.some(
+          (asset) =>
+            asset.asset_type === BridgeAssetType.Runes &&
+            asset.asset_id === runeId,
+        ),
+    );
+  }
+
+  /**
+   * Create a scheduled task to process pending Rune bridge transactions
+   * @returns
+   */
   createPendingBridgeTransactionsTask(): NodeJS.Timeout {
     return setInterval(async () => {
-      console.log("Checking pending Rune bridge transactions in mempool...");
-      await this.processRuneMempoolTransactions();
-
       const [pendingTxs, confirmedTxs] = await Promise.all([
         tokenStorageService.getBridgeTransactions(
           0,
-          10,
+          1,
           BridgeTransactionStatus.Pending,
         ),
         tokenStorageService.getBridgeTransactions(
           0,
-          10,
+          1,
           BridgeTransactionStatus.Confirmed,
         ),
       ]);
 
-      const runeBridgeTxs = [...pendingTxs, ...confirmedTxs].filter(
-        (bridge) =>
-          bridge.bridge_type === BridgeType.Import &&
-          bridge.asset_infos.some(
-            (asset) => asset.asset_type === BridgeAssetType.Runes,
-          ),
-      );
-
-      console.log(
-        `Pending and confirmed Rune bridge transactions:`,
-        runeBridgeTxs,
-      );
-
-      for (const runeBridgeTx of runeBridgeTxs) {
-        await this.processRuneImportBridgeTransaction(runeBridgeTx);
-      }
-
-      const pendingExportTxs = await tokenStorageService.getBridgeTransactions(
-        0,
-        10,
-        BridgeTransactionStatus.Pending,
-        BridgeType.Export,
-      );
-      const runeExportTxs = pendingExportTxs.filter((bridge) =>
+      const bridgeTx = [...pendingTxs, ...confirmedTxs].find((bridge) =>
         bridge.asset_infos.some(
           (asset) => asset.asset_type === BridgeAssetType.Runes,
         ),
       );
 
-      for (const runeExportTx of runeExportTxs) {
-        await this.processRuneExportBridgeTransaction(runeExportTx);
+      if (!bridgeTx) {
+        return;
+      }
+
+      if (bridgeTx.bridge_type === BridgeType.Import) {
+        await this.processRuneImportBridgeTransaction(bridgeTx);
+      } else {
+        await this.processRuneExportBridgeTransaction(bridgeTx);
       }
     }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
 
+  /**
+   * Process pending Rune import bridge transaction automatically by utilizing the mempool API to track the btc transaction status and update the bridge transaction accordingly.
+   * @param bridgeTx
+   * @returns
+   */
   async processRuneImportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
@@ -683,48 +735,55 @@ class RuneBridgeStore {
     }
   }
 
+  /**
+   * Process pending Rune export bridge transaction automatically by utilizing the mempool API to track the btc transaction status and update the bridge transaction accordingly.
+   * @param bridgeTx
+   * @returns
+   */
   async processRuneExportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
     console.log(`Processing export Rune bridge transaction`, bridgeTx);
 
+    if (!bridgeTx.omnity_ticket_id) {
+      return;
+    }
+
     let btcTxId = bridgeTx.btc_txid;
 
-    if (!btcTxId && bridgeTx.omnity_ticket_id) {
+    if (!btcTxId) {
       const queryTxHashResult = await omnityHubService.queryTxHash(
         bridgeTx.omnity_ticket_id,
       );
-      if (queryTxHashResult.isOk()) {
-        btcTxId = queryTxHashResult.unwrap();
-        console.log("btc txid from Omnity Hub:", btcTxId);
-        const updateResult = await tokenStorageService.updateBridgeTransaction(
-          bridgeTx.bridge_id,
-          null,
-          null,
-          null,
-          null,
-          [],
-          btcTxId,
-        );
-        if (updateResult.isOk()) {
-          this.#bridgeTxQuery.refresh();
-          this.#exportBridgeTxQuery.refresh();
-        } else {
-          console.warn(
-            `Failed to update Rune export bridge ${bridgeTx.bridge_id} with Omnity btc_txid:`,
-            updateResult.unwrapErr(),
-          );
-        }
-      } else {
+      if (queryTxHashResult.isErr()) {
         console.warn(
           `Failed to query Rune export btc_txid from Omnity Hub for ${bridgeTx.bridge_id}:`,
           queryTxHashResult.unwrapErr(),
         );
+        return;
       }
-    }
 
-    if (!btcTxId) {
-      return;
+      btcTxId = queryTxHashResult.unwrap();
+      console.log("btc txid from Omnity Hub:", btcTxId);
+
+      const updateResult = await tokenStorageService.updateBridgeTransaction(
+        bridgeTx.bridge_id,
+        null,
+        null,
+        null,
+        null,
+        [],
+        btcTxId,
+      );
+      if (updateResult.isOk()) {
+        this.#bridgeTxQuery.refresh();
+        this.#exportBridgeTxQuery.refresh();
+      } else {
+        console.warn(
+          `Failed to update Rune export bridge ${bridgeTx.bridge_id} with Omnity btc_txid:`,
+          updateResult.unwrapErr(),
+        );
+      }
     }
 
     const btcTxResult = await mempoolService.getTransactionById(btcTxId);
@@ -762,6 +821,11 @@ class RuneBridgeStore {
     }
   }
 
+  /**
+   * Process import Rune bridge transaction manually by utilizing the mempool API to look up the Rune balances contained in the UTXO, then create or update the bridge transaction accordingly.
+   * @param token
+   * @returns
+   */
   async manualRefreshBalance(
     token: Pick<TokenWithPriceAndBalance, "decimals" | "runeInfo">,
   ): Promise<Result<number, string>> {
