@@ -194,7 +194,7 @@
       },
       "drawers": {
         "txCart": {
-          "termsAgreement": "By confirming you agree execute the transaction above and agree to the terms of service",
+          "termsAgreementPrefix": "By confirming you agree execute the transaction above and agree to the ",
           "action": {
             "title": "Confirm transaction",
             "confirmButton": "Confirm",

@@ -8,6 +8,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
+  import { getAppLinks } from "$modules/shared/constants/links";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
   import {
     FlowDirection,
@@ -52,6 +53,8 @@
 
   // Hardcoded i18n key for action source
   const txCartI18nKey = "links.linkForm.drawers.txCart.action";
+
+  const appLinks = $derived(getAppLinks(locale.t));
 
   let failedImageLoads = $state<Set<string>>(new Set());
 
@@ -260,7 +263,13 @@
           {/if}
 
           <p class="mt-2 text-sm">
-            {locale.t("links.linkForm.drawers.txCart.termsAgreement")}
+            {locale.t("links.linkForm.drawers.txCart.termsAgreementPrefix")}<a
+              href={appLinks.termsOfService.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline text-primary hover:text-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm lowercase"
+              >{appLinks.termsOfService.label}</a
+            >.
           </p>
         </div>
       </div>
