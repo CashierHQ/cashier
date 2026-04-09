@@ -95,24 +95,27 @@
   );
 </script>
 
-<div class="relative {sizeClass} {className}">
-  {#if hasFailed || !loaded}
-    <div
-      class="absolute inset-0 bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
-    >
-      {fallbackDisplay}
-    </div>
-  {/if}
-
-  {#if !hasFailed}
+<div class="{sizeClass} {className}">
+  {#if loaded && !hasFailed}
     <img
       src={imageSrc}
       alt={symbol}
-      class="absolute inset-0 w-full h-full rounded-full overflow-hidden object-cover {loaded
-        ? 'opacity-100'
-        : 'opacity-0'}"
-      onerror={handleImageError}
-      onload={handleImageLoad}
+      class="w-full h-full rounded-full overflow-hidden object-cover"
     />
+  {:else}
+    <div
+      class="w-full h-full bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
+    >
+      {fallbackDisplay}
+    </div>
+    {#if !hasFailed}
+      <img
+        src={imageSrc}
+        aria-hidden="true"
+        class="hidden"
+        onerror={handleImageError}
+        onload={handleImageLoad}
+      />
+    {/if}
   {/if}
 </div>
