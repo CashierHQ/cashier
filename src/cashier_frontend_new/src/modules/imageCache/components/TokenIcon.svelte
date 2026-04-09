@@ -31,6 +31,7 @@
    */
   let localFailed = $state(false);
   let loaded = $state(false);
+  let lastImageSrc = "";
 
   // Size mapping
   const sizeClasses: Record<string, string> = {
@@ -80,6 +81,18 @@
   // Check if image failed to load
   const hasFailed = $derived(localFailed || failedImageLoads.has(address));
 
+  const showImage = $derived(loaded && !hasFailed);
+
+  // Reset local state when the resolved image source changes (prevents "stuck" failed state).
+  // This matters because `imageSrc` can change asynchronously when ImageCache updates.
+  $effect(() => {
+    const current = imageSrc;
+    if (current === lastImageSrc) return;
+    lastImageSrc = current;
+    localFailed = false;
+    loaded = false;
+  });
+
   function handleImageError() {
     localFailed = true;
     onImageError(address);
@@ -95,27 +108,24 @@
   );
 </script>
 
-<div class="{sizeClass} {className}">
-  {#if loaded && !hasFailed}
+<div class="relative {sizeClass} {className}">
+  {#if !hasFailed}
     <img
       src={imageSrc}
       alt={symbol}
-      class="w-full h-full rounded-full overflow-hidden object-cover"
+      class="absolute inset-0 w-full h-full rounded-full overflow-hidden object-cover transition-opacity {showImage
+        ? 'opacity-100'
+        : 'opacity-0'}"
+      onerror={handleImageError}
+      onload={handleImageLoad}
     />
-  {:else}
+  {/if}
+
+  {#if hasFailed || !showImage}
     <div
-      class="w-full h-full bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
+      class="absolute inset-0 w-full h-full bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
     >
       {fallbackDisplay}
     </div>
-    {#if !hasFailed}
-      <img
-        src={imageSrc}
-        aria-hidden="true"
-        class="hidden"
-        onerror={handleImageError}
-        onload={handleImageLoad}
-      />
-    {/if}
   {/if}
 </div>
