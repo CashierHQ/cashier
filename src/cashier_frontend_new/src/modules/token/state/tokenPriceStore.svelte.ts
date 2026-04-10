@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { icExplorerTokenPriceService } from "../services/token_price/icExplorer";
-import { kongSwapTokenPriceService } from "../services/token_price/kongSwap";
+import { icpswapTokenPriceService } from "../services/token_price/icpswap";
 
 class TokenPriceStore {
   #tokenPricesQuery;
@@ -8,17 +8,17 @@ class TokenPriceStore {
   constructor() {
     this.#tokenPricesQuery = managedState<Record<string, number>>({
       queryFn: async () => {
-        // fetch token prices in parallel from icExplorer, kongSwap
-        const services = ["kongSwap", "icExplorer"];
+        // fetch token prices in parallel from icpswap, icExplorer
+        const services = ["icpswap", "icExplorer"];
         const fetchingPriceTasks = [
-          kongSwapTokenPriceService.getTokenPrices(),
+          icpswapTokenPriceService.getTokenPrices(),
           icExplorerTokenPriceService.getTokenPrices(),
         ];
 
         const prices_results = await Promise.allSettled(fetchingPriceTasks);
         const prices: Record<string, number> = {};
 
-        // update price in priority order icExplorer > kongSwap
+        // update price in priority order icExplorer > icpswap
         for (let i = 0; i < prices_results.length; i++) {
           const result = prices_results[i];
 
