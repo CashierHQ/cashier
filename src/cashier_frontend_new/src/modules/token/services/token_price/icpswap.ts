@@ -3,9 +3,10 @@
 
 import axios from "axios";
 import { Err, Ok, type Result } from "ts-results-es";
+import { ICPSWAP_API_BASE_URL } from "$modules/token/constants";
 import { type TokenPriceService } from ".";
 
-const ICPSWAP_API_URL = "https://api.icpswap.com/info/token/all";
+const ICPSWAP_PRICE_API_URL = `${ICPSWAP_API_BASE_URL}/info/token/all`;
 
 /** Response envelope from ICPSwap REST API */
 interface IcpSwapApiResponse {
@@ -22,7 +23,7 @@ interface IcpSwapTokenInfo {
 
 /**
  * Service for fetching token prices from ICPSwap REST API.
- * Uses https://api.icpswap.com/info/token/all for real-time USD prices.
+ * Uses {ICPSWAP_API_BASE_URL}/info/token/all for real-time USD prices.
  *
  * NOTE: The ICPSwap on-chain NodeIndex canister was tested and found to return stale prices;
  * this REST API is preferred for accuracy (verified: 20 rapid requests, 0 rate-limit errors).
@@ -34,7 +35,7 @@ class IcpswapTokenPriceService implements TokenPriceService {
    */
   public async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
     try {
-      const response = await axios.get<IcpSwapApiResponse>(ICPSWAP_API_URL, {
+      const response = await axios.get<IcpSwapApiResponse>(ICPSWAP_PRICE_API_URL, {
         timeout: 10000,
         headers: { Accept: "application/json" },
       });
