@@ -33,12 +33,17 @@ class IcpswapTokenPriceService implements TokenPriceService {
    * Fetch all token prices from ICPSwap info API
    * @returns Object mapping canister IDs to USD prices
    */
-  public async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
+  public async getTokenPrices(): Promise<
+    Result<Record<string, number>, Error>
+  > {
     try {
-      const response = await axios.get<IcpSwapApiResponse>(ICPSWAP_PRICE_API_URL, {
-        timeout: 10000,
-        headers: { Accept: "application/json" },
-      });
+      const response = await axios.get<IcpSwapApiResponse>(
+        ICPSWAP_PRICE_API_URL,
+        {
+          timeout: 10000,
+          headers: { Accept: "application/json" },
+        },
+      );
 
       if (response.data.code !== 200 || !response.data.data) {
         return Err(new Error(`ICPSwap API error: code ${response.data.code}`));

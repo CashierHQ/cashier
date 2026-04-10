@@ -43,7 +43,10 @@ class WalletStore {
         const balanceResults = await Promise.allSettled(balanceRequests);
         const balances: bigint[] = balanceResults.map((result, i) => {
           if (result.status === "fulfilled") return result.value;
-          console.warn(`Failed to fetch balance for ${enabledTokens[i]?.address}:`, result.reason);
+          console.warn(
+            `Failed to fetch balance for ${enabledTokens[i]?.address}:`,
+            result.reason,
+          );
           return 0n;
         });
 
