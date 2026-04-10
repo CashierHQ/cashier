@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
-import { icExplorerTokenPriceService } from "../services/token_price/icExplorer";
-import { icpswapTokenPriceService } from "../services/token_price/icpswap";
+import { icExplorerTokenPriceService } from "$modules/token/services/token_price/icExplorer";
+import { icpswapTokenPriceService } from "$modules/token/services/token_price/icpswap";
 
 class TokenPriceStore {
   #tokenPricesQuery;
