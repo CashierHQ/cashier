@@ -166,27 +166,6 @@ class BridgeStore {
       storageType: "sessionStorage",
     });
 
-    this.#mempoolTxQuery = managedState<BitcoinTransaction[]>({
-      queryFn: async () => {
-        if (!this.btcAddress) {
-          return [];
-        }
-        const mempoolTxsResult = await this.lookupMempoolTransactionByAddress(
-          this.btcAddress,
-        );
-
-        if (mempoolTxsResult.isErr()) {
-          return [];
-        }
-
-        const mempoolTxs = mempoolTxsResult.unwrap();
-        return mempoolTxs;
-      },
-      refetchInterval: 300 * 1000,
-      persistedKey: ["walletBridgeStore_mempoolTxs"],
-      storageType: "sessionStorage",
-    });
-
     $effect.root(() => {
       $effect(() => {
         if (authState.account == null) {
@@ -343,15 +322,57 @@ class BridgeStore {
   }
 
   /**
-   * Process mempool transactions into bridge transactions.
+   * Create a scheduled task to fetch and process mempool transactions
    * @returns
    */
-  async processMempoolTransactions() {
-    if (!this.mempoolTxs) {
-      return;
+  createMempoolTransactionTask(): NodeJS.Timeout {
+    return setInterval(async () => {
+      if (!this.btcAddress) {
+        return;
+      }
+      const result = await this.lookupMempoolTransactionByAddress(
+        this.btcAddress,
+      );
+      if (result.isErr()) {
+        return;
+      }
+      await this.processMempoolTransactions(result.unwrap());
+    }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
+  }
+
+  /**
+   * Fetch mempool transactions associated with the btc address using mempool API
+   * @param address
+   * @returns btc transactions or error message if failed to fetch
+   */
+  async lookupMempoolTransactionByAddress(
+    address: string,
+  ): Promise<Result<BitcoinTransaction[], string>> {
+    const addressTxsResult =
+      await mempoolService.getAddressTransactions(address);
+    if (addressTxsResult.isErr()) {
+      return Err(
+        `Get address transactions failed: ${addressTxsResult.unwrapErr()}`,
+      );
     }
 
-    this.mempoolTxs.forEach(async (btcTx: BitcoinTransaction) => {
+    return Ok(
+      addressTxsResult
+        .unwrap()
+        .filter(
+          (tx) =>
+            !tx.is_confirmed &&
+            tx.vout.some((output) => output.address === address),
+        ),
+    );
+  }
+
+  /**
+   * Process mempool transactions fetched from mempool API
+   * @param txs
+   */
+  async processMempoolTransactions(txs: BitcoinTransaction[]) {
+    txs.forEach(async (btcTx: BitcoinTransaction) => {
       if (this.isMempoolTxProcessed(btcTx.txid)) {
         return;
       }
@@ -360,19 +381,15 @@ class BridgeStore {
         return;
       }
 
-      const receiverBtcAddress = this.btcAddress;
       const depositFee = await ckBTCMinterService.getDepositFee();
-      const withdrawalFee = 0n;
-      const isImporting = true;
-
       const createBridgeResult =
         await tokenStorageService.createImportBridgeTransaction(
           btcTx.sender,
-          receiverBtcAddress,
+          this.btcAddress,
           btcTx,
           depositFee,
-          withdrawalFee,
-          isImporting,
+          0n,
+          true,
         );
 
       if (createBridgeResult.isErr()) {
@@ -385,36 +402,6 @@ class BridgeStore {
         this.#importBridgeTxQuery.refresh();
       }
     });
-  }
-
-  /**
-   * Look up mempool transactions by BTC address.
-   * @param address
-   * @returns array of BitcoinTransaction
-   */
-  async lookupMempoolTransactionByAddress(
-    address: string,
-  ): Promise<Result<BitcoinTransaction[], string>> {
-    const txIdsResult = await mempoolService.getMempoolTxs();
-    if (txIdsResult.isErr()) {
-      return Err(`Get mempool tx IDs failed: ${txIdsResult.unwrapErr()}`);
-    }
-
-    const txIds = txIdsResult.unwrap();
-    const transactionTasks = txIds.map(async (txid) => {
-      const txResult = await mempoolService.getTransactionById(txid);
-      if (txResult.isErr()) {
-        return null;
-      }
-      return txResult.unwrap();
-    });
-
-    const transactions = await Promise.all(transactionTasks);
-    const filteredTransactions = transactions.filter(
-      (tx): tx is BitcoinTransaction =>
-        tx !== null && tx.vout.some((output) => output.address === address),
-    );
-    return Ok(filteredTransactions);
   }
 
   /**
