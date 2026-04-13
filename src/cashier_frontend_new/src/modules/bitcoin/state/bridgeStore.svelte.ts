@@ -40,7 +40,6 @@ class BridgeStore {
     "ckbtcMinterMinConfirmations",
     null,
   );
-  #mempoolTxQuery;
   #bridgeTxQuery;
   #allBridges: BridgeTransactionWithUsdValue[] = [];
   #currentPage = 0;
@@ -56,6 +55,7 @@ class BridgeStore {
   #exportCurrentPage = 0;
   hasMoreExports = $state<boolean>(true);
 
+  mempoolTxsTask: NodeJS.Timeout | null = null;
   processPendingTxsTask: NodeJS.Timeout | null = null;
   isRefreshing = $state<boolean>(false);
 
@@ -189,14 +189,9 @@ class BridgeStore {
           this.#bridgeTxQuery.refresh();
           this.#importBridgeTxQuery.refresh();
           this.#exportBridgeTxQuery.refresh();
+          this.mempoolTxsTask = this.createMempoolTransactionTask();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
-        }
-      });
-
-      $effect(() => {
-        if (authState.account && this.#mempoolTxQuery.data) {
-          this.processMempoolTransactions();
         }
       });
     });
@@ -208,10 +203,6 @@ class BridgeStore {
 
   get minConfirmations() {
     return this.#minConfirmations.current ?? 0;
-  }
-
-  get mempoolTxs() {
-    return this.#mempoolTxQuery.data;
   }
 
   get bridgeTxs() {
@@ -280,9 +271,12 @@ class BridgeStore {
     this.hasMoreExports = true;
     this.#exportBridgeTxQuery.reset();
 
-    this.#mempoolTxQuery.reset();
-
     // Clear interval on reset
+    if (this.mempoolTxsTask) {
+      clearInterval(this.mempoolTxsTask);
+      this.mempoolTxsTask = null;
+    }
+
     if (this.processPendingTxsTask) {
       clearInterval(this.processPendingTxsTask);
       this.processPendingTxsTask = null;
