@@ -157,12 +157,14 @@ const {
 
 vi.mock("$modules/bitcoin/constants", () => ({
   BRIDGE_PAGE_SIZE: 10,
+  CKBTC_MINTER_CANISTER_ID: "aaaaa-aa",
   MEMPOOL_API_POOLING_INTERVAL_SECONDS: 60,
   MEMPOOL_API_BASE_URLS: ["https://mempool.space/api"],
 }));
 
 vi.mock("$modules/token/constants", () => ({
   CKBTC_CANISTER_ID: "mxzaz-hqaaa-aaaar-qaada-cai",
+  KONGSWAP_INDEX_CANISTER_ID: "2ipq2-uqaaa-aaaar-qailq-cai",
 }));
 
 vi.mock("$modules/auth/state/auth.svelte", () => ({
@@ -170,6 +172,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
     get account() {
       return authAccountRef.value;
     },
+    buildAnonymousAgent: vi.fn(() => ({})),
   },
 }));
 
@@ -208,6 +211,12 @@ vi.mock("$modules/bitcoin/services/omnityHubService", () => ({
 vi.mock("$modules/bitcoin/services/omnityRunesIndexerService", () => ({
   omnityRunesIndexerService: {
     getRuneBalancesForOutputs: mockGetRuneBalancesForOutputs,
+  },
+}));
+
+vi.mock("$modules/bitcoin/state/btcBridgeStore.svelte", () => ({
+  btcBridgeStore: {
+    minConfirmations: 6,
   },
 }));
 
@@ -567,7 +576,7 @@ describe("RuneBridgeStore", () => {
 
       // Assert
       expect(mockCreateRuneImportBridgeTransaction).toHaveBeenCalledWith({
-        btcAddress: "tb1qruneaddress",
+        btcAddress: "tb1qsender",
         runeId: "UNCOMMON•GOODS",
         amount: 0n,
         decimals: 8,
