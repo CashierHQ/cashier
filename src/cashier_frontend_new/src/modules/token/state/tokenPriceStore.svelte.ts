@@ -8,11 +8,12 @@ class TokenPriceStore {
   constructor() {
     this.#tokenPricesQuery = managedState<Record<string, number>>({
       queryFn: async () => {
-        // fetch token prices in parallel from icpswap, icExplorer
-        const services = ["icpswap", "icExplorer"];
+        // Fetch prices from both services in parallel
+        // then merge results with priority to icpswap
+        const services = ["icExplorer", "icpswap"];
         const fetchingPriceTasks = [
-          icpswapTokenPriceService.getTokenPrices(),
           icExplorerTokenPriceService.getTokenPrices(),
+          icpswapTokenPriceService.getTokenPrices(),
         ];
 
         const prices_results = await Promise.allSettled(fetchingPriceTasks);

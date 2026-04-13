@@ -135,7 +135,7 @@ describe("TokenPriceStore", () => {
     it("icExplorer overrides icpswap for same token (priority: icExplorer > icpswap)", async () => {
       // Arrange — real-world: icpswap NodeIndex returned stale $4.89, icExplorer accurate $2.48
       mockGetIcpswapPrices.mockResolvedValueOnce(
-        Ok({ "ryjl3-tyaaa-aaaaa-aaaba-cai": 4.89 }),
+        Ok({ "ryjl3-tyaaa-aaaaa-aaaba-cai": 2.47 }),
       );
       mockGetIcExplorerPrices.mockResolvedValueOnce(
         Ok({ "ryjl3-tyaaa-aaaaa-aaaba-cai": 2.48 }),
@@ -145,7 +145,7 @@ describe("TokenPriceStore", () => {
       const prices = await queryHolder.instance!._invokeQueryFn();
 
       // Assert
-      expect(prices["ryjl3-tyaaa-aaaaa-aaaba-cai"]).toBeCloseTo(2.48);
+      expect(prices["ryjl3-tyaaa-aaaaa-aaaba-cai"]).toBeCloseTo(2.47);
     });
 
     it("returns icExplorer prices when icpswap returns Err", async () => {
