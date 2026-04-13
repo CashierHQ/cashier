@@ -19,7 +19,7 @@ class TokenPriceStore {
         const prices_results = await Promise.allSettled(fetchingPriceTasks);
         const prices: Record<string, number> = {};
 
-        // update price in priority order icExplorer > icpswap
+        // update price in priority order icpswap > icExplorer
         for (let i = 0; i < prices_results.length; i++) {
           const result = prices_results[i];
 
