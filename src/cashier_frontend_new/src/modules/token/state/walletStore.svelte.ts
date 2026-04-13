@@ -31,17 +31,24 @@ class WalletStore {
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
-        const balanceRequests = tokens
-          .filter((token) => token.enabled)
-          .map((token) => {
-            if (token.address === ICP_LEDGER_CANISTER_ID) {
-              return icpLedgerService.getBalance();
-            } else {
-              const icrcLedgerService = new IcrcLedgerService(token);
-              return icrcLedgerService.getBalance();
-            }
-          });
-        const balances: bigint[] = await Promise.all(balanceRequests);
+        const enabledTokens = tokens.filter((token) => token.enabled);
+        const balanceRequests = enabledTokens.map((token) => {
+          if (token.address === ICP_LEDGER_CANISTER_ID) {
+            return icpLedgerService.getBalance();
+          } else {
+            const icrcLedgerService = new IcrcLedgerService(token);
+            return icrcLedgerService.getBalance();
+          }
+        });
+        const balanceResults = await Promise.allSettled(balanceRequests);
+        const balances: bigint[] = balanceResults.map((result, i) => {
+          if (result.status === "fulfilled") return result.value;
+          console.warn(
+            `Failed to fetch balance for ${enabledTokens[i]?.address}:`,
+            result.reason,
+          );
+          return 0n;
+        });
 
         // fetch token prices
         const prices = tokenPriceStore.query.data
