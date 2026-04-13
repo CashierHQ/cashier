@@ -102,11 +102,12 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             })?;
 
         // Validate btc_txid update
-        if let Some(_btc_txid) = input.btc_txid.clone()
-            && existing_transaction.btc_txid.is_some()
+        if let Some(btc_txid) = input.btc_txid.as_ref()
+            && let Some(existing_btc_txid) = existing_transaction.btc_txid.as_ref()
+            && btc_txid != existing_btc_txid
         {
             return Err(CanisterError::ValidationErrors(
-                "btc_txid is already set and cannot be updated".to_string(),
+                "btc_txid cannot be changed once set".to_string(),
             ));
         }
 
@@ -133,24 +134,27 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             }
         }
 
-        if let Some(_ckbtc_block_id) = input.ckbtc_block_id
-            && existing_transaction.ckbtc_block_id.is_some()
+        if let Some(ckbtc_block_id) = input.ckbtc_block_id.as_ref()
+            && let Some(existing_ckbtc_block_id) = existing_transaction.ckbtc_block_id.as_ref()
+            && ckbtc_block_id != existing_ckbtc_block_id
         {
             return Err(CanisterError::ValidationErrors(
                 "ckbtc_block_id is already set and cannot be updated".to_string(),
             ));
         }
 
-        if let Some(_block_id) = input.block_id
-            && existing_transaction.block_id.is_some()
+        if let Some(block_id) = input.block_id.as_ref()
+            && let Some(existing_block_id) = existing_transaction.block_id.as_ref()
+            && block_id != existing_block_id
         {
             return Err(CanisterError::ValidationErrors(
                 "block_id is already set and cannot be updated".to_string(),
             ));
         }
 
-        if let Some(_block_timestamp) = input.block_timestamp
-            && existing_transaction.block_timestamp.is_some()
+        if let Some(block_timestamp) = input.block_timestamp.as_ref()
+            && let Some(existing_block_timestamp) = existing_transaction.block_timestamp.as_ref()
+            && block_timestamp != existing_block_timestamp
         {
             return Err(CanisterError::ValidationErrors(
                 "block_timestamp is already set and cannot be updated".to_string(),
@@ -165,24 +169,27 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             ));
         }
 
-        if let Some(_deposit_fee) = input.deposit_fee.clone()
-            && existing_transaction.deposit_fee.is_some()
+        if let Some(deposit_fee) = input.deposit_fee.as_ref()
+            && let Some(existing_deposit_fee) = existing_transaction.deposit_fee.as_ref()
+            && deposit_fee != existing_deposit_fee
         {
             return Err(CanisterError::ValidationErrors(
                 "deposit_fee is already set and cannot be updated".to_string(),
             ));
         }
 
-        if let Some(_withdrawal_fee) = input.withdrawal_fee.clone()
-            && existing_transaction.withdrawal_fee.is_some()
+        if let Some(withdrawal_fee) = input.withdrawal_fee.as_ref()
+            && let Some(existing_withdrawal_fee) = existing_transaction.withdrawal_fee.as_ref()
+            && withdrawal_fee != existing_withdrawal_fee
         {
             return Err(CanisterError::ValidationErrors(
                 "withdrawal_fee is already set and cannot be updated".to_string(),
             ));
         }
 
-        if let Some(_btc_fee) = input.btc_fee.clone()
-            && existing_transaction.btc_fee.is_some()
+        if let Some(btc_fee) = input.btc_fee.as_ref()
+            && let Some(existing_btc_fee) = existing_transaction.btc_fee.as_ref()
+            && btc_fee != existing_btc_fee
         {
             return Err(CanisterError::ValidationErrors(
                 "btc_fee is already set and cannot be updated".to_string(),
@@ -599,7 +606,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_btc_txid_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_btc_txid_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -645,12 +652,12 @@ mod tests {
         assert!(matches!(
             result.unwrap_err(),
             CanisterError::ValidationErrors(message)
-                if message == "btc_txid is already set and cannot be updated"
+                if message == "btc_txid cannot be changed once set"
         ));
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_ckbtc_block_id_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_ckbtc_block_id_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -700,7 +707,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_block_id_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_block_id_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -750,7 +757,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_block_timestamp_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_block_timestamp_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -854,7 +861,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_deposit_fee_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_deposit_fee_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -904,7 +911,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_withdrawal_fee_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_withdrawal_fee_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -947,7 +954,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_fail_validate_update_bridge_due_to_btc_fee_already_set() {
+    fn it_should_fail_validate_update_bridge_due_to_btc_fee_change() {
         // Arrange
         let repo = TestRepositories::new();
         let validator = BridgeTransactionValidator::new(&repo);
@@ -987,6 +994,58 @@ mod tests {
             CanisterError::ValidationErrors(message)
                 if message == "btc_fee is already set and cannot be updated"
         ));
+    }
+
+    #[test]
+    fn it_should_allow_validate_update_bridge_with_same_existing_values() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let validator = BridgeTransactionValidator::new(&repo);
+        let user_id = random_principal_id();
+        let bridge_id = store_bridge(
+            &repo,
+            user_id,
+            fixture_of_import_create_input(random_principal_id()),
+        );
+        let mut stored = repo
+            .user_bridge_transaction()
+            .get_bridge_transaction_by_id(user_id, &bridge_id)
+            .unwrap();
+        stored.btc_txid = Some("same-btc-txid".to_string());
+        stored.ckbtc_block_id = Some(42u64);
+        stored.block_id = Some(840_000u64);
+        stored.block_timestamp = Some(1_720_000_000u64);
+        stored.deposit_fee = Some(Nat::from(1000u64));
+        stored.withdrawal_fee = Some(Nat::from(450u64));
+        stored.btc_fee = Some(Nat::from(1200u64));
+        repo.user_bridge_transaction()
+            .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
+            .unwrap();
+
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: bridge_id.clone(),
+            asset_infos: None,
+            btc_txid: Some("same-btc-txid".to_string()),
+            ckbtc_block_id: Some(42u64),
+            block_id: Some(840_000u64),
+            block_timestamp: Some(1_720_000_000u64),
+            block_confirmations: None,
+            deposit_fee: Some(Nat::from(1000u64)),
+            withdrawal_fee: Some(Nat::from(450u64)),
+            btc_fee: Some(Nat::from(1200u64)),
+            retry_times: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        let result =
+            validator.validate_update_bridge_transaction(user_id, &bridge_id, &update_input);
+
+        // Assert
+        assert!(result.is_ok());
     }
 
     #[test]

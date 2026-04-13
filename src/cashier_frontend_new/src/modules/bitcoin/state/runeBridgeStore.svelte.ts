@@ -8,6 +8,7 @@ import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { omnityBitcoinService } from "$modules/bitcoin/services/omnityBitcoinService";
 import { omnityHubService } from "$modules/bitcoin/services/omnityHubService";
 import { omnityRunesIndexerService } from "$modules/bitcoin/services/omnityRunesIndexerService";
+import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
 import {
   type BitcoinBlock,
   type BitcoinTransaction,
@@ -299,6 +300,11 @@ class RuneBridgeStore {
     }
   }
 
+  /**
+   * Set the current Rune ID
+   * @param runeId
+   * @returns
+   */
   public setRuneId(runeId: string | null) {
     if (this.rune_id === runeId) {
       return;
@@ -442,7 +448,7 @@ class RuneBridgeStore {
 
         const createBridgeResult =
           await tokenStorageService.createRuneImportBridgeTransaction({
-            btcAddress: runeAddress,
+            btcAddress: btcTx.sender,
             runeId,
             amount: 0n,
             decimals: token.decimals,
@@ -831,9 +837,14 @@ class RuneBridgeStore {
       );
     }
 
+    const shouldComplete =
+      bridgeTx.status !== BridgeTransactionStatus.Completed &&
+      updatedConfirmingBlocks.length >= btcBridgeStore.minConfirmations &&
+      btcBridgeStore.minConfirmations > 0;
+
     const updateResult = await tokenStorageService.updateBridgeTransaction(
       bridgeTx.bridge_id,
-      null,
+      shouldComplete ? BridgeTransactionStatus.Completed : null,
       null,
       btcTx.block_id,
       btcTx.block_timestamp,
