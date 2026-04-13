@@ -132,7 +132,7 @@ describe("TokenPriceStore", () => {
       expect(prices["token-c"]).toBeCloseTo(3.0);
     });
 
-    it("icExplorer overrides icpswap for same token (priority: icpswap > icExplorer)", async () => {
+    it("icpswap overrides icExplorer for same token (priority: icpswap > icExplorer)", async () => {
       mockGetIcpswapPrices.mockResolvedValueOnce(
         Ok({ "ryjl3-tyaaa-aaaaa-aaaba-cai": 2.47 }),
       );
