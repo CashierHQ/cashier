@@ -172,6 +172,11 @@ class BridgeStore {
           this.reset();
         } else {
           // Clean up the previous interval if any
+          if (this.mempoolTxsTask) {
+            clearInterval(this.mempoolTxsTask);
+            this.mempoolTxsTask = null;
+          }
+
           if (this.processPendingTxsTask) {
             clearInterval(this.processPendingTxsTask);
             this.processPendingTxsTask = null;
