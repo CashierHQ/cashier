@@ -366,13 +366,13 @@ class BridgeStore {
    * @param txs
    */
   async processMempoolTransactions(txs: BitcoinTransaction[]) {
-    txs.forEach(async (btcTx: BitcoinTransaction) => {
-      if (this.isMempoolTxProcessed(btcTx.txid)) {
-        return;
-      }
+    if (!this.btcAddress) {
+      return;
+    }
 
-      if (!this.btcAddress) {
-        return;
+    for (const btcTx of txs) {
+      if (this.isMempoolTxProcessed(btcTx.txid)) {
+        continue;
       }
 
       const depositFee = await ckBTCMinterService.getDepositFee();
@@ -395,7 +395,7 @@ class BridgeStore {
         this.#bridgeTxQuery.refresh();
         this.#importBridgeTxQuery.refresh();
       }
-    });
+    }
   }
 
   /**
