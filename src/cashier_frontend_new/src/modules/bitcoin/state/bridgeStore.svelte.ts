@@ -256,6 +256,16 @@ class BridgeStore {
   }
 
   /**
+   * Refetch export and unified bridge lists (Send page history refresh).
+   */
+  public refreshExportHistoryAsync(): Promise<void> {
+    return Promise.all([
+      this.#exportBridgeTxQuery.refreshAsync(),
+      this.#bridgeTxQuery.refreshAsync(),
+    ]).then(() => undefined);
+  }
+
+  /**
    * Reset the bridge store to initial state
    */
   public reset() {
