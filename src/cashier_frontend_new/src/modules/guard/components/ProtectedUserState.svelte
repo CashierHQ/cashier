@@ -44,7 +44,6 @@
 
   const shouldRedirect = $derived(userLinkStore && !isLoading && !isStateValid);
 
-
   const shouldShowLoading = $derived(isLoading && currentStep === null);
   let hasRenderedValidState = $state(false);
 
