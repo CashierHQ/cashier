@@ -1,0 +1,23 @@
+(record {
+  log_settings : opt record {
+    enable_console : opt bool;
+    in_memory_records : opt nat64;
+    log_filter : opt text;
+  };
+  owner : principal;
+  ckbtc_minter_id : principal;
+  tokens : opt vec record {
+    details : variant {
+      IC : record {
+        ledger_id : principal;
+        index_id : opt principal;
+        fee : nat;
+        supported_standards : vec variant { ICRC1; ICRC2; ICRC3 };
+      }
+    };
+    symbol : text;
+    name : text;
+    decimals : nat8;
+    enabled_by_default : bool;
+  };
+})

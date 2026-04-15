@@ -1,0 +1,9 @@
+(record {
+  log_settings : opt record {
+    enable_console : opt bool;
+    in_memory_records : opt nat64;
+    log_filter : opt text;
+  };
+  owner : principal;
+  token_storage_canister_id : principal;
+})
