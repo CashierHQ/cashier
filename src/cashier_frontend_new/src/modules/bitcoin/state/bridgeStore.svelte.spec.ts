@@ -1,4 +1,7 @@
-import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
+import type {
+  BitcoinBlock,
+  BitcoinTransaction,
+} from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionStatus,
   BridgeType,
@@ -87,15 +90,17 @@ function fixture_of_minter_info(
 }
 
 function fixture_of_bitcoin_transaction(
-  overrides: Record<string, unknown> = {},
-) {
+  overrides: Partial<BitcoinTransaction> = {},
+): BitcoinTransaction {
   return {
     txid: "abc123",
     sender: "tb1qsender",
     is_confirmed: true,
     block_id: 840_000n,
     block_timestamp: 1_704_000_000n,
-    vout: [{ address: "tb1qreceiver", value: 50_000n }],
+    created_at_ts: 1_704_000_000,
+    vin: [],
+    vout: [{ address: "tb1qreceiver", value_satoshis: 50_000 }],
     ...overrides,
   };
 }
@@ -121,7 +126,7 @@ const {
   mockGetDepositFee,
   mockUpdateBalanceWithMintedInfo,
   mockRetrieveBtcStatusV2,
-  mockGetMempoolTxs,
+  mockGetAddressTransactions,
   mockGetTransactionById,
   mockGetTipHeight,
   mockGetLatestBlocksFromHeight,
@@ -145,7 +150,7 @@ const {
     mockGetDepositFee: vi.fn(),
     mockUpdateBalanceWithMintedInfo: vi.fn(),
     mockRetrieveBtcStatusV2: vi.fn(),
-    mockGetMempoolTxs: vi.fn(),
+    mockGetAddressTransactions: vi.fn(),
     mockGetTransactionById: vi.fn(),
     mockGetTipHeight: vi.fn(),
     mockGetLatestBlocksFromHeight: vi.fn(),
@@ -206,7 +211,7 @@ vi.mock("$modules/bitcoin/services/ckBTCMinterService", () => ({
 
 vi.mock("$modules/bitcoin/services/mempoolService", () => ({
   mempoolService: {
-    getMempoolTxs: mockGetMempoolTxs,
+    getAddressTransactions: mockGetAddressTransactions,
     getTransactionById: mockGetTransactionById,
     getTipHeight: mockGetTipHeight,
     getLatestBlocksFromHeight: mockGetLatestBlocksFromHeight,
@@ -331,7 +336,7 @@ describe("BridgeStore", () => {
   describe("lookupMempoolTransactionByAddress", () => {
     it("it_should_fail_lookup_mempool_transaction_due_to_mempool_error", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Err("Network error"));
+      mockGetAddressTransactions.mockResolvedValue(Err("Network error"));
 
       // Act
       const result =
@@ -339,18 +344,18 @@ describe("BridgeStore", () => {
 
       // Assert
       expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toContain("Get mempool tx IDs failed");
+      expect(result.unwrapErr()).toContain("Get address transactions failed");
     });
 
     it("it_should_return_empty_when_no_txs_match_address", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Ok(["txid1"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([
           fixture_of_bitcoin_transaction({
-            vout: [{ address: "tb1qother", value: 50_000n }],
+            is_confirmed: false,
+            vout: [{ address: "tb1qother", value_satoshis: 50_000 }],
           }),
-        ),
+        ]),
       );
 
       // Act
@@ -364,9 +369,8 @@ describe("BridgeStore", () => {
 
     it("it_should_return_txs_matching_address", async () => {
       // Arrange
-      mockGetMempoolTxs.mockResolvedValue(Ok(["txid1"]));
-      mockGetTransactionById.mockResolvedValue(
-        Ok(fixture_of_bitcoin_transaction()),
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: false })]),
       );
 
       // Act
@@ -377,6 +381,21 @@ describe("BridgeStore", () => {
       expect(result.isOk()).toBe(true);
       expect(result.unwrap()).toHaveLength(1);
       expect(result.unwrap()[0].txid).toBe("abc123");
+    });
+
+    it("it_should_filter_out_confirmed_transactions", async () => {
+      // Arrange
+      mockGetAddressTransactions.mockResolvedValue(
+        Ok([fixture_of_bitcoin_transaction({ is_confirmed: true })]),
+      );
+
+      // Act
+      const result =
+        await bridgeStore.lookupMempoolTransactionByAddress("tb1qreceiver");
+
+      // Assert
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toHaveLength(0);
     });
   });
 
@@ -402,6 +421,109 @@ describe("BridgeStore", () => {
 
       // Assert
       expect(result).toBe(true);
+    });
+  });
+
+  describe("processMempoolTransactions", () => {
+    it("it_should_not_create_import_bridge_when_btc_address_is_missing", async () => {
+      // Arrange
+      const txs = [fixture_of_bitcoin_transaction({ is_confirmed: false })];
+
+      // Act
+      await bridgeStore.processMempoolTransactions(txs);
+
+      // Assert
+      expect(mockGetDepositFee).not.toHaveBeenCalled();
+      expect(mockCreateImportBridgeTransaction).not.toHaveBeenCalled();
+    });
+
+    it("it_should_skip_mempool_transactions_that_are_already_processed", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      mockQueryInstances[0].data = [
+        { ...fixture_of_import_bridge(), total_amount_usd: 0 },
+      ];
+      const txs = [fixture_of_bitcoin_transaction({ is_confirmed: false })];
+
+      // Act
+      await bridgeStore.processMempoolTransactions(txs);
+
+      // Assert
+      expect(mockGetDepositFee).not.toHaveBeenCalled();
+      expect(mockCreateImportBridgeTransaction).not.toHaveBeenCalled();
+    });
+
+    it("it_should_create_import_bridge_and_refresh_queries_for_new_mempool_transaction", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      const btcTx = fixture_of_bitcoin_transaction({ is_confirmed: false });
+      mockGetDepositFee.mockResolvedValue(1_000n);
+      mockCreateImportBridgeTransaction.mockResolvedValue(
+        Ok(fixture_of_import_bridge()),
+      );
+
+      // Act
+      await bridgeStore.processMempoolTransactions([btcTx]);
+
+      // Assert
+      expect(mockGetDepositFee).toHaveBeenCalledTimes(1);
+      expect(mockCreateImportBridgeTransaction).toHaveBeenCalledWith(
+        "tb1qsender",
+        "tb1qreceiver",
+        btcTx,
+        1_000n,
+        0n,
+        true,
+      );
+      expect(mockQueryInstances[0].refresh).toHaveBeenCalledTimes(1);
+      expect(mockQueryInstances[1].refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("it_should_continue_processing_next_transactions_when_one_creation_fails", async () => {
+      // Arrange
+      mockPersistedValues["btcAddress"] = "tb1qreceiver";
+      const firstTx = fixture_of_bitcoin_transaction({
+        txid: "txid-1",
+        sender: "tb1qsender1",
+        is_confirmed: false,
+      });
+      const secondTx = fixture_of_bitcoin_transaction({
+        txid: "txid-2",
+        sender: "tb1qsender2",
+        is_confirmed: false,
+      });
+      mockGetDepositFee.mockResolvedValue(1_000n);
+      mockCreateImportBridgeTransaction
+        .mockResolvedValueOnce(Err("create failed"))
+        .mockResolvedValueOnce(
+          Ok(fixture_of_import_bridge({ bridge_id: "import_txid-2" })),
+        );
+
+      // Act
+      await bridgeStore.processMempoolTransactions([firstTx, secondTx]);
+
+      // Assert
+      expect(mockGetDepositFee).toHaveBeenCalledTimes(2);
+      expect(mockCreateImportBridgeTransaction).toHaveBeenNthCalledWith(
+        1,
+        "tb1qsender1",
+        "tb1qreceiver",
+        firstTx,
+        1_000n,
+        0n,
+        true,
+      );
+      expect(mockCreateImportBridgeTransaction).toHaveBeenNthCalledWith(
+        2,
+        "tb1qsender2",
+        "tb1qreceiver",
+        secondTx,
+        1_000n,
+        0n,
+        true,
+      );
+      expect(mockQueryInstances[0].refresh).toHaveBeenCalledTimes(1);
+      expect(mockQueryInstances[1].refresh).toHaveBeenCalledTimes(1);
     });
   });
 

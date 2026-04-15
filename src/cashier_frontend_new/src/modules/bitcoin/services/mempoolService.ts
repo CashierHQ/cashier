@@ -92,6 +92,32 @@ class MempoolService {
   }
 
   /**
+   * Get transactions for a Bitcoin address.
+   * @param address Bitcoin address
+   * @returns Bitcoin transactions associated with the address or error message
+   */
+  async getAddressTransactions(
+    address: string,
+  ): Promise<Result<BitcoinTransaction[], string>> {
+    try {
+      const response = await this.#fetchWithFallback(`/address/${address}/txs`);
+      const data: MempoolTransaction[] = await response.json();
+      return Ok(
+        data.map((tx) =>
+          BitcoinTransactionMapper.fromMempoolApiResponse(
+            tx,
+            currentSecondTimestamp(),
+          ),
+        ),
+      );
+    } catch (error) {
+      return Err(
+        `Error fetching address transactions for ${address}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
    * Get the current tip height of the Bitcoin blockchain.
    * @returns tip height or error message
    */
