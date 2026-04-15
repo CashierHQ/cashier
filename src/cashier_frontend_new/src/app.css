@@ -83,6 +83,7 @@
   --color-lightgreen: #e8f2ee;
   --color-yellow: #a17f37;
   --color-lightyellow: #fffaf2;
+  --color-lightyellow-accent: #febb41;
   --color-lightpurple: #e8e8f2;
   --color-lightblack: #475467;
   --color-grey: #8d8d8d;
@@ -144,4 +145,8 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
+}
+
+.btc-gradient {
+  background: linear-gradient(180deg, #f4fcf9 0%, #f7faf8 100%);
 }
