@@ -8,6 +8,8 @@
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import {
     ArrowLeftRight,
+    ChevronDown,
+    ChevronUp,
     Coins,
     Copy,
     Hourglass,
@@ -22,6 +24,7 @@
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
+  let historyExpanded = $state(true);
   let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
   const importBridgeTxs = $derived.by(() => bridgeStore.importBridgeTxs ?? []);
 
@@ -64,14 +67,14 @@
   }
 </script>
 
-<div>
+<div class="px-8 btc-gradient rounded-2xl py-4 mt-6">
   <div class="mb-6 flex justify-center">
-    <Label class="text-base font-semibold">
+    <Label class="text-small font-medium">
       {locale.t("bitcoin.receive.title")}
     </Label>
   </div>
-  <div class="space-y-4">
-    <Label class="text-base font-semibold">
+  <div class="space-y-2">
+    <Label class="text-small font-medium">
       {locale.t("wallet.receive.btcAddress").replace("{{token}}", "BTC")}
     </Label>
 
@@ -91,7 +94,7 @@
       </button>
     </div>
     <div
-      class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+      class="text-xs text-grey mt-1 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
     >
       {locale.t("wallet.send.addressBitcoinExample")}
     </div>
@@ -130,26 +133,48 @@
       </div>
     </div>
   </div>
-  <div class="mt-6 flex items-center justify-between">
+  <div class="mt-6 flex items-start justify-between gap-2">
     <Label class="text-base font-semibold">
       {locale.t("bitcoin.receive.history")}
     </Label>
-    <button
-      onclick={handleRefresh}
-      disabled={isRefreshing}
-      class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50"
-      title={locale.t("bitcoin.receive.refreshTooltip")}
-    >
-      <RefreshCw size={16} class={isRefreshing ? "animate-spin" : ""} />
-    </button>
+    <div class="flex flex-col items-center gap-2.5 -mb-4 pt-1">
+      <button
+        type="button"
+        onclick={() => (historyExpanded = !historyExpanded)}
+        class="text-[#36A18B] transition-colors hover:text-[#2d8a75]"
+        aria-expanded={historyExpanded}
+        title={historyExpanded
+          ? locale.t("bitcoin.receive.collapseHistory")
+          : locale.t("bitcoin.receive.expandHistory")}
+      >
+        {#if historyExpanded}
+          <ChevronUp size={18} />
+        {:else}
+          <ChevronDown size={18} />
+        {/if}
+      </button>
+      {#if historyExpanded}
+        <button
+          type="button"
+          onclick={handleRefresh}
+          disabled={isRefreshing}
+          class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50 bg-white rounded-sm p-1 border"
+          title={locale.t("bitcoin.receive.refreshTooltip")}
+        >
+          <RefreshCw size={12} class={isRefreshing ? "animate-spin" : ""} />
+        </button>
+      {/if}
+    </div>
   </div>
-  <BridgeList
-    bridgeTxs={importBridgeTxs}
-    hasMore={bridgeStore.hasMoreImports}
-    emptyText={locale.t("wallet.receive.noBtcImportTxs")}
-    onSelectBridge={handleSelectBridge}
-    onLoadMore={handleLoadMore}
-  />
+  {#if historyExpanded}
+    <BridgeList
+      bridgeTxs={importBridgeTxs}
+      hasMore={bridgeStore.hasMoreImports}
+      emptyText={locale.t("wallet.receive.noBtcImportTxs")}
+      onSelectBridge={handleSelectBridge}
+      onLoadMore={handleLoadMore}
+    />
+  {/if}
 </div>
 
 {#if showBridgeTxCart && bridgeSource}

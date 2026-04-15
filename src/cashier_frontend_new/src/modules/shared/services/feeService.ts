@@ -282,7 +282,9 @@ export class FeeService {
           symbol: token.symbol,
           address: tokenAddress,
           amount: totalAmount,
-          amountFormattedStr: formatNumber(totalUi),
+          amountFormattedStr: formatNumber(totalUi, {
+            tofixed: token.decimals,
+          }),
           usdValueStr: token.priceUSD
             ? formatUsdAmount(totalUi * token.priceUSD)
             : undefined,
@@ -291,7 +293,9 @@ export class FeeService {
         fee: {
           feeType: FeeType.NETWORK_FEE,
           amount: fee,
-          amountFormattedStr: formatNumber(feeUi),
+          amountFormattedStr: formatNumber(feeUi, {
+            tofixed: token.decimals,
+          }),
           symbol: token.symbol,
           usdValue: token.priceUSD ? feeUi * token.priceUSD : undefined,
         },
