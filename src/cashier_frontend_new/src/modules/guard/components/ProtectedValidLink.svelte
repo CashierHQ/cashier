@@ -34,6 +34,15 @@
         !linkStore),
   );
 
+  const shouldShowLoading = $derived(isLoading && !hasLink);
+  let hasRenderedValidLink = $state(false);
+
+  $effect(() => {
+    if (isValid) {
+      hasRenderedValidLink = true;
+    }
+  });
+
   $effect(() => {
     if (shouldRedirect) {
       const redirectPath = redirectTo || "/404";
@@ -43,8 +52,8 @@
   });
 </script>
 
-{#if isLoading}
+{#if shouldShowLoading}
   <ProtectionProcessingState message="Loading..." />
-{:else if isValid}
+{:else if isValid || (hasRenderedValidLink && isLoading)}
   {@render children()}
 {/if}

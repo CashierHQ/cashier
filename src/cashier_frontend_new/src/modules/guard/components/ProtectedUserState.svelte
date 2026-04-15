@@ -44,6 +44,16 @@
 
   const shouldRedirect = $derived(userLinkStore && !isLoading && !isStateValid);
 
+
+  const shouldShowLoading = $derived(isLoading && currentStep === null);
+  let hasRenderedValidState = $state(false);
+
+  $effect(() => {
+    if (isStateValid) {
+      hasRenderedValidState = true;
+    }
+  });
+
   $effect(() => {
     if (shouldRedirect) {
       goto(resolve("/404"));
@@ -51,8 +61,8 @@
   });
 </script>
 
-{#if isLoading}
+{#if shouldShowLoading}
   <ProtectionProcessingState message="Loading..." />
-{:else if isStateValid}
+{:else if isStateValid || (hasRenderedValidState && isLoading)}
   {@render children()}
 {/if}

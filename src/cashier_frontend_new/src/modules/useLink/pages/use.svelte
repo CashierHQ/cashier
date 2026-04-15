@@ -54,14 +54,16 @@
   let useGatePageTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
+  let isTxCartOpen = $state(false);
   let showTxCart: boolean = $derived.by(() => {
-    return !!(
-      userStore?.action && userStore.action.state !== ActionState.SUCCESS
+    return (
+      isTxCartOpen &&
+      !!(userStore?.action && userStore.action.state !== ActionState.SUCCESS)
     );
   });
 
   const onCloseDrawer = () => {
-    showTxCart = false;
+    isTxCartOpen = false;
   };
 
   const handleCreateUseAction = async () => {
@@ -88,7 +90,7 @@
         );
       }
       if (userStore.action) {
-        showTxCart = true;
+        isTxCartOpen = true;
       } else {
         isCreatingAction = true;
         const actionType = userStore.findUseActionType();
@@ -102,7 +104,8 @@
         await userStore.createAction(actionType);
 
         successMessage = "Action created successfully.";
-        userStore.refreshAsync();
+        await userStore.refreshAsync();
+        isTxCartOpen = true;
       }
     } catch (err) {
       // Check if error requires redirect to 404
