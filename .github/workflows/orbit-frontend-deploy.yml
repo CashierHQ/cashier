@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - staging
+      - 'hotfix/**'
     paths:
       - 'src/cashier_frontend_new/**'
   workflow_dispatch:
@@ -42,7 +43,7 @@ jobs:
 
           if [[ "$TARGET_BRANCH" == "main" ]]; then
             echo "network=production" >> $GITHUB_OUTPUT
-          elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+          elif [[ "$TARGET_BRANCH" == "staging" || "$TARGET_BRANCH" == hotfix/* ]]; then
             echo "network=staging" >> $GITHUB_OUTPUT
           else
             # Any other branch will deploy to dev network
@@ -154,8 +155,8 @@ jobs:
           set -o pipefail
           set -x
           canister_id=$(just get_canister_id cashier_frontend_new ${{ needs.setup_environment.outputs.network }})
-          # Capture JSON output (last line from upload_asset)
-          output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
+          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
+          output=$(just upload_asset ${canister_id} | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
