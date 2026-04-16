@@ -148,6 +148,9 @@ jobs:
             echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
           fi
 
+      - name: Build canisters
+        run: just build ${{ needs.setup_environment.outputs.network }}
+
       - name: Build candid args (single run)
         run: |
           owner=${{ vars.ORBIT_STATION_ID }}
@@ -162,9 +165,6 @@ jobs:
           echo "Token storage args:"
           cat token_storage_args.hex
 
-      - name: Build canisters
-        run: just build ${{ needs.setup_environment.outputs.network }}
-
       - name: Upgrade token_storage canister
         id: token_storage
         env:
@@ -172,8 +172,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex 2>&1 | tail -1)
+          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
+          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
@@ -194,8 +194,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex 2>&1 | tail -1)
+          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
+          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
