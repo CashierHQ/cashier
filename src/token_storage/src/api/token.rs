@@ -1,13 +1,16 @@
 use crate::api::state::get_state;
 use candid::Principal;
-use ic_cdk::api::msg_caller;
-use ic_cdk::{query, update};
-
+use ic_cdk::{
+    api::{msg_caller, time},
+    query, update,
+};
 use log::{debug, info, warn};
-use token_storage_types::TokenId;
-use token_storage_types::token::{
-    AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenBalanceInput,
-    UpdateTokenInput,
+use token_storage_types::{
+    TokenId,
+    token::{
+        AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenBalanceInput,
+        UpdateTokenInput,
+    },
 };
 
 /// Returns the principal of the caller, ensuring it is not anonymous.
@@ -30,6 +33,7 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), String> {
     debug!("[user_add_token] input: {input:?}");
 
     let user_id = not_anonymous_caller();
+    let updated_at = time();
 
     // Handle optional index_id - only parse if provided and not empty
     let index_pid = match &input.index_id {
@@ -46,7 +50,7 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), String> {
     if token_registry_service.get_token(&input.token_id).is_none() {
         // Token doesn't exist in registry, register it first
         token_registry_service
-            .register_new_token(input.token_id.clone(), index_pid)
+            .register_new_token(input.token_id.clone(), index_pid, updated_at)
             .await
             .expect("Failed to register token in registry");
     }
@@ -66,6 +70,7 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), String> {
 pub async fn user_add_token_batch(input: AddTokensInput) -> Result<(), String> {
     info!("[user_add_token_batch]");
     let user_id = not_anonymous_caller();
+    let updated_at = time();
 
     debug!("[user_add_token_batch] user: {user_id}, input: {input:?}");
 
@@ -78,7 +83,7 @@ pub async fn user_add_token_batch(input: AddTokensInput) -> Result<(), String> {
             // Token doesn't exist in registry, register it first
             // Don't fail if registration fails - continue processing
             if token_registry_service
-                .register_new_token(token_id.clone(), None)
+                .register_new_token(token_id.clone(), None, updated_at)
                 .await
                 .is_err()
             {
@@ -103,11 +108,13 @@ pub async fn user_update_token_registry(input: AddTokenInput) -> Result<(), Stri
 
     let _user_id = not_anonymous_caller();
     let state = get_state();
+    let updated_at = time();
+
     let mut token_registry_service = state.token_registry;
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
-        .update_token_metadata(input.token_id)
+        .update_token_metadata(input.token_id, updated_at)
         .await
         .expect("Failed to update token metadata");
 
@@ -123,6 +130,7 @@ pub async fn user_update_token_registry_batch(input: AddTokensInput) -> Result<(
     debug!("[user_update_token_registry_batch] input: {input:?}");
 
     let _user_id = not_anonymous_caller();
+    let updated_at = time();
 
     let state = get_state();
     let mut token_registry_service = state.token_registry;
@@ -130,7 +138,7 @@ pub async fn user_update_token_registry_batch(input: AddTokensInput) -> Result<(
     // Re-register all tokens to update their metadata from the ledger
     for token_id in input.token_ids {
         token_registry_service
-            .update_token_metadata(token_id)
+            .update_token_metadata(token_id, updated_at)
             .await
             .expect("Failed to update token metadata");
     }

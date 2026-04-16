@@ -1,13 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::{cell::RefCell, thread::LocalKey};
-
-use ic_cdk::api::time;
 use ic_mple_structures::{CellStructure, VersionedStableCell};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
-
+use std::{cell::RefCell, thread::LocalKey};
 use token_storage_types::token::{TokenRegistryMetadata, TokenRegistryMetadataCodec};
 
 /// Store for TokenRegistryMetadataRepository
@@ -36,11 +33,11 @@ impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRe
             .with_borrow(|store| store.get().into_owned())
     }
 
-    pub fn increase_version(&mut self) -> u64 {
+    pub fn increase_version(&mut self, updated_at: u64) -> u64 {
         self.token_store.with_borrow_mut(|store| {
             let mut metadata = store.get().into_owned();
             metadata.version += 1;
-            metadata.last_updated = time();
+            metadata.last_updated = updated_at;
             store.set(metadata);
 
             let updated_metadata = store.get().clone();
