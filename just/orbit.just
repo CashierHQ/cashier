@@ -40,7 +40,7 @@ orbit_upgrade canister_name mode network arg_file:
       --mode {{mode}} \
       "$canister_id" \
       --wasm "$wasm_path" \
-      --argument "$arg" \
+      --raw-arg "$arg" \
       2>&1)
   else
     output=$(dfx-orbit request canister install \
@@ -59,6 +59,18 @@ orbit_upgrade canister_name mode network arg_file:
     "$arg_checksum" \
     "$request_url"
 
+# Build init and upgrade hex argument for backend canister
+[group('orbit')]
+build_backend_args_hex owner token_storage_canister_id log_filter output_file:
+  #!/usr/bin/env bash
+  set -e
+
+  # step 1: build argument text by injecting fields values
+  just build_backend_args {{owner}} {{token_storage_canister_id}} {{log_filter}} "{{output_file}}.txt"
+
+  # step 2: encode argument text to hex format using didc and candid types
+  didc encode -d ./target/artifacts/cashier_backend.did -t "(CashierBackendInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+
 # Build the backend canister args and save to file
 [group('orbit')]
 build_backend_args owner token_storage_canister_id log_filter file_name:
@@ -69,6 +81,18 @@ build_backend_args owner token_storage_canister_id log_filter file_name:
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     scripts/args/backend_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
+
+# Build init and upgrade hex argument for token storage canister
+[group('orbit')]
+build_token_storage_args_hex owner log_filter ckbtc_minter_id output_file:
+  #!/usr/bin/env bash
+  set -e
+
+  # step 1: build argument text by injecting fields values
+  just build_token_storage_args {{owner}} {{log_filter}} {{ckbtc_minter_id}} "{{output_file}}.txt"
+
+  # step 2: encode argument text to hex format using didc and candid types
+  didc encode -d ./target/artifacts/token_storage.did -t "(TokenStorageInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
 
 # Build token_storage canister args and save to file
 [group('orbit')]
