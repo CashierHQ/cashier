@@ -126,7 +126,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/dfx-orbit
-          key: dfx-orbit-linux-control-panel-v0.4.0
+          key: dfx-orbit-cli
 
       - name: Install dfx-orbit
         if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
@@ -172,8 +172,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
-          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex | tail -1)
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
@@ -194,8 +194,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
-          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex | tail -1)
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields

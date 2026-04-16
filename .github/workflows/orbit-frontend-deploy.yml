@@ -130,7 +130,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/dfx-orbit
-          key: dfx-orbit-linux-control-panel-v0.4.0
+          key: dfx-orbit-cli
 
       - name: Install dfx-orbit
         if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
@@ -155,8 +155,8 @@ jobs:
           set -o pipefail
           set -x
           canister_id=$(just get_canister_id cashier_frontend_new ${{ needs.setup_environment.outputs.network }})
-          # Capture JSON output (last line of stdout); stderr flows to CI log for visibility
-          output=$(just upload_asset ${canister_id} | tail -1)
+          # Capture JSON output (last line from upload_asset)
+          output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
