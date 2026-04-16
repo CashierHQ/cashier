@@ -69,7 +69,7 @@ build_backend_args_hex owner token_storage_canister_id log_filter output_file:
   just build_backend_args {{owner}} {{token_storage_canister_id}} {{log_filter}} "{{output_file}}.txt"
 
   # step 2: encode argument text to hex format using didc and candid types
-  didc encode -t "$(cat ./scripts/args/backend_args.did)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+  didc encode -d ./target/artifacts/cashier_backend.did -t "(CashierBackendInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
 
 # Build the backend canister args and save to file
 [group('orbit')]
@@ -92,7 +92,7 @@ build_token_storage_args_hex owner log_filter ckbtc_minter_id output_file:
   just build_token_storage_args {{owner}} {{log_filter}} {{ckbtc_minter_id}} "{{output_file}}.txt"
 
   # step 2: encode argument text to hex format using didc and candid types
-  didc encode -t "$(cat ./scripts/args/token_storage_args.did)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+  didc encode -d ./target/artifacts/token_storage.did -t "(TokenStorageInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
 
 # Build token_storage canister args and save to file
 [group('orbit')]
