@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - staging
-      - 'hotfix/**'
     paths:
       - 'src/cashier_frontend_new/**'
   workflow_dispatch:
@@ -43,7 +42,7 @@ jobs:
 
           if [[ "$TARGET_BRANCH" == "main" ]]; then
             echo "network=production" >> $GITHUB_OUTPUT
-          elif [[ "$TARGET_BRANCH" == "staging" || "$TARGET_BRANCH" == hotfix/* ]]; then
+          elif [[ "$TARGET_BRANCH" == "staging" ]]; then
             echo "network=staging" >> $GITHUB_OUTPUT
           else
             # Any other branch will deploy to dev network
