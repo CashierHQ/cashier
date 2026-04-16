@@ -106,15 +106,19 @@ build_token_storage_args owner log_filter ckbtc_minter_id file_name:
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Encode candid args and compute SHA-256 checksum of the raw bytes
+# If arg_file ends in .hex, it is already encoded — skip didc encode step
 # Returns: hex checksum string
 [group('orbit')]
 sha256_encoded_candid arg_file did_file:
   #!/usr/bin/env bash
   set -euo pipefail
-  # Read content from file
-  arg=$(cat {{arg_file}})
-  # Encode to candid hex string
-  encoded_hex=$(didc encode "$arg" --defs {{did_file}})
+  if [[ "{{arg_file}}" == *.hex ]]; then
+    # Already hex-encoded: hex → bytes → sha256
+    encoded_hex=$(cat {{arg_file}})
+  else
+    # Candid text: encode to hex first
+    encoded_hex=$(didc encode "$(cat {{arg_file}})" --defs {{did_file}})
+  fi
   # Convert hex string to bytes and compute SHA-256 checksum
   checksum=$(echo -n "$encoded_hex" | xxd -r -p | just sha256_stdin)
   echo "$checksum"
