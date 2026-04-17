@@ -129,7 +129,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/dfx-orbit
-          key: dfx-orbit-linux-control-panel-v0.4.0
+          key: dfx-orbit-cli
 
       - name: Install dfx-orbit
         if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
