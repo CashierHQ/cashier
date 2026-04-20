@@ -126,7 +126,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/dfx-orbit
-          key: dfx-orbit-linux-control-panel-v0.4.0
+          key: dfx-orbit-cli
 
       - name: Install dfx-orbit
         if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
@@ -148,6 +148,9 @@ jobs:
             echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
           fi
 
+      - name: Build canisters
+        run: just build ${{ needs.setup_environment.outputs.network }}
+
       - name: Build candid args (single run)
         run: |
           owner=${{ vars.ORBIT_STATION_ID }}
@@ -161,9 +164,6 @@ jobs:
           echo ""
           echo "Token storage args:"
           cat token_storage_args.hex
-
-      - name: Build canisters
-        run: just build ${{ needs.setup_environment.outputs.network }}
 
       - name: Upgrade token_storage canister
         id: token_storage
