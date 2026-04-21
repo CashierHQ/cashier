@@ -145,10 +145,11 @@ export class FeeService {
   ): AssetAndFeeList {
     const pairs: AssetAndFee[] = [];
     const feeConfig = this.getLinkCreationFee();
-    const feeTokenAddress = feeConfig.tokenAddress.toLowerCase();
+    const feeTokenAddress = feeConfig.tokenAddress?.toLowerCase() ?? "";
 
     const hasFeeTokenOutgoingAssetIntent =
       action.type === ActionType.CREATE_LINK &&
+      feeTokenAddress !== "" &&
       action.intents.some((intent) => {
         const address = intent.type.payload.asset.address.toString();
         return (
@@ -344,8 +345,8 @@ export class FeeService {
 
       const isCreateLinkFee = item.fee.feeType === FeeType.CREATE_LINK_FEE;
 
-      let amount = isCreateLinkFee ? item.asset.amount : item.fee.amount;
-      let usdAmount = isCreateLinkFee
+      const amount = isCreateLinkFee ? item.asset.amount : item.fee.amount;
+      const usdAmount = isCreateLinkFee
         ? parseFloat(item.asset.usdValueStr ?? "0")
         : item.fee.usdValue;
 
@@ -460,9 +461,12 @@ export class FeeService {
       return Err(new Error("Link fee token not found"));
     }
 
-    const isFeeTokenAlsoAsset = linkAssets.some(
-      (a) => a.address.toLowerCase() === linkFeeInfo.tokenAddress.toLowerCase(),
-    );
+    const isFeeTokenAlsoAsset =
+      linkFeeInfo.tokenAddress !== undefined &&
+      linkAssets.some(
+        (a) =>
+          a.address.toLowerCase() === linkFeeInfo.tokenAddress!.toLowerCase(),
+      );
 
     const intentFees = calculateIntentFees({
       intent_participants: IntentParticipants.CreatorToTreasury,
