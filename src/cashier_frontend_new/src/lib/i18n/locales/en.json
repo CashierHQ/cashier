@@ -194,7 +194,7 @@
       },
       "drawers": {
         "txCart": {
-          "termsAgreement": "By confirming you agree execute the transaction above and agree to the terms of service",
+          "termsAgreementPrefix": "By confirming you agree execute the transaction above and agree to the ",
           "action": {
             "title": "Confirm transaction",
             "confirmButton": "Confirm",
@@ -482,7 +482,9 @@
       "noIncomingBalance": "No incoming BTC balance found.",
       "refreshSuccess": "Balance refreshed successfully.",
       "refreshError": "Failed to refresh balance. Please try again.",
-      "refreshTooltip": "Refresh balance"
+      "refreshTooltip": "Refresh balance",
+      "expandHistory": "Show import history",
+      "collapseHistory": "Hide import history"
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",
@@ -502,7 +504,12 @@
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
         "warning5": "Transfer time ~1 hour. Track the progress below."
-      }
+      },
+      "refreshSuccess": "Export history refreshed.",
+      "refreshError": "Failed to refresh history. Please try again.",
+      "refreshTooltip": "Refresh history",
+      "expandHistory": "Show export history",
+      "collapseHistory": "Hide export history"
     },
     "txCart": {
       "title": "Transaction details",
