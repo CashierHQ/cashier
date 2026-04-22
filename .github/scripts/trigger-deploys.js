@@ -62,9 +62,7 @@ async function triggerDeploys({ github, context, core }) {
   // Match and dispatch
   const matched = matchDeployTargets(changedPaths, config.deployTargets);
 
-  // Fast-forward merge guarantees post-merge target HEAD == PR head SHA.
-  // pr.head.sha is the PR's source branch tip, already replicated for a while,
-  // so no race with GitHub's branch ref cache propagation.
+  // FF merge only: post-merge branch HEAD == pr.head.sha (no new commit created).
   const mergedSha = pr.head.sha;
   console.log(`Post-merge SHA for ${targetBranch}: ${mergedSha}`);
 
