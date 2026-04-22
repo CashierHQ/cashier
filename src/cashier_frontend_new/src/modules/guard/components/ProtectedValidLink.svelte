@@ -21,7 +21,7 @@
     context.isLoading({ checkTempLinkLoad: true }),
   );
 
-  const hasLink = $derived(() => context.hasLink());
+  const hasLink = $derived.by(() => context.hasLink());
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 
@@ -34,7 +34,6 @@
         !linkStore),
   );
 
-  const shouldShowLoading = $derived(isLoading && !hasLink);
   let hasRenderedValidLink = $state(false);
 
   $effect(() => {
@@ -42,6 +41,10 @@
       hasRenderedValidLink = true;
     }
   });
+
+  const shouldShowLoading = $derived(
+    isLoading && !hasLink && !hasRenderedValidLink,
+  );
 
   $effect(() => {
     if (shouldRedirect) {

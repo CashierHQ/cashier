@@ -103,7 +103,6 @@
 
         await userStore.createAction(actionType);
 
-        successMessage = "Action created successfully.";
         await userStore.refreshAsync();
         isTxCartOpen = true;
       }

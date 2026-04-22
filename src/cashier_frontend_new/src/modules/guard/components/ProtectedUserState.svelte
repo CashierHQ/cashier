@@ -44,7 +44,6 @@
 
   const shouldRedirect = $derived(userLinkStore && !isLoading && !isStateValid);
 
-  const shouldShowLoading = $derived(isLoading && currentStep === null);
   let hasRenderedValidState = $state(false);
 
   $effect(() => {
@@ -52,6 +51,10 @@
       hasRenderedValidState = true;
     }
   });
+
+  const shouldShowLoading = $derived(
+    isLoading && currentStep === null && !hasRenderedValidState,
+  );
 
   $effect(() => {
     if (shouldRedirect) {

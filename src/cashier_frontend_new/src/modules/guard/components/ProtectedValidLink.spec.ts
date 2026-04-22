@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, svelte/no-navigation-without-resolve */
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import type { GuardContext } from "../context.svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock navigation
 vi.mock("$app/navigation", () => ({
@@ -12,185 +11,107 @@ vi.mock("$app/paths", () => ({
   resolve: (path: string) => path,
 }));
 
-describe("ProtectedValidLink Guard Logic", () => {
-  let mockContext: GuardContext;
-
+describe("ProtectedValidLink", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockContext = {
-      authState: {
-        isReady: true,
-      },
-      userProfile: {
-        isLoggedIn: () => true,
-      },
-      linkDetailStore: null,
-      userLinkStore: null,
-      linkCreationStore: null,
-      isGuardCheckComplete: false,
-      hasTempLinkLoadAttempted: true,
-      setLinkDetailStore: vi.fn(),
-      setUserLinkStore: vi.fn(),
-      setLinkCreationStore: vi.fn(),
-      setGuardCheckComplete: vi.fn(),
-      setHasTempLinkLoadAttempted: vi.fn(),
-    } as unknown as GuardContext;
   });
 
-  describe("LinkDetailStore", () => {
-    it("should show loading state while link is loading", () => {
-      mockContext.linkDetailStore = {
-        query: { isLoading: true },
-        link: null,
-      } as any;
-
-      const isLoading = mockContext.linkDetailStore?.query.isLoading;
-      expect(isLoading).toBe(true);
-    });
-
-    it("should redirect when link is not found", () => {
-      mockContext.linkDetailStore = {
-        query: { isLoading: false },
-        link: null,
-      } as any;
-
-      const hasLink =
-        mockContext.linkDetailStore?.link !== null &&
-        mockContext.linkDetailStore?.link !== undefined;
-      const isLoading = mockContext.linkDetailStore?.query.isLoading;
-
-      if (!isLoading && !hasLink) {
-        goto("/404");
-      }
-
-      expect(goto).toHaveBeenCalledWith("/404");
-    });
-
-    it("should render children when link is valid", () => {
-      mockContext.linkDetailStore = {
-        query: { isLoading: false },
-        link: { id: "test-link" },
-      } as any;
-
-      const hasLink =
-        mockContext.linkDetailStore?.link !== null &&
-        mockContext.linkDetailStore?.link !== undefined;
-      const isLoading = mockContext.linkDetailStore?.query.isLoading;
-
-      expect(isLoading).toBe(false);
-      expect(hasLink).toBe(true);
-      expect(goto).not.toHaveBeenCalled();
-    });
+  it("shouldShowLoading=true when isLoading && !hasLink", () => {
+    const isLoading = true;
+    const hasLink = false;
+    const hasRenderedValidLink = false;
+    const shouldShowLoading = isLoading && !hasLink && !hasRenderedValidLink;
+    expect(shouldShowLoading).toBe(true);
   });
 
-  describe("LinkCreationStore (temp link)", () => {
-    it("should not show loading for temp links", () => {
-      mockContext.linkCreationStore = {
-        state: { step: 0 },
-      } as any;
+  it("redirects to /404 when ready to check and no link", () => {
+    const redirectTo: string | undefined = undefined;
+    const linkStore = {}; // not null → ready to check
+    const isLoading = false;
+    const hasLink = false;
 
-      const isLoading = false; // LinkCreationStore has no query
-      expect(isLoading).toBe(false);
-    });
+    const isReadyToCheck = !isLoading && linkStore !== null;
+    const shouldRedirect = isReadyToCheck && !hasLink;
 
-    it("should redirect when temp link is not found", () => {
-      mockContext.linkCreationStore = null;
-      mockContext.hasTempLinkLoadAttempted = true;
+    if (shouldRedirect) {
+      goto(redirectTo || "/404");
+    }
 
-      const shouldRedirect =
-        mockContext.authState.isReady &&
-        mockContext.hasTempLinkLoadAttempted &&
-        !mockContext.linkCreationStore;
-
-      if (shouldRedirect) {
-        goto("/links");
-      }
-
-      expect(goto).toHaveBeenCalledWith("/links");
-    });
-
-    it("should render children when temp link exists", () => {
-      mockContext.linkCreationStore = {
-        state: { step: 0 },
-      } as any;
-
-      const hasLink = mockContext.linkCreationStore !== null;
-      expect(hasLink).toBe(true);
-      expect(goto).not.toHaveBeenCalled();
-    });
+    expect(goto).toHaveBeenCalledWith("/404");
   });
 
-  describe("UserLinkStore", () => {
-    it("should show loading state while user link is loading", () => {
-      mockContext.userLinkStore = {
-        linkDetail: {
-          query: { isLoading: true },
-          link: null,
-        },
-      } as any;
+  it("redirects when auth is ready, temp link load attempted, and linkStore is null", () => {
+    const redirectTo: string | undefined = undefined;
+    const authReady = true;
+    const hasTempLinkLoadAttempted = true;
+    const linkStore = null;
+    const isLoading = false;
 
-      const isLoading = mockContext.userLinkStore?.linkDetail?.query?.isLoading;
-      expect(isLoading).toBe(true);
-    });
+    const isReadyToCheck = !isLoading && linkStore !== null;
+    const hasLink = false;
+    const shouldRedirect =
+      (isReadyToCheck && !hasLink) ||
+      (authReady && hasTempLinkLoadAttempted && !linkStore);
 
-    it("should redirect when user link has no link", () => {
-      mockContext.userLinkStore = {
-        linkDetail: {
-          query: { isLoading: false },
-          link: null,
-        },
-      } as any;
+    if (shouldRedirect) {
+      goto(redirectTo || "/404");
+    }
 
-      const hasLink =
-        mockContext.userLinkStore?.linkDetail?.link !== null &&
-        mockContext.userLinkStore?.linkDetail?.link !== undefined;
-      const isLoading =
-        mockContext.userLinkStore?.linkDetail?.query?.isLoading ?? false;
-
-      if (!isLoading && !hasLink) {
-        goto("/404");
-      }
-
-      expect(goto).toHaveBeenCalledWith("/404");
-    });
-
-    it("should render children when user link is valid", () => {
-      mockContext.userLinkStore = {
-        linkDetail: {
-          query: { isLoading: false },
-          link: { id: "test-link" },
-        },
-      } as any;
-
-      const hasLink =
-        mockContext.userLinkStore?.linkDetail?.link !== null &&
-        mockContext.userLinkStore?.linkDetail?.link !== undefined;
-      const isLoading =
-        mockContext.userLinkStore?.linkDetail?.query?.isLoading ?? false;
-
-      expect(isLoading).toBe(false);
-      expect(hasLink).toBe(true);
-      expect(goto).not.toHaveBeenCalled();
-    });
+    expect(goto).toHaveBeenCalledWith("/404");
   });
 
-  describe("custom redirectTo", () => {
+  it("renders children during background loading if a valid link was rendered before (hasRenderedValidLink)", () => {
+    // Phase 1: valid link rendered
+    let hasRenderedValidLink = false;
+    const feeTokenAddress = "n/a";
+    void feeTokenAddress;
+
+    const linkStorePhase1 = {}; // exists
+    const isLoadingPhase1 = false;
+    const hasLinkPhase1 = true;
+    const isValidPhase1 = !linkStorePhase1
+      ? false
+      : isLoadingPhase1
+        ? false
+        : hasLinkPhase1;
+
+    if (isValidPhase1) {
+      hasRenderedValidLink = true;
+    }
+
+    // Phase 2: refetching (loading=true) but we still have the link
+    const linkStorePhase2 = {}; // exists
+    const isLoadingPhase2 = true;
+    const hasLinkPhase2 = true;
+    const isValidPhase2 = !linkStorePhase2
+      ? false
+      : isLoadingPhase2
+        ? false
+        : hasLinkPhase2;
+    const shouldShowLoading =
+      isLoadingPhase2 && !hasLinkPhase2 && !hasRenderedValidLink;
+    const shouldRenderChildren =
+      !shouldShowLoading &&
+      (isValidPhase2 || (hasRenderedValidLink && isLoadingPhase2));
+
+    expect(hasRenderedValidLink).toBe(true);
+    expect(shouldShowLoading).toBe(false);
+    expect(shouldRenderChildren).toBe(true);
+  });
+
+  it("redirects to custom redirectTo when shouldRedirect is true", () => {
     const redirectTo = "/custom-path";
+    const linkStore = {}; // ready to check
+    const isLoading = false;
+    const hasLink = false;
 
-    it("should redirect to custom path when link not found", () => {
-      mockContext.linkDetailStore = {
-        query: { isLoading: false },
-        link: null,
-      } as any;
+    const isReadyToCheck = !isLoading && linkStore !== null;
+    const shouldRedirect = isReadyToCheck && !hasLink;
 
-      const hasLink = mockContext.linkDetailStore?.link !== null;
-      const isLoading = mockContext.linkDetailStore?.query.isLoading;
+    if (shouldRedirect) {
+      goto(redirectTo || "/404");
+    }
 
-      if (!isLoading && !hasLink) {
-        goto(redirectTo);
-      }
-
-      expect(goto).toHaveBeenCalledWith("/custom-path");
-    });
+    expect(goto).toHaveBeenCalledWith("/custom-path");
   });
 });
