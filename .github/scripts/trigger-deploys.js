@@ -33,16 +33,6 @@ function matchDeployTargets(changedPaths, targets) {
 }
 
 /**
- * Resolve the current HEAD SHA of a branch.
- * Used to get the exact post-merge commit so deploy workflows checkout
- * the correct code and avoid a race condition with stale branch ref resolution.
- */
-async function getTargetBranchSha(github, owner, repo, branch) {
-  const { data } = await github.rest.repos.getBranch({ owner, repo, branch });
-  return data.commit.sha;
-}
-
-/**
  * Main entry point for GitHub Actions.
  * Checks PR target branch, gets changed files, dispatches matching deploy workflows.
  */
@@ -72,9 +62,10 @@ async function triggerDeploys({ github, context, core }) {
   // Match and dispatch
   const matched = matchDeployTargets(changedPaths, config.deployTargets);
 
-  // Resolve post-merge SHA to avoid race condition where GitHub's branch ref
-  // cache hasn't propagated yet and checkout would get the pre-merge commit
-  const mergedSha = await getTargetBranchSha(github, owner, repo, targetBranch);
+  // Fast-forward merge guarantees post-merge target HEAD == PR head SHA.
+  // pr.head.sha is the PR's source branch tip, already replicated for a while,
+  // so no race with GitHub's branch ref cache propagation.
+  const mergedSha = pr.head.sha;
   console.log(`Post-merge SHA for ${targetBranch}: ${mergedSha}`);
 
   for (const target of matched) {
@@ -99,5 +90,4 @@ module.exports = {
   getChangedFiles,
   matchDeployTargets,
   loadConfig,
-  getTargetBranchSha,
 };
