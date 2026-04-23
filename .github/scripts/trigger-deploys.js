@@ -62,6 +62,10 @@ async function triggerDeploys({ github, context, core }) {
   // Match and dispatch
   const matched = matchDeployTargets(changedPaths, config.deployTargets);
 
+  // FF merge only: post-merge branch HEAD == pr.head.sha (no new commit created).
+  const mergedSha = pr.head.sha;
+  console.log(`Post-merge SHA for ${targetBranch}: ${mergedSha}`);
+
   for (const target of matched) {
     console.log(`Triggering ${target.name} deploy...`);
     await github.rest.actions.createWorkflowDispatch({
@@ -69,6 +73,7 @@ async function triggerDeploys({ github, context, core }) {
       repo,
       workflow_id: target.workflow,
       ref: targetBranch,
+      inputs: { sha: mergedSha },
     });
   }
 
