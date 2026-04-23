@@ -178,3 +178,4 @@ We extend big thanks to aforementioned teams.
 - [ICRC-112: Batch Call Canister](https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_112_batch_call_canister.md#partial-responses)
 - [NFID Identity Kit](https://identitykit.xyz/)
 - [ICRC ledger](https://github.com/dfinity/ic/tree/master/rs/rosetta-api/icrc1)
+
