@@ -519,13 +519,40 @@ describe("FeeService", () => {
           decimals: 8,
         });
 
-        const treasuryOnly = createMockAction(ActionType.CREATE_LINK, [
-          createIntentWithPayload(
-            "treasury-only",
-            IntentTask.TRANSFER_WALLET_TO_TREASURY,
-            100_000_000n,
-          ),
-        ]);
+        // A "complete" CREATE_LINK action must include both:
+        // - funding intent (TRANSFER_WALLET_TO_LINK)
+        // - fee intent (TRANSFER_WALLET_TO_TREASURY)
+        //
+        // Baseline: fund the link with a different token so there's no overlap.
+        const otherPrincipal = Principal.anonymous();
+        const otherTokenAddress = otherPrincipal.toText();
+        const otherAsset = new Asset(otherPrincipal);
+        const tokensMapWithOther = {
+          ...tokensMap,
+          [otherTokenAddress]: createMockToken(otherTokenAddress, {
+            symbol: "OTHER",
+            decimals: 8,
+            fee: LEDGER_FEE,
+            priceUSD: undefined,
+          }),
+        };
+
+        const withDifferentFundingAsset = createMockAction(
+          ActionType.CREATE_LINK,
+          [
+            createIntentWithPayloadAndAsset(
+              "funding-asset",
+              IntentTask.TRANSFER_WALLET_TO_LINK,
+              100_000_000n,
+              otherAsset,
+            ),
+            createIntentWithPayload(
+              "treasury",
+              IntentTask.TRANSFER_WALLET_TO_TREASURY,
+              100_000_000n,
+            ),
+          ],
+        );
 
         const withFundingAsset = createMockAction(ActionType.CREATE_LINK, [
           createIntentWithPayload(
@@ -541,9 +568,9 @@ describe("FeeService", () => {
         ]);
 
         const resA = svc.buildFromAction(
-          treasuryOnly,
+          withDifferentFundingAsset,
           1,
-          tokensMap,
+          tokensMapWithOther,
           from.getPrincipal().toText(),
         );
         const resB = svc.buildFromAction(
@@ -565,7 +592,7 @@ describe("FeeService", () => {
 
         if (!createLinkFeeA || !createLinkFeeB) return;
 
-        // When fee token is also funded as an outgoing asset, displayed total should be reduced by one ledger fee.
+        // When the deposited token equals the fee token, displayed total should be reduced by one ledger fee.
         expect(createLinkFeeB.asset.amount).toBe(
           createLinkFeeA.asset.amount - LEDGER_FEE,
         );
@@ -580,8 +607,9 @@ describe("FeeService", () => {
           decimals: 8,
         });
 
-        const otherTokenAddress = Principal.anonymous().toText();
-        const otherAsset = new Asset(Principal.anonymous());
+        const otherPrincipal = Principal.anonymous();
+        const otherTokenAddress = otherPrincipal.toText();
+        const otherAsset = new Asset(otherPrincipal);
         const tokensMapWithOther = {
           ...tokensMap,
           [otherTokenAddress]: createMockToken(otherTokenAddress, {
@@ -592,13 +620,23 @@ describe("FeeService", () => {
           }),
         };
 
-        const treasuryOnly = createMockAction(ActionType.CREATE_LINK, [
-          createIntentWithPayload(
-            "treasury-only",
-            IntentTask.TRANSFER_WALLET_TO_TREASURY,
-            100_000_000n,
-          ),
-        ]);
+        // "Complete" action but with different funding token so there's no overlap.
+        const withDifferentFundingAssetZeroAmount = createMockAction(
+          ActionType.CREATE_LINK,
+          [
+            createIntentWithPayloadAndAsset(
+              "funding-asset",
+              IntentTask.TRANSFER_WALLET_TO_LINK,
+              0n,
+              otherAsset,
+            ),
+            createIntentWithPayload(
+              "treasury",
+              IntentTask.TRANSFER_WALLET_TO_TREASURY,
+              100_000_000n,
+            ),
+          ],
+        );
 
         const withDifferentFundingAsset = createMockAction(
           ActionType.CREATE_LINK,
@@ -618,7 +656,7 @@ describe("FeeService", () => {
         );
 
         const resA = svc.buildFromAction(
-          treasuryOnly,
+          withDifferentFundingAssetZeroAmount,
           1,
           tokensMapWithOther,
           from.getPrincipal().toText(),
