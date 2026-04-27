@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/svelte";
+import { cleanup, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FeeInfoDrawer from "./FeeInfoDrawer.svelte";
 
@@ -29,6 +29,16 @@ function fixture_of_fees_breakdown() {
     },
   ];
 }
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  cleanup(); // destroy component → queues fake timer
+  vi.runAllTimers(); // drain fake timer while jsdom is alive
+  vi.useRealTimers(); // restore for next test
+});
 
 describe("FeeInfoDrawer", () => {
   beforeEach(() => {
