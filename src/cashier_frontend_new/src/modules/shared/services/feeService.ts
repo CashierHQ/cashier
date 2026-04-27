@@ -145,6 +145,18 @@ export class FeeService {
   ): AssetAndFeeList {
     const pairs: AssetAndFee[] = [];
     const feeConfig = this.getLinkCreationFee();
+    const feeTokenAddress = feeConfig.tokenAddress?.toLowerCase() ?? "";
+
+    const hasFeeTokenOutgoingAssetIntent =
+      action.type === ActionType.CREATE_LINK &&
+      feeTokenAddress !== "" &&
+      action.intents.some((intent) => {
+        const address = intent.type.payload.asset.address.toString();
+        return (
+          address.toLowerCase() === feeTokenAddress &&
+          intent.task === IntentTask.TRANSFER_WALLET_TO_LINK
+        );
+      });
 
     for (const intent of action.intents) {
       const address = intent.type.payload.asset.address.toString();
@@ -205,11 +217,22 @@ export class FeeService {
 
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
-      const assetAmount =
+      let assetAmount =
         direction === FlowDirection.OUTGOING
           ? BigInt(intentFees.intent_total_amount) +
             BigInt(intentFees.intent_total_network_fee)
           : BigInt(intentFees.intent_total_amount);
+
+      // Effective total without double-counting: when the fee token (ICP) is also
+      // an outgoing asset for link funding, one ledger fee overlaps between the
+      // funding network fees and the link creation fee intent.
+      if (
+        feeType === FeeType.CREATE_LINK_FEE &&
+        address.toLowerCase() === feeTokenAddress &&
+        hasFeeTokenOutgoingAssetIntent
+      ) {
+        assetAmount = assetAmount > ledgerFee ? assetAmount - ledgerFee : 0n;
+      }
 
       const amountUi = parseBalanceUnits(assetAmount, decimals);
       const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
@@ -320,14 +343,12 @@ export class FeeService {
       const token = tokensMap[item.asset.address];
       if (!token) continue;
 
-      const amount =
-        item.fee.feeType === FeeType.CREATE_LINK_FEE
-          ? item.asset.amount
-          : item.fee.amount;
-      const usdAmount =
-        item.fee.feeType === FeeType.CREATE_LINK_FEE
-          ? parseFloat(item.asset.usdValueStr ?? "0")
-          : item.fee.usdValue;
+      const isCreateLinkFee = item.fee.feeType === FeeType.CREATE_LINK_FEE;
+
+      const amount = isCreateLinkFee ? item.asset.amount : item.fee.amount;
+      const usdAmount = isCreateLinkFee
+        ? parseFloat(item.asset.usdValueStr ?? "0")
+        : item.fee.usdValue;
 
       breakdown.push({
         name:
@@ -440,6 +461,13 @@ export class FeeService {
       return Err(new Error("Link fee token not found"));
     }
 
+    const isFeeTokenAlsoAsset =
+      linkFeeInfo.tokenAddress !== undefined &&
+      linkAssets.some(
+        (a) =>
+          a.address.toLowerCase() === linkFeeInfo.tokenAddress!.toLowerCase(),
+      );
+
     const intentFees = calculateIntentFees({
       intent_participants: IntentParticipants.CreatorToTreasury,
       token_standard: TokenStandardMapper.toSharedType(
@@ -451,9 +479,18 @@ export class FeeService {
       link_creation_fee: linkFeeInfo.amount,
     });
 
-    const linkCreationFeeTotal =
+    // When fee token is also used as an asset, one ledger fee overlaps between
+    // the asset network fees and the link creation fee intent. Align preview
+    // with max-amount validation (and backend/shared calculations) by
+    // subtracting a single ledger fee from the displayed link creation fee.
+    const linkCreationFeeTotalRaw =
       BigInt(intentFees.intent_total_amount) +
       BigInt(intentFees.intent_total_network_fee);
+    const overlapFee = isFeeTokenAlsoAsset ? (linkFeeToken.fee ?? 0n) : 0n;
+    const linkCreationFeeTotal =
+      linkCreationFeeTotalRaw > overlapFee
+        ? linkCreationFeeTotalRaw - overlapFee
+        : 0n;
 
     const linkFeeFormatted = parseBalanceUnits(
       linkCreationFeeTotal,
