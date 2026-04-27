@@ -61,6 +61,8 @@ export type ActionSource = {
  */
 export type WalletSource = {
   token: TokenMetadata;
+  /** Stable transaction id used as ledger memo; prefer backend id when available. */
+  transactionId?: string;
   /* recipient address - principal or account identifier (string) */
   to: Principal | string;
   amount: bigint;

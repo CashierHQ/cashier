@@ -165,6 +165,30 @@ describe("IcpLedgerService", () => {
       expect(result).toBe(blockHeight);
     });
 
+    it("should transfer to account with deduplication memo and created_at_time", async () => {
+      const blockHeight = 12345n;
+      const memo = new Uint8Array([1, 2, 3]);
+      const createdAtTime = 1_700_000_000_000_000_000n;
+      mockTransfer.mockResolvedValue({ Ok: blockHeight });
+
+      const result = await service.transferToAccount(accountIdHex, amount, {
+        memo,
+        createdAtTime,
+      });
+
+      expect(decodeAccountID).toHaveBeenCalledWith(accountIdHex);
+      expect(mockTransfer).toHaveBeenCalledWith({
+        to: new Uint8Array([1, 2, 3, 4]),
+        amount: { e8s: amount },
+        fee: { e8s: 10_000n },
+        memo: expect.any(BigInt),
+        from_subaccount: [],
+        created_at_time: [{ timestamp_nanos: createdAtTime }],
+      });
+      expect(mockTransfer.mock.calls[0][0].memo).not.toBe(0n);
+      expect(result).toBe(blockHeight);
+    });
+
     it("should throw when actor is null (not authenticated)", async () => {
       mockBuildActor.mockReturnValue(null);
 
@@ -193,14 +217,14 @@ describe("IcpLedgerService", () => {
       ).rejects.toThrow("Bad fee:");
     });
 
-    it("should throw on TxDuplicate error", async () => {
+    it("should return duplicate block height on TxDuplicate error", async () => {
       mockTransfer.mockResolvedValue({
         Err: { TxDuplicate: { duplicate_of: 100n } },
       });
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Duplicate transaction:");
+      ).resolves.toBe(100n);
     });
 
     it("should throw on InsufficientFunds error", async () => {
@@ -268,6 +292,28 @@ describe("IcpLedgerService", () => {
       expect(result).toBe(blockIndex);
     });
 
+    it("should transfer via ICRC-1 with deduplication memo and created_at_time", async () => {
+      const blockIndex = 67890n;
+      const memo = new Uint8Array([1, 2, 3]);
+      const createdAtTime = 1_700_000_000_000_000_000n;
+      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+
+      const result = await service.transferToPrincipal(toPrincipal, amount, {
+        memo,
+        createdAtTime,
+      });
+
+      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
+        to: { owner: toPrincipal, subaccount: [] },
+        amount,
+        fee: [10_000n],
+        memo: [memo],
+        from_subaccount: [],
+        created_at_time: [createdAtTime],
+      });
+      expect(result).toBe(blockIndex);
+    });
+
     it("should throw when actor is null (not authenticated)", async () => {
       mockBuildActor.mockReturnValue(null);
 
@@ -306,14 +352,14 @@ describe("IcpLedgerService", () => {
       ).rejects.toThrow("Bad burn amount:");
     });
 
-    it("should throw on Duplicate error", async () => {
+    it("should return duplicate block index on Duplicate error", async () => {
       mockIcrc1Transfer.mockResolvedValue({
         Err: { Duplicate: { duplicate_of: 42n } },
       });
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Duplicate transaction:");
+      ).resolves.toBe(42n);
     });
 
     it("should throw on BadFee error", async () => {

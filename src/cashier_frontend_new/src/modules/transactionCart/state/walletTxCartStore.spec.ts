@@ -244,6 +244,10 @@ describe("WalletTxCartStore", () => {
       expect(mockTransferToAccount).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(12345n));
     });
@@ -258,6 +262,10 @@ describe("WalletTxCartStore", () => {
       expect(mockIcpTransferToPrincipal).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(11111n));
     });
@@ -272,8 +280,28 @@ describe("WalletTxCartStore", () => {
       expect(mockTransferToPrincipal).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(67890n));
+    });
+
+    it("should reuse the same deduplication fields when retrying", async () => {
+      mockTransferToPrincipal
+        .mockRejectedValueOnce(new Error("Temporary failure"))
+        .mockResolvedValueOnce(67890n);
+      const source = createWalletSource(false);
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+      await store.execute();
+
+      const firstDeduplication = mockTransferToPrincipal.mock.calls[0][2];
+      const retryDeduplication = mockTransferToPrincipal.mock.calls[1][2];
+      expect(retryDeduplication).toBe(firstDeduplication);
     });
 
     it("should return Err for ICRC with account ID", async () => {

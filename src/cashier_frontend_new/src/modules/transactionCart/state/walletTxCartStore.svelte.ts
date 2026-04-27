@@ -5,6 +5,7 @@ import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
 import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import {
@@ -23,9 +24,11 @@ export class WalletTxCartStore implements TxCartStore {
   #icpLedgerService: IcpLedgerService | null = null;
   #icrcLedgerService: IcrcLedgerService | null = null;
   #assetAndFeeList = $state<AssetAndFee[]>([]);
+  #deduplication: TransferDeduplicationFields;
 
   constructor(source: WalletSource) {
     this.#source = source;
+    this.#deduplication = this.#createDeduplicationFields(source.transactionId);
   }
 
   /**
@@ -74,6 +77,17 @@ export class WalletTxCartStore implements TxCartStore {
     );
   }
 
+  #createDeduplicationFields(
+    transactionId?: string,
+  ): TransferDeduplicationFields {
+    const id =
+      transactionId ?? globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`;
+    return {
+      memo: new TextEncoder().encode(id),
+      createdAtTime: BigInt(Date.now()) * 1_000_000n,
+    };
+  }
+
   /**
    * Transition all assets to a new state.
    * Creates new array to trigger Svelte 5 reactivity.
@@ -110,9 +124,17 @@ export class WalletTxCartStore implements TxCartStore {
       // ICP Ledger: supports both ACCOUNT_ID and PRINCIPAL
       if (this.#icpLedgerService) {
         if (isAccountId && typeof to === "string") {
-          result = await this.#icpLedgerService.transferToAccount(to, amount);
+          result = await this.#icpLedgerService.transferToAccount(
+            to,
+            amount,
+            this.#deduplication,
+          );
         } else if (isPrincipal && typeof to !== "string") {
-          result = await this.#icpLedgerService.transferToPrincipal(to, amount);
+          result = await this.#icpLedgerService.transferToPrincipal(
+            to,
+            amount,
+            this.#deduplication,
+          );
         } else {
           this.setSourceState(WalletTransferState.FAILED);
           return Err(`Invalid address type for ${receiveType}.`);
@@ -131,7 +153,11 @@ export class WalletTxCartStore implements TxCartStore {
           this.setSourceState(WalletTransferState.FAILED);
           return Err("Invalid principal address.");
         }
-        result = await this.#icrcLedgerService.transferToPrincipal(to, amount);
+        result = await this.#icrcLedgerService.transferToPrincipal(
+          to,
+          amount,
+          this.#deduplication,
+        );
         this.setSourceState(WalletTransferState.SUCCESS);
         return Ok(result);
       }
