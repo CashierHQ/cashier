@@ -34,13 +34,15 @@
   <div class="flex gap-2 items-center mb-2 justify-between">
     <Label>{locale.t("links.linkForm.detail.usageInfo")}</Label>
     {#if onRefresh}
-      <button
-        onclick={onRefresh}
-        disabled={isRefreshing}
-        class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50"
-      >
-        <RefreshCw size={16} class={isRefreshing ? "animate-spin" : ""} />
-      </button>
+      <div class="flex items-center rounded-[3px] border border-lightgreen">
+        <button
+          onclick={onRefresh}
+          disabled={isRefreshing}
+          class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50 p-[3px] cursor-pointer"
+        >
+          <RefreshCw size={14} class={isRefreshing ? "animate-spin" : ""} />
+        </button>
+      </div>
     {/if}
   </div>
   <div class="flex flex-col border-[1px] rounded-lg border-lightgreen">
