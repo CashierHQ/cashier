@@ -3,8 +3,8 @@ import { rsMatch } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import { Principal } from "@dfinity/principal";
-import type { TokenMetadata } from "../types";
-import type { TransferDeduplicationFields } from "../types/transferDeduplication";
+import type { TokenMetadata } from "$modules/token/types";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 
 /**
  * Service for interacting with Icrc Ledger canisters for a specific token

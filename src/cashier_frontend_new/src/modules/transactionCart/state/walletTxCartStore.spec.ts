@@ -137,6 +137,57 @@ describe("WalletTxCartStore", () => {
       const store = new WalletTxCartStore(source);
       expect(store).toBeInstanceOf(WalletTxCartStore);
     });
+
+    it("should build transaction id from principal + timestamp when source.transactionId is missing", async () => {
+      vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+      const cryptoMock: Pick<Crypto, "randomUUID"> = {
+        randomUUID: () => "00000000-0000-0000-0000-000000000000",
+      };
+      vi.stubGlobal("crypto", cryptoMock as unknown as Crypto);
+      vi.mocked(authState).account = {
+        owner: "principal-abc",
+      } as typeof authState.account;
+
+      const source: WalletSource = {
+        ...createWalletSource(true, true),
+        transactionId: undefined,
+      };
+
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+
+      const deduplication = mockTransferToAccount.mock.calls[0][2];
+      const memoStr = new TextDecoder().decode(deduplication.memo);
+      expect(memoStr).toBe(
+        "principal-abc-1700000000000-00000000-0000-0000-0000-000000000000",
+      );
+      expect(deduplication.createdAtTime).toBe(1700000000000n * 1_000_000n);
+    });
+
+    it("should prefer source.transactionId over generated one", async () => {
+      vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+      const cryptoMock: Pick<Crypto, "randomUUID"> = {
+        randomUUID: () => "00000000-0000-0000-0000-000000000000",
+      };
+      vi.stubGlobal("crypto", cryptoMock as unknown as Crypto);
+      vi.mocked(authState).account = {
+        owner: "principal-abc",
+      } as typeof authState.account;
+
+      const source = createWalletSource(true, true);
+      source.transactionId = "backend-tx-id";
+
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+
+      const deduplication = mockTransferToAccount.mock.calls[0][2];
+      const memoStr = new TextDecoder().decode(deduplication.memo);
+      expect(memoStr).toBe("backend-tx-id");
+    });
   });
 
   describe("initialize", () => {

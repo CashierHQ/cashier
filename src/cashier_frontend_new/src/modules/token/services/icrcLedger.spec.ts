@@ -35,7 +35,7 @@ vi.mock("$modules/bitcoin/constants", () => ({
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import { IcrcLedgerService } from "./icrcLedger";
-import type { TokenMetadata } from "../types";
+import type { TokenMetadata } from "$modules/token/types";
 
 describe("IcrcLedgerService", () => {
   let service: IcrcLedgerService;

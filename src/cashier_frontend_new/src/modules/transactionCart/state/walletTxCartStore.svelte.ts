@@ -80,11 +80,14 @@ export class WalletTxCartStore implements TxCartStore {
   #createDeduplicationFields(
     transactionId?: string,
   ): TransferDeduplicationFields {
-    const id =
-      transactionId ?? globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`;
+    const owner = authState.account?.owner ?? "unknown";
+    const nowMs = Date.now();
+    const nonce = globalThis.crypto?.randomUUID?.() ?? `${nowMs}`;
+    // Must include both principal (owner) and timestamp to reduce collisions across users.
+    const id = transactionId ?? `${owner}-${nowMs}-${nonce}`;
     return {
       memo: new TextEncoder().encode(id),
-      createdAtTime: BigInt(Date.now()) * 1_000_000n,
+      createdAtTime: BigInt(nowMs) * 1_000_000n,
     };
   }
 

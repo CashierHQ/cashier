@@ -3,10 +3,13 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 import { Principal } from "@dfinity/principal";
-import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
 import { toNullable } from "@dfinity/utils";
 import { rsMatch } from "$lib/rsMatch";
-import type { TransferDeduplicationFields } from "../types/transferDeduplication";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
