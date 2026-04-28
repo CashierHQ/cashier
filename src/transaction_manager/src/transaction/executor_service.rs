@@ -85,7 +85,7 @@ impl<E: TransactionExecutor + Clone> ExecutionService for IcExecutorService<E> {
                     .collect::<Vec<_>>();
                 let results = futures::future::join_all(futures).await;
 
-                for (&tx, result) in level_txs.iter().zip(results) {
+                for (&tx, result) in level_txs.iter().zip(results.into_iter()) {
                     match result {
                         Ok(_) => {
                             executed_transactions.push(Transaction {
