@@ -95,4 +95,29 @@ describe("ProtectedLinkState", () => {
 
     expect(goto).toHaveBeenCalledWith("/404");
   });
+
+  it("keeps rendering children during background loading after a valid state was rendered", async () => {
+    mockContext.linkDetailStore = {
+      query: { isLoading: false },
+      state: { step: LinkStep.ACTIVE },
+    } as any;
+
+    render(ProtectedLinkStateTestHost, {
+      props: { allowedStates: [LinkStep.ACTIVE] },
+    });
+
+    await tick();
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+
+    mockContext.linkDetailStore = {
+      query: { isLoading: true },
+      state: { step: LinkStep.ACTIVE },
+    } as any;
+
+    await tick();
+
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+    expect(goto).not.toHaveBeenCalled();
+  });
 });

@@ -126,4 +126,27 @@ describe("ProtectedLinkOwner", () => {
 
     expect(goto).toHaveBeenCalledWith("/custom-path");
   });
+
+  it("keeps rendering children during background loading after an allowed state was rendered", async () => {
+    mockContext.linkDetailStore = {
+      query: { isLoading: false },
+      link: { creator: "owner-principal-123" },
+    } as any;
+
+    render(ProtectedLinkOwnerTestHost, { props: { mustBeOwner: true } });
+
+    await tick();
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+
+    mockContext.linkDetailStore = {
+      query: { isLoading: true },
+      link: { creator: "owner-principal-123" },
+    } as any;
+
+    await tick();
+
+    expect(screen.getByTestId("child")).toBeInTheDocument();
+    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+    expect(goto).not.toHaveBeenCalled();
+  });
 });
