@@ -96,7 +96,7 @@ impl<V: TransactionValidator + Clone> ValidationService for IcValidatorService<V
                     .collect::<Vec<_>>();
                 let results = futures::future::join_all(futures).await;
 
-                for (txid, result) in level_txids.iter().zip(results.into_iter()) {
+                for (txid, result) in level_txids.iter().zip(results) {
                     let mut updated_tx = txs_map
                         .get(txid.as_str())
                         .cloned()
