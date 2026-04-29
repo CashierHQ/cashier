@@ -94,6 +94,8 @@ jobs:
         run: dfx-orbit me
 
       - name: Create the canister id
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           dfx canister create token_storage --ic
 
