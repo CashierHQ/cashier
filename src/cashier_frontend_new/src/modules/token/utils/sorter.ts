@@ -34,7 +34,17 @@ export function sortWalletTokens(
   });
 }
 
-function tierOf(token: TokenWithPriceAndBalance, usdValue: number): 1 | 2 | 3 | 4 {
+/**
+ * Maps a token to its display tier. Lower number = higher in the list.
+ *   1 — enabled default token holding value (top of wallet)
+ *   2 — enabled custom/imported token holding value
+ *   3 — enabled but zero balance (parked, ICP/defaults pinned within)
+ *   4 — disabled by user (sinks below everything regardless of value)
+ */
+function tierOf(
+  token: TokenWithPriceAndBalance,
+  usdValue: number,
+): 1 | 2 | 3 | 4 {
   if (!token.enabled) return 4;
   if (usdValue > 0) return token.is_default ? 1 : 2;
   return 3;
