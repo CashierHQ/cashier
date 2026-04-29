@@ -135,18 +135,4 @@ jobs:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
-          set -o pipefail
-          # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade token_storage "install" "--ic" token_storage_args.hex 2>&1 | tail -1)
-          rc=${PIPESTATUS[0]}
-
-          # Parse JSON fields
-          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
-          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
-          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
-          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
-
-          if [ "$rc" -ne 0 ]; then
-            echo "::error ::orbit_upgrade failed with exit code $rc"
-            exit $rc
-          fi
+          just orbit_upgrade token_storage "install" "--ic" token_storage_args.hex
