@@ -107,11 +107,11 @@ jobs:
       - name: Verify the canister id
         run: dfx canister id token_storage --ic
 
-      - name: Add Orbit station as controller
+      - name: Set Orbit station as the controller
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister update-settings token_storage --add-controller ${{ vars.ORBIT_STATION_ID }} --ic
+          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --ic
 
       - name: Set log filter
         id: log_filter

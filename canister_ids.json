@@ -15,8 +15,7 @@
   "token_storage": {
     "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
     "production": "d2fvt-giaaa-aaaam-aen4q-cai",
-    "staging": "o4l23-2iaaa-aaaam-aehga-cai",
-    "ic": "de7vz-tyaaa-aaaao-ba3sa-cai"
+    "staging": "o4l23-2iaaa-aaaam-aehga-cai"
   },
   "token_storage_immut": {
     "ic": "grhea-oyaaa-aaaao-ba3ma-cai"
