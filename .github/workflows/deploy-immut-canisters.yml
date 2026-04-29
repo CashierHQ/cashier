@@ -119,7 +119,7 @@ jobs:
           echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
 
       - name: Build canisters
-        run: just build
+        run: just build_canisters
 
       - name: Build candid hex args
         run: |
@@ -135,4 +135,4 @@ jobs:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
-          just orbit_upgrade token_storage "install" "--network ic" token_storage_args.hex
+          just orbit_upgrade token_storage "install" "ic" token_storage_args.hex
