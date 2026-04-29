@@ -92,3 +92,49 @@ jobs:
 
       - name: Verify CI_user is legitimate user of the station
         run: dfx-orbit me
+
+      - name: Create the canister id
+        run: |
+          dfx canister create token_storage --ic
+
+      - name: Verify the canister id
+        run: dfx canister id token_storage --ic
+
+      - name: Add Orbit station as controller
+        run: |
+          dfx canister update-settings token_storage --add-controller ${{ vars.ORBIT_STATION_ID }} --ic
+
+      - name: Set log filter
+        id: log_filter
+        run: |
+          echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
+
+      - name: Build candid hex args
+        run: |
+          owner=${{ vars.ORBIT_STATION_ID }}
+          ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
+          just build_token_storage_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args
+          echo "Token storage args:"
+          cat token_storage_args.hex
+
+      - name: Install canister using Orbit
+        id: token_storage
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade token_storage "install" "--ic" token_storage_args.hex 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc"
+            exit $rc
+          fi
