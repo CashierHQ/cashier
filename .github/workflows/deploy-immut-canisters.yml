@@ -103,6 +103,8 @@ jobs:
         run: dfx canister id token_storage --ic
 
       - name: Add Orbit station as controller
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           dfx canister update-settings token_storage --add-controller ${{ vars.ORBIT_STATION_ID }} --ic
 
