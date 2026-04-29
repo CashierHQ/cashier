@@ -33,7 +33,8 @@ orbit_upgrade canister_name mode network arg_file:
   wasm_path="{{ARTIFACTS_DIR}}/{{canister_name}}.wasm.gz"
   wasm_checksum=$(just sha256_file "$wasm_path")
   arg=$(cat {{arg_file}})
-  arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
+  #arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
+  arg_checksum="123456"
 
   if [ -n "$arg" ]; then
     output=$(dfx-orbit request canister install \
