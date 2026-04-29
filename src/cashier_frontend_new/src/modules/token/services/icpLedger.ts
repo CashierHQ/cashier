@@ -51,6 +51,11 @@ export class IcpLedgerService {
     }
   }
 
+  /**
+   * Convert a memo to a legacy memo.
+   * @param memo The memo to convert.
+   * @returns The legacy memo.
+   */
   #toLegacyMemo(memo: Uint8Array | number[]): bigint {
     const mask64 = (1n << 64n) - 1n;
     let hash = 14_695_981_039_346_656_037n;

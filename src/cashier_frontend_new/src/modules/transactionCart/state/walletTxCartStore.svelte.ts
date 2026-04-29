@@ -14,6 +14,7 @@ import {
 } from "$modules/transactionCart/types/txCart";
 import { ReceiveAddressType } from "$modules/wallet/types";
 import { Err, Ok, type Result } from "ts-results-es";
+import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
 
 /**
  * Transaction cart store for Wallet-based (ICRC/ICP) transactions.
@@ -28,7 +29,7 @@ export class WalletTxCartStore implements TxCartStore {
 
   constructor(source: WalletSource) {
     this.#source = source;
-    this.#deduplication = this.#createDeduplicationFields(source.transactionId);
+    this.#deduplication = this.#createDeduplicationFields();
   }
 
   /**
@@ -77,16 +78,18 @@ export class WalletTxCartStore implements TxCartStore {
     );
   }
 
-  #createDeduplicationFields(
-    transactionId?: string,
-  ): TransferDeduplicationFields {
+  /**
+   * Create deduplication fields for the transaction.
+   * @returns The deduplication fields.
+   */
+  #createDeduplicationFields(): TransferDeduplicationFields {
     const owner = authState.account?.owner ?? "unknown";
     const nowMs = Date.now();
     const nonce = globalThis.crypto?.randomUUID?.() ?? `${nowMs}`;
     // Must include both principal (owner) and timestamp to reduce collisions across users.
-    const id = transactionId ?? `${owner}-${nowMs}-${nonce}`;
+    const id = `${owner}-${nowMs}-${nonce}`;
     return {
-      memo: new TextEncoder().encode(id),
+      memo: createDeduplicationMemo32(id),
       createdAtTime: BigInt(nowMs) * 1_000_000n,
     };
   }

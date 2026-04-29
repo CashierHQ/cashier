@@ -13,6 +13,7 @@ import { Ok } from "ts-results-es";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
+import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
 import { WalletTxCartStore } from "./walletTxCartStore.svelte";
 
 // Mock constants
@@ -138,7 +139,7 @@ describe("WalletTxCartStore", () => {
       expect(store).toBeInstanceOf(WalletTxCartStore);
     });
 
-    it("should build transaction id from principal + timestamp when source.transactionId is missing", async () => {
+    it("should create memo <= 32 bytes and deterministic for fixed inputs", async () => {
       vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
       const cryptoMock: Pick<Crypto, "randomUUID"> = {
         randomUUID: () => "00000000-0000-0000-0000-000000000000",
@@ -148,10 +149,7 @@ describe("WalletTxCartStore", () => {
         owner: "principal-abc",
       } as typeof authState.account;
 
-      const source: WalletSource = {
-        ...createWalletSource(true, true),
-        transactionId: undefined,
-      };
+      const source: WalletSource = createWalletSource(true, true);
 
       const store = new WalletTxCartStore(source);
       store.initialize();
@@ -159,25 +157,28 @@ describe("WalletTxCartStore", () => {
       await store.execute();
 
       const deduplication = mockTransferToAccount.mock.calls[0][2];
-      const memoStr = new TextDecoder().decode(deduplication.memo);
-      expect(memoStr).toBe(
-        "principal-abc-1700000000000-00000000-0000-0000-0000-000000000000",
+      const expectedId =
+        "principal-abc-1700000000000-00000000-0000-0000-0000-000000000000";
+      expect(deduplication.memo).toEqual(createDeduplicationMemo32(expectedId));
+      expect(deduplication.memo).toBeInstanceOf(Uint8Array);
+      expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
+        32,
       );
       expect(deduplication.createdAtTime).toBe(1700000000000n * 1_000_000n);
     });
 
-    it("should prefer source.transactionId over generated one", async () => {
+    it("should keep memo <= 32 bytes even when owner is long", async () => {
       vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
       const cryptoMock: Pick<Crypto, "randomUUID"> = {
         randomUUID: () => "00000000-0000-0000-0000-000000000000",
       };
       vi.stubGlobal("crypto", cryptoMock as unknown as Crypto);
       vi.mocked(authState).account = {
-        owner: "principal-abc",
+        owner:
+          "aaaaa-bbbbb-ccccc-ddddd-eeeee-fffff-ggggg-hhhhh-iiiii-jjjjj-kkkkk-lllll",
       } as typeof authState.account;
 
       const source = createWalletSource(true, true);
-      source.transactionId = "backend-tx-id";
 
       const store = new WalletTxCartStore(source);
       store.initialize();
@@ -185,8 +186,9 @@ describe("WalletTxCartStore", () => {
       await store.execute();
 
       const deduplication = mockTransferToAccount.mock.calls[0][2];
-      const memoStr = new TextDecoder().decode(deduplication.memo);
-      expect(memoStr).toBe("backend-tx-id");
+      expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
+        32,
+      );
     });
   });
 
