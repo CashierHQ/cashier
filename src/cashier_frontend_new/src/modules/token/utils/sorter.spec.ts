@@ -20,37 +20,8 @@ function makeToken(
 }
 
 describe("sortWalletTokens", () => {
-  it("orders tier 1 (enabled+default+USD>0) by USD desc", () => {
+  it("orders tier 1 (enabled + USD > 0) by USD desc", () => {
     const tokens = [
-      makeToken({
-        address: "mxzaz-hqaaa-aaaar-qaada-cai",
-        priceUSD: 100000.01,
-        balance: 1000n,
-        is_default: true,
-      }),
-      makeToken({
-        address: ICP_LEDGER_CANISTER_ID,
-        priceUSD: 5.01,
-        balance: 1000n,
-        is_default: true,
-      }),
-    ];
-
-    expect(sortWalletTokens(tokens).map((t) => t.address)).toEqual([
-      "mxzaz-hqaaa-aaaar-qaada-cai",
-      ICP_LEDGER_CANISTER_ID,
-    ]);
-  });
-
-  it("places tier 1 above tier 2 even when tier 2 has higher USD value", () => {
-    const tokens = [
-      makeToken({
-        address: "non-default-rich",
-        priceUSD: 1_000_000,
-        balance: 1000n,
-        decimals: 0,
-        is_default: false,
-      }),
       makeToken({
         address: "default-poor",
         priceUSD: 0.01,
@@ -58,15 +29,22 @@ describe("sortWalletTokens", () => {
         decimals: 0,
         is_default: true,
       }),
+      makeToken({
+        address: "non-default-rich",
+        priceUSD: 1_000_000,
+        balance: 1000n,
+        decimals: 0,
+        is_default: false,
+      }),
     ];
 
     expect(sortWalletTokens(tokens).map((t) => t.address)).toEqual([
-      "default-poor",
       "non-default-rich",
+      "default-poor",
     ]);
   });
 
-  it("places tier 3 (enabled+USD=0) below tier 2 with ICP first then defaults", () => {
+  it("places tier 2 (enabled + USD = 0) below tier 1 with ICP first then defaults", () => {
     const tokens = [
       makeToken({
         address: "zzz-non-default",
@@ -81,7 +59,7 @@ describe("sortWalletTokens", () => {
         is_default: true,
       }),
       makeToken({
-        address: "tier2-token",
+        address: "tier1-token",
         priceUSD: 1,
         balance: 1n,
         decimals: 0,
@@ -90,7 +68,7 @@ describe("sortWalletTokens", () => {
     ];
 
     expect(sortWalletTokens(tokens).map((t) => t.address)).toEqual([
-      "tier2-token",
+      "tier1-token",
       ICP_LEDGER_CANISTER_ID,
       "aaa-default-zero",
       "zzz-non-default",
@@ -196,12 +174,12 @@ describe("sortWalletTokens", () => {
     ];
 
     expect(sortWalletTokens(tokens).map((t) => t.address)).toEqual([
-      "mxzaz-hqaaa-aaaar-qaada-cai", // tier 1: ckBTC
-      ICP_LEDGER_CANISTER_ID, // tier 1: ICP
-      "oj6if-riaaa-aaaaq-aaeha-cai", // tier 2: ALICE
-      "xevnm-gaaaa-aaaar-qafnq-cai", // tier 3: ckUSDC (default)
-      "ss2fx-dyaaa-aaaar-qacoq-cai", // tier 3: ckETH (non-default)
-      "disabled-token", // tier 4
+      "mxzaz-hqaaa-aaaar-qaada-cai", // tier 1: ckBTC ($10M)
+      ICP_LEDGER_CANISTER_ID, // tier 1: ICP ($5K)
+      "oj6if-riaaa-aaaaq-aaeha-cai", // tier 1: ALICE ($0.01)
+      "xevnm-gaaaa-aaaar-qafnq-cai", // tier 2: ckUSDC (default)
+      "ss2fx-dyaaa-aaaar-qacoq-cai", // tier 2: ckETH (non-default)
+      "disabled-token", // tier 3
     ]);
   });
 });

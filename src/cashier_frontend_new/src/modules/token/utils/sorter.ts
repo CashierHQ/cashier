@@ -4,10 +4,9 @@ import type { TokenWithPriceAndBalance } from "../types";
 
 /**
  * Sorts wallet tokens by tier:
- *   1. enabled + is_default + USD > 0   — USD desc
- *   2. enabled + !is_default + USD > 0  — USD desc
- *   3. enabled + USD = 0                — ICP first, then default, then address
- *   4. disabled (any value)             — USD desc, then address
+ *   1. enabled + USD > 0   — USD desc
+ *   2. enabled + USD = 0   — ICP first, then default, then address
+ *   3. disabled (any value) — USD desc, then address
  */
 export function sortWalletTokens(
   enrichedTokens: TokenWithPriceAndBalance[],
@@ -20,11 +19,11 @@ export function sortWalletTokens(
 
     if (ta !== tb) return ta - tb;
 
-    if (ta === 1 || ta === 2 || ta === 4) {
+    if (ta === 1 || ta === 3) {
       if (aUSD !== bUSD) return bUSD - aUSD;
     }
 
-    if (ta === 3) {
+    if (ta === 2) {
       if (a.address === ICP_LEDGER_CANISTER_ID) return -1;
       if (b.address === ICP_LEDGER_CANISTER_ID) return 1;
       if (a.is_default !== b.is_default) return a.is_default ? -1 : 1;
@@ -36,16 +35,14 @@ export function sortWalletTokens(
 
 /**
  * Maps a token to its display tier. Lower number = higher in the list.
- *   1 — enabled default token holding value (top of wallet)
- *   2 — enabled custom/imported token holding value
- *   3 — enabled but zero balance (parked, ICP/defaults pinned within)
- *   4 — disabled by user (sinks below everything regardless of value)
+ *   1 — enabled token holding value (sorted by USD desc, default flag ignored)
+ *   2 — enabled but zero balance (parked, ICP/defaults pinned within)
+ *   3 — disabled by user (sinks below everything regardless of value)
  */
 function tierOf(
   token: TokenWithPriceAndBalance,
   usdValue: number,
-): 1 | 2 | 3 | 4 {
-  if (!token.enabled) return 4;
-  if (usdValue > 0) return token.is_default ? 1 : 2;
-  return 3;
+): 1 | 2 | 3 {
+  if (!token.enabled) return 3;
+  return usdValue > 0 ? 1 : 2;
 }
