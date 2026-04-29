@@ -118,6 +118,9 @@ jobs:
         run: |
           echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
 
+      - name: Build canisters
+        run: just build
+
       - name: Build candid hex args
         run: |
           owner=${{ vars.ORBIT_STATION_ID }}
