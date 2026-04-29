@@ -135,4 +135,4 @@ jobs:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
-          just orbit_upgrade token_storage "install" "--ic" token_storage_args.hex
+          just orbit_upgrade token_storage "install" "--network ic" token_storage_args.hex
