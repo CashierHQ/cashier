@@ -10,11 +10,6 @@
       "candid": "./target/artifacts/token_storage.did",
       "wasm": "./target/artifacts/token_storage.wasm.gz"
     },
-    "token_storage_immut": {
-      "type": "custom",
-      "candid": "./target/artifacts/token_storage.did",
-      "wasm": "./target/artifacts/token_storage.wasm.gz"
-    },
     "cashier_frontend_new": {
       "source": ["./src/cashier_frontend_new/build"],
       "type": "assets",
