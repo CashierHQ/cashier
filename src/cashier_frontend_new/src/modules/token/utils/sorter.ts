@@ -39,10 +39,7 @@ export function sortWalletTokens(
  *   2 — enabled but zero balance (parked, ICP/defaults pinned within)
  *   3 — disabled by user (sinks below everything regardless of value)
  */
-function tierOf(
-  token: TokenWithPriceAndBalance,
-  usdValue: number,
-): 1 | 2 | 3 {
+function tierOf(token: TokenWithPriceAndBalance, usdValue: number): 1 | 2 | 3 {
   if (!token.enabled) return 3;
   return usdValue > 0 ? 1 : 2;
 }
