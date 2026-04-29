@@ -118,9 +118,8 @@ describe("createDeduplicationMemo32", () => {
     it("it_should_produce_sha256_of_hello", () => {
       // SHA-256("hello")
       const expected = new Uint8Array([
-        44, 242, 77, 186, 95, 176, 163, 14, 38, 232, 59, 42, 197, 185, 226,
-        158, 27, 22, 30, 92, 31, 167, 66, 94, 115, 4, 51, 98, 147, 139, 152,
-        36,
+        44, 242, 77, 186, 95, 176, 163, 14, 38, 232, 59, 42, 197, 185, 226, 158,
+        27, 22, 30, 92, 31, 167, 66, 94, 115, 4, 51, 98, 147, 139, 152, 36,
       ]);
 
       expect(createDeduplicationMemo32("hello")).toEqual(expected);
