@@ -64,7 +64,31 @@ jobs:
       - name: Clean up private key file
         run: rm private_key.pem
 
-      - name: Get cashier dev address
+      - name: Verify CI_user address
         run: |
           dfx identity use ci_user
           dfx identity get-principal
+
+      - name: Cache dfx-orbit binary
+        id: cache-dfx-orbit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/dfx-orbit
+          key: dfx-orbit-linux-control-panel-v0.4.0
+
+      - name: Install dfx-orbit
+        if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/CashierHQ/orbit.git
+          cd orbit
+          cargo install -f --path tools/dfx-orbit/
+
+      - name: Setup station
+        run: |
+          dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+
+      - name: Verify station setup
+        run: dfx-orbit station list
+
+      - name: Verify CI_user is legitimate user of the station
+        run: dfx-orbit me
