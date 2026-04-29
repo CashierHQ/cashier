@@ -111,7 +111,7 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --ic
+          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --ic -y
 
       - name: Set log filter
         id: log_filter
