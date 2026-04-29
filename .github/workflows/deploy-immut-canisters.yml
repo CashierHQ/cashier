@@ -1,0 +1,70 @@
+name: Deploy immutable canisters
+on:
+  push:
+    branches:
+      - feature/immut-contract
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    environment: immut-contract
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
+
+      - name: Setup environment
+        run: |
+          export RUST_BACKTRACE="full" >> $GITHUB_ENV
+
+      - name: Install dfx
+        uses: dfinity/setup-dfx@main
+
+      - name: Confirm successful installation
+        run: dfx --version
+
+      - name: Install ic-wasm
+        run: |
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          chmod +x /usr/local/bin/ic-wasm
+
+      - name: Install candid-extractor
+        run: |
+          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
+          chmod +x /usr/local/bin/candid-extractor
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Export CI_user private key file
+        run: |
+          echo "${{ secrets.CI_USER_PEM }}" > private_key.pem
+
+      # DANGEROUS: This is a plaintext identity import
+      - name: Import CI_user identity
+        run: dfx identity import ci_user private_key.pem --storage-mode=plaintext
+      # DANGEROUS: Do not echo the private key to the console
+
+      - name: Clean up private key file
+        run: rm private_key.pem
+
+      - name: Get cashier dev address
+        run: |
+          dfx identity use ci_user
+          dfx identity get-principal
