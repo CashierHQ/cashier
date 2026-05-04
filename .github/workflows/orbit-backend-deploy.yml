@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - staging
+      - feature/immut-contract
     paths:
       - 'src/cashier_backend/**'
       - 'src/token_storage/**'
@@ -46,6 +47,8 @@ jobs:
             echo "network=production" >> $GITHUB_OUTPUT
           elif [[ "$TARGET_BRANCH" == "staging" ]]; then
             echo "network=staging" >> $GITHUB_OUTPUT
+          elif [[ "$TARGET_BRANCH" == "feature/immut-contract" ]]; then
+            echo "network=immut-contract" >> $GITHUB_OUTPUT
           else
             # Any other branch will deploy to dev network
             echo "network=dev" >> $GITHUB_OUTPUT
@@ -54,12 +57,12 @@ jobs:
       - name: Set deployment mode
         id: set-mode
         run: |
-          # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
+          # Use input mode if provided (workflow_dispatch), otherwise default to 'install'
           INPUT_MODE="${{ github.event.inputs.mode }}"
           if [[ -n "$INPUT_MODE" ]]; then
             echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
           else
-            echo "mode=upgrade" >> $GITHUB_OUTPUT
+            echo "mode=install" >> $GITHUB_OUTPUT
           fi
 
   deploy:
