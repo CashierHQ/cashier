@@ -34,8 +34,31 @@ vi.mock("$modules/shared/utils/icpAccountId", () => ({
 
 // Import after mocks
 import { authState } from "$modules/auth/state/auth.svelte";
-import { IcpLedgerService } from "./icpLedger";
+import { IcpLedgerService, toLegacyMemo } from "./icpLedger";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
+
+describe("toLegacyMemo", () => {
+  it("returns FNV offset basis for empty input", () => {
+    expect(toLegacyMemo([])).toBe(14_695_981_039_346_656_037n);
+  });
+
+  it("hashes a single zero byte", () => {
+    expect(toLegacyMemo([0])).toBe(12_638_153_115_695_167_455n);
+  });
+
+  it("hashes multiple bytes", () => {
+    expect(toLegacyMemo([1, 2, 3])).toBe(15_035_938_162_879_559_083n);
+  });
+
+  it("masks to 64 bits (255-byte)", () => {
+    expect(toLegacyMemo([255])).toBe(12_638_352_127_299_873_646n);
+  });
+
+  it("treats Uint8Array like number[]", () => {
+    const bytes = [10, 20, 30, 40];
+    expect(toLegacyMemo(new Uint8Array(bytes))).toBe(toLegacyMemo(bytes));
+  });
+});
 
 describe("IcpLedgerService", () => {
   let service: IcpLedgerService;

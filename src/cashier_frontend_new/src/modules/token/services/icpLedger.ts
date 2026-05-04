@@ -11,6 +11,19 @@ import { toNullable } from "@dfinity/utils";
 import { rsMatch } from "$lib/rsMatch";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 
+/** FNV-1a style 64-bit hash for legacy transfer memo (masked to u64). */
+export function toLegacyMemo(memo: Uint8Array | number[]): bigint {
+  const mask64 = (1n << 64n) - 1n;
+  let hash = 14_695_981_039_346_656_037n;
+
+  for (const byte of memo) {
+    hash ^= BigInt(byte);
+    hash = (hash * 1_099_511_628_211n) & mask64;
+  }
+
+  return hash;
+}
+
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  */
@@ -51,21 +64,8 @@ export class IcpLedgerService {
     }
   }
 
-  /**
-   * Convert a memo to a legacy memo.
-   * @param memo The memo to convert.
-   * @returns The legacy memo.
-   */
   #toLegacyMemo(memo: Uint8Array | number[]): bigint {
-    const mask64 = (1n << 64n) - 1n;
-    let hash = 14_695_981_039_346_656_037n;
-
-    for (const byte of memo) {
-      hash ^= BigInt(byte);
-      hash = (hash * 1_099_511_628_211n) & mask64;
-    }
-
-    return hash;
+    return toLegacyMemo(memo);
   }
 
   /**
