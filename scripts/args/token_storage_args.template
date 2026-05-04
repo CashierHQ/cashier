@@ -43,5 +43,3209 @@
       decimals = 18: nat8;
       enabled_by_default = true;
     };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xevnm-gaaaa-aaaar-qafnq-cai";
+        index_id = opt principal "xrs4b-hiaaa-aaaar-qafoa-cai";
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckUSDC";
+      name = "Chain Key USD Coin";
+      decimals = 6: nat8;
+      enabled_by_default = true;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vpyot-zqaaa-aaaaa-qavaq-cai";
+        index_id = null : opt principal;
+        fee = 1 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "FUNNAI";
+      name = "FUNNAI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6yaih-jyaaa-aaaab-aaxia-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "VILAGE";
+      name = "Xtravagant Village";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ithic-qaaaa-aaaab-qc7vq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DARK";
+      name = "DARK";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xwuv6-lyaaa-aaaad-aaena-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CMHT";
+      name = "Crypto Miners Hunt Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "nxd7c-niaaa-aaaae-qaawa-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "FACT";
+      name = "Factland Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jy3uz-6iaaa-aaaaf-qao3a-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICN";
+      name = "IC News Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "b2pon-6aaaa-aaaag-abp6q-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "WOJAKIC";
+      name = "Wojakic Meme Coin";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "agtsn-xyaaa-aaaag-ak3kq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
+      }};
+      symbol = "ICDV";
+      name = "ICDevs";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "q624g-niaaa-aaaag-alfyq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "FMJ";
+      name = "Fort Major";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mjjyq-5yaaa-aaaag-atsnq-cai";
+        index_id = null : opt principal;
+        fee = 1000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "MOTOKOINS";
+      name = "MOTOKOINS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "l67es-4iaaa-aaaag-atvda-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "AAA";
+      name = "aaaaa-aa ∞";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ktra4-taaaa-aaaag-atveq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BIL";
+      name = "BIL Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "zbneb-7aaaa-aaaag-at2nq-cai";
+        index_id = null : opt principal;
+        fee = 10000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "USDT.bsc";
+      name = "USDT on ICP";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "z2iye-fyaaa-aaaag-at2pa-cai";
+        index_id = null : opt principal;
+        fee = 10000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "USDC.bsc";
+      name = "USDC on ICP";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "r5ola-uyaaa-aaaag-at3za-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "MOTOKOINS";
+      name = "MOTOKOINS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "2virr-waaaa-aaaag-at5ya-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CREDITs";
+      name = "CREDITs";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "eayyd-iiaaa-aaaah-adtea-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "iDoge";
+      name = "Internet Doge";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pi6cs-kqaaa-aaaah-advfa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "CZECH";
+      name = "Czech";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "iozql-7iaaa-aaaah-advvq-cai";
+        index_id = null : opt principal;
+        fee = 420 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "TENDY";
+      name = "Tendies";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "cp4zx-yiaaa-aaaah-aqzea-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DOD";
+      name = "DOD";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fnnuy-yqaaa-aaaah-aq6ja-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "DFX";
+      name = "DFileX";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "maqfl-kaaaa-aaaah-arfyq-cai";
+        index_id = null : opt principal;
+        fee = 1000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "AVCD";
+      name = "AVOCADO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "zc5ct-kaaaa-aaaah-qddga-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "xICP";
+      name = "xICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ggi4a-wyaaa-aaaai-actqq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DC";
+      name = "Decent Cloud";
+      decimals = 9: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ry5ih-gaaaa-aaaai-aqayq-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "bone";
+      name = "bone";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ly36x-wiaaa-aaaai-aqj7q-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "VCHF";
+      name = "VNX Franc";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xafvr-biaaa-aaaai-aql5q-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "TESTICP";
+      name = "Test ICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6qfxa-ryaaa-aaaai-qbhsq-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC3 } };
+      }};
+      symbol = "TAGGR";
+      name = "Taggr";
+      decimals = 2: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "imeri-bqaaa-aaaai-qnpla-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "OT";
+      name = "ICOracle Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "j5lhj-xyaaa-aaaai-qpfeq-cai";
+        index_id = null : opt principal;
+        fee = 1483370 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Bits";
+      name = "BreakingBits";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "k762w-hiaaa-aaaai-qpfpq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "OWL";
+      name = "META";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o3mvq-caaaa-aaaai-qpfua-cai";
+        index_id = null : opt principal;
+        fee = 2000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DITTO";
+      name = "DITTO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6zn6a-cyaaa-aaaai-q3m3q-cai";
+        index_id = null : opt principal;
+        fee = 500000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "PACA";
+      name = "PACA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jwcfb-hyaaa-aaaaj-aac4q-cai";
+        index_id = null : opt principal;
+        fee = 200000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "OGY";
+      name = "Origyn";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "aiavr-dyaaa-aaaaj-azt5q-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "DARKMAGA";
+      name = "DARKMAGA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3jkp5-oyaaa-aaaaj-azwqa-cai";
+        index_id = opt principal "qzre3-3iaaa-aaaai-aqmsa-cai";
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "TICRC1";
+      name = "TEST ICRC1";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "anbw7-hqaaa-aaaaj-az7ra-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "vUSD";
+      name = "vUSD";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "w5t77-riaaa-aaaaj-a2mda-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "GRAVE";
+      name = "Graveyard Trespasser";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o6v37-3iaaa-aaaaj-qa4fa-cai";
+        index_id = null : opt principal;
+        fee = 1 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BTON";
+      name = "Btown Mo";
+      decimals = 3: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "przbn-baaaa-aaaaj-qnshq-cai";
+        index_id = null : opt principal;
+        fee = 25 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CRUMB";
+      name = "CrumbEatr";
+      decimals = 2: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bpqth-gaaaa-aaaaj-qntfq-cai";
+        index_id = null : opt principal;
+        fee = 25 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CRUMB";
+      name = "CrumbEatr";
+      decimals = 2: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pmlt4-pqaaa-aaaak-aewmq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "COE";
+      name = "COE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pcj6u-uaaaa-aaaak-aewnq-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CLOUD";
+      name = "Crypto Cloud";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ph45x-riaaa-aaaak-afabq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "KAST";
+      name = "SpellKaster";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ifnqy-rqaaa-aaaak-afhmq-cai";
+        index_id = null : opt principal;
+        fee = 1000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ICPI";
+      name = "ICPI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "5s2p2-4qaaa-aaaak-afitq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "doge";
+      name = "doge";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "75bwl-diaaa-aaaak-afi7a-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ICD";
+      name = "IC Drip Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "unvj5-dqaaa-aaaak-afjbq-cai";
+        index_id = null : opt principal;
+        fee = 50000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "STAR";
+      name = "Coinstars Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "wqihv-qyaaa-aaaak-afjoa-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "XP";
+      name = "WindogeXP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "tmt5q-3qaaa-aaaak-afjrq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "CATDOG";
+      name = "CATDOG";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "rynye-6qaaa-aaaak-afj7q-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "$ICBonk";
+      name = "ICPBonk";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "gfa5z-iaaaa-aaaak-afkaq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ipaw";
+      name = "ipaw";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "edypu-bqaaa-aaaak-afknq-cai";
+        index_id = null : opt principal;
+        fee = 4200 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "BITCORN";
+      name = "BITCORN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "brbyz-riaaa-aaaak-afkta-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "JESUS";
+      name = "JESUS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jncxy-2qaaa-aaaak-aflhq-cai";
+        index_id = null : opt principal;
+        fee = 10000000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ALPACALB";
+      name = "ALPACALB";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kbvhp-rqaaa-aaaak-aflnq-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "PAWT";
+      name = "PAWT";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kttqw-5aaaa-aaaak-afloq-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "RENEGADE";
+      name = "RENEGADE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "nattc-jqaaa-aaaak-afl5q-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "TempleOS";
+      name = "TempleOS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "nwd3n-qaaaa-aaaak-afmda-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "INSANE";
+      name = "INSANE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o2ul2-3aaaa-aaaak-afmja-cai";
+        index_id = null : opt principal;
+        fee = 4206900000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "PEPE";
+      name = "PEPE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dbjc3-biaaa-aaaak-afnaq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "Linux";
+      name = "Linux";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dikjh-xaaaa-aaaak-afnba-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "MacOS";
+      name = "MacOS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "czaxy-piaaa-aaaak-afneq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "UNIX";
+      name = "UNIX";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "eapww-ziaaa-aaaak-afnqq-cai";
+        index_id = null : opt principal;
+        fee = 1 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "Cryptos";
+      name = "Cryptos";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "obaqf-viaaa-aaaak-ak3na-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "TRA";
+      name = "Trabyter Bucks";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3kf65-giaaa-aaaak-qcw2q-cai";
+        index_id = null : opt principal;
+        fee = 1000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "AVCD";
+      name = "AVOCADO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "sr5fw-zqaaa-aaaak-qig5q-cai";
+        index_id = null : opt principal;
+        fee = 2500000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "COW";
+      name = "Red Heifer";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "egjwt-lqaaa-aaaak-qi2aa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BURN";
+      name = "MSQ Cycle Burn";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jizbq-3qaaa-aaaak-qubga-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "D3PO";
+      name = "Dom-3PO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vurva-zqaaa-aaaak-quezq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "MAPTF";
+      name = "MAP Technical Forecasting ";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "iwv6l-6iaaa-aaaal-ajjjq-cai";
+        index_id = null : opt principal;
+        fee = 50000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "CLOWN";
+      name = "Insane Clown Protocol";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lzvx6-nqaaa-aaaal-ajo6q-cai";
+        index_id = null : opt principal;
+        fee = 420000000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "PEPE";
+      name = "PEPE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7xkvf-zyaaa-aaaal-ajvra-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "PARTY";
+      name = "Party Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "42v33-hyaaa-aaaal-aspca-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "INDA";
+      name = "INDA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "uwihq-liaaa-aaaal-qcbrq-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "NOBL";
+      name = "NOBLEBLOCKS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "n6tkf-tqaaa-aaaal-qsneq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "cICP";
+      name = "cICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7wg6b-yaaaa-aaaal-qsofq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "AckUSDC";
+      name = "Atlas ckUSDC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7rrmx-tyaaa-aaaal-qsraq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "OHSHII";
+      name = "OhShii";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "73f6j-5iaaa-aaaal-qsw4a-cai";
+        index_id = null : opt principal;
+        fee = 1 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BOT";
+      name = "BOTCOIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xa275-diaaa-aaaam-ab4pq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "EYES";
+      name = "EYES";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mwgzv-jqaaa-aaaam-acfha-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "CGST";
+      name = "ChubbyGhost";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bu6jl-aqaaa-aaaam-aciaa-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "PizzaBTC";
+      name = "PizzaBTC";
+      decimals = 0: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "cnoir-kyaaa-aaaam-acijq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "WIB";
+      name = "DogWifBrow";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "epev2-gaaaa-aaaam-aci7a-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "CHUGGA";
+      name = "CHUGGA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "u2mpw-6yaaa-aaaam-aclrq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "NAUT";
+      name = "iistronauts";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bq6c7-tqaaa-aaaam-acqya-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "EI8HT";
+      name = "EI8HT";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lnezh-4aaaa-aaaam-acrba-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "RTX";
+      name = "Ratex";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lydik-5iaaa-aaaam-acrcq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DITTO";
+      name = "DITTO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3j5nq-qqaaa-aaaam-acvrq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "WORM";
+      name = "WORM";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lfqod-3aaaa-aaaam-ac2rq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "804";
+      name = "Qaidi804";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "esbhr-giaaa-aaaam-ac4jq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "ND64";
+      name = "ND64";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mwen2-oqaaa-aaaam-adaca-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "nanas";
+      name = "The Banana Company";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "spdsf-5yaaa-aaaam-adcnq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "LIKE";
+      name = "LIKE";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dguc4-6aaaa-aaaam-adg2q-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "FOREST";
+      name = "FOREST";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "m4q7e-aaaaa-aaaam-adh6q-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "ICST";
+      name = "IC Strategy";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ypkpu-uaaaa-aaaam-adihq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICPS";
+      name = "ICPS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hjfd4-eqaaa-aaaam-adkmq-cai";
+        index_id = null : opt principal;
+        fee = 1250 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
+      }};
+      symbol = "DPW";
+      name = "Dragon Paladin Wizard";
+      decimals = 12: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "4pylg-ciaaa-aaaam-adqea-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BONG";
+      name = "BongSwap";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "744yc-gqaaa-aaaam-adxra-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "PHAX";
+      name = "PHAOX";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pmvba-2aaaa-aaaam-adyta-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "WCP";
+      name = "World Computer Protocol";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hzvf5-hqaaa-aaaam-adzga-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Vortix";
+      name = "Vortix";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fnlaj-cqaaa-aaaam-adzia-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "WIM";
+      name = "WORLD ICP MUSIC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "f7nxq-oaaaa-aaaam-adzla-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Pusdt";
+      name = "Pusdt";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ehect-aaaaa-aaaam-adzpa-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "CAFC";
+      name = "Caffeine AI Fan Club";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "26d5m-tiaaa-aaaam-ad3aq-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Pirate";
+      name = "PirateDao";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "felsj-5qaaa-aaaam-aenia-cai";
+        index_id = null : opt principal;
+        fee = 200000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BANK";
+      name = "Banking Brave";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hdqmr-qyaaa-aaaam-qbgxq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BASED";
+      name = "Based";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "f6ncz-dqaaa-aaaam-qbgya-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "OG";
+      name = "OG";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fcjyi-uqaaa-aaaam-qbg2a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "CHUBBY";
+      name = "Chubby McFatCat";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ffi64-ziaaa-aaaam-qbg2q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "JBBJ";
+      name = "JerryBanfield";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "eig2s-waaaa-aaaam-qbg5a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "NAK";
+      name = "NAK";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6fvyi-faaaa-aaaam-qbiga-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "POPEYE";
+      name = "Popeye The Sailor";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "je4he-eqaaa-aaaam-qbl3a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MODOGO";
+      name = "Modogo";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "n44gr-qyaaa-aaaam-qbuha-cai";
+        index_id = null : opt principal;
+        fee = 15000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BNB";
+      name = "BNB on ICP";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "npnnq-naaaa-aaaam-qb7va-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "AWB";
+      name = "Ape Wif Bull";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "2cxs5-rqaaa-aaaam-qcapq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DOMS";
+      name = "Dominics Pizza";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "e3qnc-cyaaa-aaaam-qccaa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Andy";
+      name = "Andy";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fw6jm-nqaaa-aaaam-qcchq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "McDOMS";
+      name = "McDomalds";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ewfzi-bqaaa-aaaam-qcf4a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Bch";
+      name = "Bigcheese ";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ixraq-4iaaa-aaaam-qci5q-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "PONZI";
+      name = "Ponzi Buddy";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "b5zx2-caaaa-aaaam-qcjma-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DAGOTH";
+      name = "Dagoth Ur";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7nlx3-baaaa-aaaam-qcuhq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DOMINATOR";
+      name = "DOMINATOR";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "2rqn6-kiaaa-aaaam-qcuya-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MGSN";
+      name = "MegaSynergy";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3jzy5-eiaaa-aaaam-qcu4a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MOCATO";
+      name = "Mocato";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "337pe-iyaaa-aaaam-qcu7a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Boob";
+      name = "Bob on Bob";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "qznhl-eqaaa-aaaam-qcvcq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DoGood";
+      name = "DoGoodICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "to7lz-viaaa-aaaam-qcvka-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "SSDOM";
+      name = "Sideshow Dom";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dasnq-xiaaa-aaaam-qcwga-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "CPC";
+      name = "Couch Potato Club";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fcyq3-3qaaa-aaaam-qcwqq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DOMINSON";
+      name = "C.H. DOMINSON";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "e5qdm-yiaaa-aaaam-qcwua-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "domwifhat";
+      name = "domwifhat";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "egv7j-cqaaa-aaaam-qcwwq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "WEN";
+      name = "Wenzel";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hndjk-eiaaa-aaaam-qcw4a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BORED";
+      name = "Bored Alien Project";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hdbec-7yaaa-aaaam-qcw5a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "OPENAPP";
+      name = "OPEN INVESTMENT APP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pwba7-ciaaa-aaaam-qcxia-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "GFC";
+      name = "GarfieldCoin";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ixhus-2iaaa-aaaam-qcxya-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DOGFAI";
+      name = "DogFitAI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "icaf7-3aaaa-aaaam-qcx3q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "RUGGY";
+      name = "RUGGY";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "4k7jk-vyaaa-aaaam-qcyaa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "RAVEN";
+      name = "The Raven Project ";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3my3t-aaaaa-aaaam-qcyqq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Cheese";
+      name = "Cheese";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "rwdg7-ciaaa-aaaam-qczja-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Zombie";
+      name = "ICZOMBIES";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "p6vx3-fiaaa-aaaam-qc4yq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MANRAY";
+      name = "Man Ray";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "esfs4-sqaaa-aaaam-qc5ea-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "VIBE";
+      name = "Viberadio";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "aoryq-uyaaa-aaaam-qdaaq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "AB";
+      name = "AliceBob";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dqa76-tiaaa-aaaam-qdajq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "RETARF";
+      name = "Retarf";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mnfes-aqaaa-aaaam-qdbna-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "G";
+      name = "Givers";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "k2iiu-naaaa-aaaam-qdbya-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Babe";
+      name = "Baby jade 8";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "iddzk-liaaa-aaaam-qdgka-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "ICB";
+      name = "ICBat";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3om6e-iqaaa-aaaam-qdo4a-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "DFBCOIN";
+      name = "DAILY FOOD BANK";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ck73f-syaaa-aaaam-qdtea-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "SCOTT";
+      name = "SCOTT SUMMERS";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "atuk3-uqaaa-aaaam-qduwa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "IC";
+      name = "Infinity Coin";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "4zmwe-paaaa-aaaam-qdwxa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "dvinity";
+      name = "dvinity";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kqkoi-fqaaa-aaaam-qdzba-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "USC";
+      name = "Unstable Coin";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3imqk-saaaa-aaaam-qd2ia-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MONSTER";
+      name = "Monster";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "qdi6h-hiaaa-aaaam-qeqqa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "GCash";
+      name = "GCash";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "qroj6-lyaaa-aaaam-qeqta-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BITTYICP";
+      name = "BITTY ON ICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "2qqix-tiaaa-aaaam-qeria-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BDOG";
+      name = "BOBDOG";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fua74-fyaaa-aaaan-qecrq-cai";
+        index_id = null : opt principal;
+        fee = 1000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "SEED";
+      name = "SEED";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "rh2pm-ryaaa-aaaan-qeniq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "EXE";
+      name = "Windoge98";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hbjjz-kaaaa-aaaan-qiocq-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "roma";
+      name = "roma";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vi5vh-wyaaa-aaaan-qizxa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Querio";
+      name = "QRO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ghvlc-vqaaa-aaaan-qlsca-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "SDOGE";
+      name = "SpaceDoge";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "iczfn-iiaaa-aaaan-qltcq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "MIF";
+      name = "motokowifhat";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7tvr6-fqaaa-aaaan-qmira-cai";
+        index_id = null : opt principal;
+        fee = 420 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ALIEN";
+      name = "ALIEN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "z3hpp-qaaaa-aaaan-qzmqq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "CGG";
+      name = "Capgras Games";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kqigp-jiaaa-aaaan-qzqsq-cai";
+        index_id = null : opt principal;
+        fee = 42000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "IAMAI";
+      name = "I am AI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "i2s4q-syaaa-aaaan-qz4sq-cai";
+        index_id = null : opt principal;
+        fee = 1000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
+      }};
+      symbol = "sGLDT";
+      name = "sGLDT - GLDT Wrapper";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "zix77-6qaaa-aaaao-a4pwq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "PULSE";
+      name = "PULSE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kz5t3-pyaaa-aaaap-ab2qq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "iVishnu";
+      name = "VishnuAI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "zzsnb-aaaaa-aaaap-ag66q-cai";
+        index_id = null : opt principal;
+        fee = 5 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "DAMONIC";
+      name = "Damonic Welleams";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "wexwn-tyaaa-aaaap-ag72a-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "WBR23";
+      name = "Warrant Bridge23";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "wkv3f-iiaaa-aaaap-ag73a-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "WUMBO";
+      name = "Wumbo";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "nznw5-iyaaa-aaaap-ahava-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "";
+      name = "";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6phnw-ryaaa-aaaap-ahibq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "ICMAGA";
+      name = "ICMAGA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ol6zb-5iaaa-aaaap-ahmra-cai";
+        index_id = null : opt principal;
+        fee = 112 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "FOREST";
+      name = "FOREST";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3mpua-viaaa-aaaap-ahpba-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "TBTC";
+      name = "TRUMPTOSHI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "r7bws-hiaaa-aaaap-ahr4q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "LAB";
+      name = "LAB";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ob475-vyaaa-aaaap-ahuia-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "TRAPRE";
+      name = "Trabyter Premium Bucks";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "dfg2l-2yaaa-aaaap-akpsa-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "DIGGY";
+      name = "DIGGY";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bd6ig-tiaaa-aaaap-akp7a-cai";
+        index_id = null : opt principal;
+        fee = 50000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "SNOGE";
+      name = "Snoge";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "3am6i-sqaaa-aaaap-anveq-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "FRENZY";
+      name = "FRENZY";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ysy5f-2qaaa-aaaap-qkmmq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ALEX";
+      name = "ALEX";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ku7bj-lyaaa-aaaap-qpocq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "TSIP";
+      name = "Test SipnPlay";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "k25mb-qiaaa-aaaap-qpodq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "QUOKKA";
+      name = "Quokka";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "57uyz-cyaaa-aaaap-qpvgq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BIL";
+      name = "BIL Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7jkyx-oiaaa-aaaap-qpzeq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "VALK";
+      name = "Valkyries";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "4f5ia-fiaaa-aaaap-qpzoq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Acorn Token";
+      name = "ACORN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "b3d2q-ayaaa-aaaap-qqcfq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "ZERO";
+      name = "Zero";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "zfcdd-tqaaa-aaaaq-aaaga-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DKP";
+      name = "Draggin Karma Points";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "2ouva-viaaa-aaaaq-aaamq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CHAT";
+      name = "CHAT";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7ajy4-sqaaa-aaaaq-aaaqa-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "SOC";
+      name = "SONIC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "73mez-iiaaa-aaaaq-aaasq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "KINIC";
+      name = "KINIC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6rdgd-kyaaa-aaaaq-aaavq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DOLR";
+      name = "DOLR AI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "4c4fd-caaaa-aaaaq-aaa3a-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CLAY";
+      name = "Mimic Clay";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xsi2v-cyaaa-aaaaq-aabfq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DCD";
+      name = "DecideAI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vtrom-gqaaa-aaaaq-aabia-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BOOM";
+      name = "BOOM";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "uf2wh-taaaa-aaaaq-aabna-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CTZ";
+      name = "CatalyzeDAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "rxdbk-dyaaa-aaaaq-aabtq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "NUA";
+      name = "Nuance";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "qbizb-wiaaa-aaaaq-aabwq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "SONIC";
+      name = "Sonic";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "sotaq-jqaaa-aaaaq-aab2a-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 } };
+      }};
+      symbol = "QRO";
+      name = "Querio";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "tyyy3-4aaaa-aaaaq-aab7a-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "GOLDAO";
+      name = "GOLDAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "emww2-4yaaa-aaaaq-aacbq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "TRAX";
+      name = "TRAX";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "f54if-eqaaa-aaaaq-aacea-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "NTN";
+      name = "Neutrinite";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hvgxa-wqaaa-aaaaq-aacia-cai";
+        index_id = null : opt principal;
+        fee = 1000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "SNEED";
+      name = "Sneed DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hhaaz-2aaaa-aaaaq-aacla-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICL";
+      name = "ICLighthouse DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "gemj7-oyaaa-aaaaq-aacnq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ELNA";
+      name = "ELNA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ddsp7-7iaaa-aaaaq-aacqq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICFC";
+      name = "ICFC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "druyg-tyaaa-aaaaq-aactq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "PANDA";
+      name = "ICPanda";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ca6gz-lqaaa-aaaaq-aacwa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICS";
+      name = "ICPSwap Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "atbfz-diaaa-aaaaq-aacyq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "YUKU";
+      name = "Yuku AI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bliq2-niaaa-aaaaq-aac4q-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "EST";
+      name = "ESTATE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bzohd-byaaa-aaaaq-aac7q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "MORA";
+      name = "MORA DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "k45jy-aiaaa-aaaaq-aadcq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "MOTOKO";
+      name = "Motoko";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lrtnw-paaaa-aaaaq-aadfa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "SWAMP";
+      name = "Swampies";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lkwrt-vyaaa-aaaaq-aadhq-cai";
+        index_id = opt principal "jqkzp-liaaa-aaaaq-aadiq-cai";
+        fee = 200000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "OGY";
+      name = "ORIGYN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jcmow-hyaaa-aaaaq-aadlq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "WTN";
+      name = "WaterNeuron";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "np5km-uyaaa-aaaaq-aadrq-cai";
+        index_id = null : opt principal;
+        fee = 5000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "PHASMA";
+      name = "PHASMA";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "m6xut-mqaaa-aaaaq-aadua-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICVC";
+      name = "ICVC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mmrdk-aaaaa-aaaaq-aadxa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "JUNOBUILD";
+      name = "Juno Build";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o7oak-iyaaa-aaaaq-aadzq-cai";
+        index_id = opt principal "onixt-eiaaa-aaaaq-aad2q-cai";
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "KONG";
+      name = "KongSwap";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "p3dpy-ryaaa-aaaaq-aad7q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICTO";
+      name = "ICTO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "p7vqo-eyaaa-aaaaq-aaeca-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CANI";
+      name = "CANI DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o4zzi-qaaaa-aaaaq-aaeeq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "WELL";
+      name = "FomoWell";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "oj6if-riaaa-aaaaq-aaeha-cai";
+        index_id = null : opt principal;
+        fee = 500000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ALICE";
+      name = "ALICE";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mih44-vaaaa-aaaaq-aaekq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "NFIDW";
+      name = "NFID Wallet";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ifwyg-gaaaa-aaaaq-aaeqq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICE";
+      name = "ICExplorer";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ixqp7-kqaaa-aaaaq-aaetq-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "DAO";
+      name = "Personal DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "jg2ra-syaaa-aaaaq-aaewa-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "CECIL";
+      name = "Cecil The Lion DAO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "lvfsa-2aaaa-aaaaq-aaeyq-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICX";
+      name = "ICPEx";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kknbx-zyaaa-aaaaq-aae4a-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "TACO";
+      name = "TACO";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "kylwo-viaaa-aaaaq-aae7a-cai";
+        index_id = null : opt principal;
+        fee = 420 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "TENDY";
+      name = "Tendies";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "b5yyv-uyaaa-aaaaq-aafca-cai";
+        index_id = null : opt principal;
+        fee = 100000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ONICAI";
+      name = "ONICAI";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "um5iw-rqaaa-aaaaq-qaaba-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "TCYCLES";
+      name = "Trillion Cycles";
+      decimals = 12: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "mc6ru-gyaaa-aaaar-qaaaq-cai";
+        index_id = opt principal "mm444-5iaaa-aaaar-qaabq-cai";
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckTESTBTC";
+      name = "Chain key testnet Bitcoin";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "apia6-jaaaa-aaaar-qabma-cai";
+        index_id = null : opt principal;
+        fee = 10000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckSepoliaETH";
+      name = "Chain key Sepolia Ethereum";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "uxr6i-cyaaa-aaaar-qacyq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "TTS";
+      name = "Tortoise ";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "uztta-ziaaa-aaaar-qaczq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Ninja";
+      name = "Ninja";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vizn7-baaaa-aaaar-qac4a-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "Cat ";
+      name = "Felis Catus";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "vb2gd-xiaaa-aaaar-qac5q-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "ICAT";
+      name = "ICat";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6ejiy-wyaaa-aaaar-qadaq-cai";
+        index_id = null : opt principal;
+        fee = 0 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
+      }};
+      symbol = "BUFF";
+      name = "Buffer";
+      decimals = 10: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "yfumr-cyaaa-aaaar-qaela-cai";
+        index_id = null : opt principal;
+        fee = 4000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckSepoliaUSDC";
+      name = "Chain key Sepolia USDC";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "77xez-aaaaa-aaaar-qaezq-cai";
+        index_id = null : opt principal;
+        fee = 100 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "RICH.OT";
+      name = "HOPE•YOU•GET•RICH";
+      decimals = 2: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "r52mc-qaaaa-aaaar-qafzq-cai";
+        index_id = null : opt principal;
+        fee = 200000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckSepoliaLINK";
+      name = "Chain key Sepolia LINK";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "hw4ru-taaaa-aaaar-qagdq-cai";
+        index_id = null : opt principal;
+        fee = 100000000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckSepoliaPEPE";
+      name = "Chain key Sepolia PEPE";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "g4tto-rqaaa-aaaar-qageq-cai";
+        index_id = null : opt principal;
+        fee = 100000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckLINK";
+      name = "ckLINK";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "gaxj7-gqaaa-aaaar-qaggq-cai";
+        index_id = null : opt principal;
+        fee = 100000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BOX.OT";
+      name = "BOX•TOKEN•ON•BITCOIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "etik7-oiaaa-aaaar-qagia-cai";
+        index_id = null : opt principal;
+        fee = 1000000000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckPEPE";
+      name = "ckPEPE";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ebo5g-cyaaa-aaaar-qagla-cai";
+        index_id = null : opt principal;
+        fee = 34000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckOCT";
+      name = "ckOCT";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "fxffn-xiaaa-aaaar-qagoa-cai";
+        index_id = null : opt principal;
+        fee = 100000000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckSHIB";
+      name = "ckSHIB";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "a6zof-5iaaa-aaaar-qagsa-cai";
+        index_id = null : opt principal;
+        fee = 100 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "HASHLEY.OT";
+      name = "HASHLEY•HASHLEY";
+      decimals = 2: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "buwm7-7yaaa-aaaar-qagva-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "nICP";
+      name = "neuron ICP";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "bptq2-faaaa-aaaar-qagxq-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckWBTC";
+      name = "ckWBTC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "cngnf-vqaaa-aaaar-qag4q-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckUSDT";
+      name = "ckUSDT";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "j2tuh-yqaaa-aaaar-qahcq-cai";
+        index_id = null : opt principal;
+        fee = 1000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckWSTETH";
+      name = "ckWSTETH";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ilzky-ayaaa-aaaar-qahha-cai";
+        index_id = null : opt principal;
+        fee = 1000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckUNI";
+      name = "ckUNI";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "pe5t5-diaaa-aaaar-qahwa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckEURC";
+      name = "ckEURC";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "nza5v-qaaaa-aaaar-qahzq-cai";
+        index_id = null : opt principal;
+        fee = 1 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ckXAUT";
+      name = "ckXAUT";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "y3qt2-4iaaa-aaaar-qaifa-cai";
+        index_id = null : opt principal;
+        fee = 1000000000000000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BAD.OT";
+      name = "BOLD•ART•DEGENS";
+      decimals = 18: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "6c7su-kiaaa-aaaar-qaira-cai";
+        index_id = null : opt principal;
+        fee = 10000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "GLDT";
+      name = "Gold Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "eazb6-tqaaa-aaaar-qan2a-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ODINDOG•ID•YTTL•ODIN";
+      name = "ODINDOG•ID•YTTL•ODIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "sx3gz-hqaaa-aaaar-qaoca-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "GHOSTNODE•ID•ZVVO•ODIN";
+      name = "GHOSTNODE•ID•ZVVO•ODIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "xla44-myaaa-aaaar-qao5q-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "GG•ID•ZJXV•ODIN";
+      name = "GG•ID•ZJXV•ODIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "5kijx-siaaa-aaaar-qaqda-cai";
+        index_id = null : opt principal;
+        fee = 10 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "ICONFUCIUS•ID•RVMN•ODIN";
+      name = "ICONFUCIUS•ID•RVMN•ODIN";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "53nhb-haaaa-aaaar-qbn5q-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "USDC";
+      name = "USDC";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "ij33n-oiaaa-aaaar-qbooa-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "USDT";
+      name = "USDT";
+      decimals = 6: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "io25z-dqaaa-aaaar-qbooq-cai";
+        index_id = null : opt principal;
+        fee = 20 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "cbBTC";
+      name = "cbBTC";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "7pail-xaaaa-aaaas-aabmq-cai";
+        index_id = null : opt principal;
+        fee = 1000000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "BOB";
+      name = "BOB";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "oqvo3-qqaaa-aaaas-aibca-cai";
+        index_id = null : opt principal;
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC3 }; variant { ICRC2 } };
+      }};
+      symbol = "pBob";
+      name = "pBob - BOB Mining Pool Token";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
   };
 })
