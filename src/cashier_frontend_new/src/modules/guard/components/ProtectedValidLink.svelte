@@ -21,7 +21,7 @@
     context.isLoading({ checkTempLinkLoad: true }),
   );
 
-  const hasLink = $derived(() => context.hasLink());
+  const hasLink = $derived.by(() => context.hasLink());
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 
@@ -34,6 +34,18 @@
         !linkStore),
   );
 
+  let hasRenderedValidLink = $state(false);
+
+  $effect(() => {
+    if (isValid) {
+      hasRenderedValidLink = true;
+    }
+  });
+
+  const shouldShowLoading = $derived(
+    isLoading && !hasLink && !hasRenderedValidLink,
+  );
+
   $effect(() => {
     if (shouldRedirect) {
       const redirectPath = redirectTo || "/404";
@@ -43,8 +55,8 @@
   });
 </script>
 
-{#if isLoading}
+{#if shouldShowLoading}
   <ProtectionProcessingState message="Loading..." />
-{:else if isValid}
+{:else if isValid || (hasRenderedValidLink && isLoading)}
   {@render children()}
 {/if}
