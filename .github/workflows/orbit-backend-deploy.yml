@@ -124,6 +124,9 @@ jobs:
           echo "Deployer principal: $(dfx identity get-principal)"
           echo "operator=$(dfx identity get-principal)" >> $GITHUB_OUTPUT
       # DANGEROUS: Do not echo the private key to the console
+      - name: Clean up private key file
+        run: rm private_key.pem
+
       - name: Cache dfx-orbit binary
         id: cache-dfx-orbit
         uses: actions/cache@v4
@@ -138,9 +141,12 @@ jobs:
           cd orbit
           cargo install -f --path tools/dfx-orbit/
 
-      - name: Setup station
+      - name: Setup Orbit station
         run: |
           dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+
+      - name: Verify Orbit station
+        run: dfx-orbit station list
 
       - name: Set log filter
         id: log_filter
