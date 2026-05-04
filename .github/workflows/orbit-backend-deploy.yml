@@ -60,14 +60,11 @@ jobs:
 
       - name: Set deployment mode
         id: set-mode
+        env:
+          DEFAULT_MODE: install
+          INPUT_MODE: ${{ github.event.inputs.mode }}
         run: |
-          # Use input mode if provided (workflow_dispatch), otherwise default to 'install'
-          INPUT_MODE="${{ github.event.inputs.mode }}"
-          if [[ -n "$INPUT_MODE" ]]; then
-            echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
-          else
-            echo "mode=upgrade" >> $GITHUB_OUTPUT
-          fi
+          echo "mode=${INPUT_MODE:-$DEFAULT_MODE}" >> $GITHUB_OUTPUT
 
   deploy:
     name: Prepare and Submit Orbit request (optional)
