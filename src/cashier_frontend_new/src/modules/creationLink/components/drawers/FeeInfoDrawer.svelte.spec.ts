@@ -30,17 +30,17 @@ function fixture_of_fees_breakdown() {
   ];
 }
 
-beforeEach(() => {
-  vi.useFakeTimers();
-});
-
-afterEach(() => {
-  cleanup(); // destroy component → queues fake timer
-  vi.runAllTimers(); // drain fake timer while jsdom is alive
-  vi.useRealTimers(); // restore for next test
-});
-
 describe("FeeInfoDrawer", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    cleanup(); // destroy component → may queue timer(s)
+    vi.runAllTimers();
+    vi.useRealTimers();
+  });
+
   it("it_should_do_render_fee_breakdown_rows_when_open", () => {
     // Arrange
     render(FeeInfoDrawer, {
