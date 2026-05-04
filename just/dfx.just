@@ -5,10 +5,19 @@ CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
 CKBTC_KYT_ID:="o6ude-eyaaa-aaaar-qal6a-cai"
 
 # Start the local dfx server
+# params bitcoin: "true" to enable bitcoin node (requires bitcoind on 127.0.0.1:18444), otherwise disabled
 [group('dfx')]
-dfx_local_start: dfx_prepare_env dfx_local_stop
+dfx_local_start bitcoin="false": dfx_prepare_env dfx_local_stop
+  #!/usr/bin/env bash
+  set -e
+
+  BITCOIN_FLAGS=""
+  if [ "{{bitcoin}}" = "true" ]; then
+    BITCOIN_FLAGS="--enable-bitcoin --bitcoin-node 127.0.0.1:18444"
+  fi
+
   # Start the local dfx server
-  dfx start --enable-bitcoin --background --clean --host 127.0.0.1:8000 --bitcoin-node 127.0.0.1:18444 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
+  dfx start $BITCOIN_FLAGS --background --clean --host 127.0.0.1:8000 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
 
   # Add cycles to the wallet
   wallet_principal=$(dfx identity get-wallet) && dfx ledger fabricate-cycles --t 10000000 --canister $wallet_principal
@@ -38,11 +47,12 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
-  dfx deploy cashier_frontend_new {{network}}
+  dfx deploy cashier_frontend_new {{network}} --upgrade-unchanged
 
 # Starts the local dfx server and deploys the canisters
+# params bitcoin: "true" to enable bitcoin node (for ckBTC flows), defaults to "false"
 [group('dfx')]
-dfx_local_deploy: dfx_local_start && dfx_local_info
+dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
   #!/usr/bin/env bash
   set -e
 
@@ -200,7 +210,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
-  })" {{network}}
+  })" {{network}} --upgrade-unchanged
 
 # Deploys the token_storage canister
 # params 
@@ -270,7 +280,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
       };
       ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
-  })" {{network}} {{mode}} --yes
+  })" {{network}} {{mode}} --upgrade-unchanged
 
 # Deploy Gate canister
 # params:

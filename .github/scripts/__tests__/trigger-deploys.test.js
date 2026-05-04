@@ -8,13 +8,20 @@ const {
 const config = loadConfig();
 
 // Helper to create mock github/context/core objects
-function createMocks({ targetBranch = "main", changedFiles = [] } = {}) {
+function createMocks({
+  targetBranch = "main",
+  changedFiles = [],
+  headSha = "abc123def456",
+} = {}) {
   const dispatch = jest.fn();
   const github = {
     rest: {
       pulls: {
         get: jest.fn().mockResolvedValue({
-          data: { base: { ref: targetBranch } },
+          data: {
+            base: { ref: targetBranch },
+            head: { sha: headSha },
+          },
         }),
         listFiles: {},
       },
@@ -180,5 +187,19 @@ describe("triggerDeploys", () => {
     });
     await triggerDeploys({ github, context, core });
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test("passes PR head SHA as dispatch input to avoid stale checkout", async () => {
+    const { github, context, core, dispatch } = createMocks({
+      targetBranch: "main",
+      changedFiles: ["src/cashier_backend/lib.rs"],
+      headSha: "deadbeefcafe1234",
+    });
+    await triggerDeploys({ github, context, core });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputs: { sha: "deadbeefcafe1234" },
+      })
+    );
   });
 });
