@@ -4,6 +4,7 @@
   },
   "cashier_backend": {
     "dev": "edrez-4iaaa-aaaam-aekta-cai",
+    "immut-contract": "6zqew-6yaaa-aaaaj-a6oda-cai",
     "production": "eyuy4-gqaaa-aaaam-aekrq-cai",
     "staging": "jjio5-5aaaa-aaaam-adhaq-cai"
   },
@@ -14,6 +15,7 @@
   },
   "token_storage": {
     "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
+    "immut-contract": "6qtpk-iqaaa-aaaaj-a6ocq-cai",
     "production": "d2fvt-giaaa-aaaam-aen4q-cai",
     "staging": "o4l23-2iaaa-aaaam-aehga-cai"
   }

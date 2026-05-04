@@ -66,7 +66,7 @@ jobs:
           if [[ -n "$INPUT_MODE" ]]; then
             echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
           else
-            echo "mode=install" >> $GITHUB_OUTPUT
+            echo "mode=upgrade" >> $GITHUB_OUTPUT
           fi
 
   deploy:
@@ -155,6 +155,27 @@ jobs:
 
       - name: Verify Orbit station
         run: dfx-orbit station list
+
+      - name: Create the canister id
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister create token_storage --network ${{ needs.setup_environment.outputs.network }}
+          dfx canister create cashier_backend --network ${{ needs.setup_environment.outputs.network }}
+
+      - name: Verify the canister id
+        run: |
+          echo "Token storage canister ID:"
+          just get_canister_id token_storage ${{ needs.setup_environment.outputs.network }}
+          echo "Cashier backend canister ID:"
+          just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }}
+
+      - name: Set Orbit station as the controller
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister update-settings token_storage --add-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+          dfx canister update-settings cashier_backend --add-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Set log filter
         id: log_filter

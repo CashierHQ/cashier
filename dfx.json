@@ -205,6 +205,10 @@
       "type": "persistent",
       "providers": ["https://icp0.io"]
     },
+    "immut-contract": {
+      "type": "persistent",
+      "providers": ["https://icp0.io"]
+    },
     "local": {
       "bind": "127.0.0.1:4943",
       "type": "ephemeral"
