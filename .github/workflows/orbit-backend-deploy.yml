@@ -61,7 +61,7 @@ jobs:
       - name: Set deployment mode
         id: set-mode
         env:
-          DEFAULT_MODE: upgrade
+          DEFAULT_MODE: install
           INPUT_MODE: ${{ github.event.inputs.mode }}
         run: |
           echo "mode=${INPUT_MODE:-$DEFAULT_MODE}" >> $GITHUB_OUTPUT
@@ -173,8 +173,8 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister update-settings token_storage --add-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
-          dfx canister update-settings cashier_backend --add-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+          dfx canister update-settings cashier_backend --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Set log filter
         id: log_filter
