@@ -3,7 +3,8 @@ import { rsMatch } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import { Principal } from "@dfinity/principal";
-import type { TokenMetadata } from "../types";
+import type { TokenMetadata } from "$modules/token/types";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 
 /**
  * Service for interacting with Icrc Ledger canisters for a specific token
@@ -80,6 +81,7 @@ export class IcrcLedgerService {
   public async transferToPrincipal(
     to: Principal,
     amount: bigint,
+    deduplication?: TransferDeduplicationFields,
   ): Promise<bigint> {
     const toAccount: icrcLedger.Account = {
       owner: to,
@@ -94,8 +96,8 @@ export class IcrcLedgerService {
       to: toAccount,
       amount,
       fee: [this.#fee],
-      memo: [],
-      created_at_time: [],
+      memo: deduplication ? [deduplication.memo] : [],
+      created_at_time: deduplication ? [deduplication.createdAtTime] : [],
       from_subaccount: [],
     });
 
@@ -111,7 +113,7 @@ export class IcrcLedgerService {
           throw new Error(`Bad burn amount: ${e}`);
         },
         Duplicate: (e) => {
-          throw new Error(`Duplicate transaction: ${e}`);
+          return e.duplicate_of;
         },
         BadFee: (e) => {
           throw new Error(`Bad fee: ${e}`);

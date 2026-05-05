@@ -7,8 +7,9 @@ import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
-import { ICP_LEDGER_CANISTER_ID } from "../constants";
-import { sortWalletTokens } from "../utils/sorter";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { sortWalletTokens } from "$modules/token/utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 import {
@@ -255,10 +256,19 @@ class WalletStore {
    * @param to Principal of recipient
    * @param amount Amount of tokens to transfer
    */
-  async transferTokenToPrincipal(token: string, to: Principal, amount: bigint) {
+  async transferTokenToPrincipal(
+    token: string,
+    to: Principal,
+    amount: bigint,
+    deduplication?: TransferDeduplicationFields,
+  ) {
     const tokenData = this.findTokenByAddress(token).unwrap();
     const icrcLedgerService = new IcrcLedgerService(tokenData);
-    const transferRes = await icrcLedgerService.transferToPrincipal(to, amount);
+    const transferRes = await icrcLedgerService.transferToPrincipal(
+      to,
+      amount,
+      deduplication,
+    );
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
     return transferRes;
