@@ -1,6 +1,6 @@
 import { balanceToUSDValue } from "$modules/shared/utils/converter";
-import { ICP_LEDGER_CANISTER_ID } from "../constants";
-import type { TokenWithPriceAndBalance } from "../types";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 /**
  * Sorts an array of wallet tokens with the following criteria:

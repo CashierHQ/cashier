@@ -414,6 +414,7 @@ describe("WalletStore", () => {
       expect(mockIcrcTransferToPrincipal).toHaveBeenCalledWith(
         recipient,
         1000n,
+        undefined,
       );
     });
 
