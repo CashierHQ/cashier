@@ -3,9 +3,26 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 import { Principal } from "@dfinity/principal";
-import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
 import { toNullable } from "@dfinity/utils";
 import { rsMatch } from "$lib/rsMatch";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+
+/** FNV-1a style 64-bit hash for legacy transfer memo (masked to u64). */
+export function toLegacyMemo(memo: Uint8Array | number[]): bigint {
+  const mask64 = (1n << 64n) - 1n;
+  let hash = 14_695_981_039_346_656_037n;
+
+  for (const byte of memo) {
+    hash ^= BigInt(byte);
+    hash = (hash * 1_099_511_628_211n) & mask64;
+  }
+
+  return hash;
+}
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
@@ -47,6 +64,10 @@ export class IcpLedgerService {
     }
   }
 
+  #toLegacyMemo(memo: Uint8Array | number[]): bigint {
+    return toLegacyMemo(memo);
+  }
+
   /**
    * Get the account balance for the current user.
    * @returns The balance of the current account.
@@ -67,7 +88,11 @@ export class IcpLedgerService {
    * @param amount The amount of tokens to transfer.
    * @returns The result of the transfer operation.
    */
-  public async transferToAccount(to: string, amount: bigint): Promise<bigint> {
+  public async transferToAccount(
+    to: string,
+    amount: bigint,
+    deduplication?: TransferDeduplicationFields,
+  ): Promise<bigint> {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
@@ -78,9 +103,11 @@ export class IcpLedgerService {
       to: accountID,
       amount: { e8s: amount },
       fee: { e8s: this.#fee },
-      memo: BigInt(0),
+      memo: deduplication ? this.#toLegacyMemo(deduplication.memo) : BigInt(0),
       from_subaccount: [],
-      created_at_time: [],
+      created_at_time: deduplication
+        ? [{ timestamp_nanos: deduplication.createdAtTime }]
+        : [],
     });
 
     if ("Err" in result) {
@@ -92,7 +119,7 @@ export class IcpLedgerService {
           throw new Error(`Bad fee: ${e}`);
         },
         TxDuplicate: (e) => {
-          throw new Error(`Duplicate transaction: ${e}`);
+          return e.duplicate_of;
         },
         InsufficientFunds: () => {
           throw new Error(`Insufficient funds`);
@@ -115,6 +142,7 @@ export class IcpLedgerService {
   public async transferToPrincipal(
     to: Principal,
     amount: bigint,
+    deduplication?: TransferDeduplicationFields,
   ): Promise<bigint> {
     const actor = this.#getActor();
     if (!actor) {
@@ -125,9 +153,9 @@ export class IcpLedgerService {
       to: { owner: to, subaccount: [] },
       amount,
       fee: toNullable(this.#fee),
-      memo: [],
+      memo: deduplication ? [deduplication.memo] : [],
       from_subaccount: [],
-      created_at_time: [],
+      created_at_time: deduplication ? [deduplication.createdAtTime] : [],
     });
 
     if ("Err" in result) {
@@ -142,7 +170,7 @@ export class IcpLedgerService {
           throw new Error(`Bad burn amount: ${e}`);
         },
         Duplicate: (e) => {
-          throw new Error(`Duplicate transaction: ${e}`);
+          return e.duplicate_of;
         },
         BadFee: (e) => {
           throw new Error(`Bad fee: ${e}`);
