@@ -21,7 +21,7 @@ upload_asset canister_id:
 # General canister upgrade request to orbit
 # Returns JSON with: wasm_checksum, arg, arg_checksum, request_url
 [group('orbit')]
-orbit_upgrade canister_name mode network arg_file:
+orbit_upgrade canister_name mode network arg_file commit="" review_run_url="":
   #!/usr/bin/env bash
   set -euo pipefail
   set -x
@@ -36,14 +36,20 @@ orbit_upgrade canister_name mode network arg_file:
   arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
 
   if [ -n "$arg" ]; then
-    output=$(dfx-orbit request canister install \
+    output=$(dfx-orbit request \
+      --title "Install $canister_name canister: $canister_id" \
+      --summary "Commit $commit. Review run: $review_run_url" \
+      canister install \
       --mode {{mode}} \
       "$canister_id" \
       --wasm "$wasm_path" \
       --raw-arg "$arg" \
       2>&1)
   else
-    output=$(dfx-orbit request canister install \
+    output=$(dfx-orbit request \
+      --title "Install $canister_name canister: $canister_id" \
+      --summary "Commit $commit. Review run: $review_run_url" \
+      canister install \
       --mode {{mode}} \
       "$canister_id" \
       --wasm "$wasm_path" \
