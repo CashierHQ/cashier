@@ -1,0 +1,108 @@
+name: Orbit Deploy Setup
+description: Common setup steps for Orbit canister deployments (toolchain, dfx, identity, dfx-orbit)
+
+inputs:
+  sha:
+    description: 'Commit SHA to checkout (leave empty to use github.sha)'
+    required: false
+    default: ''
+  deployer_secret:
+    description: 'Deployer PEM private key (secrets.DEPLOYER)'
+    required: true
+  orbit_station_id:
+    description: 'Orbit station ID (vars.ORBIT_STATION_ID)'
+    required: true
+
+outputs:
+  operator:
+    description: 'Deployer principal returned by dfx identity get-principal'
+    value: ${{ steps.identity.outputs.operator }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.sha || github.sha }}
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
+        targets: wasm32-unknown-unknown
+
+    - name: Setup environment
+      shell: bash
+      run: export RUST_BACKTRACE="full"
+
+    - name: Install dfx
+      uses: dfinity/setup-dfx@main
+
+    - name: Confirm successful installation
+      shell: bash
+      run: dfx --version
+
+    - name: Install ic-wasm
+      shell: bash
+      run: |
+        wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+        chmod +x /usr/local/bin/ic-wasm
+
+    - name: Install candid-extractor
+      shell: bash
+      run: |
+        wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
+        tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
+        chmod +x /usr/local/bin/candid-extractor
+
+    - name: Install didc
+      shell: bash
+      run: |
+        wget https://github.com/dfinity/candid/releases/download/2025-10-16/didc-linux64 -O /usr/local/bin/didc
+        chmod +x /usr/local/bin/didc
+
+    - name: Install Just command runner
+      uses: extractions/setup-just@v4
+
+    - name: Create Deployer private key file
+      shell: bash
+      run: echo "${{ inputs.deployer_secret }}" > private_key.pem
+
+    # DANGEROUS: This is a plaintext identity import
+    - name: Import Deployer identity
+      id: identity
+      shell: bash
+      run: |
+        dfx identity import deployer private_key.pem --storage-mode=plaintext
+        dfx identity use deployer
+        echo "Deployer principal: $(dfx identity get-principal)"
+        echo "operator=$(dfx identity get-principal)" >> $GITHUB_OUTPUT
+
+    # DANGEROUS: Do not echo the private key to the console
+    - name: Clean up private key file
+      shell: bash
+      run: rm private_key.pem
+
+    - name: Cache dfx-orbit binary
+      id: cache-dfx-orbit
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/dfx-orbit
+        key: dfx-orbit-cli
+
+    - name: Install dfx-orbit
+      if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        git clone https://github.com/CashierHQ/orbit.git
+        cd orbit
+        cargo install -f --path tools/dfx-orbit/
+
+    - name: Setup Orbit station
+      shell: bash
+      run: dfx-orbit station add cashier --station-id ${{ inputs.orbit_station_id }} --network ic
+
+    - name: Verify Orbit station
+      shell: bash
+      run: dfx-orbit station list
