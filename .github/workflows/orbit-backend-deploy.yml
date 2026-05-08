@@ -87,8 +87,9 @@ jobs:
       - name: Verify the canister id
         id: canister_ids
         run: |
-          echo "Cashier backend canister ID:"
-          just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }}
+          BE_CANISTER_ID=$(just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }})
+          echo "Cashier backend canister ID: $BE_CANISTER_ID"
+          echo "cashier_backend_id=$BE_CANISTER_ID" >> $GITHUB_OUTPUT
 
       - name: Set Orbit station as the controller
         env:
@@ -149,7 +150,8 @@ jobs:
           - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
 
           ### Backend Canister
-          **Arg:**
+          - **Canister ID**: `${{ steps.canister_ids.outputs.cashier_backend_id }}`
+          - **Arg:**
           ```
           ${{ steps.backend.outputs.arg }}
           ```

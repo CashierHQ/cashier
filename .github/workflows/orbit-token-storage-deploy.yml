@@ -88,6 +88,7 @@ jobs:
         run: |
           TOKEN_STORAGE_ID=$(just get_canister_id token_storage ${{ needs.setup_environment.outputs.network }})
           echo "Token storage canister ID: $TOKEN_STORAGE_ID"
+          echo "token_storage_id=$TOKEN_STORAGE_ID" >> $GITHUB_OUTPUT
 
       - name: Set Orbit station as the controller
         env:
@@ -147,6 +148,7 @@ jobs:
           - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
 
           ### Token Storage Canister
+          - **Canister ID**: `${{ steps.canister_ids.outputs.token_storage_id }}`
           **Arg:**
           ```
           ${{ steps.token_storage.outputs.arg }}
