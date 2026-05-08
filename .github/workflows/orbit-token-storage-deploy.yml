@@ -1,12 +1,6 @@
 name: Orbit Token Storage Deploy
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - 'src/token_storage/**'
   workflow_dispatch:
     inputs:
       mode:

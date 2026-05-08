@@ -1,13 +1,6 @@
 name: Orbit Backend Deploy
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - 'src/cashier_backend/**'
-      - 'src/transaction_manager/**'
   workflow_dispatch:
     inputs:
       mode:
