@@ -1,4 +1,4 @@
-name: Orbit Backend Deploy
+name: Orbit Token Storage Deploy
 
 on:
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
           if [[ "$TARGET_BRANCH" == "main" ]]; then
             echo "network=production" >> $GITHUB_OUTPUT
           elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-            echo "network=staging" >> $GITHUB_OUTPUT          
+            echo "network=staging" >> $GITHUB_OUTPUT
           else
             # Any other branch will deploy to dev network
             echo "network=dev" >> $GITHUB_OUTPUT
@@ -75,20 +75,20 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister create cashier_backend --network ${{ needs.setup_environment.outputs.network }}
+          dfx canister create token_storage --network ${{ needs.setup_environment.outputs.network }}
 
       - name: Verify the canister id
         id: canister_ids
         run: |
-          BE_CANISTER_ID=$(just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }})
-          echo "Cashier backend canister ID: $BE_CANISTER_ID"
-          echo "cashier_backend_id=$BE_CANISTER_ID" >> $GITHUB_OUTPUT
+          TOKEN_STORAGE_ID=$(just get_canister_id token_storage ${{ needs.setup_environment.outputs.network }})
+          echo "Token storage canister ID: $TOKEN_STORAGE_ID"
+          echo "token_storage_id=$TOKEN_STORAGE_ID" >> $GITHUB_OUTPUT
 
       - name: Set Orbit station as the controller
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister update-settings cashier_backend --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Set log filter
         id: log_filter
@@ -106,25 +106,24 @@ jobs:
         run: |
           owner=${{ vars.ORBIT_STATION_ID }}
           ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
-          token_storage_canister_id=${{ vars.TOKEN_STORAGE_CANISTER_ID }}
-          just build_backend_args_hex "$owner" "$token_storage_canister_id" "${{ steps.log_filter.outputs.filter }}" backend_args
-          echo "Backend args:"
-          cat backend_args.hex
+          just build_token_storage_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args
+          echo "Token storage args:"
+          cat token_storage_args.hex
 
-      - name: Install backend canister
-        id: backend
+      - name: Upgrade token_storage canister
+        id: token_storage
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
           set -o pipefail
 
-          canister_name=cashier_backend
+          canister_name=token_storage
           review_run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           commit=${{ github.sha }}
 
           # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
+          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
@@ -147,17 +146,17 @@ jobs:
           - **Mode**: `${{ env.MODE }}`
           - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
 
-          ### Backend Canister
-          - **Canister ID**: `${{ steps.canister_ids.outputs.cashier_backend_id }}`
-          - **Arg:**
+          ### Token Storage Canister
+          - **Canister ID**: `${{ steps.canister_ids.outputs.token_storage_id }}`
+          **Arg:**
           ```
-          ${{ steps.backend.outputs.arg }}
+          ${{ steps.token_storage.outputs.arg }}
           ```
           | Field | Value |
           |-------|-------|
-          | WASM Checksum | `${{ steps.backend.outputs.wasm_checksum }}` |
-          | Arg Checksum | `${{ steps.backend.outputs.arg_checksum }}` |
-          | Request URL | ${{ steps.backend.outputs.request_url }} |
+          | WASM Checksum | `${{ steps.token_storage.outputs.wasm_checksum }}` |
+          | Arg Checksum | `${{ steps.token_storage.outputs.arg_checksum }}` |
+          | Request URL | ${{ steps.token_storage.outputs.request_url }} |
 
           ---
           EOF
