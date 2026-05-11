@@ -1,26 +1,33 @@
 <script lang="ts">
-  const SEGMENT_COUNT = 3;
+  const DEFAULT_SEGMENT_COUNT = 3;
 
   const {
-    filledCount = SEGMENT_COUNT,
+    filledCount = DEFAULT_SEGMENT_COUNT,
+    segmentCount = DEFAULT_SEGMENT_COUNT,
   }: {
-    /** How many segments from the left use the completed (green) style, 0–3. */
+    /** How many segments from the left use the completed (green) style. */
     filledCount?: number;
+    /** How many total segments are there. */
+    segmentCount?: number;
   } = $props();
 
-  const clampedFilled = $derived.by(() =>
-    Math.min(SEGMENT_COUNT, Math.max(0, Math.floor(filledCount))),
+  const clampedSegmentCount: number = $derived.by(() =>
+    Math.max(1, Math.floor(segmentCount)),
+  );
+
+  const clampedFilled: number = $derived.by(() =>
+    Math.min(clampedSegmentCount, Math.max(0, Math.floor(filledCount))),
   );
 </script>
 
 <div class="flex w-full mb-3" role="presentation">
-  {#each [...Array(SEGMENT_COUNT).keys()] as i (i)}
+  {#each [...Array(clampedSegmentCount).keys()] as i (i)}
     <div
       class="h-[6px] rounded-full mx-[2px] transition-all duration-300 {clampedFilled >=
       i + 1
         ? 'bg-green'
         : 'bg-lightgreen'}"
-      style="width: 33.3333%;"
+      style={`width: ${100 / clampedSegmentCount}%`}
     ></div>
   {/each}
 </div>

@@ -9,6 +9,7 @@
   const allStates = [
     LinkStep.CHOOSE_TYPE,
     LinkStep.ADD_ASSET,
+    LinkStep.LOCK,
     LinkStep.PREVIEW,
     LinkStep.CREATED,
     LinkStep.ACTIVE,
