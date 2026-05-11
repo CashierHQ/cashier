@@ -5,7 +5,7 @@
   import telegramIcon from "$lib/assets/telegram-icon.svg";
   import quizIcon from "$lib/assets/gating/quiz-icon.svg";
   import coinTokenIcon from "$lib/assets/gating/coin-token-icon.svg";
-  import { LockKeyhole, RectangleEllipsis } from "lucide-svelte";
+  import { Lock, RectangleEllipsis } from "lucide-svelte";
 
   const {
     store,
@@ -71,7 +71,7 @@
         }}
         class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&
         store.selectedGateTypes.includes(option.type)
-          ? 'border-green bg-green/5'
+          ? 'border-green'
           : ''}"
       >
         {#if option.iconSrc}
@@ -91,7 +91,7 @@
           {option.label}
         </span>
         {#if option.type === GateType.PASSWORD && store.hasConfiguredPassword}
-          <LockKeyhole class="ml-auto h-4 w-4 text-green" aria-hidden="true" />
+          <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">
             Coming soon

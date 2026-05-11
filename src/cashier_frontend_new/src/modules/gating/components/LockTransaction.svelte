@@ -12,6 +12,7 @@
   import PasswordLockForm from "$modules/gating/components/PasswordLockForm.svelte";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { Info, X } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
   import lockedLock from "$lib/assets/gating/locked-lock.svg";
   import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
 
@@ -26,7 +27,6 @@
   let errorMessage: string | null = $state(null);
   let isContinuing = $state(false);
   let passwordDrawerOpen = $state(false);
-  let showLockAddedNotice = $state(store.hasConfiguredPassword);
 
   const handleContinue = async () => {
     errorMessage = null;
@@ -43,7 +43,7 @@
 
   const handlePasswordLock = () => {
     passwordDrawerOpen = false;
-    showLockAddedNotice = true;
+    toast.success("You added a lock");
   };
 </script>
 
@@ -63,23 +63,6 @@
   </div>
 
   <GateOptionList {store} onPasswordClick={() => (passwordDrawerOpen = true)} />
-
-  {#if showLockAddedNotice && store.hasConfiguredPassword}
-    <div
-      class="flex h-12 items-center gap-3 rounded-xl bg-[#FFF8EC] px-4 text-sm text-green"
-    >
-      <Info class="h-4 w-4 flex-none" aria-hidden="true" />
-      <span class="font-medium">You added a lock</span>
-      <button
-        type="button"
-        class="ml-auto text-muted-foreground"
-        aria-label="Dismiss lock added message"
-        onclick={() => (showLockAddedNotice = false)}
-      >
-        <X class="h-4 w-4" aria-hidden="true" />
-      </button>
-    </div>
-  {/if}
 
   {#if errorMessage}
     <p class="text-sm text-red-500">{errorMessage}</p>

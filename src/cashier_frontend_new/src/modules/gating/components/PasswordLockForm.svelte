@@ -33,7 +33,7 @@
 
       <button
         type="button"
-        class="text-xs font-medium text-red-500"
+        class="text-xs font-medium text-[#D26060]"
         onclick={() => {
           submitted = false;
           store.clearPasswordDraft();
@@ -83,13 +83,11 @@
         type={showConfirmPassword ? "text" : "password"}
         value={store.confirmPassword}
         oninput={(e) =>
-          store.setConfirmPassword(
-            (e.currentTarget as HTMLInputElement).value,
-          )}
+          store.setConfirmPassword((e.currentTarget as HTMLInputElement).value)}
         placeholder="Enter the password"
         class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green {submitted &&
         store.passwordSetupError
-          ? 'border-red-500'
+          ? 'border-[#D26060]'
           : ''}"
       />
 
@@ -108,7 +106,7 @@
     </div>
 
     {#if submitted && store.passwordSetupError}
-      <p class="text-xs text-red-500">{store.passwordSetupError}</p>
+      <p class="text-xs text-[#D26060]">{store.passwordSetupError}</p>
     {/if}
   </div>
 
