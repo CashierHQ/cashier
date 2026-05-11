@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { GateType } from "$modules/gating/types/gate";
   import xIcon from "$lib/assets/x-icon.svg";
@@ -18,27 +19,27 @@
   const options = [
     {
       type: GateType.PASSWORD,
-      label: "Password",
+      label: locale.t("links.linkForm.lock.password"),
       enabled: true,
       iconComponent: RectangleEllipsis,
     },
     {
-      label: "X handle",
+      label: locale.t("links.linkForm.lock.xHandle"),
       enabled: false,
       iconSrc: xIcon,
     },
     {
-      label: "Telegram group",
+      label: locale.t("links.linkForm.lock.telegramGroup"),
       enabled: false,
       iconSrc: telegramIcon,
     },
     {
-      label: "Token or NFT ownership",
+      label: locale.t("links.linkForm.lock.tokenOrNftOwnership"),
       enabled: false,
       iconSrc: coinTokenIcon,
     },
     {
-      label: "Quiz: multiple choice",
+      label: locale.t("links.linkForm.lock.quizMultipleChoice"),
       enabled: false,
       iconSrc: quizIcon,
     },
@@ -47,7 +48,9 @@
 
 <div class="space-y-2">
   <div class="flex items-center justify-between">
-    <p class="text-base text-foreground">Choose locks</p>
+    <p class="text-base text-foreground">
+      {locale.t("links.linkForm.lock.chooseLocks")}
+    </p>
 
     <button
       type="button"
@@ -55,7 +58,7 @@
       disabled={!store.hasLocks}
       onclick={() => store.resetAll()}
     >
-      Reset all
+      {locale.t("links.linkForm.lock.resetAll")}
     </button>
   </div>
 
@@ -94,7 +97,7 @@
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">
-            Coming soon
+            {locale.t("links.linkForm.lock.comingSoon")}
           </span>
         {/if}
       </button>

@@ -1,3 +1,4 @@
+import { locale } from "$lib/i18n";
 import { GateType, type GateDraft } from "$modules/gating/types/gate";
 
 export class GatingStore {
@@ -27,12 +28,14 @@ export class GatingStore {
   }
 
   get passwordSetupError(): string | null {
-    if (this.#password.trim().length === 0) return "Password is required";
+    if (this.#password.trim().length === 0) {
+      return locale.t("links.linkForm.lock.errors.passwordRequired");
+    }
     if (this.#confirmPassword.trim().length === 0) {
-      return "Confirm password is required";
+      return locale.t("links.linkForm.lock.errors.confirmPasswordRequired");
     }
     if (this.#password !== this.#confirmPassword) {
-      return "The passwords are different.";
+      return locale.t("links.linkForm.lock.errors.passwordsDifferent");
     }
     return null;
   }

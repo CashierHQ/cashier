@@ -33,7 +33,7 @@
     }
 
     if (linkStep === LinkStep.LOCK) {
-      return "Lock transaction";
+      return locale.t("links.linkForm.lock.title");
     }
 
     if (linkStep === LinkStep.PREVIEW) {

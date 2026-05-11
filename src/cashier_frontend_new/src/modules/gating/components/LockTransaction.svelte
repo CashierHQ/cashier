@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
     Drawer,
@@ -43,22 +44,33 @@
 
   const handlePasswordLock = () => {
     passwordDrawerOpen = false;
-    toast.success("You added a lock");
+    toast.success(locale.t("links.linkForm.lock.lockAdded"));
   };
 </script>
 
 <div class="flex grow flex-col gap-6 py-2">
   <div class="flex flex-col items-center gap-2">
     <p class="text-sm text-foreground">
-      Transaction is <span class="font-medium text-green"
-        >{store.hasLocks ? "locked" : "not locked"}</span
+      {locale.t("links.linkForm.lock.transactionIs")}
+      <span class="font-medium text-green"
+        >{store.hasLocks
+          ? locale.t("links.linkForm.lock.locked")
+          : locale.t("links.linkForm.lock.notLocked")}</span
       >
     </p>
 
     {#if store.hasLocks}
-      <img src={lockedLock} alt="Locked lock" class="h-32 w-32" />
+      <img
+        src={lockedLock}
+        alt={locale.t("links.linkForm.lock.lockedLockAlt")}
+        class="h-32 w-32"
+      />
     {:else}
-      <img src={unlockedLock} alt="Unlocked lock" class="h-32 w-32" />
+      <img
+        src={unlockedLock}
+        alt={locale.t("links.linkForm.lock.unlockedLockAlt")}
+        class="h-32 w-32"
+      />
     {/if}
   </div>
 
@@ -70,7 +82,7 @@
 
   <div class="flex items-center gap-2 text-sm text-green">
     <Info class="h-4 w-4 flex-none" aria-hidden="true" />
-    <p>User must open all locks to use transaction</p>
+    <p>{locale.t("links.linkForm.lock.allLocksRequired")}</p>
   </div>
 
   <Button
@@ -79,7 +91,9 @@
     onclick={handleContinue}
     class="mt-auto h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
   >
-    {isContinuing ? "Continuing..." : "Continue"}
+    {isContinuing
+      ? locale.t("links.linkForm.lock.continuing")
+      : locale.t("links.linkForm.lock.continue")}
   </Button>
 </div>
 
@@ -87,12 +101,14 @@
   <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
     <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
       <div class="relative flex items-center justify-center">
-        <DrawerTitle class="text-base font-semibold">Set lock keys</DrawerTitle>
+        <DrawerTitle class="text-base font-semibold">
+          {locale.t("links.linkForm.lock.setLockKeys")}
+        </DrawerTitle>
         <DrawerClose>
           <button
             type="button"
             class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
-            aria-label="Close password lock drawer"
+            aria-label={locale.t("links.linkForm.lock.closePasswordLockDrawer")}
           >
             <X class="h-5 w-5" aria-hidden="true" />
           </button>
