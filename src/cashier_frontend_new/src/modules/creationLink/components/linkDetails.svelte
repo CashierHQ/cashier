@@ -17,15 +17,19 @@
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { toast } from "svelte-sonner";
+  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import { locale } from "$lib/i18n";
 
   const {
     link,
     errorMessage,
     successMessage,
+    gatingStore,
   }: {
     link: GenericCreationLinkStoreVM & AddAssetVM;
     errorMessage: string | null;
     successMessage: string | null;
+    gatingStore?: GatingStore;
   } = $props();
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
@@ -93,13 +97,6 @@
     );
   });
 
-  // Transaction lock status (currently always "Unlock" for preview links)
-  const transactionLockStatus = $derived.by(() => {
-    // For now, always return "Unlock" as transaction lock is not yet implemented in backend
-    // In the future, this could check link.link for lock status if added to backend
-    return "Unlock";
-  });
-
   const feesBreakdown = $derived.by(() => {
     return buildPreviewFeesBreakdown(
       forecastLinkCreationFees,
@@ -107,10 +104,22 @@
     );
   });
 
+  const lockFees = $derived.by(() => {
+    if (!gatingStore?.hasLocks) return [];
+    // TODO(gating): Hard-coded for now until we have real lock fee data from backend
+    return [
+      {
+        label: locale.t("links.linkForm.lock.fees.password"),
+        amount: "0.05 ICP",
+        usdAmount: "~$0.2",
+      },
+    ];
+  });
+
   let showFeeInfoDrawer = $state(false);
 
   function handleFeeBreakdownClick() {
-    if (feesBreakdown.length === 0) return;
+    if (feesBreakdown.length === 0 && lockFees.length === 0) return;
     showFeeInfoDrawer = true;
   }
 
@@ -153,7 +162,7 @@
   />
 
   <!-- Block 2: Transaction Lock -->
-  <TransactionLockSection {transactionLockStatus} />
+  <TransactionLockSection {gatingStore} />
 
   <!-- Block 3: You Send -->
   {#if isSendLink}
@@ -169,10 +178,10 @@
   <!-- Block 4: Fees Breakdown -->
   <FeesBreakdownSection
     {totalFeesUsd}
-    onBreakdownClick={feesBreakdown.length > 0
+    onBreakdownClick={feesBreakdown.length > 0 || lockFees.length > 0
       ? handleFeeBreakdownClick
       : undefined}
   />
 </div>
 
-<FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} />
+<FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} {lockFees} />

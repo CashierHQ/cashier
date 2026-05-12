@@ -201,6 +201,12 @@
         "hidePassword": "Hide password",
         "lock": "Lock",
         "lockAdded": "You added a lock",
+        "fees": {
+          "password": "Lock fee - password",
+          "xFollow": "Lock fee - X follow",
+          "total": "Total lock fees",
+          "multipleTokens": "Multiple tokens"
+        },
         "errors": {
           "passwordRequired": "Password is required",
           "confirmPasswordRequired": "Confirm password is required",
@@ -224,7 +230,11 @@
         "includingNetworkFees": "Including network fees",
         "linkCreationFee": "Link creation fee",
         "feesBreakdown": "Fees breakdown",
-        "totalFees": "Total fees"
+        "totalFees": "Total fees",
+        "transactionLockStatus": {
+          "locked": "Locked",
+          "unlocked": "Unlocked"
+        }
       },
       "drawers": {
         "txCart": {

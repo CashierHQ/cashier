@@ -69,6 +69,7 @@
   } = $props();
 
   const context = getGuardContext();
+  const gatingStore = $derived.by(() => context.gatingStore);
   const linkStore = $derived.by(() => {
     const storeV3 = context.linkDetailStoreV3;
     if (storeV3) {
@@ -365,28 +366,6 @@
     }
   });
 
-  // Transaction lock status based on link state
-  // ACTIVE -> Unlock (can end link, copy link)
-  // INACTIVE -> Lock (can withdraw)
-  // CREATE_LINK -> Unlock (can create)
-  const transactionLockStatus = $derived.by(() => {
-    if (!linkStore || !linkStore.link)
-      return locale.t("links.linkForm.preview.transactionLockUnlock");
-
-    switch (linkStore.link.state) {
-      case LinkState.ACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      case LinkState.INACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockLock");
-      case LinkState.INACTIVE_ENDED:
-        return locale.t("links.linkForm.preview.transactionLockEnded");
-      case LinkState.CREATE_LINK:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      default:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-    }
-  });
-
   const isTransactionLockEnded = $derived.by(() => {
     return linkStore?.link?.state === LinkState.INACTIVE_ENDED;
   });
@@ -649,7 +628,7 @@
 
       <!-- Block 2: Transaction Lock -->
       <TransactionLockSection
-        {transactionLockStatus}
+        gatingStore={gatingStore ?? undefined}
         isEnded={isTransactionLockEnded}
       />
 

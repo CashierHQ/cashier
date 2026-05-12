@@ -115,7 +115,7 @@
     {:else if linkStore.step === LinkStep.LOCK}
       <LockTransaction link={linkStore} store={gatingStore} />
     {:else if linkStore.step === LinkStep.PREVIEW}
-      <Preview link={linkStore} />
+      <Preview link={linkStore} {gatingStore} />
     {:else if linkStore.step === LinkStep.CREATED && linkStore.id && detailStore}
       <CreatedLink link={linkStore} {detailStore} />
     {/if}
