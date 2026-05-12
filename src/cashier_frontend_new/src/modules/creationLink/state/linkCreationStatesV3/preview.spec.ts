@@ -213,12 +213,10 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_succeed_go_next_delete_draft_and_temp_link_from_storage", async () => {
-      const { draftLinkRepository } = await import(
-        "$modules/creationLink/repositories/draftLinkRepository"
-      );
-      const { tempLinkRepository } = await import(
-        "$modules/creationLink/repositories/tempLinkRepository"
-      );
+      const { draftLinkRepository } =
+        await import("$modules/creationLink/repositories/draftLinkRepository");
+      const { tempLinkRepository } =
+        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: "test-store-id" });
       const state = new PreviewStateV3(store);
       await state.goNext();
@@ -233,12 +231,10 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_succeed_go_next_not_delete_from_storage_when_no_link_backend_id", async () => {
-      const { draftLinkRepository } = await import(
-        "$modules/creationLink/repositories/draftLinkRepository"
-      );
-      const { tempLinkRepository } = await import(
-        "$modules/creationLink/repositories/tempLinkRepository"
-      );
+      const { draftLinkRepository } =
+        await import("$modules/creationLink/repositories/draftLinkRepository");
+      const { tempLinkRepository } =
+        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: null });
       const state = new PreviewStateV3(store);
       await state.goNext();

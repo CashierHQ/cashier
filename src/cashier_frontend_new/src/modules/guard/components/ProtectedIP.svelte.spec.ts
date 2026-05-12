@@ -31,9 +31,8 @@ describe("ProtectedIP", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    const { userIPStore } = await import(
-      "$modules/guard/state/userIPStore.svelte"
-    );
+    const { userIPStore } =
+      await import("$modules/guard/state/userIPStore.svelte");
     mockStore = userIPStore as any;
   });
 

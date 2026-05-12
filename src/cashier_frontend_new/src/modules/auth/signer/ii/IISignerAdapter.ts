@@ -40,7 +40,9 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private identity: Identity | null = null;
 
   constructor(
-    args: { adapter: Adapter.Config; config: IIAdapterConfig } | IIAdapterConfig,
+    args:
+      | { adapter: Adapter.Config; config: IIAdapterConfig }
+      | IIAdapterConfig,
   ) {
     // Support simplified constructor in tests: new IIAdapter(config)
     const normalized = ((): {
@@ -170,8 +172,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     try {
       const identity = await this.authClient.signIn({
         maxTimeToLive:
-          this.config.delegationTimeout ??
-          BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
+          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
       });
       const account: Account = {
         owner: identity.getPrincipal().toText(),
