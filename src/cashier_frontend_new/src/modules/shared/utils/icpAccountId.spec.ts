@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import {
   principalToAccountId,
   encodeAccountID,

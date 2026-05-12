@@ -1,10 +1,10 @@
 import {
   IcrcLedgerCanister,
-  IcrcIndexNgCanister,
+  IcrcIndexCanister,
   mapTokenMetadata,
   type IcrcTokenMetadata,
 } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -76,7 +76,7 @@ export async function validateIndexCanister(
 > {
   try {
     const agent = authState.buildAnonymousAgent();
-    const indexCanister = IcrcIndexNgCanister.create({
+    const indexCanister = IcrcIndexCanister.create({
       agent,
       canisterId: Principal.fromText(canisterId),
     });

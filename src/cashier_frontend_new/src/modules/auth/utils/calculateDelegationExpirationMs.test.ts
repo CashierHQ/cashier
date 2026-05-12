@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { calculateDelegationExpirationMs } from "./calculateDelegationExpirationMs";
-import type { DelegationChain } from "@dfinity/identity";
+import type { DelegationChain } from "@icp-sdk/core/identity";
 import { NANOS_IN_MILLIS } from "../constants";
 
 describe("calculateDelegationExpirationMs", () => {

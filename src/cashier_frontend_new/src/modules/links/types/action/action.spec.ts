@@ -3,7 +3,7 @@ import type {
   Icrc112Request as BackendIcrc112Request,
   IntentDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 import { ActionMapper } from "./action";
 

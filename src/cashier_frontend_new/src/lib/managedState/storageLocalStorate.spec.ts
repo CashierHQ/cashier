@@ -5,7 +5,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as devalue from "devalue";
 import { LocalStorageStore } from "./storageLocalStorage";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { TestValue, Option, testValueDevalueSerde } from "./utils";
 
 describe("LocalStorageStore", () => {

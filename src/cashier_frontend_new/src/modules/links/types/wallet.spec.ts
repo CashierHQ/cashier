@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import Wallet from "./wallet";
 import type { Wallet as BackendWallet } from "$lib/generated/cashier_backend/cashier_backend.did";
 

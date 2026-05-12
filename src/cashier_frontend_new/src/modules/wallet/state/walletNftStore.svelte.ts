@@ -8,7 +8,7 @@ import type {
   EnrichedNFT,
   NFT,
 } from "$modules/wallet/types/nft";
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Store managing the user's wallet NFTs

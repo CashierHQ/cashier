@@ -4,7 +4,7 @@ import {
   mapTokenMetadata,
   type IcrcTokenMetadata,
 } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Service for fetching metadata for ICRC-* tokens

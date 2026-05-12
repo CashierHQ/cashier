@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Asset, AssetInfo } from "$modules/links/types/link/asset";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { getFirstAssetDisplayInfo } from "./getFirstAssetDisplayInfo";

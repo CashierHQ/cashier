@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { IntentMapper } from "./intent";
 

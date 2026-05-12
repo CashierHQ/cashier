@@ -3,7 +3,7 @@ import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkState, LinkType } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/i18n", () => ({

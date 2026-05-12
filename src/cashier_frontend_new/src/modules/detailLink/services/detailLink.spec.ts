@@ -25,7 +25,7 @@ import {
   LinkType as SharedLinkType,
   type Link as SharedLink,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { detailLinkService } from "./detailLink";

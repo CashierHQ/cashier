@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isValidPrincipal, isValidAccountId, shortenAddress } from "./address";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 
 describe("isValidPrincipal", () => {
   it("should return Ok with Principal for valid principal", () => {

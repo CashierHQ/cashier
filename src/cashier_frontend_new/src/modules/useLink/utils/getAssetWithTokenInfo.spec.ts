@@ -3,7 +3,7 @@ import { getAssetWithTokenInfo } from "./getAssetWithTokenInfo";
 import { AssetInfo, Asset } from "$modules/links/types/link/asset";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 
 describe("getAssetWithTokenInfo", () => {

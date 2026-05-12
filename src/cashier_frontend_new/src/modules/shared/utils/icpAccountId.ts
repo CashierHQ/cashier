@@ -1,12 +1,5 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { Principal } from "@dfinity/principal";
-
-// Polyfill for Buffer in browser environment
-// The @dfinity/ledger-icp package depends on Buffer, which is not available in browsers by default.
-import { Buffer } from "buffer";
-if (typeof window !== "undefined" && !window.Buffer) {
-  window.Buffer = Buffer;
-}
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Encode an ICP account identifier from a principal string.

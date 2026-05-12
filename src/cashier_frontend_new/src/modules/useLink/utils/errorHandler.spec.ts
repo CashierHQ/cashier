@@ -15,7 +15,7 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import { ActionState } from "$modules/links/types/action/actionState";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Helper to create a mock link
 function createMockLink(state: LinkStateValue = LinkState.ACTIVE): Link {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as devalue from "devalue";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Link, LinkMapper, type SerializedLink } from "./link";
 import { Asset, AssetInfo } from "./asset";
 import { LinkType } from "./linkType";

@@ -4,7 +4,7 @@ import { Link } from "../types/link/link";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { UnifiedLinkItemMapper } from "../types/linkList";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { managedState } from "$lib/managedState";
 import { TempLink } from "../types/tempLink";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";

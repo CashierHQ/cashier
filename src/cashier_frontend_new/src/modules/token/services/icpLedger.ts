@@ -2,7 +2,7 @@ import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_cani
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,

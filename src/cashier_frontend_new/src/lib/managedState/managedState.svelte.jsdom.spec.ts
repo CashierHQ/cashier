@@ -6,7 +6,7 @@ import * as devalue from "devalue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { managedState } from "./managedState.svelte";
 import { TestValue, Option, testValueDevalueSerde } from "./utils";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 
 describe("ManagedState - Global storage", () => {
   beforeEach(() => {

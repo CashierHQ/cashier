@@ -1,5 +1,5 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 import { parseListTokens } from "./parser";
 

@@ -1,6 +1,6 @@
 import { managedState, type ManagedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import {
   DEFAULT_TX_PAGE_SIZE,

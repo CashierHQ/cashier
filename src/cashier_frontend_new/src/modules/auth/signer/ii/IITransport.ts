@@ -1,6 +1,6 @@
 import { type Channel, type Transport } from "@slide-computer/signer";
 import { IIChannel } from "./IIChannel";
-import { HttpAgent } from "@dfinity/agent";
+import { HttpAgent } from "@icp-sdk/core/agent";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9

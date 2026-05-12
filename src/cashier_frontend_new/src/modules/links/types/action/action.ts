@@ -6,7 +6,7 @@ import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.
 import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
 import type { Action as SharedAction } from "$shared";
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import type { ActionState } from "./actionState";
 import { ActionStateMapper } from "./actionState";
 import { ActionTypeMapper, type ActionTypeValue } from "./actionType";

@@ -22,7 +22,7 @@ import type { TokenMetadata } from "$modules/token/types";
 import { parseListTokens } from "$modules/token/utils/parser";
 import type { NFT } from "$modules/wallet/types/nft";
 import { NFTMapper } from "$modules/wallet/types/nft";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**

@@ -6,7 +6,7 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { BitcoinBlock } from "./bitcoin_transaction";
 
 /**

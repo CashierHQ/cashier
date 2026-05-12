@@ -2,7 +2,7 @@ import {
   CreateLinkAsset,
   CreateLinkData,
 } from "$modules/creationLink/types/createLinkData";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 import { Link } from "./link/link";
 import { LinkState } from "./link/linkState";

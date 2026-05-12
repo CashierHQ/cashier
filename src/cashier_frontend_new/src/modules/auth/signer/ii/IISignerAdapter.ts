@@ -1,7 +1,12 @@
-import { HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
-import { AuthClient } from "@dfinity/auth-client";
-import { BaseSignerAdapter } from "@windoge98/plug-n-play";
-import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
+import {
+  Actor,
+  HttpAgent,
+  type ActorSubclass,
+  type Identity,
+} from "@icp-sdk/core/agent";
+import { AuthClient } from "@icp-sdk/auth/client";
+import { Adapter, BaseSignerAdapter } from "@windoge98/plug-n-play";
+import { type IIAdapterConfig, isIIAdapterConfig } from "./type";
 import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
@@ -14,11 +19,20 @@ interface Account {
   owner: string | null;
   subaccount: string | null;
 }
+
 /**
  * IISignerAdapter integrates Internet Identity (II) with the Plug and Play (PNP).
  * By default PNP support a IIAdapter from plug-n-play, but it doesn't use signer-js
  * which is required for the new transaction flow in Cashier.
  * This adapter implements II support using signer-js.
+ *
+ * v5 notes (icp-sdk migration):
+ * - AuthClient is constructed via `new AuthClient(opts)` (was static `AuthClient.create`)
+ * - `identityProvider`, `derivationOrigin`, `windowOpenerFeatures` moved to constructor opts
+ * - `signIn(opts?) -> Promise<Identity>` replaces callback-style `login`
+ * - `signOut()` replaces `logout`
+ * - `isAuthenticated()` is now synchronous
+ * - `getIdentity()` is now async
  */
 export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
@@ -26,10 +40,13 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private identity: Identity | null = null;
 
   constructor(
-    args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig,
+    args: { adapter: Adapter.Config; config: IIAdapterConfig } | IIAdapterConfig,
   ) {
     // Support simplified constructor in tests: new IIAdapter(config)
-    const normalized = ((): { adapter: unknown; config: IIAdapterConfig } => {
+    const normalized = ((): {
+      adapter: Adapter.Config;
+      config: IIAdapterConfig;
+    } => {
       if ("config" in args) {
         return args;
       }
@@ -55,45 +72,34 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
 
     // Initialize AuthClient immediately for Safari compatibility
     // This happens during app initialization, not during user interaction
-    this.initializeAuthClientSync();
+    this.initializeAuthClient();
   }
 
   getAuthClient(): AuthClient | null {
     return this.authClient;
   }
 
+  // v5: AuthClient is constructed synchronously, transport setup is deferred to connect()
   protected ensureTransportInitialized(): Promise<void> {
-    throw new Error("Method not implemented.");
+    return Promise.resolve();
   }
 
-  private initializeAuthClientSync(): void {
-    AuthClient.create({
-      idleOptions: this.config.idleOptions,
-    })
-      .then((client) => {
-        this.authClient = client;
-      })
-      .catch((err) => {
-        this.handleError("Failed to create AuthClient", err);
-        this.setState(Status.ERROR);
+  private initializeAuthClient(): void {
+    try {
+      // v5: AuthClient constructor accepts identity provider URL, derivation origin,
+      // and window opener features directly (previously passed to login())
+      this.authClient = new AuthClient({
+        idleOptions: this.config.idleOptions,
+        identityProvider: this.config.iiProviderUrl || "https://id.ai",
+        derivationOrigin: this.config.derivationOrigin,
+        windowOpenerFeatures: (() => {
+          const screen = getScreenDimensions();
+          return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
+        })(),
       });
-  }
-
-  private async ensureAuthClient(): Promise<void> {
-    if (this.authClient) {
-      return;
-    }
-
-    // Wait for AuthClient to be initialized
-    let attempts = 0;
-    while (!this.authClient && attempts < 50) {
-      // Max 5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      attempts++;
-    }
-
-    if (!this.authClient) {
-      throw new Error("Failed to initialize AuthClient after 5 seconds");
+    } catch (err) {
+      this.handleError("Failed to create AuthClient", err);
+      this.setState(Adapter.Status.ERROR);
     }
   }
 
@@ -122,16 +128,15 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
 
   async connect(): Promise<Account> {
     try {
-      this.setState(Status.CONNECTING);
+      this.setState(Adapter.Status.CONNECTING);
 
-      // Ensure AuthClient is ready
-      await this.ensureAuthClient();
+      if (!this.authClient) {
+        throw new Error("AuthClient not initialized");
+      }
 
-      // Check if already authenticated before opening popup
-      const isAuthenticated = await this.authClient!.isAuthenticated();
-
-      if (isAuthenticated) {
-        const identity = this.authClient!.getIdentity();
+      // v5: isAuthenticated is synchronous, getIdentity is async
+      if (this.authClient.isAuthenticated()) {
+        const identity = await this.authClient.getIdentity();
         const principal = identity?.getPrincipal();
 
         if (identity && principal && !principal.isAnonymous()) {
@@ -143,7 +148,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
           if (!this.agent) {
             await this.initAgentAndSigner(identity);
           }
-          this.setState(Status.CONNECTED);
+          this.setState(Adapter.Status.CONNECTED);
           return account;
         }
       }
@@ -151,61 +156,47 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       // Not authenticated or invalid session - open login popup
       return await this.performLogin();
     } catch (error) {
-      this.setState(Status.ERROR);
+      this.setState(Adapter.Status.ERROR);
       throw error;
     }
   }
 
+  // v5: signIn() returns Promise<Identity> directly; identityProvider/derivationOrigin/
+  // windowOpenerFeatures moved to AuthClient constructor (set in initializeAuthClient)
   private async performLogin(): Promise<Account> {
-    return new Promise<Account>((resolve, reject) => {
-      const loginOptions = {
-        derivationOrigin: this.config.derivationOrigin,
-        identityProvider: this.config.iiProviderUrl || "https://id.ai",
+    if (!this.authClient) {
+      throw new Error("AuthClient not initialized");
+    }
+    try {
+      const identity = await this.authClient.signIn({
         maxTimeToLive:
-          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 day
-        // Open in new popup window (equivalent to target="_blank" but for window.open)
-        windowOpenerFeatures: (() => {
-          const screen = getScreenDimensions();
-          return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
-        })(),
-        onSuccess: async () => {
-          try {
-            if (!this.authClient) {
-              throw new Error("AuthClient not initialized after login");
-            }
-            const identity = this.authClient.getIdentity();
-            const account: Account = {
-              owner: identity.getPrincipal().toText(),
-              subaccount: null,
-            };
-            this.identity = identity;
-            await this.initAgentAndSigner(identity);
-
-            this.setState(Status.CONNECTED);
-            resolve(account);
-          } catch (error) {
-            this.setState(Status.ERROR);
-            reject(error);
-          }
-        },
-        onError: (error?: string) => {
-          this.handleError("Login error", error || "Unknown error");
-          this.setState(Status.ERROR);
-          reject(
-            new Error(`II Authentication failed: ${error || "Unknown error"}`),
-          );
-        },
+          this.config.delegationTimeout ??
+          BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
+      });
+      const account: Account = {
+        owner: identity.getPrincipal().toText(),
+        subaccount: null,
       };
+      this.identity = identity;
+      await this.initAgentAndSigner(identity);
 
-      this.authClient!.login(loginOptions);
-    });
+      this.setState(Adapter.Status.CONNECTED);
+      return account;
+    } catch (error) {
+      this.handleError("Login error", error);
+      this.setState(Adapter.Status.ERROR);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`II Authentication failed: ${message}`);
+    }
   }
 
   async isConnected(): Promise<boolean> {
-    return this.authClient ? await this.authClient.isAuthenticated() : false;
+    // v5: isAuthenticated is now synchronous
+    return this.authClient ? this.authClient.isAuthenticated() : false;
   }
 
   // Implementation for BaseIcAdapter actor caching
+  // v5: createActorWithAgent removed; use Actor.createActor directly
   protected createActorInternal<T>(
     canisterId: string,
     idl: Record<string, unknown>,
@@ -214,35 +205,26 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       throw new Error("Agent not initialized. Connect first.");
     }
 
-    return this.createActorWithAgent<T>(
-      this.agent as HttpAgent,
+    return Actor.createActor<T>(idl as never, {
+      agent: this.agent as HttpAgent,
       canisterId,
-      idl,
-    );
+    });
   }
 
   async getPrincipal(): Promise<string> {
     if (!this.authClient) throw new Error("Not connected");
-    const identity = this.authClient.getIdentity();
+    // v5: getIdentity is async
+    const identity = await this.authClient.getIdentity();
     if (!identity) throw new Error("Identity not available");
     const principal = identity.getPrincipal();
     return principal.toText();
   }
 
-  private async refreshLogin(): Promise<void> {
-    try {
-      await this.ensureAuthClient();
-      await this.performLogin();
-    } catch (error) {
-      this.handleError("Failed to refresh login", error);
-      await this.disconnect().catch(() => {});
-    }
-  }
-
   // Disconnect logic specific to II
+  // v5: signOut replaces logout
   protected async disconnectInternal(): Promise<void> {
     if (this.authClient) {
-      await this.authClient.logout();
+      await this.authClient.signOut();
     }
   }
 
@@ -258,11 +240,12 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
    */
   protected async onDispose(): Promise<void> {
     // Ensure logout if still connected
+    // v5: signOut replaces logout
     if (this.authClient) {
       try {
-        await this.authClient.logout();
+        await this.authClient.signOut();
       } catch (error) {
-        console.error("Error during AuthClient logout:", error);
+        console.error("Error during AuthClient signOut:", error);
       }
       this.authClient = null;
     }

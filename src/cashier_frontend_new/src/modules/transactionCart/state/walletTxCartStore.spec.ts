@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
 import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import type {

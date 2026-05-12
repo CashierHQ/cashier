@@ -1,11 +1,11 @@
-import { Principal } from "@dfinity/principal";
-import type {
-  BatchCallCanisterRequest,
-  BatchCallCanisterResponse,
-  Signer,
-  Transport,
+import { Principal } from "@icp-sdk/core/principal";
+import {
+  type BatchCallCanisterRequest,
+  type BatchCallCanisterResponse,
+  type Signer,
+  type Transport,
+  toBase64,
 } from "@slide-computer/signer";
-import { Buffer } from "buffer";
 import type { Icrc112ExecutionResult } from "../types/icrc112Request";
 
 // Class of service handler for ICRC-112 requests
@@ -27,8 +27,8 @@ class Icrc112Service<T extends Transport> {
       Array<{
         canister_id: Principal;
         method: string;
-        arg: ArrayBuffer;
-        nonce?: ArrayBuffer;
+        arg: Uint8Array | ArrayBuffer;
+        nonce?: Uint8Array | ArrayBuffer;
       }>
     >,
     sender: string,
@@ -42,12 +42,13 @@ class Icrc112Service<T extends Transport> {
             "ICRC-112 request missing canister_id - malformed request",
           );
         }
+        // v5: use signer's toBase64 (browser-native, no Buffer polyfill needed)
         return {
           canisterId: canisterId.toString(),
           method: request.method,
-          arg: Buffer.from(request.arg).toString("base64"),
+          arg: toBase64(new Uint8Array(request.arg)),
           ...(request.nonce && {
-            nonce: Buffer.from(request.nonce).toString("base64"),
+            nonce: toBase64(new Uint8Array(request.nonce)),
           }),
         };
       }),
@@ -60,10 +61,8 @@ class Icrc112Service<T extends Transport> {
       params: {
         sender,
         requests,
-        validation: {
-          canisterId: cashierBackendCanisterId,
-          method: "icrc114_validate",
-        },
+        // v5: validation canister id is a flat field (was nested object)
+        validationCanisterId: cashierBackendCanisterId,
       },
     };
 

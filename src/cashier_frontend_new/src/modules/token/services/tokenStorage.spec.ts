@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Hoisted mock functions
 const { mockBuildActor, mockUserCreateBridgeTransaction } = vi.hoisted(() => ({

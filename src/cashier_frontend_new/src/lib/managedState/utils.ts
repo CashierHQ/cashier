@@ -1,5 +1,5 @@
 import type { DevalueSerde } from ".";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // class for serde testing
 export class TestValue {
