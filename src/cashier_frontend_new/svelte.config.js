@@ -12,10 +12,11 @@ const config = {
       $modules: "./src/modules",
       $shared: "../lib/cashier_shared/generated/ts",
       $sharedTemplates: "../lib/cashier_shared/templates",
-      // Ensure @icp-sdk/core resolves from the frontend's node_modules
+      // Ensure @icp-sdk/core/principal resolves from the frontend's node_modules
       // when TypeScript checks files in ../shared/generated/ts/ (which is
       // outside the frontend's node_modules ancestor path).
-      "@icp-sdk/core": "./node_modules/@icp-sdk/core",
+      "@icp-sdk/core/principal":
+        "./node_modules/@icp-sdk/core/lib/esm/principal",
     },
   },
 };
