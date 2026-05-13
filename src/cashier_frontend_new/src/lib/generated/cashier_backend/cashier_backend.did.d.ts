@@ -629,6 +629,16 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
   'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_14>,
+  /**
+   * Syncs the asset balance cache for a link by querying actual token balances.
+   * Only the link creator can trigger this.
+   * # Arguments
+   * * `link_id` - The unique identifier of the link
+   * # Returns
+   * * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
+   * * `Err(CanisterError)` - If link not found, access denied, or balance fetch fails
+   */
+  'user_sync_asset_balance_cache' : ActorMethod<[string], Result_10>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

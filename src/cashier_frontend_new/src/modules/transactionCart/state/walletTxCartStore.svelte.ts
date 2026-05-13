@@ -5,6 +5,7 @@ import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
 import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import {
@@ -13,6 +14,7 @@ import {
 } from "$modules/transactionCart/types/txCart";
 import { ReceiveAddressType } from "$modules/wallet/types";
 import { Err, Ok, type Result } from "ts-results-es";
+import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
 
 /**
  * Transaction cart store for Wallet-based (ICRC/ICP) transactions.
@@ -23,9 +25,11 @@ export class WalletTxCartStore implements TxCartStore {
   #icpLedgerService: IcpLedgerService | null = null;
   #icrcLedgerService: IcrcLedgerService | null = null;
   #assetAndFeeList = $state<AssetAndFee[]>([]);
+  #deduplication: TransferDeduplicationFields;
 
   constructor(source: WalletSource) {
     this.#source = source;
+    this.#deduplication = this.#createDeduplicationFields();
   }
 
   /**
@@ -75,6 +79,22 @@ export class WalletTxCartStore implements TxCartStore {
   }
 
   /**
+   * Create deduplication fields for the transaction.
+   * @returns The deduplication fields.
+   */
+  #createDeduplicationFields(): TransferDeduplicationFields {
+    const owner = authState.account?.owner ?? "unknown";
+    const nowMs = Date.now();
+    const nonce = globalThis.crypto?.randomUUID?.() ?? `${nowMs}`;
+    // Must include both principal (owner) and timestamp to reduce collisions across users.
+    const id = `${owner}-${nowMs}-${nonce}`;
+    return {
+      memo: createDeduplicationMemo32(id),
+      createdAtTime: BigInt(nowMs) * 1_000_000n,
+    };
+  }
+
+  /**
    * Transition all assets to a new state.
    * Creates new array to trigger Svelte 5 reactivity.
    * @param state - WalletTransferState for state transition
@@ -115,9 +135,17 @@ export class WalletTxCartStore implements TxCartStore {
       // ICP Ledger: supports both ACCOUNT_ID and PRINCIPAL
       if (this.#icpLedgerService) {
         if (isAccountId && typeof to === "string") {
-          result = await this.#icpLedgerService.transferToAccount(to, amount);
+          result = await this.#icpLedgerService.transferToAccount(
+            to,
+            amount,
+            this.#deduplication,
+          );
         } else if (isPrincipal && typeof to !== "string") {
-          result = await this.#icpLedgerService.transferToPrincipal(to, amount);
+          result = await this.#icpLedgerService.transferToPrincipal(
+            to,
+            amount,
+            this.#deduplication,
+          );
         } else {
           this.setSourceState(WalletTransferState.FAILED);
           console.warn(`[cashier-dapp] Transfer failed — Invalid address type for ${receiveType}.`);
@@ -140,7 +168,11 @@ export class WalletTxCartStore implements TxCartStore {
           console.warn("[cashier-dapp] Transfer failed — Invalid principal address.");
           return Err("Invalid principal address.");
         }
-        result = await this.#icrcLedgerService.transferToPrincipal(to, amount);
+        result = await this.#icrcLedgerService.transferToPrincipal(
+          to,
+          amount,
+          this.#deduplication,
+        );
         this.setSourceState(WalletTransferState.SUCCESS);
         console.log(`[cashier-dapp] Transfer succeeded — block index: ${result}`);
         return Ok(result);

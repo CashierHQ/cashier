@@ -47,6 +47,21 @@ const createIntentWithPayload = (
   return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
 };
 
+const createIntentWithPayloadAndAsset = (
+  id: string,
+  task: IntentTask,
+  amount: bigint,
+  asset: Asset,
+): Intent => {
+  const payload: IntentPayload = new TransferData(
+    toWallet,
+    asset,
+    fromWallet,
+    amount,
+  );
+  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
+};
+
 const LEDGER_FEE = 10_000n; // 0.0001 token in e8s
 
 // Helper: Create mock token
@@ -495,6 +510,179 @@ describe("FeeService", () => {
         expect(result[0].fee?.feeType).toBe(FeeType.NETWORK_FEE);
       });
 
+      it("subtracts one ledger fee from CREATE_LINK_FEE when deposited token equals link-creation-fee token", () => {
+        // Make fee token address match the token used in this action.
+        vi.spyOn(svc, "getLinkCreationFee").mockReturnValue({
+          amount: 10_000n,
+          tokenAddress,
+          symbol: "ICP",
+          decimals: 8,
+        });
+
+        // A "complete" CREATE_LINK action must include both:
+        // - funding intent (TRANSFER_WALLET_TO_LINK)
+        // - fee intent (TRANSFER_WALLET_TO_TREASURY)
+        //
+        // Baseline: fund the link with a different token so there's no overlap.
+        const otherPrincipal = Principal.anonymous();
+        const otherTokenAddress = otherPrincipal.toText();
+        const otherAsset = new Asset(otherPrincipal);
+        const tokensMapWithOther = {
+          ...tokensMap,
+          [otherTokenAddress]: createMockToken(otherTokenAddress, {
+            symbol: "OTHER",
+            decimals: 8,
+            fee: LEDGER_FEE,
+            priceUSD: undefined,
+          }),
+        };
+
+        const withDifferentFundingAsset = createMockAction(
+          ActionType.CREATE_LINK,
+          [
+            createIntentWithPayloadAndAsset(
+              "funding-asset",
+              IntentTask.TRANSFER_WALLET_TO_LINK,
+              100_000_000n,
+              otherAsset,
+            ),
+            createIntentWithPayload(
+              "treasury",
+              IntentTask.TRANSFER_WALLET_TO_TREASURY,
+              100_000_000n,
+            ),
+          ],
+        );
+
+        const withFundingAsset = createMockAction(ActionType.CREATE_LINK, [
+          createIntentWithPayload(
+            "funding-asset",
+            IntentTask.TRANSFER_WALLET_TO_LINK,
+            100_000_000n,
+          ),
+          createIntentWithPayload(
+            "treasury",
+            IntentTask.TRANSFER_WALLET_TO_TREASURY,
+            100_000_000n,
+          ),
+        ]);
+
+        const resA = svc.buildFromAction(
+          withDifferentFundingAsset,
+          1,
+          tokensMapWithOther,
+          from.getPrincipal().toText(),
+        );
+        const resB = svc.buildFromAction(
+          withFundingAsset,
+          1,
+          tokensMap,
+          from.getPrincipal().toText(),
+        );
+
+        const createLinkFeeA = resA.find(
+          (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+        );
+        const createLinkFeeB = resB.find(
+          (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+        );
+
+        expect(createLinkFeeA).toBeDefined();
+        expect(createLinkFeeB).toBeDefined();
+
+        if (!createLinkFeeA || !createLinkFeeB) return;
+
+        // When the deposited token equals the fee token, displayed total should be reduced by one ledger fee.
+        expect(createLinkFeeB.asset.amount).toBe(
+          createLinkFeeA.asset.amount - LEDGER_FEE,
+        );
+      });
+
+      it("does not subtract ledger fee when deposited token differs from link-creation-fee token", () => {
+        // Fee token is ICP (tokenAddress). We'll deposit a different token to the link.
+        vi.spyOn(svc, "getLinkCreationFee").mockReturnValue({
+          amount: 10_000n,
+          tokenAddress,
+          symbol: "ICP",
+          decimals: 8,
+        });
+
+        const otherPrincipal = Principal.anonymous();
+        const otherTokenAddress = otherPrincipal.toText();
+        const otherAsset = new Asset(otherPrincipal);
+        const tokensMapWithOther = {
+          ...tokensMap,
+          [otherTokenAddress]: createMockToken(otherTokenAddress, {
+            symbol: "OTHER",
+            decimals: 8,
+            fee: LEDGER_FEE,
+            priceUSD: undefined,
+          }),
+        };
+
+        // "Complete" action but with different funding token so there's no overlap.
+        const withDifferentFundingAssetZeroAmount = createMockAction(
+          ActionType.CREATE_LINK,
+          [
+            createIntentWithPayloadAndAsset(
+              "funding-asset",
+              IntentTask.TRANSFER_WALLET_TO_LINK,
+              0n,
+              otherAsset,
+            ),
+            createIntentWithPayload(
+              "treasury",
+              IntentTask.TRANSFER_WALLET_TO_TREASURY,
+              100_000_000n,
+            ),
+          ],
+        );
+
+        const withDifferentFundingAsset = createMockAction(
+          ActionType.CREATE_LINK,
+          [
+            createIntentWithPayloadAndAsset(
+              "funding-asset",
+              IntentTask.TRANSFER_WALLET_TO_LINK,
+              100_000_000n,
+              otherAsset,
+            ),
+            createIntentWithPayload(
+              "treasury",
+              IntentTask.TRANSFER_WALLET_TO_TREASURY,
+              100_000_000n,
+            ),
+          ],
+        );
+
+        const resA = svc.buildFromAction(
+          withDifferentFundingAssetZeroAmount,
+          1,
+          tokensMapWithOther,
+          from.getPrincipal().toText(),
+        );
+        const resB = svc.buildFromAction(
+          withDifferentFundingAsset,
+          1,
+          tokensMapWithOther,
+          from.getPrincipal().toText(),
+        );
+
+        const createLinkFeeA = resA.find(
+          (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+        );
+        const createLinkFeeB = resB.find(
+          (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+        );
+
+        expect(createLinkFeeA).toBeDefined();
+        expect(createLinkFeeB).toBeDefined();
+        if (!createLinkFeeA || !createLinkFeeB) return;
+
+        // Since the deposited token differs, no network-fee overlap should be subtracted.
+        expect(createLinkFeeB.asset.amount).toBe(createLinkFeeA.asset.amount);
+      });
+
       it("calculates USD values when priceUSD available", () => {
         const intent = createIntentWithPayload(
           "id-5",
@@ -783,5 +971,128 @@ describe("FeeService", () => {
         expect(result).toHaveLength(0);
       });
     });
+  });
+});
+
+describe("FeeService - mocked $shared edge cases", () => {
+  it("clamps CREATE_LINK_FEE asset amount to 0 when overlap subtraction would go negative", async () => {
+    vi.resetModules();
+    const tokenAddress = assets[0].address.toString();
+
+    // Local mock: make calculateIntentFees return a total equal to exactly one ledger fee.
+    vi.doMock("$shared", async () => {
+      const actual = await vi.importActual<typeof import("$shared")>("$shared");
+      return {
+        ...actual,
+        calculateIntentFees: vi.fn(() => ({
+          intent_total_amount: "0",
+          intent_total_network_fee: LEDGER_FEE.toString(),
+          intent_user_fee: "0",
+        })),
+      };
+    });
+
+    const { FeeService: FeeServiceWithMock } = await import("./feeService");
+    const localSvc = new FeeServiceWithMock();
+
+    vi.spyOn(localSvc, "getLinkCreationFee").mockReturnValue({
+      amount: 0n,
+      tokenAddress,
+      symbol: "ICP",
+      decimals: 8,
+    });
+
+    const token = createMockToken(tokenAddress, {
+      symbol: "ICP",
+      decimals: 8,
+      fee: LEDGER_FEE,
+      priceUSD: undefined,
+    });
+    const tokensMap = { [tokenAddress]: token };
+
+    const action = createMockAction(ActionType.CREATE_LINK, [
+      createIntentWithPayload(
+        "funding-asset",
+        IntentTask.TRANSFER_WALLET_TO_LINK,
+        1n,
+      ),
+      createIntentWithPayload(
+        "treasury",
+        IntentTask.TRANSFER_WALLET_TO_TREASURY,
+        1n,
+      ),
+    ]);
+
+    const res = localSvc.buildFromAction(
+      action,
+      1,
+      tokensMap,
+      from.getPrincipal().toText(),
+    );
+    const createLinkFee = res.find(
+      (p) => p.fee?.feeType === FeeType.CREATE_LINK_FEE,
+    );
+    expect(createLinkFee).toBeDefined();
+    expect(createLinkFee?.asset.amount).toBe(0n);
+  });
+
+  it("forecastLinkCreationFees uses intent_total_amount + intent_total_network_fee for asset amount and USD", async () => {
+    vi.resetModules();
+
+    const totalAmount = 1_000_000n;
+    const totalNetworkFee = 250_000n;
+
+    vi.doMock("$shared", async () => {
+      const actual = await vi.importActual<typeof import("$shared")>("$shared");
+      return {
+        ...actual,
+        calculateIntentFees: vi.fn(() => ({
+          intent_total_amount: totalAmount.toString(),
+          intent_total_network_fee: totalNetworkFee.toString(),
+          intent_user_fee: "0",
+        })),
+      };
+    });
+
+    const { FeeService: FeeServiceWithMock } = await import("./feeService");
+    const localSvc = new FeeServiceWithMock();
+
+    const token = createMockToken("mock-token", {
+      symbol: "MOCK",
+      decimals: 8,
+      fee: LEDGER_FEE,
+      priceUSD: 2.0,
+    });
+
+    // Also provide the link-fee token required by forecastLinkCreationFees.
+    const linkFeeInfo = localSvc.getLinkCreationFee();
+    const linkFeeToken = createMockToken(linkFeeInfo.tokenAddress, {
+      symbol: "ICP",
+      decimals: 8,
+      fee: LEDGER_FEE,
+      priceUSD: 1.0,
+    });
+
+    const tokensMap = {
+      [token.address]: token,
+      [linkFeeToken.address]: linkFeeToken,
+    } as Record<string, TokenWithPriceAndBalance>;
+
+    const res = localSvc.forecastLinkCreationFees(
+      [{ address: token.address, useAmount: 123n }],
+      3,
+      tokensMap,
+    );
+
+    expect(res.isOk()).toBe(true);
+    const pairs = res.unwrap();
+    const assetPair = pairs.find((p) => p.asset.address === token.address);
+    expect(assetPair).toBeDefined();
+    if (!assetPair) return;
+
+    const expectedRaw = totalAmount + totalNetworkFee;
+    const expectedUi = parseBalanceUnits(expectedRaw, token.decimals);
+    expect(assetPair.asset.amount).toBe(formatNumber(expectedUi));
+    expect(assetPair.asset.usdValueStr).toBeDefined();
   });
 });

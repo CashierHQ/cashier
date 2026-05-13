@@ -281,6 +281,8 @@ describe("BitcoinTransactionMapper", () => {
         withdrawal_fee: [withdrawalFee],
         btc_fee: [],
         created_at_ts: 1704067200n,
+        ckbtc_block_id: [],
+        status: [],
       });
     });
 
@@ -315,6 +317,8 @@ describe("BitcoinTransactionMapper", () => {
         withdrawal_fee: [withdrawalFee],
         btc_fee: [],
         created_at_ts: 1704067200n,
+        ckbtc_block_id: [],
+        status: [],
       });
     });
 

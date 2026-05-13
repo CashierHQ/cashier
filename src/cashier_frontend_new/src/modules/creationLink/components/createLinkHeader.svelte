@@ -1,5 +1,6 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
+  import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { ChevronLeft } from "lucide-svelte";
 
@@ -51,27 +52,5 @@
       <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
     </button>
   </div>
-  <div class="flex w-full mb-3">
-    <div
-      class="h-[6px] rounded-full mx-[2px] transition-all duration-300 {progress >=
-      1
-        ? 'bg-green'
-        : 'bg-lightgreen'}"
-      style="width: 33.3333%;"
-    ></div>
-    <div
-      class="h-[6px] rounded-full mx-[2px] transition-all duration-300 {progress >=
-      2
-        ? 'bg-green'
-        : 'bg-lightgreen'}"
-      style="width: 33.3333%;"
-    ></div>
-    <div
-      class="h-[6px] rounded-full mx-[2px] transition-all duration-300 {progress >=
-      3
-        ? 'bg-green'
-        : 'bg-lightgreen'}"
-      style="width: 33.3333%;"
-    ></div>
-  </div>
+  <LinkCreationProgressBar filledCount={progress} />
 </div>

@@ -13,6 +13,7 @@ import { Ok } from "ts-results-es";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
+import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
 import { WalletTxCartStore } from "./walletTxCartStore.svelte";
 
 // Mock constants
@@ -137,6 +138,58 @@ describe("WalletTxCartStore", () => {
       const store = new WalletTxCartStore(source);
       expect(store).toBeInstanceOf(WalletTxCartStore);
     });
+
+    it("should create memo <= 32 bytes and deterministic for fixed inputs", async () => {
+      vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+      const cryptoMock: Pick<Crypto, "randomUUID"> = {
+        randomUUID: () => "00000000-0000-0000-0000-000000000000",
+      };
+      vi.stubGlobal("crypto", cryptoMock as unknown as Crypto);
+      vi.mocked(authState).account = {
+        owner: "principal-abc",
+      } as typeof authState.account;
+
+      const source: WalletSource = createWalletSource(true, true);
+
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+
+      const deduplication = mockTransferToAccount.mock.calls[0][2];
+      const expectedId =
+        "principal-abc-1700000000000-00000000-0000-0000-0000-000000000000";
+      expect(deduplication.memo).toEqual(createDeduplicationMemo32(expectedId));
+      expect(deduplication.memo).toBeInstanceOf(Uint8Array);
+      expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
+        32,
+      );
+      expect(deduplication.createdAtTime).toBe(1700000000000n * 1_000_000n);
+    });
+
+    it("should keep memo <= 32 bytes even when owner is long", async () => {
+      vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
+      const cryptoMock: Pick<Crypto, "randomUUID"> = {
+        randomUUID: () => "00000000-0000-0000-0000-000000000000",
+      };
+      vi.stubGlobal("crypto", cryptoMock as unknown as Crypto);
+      vi.mocked(authState).account = {
+        owner:
+          "aaaaa-bbbbb-ccccc-ddddd-eeeee-fffff-ggggg-hhhhh-iiiii-jjjjj-kkkkk-lllll",
+      } as typeof authState.account;
+
+      const source = createWalletSource(true, true);
+
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+
+      const deduplication = mockTransferToAccount.mock.calls[0][2];
+      expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
+        32,
+      );
+    });
   });
 
   describe("initialize", () => {
@@ -244,6 +297,10 @@ describe("WalletTxCartStore", () => {
       expect(mockTransferToAccount).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(12345n));
     });
@@ -258,6 +315,10 @@ describe("WalletTxCartStore", () => {
       expect(mockIcpTransferToPrincipal).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(11111n));
     });
@@ -272,8 +333,28 @@ describe("WalletTxCartStore", () => {
       expect(mockTransferToPrincipal).toHaveBeenCalledWith(
         source.to,
         source.amount,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
       );
       expect(result).toEqual(Ok(67890n));
+    });
+
+    it("should reuse the same deduplication fields when retrying", async () => {
+      mockTransferToPrincipal
+        .mockRejectedValueOnce(new Error("Temporary failure"))
+        .mockResolvedValueOnce(67890n);
+      const source = createWalletSource(false);
+      const store = new WalletTxCartStore(source);
+      store.initialize();
+
+      await store.execute();
+      await store.execute();
+
+      const firstDeduplication = mockTransferToPrincipal.mock.calls[0][2];
+      const retryDeduplication = mockTransferToPrincipal.mock.calls[1][2];
+      expect(retryDeduplication).toBe(firstDeduplication);
     });
 
     it("should return Err for ICRC with account ID", async () => {

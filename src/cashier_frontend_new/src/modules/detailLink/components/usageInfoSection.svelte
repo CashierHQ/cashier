@@ -7,16 +7,25 @@
     formatNumber,
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
+  import { RefreshCw } from "lucide-svelte";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     useCount?: number;
+    onRefresh?: () => Promise<void>;
+    isRefreshing?: boolean;
   };
 
-  let { assetsWithTokenInfo, failedImageLoads, onImageError, useCount }: Props =
-    $props();
+  let {
+    assetsWithTokenInfo,
+    failedImageLoads,
+    onImageError,
+    useCount,
+    onRefresh,
+    isRefreshing = false,
+  }: Props = $props();
 
   const linkUseActionCounter = $derived(useCount ?? 0);
 </script>
@@ -24,6 +33,17 @@
 <div>
   <div class="flex gap-2 items-center mb-2 justify-between">
     <Label>{locale.t("links.linkForm.detail.usageInfo")}</Label>
+    {#if onRefresh}
+      <div class="flex items-center rounded-[3px] border border-lightgreen">
+        <button
+          onclick={onRefresh}
+          disabled={isRefreshing}
+          class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50 p-[3px] cursor-pointer"
+        >
+          <RefreshCw size={14} class={isRefreshing ? "animate-spin" : ""} />
+        </button>
+      </div>
+    {/if}
   </div>
   <div class="flex flex-col border-[1px] rounded-lg border-lightgreen">
     <div

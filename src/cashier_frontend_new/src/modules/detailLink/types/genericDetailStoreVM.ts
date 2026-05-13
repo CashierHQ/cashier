@@ -17,4 +17,5 @@ export type GenericDetailStoreVM = {
   processAction(): Promise<ProcessActionResult>;
   disableLink(): Promise<void>;
   refreshAsync(): Promise<void>;
+  syncAssetBalanceCache?(): Promise<void>;
 };

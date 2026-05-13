@@ -131,6 +131,7 @@
         useAmount: 0n,
       },
     ]);
+    link.setMaxUse(1);
     showAssetDrawer = false;
   }
 
@@ -153,8 +154,18 @@
         // Round to 4 decimal places to avoid floating point precision errors
         const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
         localUsdAmount = formatUsdAmount(roundedUsdValue);
+      } else if (!value) {
+        localUsdAmount = "";
+      }
+
+      if (
+        forceUpdate ||
+        !canConvert ||
+        !tokenUsdPrice ||
+        !isFinite(tokenUsdPrice)
+      ) {
         setTokenAmount(value);
-      } else if (forceUpdate) {
+      } else if (!isNaN(parseFloat(value))) {
         setTokenAmount(value);
       }
     }

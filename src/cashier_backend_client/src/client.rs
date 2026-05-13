@@ -14,7 +14,7 @@ use cashier_backend_types::{
         },
         link::{
             CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3,
+            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
         },
     },
     service::link::{PaginateInput, PaginateResult},
@@ -330,6 +330,22 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         link_id: &str,
     ) -> CanisterClientResult<Result<DisableLinkResponseV3, CanisterError>> {
         self.client.update("user_disable_link_v3", (link_id,)).await
+    }
+
+    /// Syncs the asset balance cache for a link by querying actual token balances from the ledger.
+    /// Only the link creator can trigger this.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to sync
+    /// # Returns
+    /// * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
+    /// * `Err(CanisterError)` - If sync fails or unauthorized
+    pub async fn user_sync_asset_balance_cache(
+        &self,
+        link_id: &str,
+    ) -> CanisterClientResult<Result<SyncAssetBalanceCacheResponseV3, CanisterError>> {
+        self.client
+            .update("user_sync_asset_balance_cache", (link_id,))
+            .await
     }
 
     /// Flushes the token standard cache.
