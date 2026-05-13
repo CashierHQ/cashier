@@ -66,28 +66,15 @@ describe('trace', () => {
   })
 
   it('test B (fireLoad)', async () => {
-    console.log('[test B] start')
     const transport = new IframeTransport({ url: 'https://wallet.example.com' })
-    console.log('[test B] created transport')
     const channelPromise = transport.establishChannel()
-    console.log('[test B] called establishChannel, about to fireLoad')
-    
-    // Manual equivalent of fireLoad:
+
     fakeIframe._fireLoad()
-    console.log('[test B] after _fireLoad, about to setTimeout')
-    
-    await new Promise<void>((r) => {
-      console.log('[test B] inside setTimeout executor, calling setTimeout')
-      const id = setTimeout(() => {
-        console.log('[test B] setTimeout callback fired!')
-        r()
-      }, 0)
-      console.log('[test B] setTimeout registered, id=', id)
-    })
-    
-    console.log('[test B] after await setTimeout - getCapturedOptions:', Object.keys(getCapturedOptions()))
+    await Promise.resolve()
+    await Promise.resolve()
+
     getCapturedOptions().onEstablish?.('https://wallet.example.com')
     await channelPromise
     expect(getCapturedOptions().establishTimeout).toBe(30_000)
-  }, 10000)
+  })
 })

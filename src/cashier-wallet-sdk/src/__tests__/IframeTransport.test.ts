@@ -36,12 +36,16 @@ vi.mock('@slide-computer/signer-web', () => ({
  * Fire the iframe load event and flush the microtask queue to let the
  * async `ensureIframe()` promise chain settle — including the await in
  * `establishChannel()` that calls `new HeartbeatClient(options)`.
+ *
+ * We rely purely on awaited microtasks here. Vitest 3 + jsdom can be
+ * unreliable about whether `setTimeout(0)` actually fires before the
+ * test continues; awaiting `Promise.resolve()` directly drains the
+ * microtask queue synchronously and predictably.
  */
 async function fireLoad(iframe: { _fireLoad: () => void }) {
   iframe._fireLoad()
-  // Use a macro-task delay to guarantee all pending microtasks (including
-  // nested promise continuations from the async await chain) have flushed.
-  await new Promise<void>((r) => setTimeout(r, 0))
+  await Promise.resolve()
+  await Promise.resolve()
 }
 
 /** Create a fake iframe that fires the 'load' event asynchronously. */
@@ -172,7 +176,7 @@ describe('IframeTransport', () => {
       const transport = new IframeTransport({ url: 'https://wallet.example.com' })
 
       const channelPromise = transport.establishChannel()
-      fakeIframe._fireLoad()
+      await fireLoad(fakeIframe)
       getCapturedOptions().onEstablish?.('https://wallet.example.com')
 
       const channel = await channelPromise
