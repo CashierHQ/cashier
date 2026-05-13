@@ -1,5 +1,5 @@
 # Starts the new frontend locally
 [group('run')]
 start_frontend_new:
-  cd {{FRONTEND_DIR_NEW}} && npm run dev
+  cd {{FRONTEND_DIR_NEW}} && pnpm run dev
 

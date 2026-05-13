@@ -119,9 +119,8 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     // Phase 2 — mount iframe + ICRC-29 transport
     console.log('[cashier-sdk-adapter] Mounting wallet iframe and establishing ICRC-29 channel...')
     this.iframeTransport = new IframeTransport({ url: walletOrigin, establishTimeout, disconnectTimeout })
-    // Cast to Transport to avoid private-field variance issues across signer-js versions
-    this.signer = new Signer({
-      transport: this.iframeTransport as unknown as Transport,
+    this.signer = new Signer<Transport>({
+      transport: this.iframeTransport,
       // Keep the channel alive across calls (we re-use the iframe)
       autoCloseTransportChannel: false,
     })

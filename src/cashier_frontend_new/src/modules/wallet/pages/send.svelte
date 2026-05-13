@@ -63,7 +63,9 @@
   let showConfirmDrawer = $state(false);
   let isSending = $state(false);
 
-  const isStandaloneWallet = $derived(authState.connectedWalletId === CASHIER_WALLET_ID);
+  const isStandaloneWallet = $derived(
+    authState.connectedWalletId === CASHIER_WALLET_ID,
+  );
   let lastBlockId = $state<bigint | null>(null);
   let bridgeSource = $state<BridgeSource | null>(null);
   let isCreatingExportBridge = $state(false);

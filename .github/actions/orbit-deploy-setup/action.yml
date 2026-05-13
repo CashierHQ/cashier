@@ -32,6 +32,17 @@ runs:
         components: clippy, rustfmt
         targets: wasm32-unknown-unknown
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9.15.4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'pnpm'
+
     - name: Setup environment
       shell: bash
       run: export RUST_BACKTRACE="full"
