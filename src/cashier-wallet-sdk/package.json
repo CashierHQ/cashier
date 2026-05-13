@@ -50,7 +50,7 @@
 		"jsdom": "^25.0.1",
 		"tsup": "^8.5.1",
 		"typescript": "^5.9.2",
-		"vitest": "^2.1.8"
+		"vitest": "^3.2.4"
 	},
 	"peerDependencies": {
 		"@dfinity/agent": ">=2.0.0",
