@@ -69,7 +69,7 @@
     "@icp-sdk/auth": "^7.0.0",
     "@icp-sdk/canisters": "^3.6.0",
     "@icp-sdk/core": "^5.4.0",
-    "@noble/hashes": "^2.2.0",
+    "@noble/hashes": "^1.8.0",
     "@slide-computer/signer": "^4.2.2",
     "@windoge98/plug-n-play": "github:CashierHQ/plug-n-play#feature/bump-dfinity-packages-version",
     "axios": "^1.16.0",
