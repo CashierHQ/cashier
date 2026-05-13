@@ -180,14 +180,25 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
             ...rest: unknown[]
           ) => {
             const paths = options?.paths
+            // Use cross-realm-safe checks: `instanceof ArrayBuffer` breaks
+            // when the buffer was constructed in a different realm (e.g.
+            // jsdom test env, iframe, or Web Worker boundary), so we
+            // detect ArrayBuffer via `Object.prototype.toString.call`
+            // and TypedArrays via `ArrayBuffer.isView`.
+            const firstLabel = Array.isArray(paths?.[0]) ? paths[0][0] : undefined
+            const isBufferLike =
+              firstLabel != null &&
+              typeof firstLabel === 'object' &&
+              (Object.prototype.toString.call(firstLabel) === '[object ArrayBuffer]' ||
+                ArrayBuffer.isView(firstLabel as ArrayBufferView))
             const isRequestStatus =
               Array.isArray(paths) &&
               paths.length === 1 &&
               Array.isArray(paths[0]) &&
               paths[0].length === 2 &&
-              (paths[0][0] instanceof ArrayBuffer ||
-                paths[0][0] instanceof Uint8Array) &&
-              new TextDecoder().decode(paths[0][0]) === 'request_status'
+              isBufferLike &&
+              new TextDecoder().decode(firstLabel as ArrayBuffer | ArrayBufferView) ===
+                'request_status'
             if (isRequestStatus) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               return (signerAgentRef as any).readState(canisterId, options, ...rest)

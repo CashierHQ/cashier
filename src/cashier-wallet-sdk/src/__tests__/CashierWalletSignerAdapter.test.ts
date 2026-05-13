@@ -107,14 +107,19 @@ vi.mock('@slide-computer/signer', () => ({
 }))
 
 vi.mock('@slide-computer/signer-agent', () => ({
+  // Use `vi.fn(() => obj)` rather than `vi.fn().mockReturnValue(obj)` so that
+  // `vi.restoreAllMocks()` in `afterEach` falls back to this initial
+  // implementation between tests instead of wiping it entirely (which makes
+  // `createSync(...)` return undefined for every test after the first
+  // afterEach runs).
   SignerAgent: {
-    createSync: vi.fn().mockReturnValue(mockSignerAgentInstance),
+    createSync: vi.fn(() => mockSignerAgentInstance),
   },
 }))
 
 vi.mock('@dfinity/agent', () => ({
   HttpAgent: {
-    createSync: vi.fn().mockReturnValue(mockHttpAgentInstance),
+    createSync: vi.fn(() => mockHttpAgentInstance),
   },
   Actor: { createActor: vi.fn() },
 }))

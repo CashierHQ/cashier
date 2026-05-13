@@ -74,6 +74,13 @@ export interface TransferParams {
   to: string
   /** Amount in the smallest token unit (e.g. e8s for ICP). */
   amount: bigint
+  /**
+   * Optional transfer fee in the smallest token unit. When omitted the
+   * wallet falls back to the ledger's default fee.
+   */
+  fee?: bigint
+  /** Optional ICRC-1 memo (opaque bytes) attached to the transfer. */
+  memo?: Uint8Array | undefined
 }
 
 /** Result returned by {@link WalletSDK.icrc1Transfer}. */

@@ -2,33 +2,51 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { IframeTransport, IframeTransportError } from '../IframeTransport'
 
 // ── Hoisted mock state ────────────────────────────────────────────────────────
+//
+// We can't rely on a closure variable inside `vi.hoisted` to capture the
+// HeartbeatClient options: with vitest 3 + jsdom, the closure that the mock
+// implementation writes to and the closure that test code reads from can be
+// different instances. Instead, we read `MockHeartbeatClient.mock.calls[0][0]`
+// directly via `getCapturedOptions()`, which always returns the latest args
+// from the same mock instance the source code invokes.
 
-const {
-  MockHeartbeatClient,
-  MockPostMessageChannel,
-  mockPostMessageChannel,
-  getCapturedOptions,
-  resetCaptured,
-} = vi.hoisted(() => {
-  let capturedOpts: Record<string, unknown> = {}
-  const mockPmc = { close: vi.fn().mockResolvedValue(undefined) }
-  const MockPmc = vi.fn().mockReturnValue(mockPmc)
-  const MockHbc = vi.fn().mockImplementation((opts: Record<string, unknown>) => {
-    capturedOpts = opts
+const { MockHeartbeatClient, MockPostMessageChannel, mockPostMessageChannel } =
+  vi.hoisted(() => {
+    const mockPmc = { close: vi.fn().mockResolvedValue(undefined) }
+    // `mockReturnValue` / `mockImplementation` are not always honoured when
+    // a vi.fn() is invoked with `new` — `new` discards primitive returns and
+    // sometimes keeps the fresh spy `this`. Passing the implementation
+    // directly to `vi.fn(fn)` ensures the returned object always replaces
+    // the constructor's `this`, so the test can do `expect(channel).toBe(...)`.
+    const MockPmc = vi.fn(() => mockPmc)
+    const MockHbc = vi.fn()
+    return {
+      MockHeartbeatClient: MockHbc,
+      MockPostMessageChannel: MockPmc,
+      mockPostMessageChannel: mockPmc,
+    }
   })
-  return {
-    MockHeartbeatClient: MockHbc,
-    MockPostMessageChannel: MockPmc,
-    mockPostMessageChannel: mockPmc,
-    getCapturedOptions: () => capturedOpts,
-    resetCaptured: () => { capturedOpts = {} },
-  }
-})
 
 vi.mock('@slide-computer/signer-web', () => ({
   HeartbeatClient: MockHeartbeatClient,
   PostMessageChannel: MockPostMessageChannel,
 }))
+
+interface HeartbeatClientOptions {
+  signerWindow: Window
+  establishTimeout: number
+  disconnectTimeout: number
+  statusPollingRate: number
+  onEstablish?: (origin: string) => void
+  onEstablishTimeout?: () => void
+  onDisconnect?: () => void
+  manageFocus?: boolean
+}
+
+function getCapturedOptions(): Partial<HeartbeatClientOptions> {
+  const lastCall = MockHeartbeatClient.mock.calls.at(-1)
+  return (lastCall?.[0] ?? {}) as Partial<HeartbeatClientOptions>
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,7 +91,6 @@ describe('IframeTransport', () => {
   let fakeIframe: ReturnType<typeof makeFakeIframe>
 
   beforeEach(() => {
-    resetCaptured()
     MockHeartbeatClient.mockClear()
     MockPostMessageChannel.mockClear()
 
