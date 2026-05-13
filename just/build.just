@@ -45,6 +45,11 @@ install_frontend_deps:
   # including the `workspace:*` link to @cashier-wallet/wallet-sdk.
   # pnpm enforces a frozen lockfile automatically when CI=true.
   cd "{{FRONTEND_DIR_NEW}}" && pnpm install
+  # Build the wallet SDK so consumers can resolve dist/index.{js,d.ts}.
+  # Required by svelte-check (frontend_check_code), vite build (build_frontend),
+  # and vitest (test_frontend) — pnpm only symlinks workspace packages,
+  # it does not run their build script automatically.
+  pnpm --filter @cashier-wallet/wallet-sdk run build
 
 [private]
 generate_frontend_ts_for_canister canister:
