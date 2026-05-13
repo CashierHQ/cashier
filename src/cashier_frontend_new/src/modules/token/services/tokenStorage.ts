@@ -399,7 +399,9 @@ class TokenStorageService {
 
       return bridgeTransactions;
     } catch (err) {
-      throw new Error(`Error fetching bridge transactions: ${err}`);
+      throw new Error(`Error fetching bridge transactions: ${err}`, {
+        cause: err,
+      });
     }
   }
 

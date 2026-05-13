@@ -38,7 +38,9 @@ export class DraftLinkRepository {
       return list;
     } catch (error) {
       const details = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to parse draft links from storage: ${details}`);
+      throw new Error(`Failed to parse draft links from storage: ${details}`, {
+        cause: error,
+      });
     }
   }
 

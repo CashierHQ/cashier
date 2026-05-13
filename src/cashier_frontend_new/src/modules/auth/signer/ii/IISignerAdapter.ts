@@ -187,7 +187,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       this.handleError("Login error", error);
       this.setState(Adapter.Status.ERROR);
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`II Authentication failed: ${message}`);
+      throw new Error(`II Authentication failed: ${message}`, { cause: error });
     }
   }
 
