@@ -69,6 +69,15 @@ jobs:
           components: clippy, rustfmt
           targets: wasm32-unknown-unknown
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+
       - name: Install Just command runner
         uses: extractions/setup-just@v4
 

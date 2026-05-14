@@ -5,8 +5,11 @@ import {
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
+import { CashierWalletSignerAdapter } from "@cashier-wallet/wallet-sdk";
 import {
   BUILD_TYPE,
+  CASHIER_WALLET_ID,
+  CASHIER_WALLET_ORIGIN,
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
@@ -66,6 +69,22 @@ const CONFIG: CreatePnpArgs = {
             authState.logout();
           },
         },
+      },
+    },
+    // Cashier Wallet — ICRC-29 iframe wallet with II authentication
+    [CASHIER_WALLET_ID]: {
+      id: CASHIER_WALLET_ID,
+      enabled: true,
+      adapter: CashierWalletSignerAdapter,
+      config: {
+        walletOrigin: CASHIER_WALLET_ORIGIN,
+        host: HOST_ICP,
+        // Only set derivationOrigin in production — II (https://identity.ic0.app)
+        // must be able to GET /.well-known/ii-alternative-origins from this origin
+        // to verify the relationship. That fetch is blocked by browsers when the
+        // DApp runs on HTTP (localhost), so we skip it for non-production builds.
+        derivationOrigin:
+          BUILD_TYPE === "production" ? "https://cashierapp.io" : undefined,
       },
     },
   },
@@ -131,13 +150,18 @@ const initPnp = async () => {
     resetLoginState();
     isReady = true;
     return;
-  } else if (walletId) {
-    // try to reconnect
+  } else if (walletId === II_SIGNER_WALLET_ID) {
+    // II supports silent reconnect — it reads from IndexedDB without a popup
     try {
       await authState.login(walletId);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
+      resetLoginState();
     }
+  } else if (walletId) {
+    // External wallet adapters (e.g. Cashier Wallet) require user interaction
+    // to reconnect — clear persisted state so the UI starts fresh
+    resetLoginState();
   } else {
     // unknown state, clear persisted state
     resetLoginState();
@@ -168,6 +192,14 @@ export const authState = {
    */
   get isReady() {
     return isReady;
+  },
+
+  /**
+   * ID of the currently connected wallet adapter, or null if not connected.
+   * e.g. "cashier" for the standalone wallet, "iiSigner" for Internet Identity.
+   */
+  get connectedWalletId() {
+    return walletConnect.current.id;
   },
 
   /**
@@ -337,14 +369,25 @@ const inner_logout = async () => {
 
 /**
  * Setup session manager with delegation expiration timeout.
+ *
+ * For II signer: reads the delegation chain expiry and sets a countdown timer.
+ * For other adapters (e.g. Cashier Wallet): persists the wallet ID without
+ * an expiry and skips the timer — the session will remain until explicit logout
+ * or browser storage is cleared. Full delegation-based expiry for external
+ * wallet adapters can be added via icrc34_delegation in a future iteration.
  */
 const setupSessionManager = async (walletId: string) => {
-  if (walletId !== II_SIGNER_WALLET_ID) {
-    throw new Error("Session manager is only supported for II signer");
-  }
-
   if (!pnp) {
     throw new Error("PNP is not initialized");
+  }
+
+  if (walletId !== II_SIGNER_WALLET_ID) {
+    // Non-II adapters: just persist wallet ID, no expiry tracking
+    walletConnect.current = {
+      id: walletId,
+      expiredAtMs: null,
+    };
+    return;
   }
 
   const iiAdapter = pnp.provider as IISignerAdapter;

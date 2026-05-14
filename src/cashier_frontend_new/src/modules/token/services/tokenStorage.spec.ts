@@ -69,9 +69,8 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
   it("it_should_fail_create_manual_import_bridge_due_to_not_authenticated", async () => {
     // Arrange
     mockBuildActor.mockReturnValue(null);
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     // Act
     const result =
@@ -95,9 +94,8 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
     mockBuildActor.mockReturnValue({
       user_create_bridge_transaction: mockUserCreateBridgeTransaction,
     });
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     // Act
     const result =
@@ -132,9 +130,8 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
     mockBuildActor.mockReturnValue({
       user_create_bridge_transaction: mockUserCreateBridgeTransaction,
     });
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     // Act
     const result =

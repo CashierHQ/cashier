@@ -1,0 +1,4 @@
+packages:
+  - src/cashier-wallet-sdk
+  - src/cashier_wallet
+  - src/cashier_frontend_new
