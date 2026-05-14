@@ -123,7 +123,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   async connect(): Promise<Account> {
     try {
       this.setState(Status.CONNECTING);
-      console.log("[cashier-ii-adapter] Connecting...");
 
       // Ensure AuthClient is ready
       await this.ensureAuthClient();
@@ -136,9 +135,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
         const principal = identity?.getPrincipal();
 
         if (identity && principal && !principal.isAnonymous()) {
-          console.log(
-            `[cashier-ii-adapter] Existing session found — principal: ${principal.toText()}`,
-          );
           const account: Account = {
             owner: identity.getPrincipal().toText(),
             subaccount: null,
@@ -153,9 +149,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       }
 
       // Not authenticated or invalid session - open login popup
-      console.log(
-        "[cashier-ii-adapter] No active session — opening II login popup",
-      );
       return await this.performLogin();
     } catch (error) {
       this.setState(Status.ERROR);
@@ -181,18 +174,12 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
               throw new Error("AuthClient not initialized after login");
             }
             const identity = this.authClient.getIdentity();
-            console.log(
-              `[cashier-ii-adapter] Login succeeded — principal: ${identity.getPrincipal().toText()}`,
-            );
             const account: Account = {
               owner: identity.getPrincipal().toText(),
               subaccount: null,
             };
             this.identity = identity;
             await this.initAgentAndSigner(identity);
-            console.log(
-              "[cashier-ii-adapter] Agent and signer initialised — ready",
-            );
 
             this.setState(Status.CONNECTED);
             resolve(account);
@@ -202,9 +189,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
           }
         },
         onError: (error?: string) => {
-          console.error(
-            `[cashier-ii-adapter] Login failed — ${error || "Unknown error"}`,
-          );
           this.handleError("Login error", error || "Unknown error");
           this.setState(Status.ERROR);
           reject(
@@ -230,9 +214,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       throw new Error("Agent not initialized. Connect first.");
     }
 
-    console.log(
-      `[cashier-ii-adapter] Creating actor for canister: ${canisterId}`,
-    );
     return this.createActorWithAgent<T>(
       this.agent as HttpAgent,
       canisterId,

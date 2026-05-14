@@ -57,7 +57,6 @@ export async function initOisySigner(): Promise<void> {
   await refreshAuthClient()
   const identity = getIdentity()
   if (!identity || identity.getPrincipal().isAnonymous()) {
-    console.warn('[oisy-signer] initOisySigner called without authenticated identity — skipping')
     return
   }
 
@@ -92,7 +91,6 @@ export async function initOisySigner(): Promise<void> {
 
       if (!popup) {
         // Popup blocked — deny all scopes immediately
-        console.warn('[oisy-signer] ICRC-25 permission popup was blocked — denying all scopes')
         const deniedScopes = (requestedScopes as IcrcScope[]).map((s) => ({
           scope: s.scope,
           state: 'denied' as const,
@@ -147,7 +145,6 @@ export async function initOisySigner(): Promise<void> {
         )
 
         if (!popup) {
-          console.warn('[oisy-signer] ICRC-21 consent popup was blocked — rejecting call')
           payload.reject()
           currentIcrc21RequestId = null
           return
@@ -170,24 +167,17 @@ export async function initOisySigner(): Promise<void> {
     },
   })
 
-  // ── ICRC-49: call canister status prompt (logging only) ─────────────────
+  // ── ICRC-49: call canister status prompt (no-op) ───────────────────────
   // The user already approved at the ICRC-21 stage. This prompt receives
-  // status updates for telemetry/logging — no UI action required.
+  // status updates — no UI action required.
   signerInstance.register({
     method: ICRC49_CALL_CANISTER,
-    prompt: (payload) => {
-      if (payload.status === 'executing') {
-        console.log('[oisy-signer] icrc49 executing')
-      } else if (payload.status === 'result') {
-        console.log('[oisy-signer] icrc49 result — call succeeded')
-      } else if (payload.status === 'error') {
-        console.warn('[oisy-signer] icrc49 error —', payload.details)
-      }
+    prompt: () => {
+      // intentionally no-op
     },
   })
 
   walletReady = true
-  console.log('[oisy-signer] Signer initialised and ready')
 }
 
 /**

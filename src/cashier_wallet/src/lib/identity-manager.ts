@@ -43,7 +43,6 @@ export async function login(derivationOrigin?: string): Promise<{ ok: boolean; e
         onSuccess: () => resolve({ ok: true }),
         onError: (err) => {
           const msg = typeof err === 'string' ? err : String(err)
-          console.error('[identity-manager] login error:', msg)
           resolve({ ok: false, error: msg })
         }
       })
