@@ -388,9 +388,14 @@ describe("WalletStore", () => {
       await walletStore.addToken("new-token");
 
       // Assert — third argument must contain existing token addresses
-      expect(mockAddToken).toHaveBeenCalledWith(expect.anything(), undefined, [
-        "existing-token",
-      ]);
+      expect(mockAddToken).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        ["existing-token"],
+        undefined,
+        undefined,
+        undefined,
+      );
     });
   });
 
