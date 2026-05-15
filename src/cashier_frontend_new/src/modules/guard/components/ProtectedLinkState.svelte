@@ -45,6 +45,17 @@
     currentStep !== null && allowedStates.includes(currentStep),
   );
 
+  let hasRenderedValidState = $state(false);
+
+  $effect(() => {
+    // Mark as rendered only when we actually show children (i.e. not during initial loading).
+    if (isStateValid && !isLoading) {
+      hasRenderedValidState = true;
+    }
+  });
+
+  const shouldShowLoading = $derived(isLoading && !hasRenderedValidState);
+
   const shouldRedirect = $derived(
     (linkStore &&
       "query" in linkStore &&
@@ -60,8 +71,8 @@
   });
 </script>
 
-{#if isLoading}
+{#if shouldShowLoading}
   <ProtectionProcessingState message="Loading..." />
-{:else if isStateValid}
+{:else if isStateValid || (hasRenderedValidState && isLoading)}
   {@render children()}
 {/if}

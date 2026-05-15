@@ -56,8 +56,8 @@ class BtcBridgeStore {
   #exportCurrentPage = 0;
   hasMoreExports = $state<boolean>(true);
 
-  processPendingTxsTask: NodeJS.Timeout | null = null;
   mempoolTxsTask: NodeJS.Timeout | null = null;
+  processPendingTxsTask: NodeJS.Timeout | null = null;
   isRefreshing = $state<boolean>(false);
 
   constructor() {
@@ -189,6 +189,12 @@ class BtcBridgeStore {
         if (authState.account == null) {
           this.reset();
         } else {
+          // Clean up the previous interval if any
+          if (this.mempoolTxsTask) {
+            clearInterval(this.mempoolTxsTask);
+            this.mempoolTxsTask = null;
+          }
+
           if (this.processPendingTxsTask) {
             clearInterval(this.processPendingTxsTask);
             this.processPendingTxsTask = null;
@@ -211,9 +217,9 @@ class BtcBridgeStore {
           this.#bridgeTxQuery.refresh();
           this.#importBridgeTxQuery.refresh();
           this.#exportBridgeTxQuery.refresh();
+          this.mempoolTxsTask = this.createMempoolTransactionTask();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
-          this.mempoolTxsTask = this.createMempoolTransactionTask();
         }
       });
     });
@@ -322,7 +328,17 @@ class BtcBridgeStore {
   }
 
   /**
-   * Reset the store to initial state, typically used on user logout
+   * Refetch export and unified bridge lists (Send page history refresh).
+   */
+  public refreshExportHistoryAsync(): Promise<void> {
+    return Promise.all([
+      this.#exportBridgeTxQuery.refreshAsync(),
+      this.#bridgeTxQuery.refreshAsync(),
+    ]).then(() => undefined);
+  }
+
+  /**
+   * Reset the bridge store to initial state
    */
   public reset() {
     this.#btcAddress.current = null;
@@ -342,6 +358,7 @@ class BtcBridgeStore {
     this.hasMoreExports = true;
     this.#exportBridgeTxQuery.reset();
 
+    // Clear interval on reset
     if (this.mempoolTxsTask) {
       clearInterval(this.mempoolTxsTask);
       this.mempoolTxsTask = null;
@@ -470,7 +487,7 @@ class BtcBridgeStore {
   }
 
   /**
-   * Check whether the mempool transaction has already been processed
+   * Check if a mempool transaction has already been processed into a bridge transaction.
    * @param txid
    * @returns true if the transaction has already been processed, false otherwise
    */

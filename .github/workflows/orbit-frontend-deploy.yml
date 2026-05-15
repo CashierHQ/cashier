@@ -18,6 +18,10 @@ on:
           - reinstall
           - upgrade
           - install
+      sha:
+        description: 'Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -26,39 +30,39 @@ jobs:
   setup_environment:
     runs-on: ubuntu-latest
     outputs:
-        network: ${{ steps.set-env.outputs.network }}
-        mode: ${{ steps.set-mode.outputs.mode }}
+      network: ${{ steps.set-env.outputs.network }}
+      mode: ${{ steps.set-mode.outputs.mode }}
     steps:
-        - name: Set deployment network
-          id: set-env
-          run: |
-              # For pull requests, use base_ref, for pushes use ref_name
-              if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-                TARGET_BRANCH="${{ github.base_ref }}"
-              else
-                TARGET_BRANCH="${{ github.ref_name }}"
-              fi
-              echo "Detected branch: $TARGET_BRANCH"
+      - name: Set deployment network
+        id: set-env
+        run: |
+          # For pull requests, use base_ref, for pushes use ref_name
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TARGET_BRANCH="${{ github.base_ref }}"
+          else
+            TARGET_BRANCH="${{ github.ref_name }}"
+          fi
+          echo "Detected branch: $TARGET_BRANCH"
 
-              if [[ "$TARGET_BRANCH" == "main" ]]; then
-                echo "network=production" >> $GITHUB_OUTPUT
-              elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                echo "network=staging" >> $GITHUB_OUTPUT
-              else
-                # Any other branch will deploy to dev network
-                echo "network=dev" >> $GITHUB_OUTPUT
-              fi
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            echo "network=production" >> $GITHUB_OUTPUT
+          elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+            echo "network=staging" >> $GITHUB_OUTPUT
+          else
+            # Any other branch will deploy to dev network
+            echo "network=dev" >> $GITHUB_OUTPUT
+          fi
 
-        - name: Set deployment mode
-          id: set-mode
-          run: |
-              # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
-              INPUT_MODE="${{ github.event.inputs.mode }}"
-              if [[ -n "$INPUT_MODE" ]]; then
-                echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
-              else
-                echo "mode=upgrade" >> $GITHUB_OUTPUT
-              fi
+      - name: Set deployment mode
+        id: set-mode
+        run: |
+          # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
+          INPUT_MODE="${{ github.event.inputs.mode }}"
+          if [[ -n "$INPUT_MODE" ]]; then
+            echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
+          else
+            echo "mode=upgrade" >> $GITHUB_OUTPUT
+          fi
 
   deploy:
     name: Prepare and Submit Orbit request (optional)
@@ -70,11 +74,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Use explicit SHA when provided (passed by fast-forward trigger) to avoid
+          # race condition where branch ref cache returns pre-merge commit
+          ref: ${{ inputs.sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: '22'
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -109,7 +117,7 @@ jobs:
           chmod +x /usr/local/bin/didc
 
       - name: Install Just command runner
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v4
 
       - name: Create Deployer private key file
         run: |
@@ -124,23 +132,20 @@ jobs:
           echo "Deployer principal: $(dfx identity get-principal)"
           echo "operator=$(dfx identity get-principal)" >> $GITHUB_OUTPUT
       # DANGEROUS: Do not echo the private key to the console
-
       - name: Cache dfx-orbit binary
         id: cache-dfx-orbit
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin/dfx-orbit
-          key: dfx-orbit-linux-control-panel-v0.4.0
+          key: dfx-orbit-cli
 
       - name: Install dfx-orbit
         if: steps.cache-dfx-orbit.outputs.cache-hit != 'true'
         run: |
-          git clone https://github.com/dfinity/orbit.git
+          git clone https://github.com/CashierHQ/orbit.git
           cd orbit
-          # Checkout specific version
-          git checkout @orbit/control-panel-v0.4.0
-          cargo install -f --locked --path tools/dfx-orbit/
-  
+          cargo install -f --path tools/dfx-orbit/
+
       - name: Setup station
         run: |
           dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
@@ -160,13 +165,13 @@ jobs:
           # Capture JSON output (last line from upload_asset)
           output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
-          
+
           # Parse JSON fields
           echo "batch_id=$(echo "$output" | jq -r '.batch_id')" >> $GITHUB_OUTPUT
           echo "evidence=$(echo "$output" | jq -r '.evidence')" >> $GITHUB_OUTPUT
           echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
           echo "canister_id=$canister_id" >> $GITHUB_OUTPUT
-          
+
           if [ "$rc" -ne 0 ]; then
             echo "::error ::upload_asset failed with exit code $rc"
             exit $rc

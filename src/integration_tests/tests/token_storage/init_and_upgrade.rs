@@ -72,7 +72,11 @@ async fn should_upgrade_with_tokens_upsert() {
                 ledger_id: Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap(),
                 index_id: None,
                 fee: Nat::from(1_000u64),
-                supported_standards: vec![IcrcStandard::ICRC1],
+                supported_standards: vec![
+                    IcrcStandard::ICRC1,
+                    IcrcStandard::ICRC2,
+                    IcrcStandard::ICRC3,
+                ],
             },
             symbol: "NEWTKN".to_string(),
             name: "New Test Token".to_string(),
@@ -102,7 +106,30 @@ async fn should_upgrade_with_tokens_upsert() {
         // Assert
         let after = admin_client.list_tokens().await.unwrap().unwrap();
         assert!(after.tokens.len() > before_count);
-        assert!(after.tokens.iter().any(|t| t.symbol == "NEWTKN"));
+
+        match after.tokens.iter().find(|t| t.symbol == "NEWTKN") {
+            Some(token) => match &token.details {
+                ChainTokenDetails::IC {
+                    ledger_id,
+                    supported_standards,
+                    ..
+                } => {
+                    assert_eq!(
+                        *ledger_id,
+                        Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap()
+                    );
+                    assert_eq!(
+                        supported_standards,
+                        &vec![
+                            IcrcStandard::ICRC1,
+                            IcrcStandard::ICRC2,
+                            IcrcStandard::ICRC3
+                        ]
+                    );
+                }
+            },
+            None => panic!("New token not found after upgrade"),
+        }
 
         Ok(())
     })
@@ -199,7 +226,14 @@ async fn should_upgrade_upsert_existing_token() {
                 supported_standards,
                 ..
             } => {
-                assert!(supported_standards.contains(&IcrcStandard::ICRC3));
+                assert_eq!(
+                    supported_standards,
+                    &vec![
+                        IcrcStandard::ICRC1,
+                        IcrcStandard::ICRC2,
+                        IcrcStandard::ICRC3,
+                    ]
+                );
             }
         }
 

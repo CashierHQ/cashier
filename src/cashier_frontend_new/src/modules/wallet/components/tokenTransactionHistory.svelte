@@ -10,6 +10,8 @@
     ArrowUpRight,
     ArrowDownLeft,
     Check,
+    ClockArrowDown,
+    ClockArrowUp,
     LoaderCircle,
   } from "lucide-svelte";
   import { formatDate, getDateKey } from "$modules/wallet/utils/date";
@@ -290,6 +292,14 @@
     showBridgeTxCart = false;
     bridgeSource = null;
   }
+
+  function isBridgeInProgress(bridge: BridgeTransaction | undefined): boolean {
+    return (
+      !!bridge &&
+      (bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Created)
+    );
+  }
 </script>
 
 <div class="space-y-4 mt-8">
@@ -325,9 +335,18 @@
           >
             <div class="flex items-start gap-3 py-2">
               <div
-                class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
+                class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-1 {tx.bridge &&
+                isBridgeInProgress(tx.bridge)
+                  ? 'bg-lightyellow'
+                  : 'bg-lightgreen'}"
               >
-                {#if tx.kind === TransactionKind.APPROVE}
+                {#if tx.bridge && isBridgeInProgress(tx.bridge)}
+                  {#if tx.bridge.bridge_type === BridgeType.Export}
+                    <ClockArrowUp class="w-5 h-5 text-lightyellow-accent" />
+                  {:else}
+                    <ClockArrowDown class="w-5 h-5 text-lightyellow-accent" />
+                  {/if}
+                {:else if tx.kind === TransactionKind.APPROVE}
                   <Check class="w-5 h-5 text-gray-700" />
                 {:else if tx.isOutgoing}
                   <ArrowUpRight class="w-5 h-5 text-gray-700" />

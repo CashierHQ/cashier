@@ -6,6 +6,8 @@
   import { BridgeType } from "$modules/bitcoin/types/bridge_transaction";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
+  import { ChevronDown, ChevronUp, RefreshCw } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   const exportBridgeTxs = $derived.by(
     () => btcBridgeStore.exportBridgeTxs ?? [],
@@ -13,7 +15,11 @@
 
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
+
   let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
+  let historyExpanded = $state(true);
+  let exportHistoryRefreshing = $state(false);
+
 
   function handleSelectBridge(bridgeId: string) {
     const bridge = btcBridgeStore.exportBridgeTxs?.find(
@@ -36,20 +42,66 @@
   function handleLoadMore() {
     btcBridgeStore.loadMoreExports();
   }
+
+  async function handleRefreshExportHistory() {
+    exportHistoryRefreshing = true;
+    try {
+      await btcBridgeStore.refreshExportHistoryAsync();
+      toast.success(locale.t("bitcoin.send.refreshSuccess"));
+    } catch {
+      toast.error(locale.t("bitcoin.send.refreshError"));
+    } finally {
+      exportHistoryRefreshing = false;
+    }
+  }
 </script>
 
-<div class="space-y-4">
-  <Label class="text-base font-semibold">
-    {locale.t("bitcoin.send.history")}
-  </Label>
-
-  <BridgeList
-    bridgeTxs={exportBridgeTxs}
-    hasMore={btcBridgeStore.hasMoreExports}
-    emptyText={locale.t("wallet.send.noBtcExportTxs")}
-    onSelectBridge={handleSelectBridge}
-    onLoadMore={handleLoadMore}
-  />
+<div class="mt-6 space-y-0">
+  <div class="flex items-start justify-between gap-2">
+    <Label class="text-base font-semibold">
+      {locale.t("bitcoin.send.history")}
+    </Label>
+    <div class="flex flex-col items-center gap-2.5 -mb-4 pt-1">
+      <button
+        type="button"
+        onclick={() => (historyExpanded = !historyExpanded)}
+        class="text-[#36A18B] transition-colors hover:text-[#2d8a75]"
+        aria-expanded={historyExpanded}
+        title={historyExpanded
+          ? locale.t("bitcoin.send.collapseHistory")
+          : locale.t("bitcoin.send.expandHistory")}
+      >
+        {#if historyExpanded}
+          <ChevronUp size={18} />
+        {:else}
+          <ChevronDown size={18} />
+        {/if}
+      </button>
+      {#if historyExpanded}
+        <button
+          type="button"
+          onclick={handleRefreshExportHistory}
+          disabled={exportHistoryRefreshing}
+          class="text-[#36A18B] transition-colors hover:text-[#2d8a75] disabled:opacity-50 bg-white rounded-sm p-1 border"
+          title={locale.t("bitcoin.send.refreshTooltip")}
+        >
+          <RefreshCw
+            size={12}
+            class={exportHistoryRefreshing ? "animate-spin" : ""}
+          />
+        </button>
+      {/if}
+    </div>
+  </div>
+  {#if historyExpanded}
+    <BridgeList
+      bridgeTxs={exportBridgeTxs}
+      hasMore={btcBridgeStore.hasMoreExports}
+      emptyText={locale.t("wallet.send.noBtcExportTxs")}
+      onSelectBridge={handleSelectBridge}
+      onLoadMore={handleLoadMore}
+    />
+  {/if}
 </div>
 
 {#if showBridgeTxCart && bridgeSource}

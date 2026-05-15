@@ -11,17 +11,17 @@
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
-    CKBTC_CANISTER_ID,
-    ICP_LEDGER_CANISTER_ID,
+      CKBTC_CANISTER_ID,
+      ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    Bitcoin,
-    ChevronDown,
-    Copy,
-    Hourglass,
-    Info,
-    LayoutList,
+      Bitcoin,
+      ChevronDown,
+      Copy,
+      Hourglass,
+      Info,
+      LayoutList,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
@@ -112,11 +112,12 @@
   onBack={onNavigateBack}
 />
 
-<div class="px-4 grow-1 flex flex-col">
+<div class="grow-1 flex flex-col -mx-4">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
+
       {#if !isBridgeToken}
-        <div class="flex items-start gap-1.5">
+        <div class="flex items-start gap-1.5 px-8">
           <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
           <div class="text-sm text-green">
             {#if selectedTokenObj}
@@ -134,8 +135,8 @@
         </div>
       {/if}
 
-      <div class="space-y-2">
-        <Label class="text-base font-semibold"
+      <div class="space-y-2 px-8">
+        <Label class="text-small font-medium"
           >{locale.t("wallet.receive.selectTokenLabel")}</Label
         >
 
@@ -165,8 +166,8 @@
         </button>
       </div>
 
-      <div class="space-y-2">
-        <Label class="text-base font-semibold">
+      <div class="space-y-2 px-8">
+        <Label class="text-small font-medium">
           {#if isBridgeToken}
             {locale.t("wallet.receive.ckBtcIcpAddressLabel")}
           {:else if selectedTokenObj}
@@ -196,7 +197,8 @@
           </button>
         </div>
         <div
-          class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+          class="text-xs text-grey mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+          class:mb-3={isBridgeToken}
         >
           {#if isBridgeToken}
             {locale.t("wallet.send.addressPrincipleExample")}
@@ -249,7 +251,7 @@
         <ReceiveRunes token={selectedTokenObj} />
       {/if}
 
-      <div class="flex-grow-1 flex flex-col justify-end items-center">
+      <div class="flex-grow-1 flex flex-col justify-end items-center px-8">
         <Button
           onclick={onNavigateBack}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
@@ -260,18 +262,18 @@
       </div>
     </div>
   {:else if walletStore.query.isSuccess}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-4">
       <p class="text-red-600">{locale.t("wallet.noTokensMsg")}</p>
     </div>
   {:else if walletStore.query.error}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-4">
       <p class="text-red-600">
         {locale.t("wallet.errorMsg")}
         {walletStore.query.error}
       </p>
     </div>
   {:else}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-4">
       <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
     </div>
   {/if}

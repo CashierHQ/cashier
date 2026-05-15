@@ -1,12 +1,18 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import {
-    BridgeTransactionStatus,
-    type BridgeTransactionWithUsdValue,
-    BridgeType,
+      BridgeTransactionStatus,
+      type BridgeTransactionWithUsdValue,
+      BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
-  import { ArrowDownLeft, ArrowUpRight } from "lucide-svelte";
+  import {
+      ArrowDownLeft,
+      ArrowUpRight,
+      ClockArrowDown,
+      ClockArrowUp,
+  } from "lucide-svelte";
 
   interface Props {
     bridge: BridgeTransactionWithUsdValue;
@@ -51,21 +57,34 @@
   let amount = $derived.by(() => {
     const firstAsset = bridge.asset_infos[0];
     if (bridge.total_amount) {
-      const decimals = firstAsset?.decimals ?? 8;
-      return (Number(bridge.total_amount) / 10 ** decimals).toFixed(decimals);
+      // total_amount is in satoshis for BTC
+      const btc = Number(bridge.total_amount) / 100_000_000;
+      return formatNumber(btc, { tofixed: 8 });
     }
     return "0";
   });
   let isExport = $derived(bridge.bridge_type === BridgeType.Export);
+  let isBridgeInProgress = $derived(
+    bridge.status === BridgeTransactionStatus.Pending ||
+      bridge.status === BridgeTransactionStatus.Created,
+  );
 </script>
 
 <button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
   <div class="space-y-3">
     <div class="flex items-start gap-3 py-2">
       <div
-        class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
+        class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-1 {isBridgeInProgress
+          ? 'bg-lightyellow'
+          : 'bg-lightgreen'}"
       >
-        {#if isExport}
+        {#if isBridgeInProgress}
+          {#if isExport}
+            <ClockArrowUp class="w-5 h-5 text-lightyellow-accent" />
+          {:else}
+            <ClockArrowDown class="w-5 h-5 text-lightyellow-accent" />
+          {/if}
+        {:else if isExport}
           <ArrowUpRight class="w-5 h-5 text-gray-700" />
         {:else}
           <ArrowDownLeft class="w-5 h-5 text-gray-700" />

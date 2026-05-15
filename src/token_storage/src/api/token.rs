@@ -41,6 +41,7 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), CanisterError> {
     debug!("[user_add_token] input: {input:?}");
 
     let user_id = not_anonymous_caller();
+    let updated_at = time();
 
     // Handle optional index_id - only parse if provided and not empty
     let index_pid = match &input.index_id {
@@ -52,7 +53,6 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), CanisterError> {
 
     let state = get_state();
     let mut token_registry_service = state.token_registry;
-    let now = time();
     let token_metadata_fetcher = state.token_metadata_fetcher;
 
     // Check if token exists in registry, if not, add it
@@ -64,7 +64,7 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), CanisterError> {
                 index_pid,
                 input.is_rune,
                 input.rune_info,
-                now,
+                updated_at,
                 &token_metadata_fetcher,
             )
             .await
@@ -89,12 +89,12 @@ pub async fn user_add_token(input: AddTokenInput) -> Result<(), CanisterError> {
 pub async fn user_add_token_batch(input: AddTokensInput) -> Result<(), CanisterError> {
     info!("[user_add_token_batch]");
     let user_id = not_anonymous_caller();
+    let updated_at = time();
 
     debug!("[user_add_token_batch] user: {user_id}, input: {input:?}");
 
     let state = get_state();
     let mut token_registry_service = state.token_registry;
-    let now = time();
     let token_metadata_fetcher = state.token_metadata_fetcher;
 
     // Check each token and add to registry if it doesn't exist
@@ -108,7 +108,7 @@ pub async fn user_add_token_batch(input: AddTokensInput) -> Result<(), CanisterE
                     None,
                     item.is_rune,
                     item.rune_info.clone(),
-                    now,
+                    updated_at,
                     &token_metadata_fetcher,
                 )
                 .await

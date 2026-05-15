@@ -38,14 +38,14 @@ impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRe
 
     /// Increase the version of the token registry metadata
     /// # Arguments
-    /// * `timestamp` - The timestamp of the update
+    /// * `updated_at` - The timestamp of the update
     /// # Returns
     /// * `u64` - The new version of the token registry metadata
-    pub fn increase_version(&mut self, timestamp: u64) -> u64 {
+    pub fn increase_version(&mut self, updated_at: u64) -> u64 {
         self.token_store.with_borrow_mut(|store| {
             let mut metadata = store.get().into_owned();
             metadata.version += 1;
-            metadata.last_updated = timestamp;
+            metadata.last_updated = updated_at;
             store.set(metadata);
 
             let updated_metadata = store.get().clone();

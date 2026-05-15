@@ -392,25 +392,26 @@
   onBack={onNavigateBack}
 />
 
-<div class="px-4 grow-1 flex flex-col">
+<div class="-mx-4 grow-1 flex flex-col">
   {#if isLoading}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
     </div>
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      <InputAmount
-        bind:selectedToken
-        bind:amount
-        bind:tokenAmount
-        bind:usdAmount
-        {selectedTokenObj}
-        {maxAmount}
-        {isMaxAvailable}
-        onSelectToken={handleSelectToken}
-      />
-
-      <div>
+      <div class="px-8">
+        <InputAmount
+          bind:selectedToken
+          bind:amount
+          bind:tokenAmount
+          bind:usdAmount
+          {selectedTokenObj}
+          {maxAmount}
+          {isMaxAvailable}
+          onSelectToken={handleSelectToken}
+        />
+      </div>
+      <div class="px-8">
         <label
           for="receive-address-input"
           class="block text-sm font-medium mb-2"
@@ -459,7 +460,7 @@
           </button>
         </div>
         <div
-          class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+          class="text-xs text-grey mt-1.5 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {#if isCkBtc}
             {locale.t("wallet.send.addressPrincipleExample")}
@@ -472,7 +473,7 @@
           {/if}
         </div>
         {#if isCkBtc}
-          <div class="flex flex-col gap-1.5 mt-2">
+          <div class="flex flex-col gap-1.5 mt-2 bg-lightg">
             <div class="flex items-center gap-1.5">
               <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
               <div
@@ -509,10 +510,13 @@
       </div>
 
       {#if isBitcoinBridgeToken}
-        <div>
+        <div class="px-8 btc-gradient rounded-2xl py-4 mt-4 px-8">
+          <h3 class="text-normal font-semibold mb-6 text-center">
+            {locale.t("bitcoin.send.title")}
+          </h3>
           <label
             for="native-btc-address-input"
-            class="block text-sm font-medium mb-2"
+            class="block text-sm font-medium mb-1.5"
           >
             {locale.t("wallet.send.btcNativeAddressLabel")}
           </label>
@@ -533,11 +537,11 @@
             </button>
           </div>
           <div
-            class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+            class="text-xs text-grey mt-1.5 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {locale.t("wallet.send.addressBitcoinExample")}
           </div>
-          <div class="flex flex-col gap-1.5 mt-2">
+          <div class="flex flex-col gap-1.5 mt-2 mb-6">
             <div class="flex items-center gap-1.5">
               <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
               <div
@@ -579,18 +583,16 @@
               </div>
             </div>
           </div>
-        </div>
 
-        {#if isCkBtc}
-          <SendBTC />
-        {:else if isRune}
-          <SendRunes
-            token={selectedTokenObj}
-            minConfirmations={btcBridgeStore.minConfirmations}
-          />
-        {/if}
+      {#if isCkBtc}
+        <SendBTC />
+      {:else if isRune}
+        <SendRunes
+          token={selectedTokenObj}
+          minConfirmations={btcBridgeStore.minConfirmations}
+        />
       {/if}
-
+      
       <div
         class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
       >
@@ -610,11 +612,11 @@
       </div>
     </div>
   {:else if walletStore.query.isSuccess}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-red-600">{locale.t("wallet.noTokensMsg")}</p>
     </div>
   {:else if walletStore.query.error}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-red-600">
         {locale.t("wallet.errorMsg")}
         {walletStore.query.error}

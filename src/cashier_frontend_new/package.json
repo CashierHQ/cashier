@@ -1,7 +1,7 @@
 {
   "name": "cashier_frontend_new",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000 --mode local_dev",
@@ -72,6 +72,7 @@
     "@dfinity/ledger-icrc": "^2.7.0",
     "@dfinity/principal": "^2.4.1",
     "@dfinity/utils": "^2.14.0",
+    "@noble/hashes": "^2.2.0",
     "@slide-computer/signer": "^3.20.0",
     "@windoge98/plug-n-play": "^0.1.0-beta.25",
     "axios": "^1.13.1",

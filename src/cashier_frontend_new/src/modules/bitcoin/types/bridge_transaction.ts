@@ -1,4 +1,5 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import {
@@ -340,10 +341,10 @@ export class BridgeTransactionMapper {
       }
       const symbol = label;
       const amount = assetInfo.amount;
-      const amountFormattedStr = (
-        Number(assetInfo.amount) /
-        10 ** assetInfo.decimals
-      ).toFixed(assetInfo.decimals);
+      const amountUi = Number(assetInfo.amount) / 10 ** assetInfo.decimals;
+      const amountFormattedStr = formatNumber(amountUi, {
+        tofixed: assetInfo.decimals,
+      });
 
       assetItems.push({
         state,

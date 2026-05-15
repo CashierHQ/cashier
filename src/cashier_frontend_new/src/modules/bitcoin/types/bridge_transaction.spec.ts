@@ -371,7 +371,7 @@ describe("BridgeTransactionMapper", () => {
         symbol: "BTC",
         address: CKBTC_CANISTER_ID,
         amount: 100000000n,
-        amountFormattedStr: "1.00000000",
+        amountFormattedStr: "1",
         direction: FlowDirection.INCOMING,
       });
     });
@@ -422,7 +422,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result[0].direction).toBe(FlowDirection.OUTGOING);
       expect(result[0].state).toBe(AssetProcessState.PROCESSING);
       expect(result[1].label).toBe("Runes");
-      expect(result[1].amountFormattedStr).toBe("1.000000");
+      expect(result[1].amountFormattedStr).toBe("1");
     });
 
     it("should handle different transaction statuses", () => {

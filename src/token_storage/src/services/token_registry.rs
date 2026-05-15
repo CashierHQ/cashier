@@ -130,7 +130,7 @@ impl<R: Repositories> TokenRegistryService<R> {
     /// * `index_id` - Optional index ID for IC tokens
     /// * `is_rune` - Whether the token is a rune
     /// * `rune_info` - Information about the rune, if applicable
-    /// * `timestamp` - The timestamp of the registration
+    /// * `updated_at` - The timestamp of the registration
     /// * `token_metadata_fetcher` - The fetcher for retrieving token metadata
     /// # Returns
     /// * `Ok(TokenId)` - The ID of the registered token if successful
@@ -141,14 +141,13 @@ impl<R: Repositories> TokenRegistryService<R> {
         index_id: Option<IndexId>,
         is_rune: Option<bool>,
         rune_info: Option<RuneInfo>,
-        timestamp: u64,
+        updated_at: u64,
         token_metadata_fetcher: &F,
     ) -> Result<TokenId, CanisterError>
     where
         F: TokenMetadataFetcher,
     {
         validate_rune_input(is_rune, &rune_info)?;
-
         match input {
             TokenId::IC { ledger_id } => {
                 // Fetch required fields concurrently (these MUST succeed)
@@ -177,6 +176,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     is_rune,
                     rune_info,
                 };
+
                 let token_id = registry_token.details.token_id();
                 let is_new_token = !self.registry_repository.contains(&token_id);
 
@@ -241,6 +241,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     fee: token_metadata.fee,
                     supported_standards,
                 };
+
                 let token_id = self.registry_repository.register_token(current_record)?;
                 self.metadata_repository.increase_version(timestamp);
                 Ok(token_id)
@@ -274,12 +275,16 @@ impl<R: Repositories> TokenRegistryService<R> {
 
         // Second pass: register all tokens
         for input in tokens {
-            let token_id = self.registry_repository.register_token(input)?;
+            let token_id = self.registry_repository.register_token(
+                input,
+                &mut self.metadata_repository,
+                updated_at,
+            )?;
             token_ids.push(token_id);
         }
 
         if any_new_tokens {
-            self.metadata_repository.increase_version(timestamp);
+            self.metadata_repository.increase_version(updated_at);
         }
 
         Ok(token_ids)
@@ -297,7 +302,7 @@ impl<R: Repositories> TokenRegistryService<R> {
         &mut self,
         token_id: TokenId,
         supported_standards: Vec<IcrcStandard>,
-        timestamp: u64,
+        updated_at: u64,
     ) -> Result<(), CanisterError> {
         let Some(mut token) = self.registry_repository.get_token(&token_id) else {
             return Err(CanisterError::NotFound(format!(
@@ -314,8 +319,11 @@ impl<R: Repositories> TokenRegistryService<R> {
             }
         }
 
-        self.registry_repository.register_token(token)?;
-        self.metadata_repository.increase_version(timestamp);
+        self.registry_repository.register_token(
+            token,
+            &mut self.metadata_repository,
+            updated_at,
+        )?;
         Ok(())
     }
 

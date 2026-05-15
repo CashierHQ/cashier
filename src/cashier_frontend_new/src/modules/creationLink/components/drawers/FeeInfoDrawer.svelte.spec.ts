@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import FeeInfoDrawer from "./FeeInfoDrawer.svelte";
 
 vi.mock("$lib/i18n", () => ({
@@ -31,6 +31,16 @@ function fixture_of_fees_breakdown() {
 }
 
 describe("FeeInfoDrawer", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    cleanup(); // destroy component → may queue timer(s)
+    vi.runAllTimers();
+    vi.useRealTimers();
+  });
+
   it("it_should_do_render_fee_breakdown_rows_when_open", () => {
     // Arrange
     render(FeeInfoDrawer, {

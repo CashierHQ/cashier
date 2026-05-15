@@ -66,7 +66,9 @@
 
   // Separate network fees and link creation fee
   const networkFees = $derived.by(() => {
-    return feesBreakdown.filter((fee) => fee.name === "Network fees");
+    return feesBreakdown.filter(
+      (fee) => fee.name === "Network fees" || fee.name === "Network fee",
+    );
   });
 
   const linkCreationFee = $derived.by(() => {
@@ -159,7 +161,7 @@
       {/if}
 
       {#each feesBreakdown as fee (fee.name + "_" + fee.tokenAddress)}
-        {#if fee.name !== "Network fees" && fee.name !== "Link creation fee"}
+        {#if fee.name !== "Network fees" && fee.name !== "Network fee" && fee.name !== "Link creation fee"}
           {@const feeView = formatFeeBreakdownItem(fee)}
           <div>
             <div class="flex justify-between items-center">

@@ -35,6 +35,17 @@
 
   const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));
 
+  let hasRenderedAllowed = $state(false);
+
+  $effect(() => {
+    // Mark as rendered only when we actually show children.
+    if (shouldShow) {
+      hasRenderedAllowed = true;
+    }
+  });
+
+  const shouldShowLoading = $derived(isLoading && !hasRenderedAllowed);
+
   $effect(() => {
     if (isReady) {
       if (mustBeOwner && !isOwner) {
@@ -48,8 +59,10 @@
   });
 </script>
 
-{#if shouldShow}
+{#if shouldShow || (hasRenderedAllowed && isLoading)}
   {@render children()}
+{:else if shouldShowLoading}
+  <ProtectionProcessingState message="Loading..." />
 {:else if isReady}
   <ProtectionProcessingState message="Redirecting..." />
 {/if}
