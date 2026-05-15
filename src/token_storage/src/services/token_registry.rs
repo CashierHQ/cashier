@@ -184,7 +184,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                     self.registry_repository.register_token(registry_token)?;
 
                 if is_new_token {
-                    self.metadata_repository.increase_version(timestamp);
+                    self.metadata_repository.increase_version(updated_at);
                 }
 
                 Ok(registered_token_id)
@@ -259,7 +259,7 @@ impl<R: Repositories> TokenRegistryService<R> {
     pub fn add_bulk_tokens(
         &mut self,
         tokens: Vec<RegistryToken>,
-        timestamp: u64,
+        updated_at: u64,
     ) -> Result<Vec<TokenId>, CanisterError> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
@@ -275,11 +275,7 @@ impl<R: Repositories> TokenRegistryService<R> {
 
         // Second pass: register all tokens
         for input in tokens {
-            let token_id = self.registry_repository.register_token(
-                input,
-                &mut self.metadata_repository,
-                updated_at,
-            )?;
+            let token_id = self.registry_repository.register_token(input)?;
             token_ids.push(token_id);
         }
 
@@ -319,11 +315,8 @@ impl<R: Repositories> TokenRegistryService<R> {
             }
         }
 
-        self.registry_repository.register_token(
-            token,
-            &mut self.metadata_repository,
-            updated_at,
-        )?;
+        self.registry_repository.register_token(token)?;
+        self.metadata_repository.increase_version(updated_at);
         Ok(())
     }
 

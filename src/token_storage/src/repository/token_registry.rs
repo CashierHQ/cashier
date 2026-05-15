@@ -37,22 +37,11 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     /// # Returns
     /// * `Ok(TokenId)` - The ID of the registered token if it was successfully registered or already exists
     /// * `Err(CanisterError)` - An error message if the token could not be registered
-    pub fn register_token<M: Storage<TokenRegistryMetadataRepositoryStorage>>(
-        &mut self,
-        input: RegistryToken,
-        token_registry_repo: &mut TokenRegistryMetadataRepository<M>,
-        updated_at: u64,
-    ) -> Result<TokenId, String> {
+    pub fn register_token(&mut self, input: RegistryToken) -> Result<TokenId, String> {
         let token_id = input.details.token_id();
-
         self.token_reg_repo.with_borrow_mut(|store| {
             store.insert(token_id.clone(), input.clone());
         });
-
-        // If this is a new token, increment the registry version
-        if is_new_token {
-            token_registry_repo.increase_version(updated_at);
-        }
 
         Ok(token_id)
     }
