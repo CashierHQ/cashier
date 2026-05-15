@@ -7,14 +7,14 @@
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import {
-      ArrowLeftRight,
-      ChevronDown,
-      ChevronUp,
-      Coins,
-      Copy,
-      Hourglass,
-      LayoutList,
-      RefreshCw,
+    ArrowLeftRight,
+    ChevronDown,
+    ChevronUp,
+    Coins,
+    Copy,
+    Hourglass,
+    LayoutList,
+    RefreshCw,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -86,7 +86,9 @@
 
   <div class="space-y-2">
     <Label class="text-small font-medium">
-      {locale.t("wallet.receive.btcAddress").replace("{{token}}", tokenSymbol ?? "BTC")}
+      {locale
+        .t("wallet.receive.btcAddress")
+        .replace("{{token}}", tokenSymbol ?? "BTC")}
     </Label>
 
     <div class="relative">

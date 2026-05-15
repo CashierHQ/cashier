@@ -8,14 +8,14 @@
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import {
-      formatBalanceUnits,
-      parseBalanceUnits,
+    formatBalanceUnits,
+    parseBalanceUnits,
   } from "$modules/shared/utils/converter";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
-      CKBTC_CANISTER_ID,
-      ICP_INDEX_CANISTER_ID,
-      ICP_LEDGER_CANISTER_ID,
+    CKBTC_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { tokenStorageService } from "$modules/token/services/tokenStorage";
   import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
@@ -24,20 +24,20 @@
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
   import type {
-      BridgeSource,
-      WalletSource,
+    BridgeSource,
+    WalletSource,
   } from "$modules/transactionCart/types/transactionSource";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
   import { Principal } from "@dfinity/principal";
   import {
-      ArrowLeftRight,
-      Bitcoin,
-      Clipboard,
-      Coins,
-      Hourglass,
-      Info,
-      LayoutList,
+    ArrowLeftRight,
+    Bitcoin,
+    Clipboard,
+    Coins,
+    Hourglass,
+    Info,
+    LayoutList,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -594,7 +594,7 @@
           {/if}
         </div>
       {/if}
-      
+
       <div
         class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
       >

@@ -1,17 +1,17 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import {
-      BridgeTransactionStatus,
-      type BridgeTransactionWithUsdValue,
-      BridgeType,
+    BridgeTransactionStatus,
+    type BridgeTransactionWithUsdValue,
+    BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import {
-      ArrowDownLeft,
-      ArrowUpRight,
-      ClockArrowDown,
-      ClockArrowUp,
+    ArrowDownLeft,
+    ArrowUpRight,
+    ClockArrowDown,
+    ClockArrowUp,
   } from "lucide-svelte";
 
   interface Props {
@@ -55,7 +55,6 @@
     return locale.t("bitcoin.receive.unknown");
   });
   let amount = $derived.by(() => {
-    const firstAsset = bridge.asset_infos[0];
     if (bridge.total_amount) {
       // total_amount is in satoshis for BTC
       const btc = Number(bridge.total_amount) / 100_000_000;

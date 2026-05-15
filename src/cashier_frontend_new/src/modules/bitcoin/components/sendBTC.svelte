@@ -20,7 +20,6 @@
   let historyExpanded = $state(true);
   let exportHistoryRefreshing = $state(false);
 
-
   function handleSelectBridge(bridgeId: string) {
     const bridge = btcBridgeStore.exportBridgeTxs?.find(
       (b) => b.bridge_id === bridgeId,

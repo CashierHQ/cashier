@@ -11,17 +11,17 @@
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
-      CKBTC_CANISTER_ID,
-      ICP_LEDGER_CANISTER_ID,
+    CKBTC_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-      Bitcoin,
-      ChevronDown,
-      Copy,
-      Hourglass,
-      Info,
-      LayoutList,
+    Bitcoin,
+    ChevronDown,
+    Copy,
+    Hourglass,
+    Info,
+    LayoutList,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
@@ -115,7 +115,6 @@
 <div class="grow-1 flex flex-col -mx-4">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-
       {#if !isBridgeToken}
         <div class="flex items-start gap-1.5 px-8">
           <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
