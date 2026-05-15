@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   SharedAssetInfoMapper,
   type SerializedSharedAssetInfo,
-} from "./asset_info";
+} from "$modules/actionTemplate/types/asset_info";
 
 function fixture_of_shared_asset_info(
   available_amount?: bigint,

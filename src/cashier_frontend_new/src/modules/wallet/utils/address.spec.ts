@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { isValidPrincipal, isValidAccountId, shortenAddress } from "./address";
+import {
+  isValidPrincipal,
+  isValidAccountId,
+  shortenAddress,
+} from "$modules/wallet/utils/address";
 import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 
 describe("isValidPrincipal", () => {

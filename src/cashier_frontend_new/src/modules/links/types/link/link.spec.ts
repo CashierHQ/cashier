@@ -1,10 +1,14 @@
 import { describe, it, expect } from "vitest";
 import * as devalue from "devalue";
 import { Principal } from "@icp-sdk/core/principal";
-import { Link, LinkMapper, type SerializedLink } from "./link";
-import { Asset, AssetInfo } from "./asset";
-import { LinkType } from "./linkType";
-import { LinkState } from "./linkState";
+import {
+  Link,
+  LinkMapper,
+  type SerializedLink,
+} from "$modules/links/types/link/link";
+import { Asset, AssetInfo } from "$modules/links/types/link/asset";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { LinkState } from "$modules/links/types/link/linkState";
 
 function makeSampleLink(id = "link-1", title = "Test Tip Link") {
   const creator = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");

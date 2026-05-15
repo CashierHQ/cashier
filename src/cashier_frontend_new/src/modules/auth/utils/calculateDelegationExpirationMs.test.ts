@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { calculateDelegationExpirationMs } from "./calculateDelegationExpirationMs";
+import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import type { DelegationChain } from "@icp-sdk/core/identity";
-import { NANOS_IN_MILLIS } from "../constants";
+import { NANOS_IN_MILLIS } from "$modules/auth/constants";
 
 describe("calculateDelegationExpirationMs", () => {
   beforeEach(() => {

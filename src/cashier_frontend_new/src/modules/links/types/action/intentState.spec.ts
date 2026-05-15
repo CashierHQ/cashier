@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import IntentState, { IntentStateMapper } from "./intentState";
+import IntentState, {
+  IntentStateMapper,
+} from "$modules/links/types/action/intentState";
 import type { IntentState as BackendIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 describe("IntentState.fromBackendType", () => {

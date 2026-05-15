@@ -56,8 +56,8 @@ vi.mock("$modules/wallet/utils/address", () => ({
 }));
 
 // Import after mocks
-import { walletSendStore } from "./walletSendStore.svelte";
-import { ReceiveAddressType } from "../types";
+import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+import { ReceiveAddressType } from "$modules/wallet/types";
 
 describe("WalletSendStore", () => {
   beforeEach(() => {

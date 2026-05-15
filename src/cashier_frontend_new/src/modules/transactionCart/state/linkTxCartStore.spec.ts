@@ -50,7 +50,7 @@ vi.mock("$modules/shared/services/feeService", () => ({
 
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-import { LinkTxCartStore } from "./linkTxCartStore.svelte";
+import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
 
 // Test fixtures
 function createMockAction(withIcrc112Requests = false): Action {

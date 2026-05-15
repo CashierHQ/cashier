@@ -1,9 +1,19 @@
 import type { LinkDto as BackendLinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import type { Link as SharedLink } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
-import { Asset, AssetInfo, AssetInfoMapper } from "./asset";
-import { LinkStateMapper, type LinkStateValue } from "./linkState";
-import { LinkTypeMapper, type LinkTypeValue } from "./linkType";
+import {
+  Asset,
+  AssetInfo,
+  AssetInfoMapper,
+} from "$modules/links/types/link/asset";
+import {
+  LinkStateMapper,
+  type LinkStateValue,
+} from "$modules/links/types/link/linkState";
+import {
+  LinkTypeMapper,
+  type LinkTypeValue,
+} from "$modules/links/types/link/linkType";
 
 export class Link {
   id: string;

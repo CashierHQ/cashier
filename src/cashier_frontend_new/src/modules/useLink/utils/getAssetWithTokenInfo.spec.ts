@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAssetWithTokenInfo } from "./getAssetWithTokenInfo";
+import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
 import { AssetInfo, Asset } from "$modules/links/types/link/asset";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";

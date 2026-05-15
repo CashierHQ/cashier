@@ -8,8 +8,8 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinkDetailStoreV3 } from "../linkDetailStoreV3.svelte";
-import { LinkCreatedStateV3 } from "./created";
+import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+import { LinkCreatedStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/created";
 
 const mocks = vi.hoisted(() => ({
   processActionV3: vi.fn(),

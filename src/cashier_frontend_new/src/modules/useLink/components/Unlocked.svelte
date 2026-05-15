@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Link } from "$modules/links/types/link/link";
-  import Actions from "./Actions.svelte";
-  import AssetList from "./AssetList.svelte";
+  import Actions from "$modules/useLink/components/Actions.svelte";
+  import AssetList from "$modules/useLink/components/AssetList.svelte";
 
   const {
     link,

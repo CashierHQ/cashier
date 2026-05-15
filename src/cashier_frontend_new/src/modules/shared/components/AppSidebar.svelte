@@ -10,12 +10,12 @@
   } from "lucide-svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
   import { toast } from "svelte-sonner";
-  import DisconnectModal from "./DisconnectModal.svelte";
+  import DisconnectModal from "$modules/shared/components/DisconnectModal.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { resolve } from "$app/paths";
-  import SidebarMenuItem from "./SidebarMenuItem.svelte";
+  import SidebarMenuItem from "$modules/shared/components/SidebarMenuItem.svelte";
   import { locale } from "$lib/i18n";
 
   type Props = {

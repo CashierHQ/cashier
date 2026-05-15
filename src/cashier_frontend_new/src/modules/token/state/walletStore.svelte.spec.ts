@@ -139,7 +139,7 @@ vi.mock("@icp-sdk/core/principal", () => ({
 
 // ── Import store after mocks ──────────────────────────────────────────────────
 
-import { walletStore } from "./walletStore.svelte";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

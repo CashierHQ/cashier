@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   calculateLinkInfoAssetsWithTokenInfo,
   calculateUsageInfoAssetsWithTokenInfo,
-} from "./usageInfo";
+} from "$modules/detailLink/utils/usageInfo";
 
 function fixture_of_token(): TokenWithPriceAndBalance {
   return {

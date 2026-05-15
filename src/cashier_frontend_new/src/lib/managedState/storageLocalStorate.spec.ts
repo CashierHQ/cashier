@@ -4,9 +4,13 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import * as devalue from "devalue";
-import { LocalStorageStore } from "./storageLocalStorage";
+import { LocalStorageStore } from "$lib/managedState/storageLocalStorage";
 import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
-import { TestValue, Option, testValueDevalueSerde } from "./utils";
+import {
+  TestValue,
+  Option,
+  testValueDevalueSerde,
+} from "$lib/managedState/utils";
 
 describe("LocalStorageStore", () => {
   beforeEach(() => {

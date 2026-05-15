@@ -1,7 +1,7 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
-import type { UserLinkStore } from "../userLinkStore.svelte";
-import { AddressUnlockedState } from "./addressUnlocked";
+import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import { AddressUnlockedState } from "$modules/useLink/state/useLinkStates/addressUnlocked";
 
 // Landing state for user-facing link flow
 export class LandingState implements UserLinkState {

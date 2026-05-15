@@ -28,7 +28,7 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { detailLinkService } from "./detailLink";
+import { detailLinkService } from "$modules/detailLink/services/detailLink";
 
 const mocks = vi.hoisted(() => ({
   cashierBackendService: {

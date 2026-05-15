@@ -25,13 +25,13 @@ import {
   NOT_SUPPORTED_ERROR,
   toBase64,
 } from "@slide-computer/signer";
-import { IITransportError } from "./IITransport";
+import { IITransportError } from "$modules/auth/signer/ii/IITransport";
 import {
   ICRC_114_METHOD_NAME,
   MAINNET_ROOT_KEY,
   scopes,
   supportedStandards,
-} from "./constants";
+} from "$modules/auth/signer/ii/constants";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9

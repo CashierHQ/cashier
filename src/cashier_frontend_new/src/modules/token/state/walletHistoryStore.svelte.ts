@@ -6,9 +6,12 @@ import {
   DEFAULT_TX_PAGE_SIZE,
   TX_REFETCH_INTERVAL_MS,
   TX_STALE_TIME_MS,
-} from "../constants";
-import { TokenIndexService } from "../services/tokenIndexService";
-import type { GetTransactionsResult, TokenTransaction } from "../types";
+} from "$modules/token/constants";
+import { TokenIndexService } from "$modules/token/services/tokenIndexService";
+import type {
+  GetTransactionsResult,
+  TokenTransaction,
+} from "$modules/token/types";
 
 // Cache stores by indexId to preserve transaction history across token switches
 const storeCache = new SvelteMap<string, WalletHistoryStore>();

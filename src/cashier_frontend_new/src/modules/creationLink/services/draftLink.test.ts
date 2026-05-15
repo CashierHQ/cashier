@@ -18,7 +18,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: fixture_of_auth_state,
 }));
 
-import { draftLinkService } from "./draftLink";
+import { draftLinkService } from "$modules/creationLink/services/draftLink";
 
 function fixture_of_draft_link(overrides?: Partial<SharedLink>): SharedLink {
   return {

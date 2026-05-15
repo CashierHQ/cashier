@@ -10,7 +10,7 @@ import {
   isUnsupportedLinkStateError,
   shouldRedirectTo404,
   shouldRedirectErrorTo404,
-} from "./errorHandler";
+} from "$modules/useLink/utils/errorHandler";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";

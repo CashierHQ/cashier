@@ -6,7 +6,7 @@ import {
   type Transport,
   toBase64,
 } from "@slide-computer/signer";
-import type { Icrc112ExecutionResult } from "../types/icrc112Request";
+import type { Icrc112ExecutionResult } from "$modules/icrc112/types/icrc112Request";
 
 // Class of service handler for ICRC-112 requests
 // T is the Transport type used by the Signer

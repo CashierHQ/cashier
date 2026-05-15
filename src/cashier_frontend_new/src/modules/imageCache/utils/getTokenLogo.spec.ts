@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getTokenLogo } from "./getTokenLogo";
+import { getTokenLogo } from "$modules/imageCache/utils/getTokenLogo";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 
 describe("getTokenLogo", () => {

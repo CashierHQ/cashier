@@ -6,8 +6,8 @@ import {
 } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserActionCapableState } from ".";
-import type { UserLinkStore } from "../userLinkStore.svelte";
-import { LandingState } from "./landing";
+import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import { LandingState } from "$modules/useLink/state/useLinkStates/landing";
 
 export class AddressUnlockedState implements UserActionCapableState {
   readonly step = UserLinkStep.ADDRESS_UNLOCKED;

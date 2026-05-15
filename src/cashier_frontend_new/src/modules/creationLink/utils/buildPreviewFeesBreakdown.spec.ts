@@ -2,7 +2,7 @@ import { FeeType } from "$modules/links/types/fee";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok } from "ts-results-es";
 import { describe, expect, it, vi } from "vitest";
-import { buildPreviewFeesBreakdown } from "./buildPreviewFeesBreakdown";
+import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
 
 function fixture_of_token(
   overrides?: Partial<TokenWithPriceAndBalance>,

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as ipResolver from "$modules/guard/services/ip_resolver";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { UserIPStore } from "./userIPStore.svelte";
+import { UserIPStore } from "$modules/guard/state/userIPStore.svelte";
 
 // Mock the dependencies
 vi.mock("$modules/guard/services/ip_resolver");

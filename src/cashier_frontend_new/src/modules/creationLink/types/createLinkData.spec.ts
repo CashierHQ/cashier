@@ -1,7 +1,10 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import { describe, expect, it } from "vitest";
-import { CreateLinkAsset, CreateLinkData } from "./createLinkData";
-import { CreateLinkInputMapper } from "./dto/create_link";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/creationLink/types/createLinkData";
+import { CreateLinkInputMapper } from "$modules/creationLink/types/dto/create_link";
 
 describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {

@@ -7,11 +7,14 @@ import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
 import type { Action as SharedAction } from "$shared";
 import type { Principal } from "@icp-sdk/core/principal";
-import type { ActionState } from "./actionState";
-import { ActionStateMapper } from "./actionState";
-import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
-import type Intent from "./intent";
-import { IntentMapper } from "./intent";
+import type { ActionState } from "$modules/links/types/action/actionState";
+import { ActionStateMapper } from "$modules/links/types/action/actionState";
+import {
+  ActionTypeMapper,
+  type ActionTypeValue,
+} from "$modules/links/types/action/actionType";
+import type Intent from "$modules/links/types/action/intent";
+import { IntentMapper } from "$modules/links/types/action/intent";
 
 // Frontend Action class representing an action entity
 class Action {

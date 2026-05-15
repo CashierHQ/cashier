@@ -14,7 +14,7 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LinkDetailStoreV3 } from "./linkDetailStoreV3.svelte";
+import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 
 const mocks = vi.hoisted(() => ({
   queryState: {

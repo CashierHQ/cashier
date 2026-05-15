@@ -1,5 +1,5 @@
 import { type Channel, type Transport } from "@slide-computer/signer";
-import { IIChannel } from "./IIChannel";
+import { IIChannel } from "$modules/auth/signer/ii/IIChannel";
 import { HttpAgent } from "@icp-sdk/core/agent";
 
 // TODO: Remove this if all PRs resolve

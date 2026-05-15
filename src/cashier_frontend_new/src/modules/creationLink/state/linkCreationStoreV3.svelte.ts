@@ -31,7 +31,7 @@ import {
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
-import type { AddAssetItem } from "../types/viewModels/genericCreationLinkStoreVM";
+import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
 /**
  * Store for draft link state management

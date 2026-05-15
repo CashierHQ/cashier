@@ -3,7 +3,7 @@ import {
   balanceToUSDValue,
   formatBalanceUnits,
   parseBalanceUnits,
-} from "./converter";
+} from "$modules/shared/utils/converter";
 
 describe("parseBalanceUnits", () => {
   it("should throw an error for negative decimals", () => {

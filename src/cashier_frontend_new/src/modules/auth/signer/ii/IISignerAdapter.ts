@@ -6,8 +6,11 @@ import {
 } from "@icp-sdk/core/agent";
 import { AuthClient } from "@icp-sdk/auth/client";
 import { Adapter, BaseSignerAdapter } from "@windoge98/plug-n-play";
-import { type IIAdapterConfig, isIIAdapterConfig } from "./type";
-import { IITransport } from "./IITransport";
+import {
+  type IIAdapterConfig,
+  isIIAdapterConfig,
+} from "$modules/auth/signer/ii/type";
+import { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
 import { Signer } from "@slide-computer/signer";

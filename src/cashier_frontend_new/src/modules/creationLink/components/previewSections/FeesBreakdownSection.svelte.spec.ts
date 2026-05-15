@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import FeesBreakdownSection from "./FeesBreakdownSection.svelte";
+import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
 
 vi.mock("$lib/i18n", () => ({
   locale: {

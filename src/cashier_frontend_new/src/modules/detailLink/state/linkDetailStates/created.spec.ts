@@ -8,8 +8,8 @@ import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkCreatedState } from "./created";
+import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { LinkCreatedState } from "$modules/detailLink/state/linkDetailStates/created";
 
 const mocks = vi.hoisted(() => {
   const user_process_action_v2Mock = vi.fn();

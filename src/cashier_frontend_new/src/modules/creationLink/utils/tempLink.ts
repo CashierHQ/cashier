@@ -1,7 +1,7 @@
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { TempLink } from "$modules/links/types/tempLink";
-import { CreateLinkData } from "../types/createLinkData";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 
 /**
  * Create a new temporary link for the given principal ID

@@ -14,7 +14,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
-import { WalletTxCartStore } from "./walletTxCartStore.svelte";
+import { WalletTxCartStore } from "$modules/transactionCart/state/walletTxCartStore.svelte";
 
 // Mock constants
 const ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";

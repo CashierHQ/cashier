@@ -3,7 +3,7 @@ import { Asset, AssetInfo } from "$modules/links/types/link/asset";
 import { Principal } from "@icp-sdk/core/principal";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import { getFirstAssetDisplayInfo } from "./getFirstAssetDisplayInfo";
+import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
 describe("getFirstAssetDisplayInfo", () => {
   const mockPrincipal = Principal.fromText("aaaaa-aa");

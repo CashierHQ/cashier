@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { LinkListStore } from "./linkListStore.svelte";
-import { Link } from "../types/link/link";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
-import { UnifiedLinkItemMapper } from "../types/linkList";
+import { LinkListStore } from "$modules/links/state/linkListStore.svelte";
+import { Link } from "$modules/links/types/link/link";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
 import { Principal } from "@icp-sdk/core/principal";
 import { managedState } from "$lib/managedState";
-import { TempLink } from "../types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 

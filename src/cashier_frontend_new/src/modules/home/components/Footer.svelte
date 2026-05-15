@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Mail } from "lucide-svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
-  import FooterItem from "./FooterItem.svelte";
+  import FooterItem from "$modules/home/components/FooterItem.svelte";
   import { locale } from "$lib/i18n";
 
   // Get translated app links

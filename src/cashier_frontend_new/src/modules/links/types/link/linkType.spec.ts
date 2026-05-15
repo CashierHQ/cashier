@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LinkType, LinkTypeMapper } from "./linkType";
+import { LinkType, LinkTypeMapper } from "$modules/links/types/link/linkType";
 
 describe("LinkType.toBackendType", () => {
   it("maps TIP to SendTip", () => {

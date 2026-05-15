@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import type { Snippet } from "svelte";
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
+  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
 
   let {
     redirectTo,

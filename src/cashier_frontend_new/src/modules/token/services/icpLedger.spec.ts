@@ -34,7 +34,10 @@ vi.mock("$modules/shared/utils/icpAccountId", () => ({
 
 // Import after mocks
 import { authState } from "$modules/auth/state/auth.svelte";
-import { IcpLedgerService, toLegacyMemo } from "./icpLedger";
+import {
+  IcpLedgerService,
+  toLegacyMemo,
+} from "$modules/token/services/icpLedger";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 
 describe("toLegacyMemo", () => {
@@ -446,7 +449,8 @@ describe("IcpLedgerService", () => {
 
   describe("icpLedgerService singleton", () => {
     it("should export a singleton instance", async () => {
-      const { icpLedgerService } = await import("./icpLedger");
+      const { icpLedgerService } =
+        await import("$modules/token/services/icpLedger");
       expect(icpLedgerService).toBeInstanceOf(IcpLedgerService);
     });
   });

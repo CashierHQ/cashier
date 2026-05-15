@@ -12,14 +12,14 @@ import {
 } from "@dfinity/ledger-icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import { fromNullable } from "@dfinity/utils";
-import { ICP_INDEX_CANISTER_ID } from "../constants";
+import { ICP_INDEX_CANISTER_ID } from "$modules/token/constants";
 import {
   TransactionKind,
   type GetTransactionsParams,
   type GetTransactionsResult,
   type TokenTransaction,
   type TransactionKindValue,
-} from "../types";
+} from "$modules/token/types";
 import { assertUnreachable } from "$lib/rsMatch";
 
 const DEFAULT_PAGE_SIZE = 100n;

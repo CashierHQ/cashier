@@ -1,11 +1,11 @@
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { type Intent as SharedIntent } from "$shared";
-import type IntentStateValue from "./intentState";
-import { IntentStateMapper } from "./intentState";
-import type IntentTask from "./intentTask";
-import { IntentTaskMapper } from "./intentTask";
-import type IntentType from "./intentType";
-import { IntentTypeMapper } from "./intentType";
+import type IntentStateValue from "$modules/links/types/action/intentState";
+import { IntentStateMapper } from "$modules/links/types/action/intentState";
+import type IntentTask from "$modules/links/types/action/intentTask";
+import { IntentTaskMapper } from "$modules/links/types/action/intentTask";
+import type IntentType from "$modules/links/types/action/intentType";
+import { IntentTypeMapper } from "$modules/links/types/action/intentType";
 
 // Frontend representation of an Intent
 class Intent {

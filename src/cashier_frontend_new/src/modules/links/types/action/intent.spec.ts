@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { IntentMapper } from "./intent";
+import { IntentMapper } from "$modules/links/types/action/intent";
 
 describe("Intent.fromBackendType", () => {
   it("maps basic intent dto", () => {

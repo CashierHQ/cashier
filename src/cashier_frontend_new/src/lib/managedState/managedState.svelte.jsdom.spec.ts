@@ -4,8 +4,12 @@
 
 import * as devalue from "devalue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { managedState } from "./managedState.svelte";
-import { TestValue, Option, testValueDevalueSerde } from "./utils";
+import { managedState } from "$lib/managedState/managedState.svelte";
+import {
+  TestValue,
+  Option,
+  testValueDevalueSerde,
+} from "$lib/managedState/utils";
 import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 
 describe("ManagedState - Global storage", () => {

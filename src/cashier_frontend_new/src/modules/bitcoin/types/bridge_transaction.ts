@@ -7,7 +7,7 @@ import {
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 import { Principal } from "@icp-sdk/core/principal";
-import type { BitcoinBlock } from "./bitcoin_transaction";
+import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 
 /**
  * Enriched BridgeTransaction type with total amount in USD value

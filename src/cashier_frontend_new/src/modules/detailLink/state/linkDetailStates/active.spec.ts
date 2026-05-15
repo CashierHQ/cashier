@@ -7,8 +7,8 @@ import { LinkType } from "$modules/links/types/link/linkType";
 import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkActiveState } from "./active";
+import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { LinkActiveState } from "$modules/detailLink/state/linkDetailStates/active";
 
 const mocks = vi.hoisted(() => {
   const createActionV2 = vi.fn();

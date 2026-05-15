@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ProtectedIPTestHost from "./ProtectedIPTestHost.svelte";
+import ProtectedIPTestHost from "$modules/guard/components/ProtectedIPTestHost.svelte";
 
 vi.mock("$lib/i18n", () => ({
   locale: {

@@ -5,7 +5,7 @@ import {
   ValidationError,
   validateLedgerCanister,
   validateIndexCanister,
-} from "./canisterValidation";
+} from "$modules/token/services/canisterValidation";
 
 // Mock @dfinity/ledger-icrc
 vi.mock("@dfinity/ledger-icrc", () => ({

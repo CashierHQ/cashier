@@ -19,9 +19,9 @@ import { Principal } from "@icp-sdk/core/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { SessionManager } from "../services/sessionManager";
-import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
-import { isSessionExpired } from "../utils/isSessionExpired";
+import { SessionManager } from "$modules/auth/services/sessionManager";
+import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
+import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
