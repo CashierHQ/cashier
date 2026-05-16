@@ -70,10 +70,6 @@ export async function callCanister(
   const canisterId = Principal.fromText(params.canisterId)
   const argBytes = base64ToBytes(params.arg)
 
-  console.log(
-    `[cashier-wallet-instance] Submitting update call — ${params.method} on ${params.canisterId} via ${IC_HOST}`,
-  )
-
   // Create a fresh agent so the addTransform callback doesn't leak across calls
   const agent = HttpAgent.createSync({ identity, host: IC_HOST })
 
@@ -88,11 +84,9 @@ export async function callCanister(
     methodName: params.method,
     arg: argBytes,
   })
-  console.log('[cashier-wallet-instance] Call submitted to IC, polling for response...')
 
   const { pollForResponse, defaultStrategy } = polling
   await pollForResponse(agent, canisterId, submitResponse.requestId, defaultStrategy())
-  console.log('[cashier-wallet-instance] IC response received, reading certificate...')
 
   const { certificate } = await agent.readState(canisterId, {
     paths: [
@@ -105,7 +99,6 @@ export async function callCanister(
 
   if (!contentMap) throw new Error('contentMap was not captured by transform')
 
-  console.log('[cashier-wallet-instance] Certificate obtained — ICRC-49 result ready')
   return {
     contentMap: bytesToBase64(new Uint8Array(contentMap)),
     certificate: bytesToBase64(new Uint8Array(certificate)),

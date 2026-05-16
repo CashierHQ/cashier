@@ -46,7 +46,6 @@ export class RpcClient {
       this.pending.set(id, { resolve, reject })
 
       const msg: RpcRequest = { jsonrpc: '2.0', id, method, params }
-      console.debug('[sdk → wallet]', msg)
       this.target!.postMessage(msg, { targetOrigin: this.targetOrigin })
 
       setTimeout(() => {

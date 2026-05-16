@@ -21,10 +21,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
             node-version: "22"
+            cache: "pnpm"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -54,7 +58,7 @@ jobs:
           chmod +x /usr/local/bin/candid-extractor
 
       - name: Install Just command runner
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v4
 
       - name: Create Deployer private key file
         run: |

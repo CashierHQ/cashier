@@ -1,7 +1,7 @@
 {
   "name": "cashier_frontend_new",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000 --mode local_dev",
@@ -73,6 +73,7 @@
     "@dfinity/ledger-icrc": "^2.7.0",
     "@dfinity/principal": "^2.4.1",
     "@dfinity/utils": "^2.14.0",
+    "@noble/hashes": "^2.2.0",
     "@slide-computer/signer": "^3.20.0",
     "@slide-computer/signer-agent": "^3.0.0",
     "@slide-computer/signer-web": "^3.0.0",

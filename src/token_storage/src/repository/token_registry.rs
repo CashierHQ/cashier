@@ -38,6 +38,7 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
         &mut self,
         input: RegistryToken,
         token_registry_repo: &mut TokenRegistryMetadataRepository<M>,
+        updated_at: u64,
     ) -> Result<TokenId, String> {
         let token_id = input.details.token_id();
         let is_new_token = !self
@@ -50,7 +51,7 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
 
         // If this is a new token, increment the registry version
         if is_new_token {
-            token_registry_repo.increase_version();
+            token_registry_repo.increase_version(updated_at);
         }
 
         Ok(token_id)
@@ -76,5 +77,72 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
             store.clear();
             Ok(())
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repository::{Repositories, tests::TestRepositories};
+    use candid::Nat;
+    use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::token::{ChainTokenDetails, IcrcStandard};
+
+    #[test]
+    fn it_should_register_and_retrieve_token() {
+        // Arrange
+        let mut repo = TestRepositories::new().token_registry();
+        let mut token_registry_metadata_repo = TestRepositories::new().token_registry_metadata();
+        let updated_at = 1_000_000_000u64; // example timestamp
+        let ledger_id = random_principal_id();
+        let token = RegistryToken {
+            name: "Test Token".to_string(),
+            symbol: "TT".to_string(),
+            decimals: 8,
+            details: ChainTokenDetails::IC {
+                ledger_id,
+                index_id: None,
+                supported_standards: vec![
+                    IcrcStandard::ICRC1,
+                    IcrcStandard::ICRC2,
+                    IcrcStandard::ICRC3,
+                ],
+                fee: Nat::from(1000u64),
+            },
+            enabled_by_default: false,
+        };
+
+        // Act
+        let token_id = repo
+            .register_token(token.clone(), &mut token_registry_metadata_repo, updated_at)
+            .unwrap();
+
+        // Assert
+        assert_eq!(token_id, token.details.token_id());
+        assert!(repo.contains(&token_id));
+
+        // Act
+        let retrieved_token = repo.get_token(&token_id).unwrap();
+
+        // Assert
+        assert_eq!(retrieved_token, token);
+
+        match token.details {
+            ChainTokenDetails::IC {
+                ledger_id: retrieved_ledger_id,
+                supported_standards: retrieved_supported_standards,
+                ..
+            } => {
+                assert_eq!(retrieved_ledger_id, ledger_id);
+                assert_eq!(
+                    retrieved_supported_standards,
+                    vec![
+                        IcrcStandard::ICRC1,
+                        IcrcStandard::ICRC2,
+                        IcrcStandard::ICRC3
+                    ]
+                );
+            }
+        }
     }
 }

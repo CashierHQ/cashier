@@ -16,6 +16,7 @@
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
+  import { getAppLinks } from "$modules/shared/constants/links";
 
   let {
     source,
@@ -44,6 +45,8 @@
 
   // Hardcoded i18n key for wallet source
   const txCartI18nKey = "links.linkForm.drawers.txCart.wallet";
+
+  const appLinks = $derived(getAppLinks(locale.t));
 
   let failedImageLoads = $state<Set<string>>(new Set());
 
@@ -213,7 +216,13 @@
           {/if}
 
           <p class="mt-2 text-sm">
-            {locale.t("links.linkForm.drawers.txCart.termsAgreement")}
+            {locale.t("links.linkForm.drawers.txCart.termsAgreementPrefix")}<a
+              href={appLinks.termsOfService.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline text-primary hover:text-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm lowercase"
+              >{appLinks.termsOfService.label}</a
+            >.
           </p>
         </div>
       </div>

@@ -2,7 +2,10 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
-  import { CASHIER_WALLET_ID, II_SIGNER_WALLET_ID } from "$modules/shared/constants";
+  import {
+    CASHIER_WALLET_ID,
+    II_SIGNER_WALLET_ID,
+  } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
 
   type Props = {

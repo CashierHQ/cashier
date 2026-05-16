@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_common::random::init_ic_rand;
-use ic_cdk::{init, post_upgrade, pre_upgrade};
+use ic_cdk::{api::time, init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
 use token_storage_types::init::{TokenStorageInitData, TokenStorageUpgradeData};
 
@@ -12,6 +12,7 @@ use crate::{api::state::get_state, services::auth::Permission};
 fn init(init_data: TokenStorageInitData) {
     let log_config = init_data.log_settings.unwrap_or_default();
     let mut state = get_state();
+    let updated_at = time();
 
     if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
@@ -29,7 +30,7 @@ fn init(init_data: TokenStorageInitData) {
         info!("[init] Set {} default tokens", tokens.len());
         debug!("[init] Default tokens: {tokens:?}");
 
-        match state.token_registry.add_bulk_tokens(tokens) {
+        match state.token_registry.add_bulk_tokens(tokens, updated_at) {
             Ok(_) => {}
             Err(e) => {
                 error!("Error adding tokens: {e}");
@@ -54,6 +55,7 @@ fn pre_upgrade() {}
 #[post_upgrade]
 fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
     let mut state = get_state();
+    let updated_at = time();
 
     if let Err(err) = state.log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
@@ -64,6 +66,16 @@ fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
         upgrade_data.ckbtc_minter_id
     );
     state.set_ckbtc_minter_id(upgrade_data.ckbtc_minter_id);
+
+    if let Some(tokens) = upgrade_data.tokens {
+        info!("[post_upgrade] Upserting {} tokens", tokens.len());
+        match state.token_registry.add_bulk_tokens(tokens, updated_at) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error upserting tokens on upgrade: {e}");
+            }
+        }
+    }
 
     info!("[post_upgrade] Starting Token Storage");
     init_ic_rand();

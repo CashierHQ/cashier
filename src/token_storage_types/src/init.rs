@@ -22,4 +22,7 @@ pub struct TokenStorageInitData {
 pub struct TokenStorageUpgradeData {
     /// CKBTC minter canister id
     pub ckbtc_minter_id: Principal,
+    /// Optional tokens to upsert during upgrade
+    #[serde(default)]
+    pub tokens: Option<Vec<RegistryToken>>,
 }

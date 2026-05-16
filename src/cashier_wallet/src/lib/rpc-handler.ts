@@ -27,7 +27,6 @@ export function initRpcHandler(onRequest?: OnRequestCallback): void {
     // Skip ICRC-25/27/29/49 signer-standard methods — handled exclusively by icrc29-handler.ts
     if (/^icrc(25|27|29|49)_/.test(req.method)) return
 
-    console.debug('[wallet ← dapp] received:', req)
     onRequest?.(req.method)
 
     if (!event.source) return
@@ -51,7 +50,6 @@ async function handleRequest(
     const response: RpcResponse = { jsonrpc: '2.0', id: req.id }
     if (error) response.error = error
     else response.result = result
-    console.debug('[wallet → dapp] sending:', response)
     source.postMessage(response, { targetOrigin: origin })
   }
 

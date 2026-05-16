@@ -1,4 +1,5 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import {
@@ -224,6 +225,21 @@ export class BridgeTransactionMapper {
   }
 
   /**
+   * Map frontend BridgeTypeValue to token storage BridgeType canister format
+   * @param bridgeType
+   * @returns tokenStorage.BridgeType
+   */
+  public static toBridgeTypeCanister(
+    bridgeType: BridgeTypeValue,
+  ): tokenStorage.BridgeType {
+    if (bridgeType === BridgeType.Import) {
+      return { Import: null };
+    } else {
+      return { Export: null };
+    }
+  }
+
+  /**
    * Map token storage BridgeTransactionStatus to frontend BridgeTransactionStatusValue
    * @param status
    * @returns BridgeTransactionStatusValue
@@ -277,10 +293,10 @@ export class BridgeTransactionMapper {
       }
       const symbol = label;
       const amount = assetInfo.amount;
-      const amountFormattedStr = (
-        Number(assetInfo.amount) /
-        10 ** assetInfo.decimals
-      ).toFixed(assetInfo.decimals);
+      const amountUi = Number(assetInfo.amount) / 10 ** assetInfo.decimals;
+      const amountFormattedStr = formatNumber(amountUi, {
+        tofixed: assetInfo.decimals,
+      });
 
       assetItems.push({
         state,
@@ -416,6 +432,8 @@ export class BridgeTransactionMapper {
       withdrawal_fee: [withdrawalFee],
       btc_fee: [btcFee],
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+      ckbtc_block_id: [],
+      status: [],
     };
   }
 }

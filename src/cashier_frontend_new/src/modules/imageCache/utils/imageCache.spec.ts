@@ -91,6 +91,16 @@ describe("imageCache", () => {
   });
 
   describe("loadTokenImage", () => {
+    it("should cache IC Explorer URLs directly without fetch (no CORS on that CDN)", async () => {
+      const address = "ss2fx-dyaaa-aaaar-qacoq-cai";
+      const imageUrl = `https://api.icexplorer.io/images/${address}`;
+
+      await loadTokenImage(address, imageUrl);
+
+      expect(getCachedTokenImage(address)).toBe(imageUrl);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
     it("should load image and cache it", async () => {
       const address = "test-address";
       const imageUrl = "https://example.com/image.png";

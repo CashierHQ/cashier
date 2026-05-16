@@ -154,6 +154,12 @@ export const idlFactory = ({ IDL }) => {
     'index_id' : IDL.Opt(IDL.Text),
   });
   const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
+  const BridgeTransactionStatus = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Created' : IDL.Null,
+    'Completed' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
   const BridgeAssetType = IDL.Variant({
     'BTC' : IDL.Null,
     'Runes' : IDL.Null,
@@ -167,21 +173,17 @@ export const idlFactory = ({ IDL }) => {
   });
   const BridgeType = IDL.Variant({ 'Import' : IDL.Null, 'Export' : IDL.Null });
   const CreateBridgeTransactionInputArg = IDL.Record({
+    'status' : IDL.Opt(BridgeTransactionStatus),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
     'created_at_ts' : IDL.Nat64,
     'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
+    'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
     'deposit_fee' : IDL.Opt(IDL.Nat),
-  });
-  const BridgeTransactionStatus = IDL.Variant({
-    'Failed' : IDL.Null,
-    'Created' : IDL.Null,
-    'Completed' : IDL.Null,
-    'Pending' : IDL.Null,
   });
   const BlockConfirmation = IDL.Record({
     'block_id' : IDL.Nat64,
@@ -214,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
     'status' : IDL.Opt(BridgeTransactionStatus),
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
+    'bridge_type' : IDL.Opt(BridgeType),
   });
   const Result_10 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const GetUserNftInput = IDL.Record({

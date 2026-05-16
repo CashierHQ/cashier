@@ -25,6 +25,8 @@ fn fixture_of_import_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         withdrawal_fee: None,
         btc_fee: None,
         created_at_ts: 0,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 
@@ -44,6 +46,8 @@ fn fixture_of_export_bridge_input(caller: Principal) -> CreateBridgeTransactionI
         withdrawal_fee: Some(Nat::from(450u64)),
         btc_fee: Some(Nat::from(1200u64)),
         created_at_ts: 100,
+        ckbtc_block_id: None,
+        status: None,
     }
 }
 

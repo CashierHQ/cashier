@@ -18,30 +18,43 @@
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
+  import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+  import type {
+    AddAssetItem,
+    GenericCreationLinkStoreVM,
+  } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getGuardContext } from "$modules/guard/context.svelte";
-  import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionType } from "$modules/links/types/action/actionType";
-  import { LinkState } from "$modules/links/types/link/linkState";
   import {
     calculateLinkInfoAssetsWithTokenInfo,
     calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
+  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkStep } from "$modules/links/types/linkStep";
   import {
     getLinkTypeText,
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
-  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
+  import type {
+    AssetAndFeeList,
+    ForecastAssetAndFee,
+  } from "$modules/shared/types/feeService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
@@ -74,12 +87,29 @@
   let failedImageLoads = $state<Set<string>>(new Set());
   let isEndingLink = $state(false);
   let isCreatingWithdraw = $state(false);
+  let isSyncingBalance = $state(false);
   let showFirstEndLinkConfirm = $state(false);
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
   let lastClickWasOnButton = $state(false);
   let shouldShowCongratulations = $state(false);
   let detailsLandingTracked = $state(false);
+  let showFeeInfoDrawer = $state(false);
+
+  function assetAndFeeListToForecastShape(
+    list: AssetAndFeeList,
+  ): ForecastAssetAndFee[] {
+    return list.map((item) => ({
+      asset: {
+        label: item.asset.label,
+        symbol: item.asset.symbol,
+        address: item.asset.address,
+        amount: item.asset.amountFormattedStr,
+        usdValueStr: item.asset.usdValueStr,
+      },
+      fee: item.fee,
+    }));
+  }
 
   // Track Link details page load (Withdraw funnel)
   $effect(() => {
@@ -141,8 +171,7 @@
 
   // Build assetAndFee from action (from backend) for CREATE_LINK state.
   // Same source as LinkTxCart - fees from backend action, not frontend forecast.
-  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
-  const assetAndFeeFromAction = $derived.by(() => {
+  const createLinkActionAssetAndFee = $derived.by(() => {
     if (
       !linkStore ||
       !linkStore.link ||
@@ -154,8 +183,6 @@
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-    const maxUse = Number(linkStore.link.link_use_action_max_count);
-
     // Primary: use action from backend (logged-in user)
     if (linkStore.action) {
       const walletPrincipal = authState.account?.owner;
@@ -169,7 +196,25 @@
       );
     }
 
-    // Fallback: action missing (anonymous) - use forecast from link.asset_info
+    return [];
+  });
+
+  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
+  const createLinkForecastAssetAndFee = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK ||
+      linkStore.action
+    ) {
+      return [];
+    }
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const maxUse = Number(linkStore.link.link_use_action_max_count);
+
     if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
       return [];
     }
@@ -195,17 +240,106 @@
 
   // Total fees in USD from backend action (CREATE_LINK state)
   const totalFeesUsd = $derived.by(() => {
-    return assetAndFeeFromAction.reduce(
+    const feesSource =
+      createLinkActionAssetAndFee.length > 0
+        ? createLinkActionAssetAndFee
+        : createLinkForecastAssetAndFee;
+
+    return feesSource.reduce(
       (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
   });
+
+  const createLinkFeesBreakdown = $derived.by(() => {
+    if (
+      !linkStore ||
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK
+    ) {
+      return [];
+    }
+
+    if (createLinkActionAssetAndFee.length > 0) {
+      return feeService.buildBreakdown(
+        createLinkActionAssetAndFee,
+        walletStore.query.data ?? [],
+      );
+    }
+
+    return buildPreviewFeesBreakdown(
+      createLinkForecastAssetAndFee,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  function handleFeeBreakdownClick() {
+    if (createLinkFeesBreakdown.length === 0) return;
+    showFeeInfoDrawer = true;
+  }
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
     if (!linkStore || !linkStore.link) return false;
     return isSendLinkType(linkStore.link.link_type);
   });
+
+  const createLinkYouSendForecastRows = $derived.by(
+    (): ForecastAssetAndFee[] => {
+      if (
+        !linkStore?.link ||
+        linkStore.link.state !== LinkState.CREATE_LINK ||
+        !isSendLink
+      ) {
+        return [];
+      }
+      if (createLinkActionAssetAndFee.length > 0) {
+        return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
+      }
+      return createLinkForecastAssetAndFee;
+    },
+  );
+
+  const youSendPreviewLinkVm = $derived.by(
+    (): GenericCreationLinkStoreVM | undefined => {
+      const l = linkStore?.link;
+      if (
+        !linkStore ||
+        !l ||
+        l.state !== LinkState.CREATE_LINK ||
+        !isSendLink
+      ) {
+        return undefined;
+      }
+      const addons: AddAssetItem[] = (l.asset_info ?? [])
+        .map((ai) => {
+          const addr = ai.asset.address?.toText();
+          if (!addr) return null;
+          return {
+            address: addr,
+            useAmount: ai.amount_per_link_use_action,
+          };
+        })
+        .filter((x): x is AddAssetItem => x !== null);
+
+      return {
+        id: l.id,
+        backendId: l.id,
+        step: LinkStep.CREATED,
+        linkType: l.link_type,
+        createLinkData: {
+          title: l.title ?? "",
+          linkType: l.link_type,
+          assets: addons,
+          maxUse: Number(l.link_use_action_max_count),
+        },
+        action: linkStore.action,
+        setLinkType: () => {},
+        goNext: async () => {},
+        goBack: async () => {},
+      };
+    },
+  );
 
   // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
@@ -344,6 +478,26 @@
     }
   }
 
+  async function handleSyncAssetBalance() {
+    if (
+      !linkStore?.syncAssetBalanceCache ||
+      (linkStore.link?.state !== LinkState.ACTIVE &&
+        linkStore.link?.state !== LinkState.INACTIVE)
+    )
+      return;
+    isSyncingBalance = true;
+    try {
+      await linkStore.syncAssetBalanceCache();
+      toast.success(
+        locale.t("links.linkForm.detail.messages.balanceSyncSuccess"),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      isSyncingBalance = false;
+    }
+  }
+
   function onCloseDrawer() {
     showTxCart = false;
   }
@@ -470,6 +624,9 @@
 {#if linkStore && linkStore.link}
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
     <DetailLinkHeader linkTitle={linkStore.link.title} {onBack} />
+    {#if linkStore.link.state === LinkState.CREATE_LINK}
+      <LinkCreationProgressBar filledCount={3} />
+    {/if}
     {#if errorMessage}
       <div
         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -496,24 +653,40 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 5: Usage Info -->
-      <UsageInfoSection
-        {assetsWithTokenInfo}
-        {failedImageLoads}
-        onImageError={handleImageError}
-        useCount={Number(linkStore.link.link_use_action_counter)}
-      />
+      {#if linkStore.link.state === LinkState.CREATE_LINK && isSendLink && youSendPreviewLinkVm}
+        <YouSendPreview
+          forecastAssetAndFee={createLinkYouSendForecastRows}
+          {failedImageLoads}
+          onImageError={handleImageError}
+          isClickable={true}
+          link={youSendPreviewLinkVm}
+        />
+      {:else}
+        <UsageInfoSection
+          {assetsWithTokenInfo}
+          {failedImageLoads}
+          onImageError={handleImageError}
+          useCount={Number(linkStore.link.link_use_action_counter)}
+          onRefresh={handleSyncAssetBalance}
+          isRefreshing={isSyncingBalance}
+        />
+      {/if}
 
       <!-- Block 6: Share Link or Fees Breakdown -->
       {#if linkStore.link.state === LinkState.CREATE_LINK}
-        <FeesBreakdownSection {totalFeesUsd} />
+        <FeesBreakdownSection
+          {totalFeesUsd}
+          onBreakdownClick={createLinkFeesBreakdown.length > 0
+            ? handleFeeBreakdownClick
+            : undefined}
+        />
       {:else}
         <ShareLinkSection {link} />
       {/if}
     {/if}
 
     <div
-      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
+      class="flex-none w-[95%] mx-auto px-2 left-0 right-0 z-10 mt-auto pt-2 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
@@ -542,7 +715,7 @@
     </div>
 
     <div
-      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4"
+      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
@@ -591,6 +764,11 @@
       {/if}
     </div>
   </div>
+
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    feesBreakdown={createLinkFeesBreakdown}
+  />
 {/if}
 
 {#if showTxCart && linkStore && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
@@ -701,7 +879,7 @@
             class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
           >
             <div
-              class="flex-none msx w-[95%] max-w-[516px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
+              class="flex-none msx w-[95%] max-w-[510px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
               <Button
                 id="copy-link-button-modal"

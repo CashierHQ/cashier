@@ -111,24 +111,18 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     } = this.config
 
     // Phase 1 — II login via popup (pass derivationOrigin so wallet uses same II principal)
-    console.log(`[cashier-sdk-adapter] Opening II login popup → ${walletOrigin}`)
     const principal = await this.openLoginPopup(walletOrigin, derivationOrigin)
     this.principalText = principal
-    console.log(`[cashier-sdk-adapter] Login complete — principal: ${principal}`)
 
     // Phase 2 — mount iframe + ICRC-29 transport
-    console.log('[cashier-sdk-adapter] Mounting wallet iframe and establishing ICRC-29 channel...')
     this.iframeTransport = new IframeTransport({ url: walletOrigin, establishTimeout, disconnectTimeout })
-    // Cast to Transport to avoid private-field variance issues across signer-js versions
-    this.signer = new Signer({
-      transport: this.iframeTransport as unknown as Transport,
+    this.signer = new Signer<Transport>({
+      transport: this.iframeTransport,
       // Keep the channel alive across calls (we re-use the iframe)
       autoCloseTransportChannel: false,
     })
-    console.log('[cashier-sdk-adapter] ICRC-29 channel established')
 
     // Phase 3 — request permissions (shows ICRC-25 permission prompt in wallet)
-    console.log('[cashier-sdk-adapter] Requesting permissions (icrc27_accounts, icrc49_call_canister)...')
     try {
       await this.signer.requestPermissions([
         { method: 'icrc27_accounts' },
@@ -142,14 +136,11 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
       }
       throw e
     }
-    console.log('[cashier-sdk-adapter] Permissions granted')
 
     // Phase 4 — verify accounts
-    console.log('[cashier-sdk-adapter] Fetching accounts from wallet...')
     const accounts = await this.signer.accounts()
     const ownerPrincipal = accounts[0]?.owner
     const ownerText = ownerPrincipal ? ownerPrincipal.toText() : principal
-    console.log(`[cashier-sdk-adapter] Connected — owner: ${ownerText}`)
 
     // Phase 5 — create SignerAgent for update calls (ICRC-49 via iframe wallet)
     this.signerAgent = SignerAgent.createSync({
@@ -181,14 +172,25 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
             ...rest: unknown[]
           ) => {
             const paths = options?.paths
+            // Use cross-realm-safe checks: `instanceof ArrayBuffer` breaks
+            // when the buffer was constructed in a different realm (e.g.
+            // jsdom test env, iframe, or Web Worker boundary), so we
+            // detect ArrayBuffer via `Object.prototype.toString.call`
+            // and TypedArrays via `ArrayBuffer.isView`.
+            const firstLabel = Array.isArray(paths?.[0]) ? paths[0][0] : undefined
+            const isBufferLike =
+              firstLabel != null &&
+              typeof firstLabel === 'object' &&
+              (Object.prototype.toString.call(firstLabel) === '[object ArrayBuffer]' ||
+                ArrayBuffer.isView(firstLabel as ArrayBufferView))
             const isRequestStatus =
               Array.isArray(paths) &&
               paths.length === 1 &&
               Array.isArray(paths[0]) &&
               paths[0].length === 2 &&
-              (paths[0][0] instanceof ArrayBuffer ||
-                paths[0][0] instanceof Uint8Array) &&
-              new TextDecoder().decode(paths[0][0]) === 'request_status'
+              isBufferLike &&
+              new TextDecoder().decode(firstLabel as ArrayBuffer | ArrayBufferView) ===
+                'request_status'
             if (isRequestStatus) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               return (signerAgentRef as any).readState(canisterId, options, ...rest)
@@ -200,7 +202,6 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
         if (prop === 'call') {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return (...args: unknown[]) => {
-            console.log('[cashier-sdk-adapter] Update call → routing via ICRC-49 to wallet iframe')
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (signerAgentRef as any).call(...args)
           }

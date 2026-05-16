@@ -44,6 +44,7 @@ impl<R: Repositories> TokenRegistryService<R> {
         &mut self,
         input: TokenId,
         index_id: Option<IndexId>,
+        updated_at: u64,
     ) -> Result<TokenId, String> {
         match input {
             TokenId::IC { ledger_id } => {
@@ -79,14 +80,21 @@ impl<R: Repositories> TokenRegistryService<R> {
                     },
                     enabled_by_default: false,
                 };
-                self.registry_repository
-                    .register_token(registry_token, &mut self.metadata_repository)
+                self.registry_repository.register_token(
+                    registry_token,
+                    &mut self.metadata_repository,
+                    updated_at,
+                )
             }
         }
     }
 
     /// Register a new token in the registry
-    pub async fn update_token_metadata(&mut self, input: TokenId) -> Result<TokenId, String> {
+    pub async fn update_token_metadata(
+        &mut self,
+        input: TokenId,
+        updated_at: u64,
+    ) -> Result<TokenId, String> {
         let current_record = self.get_token(&input);
 
         let Some(mut current_record) = current_record else {
@@ -124,17 +132,21 @@ impl<R: Repositories> TokenRegistryService<R> {
                     fee,
                     supported_standards,
                 };
-                self.registry_repository
-                    .register_token(current_record, &mut self.metadata_repository)
-            } // _ => Err(format!(
-              //     "Registering tokens for chain '{}' is not supported yet",
-              //     chain_str
-              // )),
+                self.registry_repository.register_token(
+                    current_record,
+                    &mut self.metadata_repository,
+                    updated_at,
+                )
+            }
         }
     }
 
     // this function will update the token registry version if a new token is added
-    pub fn add_bulk_tokens(&mut self, tokens: Vec<RegistryToken>) -> Result<Vec<TokenId>, String> {
+    pub fn add_bulk_tokens(
+        &mut self,
+        tokens: Vec<RegistryToken>,
+        updated_at: u64,
+    ) -> Result<Vec<TokenId>, String> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
 
@@ -149,16 +161,18 @@ impl<R: Repositories> TokenRegistryService<R> {
 
         // Second pass: register all tokens
         for input in tokens {
-            let token_id = self
-                .registry_repository
-                .register_token(input, &mut self.metadata_repository)?;
+            let token_id = self.registry_repository.register_token(
+                input,
+                &mut self.metadata_repository,
+                updated_at,
+            )?;
             token_ids.push(token_id);
         }
 
         // If any tokens were new, increment the version
         // (this is a safeguard in case register_token didn't increment)
         if any_new_tokens {
-            self.metadata_repository.increase_version();
+            self.metadata_repository.increase_version(updated_at);
         }
 
         Ok(token_ids)
@@ -169,6 +183,7 @@ impl<R: Repositories> TokenRegistryService<R> {
         &mut self,
         token_id: TokenId,
         supported_standards: Vec<IcrcStandard>,
+        updated_at: u64,
     ) -> Result<(), String> {
         let Some(mut token) = self.registry_repository.get_token(&token_id) else {
             return Err(format!(
@@ -185,8 +200,11 @@ impl<R: Repositories> TokenRegistryService<R> {
             }
         }
 
-        self.registry_repository
-            .register_token(token, &mut self.metadata_repository)?;
+        self.registry_repository.register_token(
+            token,
+            &mut self.metadata_repository,
+            updated_at,
+        )?;
         Ok(())
     }
 

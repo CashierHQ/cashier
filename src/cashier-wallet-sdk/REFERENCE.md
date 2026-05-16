@@ -172,7 +172,6 @@ Opens the wallet in a popup window. The wallet auto-triggers Internet Identity o
 
 ```typescript
 const { principal } = await sdk.login()
-console.log('Logged in as', principal)
 ```
 
 ---
@@ -268,7 +267,6 @@ const { blockIndex } = await sdk.icrc1Transfer({
   to: 'aaaaa-aa',
   amount: BigInt(10_000),  // 0.0001 ICP in e8s
 })
-console.log('Block index:', blockIndex)
 ```
 
 `TransferParams`:
@@ -310,10 +308,14 @@ Register a listener for an SDK event. Returns `this` for chaining.
 ```typescript
 sdk
   .on('authChange', ({ authenticated, principal }) => {
-    console.log(authenticated ? `Logged in as ${principal}` : 'Logged out')
+    // handle auth change
   })
-  .on('connected', () => console.log('Wallet bridge ready'))
-  .on('disconnected', () => console.log('Wallet bridge torn down'))
+  .on('connected', () => {
+    // wallet bridge ready
+  })
+  .on('disconnected', () => {
+    // wallet bridge torn down
+  })
 ```
 
 ---

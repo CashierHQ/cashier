@@ -67,24 +67,32 @@ const {
 
 // ── Mock base class and external dependencies ─────────────────────────────────
 
-class FakeBaseSignerAdapter {
-  protected config: Record<string, unknown>
-  protected signer: unknown = null
-  protected signerAgent: unknown = null
-  protected agent: unknown = null
+// FakeBaseSignerAdapter must be hoisted alongside `vi.mock` because
+// `vi.mock(...)` is itself hoisted to the top of the module. A plain
+// top-level `class` declaration lives in the temporal dead zone until
+// initialisation order reaches it, so referencing it from the mock
+// factory throws "Cannot access 'FakeBaseSignerAdapter' before initialization".
+const { FakeBaseSignerAdapter } = vi.hoisted(() => {
+  class FakeBaseSignerAdapter {
+    protected config: Record<string, unknown>
+    protected signer: unknown = null
+    protected signerAgent: unknown = null
+    protected agent: unknown = null
 
-  constructor(args: { config: Record<string, unknown> }) {
-    this.config = args.config
-  }
+    constructor(args: { config: Record<string, unknown> }) {
+      this.config = args.config
+    }
 
-  protected createActorWithAgent<T>(
-    _agent: unknown,
-    _canisterId: string,
-    _idl: unknown,
-  ): T {
-    return {} as T
+    protected createActorWithAgent<T>(
+      _agent: unknown,
+      _canisterId: string,
+      _idl: unknown,
+    ): T {
+      return {} as T
+    }
   }
-}
+  return { FakeBaseSignerAdapter }
+})
 
 vi.mock('@windoge98/plug-n-play', () => ({
   BaseSignerAdapter: FakeBaseSignerAdapter,
@@ -99,14 +107,19 @@ vi.mock('@slide-computer/signer', () => ({
 }))
 
 vi.mock('@slide-computer/signer-agent', () => ({
+  // Use `vi.fn(() => obj)` rather than `vi.fn().mockReturnValue(obj)` so that
+  // `vi.restoreAllMocks()` in `afterEach` falls back to this initial
+  // implementation between tests instead of wiping it entirely (which makes
+  // `createSync(...)` return undefined for every test after the first
+  // afterEach runs).
   SignerAgent: {
-    createSync: vi.fn().mockReturnValue(mockSignerAgentInstance),
+    createSync: vi.fn(() => mockSignerAgentInstance),
   },
 }))
 
 vi.mock('@dfinity/agent', () => ({
   HttpAgent: {
-    createSync: vi.fn().mockReturnValue(mockHttpAgentInstance),
+    createSync: vi.fn(() => mockHttpAgentInstance),
   },
   Actor: { createActor: vi.fn() },
 }))

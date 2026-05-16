@@ -25,13 +25,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: 'pnpm'
 
       - name: Setup Just
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v4
 
       - name: Run frontend code check
         run: just frontend_check_code
@@ -45,13 +49,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
+          cache: 'pnpm'
 
       - name: Setup Just
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v4
 
       - name: Run frontend tests
         run: just test_frontend

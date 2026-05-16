@@ -13,7 +13,10 @@
     "@vitest/coverage-v8",
     "cross-fetch",
     "tw-animate-css",
-    "vitest-browser-svelte"
+    "vitest-browser-svelte",
+    "@cashier-wallet/wallet-sdk",
+    "@slide-computer/signer-agent",
+    "@slide-computer/signer-web"
   ],
   "ignoreUnresolved": ["\\$env/.+"],
   "rules": {

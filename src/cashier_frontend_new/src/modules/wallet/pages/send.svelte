@@ -14,7 +14,15 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { Clipboard, Info } from "lucide-svelte";
+  import {
+    ArrowLeftRight,
+    Bitcoin,
+    Clipboard,
+    Coins,
+    Hourglass,
+    Info,
+    LayoutList,
+  } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
@@ -55,7 +63,9 @@
   let showConfirmDrawer = $state(false);
   let isSending = $state(false);
 
-  const isStandaloneWallet = $derived(authState.connectedWalletId === CASHIER_WALLET_ID);
+  const isStandaloneWallet = $derived(
+    authState.connectedWalletId === CASHIER_WALLET_ID,
+  );
   let lastBlockId = $state<bigint | null>(null);
   let bridgeSource = $state<BridgeSource | null>(null);
   let isCreatingExportBridge = $state(false);
@@ -357,25 +367,26 @@
   onBack={onNavigateBack}
 />
 
-<div class="px-4 grow-1 flex flex-col">
+<div class="-mx-4 grow-1 flex flex-col">
   {#if isLoading}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
     </div>
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      <InputAmount
-        bind:selectedToken
-        bind:amount
-        bind:tokenAmount
-        bind:usdAmount
-        {selectedTokenObj}
-        {maxAmount}
-        {isMaxAvailable}
-        onSelectToken={handleSelectToken}
-      />
-
-      <div>
+      <div class="px-8">
+        <InputAmount
+          bind:selectedToken
+          bind:amount
+          bind:tokenAmount
+          bind:usdAmount
+          {selectedTokenObj}
+          {maxAmount}
+          {isMaxAvailable}
+          onSelectToken={handleSelectToken}
+        />
+      </div>
+      <div class="px-8">
         <label
           for="receive-address-input"
           class="block text-sm font-medium mb-2"
@@ -424,7 +435,7 @@
           </button>
         </div>
         <div
-          class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+          class="text-xs text-grey mt-1.5 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {#if isCkBtc}
             {locale.t("wallet.send.addressPrincipleExample")}
@@ -437,22 +448,30 @@
           {/if}
         </div>
         {#if isCkBtc}
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.icpAddress.warning1")}
+          <div class="flex flex-col gap-1.5 mt-2 bg-lightg">
+            <div class="flex items-center gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.icpAddress.warning1")}
+              </div>
             </div>
-          </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.icpAddress.warning2")}
+            <div class="flex items-center gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.icpAddress.warning2")}
+              </div>
             </div>
-          </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.icpAddress.warning3")}
+            <div class="flex items-center gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.icpAddress.warning3")}
+              </div>
             </div>
           </div>
         {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
@@ -466,10 +485,13 @@
       </div>
 
       {#if isCkBtc}
-        <div>
+        <div class="px-8 btc-gradient rounded-2xl py-4 mt-4 px-8">
+          <h3 class="text-normal font-semibold mb-6 text-center">
+            {locale.t("bitcoin.send.title")}
+          </h3>
           <label
             for="native-btc-address-input"
-            class="block text-sm font-medium mb-2"
+            class="block text-sm font-medium mb-1.5"
           >
             {locale.t("wallet.send.btcNativeAddressLabel")}
           </label>
@@ -490,43 +512,55 @@
             </button>
           </div>
           <div
-            class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+            class="text-xs text-grey mt-1.5 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
           >
             {locale.t("wallet.send.addressBitcoinExample")}
           </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.btcAddress.warning1")}
+          <div class="flex flex-col gap-1.5 mt-2 mb-6">
+            <div class="flex items-center gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.btcAddress.warning1")}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.btcAddress.warning2")}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.btcAddress.warning3")}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.btcAddress.warning4")}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.btcAddress.warning5")}
+              </div>
             </div>
           </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.btcAddress.warning2")}
-            </div>
-          </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.btcAddress.warning3")}
-            </div>
-          </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.btcAddress.warning4")}
-            </div>
-          </div>
-          <div class="flex items-start gap-1.5 mt-2">
-            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-            <div class="text-sm text-green">
-              {locale.t("bitcoin.send.btcAddress.warning5")}
-            </div>
-          </div>
-        </div>
 
-        <SendBTC />
+          <SendBTC />
+        </div>
       {/if}
 
       <div
@@ -548,11 +582,11 @@
       </div>
     </div>
   {:else if walletStore.query.isSuccess}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-red-600">{locale.t("wallet.noTokensMsg")}</p>
     </div>
   {:else if walletStore.query.error}
-    <div class="text-center py-8">
+    <div class="text-center py-8 px-8">
       <p class="text-red-600">
         {locale.t("wallet.errorMsg")}
         {walletStore.query.error}

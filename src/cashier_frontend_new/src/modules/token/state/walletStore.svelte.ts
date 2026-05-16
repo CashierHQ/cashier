@@ -7,8 +7,9 @@ import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
-import { ICP_LEDGER_CANISTER_ID } from "../constants";
-import { sortWalletTokens } from "../utils/sorter";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { sortWalletTokens } from "$modules/token/utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 import {
@@ -31,17 +32,24 @@ class WalletStore {
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
-        const balanceRequests = tokens
-          .filter((token) => token.enabled)
-          .map((token) => {
-            if (token.address === ICP_LEDGER_CANISTER_ID) {
-              return icpLedgerService.getBalance();
-            } else {
-              const icrcLedgerService = new IcrcLedgerService(token);
-              return icrcLedgerService.getBalance();
-            }
-          });
-        const balances: bigint[] = await Promise.all(balanceRequests);
+        const enabledTokens = tokens.filter((token) => token.enabled);
+        const balanceRequests = enabledTokens.map((token) => {
+          if (token.address === ICP_LEDGER_CANISTER_ID) {
+            return icpLedgerService.getBalance();
+          } else {
+            const icrcLedgerService = new IcrcLedgerService(token);
+            return icrcLedgerService.getBalance();
+          }
+        });
+        const balanceResults = await Promise.allSettled(balanceRequests);
+        const balances: bigint[] = balanceResults.map((result, i) => {
+          if (result.status === "fulfilled") return result.value;
+          console.warn(
+            `Failed to fetch balance for ${enabledTokens[i]?.address}:`,
+            result.reason,
+          );
+          return 0n;
+        });
 
         // fetch token prices
         const prices = tokenPriceStore.query.data
@@ -248,10 +256,19 @@ class WalletStore {
    * @param to Principal of recipient
    * @param amount Amount of tokens to transfer
    */
-  async transferTokenToPrincipal(token: string, to: Principal, amount: bigint) {
+  async transferTokenToPrincipal(
+    token: string,
+    to: Principal,
+    amount: bigint,
+    deduplication?: TransferDeduplicationFields,
+  ) {
     const tokenData = this.findTokenByAddress(token).unwrap();
     const icrcLedgerService = new IcrcLedgerService(tokenData);
-    const transferRes = await icrcLedgerService.transferToPrincipal(to, amount);
+    const transferRes = await icrcLedgerService.transferToPrincipal(
+      to,
+      amount,
+      deduplication,
+    );
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
     return transferRes;

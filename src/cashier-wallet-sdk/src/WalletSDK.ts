@@ -85,16 +85,11 @@ export class WalletSDK {
 						);
 						this.connected = true;
 						this.emit('connected', undefined);
-						console.debug('[WalletSDK] handshake ok');
 						await this._refreshAuth();
 						resolve();
 						return;
 					} catch {
-						if (i < HANDSHAKE_RETRIES - 1) {
-							console.debug(
-								`[WalletSDK] handshake attempt ${i + 1} failed, retrying…`,
-							);
-						}
+						// retry until HANDSHAKE_RETRIES is exhausted
 					}
 				}
 				reject(new Error('WalletSDK: handshake failed after retries'));

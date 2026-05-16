@@ -1,0 +1,163 @@
+name: Orbit Token Storage Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - reinstall
+          - upgrade
+          - install
+      sha:
+        description: 'Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    outputs:
+      network: ${{ steps.set-env.outputs.network }}
+      mode: ${{ steps.set-mode.outputs.mode }}
+    steps:
+      - name: Set deployment network
+        id: set-env
+        run: |
+          # For pull requests, use base_ref, for pushes use ref_name
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TARGET_BRANCH="${{ github.base_ref }}"
+          else
+            TARGET_BRANCH="${{ github.ref_name }}"
+          fi
+          echo "Detected branch: $TARGET_BRANCH"
+
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            echo "network=production" >> $GITHUB_OUTPUT
+          elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+            echo "network=staging" >> $GITHUB_OUTPUT
+          else
+            # Any other branch will deploy to dev network
+            echo "network=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set deployment mode
+        id: set-mode
+        env:
+          DEFAULT_MODE: install
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+        run: |
+          echo "mode=${INPUT_MODE:-$DEFAULT_MODE}" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Prepare and Submit Orbit request (optional)
+    needs: setup_environment
+    environment: ${{ needs.setup_environment.outputs.network }}
+    env:
+      MODE: ${{ needs.setup_environment.outputs.mode }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Orbit deploy setup
+        id: setup
+        uses: ./.github/actions/orbit-deploy-setup
+        with:
+          sha: ${{ inputs.sha }}
+          deployer_secret: ${{ secrets.DEPLOYER }}
+          orbit_station_id: ${{ vars.ORBIT_STATION_ID }}
+
+      - name: Create the canister id
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister create token_storage --network ${{ needs.setup_environment.outputs.network }}
+
+      - name: Verify the canister id
+        id: canister_ids
+        run: |
+          TOKEN_STORAGE_ID=$(just get_canister_id token_storage ${{ needs.setup_environment.outputs.network }})
+          echo "Token storage canister ID: $TOKEN_STORAGE_ID"
+          echo "token_storage_id=$TOKEN_STORAGE_ID" >> $GITHUB_OUTPUT
+
+      - name: Set Orbit station as the controller
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+
+      - name: Set log filter
+        id: log_filter
+        run: |
+          if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
+            echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
+          else
+            echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build canisters
+        run: just build ${{ needs.setup_environment.outputs.network }}
+
+      - name: Build candid args (single run)
+        run: |
+          owner=${{ vars.ORBIT_STATION_ID }}
+          ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
+          just build_token_storage_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" "$ckbtc_minter_id" token_storage_args
+          echo "Token storage args:"
+          cat token_storage_args.hex
+
+      - name: Upgrade token_storage canister
+        id: token_storage
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+
+          canister_name=token_storage
+          review_run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit=${{ github.sha }}
+
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Write Job Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## 🚀 Orbit Deploy Summary
+
+          - **Network**: `${{ needs.setup_environment.outputs.network }}`
+          - **Mode**: `${{ env.MODE }}`
+          - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
+
+          ### Token Storage Canister
+          - **Canister ID**: `${{ steps.canister_ids.outputs.token_storage_id }}`
+          **Arg:**
+          ```
+          ${{ steps.token_storage.outputs.arg }}
+          ```
+          | Field | Value |
+          |-------|-------|
+          | WASM Checksum | `${{ steps.token_storage.outputs.wasm_checksum }}` |
+          | Arg Checksum | `${{ steps.token_storage.outputs.arg_checksum }}` |
+          | Request URL | ${{ steps.token_storage.outputs.request_url }} |
+
+          ---
+          EOF
+          echo "*Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> "$GITHUB_STEP_SUMMARY"
