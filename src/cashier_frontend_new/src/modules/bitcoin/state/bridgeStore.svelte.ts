@@ -89,7 +89,7 @@ class BridgeStore {
 
         return this.#allBridges;
       },
-      refetchInterval: 3000_000, // refresh every 30 seconds
+      refetchInterval: 30_000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],
       storageType: "sessionStorage",
     });
@@ -125,7 +125,7 @@ class BridgeStore {
 
         return this.#allImportBridges;
       },
-      refetchInterval: 3000_000, // refresh every 5 minutes
+      refetchInterval: 300_000, // refresh every 5 minutes
       persistedKey: ["walletBridgeStore_importBridgeTxs"],
       storageType: "sessionStorage",
     });
@@ -161,7 +161,7 @@ class BridgeStore {
 
         return this.#allExportBridges;
       },
-      refetchInterval: 3000_000, // refresh every 5 minutes
+      refetchInterval: 300_000, // refresh every 5 minutes
       persistedKey: ["walletBridgeStore_exportBridgeTxs"],
       storageType: "sessionStorage",
     });

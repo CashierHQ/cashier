@@ -48,7 +48,7 @@ export class LinkListStore {
         return [...v2Links, ...v3Links];
       },
       watch: [() => authState.account],
-      refetchInterval: 150 * 1000, // 15 seconds
+      refetchInterval: 15 * 1000, // 15 seconds
       persistedKey: ["linkList"],
       storageType: "localStorage",
       serde: LinkMapper.serde,
