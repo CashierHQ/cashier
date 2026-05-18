@@ -7,7 +7,6 @@ import type { AdapterConstructorArgs } from "@windoge98/plug-n-play";
 import { BaseSignerAdapter } from "@windoge98/plug-n-play";
 import { TARGETS } from "$modules/auth/constants";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
-import { IITransport } from "$modules/auth/signer/ii/IITransport";
 
 export interface NFIDSignerConfig {
   /** Full URL to the NFID RPC endpoint, e.g. "http://localhost:9090/rpc" */
@@ -30,15 +29,18 @@ interface Account {
 const DEFAULT_MAX_TIME_TO_LIVE = BigInt(8 * 60 * 60 * 1_000_000_000); // 8 hours in ns
 
 /**
- * PNP adapter that authenticates via NFID using ICRC-34 delegation.
+ * PNP adapter that authenticates via NFID using a hybrid ICRC-34 + ICRC-49 flow.
  *
- * Flow:
+ * Login flow:
  *  1. Open NFID /rpc as a popup — ICRC-29 channel established.
- *  2. icrc25_request_permissions  → user approves once.
+ *  2. icrc25_request_permissions  → user approves icrc27, icrc34, icrc49 once.
  *  3. icrc27_accounts             → fetch user's principal.
- *  4. icrc34_delegation           → get a DelegationChain scoped to target canisters.
- *  5. Close NFID popup.
- *  6. All subsequent canister calls go directly via HttpAgent — no per-call approval.
+ *  4. icrc34_delegation           → get a DelegationChain scoped to backend canisters.
+ *  5. Build HttpAgent from delegation for direct backend calls (no per-call approval).
+ *  6. Keep popup open; store PostMessageTransport signer for ICRC-49 token transfers.
+ *
+ * Token transfer flow (icrc1_transfer / icrc2_approve):
+ *  - Routed through ICRC-49 via the open NFID popup — user approves each transfer.
  */
 export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
   private delegationIdentity: DelegationIdentity | null = null;
@@ -69,14 +71,20 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
       establishTimeout,
     });
 
-    // autoCloseTransportChannel: false so we can make multiple requests
-    // before closing the popup ourselves after the delegation is obtained.
-    const signer = new Signer({ transport, autoCloseTransportChannel: false });
+    // Keep the channel open long enough for the login request sequence, then
+    // let signer-js close the /rpc tab. Future transfer approvals can reopen it
+    // from the stored transport when triggered by a user click.
+    const signer = new Signer({
+      transport,
+      autoCloseTransportChannel: true,
+      closeTransportChannelAfter: 500,
+    });
 
     // Phase 2 — request permissions (one-time approval in NFID popup)
     await signer.requestPermissions([
       { method: "icrc27_accounts" },
       { method: "icrc34_delegation" },
+      { method: "icrc49_call_canister" },
     ]);
 
     // Phase 3 — get user's principal
@@ -96,10 +104,8 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
       maxTimeToLive,
     });
 
-    // Phase 5 — close NFID popup; delegation is now held locally
-    await signer.closeChannel();
-
-    // Phase 6 — build delegation identity and HttpAgent for direct IC calls
+    // Phase 5 — build delegation identity and HttpAgent for direct IC calls
+    // to canisters in the delegation targets (cashier_backend, token_storage).
     this.delegationIdentity = DelegationIdentity.fromDelegation(
       sessionKey,
       delegationChain,
@@ -111,11 +117,9 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
       shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
     });
 
-    // Wrap the agent in IITransport so PNP's getSigner() works for ICRC-1/2 ops
-    const iiTransport = await IITransport.create({
-      agent: this.agent as HttpAgent,
-    });
-    this.signer = new Signer({ transport: iiTransport });
+    // Phase 6 — store the PostMessageTransport-backed signer so token transfers
+    // can go through ICRC-49 and reopen the NFID approval tab on demand.
+    this.signer = signer;
 
     return {
       owner: ownerPrincipal.toText(),
@@ -143,6 +147,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
   }
 
   protected async disconnectInternal(): Promise<void> {
+    await this.signer?.closeChannel();
     this.delegationIdentity = null;
   }
 

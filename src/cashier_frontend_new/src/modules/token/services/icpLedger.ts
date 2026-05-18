@@ -1,7 +1,9 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { callCanisterViaIcrc49 } from "$modules/auth/signer/icrc49";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
+import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import {
   ICP_LEDGER_CANISTER_ID,
@@ -10,6 +12,11 @@ import {
 import { toNullable } from "@dfinity/utils";
 import { rsMatch } from "$lib/rsMatch";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+
+const _service = icpLedger.idlFactory({ IDL }) as unknown as {
+  _fields: Array<[string, { argTypes: IDL.Type[]; retTypes: IDL.Type[] }]>;
+};
+const _methodTypes = Object.fromEntries(_service._fields);
 
 /** FNV-1a style 64-bit hash for legacy transfer memo (masked to u64). */
 export function toLegacyMemo(memo: Uint8Array | number[]): bigint {
@@ -90,22 +97,30 @@ export class IcpLedgerService {
     amount: bigint,
     deduplication?: TransferDeduplicationFields,
   ): Promise<bigint> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
+    const signer = authState.getSigner();
+    if (!signer) throw new Error("No signer available");
+    const sender = Principal.fromText(authState.account!.owner);
+    const { argTypes, retTypes } = _methodTypes["transfer"];
 
     const accountID = decodeAccountID(to);
-    const result = await actor.transfer({
-      to: accountID,
-      amount: { e8s: amount },
-      fee: { e8s: this.#fee },
-      memo: deduplication ? this.#toLegacyMemo(deduplication.memo) : BigInt(0),
-      from_subaccount: [],
-      created_at_time: deduplication
-        ? [{ timestamp_nanos: deduplication.createdAtTime }]
-        : [],
-    });
+    const result = await callCanisterViaIcrc49<icpLedger.TransferResult>(
+      signer,
+      sender,
+      Principal.fromText(this.#canisterId),
+      "transfer",
+      argTypes,
+      retTypes,
+      {
+        to: accountID,
+        amount: { e8s: amount },
+        fee: { e8s: this.#fee },
+        memo: deduplication ? this.#toLegacyMemo(deduplication.memo) : BigInt(0),
+        from_subaccount: [],
+        created_at_time: deduplication
+          ? [{ timestamp_nanos: deduplication.createdAtTime }]
+          : [],
+      },
+    );
 
     if ("Err" in result) {
       return rsMatch(result.Err, {
@@ -141,19 +156,27 @@ export class IcpLedgerService {
     amount: bigint,
     deduplication?: TransferDeduplicationFields,
   ): Promise<bigint> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
+    const signer = authState.getSigner();
+    if (!signer) throw new Error("No signer available");
+    const sender = Principal.fromText(authState.account!.owner);
+    const { argTypes, retTypes } = _methodTypes["icrc1_transfer"];
 
-    const result = await actor.icrc1_transfer({
-      to: { owner: to, subaccount: [] },
-      amount,
-      fee: toNullable(this.#fee),
-      memo: deduplication ? [deduplication.memo] : [],
-      from_subaccount: [],
-      created_at_time: deduplication ? [deduplication.createdAtTime] : [],
-    });
+    const result = await callCanisterViaIcrc49<icpLedger.Icrc1TransferResult>(
+      signer,
+      sender,
+      Principal.fromText(this.#canisterId),
+      "icrc1_transfer",
+      argTypes,
+      retTypes,
+      {
+        to: { owner: to, subaccount: [] },
+        amount,
+        fee: toNullable(this.#fee),
+        memo: deduplication ? [deduplication.memo] : [],
+        from_subaccount: [],
+        created_at_time: deduplication ? [deduplication.createdAtTime] : [],
+      },
+    );
 
     if ("Err" in result) {
       return rsMatch(result.Err, {
