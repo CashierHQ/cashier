@@ -55,4 +55,10 @@ export const CASHIER_WALLET_ID = "cashier";
 export const CASHIER_WALLET_ORIGIN =
   PUBLIC_CASHIER_WALLET_ORIGIN ?? "http://localhost:5177";
 
+/** PNP adapter ID for the local NFID forked wallet. */
+export const NFID_WALLET_ID = "nfid-local";
+
+/** Origin URL of the local NFID forked wallet. */
+export const NFID_WALLET_ORIGIN = "http://localhost:9090";
+
 export const DRAFT_LINKS_STORAGE_KEY_PREFIX = "draftLinks";

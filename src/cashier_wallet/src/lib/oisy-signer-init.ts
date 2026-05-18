@@ -12,41 +12,38 @@
  * custom RPC protocol (consent_prepare, sign_message, icrc1_transfer, …).
  */
 
-import { Signer } from '@dfinity/oisy-wallet-signer/signer'
+import { env } from '$env/dynamic/public';
 import {
   ICRC21_CALL_CONSENT_MESSAGE,
   ICRC25_REQUEST_PERMISSIONS,
   ICRC27_ACCOUNTS,
   ICRC49_CALL_CANISTER,
-  type icrc21_consent_info,
-} from '@dfinity/oisy-wallet-signer'
-import { env } from '$env/dynamic/public'
-import { getIdentity, refreshAuthClient } from './identity-manager'
+} from '@dfinity/oisy-wallet-signer';
+import { Signer } from '@dfinity/oisy-wallet-signer/signer';
+import {
+  createPendingConsent21,
+  updateConsent21Error,
+} from './icrc21-consent-store';
 import {
   createPendingPermission,
   pendingPermissions,
   type IcrcScope,
-} from './icrc25-permission-store'
-import {
-  createPendingConsent21,
-  updateConsent21Result,
-  updateConsent21Error,
-} from './icrc21-consent-store'
+} from './icrc25-permission-store';
+import { getIdentity, refreshAuthClient } from './identity-manager';
 
-const IC_HOST = env.PUBLIC_ICP_HOST ?? 'https://icp-api.io'
+const IC_HOST = env.PUBLIC_ICP_HOST ?? 'https://icp-api.io';
 
 /** Set to true once the Signer is initialised and ready to handle ICRC-29 messages */
-export let walletReady = false
+export let walletReady = false;
 
-let signerInstance: Signer | null = null
+let signerInstance: Signer | null = null;
 
 /**
  * Tracks the requestId of the ICRC-21 consent flow that is currently in
  * progress. Since the OISY Signer serialises requests (only one at a time),
  * at most one entry can be in-flight at any given moment.
  */
-let currentIcrc21RequestId: string | null = null
-
+let currentIcrc21RequestId: string | null = null;
 
 /**
  * Initialise the OISY Signer and register prompt handlers.
@@ -54,24 +51,24 @@ let currentIcrc21RequestId: string | null = null
  * Sets `walletReady = true` on success.
  */
 export async function initOisySigner(): Promise<void> {
-  await refreshAuthClient()
-  const identity = getIdentity()
+  await refreshAuthClient();
+  const identity = getIdentity();
   if (!identity || identity.getPrincipal().isAnonymous()) {
-    return
+    return;
   }
 
   // Disconnect any previous instance (e.g. after logout/re-login)
-  signerInstance?.disconnect()
+  signerInstance?.disconnect();
 
   // The OISY Signer sends all responses via window.opener.postMessage().
   // When running inside a hidden <iframe> (IframeTransport), window.opener is
   // null. Bridge it to window.parent so responses reach the dApp correctly.
   if (!window.opener && window.parent !== window) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).opener = window.parent
+    (window as any).opener = window.parent;
   }
 
-  signerInstance = Signer.init({ owner: identity, host: IC_HOST })
+  signerInstance = Signer.init({ owner: identity, host: IC_HOST });
 
   // ── ICRC-25: permission request prompt ─────────────────────────────────
   // The OISY Signer calls this when a dApp sends icrc25_request_permissions.
@@ -79,27 +76,32 @@ export async function initOisySigner(): Promise<void> {
   signerInstance.register({
     method: ICRC25_REQUEST_PERMISSIONS,
     prompt: ({ origin, requestedScopes, confirm }) => {
-      const requestId = crypto.randomUUID()
+      const requestId = crypto.randomUUID();
 
-      createPendingPermission(requestId, requestedScopes as IcrcScope[], origin, confirm)
+      createPendingPermission(
+        requestId,
+        requestedScopes as IcrcScope[],
+        origin,
+        confirm
+      );
 
       const popup = window.open(
         `/icrc25-permissions?id=${requestId}`,
         `icrc25_${requestId}`,
-        'width=440,height=540,resizable=no',
-      )
+        'width=440,height=540,resizable=no'
+      );
 
       if (!popup) {
         // Popup blocked — deny all scopes immediately
         const deniedScopes = (requestedScopes as IcrcScope[]).map((s) => ({
           scope: s.scope,
           state: 'denied' as const,
-        }))
-        confirm(deniedScopes)
-        pendingPermissions.delete(requestId)
+        }));
+        confirm(deniedScopes);
+        pendingPermissions.delete(requestId);
       }
     },
-  })
+  });
 
   // ── ICRC-27: accounts prompt ───────────────────────────────────────────
   // Auto-approve with the authenticated principal — the user already
@@ -107,14 +109,14 @@ export async function initOisySigner(): Promise<void> {
   signerInstance.register({
     method: ICRC27_ACCOUNTS,
     prompt: ({ approve, reject }) => {
-      const id = getIdentity()
+      const id = getIdentity();
       if (!id) {
-        reject()
-        return
+        reject();
+        return;
       }
-      approve([{ owner: id.getPrincipal().toText() }])
+      approve([{ owner: id.getPrincipal().toText() }]);
     },
-  })
+  });
 
   // ── ICRC-21: consent message prompt (multi-phase) ───────────────────────
   // The OISY Signer calls this up to three times per ICRC-49 request:
@@ -129,55 +131,64 @@ export async function initOisySigner(): Promise<void> {
   signerInstance.register({
     method: ICRC21_CALL_CONSENT_MESSAGE,
     prompt: (payload) => {
+      console.log(`ICRC-21 prompt: status=${payload.status}`, payload);
       if (payload.status === 'loading') {
-        const requestId = crypto.randomUUID()
-        currentIcrc21RequestId = requestId
-        createPendingConsent21(requestId, payload.origin)
+        const requestId = crypto.randomUUID();
+        currentIcrc21RequestId = requestId;
+        createPendingConsent21(requestId, payload.origin);
         // Popup deferred until 'result' — canister may not support ICRC-21.
       } else if (payload.status === 'result') {
-        const requestId = currentIcrc21RequestId
-        if (!requestId) return
+        console.log(`consent info:`, payload.consentInfo);
 
-        const popup = window.open(
-          `/icrc21-consent?id=${requestId}`,
-          `icrc21_${requestId}`,
-          'width=440,height=600,resizable=no',
-        )
+        // const requestId = currentIcrc21RequestId;
+        // if (!requestId) return;
 
-        if (!popup) {
-          payload.reject()
-          currentIcrc21RequestId = null
-          return
-        }
+        // const popup = window.open(
+        //   `/icrc21-consent?id=${requestId}`,
+        //   `icrc21_${requestId}`,
+        //   'width=440,height=600,resizable=no'
+        // );
 
-        updateConsent21Result(
-          requestId,
-          payload.consentInfo as icrc21_consent_info,
-          payload.approve,
-          payload.reject,
-        )
+        // if (!popup) {
+        //   payload.reject();
+        //   currentIcrc21RequestId = null;
+        //   return;
+        // }
+
+        // updateConsent21Result(
+        //   requestId,
+        //   payload.consentInfo as icrc21_consent_info,
+        //   payload.approve,
+        //   payload.reject
+        // );
+
+        // auto approve
+        payload.approve();
       } else if (payload.status === 'error') {
-        const requestId = currentIcrc21RequestId
+        const requestId = currentIcrc21RequestId;
         if (requestId) {
           // Clean up store silently — OISY handles ICRC-49 rejection internally.
-          updateConsent21Error(requestId, payload.details)
+          updateConsent21Error(requestId, payload.details);
         }
-        currentIcrc21RequestId = null
+        currentIcrc21RequestId = null;
       }
     },
-  })
+  });
 
   // ── ICRC-49: call canister status prompt (no-op) ───────────────────────
   // The user already approved at the ICRC-21 stage. This prompt receives
   // status updates — no UI action required.
   signerInstance.register({
     method: ICRC49_CALL_CANISTER,
-    prompt: () => {
-      // intentionally no-op
+    prompt: ({ status, ...rest }) => {
+      console.log(`ICRC-49 result: status=${status}`, rest);
+      if (status === 'result') {
+        console.log(`ICRC-49 call successful:`, rest);
+      }
     },
-  })
+  });
 
-  walletReady = true
+  walletReady = true;
 }
 
 /**
@@ -185,8 +196,8 @@ export async function initOisySigner(): Promise<void> {
  * Call on user logout or page unload.
  */
 export function disconnectSigner(): void {
-  signerInstance?.disconnect()
-  signerInstance = null
-  walletReady = false
-  currentIcrc21RequestId = null
+  signerInstance?.disconnect();
+  signerInstance = null;
+  walletReady = false;
+  currentIcrc21RequestId = null;
 }

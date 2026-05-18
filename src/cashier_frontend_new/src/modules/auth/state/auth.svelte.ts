@@ -5,7 +5,7 @@ import {
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
-import { CashierWalletSignerAdapter } from "@cashier-wallet/wallet-sdk";
+import { NFIDSignerAdapter } from "$modules/auth/signer/nfid/NFIDSignerAdapter";
 import {
   BUILD_TYPE,
   CASHIER_WALLET_ID,
@@ -14,7 +14,11 @@ import {
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
+  NFID_WALLET_ID,
+  NFID_WALLET_ORIGIN,
 } from "$modules/shared/constants";
+import { TARGETS } from "$modules/auth/constants";
+import { CashierWalletSignerAdapter } from "@cashier-wallet/wallet-sdk";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { DelegationIdentity } from "@dfinity/identity";
@@ -69,6 +73,19 @@ const CONFIG: CreatePnpArgs = {
             authState.logout();
           },
         },
+      },
+    },
+    // Local NFID fork — ICRC-34 delegation adapter.
+    // Requests a DelegationChain scoped to backend canisters at login time;
+    // all subsequent canister calls go directly via HttpAgent (no per-call approval).
+    [NFID_WALLET_ID]: {
+      id: NFID_WALLET_ID,
+      enabled: true,
+      adapter: NFIDSignerAdapter,
+      config: {
+        walletUrl: `${NFID_WALLET_ORIGIN}/rpc`,
+        host: HOST_ICP,
+        targets: TARGETS,
       },
     },
     // Cashier Wallet — ICRC-29 iframe wallet with II authentication
@@ -430,6 +447,9 @@ const inner_login = async (walletId: string) => {
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
+
+    console.log("Login successful, account:", res);
+
     account = {
       owner: res.owner,
       subaccount: res.subaccount,

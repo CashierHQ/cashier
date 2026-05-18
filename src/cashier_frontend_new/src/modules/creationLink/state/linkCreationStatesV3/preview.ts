@@ -42,6 +42,8 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       this.#linkStore.draftAction,
     );
 
+    console.log("Create link result:", result);
+
     if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
     }

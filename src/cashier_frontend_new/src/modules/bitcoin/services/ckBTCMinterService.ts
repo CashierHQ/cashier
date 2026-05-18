@@ -26,51 +26,24 @@ export class CkBTCMinterService {
    * Create and return the ckBTC Minter actor for the current user.
    * @returns
    */
-  #getActor(): ckBTCMinter._SERVICE | null {
+  #getActor({ anonymous = false }: { anonymous?: boolean } = {}): ckBTCMinter._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: ckBTCMinter.idlFactory,
+      options: { anonymous },
     });
   }
 
-  /**
-   * Fetch the deposit fee from the ckBTC Minter canister.
-   * @returns fee as bigint
-   */
   async getDepositFee(): Promise<bigint> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
-    return actor.get_deposit_fee();
+    return this.#getActor({ anonymous: true })!.get_deposit_fee();
   }
 
-  /**
-   * Fetch the withdrawal fee for a given amount from the ckBTC Minter canister.
-   * @param amount
-   * @returns WithdrawalFee
-   */
   async getWithdrawalFee(amount: bigint): Promise<WithdrawalFee> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
-    const withdrawalFee = await actor.estimate_withdrawal_fee({
-      amount: [amount],
-    });
-    return withdrawalFee;
+    return this.#getActor({ anonymous: true })!.estimate_withdrawal_fee({ amount: [amount] });
   }
 
-  /**
-   * Fetch minter info from the ckBTC Minter canister.
-   * @returns MinterInfo
-   */
   async getMinterInfo(): Promise<MinterInfo> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
-    return actor.get_minter_info();
+    return this.#getActor({ anonymous: true })!.get_minter_info();
   }
 
   /**

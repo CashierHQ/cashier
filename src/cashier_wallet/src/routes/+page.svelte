@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
-  import { initRpcHandler } from '$lib/rpc-handler'
-  import { initOisySigner, disconnectSigner } from '$lib/oisy-signer-init'
-  import { login, logout, isAuthenticated, getIdentity, initAuthClient } from '$lib/identity-manager'
+  import { getIdentity, initAuthClient, isAuthenticated, login, logout } from '$lib/identity-manager';
+  import { disconnectSigner, initOisySigner } from '$lib/oisy-signer-init';
+  import { initRpcHandler } from '$lib/rpc-handler';
+  import { onMount } from 'svelte';
 
   let authenticated = false
   let principal = ''

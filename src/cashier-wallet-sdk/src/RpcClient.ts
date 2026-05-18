@@ -1,6 +1,6 @@
-import type { RpcRequest, RpcResponse, PendingRequest } from './types'
-import { WalletError } from './errors'
-import { DEFAULT_TIMEOUT_MS } from './constants'
+import { DEFAULT_TIMEOUT_MS } from './constants';
+import { WalletError } from './errors';
+import type { PendingRequest, RpcRequest, RpcResponse } from './types';
 
 /**
  * JSON-RPC 2.0 client over postMessage.
@@ -8,20 +8,20 @@ import { DEFAULT_TIMEOUT_MS } from './constants'
  * No framework dependencies — plain TypeScript.
  */
 export class RpcClient {
-  private pending = new Map<string, PendingRequest>()
-  private target: Window | null = null
-  private readonly targetOrigin: string
-  private readonly listener: (e: MessageEvent) => void
+  private pending = new Map<string, PendingRequest>();
+  private target: Window | null = null;
+  private readonly targetOrigin: string;
+  private readonly listener: (e: MessageEvent) => void;
 
   constructor(targetOrigin: string) {
-    this.targetOrigin = targetOrigin
-    this.listener = this.handleResponse.bind(this)
-    window.addEventListener('message', this.listener)
+    this.targetOrigin = targetOrigin;
+    this.listener = this.handleResponse.bind(this);
+    window.addEventListener('message', this.listener);
   }
 
   /** Set or replace the target window (iframe contentWindow or popup). */
   connect(target: Window): void {
-    this.target = target
+    this.target = target;
   }
 
   /**
@@ -38,32 +38,34 @@ export class RpcClient {
     params?: unknown,
     timeoutMs = DEFAULT_TIMEOUT_MS
   ): Promise<unknown> {
-    if (!this.target) throw new Error('RpcClient: no target connected')
+    if (!this.target) throw new Error('RpcClient: no target connected');
 
-    const id = crypto.randomUUID()
+    const id = crypto.randomUUID();
+
+    console.log(`RPC Request: ${method} (id: ${id})`, params);
 
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject })
+      this.pending.set(id, { resolve, reject });
 
-      const msg: RpcRequest = { jsonrpc: '2.0', id, method, params }
-      this.target!.postMessage(msg, { targetOrigin: this.targetOrigin })
+      const msg: RpcRequest = { jsonrpc: '2.0', id, method, params };
+      this.target!.postMessage(msg, { targetOrigin: this.targetOrigin });
 
       setTimeout(() => {
         if (this.pending.has(id)) {
-          this.pending.delete(id)
-          reject(new Error(`RPC timeout: ${method} (${timeoutMs}ms)`))
+          this.pending.delete(id);
+          reject(new Error(`RPC timeout: ${method} (${timeoutMs}ms)`));
         }
-      }, timeoutMs)
-    })
+      }, timeoutMs);
+    });
   }
 
   /** Remove the postMessage listener and clear all pending requests. */
   destroy(): void {
-    window.removeEventListener('message', this.listener)
+    window.removeEventListener('message', this.listener);
     this.pending.forEach(({ reject }) =>
       reject(new Error('RpcClient destroyed'))
-    )
-    this.pending.clear()
+    );
+    this.pending.clear();
   }
 
   /**
@@ -72,20 +74,20 @@ export class RpcClient {
    * Resolves or rejects the matching pending request promise.
    */
   private handleResponse(event: MessageEvent): void {
-    if (event.origin !== this.targetOrigin) return
+    if (event.origin !== this.targetOrigin) return;
 
-    const res = event.data as RpcResponse
-    if (res?.jsonrpc !== '2.0' || !res.id) return
+    const res = event.data as RpcResponse;
+    if (res?.jsonrpc !== '2.0' || !res.id) return;
 
-    const pending = this.pending.get(res.id)
-    if (!pending) return
+    const pending = this.pending.get(res.id);
+    if (!pending) return;
 
-    this.pending.delete(res.id)
+    this.pending.delete(res.id);
 
     if (res.error) {
-      pending.reject(new WalletError(res.error.message, res.error.code))
+      pending.reject(new WalletError(res.error.message, res.error.code));
     } else {
-      pending.resolve(res.result)
+      pending.resolve(res.result);
     }
   }
 }

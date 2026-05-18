@@ -1,11 +1,12 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 
-// Polyfill for Buffer in browser environment
-// The @dfinity/ledger-icp package depends on Buffer, which is not available in browsers by default.
-import { Buffer } from "buffer";
+// Polyfill Buffer in browser only — dynamic import avoids the CJS `buffer`
+// package being evaluated by Vite's ESM module runner in Node.js context.
 if (typeof window !== "undefined" && !window.Buffer) {
-  window.Buffer = Buffer;
+  import("buffer").then(({ Buffer }) => {
+    window.Buffer = Buffer;
+  });
 }
 
 /**

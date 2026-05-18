@@ -64,25 +64,32 @@ class CanisterBackendService {
       limit: 100,
     },
   ): Promise<Result<cashierBackend.PaginateResult_1, Error>> {
-    const actor = this.#getActor({
-      anonymous: false,
-    });
-    if (!actor) {
-      return Err(new Error("User not logged in"));
-    }
-    const response = await actor.user_get_links_v3(
-      toNullable({
-        offset: BigInt(params.offset),
-        limit: BigInt(params.limit),
-      }),
-    );
+    try {
+      const actor = this.#getActor({
+        anonymous: false,
+      });
+      if (!actor) {
+        return Err(new Error("User not logged in"));
+      }
+      const response = await actor.user_get_links_v3(
+        toNullable({
+          offset: BigInt(params.offset),
+          limit: BigInt(params.limit),
+        }),
+      );
 
-    return responseToResult<
-      cashierBackend.PaginateResult_1,
-      cashierBackend.CanisterError
-    >(response as cashierBackend.Result_12).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+      console.log("getLinksV3 response:", response);
+
+      return responseToResult<
+        cashierBackend.PaginateResult_1,
+        cashierBackend.CanisterError
+      >(response as cashierBackend.Result_12).mapErr(
+        (err) => new Error(JSON.stringify(err)),
+      );
+    } catch (error) {
+      console.error("getLinksV3 error:", error);
+      return Err(new Error(String(error)));
+    }
   }
 
   /**
@@ -384,24 +391,30 @@ class CanisterBackendService {
     options?: cashierBackend.GetLinkOptions,
     anonymous?: boolean,
   ): Promise<Result<cashierBackend.GetLinkResponseV3, Error>> {
-    const actor = anonymous
-      ? this.#getActor({
-          anonymous,
-        })
-      : this.#getActor({
-          anonymous: false,
-        });
-    if (!actor) {
-      return Err(new Error("Actor creation failed"));
-    }
-    const response = await actor.get_link_details_v3(id, toNullable(options));
+    try {
+      const actor = anonymous
+        ? this.#getActor({
+            anonymous,
+          })
+        : this.#getActor({
+            anonymous: false,
+          });
+      if (!actor) {
+        return Err(new Error("Actor creation failed"));
+      }
+      const response = await actor.get_link_details_v3(id, toNullable(options));
+      console.log(`getLinkDetailsV3 response:`, response);
 
-    return responseToResult<
-      cashierBackend.GetLinkResponseV3,
-      cashierBackend.CanisterError
-    >(response as cashierBackend.Result_3).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+      return responseToResult<
+        cashierBackend.GetLinkResponseV3,
+        cashierBackend.CanisterError
+      >(response as cashierBackend.Result_3).mapErr(
+        (err) => new Error(JSON.stringify(err)),
+      );
+    } catch (error) {
+      console.error("getLinkV3 error:", error);
+      return Err(new Error(String(error)));
+    }
   }
 
   /**
