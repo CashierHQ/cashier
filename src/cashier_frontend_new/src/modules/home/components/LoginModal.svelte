@@ -129,7 +129,7 @@
         >
           <span class="flex items-center w-full text-[14px]">
             <img
-              alt="Cashier Wallet"
+              alt="Cashier Wallet account"
               class="h-6 w-6 mr-[10px]"
               src="/credit-card-check.svg"
             />
@@ -137,7 +137,7 @@
               {#if isConnecting}
                 {locale.t("home.loginModal.connecting")}
               {:else}
-                Cashier Wallet
+                Cashier Wallet (account)
               {/if}
             </span>
             {#if isConnecting}
@@ -156,15 +156,15 @@
         >
           <span class="flex items-center w-full text-[14px]">
             <img
-              alt="NFID Wallet"
+              alt="Cashier Wallet delegation"
               class="h-6 w-6 mr-[10px]"
-              src="/social-icon.svg"
+              src="/credit-card-check.svg"
             />
             <span class="flex-grow text-left font-medium">
               {#if isConnecting}
                 {locale.t("home.loginModal.connecting")}
               {:else}
-                NFID Wallet (Local)
+                Cashier Wallet (delegation)
               {/if}
             </span>
             {#if isConnecting}

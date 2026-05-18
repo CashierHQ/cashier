@@ -55,5 +55,17 @@
       decimals = 6: nat8;
       enabled_by_default = true;
     };
+    record {
+      details = variant { IC = record {
+        ledger_id = principal "o7oak-iyaaa-aaaaq-aadzq-cai";
+        index_id = opt principal "onixt-eiaaa-aaaaq-aad2q-cai";
+        fee = 10000 : nat;
+        supported_standards = vec { variant { ICRC1 }; variant { ICRC2 }; variant { ICRC3 } };
+      }};
+      symbol = "KONG";
+      name = "KongSwap";
+      decimals = 8: nat8;
+      enabled_by_default = false;
+    };
   };
 })
