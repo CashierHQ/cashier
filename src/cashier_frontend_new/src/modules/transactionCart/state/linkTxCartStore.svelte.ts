@@ -1,4 +1,3 @@
-import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
 import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
@@ -16,7 +15,7 @@ import {
   AssetProcessStateMapper,
 } from "$modules/transactionCart/types/txCart";
 import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
-import type { Signer } from "@slide-computer/signer";
+import type { Signer, Transport } from "@slide-computer/signer";
 
 /**
  * Transaction cart store for Action-based (ICRC-112) transactions.
@@ -24,7 +23,7 @@ import type { Signer } from "@slide-computer/signer";
  */
 export class LinkTxCartStore implements TxCartStore {
   #source: ActionSource;
-  #icrc112Service: Icrc112Service<IITransport> | null = null;
+  #icrc112Service: Icrc112Service<Transport> | null = null;
   #assetAndFeeList = $state<AssetAndFee[]>([]);
 
   constructor(source: ActionSource) {
@@ -46,7 +45,7 @@ export class LinkTxCartStore implements TxCartStore {
 
   /** Initialize ICRC-112 service */
   initialize(): void {
-    const signer = authState.getSigner() as Signer<IITransport> | null;
+    const signer = authState.getSigner() as Signer<Transport> | null;
     if (signer) {
       this.#icrc112Service = new Icrc112Service(signer);
     }

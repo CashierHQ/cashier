@@ -31,9 +31,10 @@ function normalizeCallRequestForRequestId(
     "toFixed" in ingress_expiry &&
     typeof ingress_expiry.toFixed === "function"
   ) {
-    normalized.ingress_expiry = BigInt(ingress_expiry.toFixed());
+    const normalizedIngressExpiry = BigInt(ingress_expiry.toFixed());
+    normalized.ingress_expiry = normalizedIngressExpiry;
     debugIcrc49("normalized ingress_expiry for request id", {
-      ingressExpiry: normalized.ingress_expiry.toString(),
+      ingressExpiry: normalizedIngressExpiry.toString(),
     });
   }
 
@@ -105,6 +106,34 @@ async function getReplyArg(
   return reply.value as ArrayBuffer;
 }
 
+export type Icrc49RawCallResult = {
+  contentMap: ArrayBuffer;
+  certificate: ArrayBuffer;
+  replyArg: ArrayBuffer;
+};
+
+export async function callCanisterViaIcrc49Raw(
+  signer: Signer,
+  sender: Principal,
+  canisterId: Principal,
+  method: string,
+  arg: ArrayBuffer,
+): Promise<Icrc49RawCallResult> {
+  const { contentMap, certificate } = await signer.callCanister({
+    canisterId,
+    sender,
+    method,
+    arg,
+  });
+
+  const replyArg = await getReplyArg(contentMap, certificate, canisterId);
+  if (!replyArg) {
+    throw new Error(`ICRC-49 ${method}: no reply in response`);
+  }
+
+  return { contentMap, certificate, replyArg };
+}
+
 /**
  * Make an ICRC-49 canister call through the wallet signer.
  *
@@ -124,17 +153,13 @@ export async function callCanisterViaIcrc49<R>(
 ): Promise<R> {
   const encodedArg = IDL.encode(argTypes, [argValue]);
 
-  const { contentMap, certificate } = await signer.callCanister({
-    canisterId,
+  const { replyArg } = await callCanisterViaIcrc49Raw(
+    signer,
     sender,
+    canisterId,
     method,
-    arg: encodedArg,
-  });
-
-  const replyArg = await getReplyArg(contentMap, certificate, canisterId);
-  if (!replyArg) {
-    throw new Error(`ICRC-49 ${method}: no reply in response`);
-  }
+    encodedArg,
+  );
 
   const [result] = IDL.decode(retTypes, replyArg);
   return result as R;

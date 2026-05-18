@@ -78,8 +78,6 @@ class CanisterBackendService {
         }),
       );
 
-      console.log("getLinksV3 response:", response);
-
       return responseToResult<
         cashierBackend.PaginateResult_1,
         cashierBackend.CanisterError
@@ -403,7 +401,6 @@ class CanisterBackendService {
         return Err(new Error("Actor creation failed"));
       }
       const response = await actor.get_link_details_v3(id, toNullable(options));
-      console.log(`getLinkDetailsV3 response:`, response);
 
       return responseToResult<
         cashierBackend.GetLinkResponseV3,

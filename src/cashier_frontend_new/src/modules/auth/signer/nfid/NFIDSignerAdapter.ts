@@ -77,7 +77,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
     const signer = new Signer({
       transport,
       autoCloseTransportChannel: true,
-      closeTransportChannelAfter: 500,
+      closeTransportChannelAfter: 2_000,
     });
 
     // Phase 2 — request permissions (one-time approval in NFID popup)
