@@ -1,4 +1,4 @@
-import type { TransactionKindValue } from "./transactionKind";
+import type { TransactionKindValue } from "$modules/token/types/transactionKind";
 
 /**
  * Unified transaction type for both ICP and ICRC tokens

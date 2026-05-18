@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DisplayTransactionMapper } from "./displayTransaction";
-import { TransactionKind } from "./transactionKind";
-import type { TokenTransaction } from "./tokenTransaction";
-import type { TokenWithPriceAndBalance } from "./tokenMetadata";
+import { DisplayTransactionMapper } from "$modules/token/types/displayTransaction";
+import { TransactionKind } from "$modules/token/types/transactionKind";
+import type { TokenTransaction } from "$modules/token/types/tokenTransaction";
+import type { TokenWithPriceAndBalance } from "$modules/token/types/tokenMetadata";
 
 // Mock isTransactionOutgoing
 vi.mock("$modules/wallet/utils/transactionDisplayType", () => ({

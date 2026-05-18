@@ -8,10 +8,10 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { type LinkAction } from "$modules/links/types/linkAndAction";
-import type { LinkDetailState } from "./linkDetailStates";
-import { LinkActiveState } from "./linkDetailStates/active";
-import { LinkCreatedState } from "./linkDetailStates/created";
-import { LinkInactiveState } from "./linkDetailStates/inactive";
+import type { LinkDetailState } from "$modules/detailLink/state/linkDetailStates";
+import { LinkActiveState } from "$modules/detailLink/state/linkDetailStates/active";
+import { LinkCreatedState } from "$modules/detailLink/state/linkDetailStates/created";
+import { LinkInactiveState } from "$modules/detailLink/state/linkDetailStates/inactive";
 
 /**
  * Store for created link state management

@@ -7,7 +7,7 @@ import type {
   Asset as SharedAsset,
   AssetInfo as SharedAssetInfo,
 } from "$shared";
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 
 export class Asset {
   // Currently only IC is modeled in the backend union. Keep wrapper for future extensibility.

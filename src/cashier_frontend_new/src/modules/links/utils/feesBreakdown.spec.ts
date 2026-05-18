@@ -10,7 +10,7 @@ import {
   formatFeeBreakdownItem,
   formatLinkCreationFeeView,
   type FeeBreakdownItem,
-} from "./feesBreakdown";
+} from "$modules/links/utils/feesBreakdown";
 import { feeService } from "$modules/shared/services/feeService";
 
 // Standard ICP Ledger Canister ID (use this if ICP_LEDGER_CANISTER_ID is undefined in tests)

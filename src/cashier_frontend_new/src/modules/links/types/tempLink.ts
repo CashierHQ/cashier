@@ -1,6 +1,6 @@
 import type { LinkTypeValue } from "$modules/links/types/link/linkType";
 import type { DevalueSerde } from "$lib/managedState";
-import type { LinkStateValue } from "./link/linkState";
+import type { LinkStateValue } from "$modules/links/types/link/linkState";
 import {
   CreateLinkAsset,
   CreateLinkData,

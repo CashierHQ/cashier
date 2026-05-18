@@ -44,7 +44,7 @@ vi.mock("$lib/managedState", () => ({
 }));
 
 // Import store AFTER all mocks are defined
-import { tokenPriceStore } from "./tokenPriceStore.svelte";
+import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 
 describe("TokenPriceStore", () => {
   beforeEach(() => {

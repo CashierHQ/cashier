@@ -6,12 +6,15 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { userLinkRepository } from "../repositories/userLinkRepository";
-import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
-import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
-import type { UserActionCapableState, UserLinkState } from "./useLinkStates";
-import { CompletedState } from "./useLinkStates/completed";
-import { LandingState } from "./useLinkStates/landing";
+import { userLinkRepository } from "$modules/useLink/repositories/userLinkRepository";
+import { findUseActionTypeFromLinkType } from "$modules/useLink/utils/useActionTypeFromLinkType";
+import { userLinkStateFromStep } from "$modules/useLink/utils/userLinkStateFromStep";
+import type {
+  UserActionCapableState,
+  UserLinkState,
+} from "$modules/useLink/state/useLinkStates";
+import { CompletedState } from "$modules/useLink/state/useLinkStates/completed";
+import { LandingState } from "$modules/useLink/state/useLinkStates/landing";
 
 /**
  * Store for user link state management

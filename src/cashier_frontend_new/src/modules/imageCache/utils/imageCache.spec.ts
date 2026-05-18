@@ -7,7 +7,7 @@ import {
   clearAllCache,
   getCacheSize,
   isImageLoading,
-} from "./imageCache";
+} from "$modules/imageCache/utils/imageCache";
 
 describe("imageCache", () => {
   let mockImage: HTMLImageElement;

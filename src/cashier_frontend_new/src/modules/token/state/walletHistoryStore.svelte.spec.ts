@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { TokenTransaction } from "../types";
+import type { TokenTransaction } from "$modules/token/types";
 
 // Constants for tests
 const TEST_INDEX_ID = "qhbym-qaaaa-aaaaa-aaafq-cai";
@@ -68,7 +68,7 @@ import {
   getWalletHistoryStore,
   clearWalletHistoryCache,
   WalletHistoryStore,
-} from "./walletHistoryStore.svelte";
+} from "$modules/token/state/walletHistoryStore.svelte";
 
 // Helper to create mock transactions
 const createMockTx = (

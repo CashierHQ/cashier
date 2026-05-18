@@ -6,7 +6,7 @@ import {
   type AssetInfo as SharedAssetInfo,
   type Link as SharedLink,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 
 /**

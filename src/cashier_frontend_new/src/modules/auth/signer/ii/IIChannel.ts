@@ -4,13 +4,13 @@ import {
   Cbor,
   Certificate,
   HttpAgent,
-  LookupStatus,
+  LookupPathStatus,
   polling,
   type SignIdentity,
-} from "@dfinity/agent";
-import { IDL } from "@dfinity/candid";
-import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import { Principal } from "@dfinity/principal";
+} from "@icp-sdk/core/agent";
+import { IDL } from "@icp-sdk/core/candid";
+import { DelegationChain, DelegationIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import {
   type BatchCallCanisterRequest,
   type BatchCallCanisterResponse,
@@ -25,13 +25,13 @@ import {
   NOT_SUPPORTED_ERROR,
   toBase64,
 } from "@slide-computer/signer";
-import { IITransportError } from "./IITransport";
+import { IITransportError } from "$modules/auth/signer/ii/IITransport";
 import {
   ICRC_114_METHOD_NAME,
   MAINNET_ROOT_KEY,
   scopes,
   supportedStandards,
-} from "./constants";
+} from "$modules/auth/signer/ii/constants";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9
@@ -248,18 +248,18 @@ export class IIChannel implements Channel {
       }
       case "icrc49_call_canister": {
         const callCanisterRequest = request as CallCanisterRequest;
-        const { pollForResponse, defaultStrategy } = polling;
+        const { pollForResponse } = polling;
         const canisterId = Principal.fromText(
           callCanisterRequest.params!.canisterId,
         );
-        if (
-          callCanisterRequest.params?.sender !==
-          this.#agent.getPrincipal().toString()
-        ) {
+        // v5: HttpAgent.getPrincipal() is async — must await before string compare
+        const senderPrincipal = await this.#agent.getPrincipal();
+        if (callCanisterRequest.params?.sender !== senderPrincipal.toString()) {
           throw new IITransportError("Sender does not match Agent identity");
         }
         const agent = await HttpAgent.from(this.#agent);
-        let contentMap: ArrayBuffer;
+        // v5: Cbor.encode returns Uint8Array (was ArrayBuffer)
+        let contentMap: Uint8Array;
         agent.addTransform("update", async (agentRequest) => {
           contentMap = Cbor.encode(agentRequest.body);
           return agentRequest;
@@ -269,16 +269,13 @@ export class IIChannel implements Channel {
           methodName: callCanisterRequest.params!.method,
           arg: fromBase64(callCanisterRequest.params!.arg),
         });
-        await pollForResponse(
-          agent,
-          canisterId,
-          submitResponse.requestId,
-          defaultStrategy(),
-        );
+        // v5: pollForResponse takes PollingOptions object, not PollStrategy
+        await pollForResponse(agent, canisterId, submitResponse.requestId);
         const { certificate } = await agent.readState(canisterId, {
+          // v5: readState path elements must be Uint8Array (Cbor.encode also returns Uint8Array now)
           paths: [
             [
-              new TextEncoder().encode("request_status").buffer,
+              new TextEncoder().encode("request_status"),
               submitResponse.requestId,
             ],
           ],
@@ -295,10 +292,14 @@ export class IIChannel implements Channel {
       case "icrc112_batch_call_canister": {
         const batchCallCanisterRequest = request as BatchCallCanisterRequest;
 
+        // v5: validationCanisterId is now a flat string field (was nested object)
+        const validationCanisterId =
+          batchCallCanisterRequest.params?.validationCanisterId;
+
         // if more than 1 request in batch, validation is required
         if (
           batchCallCanisterRequest.params!.requests.length > 1 &&
-          !batchCallCanisterRequest.params?.validation?.canisterId
+          !validationCanisterId
         ) {
           return {
             id,
@@ -310,9 +311,8 @@ export class IIChannel implements Channel {
           };
         }
 
-        const { pollForResponse, defaultStrategy } = polling;
-        const validationActor = batchCallCanisterRequest.params?.validation
-          ?.canisterId
+        const { pollForResponse } = polling;
+        const validationActor = validationCanisterId
           ? Actor.createActor(
               ({ IDL }) =>
                 IDL.Service({
@@ -331,8 +331,7 @@ export class IIChannel implements Channel {
                   ),
                 }),
               {
-                canisterId:
-                  batchCallCanisterRequest.params?.validation?.canisterId,
+                canisterId: validationCanisterId,
                 agent: this.#agent,
               },
             )
@@ -346,8 +345,9 @@ export class IIChannel implements Channel {
         };
         let batchFailed = false;
         for (const requests of batchCallCanisterRequest.params!.requests) {
+          // v5: Per-request error responses retain shape from prior versions; cast to satisfy stricter response type
           batchCallCanisterResponse.result.responses.push(
-            await Promise.all(
+            (await Promise.all(
               requests.map(async (request) => {
                 if (batchFailed) {
                   return {
@@ -359,9 +359,12 @@ export class IIChannel implements Channel {
                 }
                 try {
                   const canisterId = Principal.fromText(request.canisterId);
-                  const agent = this.#agent;
-                  let contentMap: ArrayBuffer =
-                    undefined as unknown as ArrayBuffer;
+                  // v5: clone agent per request to avoid accumulating addTransform handlers
+                  // on the shared #agent across batch iterations
+                  const agent = await HttpAgent.from(this.#agent);
+                  // v5: Cbor.encode returns Uint8Array (was ArrayBuffer)
+                  let contentMap: Uint8Array =
+                    undefined as unknown as Uint8Array;
                   agent.addTransform("update", async (agentRequest) => {
                     contentMap = Cbor.encode(agentRequest.body);
                     return agentRequest;
@@ -371,40 +374,45 @@ export class IIChannel implements Channel {
                     methodName: request.method,
                     arg: fromBase64(request.arg),
                   });
+                  // v5: pollForResponse signature uses PollingOptions, default {} works
                   await pollForResponse(
                     agent,
                     canisterId,
                     submitResponse.requestId,
-                    defaultStrategy(),
                   );
                   const { certificate } = await agent.readState(canisterId, {
+                    // v5: readState path elements must be Uint8Array
                     paths: [
                       [
-                        new TextEncoder().encode("request_status").buffer,
+                        new TextEncoder().encode("request_status"),
                         submitResponse.requestId,
                       ],
                     ],
                   });
+                  // v5: Certificate.create takes principal: { canisterId } (was canisterId)
+                  // agent.rootKey may be ArrayBuffer | Uint8Array; coerce to Uint8Array
+                  const rootKey = (agent.rootKey ??
+                    MAINNET_ROOT_KEY) as Uint8Array;
                   const validCertificate = await Certificate.create({
                     certificate,
-                    rootKey: agent.rootKey ?? MAINNET_ROOT_KEY,
-                    canisterId,
+                    rootKey,
+                    principal: { canisterId },
                   });
-                  const status = validCertificate.lookup([
+                  // v5: lookup_path replaces lookup for leaf value semantics
+                  const status = validCertificate.lookup_path([
                     "request_status",
                     submitResponse.requestId,
                     "status",
                   ]);
-                  const reply = validCertificate.lookup([
+                  const reply = validCertificate.lookup_path([
                     "request_status",
                     submitResponse.requestId,
                     "reply",
                   ]);
                   if (
-                    status.status !== LookupStatus.Found ||
-                    new TextDecoder().decode(status.value as ArrayBuffer) !==
-                      "replied" ||
-                    reply.status !== LookupStatus.Found
+                    status.status !== LookupPathStatus.Found ||
+                    new TextDecoder().decode(status.value) !== "replied" ||
+                    reply.status !== LookupPathStatus.Found
                   ) {
                     batchFailed = true;
                     return {
@@ -424,7 +432,7 @@ export class IIChannel implements Channel {
                     try {
                       const value = IDL.decode(
                         [IDL.Variant({ Err: IDL.Reserved })],
-                        reply.value as ArrayBuffer,
+                        reply.value,
                       );
                       if ("Err" in value) {
                         batchFailed = true;
@@ -452,7 +460,7 @@ export class IIChannel implements Channel {
                       canister_id: Principal.fromText(request.canisterId),
                       method: request.method,
                       arg: new Uint8Array(fromBase64(request.arg)),
-                      res: new Uint8Array(reply.value as ArrayBuffer),
+                      res: reply.value,
                       nonce: request.nonce
                         ? [new Uint8Array(fromBase64(request.nonce))]
                         : [],
@@ -489,7 +497,8 @@ export class IIChannel implements Channel {
                   };
                 }
               }),
-            ),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            )) as any,
           );
         }
         return batchCallCanisterResponse;

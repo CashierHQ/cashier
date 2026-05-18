@@ -135,7 +135,7 @@ export class BridgeTxCartStore {
       return 0;
     }
 
-    let fee = 0n;
+    let fee: bigint;
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
       fee = this.bridgeTransaction.deposit_fee;
     } else {

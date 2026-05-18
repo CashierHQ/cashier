@@ -6,7 +6,7 @@ import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { LinkState, LinkType, TokenStandard, type AssetInfo } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

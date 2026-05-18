@@ -4,12 +4,11 @@ import { defineConfig } from "vite";
 import packageConfig from "./package.json";
 import * as child from "child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
-// Get commit hash
-let commitHash = "unknown";
+// Get commit hash. In restricted envs (e.g. sandboxed CI) shelling out may be blocked.
+let commitHash: string;
 try {
   commitHash = child.execSync("git rev-parse --short HEAD").toString().trim();
 } catch {
-  // In restricted environments (e.g. sandboxed CI), shelling out may be blocked.
   commitHash = "unknown";
 }
 

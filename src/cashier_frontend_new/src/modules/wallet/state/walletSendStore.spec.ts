@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Err, Ok } from "ts-results-es";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import {
   TxState,
   type ValidateSendParams,
@@ -56,8 +56,8 @@ vi.mock("$modules/wallet/utils/address", () => ({
 }));
 
 // Import after mocks
-import { walletSendStore } from "./walletSendStore.svelte";
-import { ReceiveAddressType } from "../types";
+import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+import { ReceiveAddressType } from "$modules/wallet/types";
 
 describe("WalletSendStore", () => {
   beforeEach(() => {

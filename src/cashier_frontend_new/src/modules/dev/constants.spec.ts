@@ -3,7 +3,7 @@ import {
   BUILD_APP_VERSION,
   BUILD_COMMIT_HASH,
   BUILD_TIMESTAMP,
-} from "./constants";
+} from "$modules/dev/constants";
 
 describe("Build data should be injected by vite at build time", () => {
   it("should get a TokenId from a string", () => {

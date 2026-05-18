@@ -12,16 +12,16 @@ import {
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
-import { Actor, HttpAgent } from "@dfinity/agent";
-import type { IDL } from "@dfinity/candid";
-import { DelegationIdentity } from "@dfinity/identity";
-import { Principal } from "@dfinity/principal";
+import { Actor, HttpAgent } from "@icp-sdk/core/agent";
+import type { IDL } from "@icp-sdk/core/candid";
+import { DelegationIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { SessionManager } from "../services/sessionManager";
-import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
-import { isSessionExpired } from "../utils/isSessionExpired";
+import { SessionManager } from "$modules/auth/services/sessionManager";
+import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
+import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -348,10 +348,10 @@ const setupSessionManager = async (walletId: string) => {
   }
 
   const iiAdapter = pnp.provider as IISignerAdapter;
+  // v5: getIdentity() is now async — must await before casting
   // II always return DelegationIdentity after login
-  const delegationIdentity = iiAdapter
-    .getAuthClient()
-    ?.getIdentity() as DelegationIdentity;
+  const identity = await iiAdapter.getAuthClient()?.getIdentity();
+  const delegationIdentity = identity as DelegationIdentity;
 
   const delegationExpirationInMillis = calculateDelegationExpirationMs(
     delegationIdentity.getDelegation(),

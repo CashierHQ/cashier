@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { Principal } from "@dfinity/principal";
-import Asset from "./asset";
+import { Principal } from "@icp-sdk/core/principal";
+import Asset from "$modules/links/types/asset";
 import type { Asset as BackendAsset } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 describe("Asset.fromBackendType", () => {

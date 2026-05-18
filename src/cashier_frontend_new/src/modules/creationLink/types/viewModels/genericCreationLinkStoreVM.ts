@@ -5,7 +5,7 @@ import type {
   AssetInfo as SharedAssetInfo,
   TokenStandard as SharedTokenStandard,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 export type AddAssetItem = {
   address: string;

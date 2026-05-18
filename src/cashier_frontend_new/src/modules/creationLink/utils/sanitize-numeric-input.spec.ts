@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeNumericInput } from "./sanitize-numeric-input";
+import { sanitizeNumericInput } from "$modules/creationLink/utils/sanitize-numeric-input";
 
 describe("sanitizeNumericInput", () => {
   describe("basic numeric input", () => {

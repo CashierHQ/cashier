@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Drawer as DrawerPrimitive } from "vaul-svelte";
-	import DrawerOverlay from "./drawer-overlay.svelte";
+	import DrawerOverlay from "$lib/shadcn/components/ui/drawer/drawer-overlay.svelte";
 	import { cn } from "$lib/shadcn/components/utils.js";
 
 	let {

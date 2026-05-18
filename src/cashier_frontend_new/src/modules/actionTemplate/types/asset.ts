@@ -4,7 +4,7 @@ import {
   type SharedTokenStandardValue,
 } from "$modules/actionTemplate/types/token_standard";
 import { type Asset as SharedAsset } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Mapper for converting between frontend SharedAsset and backend Asset

@@ -1,7 +1,7 @@
 import { LinkStep } from "$modules/links/types/linkStep";
 import { ActionType as SharedActionType } from "$shared";
 import { describe, expect, it } from "vitest";
-import { LinkEndedStateV3 } from "./ended";
+import { LinkEndedStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/ended";
 
 describe("LinkEndedStateV3", () => {
   describe("step", () => {

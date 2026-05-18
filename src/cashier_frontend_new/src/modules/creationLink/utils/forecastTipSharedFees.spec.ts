@@ -10,7 +10,7 @@ import {
   IntentParticipants,
   TokenStandard as SharedTokenStandard,
 } from "$shared";
-import { forecastTipSharedFees } from "./forecastTipSharedFees";
+import { forecastTipSharedFees } from "$modules/creationLink/utils/forecastTipSharedFees";
 
 // Use the same canister id as the implementation (from constants)
 const ICP_ID = ICP_LEDGER_CANISTER_ID;

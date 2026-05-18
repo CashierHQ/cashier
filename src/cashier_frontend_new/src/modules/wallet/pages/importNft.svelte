@@ -6,7 +6,7 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
-  import { Principal } from "@dfinity/principal";
+  import { Principal } from "@icp-sdk/core/principal";
   import { Clipboard, LoaderCircle } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 

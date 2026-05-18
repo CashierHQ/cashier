@@ -1,6 +1,6 @@
-import type Action from "./action/action";
-import type { Link } from "./link/link";
-import type { LinkUserStateValue } from "./link/linkUserState";
+import type Action from "$modules/links/types/action/action";
+import type { Link } from "$modules/links/types/link/link";
+import type { LinkUserStateValue } from "$modules/links/types/link/linkUserState";
 
 export class LinkAction {
   link: Link;

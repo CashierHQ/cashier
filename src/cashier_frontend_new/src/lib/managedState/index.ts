@@ -1,4 +1,7 @@
-export { managedState, ManagedState } from "./managedState.svelte";
+export {
+  managedState,
+  ManagedState,
+} from "$lib/managedState/managedState.svelte";
 
 // A simple storage interface for a single value
 export interface Storage<T> {

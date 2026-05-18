@@ -1,4 +1,4 @@
-import type { IdleOptions } from "@dfinity/auth-client";
+import type { IdleOptions } from "@icp-sdk/auth/client";
 
 export enum Status {
   CONNECTING = "CONNECTING",

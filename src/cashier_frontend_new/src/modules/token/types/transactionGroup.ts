@@ -1,4 +1,4 @@
-import type { DisplayTransaction } from "./displayTransaction";
+import type { DisplayTransaction } from "$modules/token/types/displayTransaction";
 
 /**
  * Group of transactions for a single date

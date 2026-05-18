@@ -1,4 +1,4 @@
-import networksData from "./networks.json";
+import networksData from "$modules/shared/data/networks.json";
 
 export type Network = {
   id: string;

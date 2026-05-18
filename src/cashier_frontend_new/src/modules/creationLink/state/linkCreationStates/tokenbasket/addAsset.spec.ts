@@ -1,6 +1,6 @@
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { LinkCreationStore } from "../../linkCreationStore.svelte";
+import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import {
@@ -9,9 +9,9 @@ import {
 } from "$modules/creationLink/types/createLinkData";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { AddAssetTokenBasketState } from "./addAsset";
-import { ChooseLinkTypeState } from "../chooseLinkType";
-import { PreviewState } from "../preview";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
+import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
+import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
 import { Err, Ok } from "ts-results-es";
 import { validationService } from "$modules/links/services/validationService";
 

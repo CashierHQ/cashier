@@ -155,7 +155,12 @@
         goto(resolve("/404"));
         // Return a result with the current action if it exists
         if (!userStore.action) {
-          throw new Error("Action already exists but no action found in store");
+          throw new Error(
+            "Action already exists but no action found in store",
+            {
+              cause: err,
+            },
+          );
         }
         return {
           action: userStore.action,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTag, rsMatch } from "./rsMatch";
+import { getTag, rsMatch } from "$lib/rsMatch";
 
 describe("rsMatch", () => {
   type Template =

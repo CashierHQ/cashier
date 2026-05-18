@@ -3,7 +3,7 @@ import {
   preloadTokenImage,
   preloadTokenImages,
   preloadTokenImagesIdle,
-} from "./preloadTokenImage";
+} from "$modules/imageCache/utils/preloadTokenImage";
 
 describe("preloadTokenImage", () => {
   let mockImage: HTMLImageElement;

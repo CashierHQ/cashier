@@ -1,9 +1,9 @@
 import { onDestroy } from "svelte";
 import type { DevalueSerde, Storage } from ".";
-import { GlobalStore } from "./storageGlobal";
-import { LocalStorageStore } from "./storageLocalStorage";
-import { NoOpsStore } from "./storageNoOps";
-import { SessionStorageStore } from "./storageSessionStorage";
+import { GlobalStore } from "$lib/managedState/storageGlobal";
+import { LocalStorageStore } from "$lib/managedState/storageLocalStorage";
+import { NoOpsStore } from "$lib/managedState/storageNoOps";
+import { SessionStorageStore } from "$lib/managedState/storageSessionStorage";
 import { watch as runedWatch } from "runed";
 import { assertUnreachable } from "$lib/rsMatch";
 

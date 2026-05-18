@@ -4,7 +4,7 @@ import {
   formatTokenPrice,
   formatUsdAmount,
   formatFeeAmount,
-} from "./formatNumber";
+} from "$modules/shared/utils/formatNumber";
 
 describe("formatNumber", () => {
   it("formats regular numbers", () => {

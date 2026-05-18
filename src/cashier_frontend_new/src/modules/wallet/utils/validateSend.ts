@@ -1,7 +1,10 @@
 import { locale } from "$lib/i18n";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { Err, Ok, type Result } from "ts-results-es";
-import { isValidAccountId, isValidPrincipal } from "./address";
+import {
+  isValidAccountId,
+  isValidPrincipal,
+} from "$modules/wallet/utils/address";
 import type { ValidateSendParams } from "$modules/wallet/types/walletSendStore";
 import { ReceiveAddressType } from "$modules/wallet/types/index";
 
