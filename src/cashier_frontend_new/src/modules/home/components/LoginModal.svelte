@@ -6,6 +6,7 @@
     CASHIER_WALLET_ID,
     II_SIGNER_WALLET_ID,
     NFID_WALLET_ID,
+    REAL_NFID_WALLET_ID,
   } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
 
@@ -37,6 +38,7 @@
         "internet-identity": II_SIGNER_WALLET_ID,
         "cashier-wallet": CASHIER_WALLET_ID,
         "nfid-wallet": NFID_WALLET_ID,
+        "real-nfid-wallet": REAL_NFID_WALLET_ID,
       };
       const adapterId = adapterMap[walletId] ?? walletId;
 
@@ -165,6 +167,33 @@
                 {locale.t("home.loginModal.connecting")}
               {:else}
                 Cashier Wallet (delegation)
+              {/if}
+            </span>
+            {#if isConnecting}
+              <div
+                class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
+              ></div>
+            {/if}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onclick={() => handleWalletSelect("real-nfid-wallet")}
+          disabled={isConnecting}
+          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span class="flex items-center w-full text-[14px]">
+            <img
+              alt="NFID Wallet"
+              class="h-6 w-6 mr-[10px]"
+              src="/nfid-icon.png"
+            />
+            <span class="flex-grow text-left font-medium">
+              {#if isConnecting}
+                {locale.t("home.loginModal.connecting")}
+              {:else}
+                NFID Wallet
               {/if}
             </span>
             {#if isConnecting}

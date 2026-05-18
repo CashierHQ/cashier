@@ -1,12 +1,13 @@
-import { HttpAgent, type ActorSubclass } from "@dfinity/agent";
+import { TARGETS } from "$modules/auth/constants";
+import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
+import type { IDL } from "@dfinity/candid";
 import { DelegationIdentity, Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { Signer } from "@slide-computer/signer";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import type { AdapterConstructorArgs } from "@windoge98/plug-n-play";
 import { BaseSignerAdapter } from "@windoge98/plug-n-play";
-import { TARGETS } from "$modules/auth/constants";
-import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 
 export interface NFIDSignerConfig {
   /** Full URL to the NFID RPC endpoint, e.g. "http://localhost:9090/rpc" */
@@ -19,6 +20,8 @@ export interface NFIDSignerConfig {
   establishTimeout?: number;
   /** Delegation max lifetime in nanoseconds @default 8 hours */
   maxTimeToLive?: bigint;
+  /** Origin used by the wallet to derive the delegated identity */
+  derivationOrigin?: string;
 }
 
 interface Account {
@@ -27,6 +30,11 @@ interface Account {
 }
 
 const DEFAULT_MAX_TIME_TO_LIVE = BigInt(8 * 60 * 60 * 1_000_000_000); // 8 hours in ns
+
+const arrayBufferToHex = (buffer: ArrayBuffer): string =>
+  Array.from(new Uint8Array(buffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 
 /**
  * PNP adapter that authenticates via NFID using a hybrid ICRC-34 + ICRC-49 flow.
@@ -63,6 +71,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
       targets = TARGETS,
       establishTimeout = 60_000,
       maxTimeToLive = DEFAULT_MAX_TIME_TO_LIVE,
+      derivationOrigin,
     } = this.config;
 
     // Phase 1 — open NFID popup and establish ICRC-29 channel
@@ -78,6 +87,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
       transport,
       autoCloseTransportChannel: true,
       closeTransportChannelAfter: 2_000,
+      derivationOrigin,
     });
 
     // Phase 2 — request permissions (one-time approval in NFID popup)
@@ -132,8 +142,29 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
   }
 
   async getPrincipal(): Promise<string> {
-    if (!this.delegationIdentity) throw new Error("NFIDSignerAdapter: not connected");
+    if (!this.delegationIdentity)
+      throw new Error("NFIDSignerAdapter: not connected");
     return this.delegationIdentity.getPrincipal().toText();
+  }
+
+  createDelegatedActor<T>(
+    canisterId: string,
+    idl: IDL.InterfaceFactory,
+  ): ActorSubclass<T> {
+    if (!this.agent) {
+      throw new Error(
+        "NFIDSignerAdapter: not connected — call connect() first",
+      );
+    }
+    console.warn("[NFIDSignerAdapter] createDelegatedActor", {
+      canisterId,
+      agent: this.agent.constructor.name,
+      delegatedPrincipal: this.delegationIdentity?.getPrincipal().toText(),
+    });
+    return Actor.createActor<T>(idl, {
+      agent: this.agent as HttpAgent,
+      canisterId,
+    });
   }
 
   protected createActorInternal<T>(
@@ -141,9 +172,20 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
     idl: Record<string, unknown>,
   ): ActorSubclass<T> {
     if (!this.agent) {
-      throw new Error("NFIDSignerAdapter: not connected — call connect() first");
+      throw new Error(
+        "NFIDSignerAdapter: not connected — call connect() first",
+      );
     }
-    return this.createActorWithAgent<T>(this.agent as HttpAgent, canisterId, idl);
+    console.debug("[NFIDSignerAdapter] createActorInternal", {
+      canisterId,
+      agent: this.agent.constructor.name,
+      delegatedPrincipal: this.delegationIdentity?.getPrincipal().toText(),
+    });
+    return this.createActorWithAgent<T>(
+      this.agent as HttpAgent,
+      canisterId,
+      idl,
+    );
   }
 
   protected async disconnectInternal(): Promise<void> {

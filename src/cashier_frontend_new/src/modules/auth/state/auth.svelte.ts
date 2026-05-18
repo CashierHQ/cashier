@@ -16,6 +16,8 @@ import {
   II_SIGNER_WALLET_ID,
   NFID_WALLET_ID,
   NFID_WALLET_ORIGIN,
+  REAL_NFID_WALLET_ID,
+  REAL_NFID_WALLET_ORIGIN,
 } from "$modules/shared/constants";
 import { TARGETS } from "$modules/auth/constants";
 import { CashierWalletSignerAdapter } from "@cashier-wallet/wallet-sdk";
@@ -86,6 +88,29 @@ const CONFIG: CreatePnpArgs = {
         walletUrl: `${NFID_WALLET_ORIGIN}/rpc`,
         host: HOST_ICP,
         targets: TARGETS,
+        derivationOrigin:
+          BUILD_TYPE === "production"
+            ? "https://cashierapp.io"
+            : typeof window !== "undefined"
+              ? window.location.origin
+              : undefined,
+      },
+    },
+    // Production NFID Wallet — same ICRC-29/34/49 flow as the local NFID fork.
+    [REAL_NFID_WALLET_ID]: {
+      id: REAL_NFID_WALLET_ID,
+      enabled: true,
+      adapter: NFIDSignerAdapter,
+      config: {
+        walletUrl: `${REAL_NFID_WALLET_ORIGIN}/rpc`,
+        host: HOST_ICP,
+        targets: TARGETS,
+        derivationOrigin:
+          BUILD_TYPE === "production"
+            ? "https://cashierapp.io"
+            : typeof window !== "undefined"
+              ? window.location.origin
+              : undefined,
       },
     },
     // Cashier Wallet — ICRC-29 iframe wallet with II authentication
@@ -285,6 +310,20 @@ export const authState = {
 
     if (canisterId instanceof Principal) {
       canisterId = canisterId.toText();
+    }
+
+    console.warn("[authState] buildActor", {
+      canisterId,
+      walletId: walletConnect.current.id,
+      provider: pnp.provider?.constructor.name,
+    });
+
+    if (
+      (walletConnect.current.id === NFID_WALLET_ID ||
+        walletConnect.current.id === REAL_NFID_WALLET_ID) &&
+      pnp.provider instanceof NFIDSignerAdapter
+    ) {
+      return pnp.provider.createDelegatedActor<T>(canisterId, idlFactory);
     }
 
     // pnp is initialized and user is logged in, return actor with current identity
