@@ -18,8 +18,8 @@
  */
 
 // These types are imported from generated types
-// @ts-ignore - Will be replaced during generation
-import { IntentParticipants, TokenStandard } from '../generated/ts/types.js';
+// @ts-expect-error - Will be replaced during generation
+import { IntentParticipants, TokenStandard } from "../generated/ts/types.js";
 
 /**
  * Calculate the total amount for an intent based on participants.
@@ -233,19 +233,19 @@ export interface FeeResult {
 export function calculateIntentFees(input: FeeInput): FeeResult {
   // Parse bigint values if they're strings
   const userInputAmount =
-    typeof input.user_input_amount === 'string'
+    typeof input.user_input_amount === "string"
       ? BigInt(input.user_input_amount)
       : (input.user_input_amount ?? 0n);
   const linkCreationFee =
-    typeof input.link_creation_fee === 'string'
+    typeof input.link_creation_fee === "string"
       ? BigInt(input.link_creation_fee)
       : (input.link_creation_fee ?? 0n);
   const assetNetworkFee =
-    typeof input.asset_network_fee === 'string'
+    typeof input.asset_network_fee === "string"
       ? BigInt(input.asset_network_fee)
       : input.asset_network_fee;
   const linkMaxAssetAmount =
-    typeof input.link_max_asset_amount === 'string'
+    typeof input.link_max_asset_amount === "string"
       ? BigInt(input.link_max_asset_amount)
       : (input.link_max_asset_amount ?? 0n);
   const maxUse = input.max_use ?? 1;

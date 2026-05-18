@@ -12,123 +12,127 @@
  *   npm run generate:functions # Generate functions only
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { generateTypeScript } from './generators/typescript.js';
-import { generateRust } from './generators/rust.js';
+import * as fs from "fs";
+import * as path from "path";
+import { generateTypeScript } from "./generators/typescript.js";
+import { generateRust } from "./generators/rust.js";
 import {
-	transpileToRust,
-	generateTypeScriptFunctions,
-} from './generators/logic-transpiler.js';
+  transpileToRust,
+  generateTypeScriptFunctions,
+} from "./generators/logic-transpiler.js";
 
-const ROOT_DIR = path.resolve(import.meta.dirname, '..');
-const SCHEMAS_DIR = path.join(ROOT_DIR, 'schemas');
-const LOGIC_DIR = path.join(ROOT_DIR, 'logic');
-const GENERATED_TS_DIR = path.join(ROOT_DIR, 'generated', 'ts');
-const GENERATED_RUST_DIR = path.join(ROOT_DIR, 'generated', 'rust');
+const ROOT_DIR = path.resolve(import.meta.dirname, "..");
+const SCHEMAS_DIR = path.join(ROOT_DIR, "schemas");
+const LOGIC_DIR = path.join(ROOT_DIR, "logic");
+const GENERATED_TS_DIR = path.join(ROOT_DIR, "generated", "ts");
+const GENERATED_RUST_DIR = path.join(ROOT_DIR, "generated", "rust");
 
 interface GeneratorOptions {
-	typesOnly: boolean;
-	functionsOnly: boolean;
+  typesOnly: boolean;
+  functionsOnly: boolean;
 }
 
 function parseArgs(): GeneratorOptions {
-	const args = process.argv.slice(2);
-	return {
-		typesOnly: args.includes('--types-only'),
-		functionsOnly: args.includes('--functions-only'),
-	};
+  const args = process.argv.slice(2);
+  return {
+    typesOnly: args.includes("--types-only"),
+    functionsOnly: args.includes("--functions-only"),
+  };
 }
 
 function ensureDir(dir: string): void {
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir, { recursive: true });
-	}
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 function loadJsonFile<T>(filePath: string): T {
-	const content = fs.readFileSync(filePath, 'utf-8');
-	return JSON.parse(content) as T;
+  const content = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(content) as T;
 }
 
 function writeFile(filePath: string, content: string): void {
-	const dir = path.dirname(filePath);
-	ensureDir(dir);
-	fs.writeFileSync(filePath, content, 'utf-8');
-	console.log(`  ✓ Generated: ${path.relative(ROOT_DIR, filePath)}`);
+  const dir = path.dirname(filePath);
+  ensureDir(dir);
+  fs.writeFileSync(filePath, content, "utf-8");
+  console.log(`  ✓ Generated: ${path.relative(ROOT_DIR, filePath)}`);
 }
 
 async function main(): Promise<void> {
-	const options = parseArgs();
+  const options = parseArgs();
 
-	console.log('\n🔧 Cashier Shared Package - Code Generation\n');
-	console.log('━'.repeat(50));
+  console.log("\n🔧 Cashier Shared Package - Code Generation\n");
+  console.log("━".repeat(50));
 
-	// Ensure output directories exist
-	ensureDir(GENERATED_TS_DIR);
-	ensureDir(GENERATED_RUST_DIR);
+  // Ensure output directories exist
+  ensureDir(GENERATED_TS_DIR);
+  ensureDir(GENERATED_RUST_DIR);
 
-	// Load schemas
-	const typesSchema = loadJsonFile<Record<string, unknown>>(
-		path.join(SCHEMAS_DIR, 'types.schema.json'),
-	);
+  // Load schemas
+  const typesSchema = loadJsonFile<Record<string, unknown>>(
+    path.join(SCHEMAS_DIR, "types.schema.json")
+  );
 
-	const shouldGenerateTypes = !options.functionsOnly;
-	const shouldGenerateFunctions = !options.typesOnly;
+  const shouldGenerateTypes = !options.functionsOnly;
+  const shouldGenerateFunctions = !options.typesOnly;
 
-	// =========================================================================
-	// Generate TypeScript
-	// =========================================================================
-	console.log('\n📘 Generating TypeScript...\n');
+  // =========================================================================
+  // Generate TypeScript
+  // =========================================================================
+  console.log("\n📘 Generating TypeScript...\n");
 
-	if (shouldGenerateTypes) {
-		const tsTypes = generateTypeScript.types(typesSchema);
-		writeFile(path.join(GENERATED_TS_DIR, 'types.ts'), tsTypes);
-	}
+  if (shouldGenerateTypes) {
+    const tsTypes = generateTypeScript.types(typesSchema);
+    writeFile(path.join(GENERATED_TS_DIR, "types.ts"), tsTypes);
+  }
 
-	if (shouldGenerateFunctions) {
-		// Use the new transpiler - copy TS logic with proper imports
-		const logicSourceFile = path.join(LOGIC_DIR, 'fee-calculations.ts');
-		const tsFunctions = generateTypeScriptFunctions(logicSourceFile);
-		writeFile(path.join(GENERATED_TS_DIR, 'functions.ts'), tsFunctions);
-	}
+  if (shouldGenerateFunctions) {
+    // Use the new transpiler - copy TS logic with proper imports
+    const logicSourceFile = path.join(LOGIC_DIR, "fee-calculations.ts");
+    const tsFunctions = generateTypeScriptFunctions(logicSourceFile);
+    writeFile(path.join(GENERATED_TS_DIR, "functions.ts"), tsFunctions);
+  }
 
-	// Generate index file - check file existence to avoid overriding previous generation
-	const hasTsTypes = fs.existsSync(path.join(GENERATED_TS_DIR, 'types.ts'));
-	const hasTsFunctions = fs.existsSync(path.join(GENERATED_TS_DIR, 'functions.ts'));
-	const tsIndex = generateTypeScript.index(hasTsTypes, hasTsFunctions);
-	writeFile(path.join(GENERATED_TS_DIR, 'index.ts'), tsIndex);
+  // Generate index file - check file existence to avoid overriding previous generation
+  const hasTsTypes = fs.existsSync(path.join(GENERATED_TS_DIR, "types.ts"));
+  const hasTsFunctions = fs.existsSync(
+    path.join(GENERATED_TS_DIR, "functions.ts")
+  );
+  const tsIndex = generateTypeScript.index(hasTsTypes, hasTsFunctions);
+  writeFile(path.join(GENERATED_TS_DIR, "index.ts"), tsIndex);
 
-	// =========================================================================
-	// Generate Rust
-	// =========================================================================
-	console.log('\n🦀 Generating Rust...\n');
+  // =========================================================================
+  // Generate Rust
+  // =========================================================================
+  console.log("\n🦀 Generating Rust...\n");
 
-	if (shouldGenerateTypes) {
-		const rustTypes = generateRust.types(typesSchema);
-		writeFile(path.join(GENERATED_RUST_DIR, 'types.rs'), rustTypes);
-	}
+  if (shouldGenerateTypes) {
+    const rustTypes = generateRust.types(typesSchema);
+    writeFile(path.join(GENERATED_RUST_DIR, "types.rs"), rustTypes);
+  }
 
-	if (shouldGenerateFunctions) {
-		// Use the new transpiler - transpile TS logic to Rust
-		const logicSourceFile = path.join(LOGIC_DIR, 'fee-calculations.ts');
-		const rustFunctions = transpileToRust(logicSourceFile);
-		writeFile(path.join(GENERATED_RUST_DIR, 'functions.rs'), rustFunctions);
-	}
+  if (shouldGenerateFunctions) {
+    // Use the new transpiler - transpile TS logic to Rust
+    const logicSourceFile = path.join(LOGIC_DIR, "fee-calculations.ts");
+    const rustFunctions = transpileToRust(logicSourceFile);
+    writeFile(path.join(GENERATED_RUST_DIR, "functions.rs"), rustFunctions);
+  }
 
-	// Generate mod.rs - check file existence to avoid overriding previous generation
-	const hasRustTypes = fs.existsSync(path.join(GENERATED_RUST_DIR, 'types.rs'));
-	const hasRustFunctions = fs.existsSync(path.join(GENERATED_RUST_DIR, 'functions.rs'));
-	const rustMod = generateRust.mod(hasRustTypes, hasRustFunctions);
-	writeFile(path.join(GENERATED_RUST_DIR, 'mod.rs'), rustMod);
+  // Generate mod.rs - check file existence to avoid overriding previous generation
+  const hasRustTypes = fs.existsSync(path.join(GENERATED_RUST_DIR, "types.rs"));
+  const hasRustFunctions = fs.existsSync(
+    path.join(GENERATED_RUST_DIR, "functions.rs")
+  );
+  const rustMod = generateRust.mod(hasRustTypes, hasRustFunctions);
+  writeFile(path.join(GENERATED_RUST_DIR, "mod.rs"), rustMod);
 
-	console.log('\n━'.repeat(50));
-	console.log('✅ Code generation complete!\n');
-	console.log('📝 To modify fee logic, edit: logic/fee-calculations.ts');
-	console.log('   Then run: npm run generate\n');
+  console.log("\n━".repeat(50));
+  console.log("✅ Code generation complete!\n");
+  console.log("📝 To modify fee logic, edit: logic/fee-calculations.ts");
+  console.log("   Then run: npm run generate\n");
 }
 
 main().catch((error) => {
-	console.error('❌ Generation failed:', error);
-	process.exit(1);
+  console.error("❌ Generation failed:", error);
+  process.exit(1);
 });

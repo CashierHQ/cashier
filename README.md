@@ -36,8 +36,8 @@ Technically, Cashier is all about flexibly configuring and executing different t
 **Frontend:**
 
 ```bash
-# Install all dependencies
-npm install
+# Install all workspace dependencies (run from repo root)
+pnpm install
 ```
 
 **Backend:**

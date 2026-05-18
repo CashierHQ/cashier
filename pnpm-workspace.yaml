@@ -1,0 +1,4 @@
+packages:
+  - "src/cashier_frontend_new"
+  - "src/lib/cashier_shared"
+  - ".github/scripts"
