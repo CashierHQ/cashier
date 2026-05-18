@@ -156,11 +156,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
         "NFIDSignerAdapter: not connected — call connect() first",
       );
     }
-    console.warn("[NFIDSignerAdapter] createDelegatedActor", {
-      canisterId,
-      agent: this.agent.constructor.name,
-      delegatedPrincipal: this.delegationIdentity?.getPrincipal().toText(),
-    });
+
     return Actor.createActor<T>(idl, {
       agent: this.agent as HttpAgent,
       canisterId,
@@ -176,11 +172,7 @@ export class NFIDSignerAdapter extends BaseSignerAdapter<NFIDSignerConfig> {
         "NFIDSignerAdapter: not connected — call connect() first",
       );
     }
-    console.debug("[NFIDSignerAdapter] createActorInternal", {
-      canisterId,
-      agent: this.agent.constructor.name,
-      delegatedPrincipal: this.delegationIdentity?.getPrincipal().toText(),
-    });
+
     return this.createActorWithAgent<T>(
       this.agent as HttpAgent,
       canisterId,

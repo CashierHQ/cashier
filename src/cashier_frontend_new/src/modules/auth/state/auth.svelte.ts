@@ -2,14 +2,13 @@ import { TypedBroadcastChannel } from "$lib/broadcast";
 import { assertUnreachable } from "$lib/rsMatch";
 import {
   IDLE_TIMEOUT_MILLIS_SECOND,
+  TARGETS,
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { NFIDSignerAdapter } from "$modules/auth/signer/nfid/NFIDSignerAdapter";
 import {
   BUILD_TYPE,
-  CASHIER_WALLET_ID,
-  CASHIER_WALLET_ORIGIN,
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
@@ -19,8 +18,6 @@ import {
   REAL_NFID_WALLET_ID,
   REAL_NFID_WALLET_ORIGIN,
 } from "$modules/shared/constants";
-import { TARGETS } from "$modules/auth/constants";
-import { CashierWalletSignerAdapter } from "@cashier-wallet/wallet-sdk";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { DelegationIdentity } from "@dfinity/identity";
@@ -114,21 +111,21 @@ const CONFIG: CreatePnpArgs = {
       },
     },
     // Cashier Wallet — ICRC-29 iframe wallet with II authentication
-    [CASHIER_WALLET_ID]: {
-      id: CASHIER_WALLET_ID,
-      enabled: true,
-      adapter: CashierWalletSignerAdapter,
-      config: {
-        walletOrigin: CASHIER_WALLET_ORIGIN,
-        host: HOST_ICP,
-        // Only set derivationOrigin in production — II (https://identity.ic0.app)
-        // must be able to GET /.well-known/ii-alternative-origins from this origin
-        // to verify the relationship. That fetch is blocked by browsers when the
-        // DApp runs on HTTP (localhost), so we skip it for non-production builds.
-        derivationOrigin:
-          BUILD_TYPE === "production" ? "https://cashierapp.io" : undefined,
-      },
-    },
+    // [CASHIER_WALLET_ID]: {
+    //   id: CASHIER_WALLET_ID,
+    //   enabled: true,
+    //   adapter: CashierWalletSignerAdapter,
+    //   config: {
+    //     walletOrigin: CASHIER_WALLET_ORIGIN,
+    //     host: HOST_ICP,
+    //     // Only set derivationOrigin in production — II (https://identity.ic0.app)
+    //     // must be able to GET /.well-known/ii-alternative-origins from this origin
+    //     // to verify the relationship. That fetch is blocked by browsers when the
+    //     // DApp runs on HTTP (localhost), so we skip it for non-production builds.
+    //     derivationOrigin:
+    //       BUILD_TYPE === "production" ? "https://cashierapp.io" : undefined,
+    //   },
+    // },
   },
 };
 
@@ -311,12 +308,6 @@ export const authState = {
     if (canisterId instanceof Principal) {
       canisterId = canisterId.toText();
     }
-
-    console.warn("[authState] buildActor", {
-      canisterId,
-      walletId: walletConnect.current.id,
-      provider: pnp.provider?.constructor.name,
-    });
 
     if (
       (walletConnect.current.id === NFID_WALLET_ID ||

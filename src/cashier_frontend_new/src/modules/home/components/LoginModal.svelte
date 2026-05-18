@@ -1,14 +1,13 @@
 <script lang="ts">
-  import { toast } from "svelte-sonner";
-  import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import {
-    CASHIER_WALLET_ID,
-    II_SIGNER_WALLET_ID,
-    NFID_WALLET_ID,
-    REAL_NFID_WALLET_ID,
+      II_SIGNER_WALLET_ID,
+      NFID_WALLET_ID,
+      REAL_NFID_WALLET_ID
   } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     open: boolean;
@@ -36,7 +35,7 @@
       // Map wallet ID to adapter ID
       const adapterMap: Record<string, string> = {
         "internet-identity": II_SIGNER_WALLET_ID,
-        "cashier-wallet": CASHIER_WALLET_ID,
+        //"cashier-wallet": CASHIER_WALLET_ID,
         "nfid-wallet": NFID_WALLET_ID,
         "real-nfid-wallet": REAL_NFID_WALLET_ID,
       };
@@ -123,7 +122,7 @@
           </span>
         </button>
 
-        <button
+        <!-- <button
           type="button"
           onclick={() => handleWalletSelect("cashier-wallet")}
           disabled={isConnecting}
@@ -148,7 +147,7 @@
               ></div>
             {/if}
           </span>
-        </button>
+        </button> -->
 
         <button
           type="button"
