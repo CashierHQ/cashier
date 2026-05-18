@@ -1,0 +1,41 @@
+name: "Setup IC tooling"
+description: "Installs dfx, ic-wasm, and candid-extractor for building IC canisters."
+
+inputs:
+  ic-wasm-version:
+    description: "ic-wasm release version"
+    required: false
+    default: "0.9.8"
+  candid-extractor-version:
+    description: "candid-extractor release version"
+    required: false
+    default: "0.1.6"
+  dfx-version:
+    description: "Optional dfx version to pin (e.g. 0.29.2). Leave empty to use latest."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install dfx
+      uses: dfinity/setup-dfx@main
+      with:
+        dfx-version: ${{ inputs.dfx-version }}
+
+    - name: Confirm dfx installation
+      shell: bash
+      run: dfx --version
+
+    - name: Install ic-wasm
+      shell: bash
+      run: |
+        wget "https://github.com/dfinity/ic-wasm/releases/download/${{ inputs.ic-wasm-version }}/ic-wasm-linux64" -O /usr/local/bin/ic-wasm
+        chmod +x /usr/local/bin/ic-wasm
+
+    - name: Install candid-extractor
+      shell: bash
+      run: |
+        wget "https://github.com/dfinity/candid-extractor/releases/download/${{ inputs.candid-extractor-version }}/candid-extractor-x86_64-unknown-linux-gnu.tar.gz" -O /tmp/candid-extractor.tar.gz
+        tar -xvf /tmp/candid-extractor.tar.gz -C /usr/local/bin
+        chmod +x /usr/local/bin/candid-extractor
