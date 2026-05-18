@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ProtectedAuth from "./ProtectedAuth.svelte";
+  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
 
   let {
     requireAuth,

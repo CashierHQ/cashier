@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateRequiredAssetAmount,
   calculateMaxSendAmount,
-} from "./amountCalculator";
+} from "$modules/links/utils/amountCalculator";
 import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 
 describe("calculateRequiredAssetAmount", () => {

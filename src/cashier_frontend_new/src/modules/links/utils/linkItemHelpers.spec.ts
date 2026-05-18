@@ -6,7 +6,7 @@ import {
   getLinkTypeText,
   isSendLinkType,
   isPaymentLinkType,
-} from "./linkItemHelpers";
+} from "$modules/links/utils/linkItemHelpers";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 

@@ -3,7 +3,7 @@ import {
   convertUsdToToken,
   convertTokenToUsd,
   parseTokenAmount,
-} from "./amountConversion";
+} from "$modules/links/utils/amountConversion";
 
 describe("amountConversion", () => {
   describe("convertUsdToToken", () => {

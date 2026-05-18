@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
@@ -50,7 +50,7 @@ vi.mock("$modules/shared/services/feeService", () => ({
 
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-import { LinkTxCartStore } from "./linkTxCartStore.svelte";
+import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
 
 // Test fixtures
 function createMockAction(withIcrc112Requests = false): Action {

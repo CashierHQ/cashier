@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { SessionManager } from "./sessionManager";
+import { SessionManager } from "$modules/auth/services/sessionManager";
 
 describe("SessionManager", () => {
   let sessionManager: SessionManager;

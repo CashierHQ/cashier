@@ -1,6 +1,6 @@
 import type { Action } from "$shared";
 import { ActionState, IntentState } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Import action templates - TipLink template used for TIP_SHARED_TEST
 import { deserializeActionTemplate } from "$modules/actionTemplate/services/actionTemplateSerde";

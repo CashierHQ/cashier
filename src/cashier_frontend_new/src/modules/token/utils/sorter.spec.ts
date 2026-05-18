@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ICP_LEDGER_CANISTER_ID } from "../constants";
-import type { TokenWithPriceAndBalance } from "../types";
-import { sortWalletTokens } from "./sorter";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { sortWalletTokens } from "$modules/token/utils/sorter";
 
 describe("sortWalletTokens", () => {
   it("should sort tokens correctly", () => {

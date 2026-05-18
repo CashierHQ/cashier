@@ -4,12 +4,12 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { Principal } from "@dfinity/principal";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkCreatedState } from "./created";
+import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { LinkCreatedState } from "$modules/detailLink/state/linkDetailStates/created";
 
 const mocks = vi.hoisted(() => {
   const user_process_action_v2Mock = vi.fn();

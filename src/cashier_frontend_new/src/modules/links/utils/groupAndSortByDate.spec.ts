@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { groupAndSortByDate } from "./groupAndSortByDate";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
+import { groupAndSortByDate } from "$modules/links/utils/groupAndSortByDate";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
 // tests use plain UnifiedLinkItem objects; no CreateLinkData required
-import type { UnifiedLinkItem } from "../types/linkList";
+import type { UnifiedLinkItem } from "$modules/links/types/linkList";
 
 const makeLink = (create_at: bigint): UnifiedLinkItem => ({
   id: "id" + create_at.toString(),

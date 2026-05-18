@@ -2,12 +2,12 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
-import { ONBOARDING_DISMISSED_KEY } from "../constants";
-import { cashierBackendService } from "../services/cashierBackend";
-import { Link, LinkMapper } from "../types/link/link";
-import type { UnifiedLinkList } from "../types/linkList";
-import { UnifiedLinkItemMapper } from "../types/linkList";
-import { mapV3LinkToFrontend } from "../utils/linkV3Mapper";
+import { ONBOARDING_DISMISSED_KEY } from "$modules/links/constants";
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { Link, LinkMapper } from "$modules/links/types/link/link";
+import type { UnifiedLinkList } from "$modules/links/types/linkList";
+import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
+import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 
 /**
  * Store managing the list of links.

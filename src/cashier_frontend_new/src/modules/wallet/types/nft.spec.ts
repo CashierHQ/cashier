@@ -1,8 +1,12 @@
 import type * as icrc7Ledger from "$lib/generated/icrc7_ledger/icrc7_ledger.did";
 import type * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
-import { CollectionMetadataMapper, NFTMapper, NFTMetadataMapper } from "./nft";
+import {
+  CollectionMetadataMapper,
+  NFTMapper,
+  NFTMetadataMapper,
+} from "$modules/wallet/types/nft";
 
 describe("NFTMapper", () => {
   describe("fromTokenStorageNft", () => {

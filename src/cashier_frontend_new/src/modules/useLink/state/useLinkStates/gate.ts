@@ -1,9 +1,9 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
-import type { UserLinkStore } from "../userLinkStore.svelte";
-import { AddressLockedState } from "./addressLocked";
-import { AddressUnlockedState } from "./addressUnlocked";
-import { LandingState } from "./landing";
+import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import { AddressLockedState } from "$modules/useLink/state/useLinkStates/addressLocked";
+import { AddressUnlockedState } from "$modules/useLink/state/useLinkStates/addressUnlocked";
+import { LandingState } from "$modules/useLink/state/useLinkStates/landing";
 
 export class GateState implements UserLinkState {
   readonly step = UserLinkStep.GATE;

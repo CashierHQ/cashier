@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getValidationErrorMessage } from "./validationErrorMessage";
+import { getValidationErrorMessage } from "$modules/wallet/utils/validationErrorMessage";
 import { locale } from "$lib/i18n";
 import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 

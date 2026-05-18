@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createDeduplicationMemo32 } from "./memo32";
+import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
 
 describe("createDeduplicationMemo32", () => {
   describe("output shape", () => {

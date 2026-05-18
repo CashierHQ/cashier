@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GlobalStore } from "./storageGlobal";
+import { GlobalStore } from "$lib/managedState/storageGlobal";
 
 describe("GlobalStore", () => {
   it("should get set and remove items", () => {

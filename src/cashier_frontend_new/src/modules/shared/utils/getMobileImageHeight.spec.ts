@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { getMobileImageHeight } from "./getMobileImageHeight";
+import { getMobileImageHeight } from "$modules/shared/utils/getMobileImageHeight";
 
 describe("getMobileImageHeight", () => {
   // Helper function to mock window dimensions

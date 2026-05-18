@@ -13,7 +13,7 @@
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import { Principal } from "@dfinity/principal";
+  import { Principal } from "@icp-sdk/core/principal";
   import { toast } from "svelte-sonner";
 
   /**

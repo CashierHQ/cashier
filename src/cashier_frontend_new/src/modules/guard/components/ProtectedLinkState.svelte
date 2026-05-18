@@ -4,7 +4,7 @@
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import type { Snippet } from "svelte";
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
+  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
 
   const allStates = [
     LinkStep.CHOOSE_TYPE,

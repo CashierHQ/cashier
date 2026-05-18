@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { userLinkRepository } from "./userLinkRepository";
+import { userLinkRepository } from "$modules/useLink/repositories/userLinkRepository";
 
 // Simple localStorage mock used across tests
 const createLocalStorageMock = () => {

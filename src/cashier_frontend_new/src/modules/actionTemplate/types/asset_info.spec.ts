@@ -1,11 +1,11 @@
 import type { AssetInfo as BackendAssetInfo } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { TokenStandard, type AssetInfo as SharedAssetInfo } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 import {
   SharedAssetInfoMapper,
   type SerializedSharedAssetInfo,
-} from "./asset_info";
+} from "$modules/actionTemplate/types/asset_info";
 
 function fixture_of_shared_asset_info(
   available_amount?: bigint,

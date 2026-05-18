@@ -266,7 +266,7 @@ vi.mock("runed", () => ({
 }));
 
 // Import store after all mocks are in place
-import { bridgeStore } from "./bridgeStore.svelte";
+import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
 
 describe("BridgeStore", () => {
   beforeEach(() => {

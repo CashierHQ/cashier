@@ -19,7 +19,7 @@ import {
   ActionType as SharedActionType,
   LinkState as SharedLinkState,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 
 /**

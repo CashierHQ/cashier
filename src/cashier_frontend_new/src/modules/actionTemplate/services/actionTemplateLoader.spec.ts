@@ -1,6 +1,6 @@
 import { ActionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { ActionState, ActionType, IntentState, LinkType } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 
 const loader = new ActionTemplateLoader();

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Hoisted mock functions for vi.mock factory
 const {
@@ -34,7 +34,7 @@ vi.mock("$modules/bitcoin/constants", () => ({
 // Import after mocks
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
-import { IcrcLedgerService } from "./icrcLedger";
+import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenMetadata } from "$modules/token/types";
 
 describe("IcrcLedgerService", () => {

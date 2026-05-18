@@ -29,6 +29,7 @@ export default defineConfig([
     ignores: [
       "./.svelte-kit/**/*",
       "./build/**/*",
+      "./coverage/**/*",
       "./src/lib/generated/**/*",
       "./src/lib/paraglide/**/*",
       "./src/lib/shadcn/**/*",
@@ -53,6 +54,10 @@ export default defineConfig([
           ignoreLinks: true, // Ignore <a> tags, but still check goto(), pushState(), replaceState()
         },
       ],
+      // $bindable(default) provides a fallback when parent doesn't bind; even
+      // if a $effect overwrites it on mount, the default is part of the prop
+      // contract — not a useless assignment.
+      "no-useless-assignment": "off",
     },
   },
 ]);

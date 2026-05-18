@@ -1,5 +1,8 @@
 import { SvelteDate, SvelteMap } from "svelte/reactivity";
-import type { GroupedLink, UnifiedLinkList } from "../types/linkList";
+import type {
+  GroupedLink,
+  UnifiedLinkList,
+} from "$modules/links/types/linkList";
 
 /**
  * Pure helper that groups links by day (midnight local time) and sorts groups by descending date.

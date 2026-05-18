@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { tempLinkRepository } from "../repositories/tempLinkRepository";
-import { LinkState } from "../../links/types/link/linkState";
-import { LinkType } from "../../links/types/link/linkType";
-import { CreateLinkData } from "../types/createLinkData";
-import { TempLink } from "../../links/types/tempLink";
-import { LinkStep } from "../../links/types/linkStep";
-import { LinkCreationStore } from "./linkCreationStore.svelte";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import { TempLink } from "$modules/links/types/tempLink";
+import { LinkStep } from "$modules/links/types/linkStep";
+import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 
 // Mock localStorage
 const localStorageMock = (() => {

@@ -5,7 +5,7 @@ import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
 import type { GuardContext } from "$modules/guard/context.svelte";
-import ProtectedValidLinkTestHost from "./ProtectedValidLinkTestHost.svelte";
+import ProtectedValidLinkTestHost from "$modules/guard/components/ProtectedValidLinkTestHost.svelte";
 
 vi.mock("$app/navigation", () => ({
   goto: vi.fn(),

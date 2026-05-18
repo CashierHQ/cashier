@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NoOpsStore } from "./storageNoOps";
+import { NoOpsStore } from "$lib/managedState/storageNoOps";
 
 describe("NoOpsStore", () => {
   it("shuold get set and remove items", () => {

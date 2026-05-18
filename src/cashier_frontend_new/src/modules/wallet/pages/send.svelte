@@ -29,7 +29,7 @@
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
-  import { Principal } from "@dfinity/principal";
+  import { Principal } from "@icp-sdk/core/principal";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type {
     BridgeSource,
