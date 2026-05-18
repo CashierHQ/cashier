@@ -1,4 +1,5 @@
 import { TokenStandard } from "$modules/token/types/tokenStandard";
+import type { TokenOrigin } from "$modules/token/types/tokenOrigin";
 
 /**
  * Type definitions for token metadata
@@ -13,6 +14,7 @@ export type TokenMetadata = {
   is_default: boolean;
   indexId?: string;
   tokenStandards?: TokenStandard[];
+  origin?: TokenOrigin;
 };
 
 /**

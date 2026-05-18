@@ -17,6 +17,11 @@ import {
   loadTokenImages,
   getCachedTokenImage,
 } from "$modules/imageCache";
+import type { TokenMetadata } from "$modules/token/types";
+import {
+  isMockToken,
+  mergeMockBitcoinOriginTokens,
+} from "$modules/token/mock/mockBitcoinOriginTokens";
 
 class WalletStore {
   #walletTokensQuery;
@@ -28,11 +33,22 @@ class WalletStore {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
         // fetch list user's tokens (only enabled tokens)
-        const tokens = await tokenStorageService.listTokens();
+        const fetchedTokens = await tokenStorageService.listTokens();
+        // TODO(btc): Replace these mocked Bitcoin tokens with real data once backend is ready
+        const tokens: TokenMetadata[] =
+          mergeMockBitcoinOriginTokens(fetchedTokens);
+        const fetchedTokenAddresses = new Set(
+          fetchedTokens.map((token) => token.address),
+        );
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
-        const enabledTokens = tokens.filter((token) => token.enabled);
+        const enabledTokens = tokens.filter(
+          (token) =>
+            token.enabled &&
+            (!isMockToken(token.address) ||
+              fetchedTokenAddresses.has(token.address)),
+        );
         const balanceRequests = enabledTokens.map((token) => {
           if (token.address === ICP_LEDGER_CANISTER_ID) {
             return icpLedgerService.getBalance();
@@ -56,9 +72,15 @@ class WalletStore {
           ? tokenPriceStore.query.data
           : {};
 
-        const enrichedTokens = tokens.map((token, index) => ({
+        const balanceByAddress = new Map<string, bigint>();
+
+        enabledTokens.forEach((token, index) => {
+          balanceByAddress.set(token.address, balances[index] ?? 0n);
+        });
+
+        const enrichedTokens = tokens.map((token) => ({
           ...token,
-          balance: balances[index] ?? 0n,
+          balance: balanceByAddress.get(token.address) ?? 0n,
           priceUSD: prices[token.address] || 0,
         }));
 

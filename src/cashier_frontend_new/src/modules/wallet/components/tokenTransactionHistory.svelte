@@ -260,7 +260,7 @@
   }
 </script>
 
-<div class="space-y-4 mt-8">
+<div class="space-y-4 mt-5">
   {#if !hasIndexCanister && !isCkBtc}
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
@@ -279,7 +279,7 @@
     </p>
   {:else}
     {#each transactionsByDate as dateGroup, i (i)}
-      <div class="text-lightblack text-sm mb-4">
+      <div class="text-lightblack font-light text-sm mb-2">
         {dateGroup.date}
       </div>
 
@@ -315,21 +315,21 @@
 
               <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
                 <div class="flex justify-between items-start mb-1">
-                  <p class="text-[#222222]">
+                  <p class="text-[#222222] text-sm">
                     {tx.label}
                   </p>
-                  <p class="text-[#222222] text-right">
+                  <p class="text-[#222222] text-base text-right">
                     {tx.isOutgoing ? "-" : "+"}{tx.amount}
                   </p>
                 </div>
                 <div class="flex justify-between items-start">
-                  <p class="text-[10px]/[100%] text-grey">
+                  <p class="text-[10px]/[100%] font-light text-grey">
                     {new Date(tx.timestamp).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
-                  <p class="text-[10px]/[100%] text-grey text-right">
+                  <p class="text-[10px]/[100%] font-light text-grey text-right">
                     ${tx.usdValue.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
