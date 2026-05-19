@@ -36,7 +36,10 @@ Technically, Cashier is all about flexibly configuring and executing different t
 **Frontend:**
 
 ```bash
-# Install all workspace dependencies (run from repo root)
+# CI-equivalent install (fails on lockfile drift)
+pnpm install --frozen-lockfile
+
+# When intentionally bumping or adding deps, allow lockfile updates:
 pnpm install
 ```
 

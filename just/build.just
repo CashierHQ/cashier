@@ -38,9 +38,12 @@ generate_frontend_ts:
   just generate_frontend_ts_for_canister icp_ledger_canister
 
 
+# Install workspace deps with frozen lockfile (CI-safe default).
+# Fails fast if pnpm-lock.yaml is out of sync with package.json.
+# When intentionally bumping deps locally, run `pnpm install` directly instead.
 [private]
 install_frontend_deps:
-  pnpm install
+  pnpm install --frozen-lockfile
 
 [private]
 generate_frontend_ts_for_canister canister:
