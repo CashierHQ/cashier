@@ -1,0 +1,25 @@
+name: "Setup Rust toolchain"
+description: "Installs the stable Rust toolchain with clippy, rustfmt, and the wasm32 target."
+
+inputs:
+  targets:
+    description: "Comma-separated rustup targets"
+    required: false
+    default: "wasm32-unknown-unknown"
+  components:
+    description: "Comma-separated rustup components"
+    required: false
+    default: "clippy,rustfmt"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
+
+    - name: Configure RUST_BACKTRACE
+      shell: bash
+      run: echo "RUST_BACKTRACE=full" >> "$GITHUB_ENV"
