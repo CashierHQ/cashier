@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://github.com/dfinity/icp-cli/raw/refs/tags/v0.2.6/docs/schemas/icp-yaml-schema.json
+networks:
+  - name: local
+    mode: managed
+    nns: true
+    gateway:
+      bind: 127.0.0.1
+      port: 8000
+    artificial-delay-ms: 0
+
+environments:
+  - name: local
+    network: local
+    canisters: [cashier_backend, token_storage, gate_service, cashier_frontend_new]
+  - name: dev
+    network: ic
+    canisters: [cashier_backend, token_storage, cashier_frontend_new]
+  - name: staging
+    network: ic
+    canisters: [cashier_frontend_new]
+  - name: production
+    network: ic
+    canisters: [cashier_frontend_new]
+
+canisters:
+  - name: cashier_backend
+    recipe:
+      type: "@dfinity/prebuilt@v2.0.0"
+      configuration:
+        path: ./target/artifacts/cashier_backend.wasm.gz
+
+  - name: token_storage
+    recipe:
+      type: "@dfinity/prebuilt@v2.0.0"
+      configuration:
+        path: ./target/artifacts/token_storage.wasm.gz
+
+  - name: gate_service
+    recipe:
+      type: "@dfinity/prebuilt@v2.0.0"
+      configuration:
+        path: ./target/artifacts/gate_service.wasm.gz
+
+  - name: cashier_frontend_new
+    recipe:
+      type: "@dfinity/asset-canister@v2.1.0"
+      configuration:
+        dir: src/cashier_frontend_new/build

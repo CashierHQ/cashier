@@ -21,6 +21,17 @@ The Cashier project uses an automated CI/CD pipeline that deploys to three envir
 -   **🔧 Staging Environment**: For pre-production testing
 -   **🚀 Production Environment**: For live releases with version management
 
+### Local Development Architecture (Hybrid dfx + icp-cli)
+
+As of Phase 1, the project uses a **hybrid local development setup**:
+
+- **icp-cli** (`icp.yaml`): Manages 4 app canisters (cashier_backend, token_storage, gate_service, cashier_frontend_new) + `nns: true` local network auto-deploying ICP ledger/II at http://127.0.0.1:8000
+- **dfx** (`dfx.json`): Manages 12 ledger canisters (ckBTC, ckETH, ckUSDC, DOGE, ALICE, BOB, indices, NFT) with `--specified-id` for local fabrication
+- **Mainnet IDs** (`.icp/data/mappings/{env}.ids.json`): icp-cli reads per-environment mappings for dev/staging/production deploys
+- **dfx.json networks**: `local` bound to 127.0.0.1:8000 (PocketIC), `dev`/`staging`/`production` as stub mainnet references (orbit workflows P5-deferred use these for `dfx canister create/id --network <env>`)
+
+Both tools coexist: icp-cli is the actual deployment driver; dfx supports future orbit workflow integration.
+
 ## 🏗️ Environment Strategy
 
 ### Environment Mapping

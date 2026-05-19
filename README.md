@@ -85,6 +85,7 @@ And share the link for others to use.
 **Development & Deployment:**
 
 - **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Complete CI/CD workflow, version management, and deployment strategies
+- **[Local Development Setup](docs/LOCAL-DEVELOPMENT.md)** - Hybrid icp-cli + dfx configuration for local development (Phase 1+)
 - [Backend README](src/cashier_backend/README.md) - Backend canister documentation
 - [Frontend README](src/cashier_frontend_new/README.md) - Frontend application documentation
 - [Local Tests](src/test/local-tests/README.md) - Local testing setup and re-entrancy protection tests
