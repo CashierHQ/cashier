@@ -71,6 +71,9 @@ jobs:
           deployer_secret: ${{ secrets.DEPLOYER }}
           orbit_station_id: ${{ vars.ORBIT_STATION_ID }}
 
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
       - name: Create the canister id
         env:
           DFX_WARNING: -mainnet_plaintext_identity

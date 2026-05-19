@@ -66,6 +66,9 @@ jobs:
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-rust
 
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
       - name: Install Just command runner
         uses: extractions/setup-just@v4
 
