@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "rules": {
+    "exports": "off",
+    "types": "off"
+  },
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    "src/cashier_frontend_new": {
+      "project": ["src/**"],
+      "ignore": [
+        "src/lib/generated/**",
+        "src/lib/paraglide/**",
+        "src/lib/shadcn/**"
+      ],
+      "ignoreDependencies": [
+        "@eslint/compat",
+        "@tailwindcss/forms",
+        "@tailwindcss/typography",
+        "@vitest/coverage-v8",
+        "cross-fetch",
+        "vitest-browser-svelte"
+      ],
+      "ignoreUnresolved": ["\\$env/.+"]
+    },
+    "src/lib/cashier_shared": {
+      "entry": ["logic/**/*.ts", "scripts/**/*.ts"],
+      "project": ["**/*.ts"],
+      "ignore": ["generated/**"]
+    }
+  }
+}

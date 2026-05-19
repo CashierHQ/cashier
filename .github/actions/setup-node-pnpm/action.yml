@@ -1,0 +1,27 @@
+name: "Setup Node + pnpm"
+description: "Installs pnpm and Node.js with pnpm-store caching enabled."
+
+inputs:
+  node-version:
+    description: "Node.js version to install"
+    required: false
+    default: "22"
+  pnpm-version:
+    description: "pnpm version to install"
+    required: false
+    default: "10.6.2"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
