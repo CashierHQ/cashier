@@ -7,9 +7,9 @@
  * 2. TypeScript Logic (logic/fee-calculations.ts) → Transpiled to Rust
  *
  * Usage:
- *   npm run generate           # Generate all
- *   npm run generate:types     # Generate types only
- *   npm run generate:functions # Generate functions only
+ *   pnpm run generate           # Generate all
+ *   pnpm run generate:types     # Generate types only
+ *   pnpm run generate:functions # Generate functions only
  */
 
 import * as fs from "fs";
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
   console.log("\n━".repeat(50));
   console.log("✅ Code generation complete!\n");
   console.log("📝 To modify fee logic, edit: logic/fee-calculations.ts");
-  console.log("   Then run: npm run generate\n");
+  console.log("   Then run: pnpm run generate\n");
 }
 
 main().catch((error) => {

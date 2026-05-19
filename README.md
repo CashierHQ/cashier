@@ -55,7 +55,7 @@ just build
 # deploy backend
 just dfx_local_deploy
 # run frontend
-npm start
+just start_frontend
 # after login, airdrop token for testing
 just dfx_local_airdrop <principal id>
 ```

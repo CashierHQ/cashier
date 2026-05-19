@@ -13,7 +13,7 @@
  *
  * To add/modify fee logic:
  * 1. Edit THIS file only
- * 2. Run `npm run generate`
+ * 2. Run `pnpm run generate`
  * 3. Both TS and Rust code will be updated
  */
 

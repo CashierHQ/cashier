@@ -70,7 +70,7 @@ The transpiler automatically:
 ### To Modify Fee Logic
 
 1. Edit [`logic/fee-calculations.ts`](logic/fee-calculations.ts)
-2. Run `npm run generate`
+2. Run `pnpm run generate`
 3. Both TypeScript and Rust code are automatically updated
 
 **Important**: Keep transpiled functions simple. Avoid:
@@ -84,18 +84,17 @@ The transpiler automatically:
 ### Generate Code
 
 ```bash
-# Install dependencies
-cd src/shared
-npm install
+# Install dependencies (from repo root)
+pnpm install --frozen-lockfile
 
 # Generate all code
-npm run generate
+pnpm run generate
 
 # Generate types only
-npm run generate:types
+pnpm run generate:types
 
 # Generate functions only
-npm run generate:functions
+pnpm run generate:functions
 ```
 
 ### Use in Frontend (TypeScript/Svelte)
@@ -194,15 +193,15 @@ ICRC2 tokens require 2x inbound fee (approve + transfer_from).
 ## Adding New Types
 
 1. Add type definition to `schemas/types.schema.json`
-2. Run `npm run generate`
+2. Run `pnpm run generate`
 3. Generated code appears in `generated/ts/` and `generated/rust/`
 
 ## Adding or Modifying Fee Rules
 
 1. Edit [`logic/fee-calculations.ts`](logic/fee-calculations.ts) to modify fee calculation logic
-2. Run `npm run generate`
+2. Run `pnpm run generate`
 3. Both TypeScript and Rust code will be automatically updated
-4. Run `npm test` to verify the changes work correctly
+4. Run `pnpm test` to verify the changes work correctly
 
 **Example**: To add a new `IntentParticipants` case:
 
@@ -219,22 +218,22 @@ The transpiler will automatically convert it to Rust.
 
 ```bash
 # Run TypeScript tests (all fee calculation functions)
-npm test
+pnpm test
 
 # Watch mode for development
-npm run test:watch
+pnpm run test:watch
 
 # Validate Rust compilation (requires Rust/Cargo installed)
-npm run test:rust
+pnpm run test:rust
 
 # Run full Rust tests
-npm run test:rust:full
+pnpm run test:rust:full
 
 # Run all tests (TypeScript + Rust)
-npm run test:all
+pnpm run test:all
 
 # Clean generated files
-npm run clean
+pnpm run clean
 ```
 
 **Note**: Rust validation requires Cargo to be installed. If you don't have Rust installed locally, the generated Rust code will still be correct - it just won't be validated until deployed to the backend build environment.
