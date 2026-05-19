@@ -153,7 +153,7 @@ export class IcpLedgerService {
       to: { owner: to, subaccount: [] },
       amount,
       fee: toNullable(this.#fee),
-      memo: deduplication ? [deduplication.memo] : [],
+      memo: deduplication ? [new Uint8Array(deduplication.memo)] : [],
       from_subaccount: [],
       created_at_time: deduplication ? [deduplication.createdAtTime] : [],
     });

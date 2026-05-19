@@ -1,0 +1,540 @@
+type Action = record {
+  id : text;
+  creator : principal;
+  intents : vec Intent;
+  link_id : opt text;
+  action_type : ActionType_1;
+  action_state : IntentState_1;
+  creator_address_type : AddressType;
+  intent_ids : opt vec text;
+};
+type ActionDto = record {
+  id : text;
+  icrc_112_requests : opt vec vec Icrc112Request;
+  creator : principal;
+  intents : vec IntentDto;
+  "type" : ActionType_1;
+  state : IntentState_1;
+};
+type ActionType = variant { Withdraw; Send; CreateLink; Receive };
+type ActionType_1 = variant { Withdraw; Send; CreateLink; Receive };
+type AddressType = variant { Link; User; Treasury; Creator };
+type Asset = variant { IC : record { address : principal } };
+type AssetInfo = record {
+  asset : Asset_1;
+  label : text;
+  available_amount : opt nat;
+  amount : nat;
+};
+type AssetInfoDto = record {
+  asset : Asset;
+  amount_per_link_use_action : nat;
+  label : text;
+};
+type Asset_1 = record {
+  token_standard : opt TokenStandard;
+  address : principal;
+  network_fee : opt nat;
+};
+type BuildData = record {
+  rustc_semver : text;
+  git_branch : text;
+  pkg_version : text;
+  cargo_target_triple : text;
+  cargo_debug : text;
+  pkg_name : text;
+  cargo_features : text;
+  build_timestamp : text;
+  git_sha : text;
+  git_commit_timestamp : text;
+};
+type CanisterError = variant {
+  InvalidDataError : text;
+  InvalidStateTransition : record { to : text; from : text };
+  TransactionTimeout : text;
+  BatchError : vec CanisterError;
+  AuthError : text;
+  InvalidInput : text;
+  HandleLogicError : text;
+  ParsePrincipalError : text;
+  CandidDecodeFailed : text;
+  UnknownError : text;
+  InsufficientBalance : record { available : nat64; required : nat64 };
+  NotFound : text;
+  ValidationErrors : text;
+  ParseAccountError : text;
+  Unauthorized : text;
+  AlreadyExists : text;
+  DependencyError : text;
+  CandidError : text;
+  AnonymousCall;
+  CanisterCallError : record {
+    method : text;
+    canister_id : text;
+    message : text;
+  };
+  UnboundedError : text;
+  CallCanisterFailed : text;
+};
+type CashierBackendInitData = record {
+  token_fee_ttl_ns : opt nat64;
+  owner : principal;
+  token_storage_canister_id : principal;
+  log_settings : opt LogServiceSettings;
+  token_standard_cache_ttl_ns : opt nat64;
+};
+type Chain = variant { IC };
+type CreateActionInput = record { link_id : text; action_type : ActionType_1 };
+type CreateActionInputV3 = record { action : Action; link_id : text };
+type CreateActionResponseV3 = record {
+  action : Action;
+  link : Link;
+  icrc112_requests : opt vec vec Icrc112Request;
+};
+type CreateLinkDto = record { action : ActionDto; link : LinkDto };
+type CreateLinkInput = record {
+  title : text;
+  asset_info : vec AssetInfoDto;
+  link_type : LinkType_1;
+  link_use_action_max_count : nat64;
+};
+type CreateLinkInputV3 = record {
+  title : text;
+  action : Action;
+  link_type : LinkType_1;
+  max_use : nat64;
+};
+type CreateLinkResponseV3 = record {
+  action : Action;
+  link : Link;
+  icrc112_requests : opt vec vec Icrc112Request;
+};
+type DisableLinkResponseV3 = record { link : Link };
+type FromCallType = variant { Canister; Wallet };
+type GetLinkOptions = record { action_type : ActionType };
+type GetLinkResp = record {
+  action : opt ActionDto;
+  link_user_state : LinkUserStateDto;
+  link : LinkDto;
+};
+type GetLinkResponseV3 = record {
+  action : opt Action;
+  link_user_state : opt LinkUserState;
+  link : Link;
+  icrc112_requests : opt vec vec Icrc112Request;
+};
+type IcTransaction = variant {
+  Icrc2Approve : Icrc2Approve;
+  Icrc1Transfer : Icrc1Transfer;
+  Icrc2TransferFrom : Icrc2TransferFrom;
+};
+type Icrc112Request = record {
+  arg : blob;
+  method : text;
+  canister_id : principal;
+  nonce : opt blob;
+};
+type Icrc114ValidateArgs = record {
+  arg : blob;
+  res : blob;
+  method : text;
+  canister_id : principal;
+  nonce : opt blob;
+};
+type Icrc1Transfer = record {
+  to : Wallet;
+  ts : opt nat64;
+  asset : Asset;
+  from : Wallet;
+  memo : opt blob;
+  amount : nat;
+};
+type Icrc21ConsentInfo = record {
+  metadata : Icrc21ConsentMessageMetadata;
+  consent_message : Icrc21ConsentMessage;
+};
+type Icrc21ConsentMessage = variant {
+  LineDisplayMessage : record { pages : vec Icrc21LineDisplayPage };
+  GenericDisplayMessage : text;
+};
+type Icrc21ConsentMessageMetadata = record {
+  utc_offset_minutes : opt int16;
+  language : text;
+};
+type Icrc21ConsentMessageRequest = record {
+  arg : blob;
+  method : text;
+  user_preferences : Icrc21ConsentMessageSpec;
+};
+type Icrc21ConsentMessageSpec = record {
+  metadata : Icrc21ConsentMessageMetadata;
+  device_spec : opt Icrc21DeviceSpec;
+};
+type Icrc21DeviceSpec = variant {
+  GenericDisplay;
+  LineDisplay : record { characters_per_line : nat16; lines_per_page : nat16 };
+};
+type Icrc21Error = variant {
+  GenericError : record { description : text; error_code : nat };
+  InsufficientPayment : Icrc21ErrorInfo;
+  UnsupportedCanisterCall : Icrc21ErrorInfo;
+  ConsentMessageUnavailable : Icrc21ErrorInfo;
+};
+type Icrc21ErrorInfo = record { description : text };
+type Icrc21LineDisplayPage = record { lines : vec text };
+type Icrc21SupportedStandard = record { url : text; name : text };
+type Icrc28TrustedOriginsResponse = record { trusted_origins : vec text };
+type Icrc2Approve = record {
+  ts : opt nat64;
+  asset : Asset;
+  from : Wallet;
+  memo : opt blob;
+  amount : nat;
+  spender : Wallet;
+};
+type Icrc2TransferFrom = record {
+  to : Wallet;
+  ts : opt nat64;
+  asset : Asset;
+  from : Wallet;
+  memo : opt blob;
+  amount : nat;
+  spender : Wallet;
+};
+type Intent = record {
+  id : text;
+  action_id : opt text;
+  user_fee : opt nat;
+  total_amount : opt nat;
+  asset : Asset_1;
+  dest_address_type : AddressType;
+  dest_address : principal;
+  source_address : principal;
+  intent_state : IntentState_1;
+  source_address_type : AddressType;
+  dependencies : opt vec text;
+  amount : nat;
+  network_fee : opt nat;
+  intent_type : IntentType_1;
+};
+type IntentDto = record {
+  id : text;
+  chain : Chain;
+  task : IntentTask;
+  "type" : IntentType;
+  created_at : nat64;
+  state : IntentState_1;
+  transactions : vec TransactionDto;
+};
+type IntentState = variant { Fail; Success; Processing; Created };
+type IntentState_1 = variant { Fail; Success; Processing; Created };
+type IntentTask = variant {
+  TransferWalletToLink;
+  TransferLinkToWallet;
+  TransferWalletToTreasury;
+};
+type IntentType = variant {
+  Transfer : TransferData;
+  TransferFrom : TransferFromData;
+};
+type IntentType_1 = variant { Send; Receive };
+type Link = record {
+  id : text;
+  title : text;
+  creator : principal;
+  asset_info : vec AssetInfo;
+  link_state : LinkState_1;
+  link_type : LinkType_1;
+  created_at : opt nat64;
+  use_count : nat64;
+  max_use : nat64;
+};
+type LinkDto = record {
+  id : text;
+  title : text;
+  creator : principal;
+  asset_info : vec AssetInfoDto;
+  link_type : LinkType_1;
+  create_at : nat64;
+  state : LinkState;
+  link_use_action_max_count : nat64;
+  link_use_action_counter : nat64;
+};
+type LinkState = variant { Inactive; Active; CreateLink; InactiveEnded };
+type LinkState_1 = variant {
+  Ended;
+  Preview;
+  ChooseType;
+  Inactive;
+  Active;
+  AddAsset;
+  Created;
+};
+type LinkType = variant {
+  SendAirdrop;
+  SendTip;
+  ReceivePayment;
+  SendTokenBasket;
+};
+type LinkType_1 = variant {
+  SendAirdrop;
+  SendTip;
+  ReceivePayment;
+  SendTokenBasket;
+};
+type LinkUserState = variant { Address; GateClosed; GateOpened; Completed };
+type LinkUserStateDto = record {
+  link_id : text;
+  user_id : principal;
+  state : opt LinkUserState;
+};
+type LogServiceSettings = record {
+  log_filter : opt text;
+  in_memory_records : opt nat64;
+  enable_console : opt bool;
+  max_record_length : opt nat64;
+};
+type PaginateInput = record { offset : nat64; limit : nat64 };
+type PaginateResult = record {
+  metadata : PaginateResultMetadata;
+  data : vec LinkDto;
+};
+type PaginateResultMetadata = record {
+  is_next : bool;
+  is_prev : bool;
+  total : nat64;
+  offset : nat64;
+  limit : nat64;
+};
+type PaginateResult_1 = record {
+  metadata : PaginateResultMetadata;
+  data : vec Link;
+};
+type Permission = variant { Admin };
+type ProcessActionDto = record {
+  action : ActionDto;
+  link : LinkDto;
+  errors : vec text;
+  is_success : bool;
+};
+type ProcessActionResponseV3 = record {
+  action : Action;
+  link : Link;
+  errors : vec text;
+  is_success : bool;
+  icrc112_requests : opt vec vec Icrc112Request;
+};
+type ProcessActionV2Input = record { action_id : text };
+type Protocol = variant { IC : IcTransaction };
+type Result = variant { Ok; Err : CanisterError };
+type Result_1 = variant { Ok : vec Permission; Err : CanisterError };
+type Result_10 = variant { Ok : DisableLinkResponseV3; Err : CanisterError };
+type Result_11 = variant { Ok : PaginateResult; Err : CanisterError };
+type Result_12 = variant { Ok : PaginateResult_1; Err : CanisterError };
+type Result_13 = variant { Ok : ProcessActionDto; Err : CanisterError };
+type Result_14 = variant { Ok : ProcessActionResponseV3; Err : CanisterError };
+type Result_2 = variant { Ok : GetLinkResp; Err : CanisterError };
+type Result_3 = variant { Ok : GetLinkResponseV3; Err : CanisterError };
+type Result_4 = variant { Ok : Icrc21ConsentInfo; Err : Icrc21Error };
+type Result_5 = variant { Ok : ActionDto; Err : CanisterError };
+type Result_6 = variant { Ok : CreateActionResponseV3; Err : CanisterError };
+type Result_7 = variant { Ok : CreateLinkDto; Err : CanisterError };
+type Result_8 = variant { Ok : CreateLinkResponseV3; Err : CanisterError };
+type Result_9 = variant { Ok : LinkDto; Err : CanisterError };
+type TokenStandard = variant { ICRC1; ICRC2 };
+type TransactionDto = record {
+  id : text;
+  protocol : Protocol;
+  from_call_type : FromCallType;
+  created_at : nat64;
+  state : IntentState_1;
+  dependency : opt vec text;
+  group : nat16;
+};
+type TransferData = record {
+  to : Wallet;
+  asset : Asset;
+  from : Wallet;
+  amount : nat;
+};
+type TransferFromData = record {
+  to : Wallet;
+  asset : Asset;
+  from : Wallet;
+  actual_amount : opt nat;
+  amount : nat;
+  approve_amount : opt nat;
+  spender : Wallet;
+};
+type Wallet = variant {
+  IC : record { subaccount : opt blob; address : principal };
+};
+service : (CashierBackendInitData) -> {
+  // Clears all cached token fees from the service.
+  // 
+  // This admin endpoint invalidates all cached token transfer fees, forcing
+  // subsequent fee queries to fetch fresh data from their respective token canisters.
+  // Useful for cache invalidation when fee structures change or for testing purposes.
+  // 
+  // # Authorization
+  // 
+  // Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
+  // 
+  // # Returns
+  // 
+  // Returns `Ok(())` on successful cache clearance.
+  // 
+  // # Errors
+  // 
+  // Currently always returns `Ok(())` after clearing the cache.
+  admin_fee_cache_clear : () -> (Result);
+  // Clears the cached fee for a specific token.
+  // 
+  // This admin endpoint invalidates the cached transfer fee for a single token,
+  // forcing the next fee query for that token to fetch fresh data from its canister.
+  // Useful when a specific token's fee structure changes without affecting other tokens.
+  // 
+  // # Arguments
+  // 
+  // * `token_id` - The `Principal` of the token canister whose cached fee should be cleared
+  // 
+  // # Authorization
+  // 
+  // Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
+  // 
+  // # Returns
+  // 
+  // Returns `Ok(())` on successful cache clearance for the specified token.
+  // 
+  // # Errors
+  // 
+  // Currently always returns `Ok(())` after clearing the token's cached fee.
+  admin_fee_cache_clear_token : (principal) -> (Result);
+  // Flushes the token standard cache.
+  // This admin endpoint clears all cached token standard information, forcing subsequent queries
+  // to fetch fresh data from the token storage canister.
+  admin_flush_token_standard_cache : () -> (Result);
+  // Enables/disables the inspect message.
+  admin_inspect_message_enable : (bool) -> (Result);
+  // Adds permissions to a principal and returns the principal permissions.
+  admin_permissions_add : (principal, vec Permission) -> (Result_1);
+  // Returns the permissions of a principal.
+  admin_permissions_get : (principal) -> (vec Permission) query;
+  // Removes permissions from a principal and returns the principal permissions.
+  admin_permissions_remove : (principal, vec Permission) -> (Result_1);
+  // Returns the build data of the canister.
+  get_canister_build_data : () -> (BuildData) query;
+  // Retrieves a specific link by its ID with optional action data.
+  // 
+  // This endpoint is accessible to both anonymous and authenticated users. The response
+  // includes the link details and optionally associated action data based on the caller's
+  // permissions and the requested action type.
+  // 
+  // # Arguments
+  // * `link_id` - The unique identifier of the link to retrieve
+  // * `options` - Optional parameters including action type to include in response
+  // 
+  // # Returns
+  // * `Ok(LinkDto)` - Link data
+  // * `Err(String)` - Error message if link not found or access denied
+  get_link_details_v2 : (text, opt GetLinkOptions) -> (Result_2) query;
+  // Retrieves a specific link by its ID with optional action data.
+  // # Arguments
+  // * `link_id` - The unique identifier of the link to retrieve
+  // * `options` - Optional parameters including action type to include in response
+  // # Returns
+  // * `Ok(GetLinkResponseV3)` - Link data
+  // * `Err(String)` - Error message if link not found or access denied
+  get_link_details_v3 : (text, opt GetLinkOptions) -> (Result_3) query;
+  icrc10_supported_standards : () -> (vec Icrc21SupportedStandard) query;
+  icrc114_validate : (Icrc114ValidateArgs) -> (bool);
+  icrc21_canister_call_consent_message : (Icrc21ConsentMessageRequest) -> (
+      Result_4,
+    );
+  icrc28_trusted_origins : () -> (Icrc28TrustedOriginsResponse);
+  // Returns the inspect message status.
+  is_inspect_message_enabled : () -> (bool) query;
+  // Creates a new action V2.
+  // # Arguments
+  // * `input` - Action creation data
+  // # Returns
+  // * `Ok(ActionDto)` - The created action data
+  // * `Err(CanisterError)` - If action creation fails or validation errors occur
+  user_create_action_v2 : (CreateActionInput) -> (Result_5);
+  // Creates a new action V3.
+  // # Arguments
+  // * `input` - Action creation data
+  // # Returns
+  // * `Ok(CreateActionResponse)` - The created action data
+  // * `Err(CanisterError)` - If action creation fails or validation errors occur
+  user_create_action_v3 : (CreateActionInputV3) -> (Result_6);
+  // Creates a new link V2
+  // # Arguments
+  // * `input` - Link creation data
+  // # Returns
+  // * `Ok(CreateLinkDto)` - The created link data
+  // * `Err(CanisterError)` - If link creation fails or validation errors occur
+  user_create_link_v2 : (CreateLinkInput) -> (Result_7);
+  // Creates a new link V3
+  // # Arguments
+  // * `input` - Link creation data
+  // # Returns
+  // * `Ok(CreateLinkResponseV3)` - The created link data
+  // * `Err(CanisterError)` - If link creation fails or validation errors occur
+  user_create_link_v3 : (CreateLinkInputV3) -> (Result_8);
+  // Disables an existing link V2
+  // # Arguments
+  // * `link_id` - The ID of the link to disable
+  // # Returns
+  // * `Ok(LinkDto)` - The disabled link data
+  // * `Err(CanisterError)` - If disabling fails or unauthorized
+  user_disable_link_v2 : (text) -> (Result_9);
+  // Disables a link by its ID
+  // # Arguments
+  // * `link_id` - The unique identifier of the link to disable
+  // # Returns
+  // * `Ok(DisableLinkResponseV3)` - Confirmation of link being disabled
+  // * `Err(String)` - Error message if link not found, access denied, or already disabled
+  user_disable_link_v3 : (text) -> (Result_10);
+  // Retrieves a paginated list of links created by the authenticated caller.
+  // 
+  // This endpoint requires the caller to be authenticated (non-anonymous) and returns
+  // only the links that were created by the calling principal.
+  // 
+  // # Arguments
+  // * `input` - Optional pagination parameters (page size, offset, etc.)
+  // 
+  // # Returns
+  // * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+  // * `Err(CanisterError)` - Error message if retrieval fails
+  user_get_links_v2 : (opt PaginateInput) -> (Result_11) query;
+  // Retrieves a paginated list of links for the caller.
+  // # Arguments
+  // * `input` - Optional pagination parameters
+  // # Returns
+  // * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
+  // * `Err(CanisterError)` - If retrieval fails or validation errors occur
+  user_get_links_v3 : (opt PaginateInput) -> (Result_12) query;
+  // Processes a created action V2.
+  // # Arguments
+  // * `input` - Action processing data
+  // # Returns
+  // * `Ok(ProcessActionDto)` - The processed action data
+  // * `Err(CanisterError)` - If action processing fails or validation errors occur
+  user_process_action_v2 : (ProcessActionV2Input) -> (Result_13);
+  // Processes a created action V3.
+  // # Arguments
+  // * `input` - Action processing data
+  // # Returns
+  // * `Ok(ProcessActionResponseV3)` - The processed action data
+  // * `Err(CanisterError)` - If action processing fails or validation errors occur
+  user_process_action_v3 : (ProcessActionV2Input) -> (Result_14);
+  // Syncs the asset balance cache for a link by querying actual token balances.
+  // Only the link creator can trigger this.
+  // # Arguments
+  // * `link_id` - The unique identifier of the link
+  // # Returns
+  // * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
+  // * `Err(CanisterError)` - If link not found, access denied, or balance fetch fails
+  user_sync_asset_balance_cache : (text) -> (Result_10);
+}

@@ -1,0 +1,288 @@
+type AddTokenInput = record { token_id : TokenId; index_id : opt text };
+type AddTokensInput = record { token_ids : vec TokenId };
+type AddUserNftInput = record { nft : Nft };
+type BlockConfirmation = record { block_id : nat64; block_timestamp : nat64 };
+type BridgeAssetInfo = record {
+  decimals : nat8;
+  asset_type : BridgeAssetType;
+  asset_id : text;
+  amount : nat;
+};
+type BridgeAssetType = variant { BTC; Runes; Ordinals };
+type BridgeTransactionStatus = variant { Failed; Created; Completed; Pending };
+type BridgeType = variant { Import; Export };
+type BuildData = record {
+  rustc_semver : text;
+  git_branch : text;
+  pkg_version : text;
+  cargo_target_triple : text;
+  cargo_debug : text;
+  pkg_name : text;
+  cargo_features : text;
+  build_timestamp : text;
+  git_sha : text;
+  git_commit_timestamp : text;
+};
+type CanisterError = variant {
+  InvalidDataError : text;
+  InvalidStateTransition : record { to : text; from : text };
+  TransactionTimeout : text;
+  BatchError : vec CanisterError;
+  AuthError : text;
+  InvalidInput : text;
+  HandleLogicError : text;
+  ParsePrincipalError : text;
+  CandidDecodeFailed : text;
+  UnknownError : text;
+  InsufficientBalance : record { available : nat64; required : nat64 };
+  NotFound : text;
+  ValidationErrors : text;
+  ParseAccountError : text;
+  Unauthorized : text;
+  AlreadyExists : text;
+  DependencyError : text;
+  CandidError : text;
+  AnonymousCall;
+  StorageError : text;
+  CanisterCallError : record {
+    method : text;
+    canister_id : text;
+    message : text;
+  };
+  UnboundedError : text;
+  CallCanisterFailed : text;
+};
+type Chain = variant { IC };
+type ChainTokenDetails = variant {
+  IC : record {
+    fee : nat;
+    ledger_id : principal;
+    index_id : opt principal;
+    supported_standards : vec IcrcStandard;
+  };
+};
+type CreateBridgeTransactionInputArg = record {
+  status : opt BridgeTransactionStatus;
+  asset_infos : vec BridgeAssetInfo;
+  btc_txid : opt text;
+  icp_address : principal;
+  created_at_ts : nat64;
+  withdrawal_fee : opt nat;
+  btc_fee : opt nat;
+  ckbtc_block_id : opt nat64;
+  btc_address : text;
+  bridge_type : BridgeType;
+  deposit_fee : opt nat;
+};
+type GetUserBridgeTransactionsInputArg = record {
+  status : opt BridgeTransactionStatus;
+  limit : opt nat32;
+  start : opt nat32;
+  bridge_type : opt BridgeType;
+};
+type GetUserNftInput = record { limit : opt nat32; start : opt nat32 };
+type IcrcStandard = variant { ICRC1; ICRC2; ICRC3 };
+type LogServiceSettings = record {
+  log_filter : opt text;
+  in_memory_records : opt nat64;
+  enable_console : opt bool;
+  max_record_length : opt nat64;
+};
+type Nft = record { token_id : nat; collection_id : principal };
+type Permission = variant { TokenManager; Admin };
+type RegistryStats = record {
+  total_enabled_default : nat64;
+  total_tokens : nat64;
+};
+type RegistryToken = record {
+  decimals : nat8;
+  name : text;
+  enabled_by_default : bool;
+  details : ChainTokenDetails;
+  symbol : text;
+};
+type Result = variant { Ok : RegistryStats; Err : text };
+type Result_1 = variant { Ok : vec record { TokenId; nat }; Err : text };
+type Result_10 = variant { Ok : text; Err : CanisterError };
+type Result_2 = variant { Ok : UserTokens; Err : text };
+type Result_3 = variant { Ok; Err : text };
+type Result_4 = variant { Ok; Err : CanisterError };
+type Result_5 = variant { Ok : TokenListResponse; Err : text };
+type Result_6 = variant { Ok : vec Permission; Err : CanisterError };
+type Result_7 = variant { Ok : TokenDto; Err : text };
+type Result_8 = variant { Ok : UserNftDto; Err : CanisterError };
+type Result_9 = variant { Ok : UserBridgeTransactionDto; Err : CanisterError };
+type TokenDto = record {
+  id : TokenId;
+  decimals : nat8;
+  balance : opt nat;
+  chain : Chain;
+  name : text;
+  is_default : bool;
+  enabled : bool;
+  details : ChainTokenDetails;
+  string_id : text;
+  symbol : text;
+};
+type TokenId = variant { IC : record { ledger_id : principal } };
+type TokenListResponse = record {
+  need_update_version : bool;
+  tokens : vec TokenDto;
+  perference : opt UserPreference;
+};
+type TokenRegistryMetadata = record { last_updated : nat64; version : nat64 };
+type TokenStorageInitData = record {
+  owner : principal;
+  tokens : opt vec RegistryToken;
+  ckbtc_minter_id : principal;
+  log_settings : opt LogServiceSettings;
+};
+type UpdateBridgeTransactionInputArg = record {
+  retry_times : opt nat8;
+  status : opt BridgeTransactionStatus;
+  block_confirmations : opt vec BlockConfirmation;
+  block_id : opt nat64;
+  btc_txid : opt text;
+  withdrawal_fee : opt nat;
+  btc_fee : opt nat;
+  block_timestamp : opt nat64;
+  ckbtc_block_id : opt nat64;
+  bridge_id : text;
+  deposit_fee : opt nat;
+};
+type UpdateTokenBalanceInput = record { balance : nat; token_id : TokenId };
+type UpdateTokenInput = record { token_id : TokenId; is_enabled : bool };
+type UpdateTokenStandardsInput = record {
+  token_id : TokenId;
+  supported_standards : vec IcrcStandard;
+};
+type UserBridgeTransactionDto = record {
+  retry_times : nat8;
+  status : BridgeTransactionStatus;
+  block_confirmations : vec BlockConfirmation;
+  block_id : opt nat64;
+  asset_infos : vec BridgeAssetInfo;
+  total_amount : opt nat;
+  btc_txid : opt text;
+  icp_address : principal;
+  created_at_ts : nat64;
+  withdrawal_fee : opt nat;
+  btc_fee : opt nat;
+  block_timestamp : opt nat64;
+  ckbtc_block_id : opt nat64;
+  bridge_id : text;
+  btc_address : text;
+  bridge_type : BridgeType;
+  deposit_fee : opt nat;
+};
+type UserNftDto = record { nft : Nft; user : principal };
+type UserPreference = record {
+  hide_zero_balance : bool;
+  selected_chain : vec Chain;
+  hide_unknown_token : bool;
+};
+type UserTokens = record {
+  registry_tokens : nat64;
+  version : nat64;
+  enabled : nat64;
+};
+service : (TokenStorageInitData) -> {
+  // Gets the full metadata of the token registry
+  // Includes version number and last updated timestamp
+  admin_get_registry_metadata : () -> (TokenRegistryMetadata) query;
+  admin_get_registry_tokens : (bool) -> (vec TokenDto) query;
+  admin_get_stats : () -> (Result) query;
+  admin_get_user_balance : (principal) -> (Result_1) query;
+  admin_get_user_tokens : (principal) -> (Result_2) query;
+  admin_initialize_registry : () -> (Result_3);
+  // Enables/disables the inspect message.
+  admin_inspect_message_enable : (bool) -> (Result_4);
+  admin_list_tokens_by_wallet : (principal) -> (Result_5) query;
+  // Adds permissions to a principal and returns the principal permissions.
+  admin_permissions_add : (principal, vec Permission) -> (Result_6);
+  // Returns the permissions of a principal.
+  admin_permissions_get : (principal) -> (vec Permission) query;
+  // Removes permissions from a principal and returns the principal permissions.
+  admin_permissions_remove : (principal, vec Permission) -> (Result_6);
+  // Returns the build data of the canister.
+  get_canister_build_data : () -> (BuildData) query;
+  // Get token from registry by token id
+  // # Arguments
+  // * `ledger_id` - The principal ID of the ledger associated with the token
+  // # Returns
+  // * Ok(TokenDto) - The token details if found
+  // * Err(String) - An error message if the token is not found
+  get_token_by_id : (principal) -> (Result_7) query;
+  // Returns the inspect message status.
+  is_inspect_message_enabled : () -> (bool) query;
+  // Lists the tokens in the registry for the caller
+  list_tokens : () -> (Result_5) query;
+  // Override for a token's supported standards
+  token_manager_update_token_standards : (UpdateTokenStandardsInput) -> (
+      Result_3,
+    );
+  // Adds a new NFT to the user's collection
+  // # Arguments
+  // * `input` - The input containing the NFT to be added
+  // # Returns
+  // * `UserNftDto` - The added NFT with user information
+  user_add_nft : (AddUserNftInput) -> (Result_8);
+  user_add_token : (AddTokenInput) -> (Result_3);
+  // Add multiple tokens to the user's list
+  // 
+  // ToDo: this function is not atomic can leave the state in an inconsistent state
+  user_add_token_batch : (AddTokensInput) -> (Result_3);
+  // Creates a new bridge transaction for the calling user
+  // # Arguments
+  // * `input` - The input data for creating the bridge transaction
+  // # Returns
+  // * `Ok(UserBridgeTransactionDto)` - The created bridge transaction if successful
+  // * `Err(CanisterError)` - An error if the transaction creation fails
+  user_create_bridge_transaction : (CreateBridgeTransactionInputArg) -> (
+      Result_9,
+    );
+  // Retrieves a specific bridge transaction by its ID for the calling user
+  // # Arguments
+  // * `bridge_id` - The ID of the bridge transaction to retrieve
+  // # Returns
+  // * `Option<UserBridgeTransactionDto>` - The bridge transaction if found, or None if not found
+  user_get_bridge_transaction_by_id : (text) -> (
+      opt UserBridgeTransactionDto,
+    ) query;
+  // Retrieves the list of bridge transactions for the calling user
+  // # Arguments
+  // * `start` - Optional start index for pagination
+  // * `limit` - Optional limit for pagination
+  // # Returns
+  // * `Vec<UserBridgeTransactionDto>` - List of bridge transactions owned by the user
+  user_get_bridge_transactions : (GetUserBridgeTransactionsInputArg) -> (
+      vec UserBridgeTransactionDto,
+    ) query;
+  // Retrieves the BTC address associated with the calling user
+  // # Returns
+  // * `String` - The BTC address of the user, or a CanisterError
+  user_get_btc_address : () -> (Result_10);
+  // Retrieves the NFTs owned by the calling user
+  // # Arguments
+  // * `input` - The input containing pagination parameters
+  // # Returns
+  // * `Vec<NftDto>` - List of NFTs owned by the user
+  user_get_nfts : (GetUserNftInput) -> (vec Nft) query;
+  user_sync_token_list : () -> (Result_3);
+  // Updates an existing bridge transaction for the calling user
+  // # Arguments
+  // * `input` - The input data for updating the bridge transaction
+  // # Returns
+  // * `Ok(UserBridgeTransactionDto)` - The updated bridge transaction if successful
+  // * `Err(CanisterError)` - An error if the transaction update fails
+  user_update_bridge_transaction : (UpdateBridgeTransactionInputArg) -> (
+      Result_9,
+    );
+  user_update_token_balance : (vec UpdateTokenBalanceInput) -> (Result_3);
+  user_update_token_enable : (UpdateTokenInput) -> (Result_3);
+  user_update_token_registry : (AddTokenInput) -> (Result_3);
+  // Update the metadata for multiple tokens
+  // 
+  // ToDo: this function is not atomic can leave the state in an inconsistent state
+  user_update_token_registry_batch : (AddTokensInput) -> (Result_3);
+}

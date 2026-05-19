@@ -11,9 +11,12 @@ clean:
   rm -rf ./node_modules
 
 
-# Builds and download all artifacts
+# Builds and download all artifacts.
+# Note: TS bindings for the frontend are generated automatically by the
+# @icp-sdk/bindgen Vite plugin during `build_frontend` (see src/cashier_frontend_new/vite.config.ts).
+# Pre-build refreshes the .did source files under src/cashier_frontend_new/src/lib/generated/.did/.
 [group('build')]
-build mode="local_dev": download_artifacts build_canisters generate_frontend_ts 
+build mode="local_dev": download_artifacts build_canisters sync_frontend_did_files
   just build_frontend {{mode}}
 
 
@@ -30,13 +33,17 @@ build_canisters: pre_build
 build_frontend mode="local_dev": install_frontend_deps
   pnpm --filter cashier_frontend_new build:{{mode}}
 
-# Generates the ts files for the canister services 
-[group('build')]
-generate_frontend_ts:
-  just generate_frontend_ts_for_canister cashier_backend
-  just generate_frontend_ts_for_canister token_storage
-  just generate_frontend_ts_for_canister icp_ledger_canister
-
+# Sync .did files used as bindgen plugin input.
+# Source of truth: target/artifacts/ (refreshed by build_canisters + download_artifacts).
+[private]
+sync_frontend_did_files:
+  #!/usr/bin/env bash
+  set -e
+  DID_DIR="{{FRONTEND_DIR_NEW}}/src/lib/generated/.did"
+  mkdir -p "$DID_DIR"
+  cp {{ARTIFACTS_DIR}}/cashier_backend.did "$DID_DIR/cashier_backend.did"
+  cp {{ARTIFACTS_DIR}}/token_storage.did "$DID_DIR/token_storage.did"
+  cp {{ARTIFACTS_DIR}}/ledger-suite-icp.did "$DID_DIR/icp_ledger_canister.did"
 
 # Install workspace deps with frozen lockfile (CI-safe default).
 # Fails fast if pnpm-lock.yaml is out of sync with package.json.
@@ -44,16 +51,6 @@ generate_frontend_ts:
 [private]
 install_frontend_deps:
   pnpm install --frozen-lockfile
-
-[private]
-generate_frontend_ts_for_canister canister:
-  # Files are generated into ./src/declarations
-  dfx generate {{canister}}
-  rm src/declarations/{{canister}}/{{canister}}.did
-  rm src/declarations/{{canister}}/index.d.ts
-  rm src/declarations/{{canister}}/index.js
-  cp -r src/declarations/* {{FRONTEND_DIR_NEW}}/src/lib/generated
-  rm -rf src/declarations
 
 
 # Download third party artifacts

@@ -7,7 +7,7 @@ describe("Icrc112Request.fromBackendType", () => {
   it("parses arg and nonce arrays", () => {
     const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
     const backend: BackendIcrc112Request = {
-      arg: [1, 2, 3],
+      arg: new Uint8Array([1, 2, 3]),
       method: "m",
       canister_id: p,
       nonce: [new Uint8Array([7, 8])],

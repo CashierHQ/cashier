@@ -12,7 +12,7 @@ describe("Action.fromBackendType", () => {
     const principal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
     const backendIcrc: BackendIcrc112Request = {
-      arg: [1, 2, 3],
+      arg: new Uint8Array([1, 2, 3]),
       method: "transfer",
       canister_id: principal,
       nonce: [new Uint8Array([9, 9])],
