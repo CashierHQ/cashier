@@ -15,6 +15,7 @@ import {
   II_SIGNER_WALLET_ID,
   NFID_WALLET_ID,
   NFID_WALLET_ORIGIN,
+  OISY_WALLET_ID,
   REAL_NFID_WALLET_ID,
   REAL_NFID_WALLET_ORIGIN,
 } from "$modules/shared/constants";
@@ -102,6 +103,18 @@ const CONFIG: CreatePnpArgs = {
         walletUrl: `${REAL_NFID_WALLET_ORIGIN}/rpc`,
         host: HOST_ICP,
         targets: TARGETS,
+        derivationOrigin:
+          BUILD_TYPE === "production"
+            ? "https://cashierapp.io"
+            : typeof window !== "undefined"
+              ? window.location.origin
+              : undefined,
+      },
+    },
+    [OISY_WALLET_ID]: {
+      id: OISY_WALLET_ID,
+      enabled: true,
+      config: {
         derivationOrigin:
           BUILD_TYPE === "production"
             ? "https://cashierapp.io"

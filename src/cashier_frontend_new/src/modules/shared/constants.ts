@@ -48,6 +48,9 @@ export const USD_DISPLAY_DECIMALS = 6;
 
 export const II_SIGNER_WALLET_ID = "iiSigner";
 
+/** PNP built-in adapter ID for OISY Wallet. */
+export const OISY_WALLET_ID = "oisy";
+
 /** PNP adapter ID for the Cashier Wallet (ICRC-29 iframe wallet). */
 export const CASHIER_WALLET_ID = "cashier";
 
