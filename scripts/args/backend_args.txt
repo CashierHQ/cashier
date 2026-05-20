@@ -1,9 +1,0 @@
-(record {
-  log_settings=opt record {
-    enable_console=opt true;
-    in_memory_records=opt 10000;
-    log_filter=opt "global,cashier=debug,token_storage=debug";
-  };
-  owner=principal "olxba-3ly3s-io2tg-65a6t-u4giv-743hh-xvgtn-hsqrc-xpak7-tycfo-rae";
-  token_storage_canister_id=principal "rpfmw-oqaaa-aaaao-a5uaa-cai";
-})
