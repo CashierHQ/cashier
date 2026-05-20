@@ -3,6 +3,7 @@ networks:
   - name: local
     mode: managed
     nns: true
+    ii: true 
     gateway:
       bind: 127.0.0.1
       port: 8000

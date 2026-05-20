@@ -2,6 +2,7 @@
 import "./just/build.just"
 import "./just/code_check.just"
 import "./just/dfx.just"
+import "./just/icp.just"
 import "./just/run.just"
 import "./just/test.just"
 import "./just/orbit.just"

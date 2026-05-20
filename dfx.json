@@ -1,5 +1,4 @@
 {
-  "_comment": "HYBRID CONFIG. Local ledger fabrication uses --specified-id (icp-cli has no equivalent in v0.2.6). App canisters live in icp.yaml for icp-cli deploys; mirrored here for dfx-orbit mainnet workflows (orbit-*.yml) which are deferred to P5.",
   "canisters": {
     "cashier_backend": {
       "type": "custom",
