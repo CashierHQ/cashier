@@ -1,7 +1,7 @@
-import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import type { _SERVICE } from "$lib/generated/cashier_backend/cashier_backend.did";
+import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
+import { callCanisterViaIcrc49Raw } from "$modules/auth/services/icrc49";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { callCanisterViaIcrc49Raw } from "$modules/auth/signer/icrc49";
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import type {
@@ -45,7 +45,10 @@ function isIcrcLedgerMethod(method: string): boolean {
   );
 }
 
-function debugIcrc112(message: string, details?: Record<string, unknown>): void {
+function debugIcrc112(
+  message: string,
+  details?: Record<string, unknown>,
+): void {
   // eslint-disable-next-line no-console
   console.debug(`[ICRC-112] ${message}`, details ?? "");
 }
@@ -291,9 +294,12 @@ class Icrc112Service<T extends Transport> {
             replyArg,
           );
           if (ledgerStatus === "success") {
-            debugIcrc112("skipping backend ICRC-114 validation for ledger call", {
-              ...requestLabel,
-            });
+            debugIcrc112(
+              "skipping backend ICRC-114 validation for ledger call",
+              {
+                ...requestLabel,
+              },
+            );
             continue;
           }
           if (ledgerStatus === "error") {
@@ -304,7 +310,10 @@ class Icrc112Service<T extends Transport> {
             continue;
           }
 
-          debugIcrc112("validating fallback request with ICRC-114", requestLabel);
+          debugIcrc112(
+            "validating fallback request with ICRC-114",
+            requestLabel,
+          );
           const isValid = await this.validateIcrc114(
             cashierBackendCanisterId,
             request,

@@ -2,10 +2,9 @@
   import { locale } from "$lib/i18n";
   import { authState } from "$modules/auth/state/auth.svelte";
   import {
+      CASHIER_WALLET_ID,
       II_SIGNER_WALLET_ID,
-      NFID_WALLET_ID,
-      OISY_WALLET_ID,
-      REAL_NFID_WALLET_ID,
+      REAL_NFID_WALLET_ID
   } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -36,10 +35,8 @@
       // Map wallet ID to adapter ID
       const adapterMap: Record<string, string> = {
         "internet-identity": II_SIGNER_WALLET_ID,
-        //"cashier-wallet": CASHIER_WALLET_ID,
-        "nfid-wallet": NFID_WALLET_ID,
+        "cashier-wallet": CASHIER_WALLET_ID,
         "real-nfid-wallet": REAL_NFID_WALLET_ID,
-        "oisy-wallet": OISY_WALLET_ID,
       };
       const adapterId = adapterMap[walletId] ?? walletId;
 
@@ -126,7 +123,7 @@
 
         <button
           type="button"
-          onclick={() => handleWalletSelect("nfid-wallet")}
+          onclick={() => handleWalletSelect("cashier-wallet")}
           disabled={isConnecting}
           class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >

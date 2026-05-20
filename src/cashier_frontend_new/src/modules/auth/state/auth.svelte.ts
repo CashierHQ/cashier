@@ -474,8 +474,6 @@ const inner_login = async (walletId: string) => {
       throw new Error("Login failed: owner is null");
     }
 
-    console.log("Login successful, account:", res);
-
     account = {
       owner: res.owner,
       subaccount: res.subaccount,

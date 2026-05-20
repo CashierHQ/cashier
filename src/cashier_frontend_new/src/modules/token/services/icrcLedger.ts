@@ -1,12 +1,12 @@
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { rsMatch } from "$lib/rsMatch";
+import { callCanisterViaIcrc49 } from "$modules/auth/services/icrc49";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { callCanisterViaIcrc49 } from "$modules/auth/signer/icrc49";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { IDL } from "@dfinity/candid";
+import { Principal } from "@dfinity/principal";
 
 // Extract arg/return types from the generated IDL for ICRC-49 encoding.
 const _service = icrcLedger.idlFactory({ IDL }) as unknown as {
@@ -26,7 +26,9 @@ export class IcrcLedgerService {
     this.#fee = token.fee;
   }
 
-  #getActor({ anonymous = false }: { anonymous?: boolean } = {}): icrcLedger._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: { anonymous?: boolean } = {}): icrcLedger._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: icrcLedger.idlFactory,

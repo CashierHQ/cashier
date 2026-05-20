@@ -1,17 +1,17 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
+import { rsMatch } from "$lib/rsMatch";
+import { callCanisterViaIcrc49 } from "$modules/auth/services/icrc49";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { callCanisterViaIcrc49 } from "$modules/auth/signer/icrc49";
 import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
 import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
-import { toNullable } from "@dfinity/utils";
-import { rsMatch } from "$lib/rsMatch";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { IDL } from "@dfinity/candid";
+import { Principal } from "@dfinity/principal";
+import { toNullable } from "@dfinity/utils";
 
 const _service = icpLedger.idlFactory({ IDL }) as unknown as {
   _fields: Array<[string, { argTypes: IDL.Type[]; retTypes: IDL.Type[] }]>;
@@ -48,7 +48,9 @@ export class IcpLedgerService {
    * @returns Authenticated ICP Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor({ anonymous = false }: { anonymous?: boolean } = {}): icpLedger._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: { anonymous?: boolean } = {}): icpLedger._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: icpLedger.idlFactory,
@@ -114,7 +116,9 @@ export class IcpLedgerService {
         to: accountID,
         amount: { e8s: amount },
         fee: { e8s: this.#fee },
-        memo: deduplication ? this.#toLegacyMemo(deduplication.memo) : BigInt(0),
+        memo: deduplication
+          ? this.#toLegacyMemo(deduplication.memo)
+          : BigInt(0),
         from_subaccount: [],
         created_at_time: deduplication
           ? [{ timestamp_nanos: deduplication.createdAtTime }]
