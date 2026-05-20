@@ -7,7 +7,7 @@ import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
-import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
+import { type Icrc112Requests } from "$modules/auth/types/icrc112";
 import { LinkStep } from "$modules/links/types/linkStep";
 import {
   CASHIER_BACKEND_CANISTER_ID,

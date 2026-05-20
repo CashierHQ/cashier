@@ -175,6 +175,8 @@
         </button>
 
         <div
+          role="group"
+          aria-label="Link type carousel"
           class="relative flex transition-transform duration-300 ease-in-out h-[20rem] md:h-[400px] pb-2"
           style="transform: translateX(-{currentSlide *
             25}%); width: 400%; touch-action: pan-y;"

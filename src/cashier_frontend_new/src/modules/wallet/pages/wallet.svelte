@@ -33,7 +33,7 @@
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
-  let currentTab = $state<WalletTab>(activeTab);
+  let currentTab = $derived(activeTab);
 
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(

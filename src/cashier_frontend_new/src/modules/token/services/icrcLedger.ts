@@ -1,10 +1,18 @@
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { rsMatch } from "$lib/rsMatch";
+import { callCanisterViaIcrc49 } from "$modules/auth/services/icrc49";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
-import { Principal } from "@icp-sdk/core/principal";
 import type { TokenMetadata } from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
+
+// Extract arg/return types from the generated IDL for ICRC-49 encoding.
+const _service = icrcLedger.idlFactory({ IDL }) as unknown as {
+  _fields: Array<[string, { argTypes: IDL.Type[]; retTypes: IDL.Type[] }]>;
+};
+const _methodTypes = Object.fromEntries(_service._fields);
 
 /**
  * Service for interacting with Icrc Ledger canisters for a specific token
@@ -18,15 +26,13 @@ export class IcrcLedgerService {
     this.#fee = token.fee;
   }
 
-  /**
-   * Get the authenticated Icrc Ledger actor for the current user.
-   * @returns Authenticated Icrc Ledger actor
-   * @throws Error if the user is not authenticated
-   */
-  #getActor(): icrcLedger._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: { anonymous?: boolean } = {}): icrcLedger._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: icrcLedger.idlFactory,
+      options: { anonymous },
     });
   }
 
@@ -64,11 +70,12 @@ export class IcrcLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor = this.#getActor();
+    const account: icrcLedger.Account = this.#getAccount();
+    const actor = this.#getActor({ anonymous: true });
     if (!actor) {
       throw new Error("User is not authenticated");
     }
-    const account: icrcLedger.Account = this.#getAccount();
+
     return await actor.icrc1_balance_of(account);
   }
 
@@ -83,23 +90,27 @@ export class IcrcLedgerService {
     amount: bigint,
     deduplication?: TransferDeduplicationFields,
   ): Promise<bigint> {
-    const toAccount: icrcLedger.Account = {
-      owner: to,
-      subaccount: [],
-    };
+    const signer = authState.getSigner();
+    if (!signer) throw new Error("No signer available");
+    const sender = Principal.fromText(authState.account!.owner);
+    const { argTypes, retTypes } = _methodTypes["icrc1_transfer"];
 
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
-    const result = await actor.icrc1_transfer({
-      to: toAccount,
-      amount,
-      fee: [this.#fee],
-      memo: deduplication ? [deduplication.memo] : [],
-      created_at_time: deduplication ? [deduplication.createdAtTime] : [],
-      from_subaccount: [],
-    });
+    const result = await callCanisterViaIcrc49<icrcLedger.TransferResult>(
+      signer,
+      sender,
+      Principal.fromText(this.#canisterId),
+      "icrc1_transfer",
+      argTypes,
+      retTypes,
+      {
+        to: { owner: to, subaccount: [] },
+        amount,
+        fee: [this.#fee],
+        memo: deduplication ? [deduplication.memo] : [],
+        created_at_time: deduplication ? [deduplication.createdAtTime] : [],
+        from_subaccount: [],
+      },
+    );
 
     if ("Err" in result) {
       return rsMatch(result.Err, {
@@ -145,21 +156,29 @@ export class IcrcLedgerService {
     memo: Uint8Array | number[],
     createdAtTime: bigint,
   ): Promise<bigint> {
-    const actor = this.#getActor();
-    if (!actor) {
-      throw new Error("User is not authenticated");
-    }
+    const signer = authState.getSigner();
+    if (!signer) throw new Error("No signer available");
+    const sender = Principal.fromText(authState.account!.owner);
+    const { argTypes, retTypes } = _methodTypes["icrc2_approve"];
 
-    const result = await actor.icrc2_approve({
-      spender: this.#getSpender(Principal.fromText(CKBTC_MINTER_CANISTER_ID)),
-      amount,
-      fee: [this.#fee],
-      memo: [memo],
-      created_at_time: [createdAtTime],
-      expected_allowance: [],
-      expires_at: [],
-      from_subaccount: [],
-    });
+    const result = await callCanisterViaIcrc49<icrcLedger.ApproveResult>(
+      signer,
+      sender,
+      Principal.fromText(this.#canisterId),
+      "icrc2_approve",
+      argTypes,
+      retTypes,
+      {
+        spender: this.#getSpender(Principal.fromText(CKBTC_MINTER_CANISTER_ID)),
+        amount,
+        fee: [this.#fee],
+        memo: [memo],
+        created_at_time: [createdAtTime],
+        expected_allowance: [],
+        expires_at: [],
+        from_subaccount: [],
+      },
+    );
 
     if ("Err" in result) {
       return rsMatch(result.Err, {

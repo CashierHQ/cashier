@@ -153,7 +153,7 @@ To do
 - Transaction speed optimization with ICRC-2.
 - NFT (EXT or ICRC7) support.
 - Gating mechanism foundation.
-- Gating use cases: password, X, Telegram, KYC, etc).
+- Gating use cases: password, X, Telegram, KYC, etc.
 - Wallet asset swaps.
 - ck tokens import export.
 - Additional chain support (BTC, ETH, SOL).
@@ -181,4 +181,3 @@ We extend big thanks to aforementioned teams.
 - [ICRC-112: Batch Call Canister](https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_112_batch_call_canister.md#partial-responses)
 - [NFID Identity Kit](https://identitykit.xyz/)
 - [ICRC ledger](https://github.com/dfinity/ic/tree/master/rs/rosetta-api/icrc1)
-

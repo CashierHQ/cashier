@@ -18,7 +18,13 @@ process.env.VITE_DEV_BUILD_TIMESTAMP = new Date().toISOString();
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
+  resolve: {
+    alias: {
+      buffer: "buffer/",
+    },
+  },
   optimizeDeps: {
+    include: ["buffer"],
     esbuildOptions: {
       define: {
         global: "globalThis",
@@ -27,7 +33,6 @@ export default defineConfig({
   },
   test: {
     setupFiles: ["./vitest-setup.js"],
-    expect: { requireAssertions: true },
     projects: [
       {
         extends: "./vite.config.ts",

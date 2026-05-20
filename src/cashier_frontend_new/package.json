@@ -68,6 +68,7 @@
     "@icp-sdk/core": "^5.4.0",
     "@noble/hashes": "^1.8.0",
     "@slide-computer/signer": "^4.2.2",
+    "@slide-computer/signer-web": "4.2.2",
     "@windoge98/plug-n-play": "github:CashierHQ/plug-n-play#main",
     "axios": "^1.16.0",
     "devalue": "^5.8.0",

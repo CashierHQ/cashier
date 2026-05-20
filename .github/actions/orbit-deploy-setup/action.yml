@@ -3,19 +3,19 @@ description: Common setup steps for Orbit canister deployments (toolchain, dfx, 
 
 inputs:
   sha:
-    description: 'Commit SHA to checkout (leave empty to use github.sha)'
+    description: "Commit SHA to checkout (leave empty to use github.sha)"
     required: false
-    default: ''
+    default: ""
   deployer_secret:
-    description: 'Deployer PEM private key (secrets.DEPLOYER)'
+    description: "Deployer PEM private key (secrets.DEPLOYER)"
     required: true
   orbit_station_id:
-    description: 'Orbit station ID (vars.ORBIT_STATION_ID)'
+    description: "Orbit station ID (vars.ORBIT_STATION_ID)"
     required: true
 
 outputs:
   operator:
-    description: 'Deployer principal returned by dfx identity get-principal'
+    description: "Deployer principal returned by dfx identity get-principal"
     value: ${{ steps.identity.outputs.operator }}
 
 runs:

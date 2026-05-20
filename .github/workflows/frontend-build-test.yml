@@ -5,16 +5,16 @@ on:
     branches: [main, dev, staging]
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'src/cashier_frontend_new/**'
-      - 'src/lib/cashier_shared/**'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'package.json'
-      - 'eslint.config.js'
-      - 'knip.json'
-      - '.prettierrc'
-      - '.prettierignore'
-      - '!src/cashier_frontend_new/src/lib/generated/**'
+      - "src/cashier_frontend_new/**"
+      - "src/lib/cashier_shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "eslint.config.js"
+      - "knip.json"
+      - ".prettierrc"
+      - ".prettierignore"
+      - "!src/cashier_frontend_new/src/lib/generated/**"
 
 concurrency:
   group: frontend-${{ github.workflow }}-${{ github.ref }}

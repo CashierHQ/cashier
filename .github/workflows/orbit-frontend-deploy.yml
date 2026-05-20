@@ -6,20 +6,20 @@ on:
       - main
       - staging
     paths:
-      - 'src/cashier_frontend_new/**'
+      - "src/cashier_frontend_new/**"
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Deployment mode'
+        description: "Deployment mode"
         required: true
-        default: 'upgrade'
+        default: "upgrade"
         type: choice
         options:
           - reinstall
           - upgrade
           - install
       sha:
-        description: 'Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)'
+        description: "Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)"
         required: false
         type: string
 

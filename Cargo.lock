@@ -2914,6 +2914,7 @@ dependencies = [
  "ic_mple_pocket_ic",
  "ic_mple_structures",
  "ic_mple_utils",
+ "itertools 0.14.0",
  "log",
  "serde",
  "serde_bytes",

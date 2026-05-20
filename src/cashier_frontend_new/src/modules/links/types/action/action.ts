@@ -3,8 +3,8 @@ import type {
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
-import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
+import type Icrc112Request from "$modules/auth/types/icrc112";
+import { Icrc112RequestMapper } from "$modules/auth/types/icrc112";
 import type { Action as SharedAction } from "$shared";
 import type { Principal } from "@icp-sdk/core/principal";
 import type { ActionState } from "$modules/links/types/action/actionState";

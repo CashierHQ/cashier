@@ -1,19 +1,37 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import {
-    parseBalanceUnits,
-    formatBalanceUnits,
-  } from "$modules/shared/utils/converter";
-  import {
-    ICP_LEDGER_CANISTER_ID,
-    ICP_INDEX_CANISTER_ID,
-    CKBTC_CANISTER_ID,
-  } from "$modules/token/constants";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
+  import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
+  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
+  import InputAmount from "$modules/shared/components/InputAmount.svelte";
+  import { CASHIER_WALLET_ID } from "$modules/shared/constants";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import {
+    CKBTC_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
+  import { tokenStorageService } from "$modules/token/services/tokenStorage";
+  import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
+  import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
+  import { WalletTxCartStore } from "$modules/transactionCart/state/walletTxCartStore.svelte";
+  import type {
+    BridgeSource,
+    WalletSource,
+  } from "$modules/transactionCart/types/transactionSource";
+  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+  import { ReceiveAddressType } from "$modules/wallet/types";
+  import { Principal } from "@icp-sdk/core/principal";
   import {
     ArrowLeftRight,
     Bitcoin,
@@ -24,21 +42,6 @@
     LayoutList,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
-  import InputAmount from "$modules/shared/components/InputAmount.svelte";
-  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
-  import { ReceiveAddressType } from "$modules/wallet/types";
-  import { Principal } from "@icp-sdk/core/principal";
-  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
-  import type {
-    BridgeSource,
-    WalletSource,
-  } from "$modules/transactionCart/types/transactionSource";
-  import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
-  import { tokenStorageService } from "$modules/token/services/tokenStorage";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
-  import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
 
   type Props = {
     initialToken?: string;
@@ -58,6 +61,11 @@
   // UI state (local)
   let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
+  let isSending = $state(false);
+
+  const isStandaloneWallet = $derived(
+    authState.connectedWalletId === CASHIER_WALLET_ID,
+  );
   let lastBlockId = $state<bigint | null>(null);
   let bridgeSource = $state<BridgeSource | null>(null);
   let isCreatingExportBridge = $state(false);
@@ -239,6 +247,8 @@
     });
     if (result.isErr()) {
       toast.error(result.error);
+    } else if (isStandaloneWallet) {
+      await executeDirectly();
     } else {
       showConfirmDrawer = true;
     }
@@ -314,6 +324,25 @@
     walletStore.query.refresh();
     refreshTransactionHistory();
     toast.success(locale.t("wallet.send.successMessage"));
+  }
+
+  async function executeDirectly() {
+    if (!walletSource) return;
+    isSending = true;
+    try {
+      const store = new WalletTxCartStore(walletSource);
+      await store.initialize();
+      const result = await store.execute();
+      if (result.isOk()) {
+        handleTxSuccess(result.unwrap());
+      } else {
+        toast.error(result.unwrapErr());
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      isSending = false;
+    }
   }
 
   function handleCloseDrawer() {
@@ -539,7 +568,7 @@
       >
         <Button
           onclick={handleContinue}
-          disabled={isCreatingExportBridge}
+          disabled={isCreatingExportBridge || isSending}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           type="button"
         >
@@ -566,7 +595,7 @@
   {/if}
 </div>
 
-{#if walletSource && !bridgeSource}
+{#if walletSource && !bridgeSource && !isStandaloneWallet}
   <WalletTxCart
     source={{
       ...walletSource,
