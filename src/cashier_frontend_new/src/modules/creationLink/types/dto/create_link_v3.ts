@@ -6,11 +6,11 @@ import type {
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
 import { SharedLinkTypeMapper } from "$modules/actionTemplate/types/link_type";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
+import type Icrc112Request from "$modules/auth/types/icrc112";
 import {
   Icrc112RequestMapper,
   type Icrc112Requests,
-} from "$modules/icrc112/types/icrc112Request";
+} from "$modules/auth/types/icrc112";
 import type { LinkType as SharedLinkType } from "$shared";
 import { type Action as SharedAction, type Link as SharedLink } from "$shared";
 

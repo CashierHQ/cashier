@@ -5,11 +5,11 @@ import type {
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
+import type Icrc112Request from "$modules/auth/types/icrc112";
 import {
   Icrc112RequestMapper,
   type Icrc112Requests,
-} from "$modules/icrc112/types/icrc112Request";
+} from "$modules/auth/types/icrc112";
 import type { Action as SharedAction, Link as SharedLink } from "$shared";
 
 export type CreateActionInputV3 = {

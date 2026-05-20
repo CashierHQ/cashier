@@ -1,6 +1,6 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-import Icrc112Service from "$modules/icrc112/services/icrc112Service";
+import Icrc112Service from "$modules/auth/services/icrc112";
 import type Action from "$modules/links/types/action/action";
 import IntentState, {
   type IntentStateValue,

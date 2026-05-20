@@ -31,10 +31,10 @@ interface Account {
 
 const DEFAULT_MAX_TIME_TO_LIVE = BigInt(8 * 60 * 60 * 1_000_000_000); // 8 hours in ns
 
-const arrayBufferToHex = (buffer: ArrayBuffer): string =>
-  Array.from(new Uint8Array(buffer))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+// const arrayBufferToHex = (buffer: ArrayBuffer): string =>
+//   Array.from(new Uint8Array(buffer))
+//     .map((byte) => byte.toString(16).padStart(2, "0"))
+//     .join("");
 
 /**
  * PNP adapter that authenticates via NFID using a hybrid ICRC-34 + ICRC-49 flow.

@@ -34,7 +34,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   },
 }));
 
-vi.mock("$modules/icrc112/services/icrc112Service", () => ({
+vi.mock("$modules/auth/services/icrc112", () => ({
   default: MockIcrc112Service,
 }));
 
@@ -49,7 +49,7 @@ vi.mock("$modules/shared/services/feeService", () => ({
 }));
 
 import { authState } from "$modules/auth/state/auth.svelte";
-import Icrc112Service from "$modules/icrc112/services/icrc112Service";
+import Icrc112Service from "$modules/auth/services/icrc112";
 import { LinkTxCartStore } from "./linkTxCartStore.svelte";
 
 // Test fixtures

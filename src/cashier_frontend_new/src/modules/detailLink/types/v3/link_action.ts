@@ -4,8 +4,8 @@ import {
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
-import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
-import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
+import type Icrc112Request from "$modules/auth/types/icrc112";
+import { Icrc112RequestMapper } from "$modules/auth/types/icrc112";
 import {
   LinkUserStateMapper,
   type LinkUserStateValue,

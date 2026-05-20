@@ -2,7 +2,7 @@ import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cas
 import type { Principal } from "@dfinity/principal";
 import { fromNullable } from "@dfinity/utils";
 
-// Frontend representation of an ICRC-112 request
+// Frontend representation of an ICRC-112 request.
 export type Icrc112Requests = Icrc112Request[][];
 
 class Icrc112Request {
@@ -16,7 +16,7 @@ class Icrc112Request {
 
 export default Icrc112Request;
 
-// Mapper helper for Icrc112Request to match repository patterns
+// Mapper helper for Icrc112Request to match repository patterns.
 export class Icrc112RequestMapper {
   /**
    * Convert from backend Icrc112Request to frontend Icrc112Request
@@ -49,4 +49,16 @@ export class Icrc112RequestMapper {
 export type Icrc112ExecutionResult = {
   isSuccess: boolean;
   errors: string[] | null;
+};
+
+export type Icrc112RequestInput = {
+  canister_id: Principal;
+  method: string;
+  arg: ArrayBuffer;
+  nonce?: ArrayBuffer;
+};
+
+export type SignerErrorLike = {
+  code?: number;
+  message?: string;
 };

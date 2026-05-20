@@ -16,7 +16,6 @@ import {
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
   NFID_WALLET_ID,
-  OISY_WALLET_ID,
   REAL_NFID_WALLET_ID,
   REAL_NFID_WALLET_ORIGIN,
 } from "$modules/shared/constants";
@@ -76,7 +75,7 @@ const CONFIG: CreatePnpArgs = {
         },
       },
     },
-    // Cashier standalone wallet
+    // Cashier Standalone wallet
     [CASHIER_WALLET_ID]: {
       id: CASHIER_WALLET_ID,
       enabled: true,
@@ -102,18 +101,6 @@ const CONFIG: CreatePnpArgs = {
         walletUrl: `${REAL_NFID_WALLET_ORIGIN}/rpc`,
         host: HOST_ICP,
         targets: TARGETS,
-        derivationOrigin:
-          BUILD_TYPE === "production"
-            ? "https://cashierapp.io"
-            : typeof window !== "undefined"
-              ? window.location.origin
-              : undefined,
-      },
-    },
-    [OISY_WALLET_ID]: {
-      id: OISY_WALLET_ID,
-      enabled: true,
-      config: {
         derivationOrigin:
           BUILD_TYPE === "production"
             ? "https://cashierapp.io"

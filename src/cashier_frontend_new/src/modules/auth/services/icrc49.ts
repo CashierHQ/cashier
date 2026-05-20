@@ -2,7 +2,7 @@ import { MAINNET_ROOT_KEY } from "$modules/auth/signer/ii/constants";
 import type {
   Icrc49ContentMap,
   Icrc49RawCallResult,
-} from "$modules/auth/types";
+} from "$modules/auth/types/icrc49";
 import { Cbor, Certificate, LookupStatus, requestIdOf } from "@dfinity/agent";
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";

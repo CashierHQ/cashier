@@ -2,6 +2,11 @@ import type { _SERVICE } from "$lib/generated/cashier_backend/cashier_backend.di
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { callCanisterViaIcrc49Raw } from "$modules/auth/services/icrc49";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type {
+  Icrc112ExecutionResult,
+  Icrc112RequestInput,
+  SignerErrorLike,
+} from "$modules/auth/types/icrc112";
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import type {
@@ -11,20 +16,15 @@ import type {
   Transport,
 } from "@slide-computer/signer";
 import { Buffer } from "buffer";
-import type { Icrc112ExecutionResult } from "../types/icrc112Request";
 
-type Icrc112RequestInput = {
-  canister_id: Principal;
-  method: string;
-  arg: ArrayBuffer;
-  nonce?: ArrayBuffer;
-};
-
-type SignerErrorLike = {
-  code?: number;
-  message?: string;
-};
-
+/**
+ * Checks whether a signer error means the ICRC-112 batch call method is not
+ * supported by the connected wallet.
+ *
+ * @param error - Unknown error object returned or thrown by the signer.
+ * @returns `true` when the error should fall back to per-call ICRC-49
+ * execution.
+ */
 function isUnsupportedBatchError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
 
@@ -36,6 +36,12 @@ function isUnsupportedBatchError(error: unknown): boolean {
   );
 }
 
+/**
+ * Checks whether a canister method belongs to a known ICRC ledger interface.
+ *
+ * @param method - Canister method name from an ICRC-112 request.
+ * @returns `true` when the method is a known ICRC ledger method.
+ */
 function isIcrcLedgerMethod(method: string): boolean {
   return (
     method.startsWith("icrc1_") ||
@@ -45,6 +51,13 @@ function isIcrcLedgerMethod(method: string): boolean {
   );
 }
 
+/**
+ * Writes a namespaced debug message for ICRC-112 execution diagnostics.
+ *
+ * @param message - Short debug message.
+ * @param details - Optional structured details to include in the log entry.
+ * @returns Nothing.
+ */
 function debugIcrc112(
   message: string,
   details?: Record<string, unknown>,
@@ -55,19 +68,40 @@ function debugIcrc112(
 
 type IcrcLedgerReplyStatus = "success" | "error" | "not-ledger";
 
-// Class of service handler for ICRC-112 requests
-// T is the Transport type used by the Signer
+/**
+ * Service handler for ICRC-112 batch canister call requests.
+ *
+ * @typeParam T - Transport type used by the connected signer.
+ */
 class Icrc112Service<T extends Transport> {
   private readonly signer: Signer<T>;
 
+  /**
+   * Creates an ICRC-112 service bound to a wallet signer.
+   *
+   * @param signer - Connected signer used to send JSON-RPC batch requests or
+   * ICRC-49 fallback calls.
+   */
   constructor(signer: Signer<T>) {
     this.signer = signer;
   }
 
   /**
-   * Send ICRC-112 batch call request using the connected signer
-   * @param icrc112Requests - 2D array of ICRC-112 requests (sequences of parallel requests)
-   * @returns The result of the ICRC-112 execution
+   * Sends an ICRC-112 batch canister call request using the connected signer.
+   *
+   * The input is grouped as sequential batches of parallel requests. When the
+   * signer does not support `icrc112_batch_call_canister`, this falls back to
+   * executing each constituent request through ICRC-49.
+   *
+   * @param icrc112Requests - Two-dimensional request list, where each outer
+   * item is a sequence step and each inner item can run in parallel.
+   * @param sender - Principal text of the user identity that should execute
+   * the batch.
+   * @param cashierBackendCanisterId - Cashier backend canister ID used for
+   * ICRC-114 validation.
+   * @returns The result of the ICRC-112 execution, including any per-request
+   * errors.
+   * @throws If a request is malformed and does not include a canister ID.
    */
   async sendBatchRequest(
     icrc112Requests: Array<Array<Icrc112RequestInput>>,
@@ -189,6 +223,13 @@ class Icrc112Service<T extends Transport> {
     }
   }
 
+  /**
+   * Builds the cashier backend actor used for ICRC-114 validation.
+   *
+   * @param cashierBackendCanisterId - Cashier backend canister ID.
+   * @returns A typed cashier backend actor.
+   * @throws If the authenticated actor cannot be initialized.
+   */
   private getValidationActor(cashierBackendCanisterId: string): _SERVICE {
     const actor = authState.buildActor<_SERVICE>({
       canisterId: cashierBackendCanisterId,
@@ -202,6 +243,16 @@ class Icrc112Service<T extends Transport> {
     return actor;
   }
 
+  /**
+   * Validates an ICRC-49 fallback reply with the backend ICRC-114 validator.
+   *
+   * @param cashierBackendCanisterId - Cashier backend canister ID.
+   * @param request - Original ICRC-112 request that was executed through
+   * ICRC-49.
+   * @param replyArg - Raw Candid reply bytes returned by the target canister.
+   * @returns `true` when the backend confirms the reply is valid for the
+   * request.
+   */
   private async validateIcrc114(
     cashierBackendCanisterId: string,
     request: Icrc112RequestInput,
@@ -218,6 +269,17 @@ class Icrc112Service<T extends Transport> {
     });
   }
 
+  /**
+   * Classifies an ICRC ledger reply for fallback execution.
+   *
+   * Ledger calls can be trusted from their Candid `Result` reply and do not
+   * require backend ICRC-114 validation when successful.
+   *
+   * @param method - Canister method name from the request.
+   * @param replyArg - Raw Candid reply bytes returned by the target canister.
+   * @returns `success` for successful ledger replies, `error` for ledger
+   * errors, or `not-ledger` for methods that require backend validation.
+   */
   private getIcrcLedgerReplyStatus(
     method: string,
     replyArg: ArrayBuffer,
@@ -250,6 +312,23 @@ class Icrc112Service<T extends Transport> {
     }
   }
 
+  /**
+   * Executes an ICRC-112 request matrix by issuing each constituent call
+   * through ICRC-49.
+   *
+   * This fallback is used for signers that do not support
+   * `icrc112_batch_call_canister`. Ledger calls are classified locally from the
+   * Candid reply; non-ledger calls are validated through backend ICRC-114.
+   *
+   * @param icrc112Requests - Two-dimensional request list, where each outer
+   * item is a sequence step and each inner item can run in parallel.
+   * @param sender - Principal text of the user identity that should execute
+   * the calls.
+   * @param cashierBackendCanisterId - Cashier backend canister ID used for
+   * ICRC-114 validation.
+   * @returns The fallback execution result, including skipped or failed
+   * request errors.
+   */
   private async sendBatchRequestViaIcrc49(
     icrc112Requests: Array<Array<Icrc112RequestInput>>,
     sender: string,

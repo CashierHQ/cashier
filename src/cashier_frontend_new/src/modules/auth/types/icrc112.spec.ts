@@ -1,7 +1,7 @@
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
 import { describe, expect, it } from "vitest";
-import { Icrc112RequestMapper } from "./icrc112Request";
+import { Icrc112RequestMapper } from "$modules/auth/types/icrc112";
 
 describe("Icrc112Request.fromBackendType", () => {
   it("parses arg and nonce arrays", () => {
