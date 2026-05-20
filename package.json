@@ -1,16 +1,4 @@
 {
-<<<<<<< HEAD
-	"name": "cashier",
-	"private": true,
-	"pnpm": {
-		"overrides": {
-			"@slide-computer/signer": "^3.20.0",
-			"@slide-computer/signer-web": "^3.20.0",
-			"@slide-computer/signer-agent": "^3.20.0"
-		}
-	},
-	"packageManager": "pnpm@11.1.1"
-=======
   "name": "cashier",
   "private": true,
   "type": "module",
@@ -29,5 +17,4 @@
     "prettier": "^3.8.3",
     "typescript-eslint": "^8.59.3"
   }
->>>>>>> dev
 }

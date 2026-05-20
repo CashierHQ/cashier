@@ -1,27 +1,24 @@
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
+import { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
 import type { Signer } from "@slide-computer/signer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  callCanisterViaIcrc49,
-  callCanisterViaIcrc49Raw,
-} from "./icrc49";
+import { callCanisterViaIcrc49, callCanisterViaIcrc49Raw } from "./icrc49";
 
 const {
   certificateCreateMock,
   cborDecodeMock,
   requestIdOfMock,
-  LookupStatusMock,
+  LookupPathStatusMock,
 } = vi.hoisted(() => ({
   certificateCreateMock: vi.fn(),
   cborDecodeMock: vi.fn(),
   requestIdOfMock: vi.fn(),
-  LookupStatusMock: {
+  LookupPathStatusMock: {
     Found: "found",
   },
 }));
 
-vi.mock("@dfinity/agent", () => ({
+vi.mock("@icp-sdk/core/agent", () => ({
   Cbor: {
     decode: cborDecodeMock,
   },
@@ -29,14 +26,14 @@ vi.mock("@dfinity/agent", () => ({
     create: certificateCreateMock,
   },
   IC_ROOT_KEY: "00",
-  LookupStatus: LookupStatusMock,
+  LookupPathStatus: LookupPathStatusMock,
   requestIdOf: requestIdOfMock,
 }));
 
 const sender = Principal.fromText("aaaaa-aa");
 const canisterId = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
-const bytes = (values: number[]): ArrayBuffer => new Uint8Array(values).buffer;
+const bytes = (values: number[]): Uint8Array => new Uint8Array(values);
 
 const makeSigner = (
   response: Awaited<ReturnType<Signer["callCanister"]>>,
@@ -117,16 +114,16 @@ describe("callCanisterViaIcrc49Raw", () => {
     const replyArg = bytes([13]);
     const requestId = bytes([14]);
     const ingressExpiry = { toFixed: vi.fn(() => "123456789") };
-    const lookupMock = vi.fn((path: unknown[]) => {
+    const lookupPathMock = vi.fn((path: unknown[]) => {
       if (path.at(-1) === "status") {
         return {
-          status: LookupStatusMock.Found,
-          value: new TextEncoder().encode("replied").buffer,
+          status: LookupPathStatusMock.Found,
+          value: new TextEncoder().encode("replied"),
         };
       }
 
       return {
-        status: LookupStatusMock.Found,
+        status: LookupPathStatusMock.Found,
         value: replyArg,
       };
     });
@@ -140,7 +137,7 @@ describe("callCanisterViaIcrc49Raw", () => {
       sender,
     });
     requestIdOfMock.mockReturnValue(requestId);
-    certificateCreateMock.mockResolvedValue({ lookup: lookupMock });
+    certificateCreateMock.mockResolvedValue({ lookup_path: lookupPathMock });
 
     const result = await callCanisterViaIcrc49Raw(
       signer,
@@ -158,15 +155,15 @@ describe("callCanisterViaIcrc49Raw", () => {
     );
     expect(certificateCreateMock).toHaveBeenCalledWith({
       certificate,
-      rootKey: expect.any(ArrayBuffer),
-      canisterId,
+      rootKey: expect.any(Uint8Array),
+      principal: { canisterId },
     });
-    expect(lookupMock).toHaveBeenCalledWith([
+    expect(lookupPathMock).toHaveBeenCalledWith([
       "request_status",
       requestId,
       "status",
     ]);
-    expect(lookupMock).toHaveBeenCalledWith([
+    expect(lookupPathMock).toHaveBeenCalledWith([
       "request_status",
       requestId,
       "reply",
@@ -183,7 +180,7 @@ describe("callCanisterViaIcrc49Raw", () => {
     cborDecodeMock.mockReturnValue({ request_type: "call" });
     requestIdOfMock.mockReturnValue(requestId);
     certificateCreateMock.mockResolvedValue({
-      lookup: vi.fn(() => ({ status: "absent" })),
+      lookup_path: vi.fn(() => ({ status: "absent" })),
     });
 
     await expect(

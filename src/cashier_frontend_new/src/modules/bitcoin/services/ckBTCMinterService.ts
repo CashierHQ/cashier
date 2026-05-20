@@ -26,7 +26,9 @@ export class CkBTCMinterService {
    * Create and return the ckBTC Minter actor for the current user.
    * @returns
    */
-  #getActor({ anonymous = false }: { anonymous?: boolean } = {}): ckBTCMinter._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: { anonymous?: boolean } = {}): ckBTCMinter._SERVICE | null {
     return authState.buildActor({
       canisterId: this.#canisterId,
       idlFactory: ckBTCMinter.idlFactory,
@@ -39,7 +41,9 @@ export class CkBTCMinterService {
   }
 
   async getWithdrawalFee(amount: bigint): Promise<WithdrawalFee> {
-    return this.#getActor({ anonymous: true })!.estimate_withdrawal_fee({ amount: [amount] });
+    return this.#getActor({ anonymous: true })!.estimate_withdrawal_fee({
+      amount: [amount],
+    });
   }
 
   async getMinterInfo(): Promise<MinterInfo> {

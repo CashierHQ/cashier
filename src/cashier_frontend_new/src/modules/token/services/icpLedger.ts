@@ -9,7 +9,7 @@ import {
   ICP_LEDGER_FEE,
 } from "$modules/token/constants";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
-import { IDL } from "@dfinity/candid";
+import { IDL } from "@icp-sdk/core/candid";
 import { toNullable } from "@dfinity/utils";
 import { Principal } from "@icp-sdk/core/principal";
 
@@ -85,7 +85,12 @@ export class IcpLedgerService {
    */
   public async getBalance(): Promise<bigint> {
     const account: Account = this.#getAccount();
-    return await this.#getActor({ anonymous: true })!.icrc1_balance_of(account);
+    const actor = this.#getActor({ anonymous: true });
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    return await actor.icrc1_balance_of(account);
   }
 
   /**

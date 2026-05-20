@@ -86,4 +86,4 @@ export const ICRC_114_METHOD_NAME = "icrc114_validate";
 
 export const MAINNET_ROOT_KEY = new Uint8Array(
   IC_ROOT_KEY.match(/[\da-f]{2}/gi)!.map((h) => parseInt(h, 16)),
-).buffer;
+);

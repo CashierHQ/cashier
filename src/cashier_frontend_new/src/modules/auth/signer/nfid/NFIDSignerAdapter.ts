@@ -1,9 +1,9 @@
 import { TARGETS } from "$modules/auth/constants";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
-import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
-import type { IDL } from "@dfinity/candid";
-import { DelegationIdentity, Ed25519KeyIdentity } from "@dfinity/identity";
-import { Principal } from "@dfinity/principal";
+import { Actor, HttpAgent, type ActorSubclass } from "@icp-sdk/core/agent";
+import type { IDL } from "@icp-sdk/core/candid";
+import { DelegationIdentity, Ed25519KeyIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import { Signer } from "@slide-computer/signer";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import type { AdapterConstructorArgs } from "@windoge98/plug-n-play";

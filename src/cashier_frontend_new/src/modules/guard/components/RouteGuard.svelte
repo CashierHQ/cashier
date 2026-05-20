@@ -22,17 +22,19 @@
 
   const context = new GuardContext();
 
-  if (linkId) {
-    if (storeType === "userLink") {
-      // TODO: switch version by global config
-      //context.setUserLinkStore(new UserLinkStore({ id: linkId }));
-      context.setUserLinkStoreV3(new UserLinkStoreV3({ id: linkId }));
-    } else if (storeType === "linkDetail") {
-      // TODO: switch version by global config
-      //context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
-      context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
+  $effect(() => {
+    if (linkId) {
+      if (storeType === "userLink") {
+        // TODO: switch version by global config
+        //context.setUserLinkStore(new UserLinkStore({ id: linkId }));
+        context.setUserLinkStoreV3(new UserLinkStoreV3({ id: linkId }));
+      } else if (storeType === "linkDetail") {
+        // TODO: switch version by global config
+        //context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
+        context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
+      }
     }
-  }
+  });
 
   $effect(() => {
     if (draftLinkId && context.authState.isReady) {

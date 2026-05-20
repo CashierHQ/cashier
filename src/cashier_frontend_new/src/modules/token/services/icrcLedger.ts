@@ -5,7 +5,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import type { TokenMetadata } from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
-import { IDL } from "@dfinity/candid";
+import { IDL } from "@icp-sdk/core/candid";
 import { Principal } from "@icp-sdk/core/principal";
 
 // Extract arg/return types from the generated IDL for ICRC-49 encoding.
@@ -71,7 +71,12 @@ export class IcrcLedgerService {
    */
   public async getBalance(): Promise<bigint> {
     const account: icrcLedger.Account = this.#getAccount();
-    return await this.#getActor({ anonymous: true })!.icrc1_balance_of(account);
+    const actor = this.#getActor({ anonymous: true });
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    return await actor.icrc1_balance_of(account);
   }
 
   /**

@@ -1,5 +1,5 @@
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
+import { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
 import type { Signer, Transport } from "@slide-computer/signer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Icrc112RequestInput } from "$modules/auth/types/icrc112";
@@ -88,10 +88,7 @@ describe("Icrc112Service", () => {
               },
             ],
           ],
-          validation: {
-            canisterId: cashierBackendCanisterId,
-            method: "icrc114_validate",
-          },
+          validationCanisterId: cashierBackendCanisterId,
         },
       });
     });
@@ -213,7 +210,7 @@ describe("Icrc112Service", () => {
         Principal.fromText(sender),
         ledgerCanisterId,
         "icrc1_transfer",
-        request.arg,
+        new Uint8Array(request.arg),
       );
       expect(buildActorMock).not.toHaveBeenCalled();
     });

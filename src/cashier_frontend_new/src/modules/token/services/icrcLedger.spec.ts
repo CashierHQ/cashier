@@ -7,12 +7,16 @@ import { Principal } from "@icp-sdk/core/principal";
 // Hoisted mock functions for vi.mock factory
 const {
   mockBuildActor,
+  mockGetSigner,
+  mockCallCanisterViaIcrc49,
   mockIcrc1BalanceOf,
   mockIcrc1Transfer,
   mockIcrc2Approve,
   mockIcrc2Allowance,
 } = vi.hoisted(() => ({
   mockBuildActor: vi.fn(),
+  mockGetSigner: vi.fn(),
+  mockCallCanisterViaIcrc49: vi.fn(),
   mockIcrc1BalanceOf: vi.fn(),
   mockIcrc1Transfer: vi.fn(),
   mockIcrc2Approve: vi.fn(),
@@ -24,7 +28,12 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: {
     account: { owner: "aaaaa-aa", subaccount: null },
     buildActor: mockBuildActor,
+    getSigner: mockGetSigner,
   },
+}));
+
+vi.mock("$modules/auth/services/icrc49", () => ({
+  callCanisterViaIcrc49: mockCallCanisterViaIcrc49,
 }));
 
 vi.mock("$modules/bitcoin/constants", () => ({
@@ -67,6 +76,7 @@ describe("IcrcLedgerService", () => {
     service = new IcrcLedgerService(mockToken);
     // Default: actor is available
     mockBuildActor.mockReturnValue(mockActor);
+    mockGetSigner.mockReturnValue({});
   });
 
   afterEach(() => {
@@ -98,6 +108,7 @@ describe("IcrcLedgerService", () => {
       expect(mockBuildActor).toHaveBeenCalledWith({
         canisterId: mockToken.address,
         idlFactory: expect.any(Function),
+        options: { anonymous: true },
       });
       expect(mockIcrc1BalanceOf).toHaveBeenCalledWith({
         owner: Principal.fromText("aaaaa-aa"),
@@ -133,18 +144,26 @@ describe("IcrcLedgerService", () => {
 
     it("should transfer successfully and return block index", async () => {
       const blockIndex = 67890n;
-      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockIndex });
 
       const result = await service.transferToPrincipal(toPrincipal, amount);
 
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
-        to: { owner: toPrincipal, subaccount: [] },
-        amount,
-        fee: [mockToken.fee],
-        memo: [],
-        from_subaccount: [],
-        created_at_time: [],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText(mockToken.address),
+        "icrc1_transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: { owner: toPrincipal, subaccount: [] },
+          amount,
+          fee: [mockToken.fee],
+          memo: [],
+          from_subaccount: [],
+          created_at_time: [],
+        }),
+      );
       expect(result).toBe(blockIndex);
     });
 
@@ -152,34 +171,42 @@ describe("IcrcLedgerService", () => {
       const blockIndex = 67890n;
       const memo = new Uint8Array([1, 2, 3]);
       const createdAtTime = 1_700_000_000_000_000_000n;
-      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockIndex });
 
       const result = await service.transferToPrincipal(toPrincipal, amount, {
         memo,
         createdAtTime,
       });
 
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
-        to: { owner: toPrincipal, subaccount: [] },
-        amount,
-        fee: [mockToken.fee],
-        memo: [memo],
-        from_subaccount: [],
-        created_at_time: [createdAtTime],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText(mockToken.address),
+        "icrc1_transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: { owner: toPrincipal, subaccount: [] },
+          amount,
+          fee: [mockToken.fee],
+          memo: [memo],
+          from_subaccount: [],
+          created_at_time: [createdAtTime],
+        }),
+      );
       expect(result).toBe(blockIndex);
     });
 
     it("should throw when actor is null (not authenticated)", async () => {
-      mockBuildActor.mockReturnValue(null);
+      mockGetSigner.mockReturnValue(null);
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("User is not authenticated");
+      ).rejects.toThrow("No signer available");
     });
 
     it("should throw on GenericError", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { GenericError: { message: "Test error", error_code: 500n } },
       });
 
@@ -189,7 +216,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on TemporarilyUnavailable error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { TemporarilyUnavailable: null },
       });
 
@@ -199,7 +226,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on BadBurn error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { BadBurn: { min_burn_amount: 1000n } },
       });
 
@@ -209,7 +236,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should return duplicate block index on Duplicate error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { Duplicate: { duplicate_of: 42n } },
       });
 
@@ -219,7 +246,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on BadFee error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { BadFee: { expected_fee: 20_000n } },
       });
 
@@ -229,7 +256,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on TooOld error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({ Err: { TooOld: null } });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Err: { TooOld: null } });
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
@@ -237,7 +264,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on CreatedInFuture error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { CreatedInFuture: { ledger_time: 1000n } },
       });
 
@@ -247,7 +274,7 @@ describe("IcrcLedgerService", () => {
     });
 
     it("should throw on InsufficientFunds error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { InsufficientFunds: { balance: 100n } },
       });
 
@@ -263,7 +290,7 @@ describe("IcrcLedgerService", () => {
       const amount = 50_000n;
       const memo = new Uint8Array([1, 2, 3]);
       const createdAtTime = 1_700_000_000_000_000_000n;
-      mockIcrc2Approve.mockResolvedValue({ Ok: 123n });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: 123n });
 
       // Act
       const result = await service.approveCkBtcWithdrawal(
@@ -274,19 +301,27 @@ describe("IcrcLedgerService", () => {
 
       // Assert
       expect(result).toBe(123n);
-      expect(mockIcrc2Approve).toHaveBeenCalledWith({
-        spender: {
-          owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
-          subaccount: [],
-        },
-        amount,
-        fee: [mockToken.fee],
-        memo: [memo],
-        created_at_time: [createdAtTime],
-        expected_allowance: [],
-        expires_at: [],
-        from_subaccount: [],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText(mockToken.address),
+        "icrc2_approve",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          spender: {
+            owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
+            subaccount: [],
+          },
+          amount,
+          fee: [mockToken.fee],
+          memo: [memo],
+          created_at_time: [createdAtTime],
+          expected_allowance: [],
+          expires_at: [],
+          from_subaccount: [],
+        }),
+      );
     });
   });
 

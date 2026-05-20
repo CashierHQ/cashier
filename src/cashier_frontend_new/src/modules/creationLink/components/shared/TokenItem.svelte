@@ -45,12 +45,12 @@
     return `~$${formatUsdAmount(usdValue)}`;
   }
 
-  const tokenLogo = getTokenLogo(token.address);
-  const formattedBalance = formatBalance(token.balance, token.decimals);
-  const formattedUSD = formatUSDValue(
-    token.balance,
-    token.decimals,
-    token.priceUSD,
+  const tokenLogo = $derived(getTokenLogo(token.address));
+  const formattedBalance = $derived(
+    formatBalance(token.balance, token.decimals),
+  );
+  const formattedUSD = $derived(
+    formatUSDValue(token.balance, token.decimals, token.priceUSD),
   );
 
   function handleImageError() {

@@ -1,11 +1,17 @@
 import { MAINNET_ROOT_KEY } from "$modules/auth/signer/ii/constants";
 import type {
+  Icrc49Bytes,
   Icrc49ContentMap,
   Icrc49RawCallResult,
 } from "$modules/auth/types/icrc49";
-import { Cbor, Certificate, LookupStatus, requestIdOf } from "@dfinity/agent";
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
+import {
+  Cbor,
+  Certificate,
+  LookupPathStatus,
+  requestIdOf,
+} from "@icp-sdk/core/agent";
+import { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
 import type { Signer } from "@slide-computer/signer";
 
 /**
@@ -77,13 +83,14 @@ export async function callCanisterViaIcrc49Raw(
   sender: Principal,
   canisterId: Principal,
   method: string,
-  arg: ArrayBuffer,
+  arg: Icrc49Bytes,
 ): Promise<Icrc49RawCallResult> {
+  const argBytes = toUint8Array(arg);
   const { contentMap, certificate } = await signer.callCanister({
     canisterId,
     sender,
     method,
-    arg,
+    arg: argBytes,
   });
 
   const replyArg = await getReplyArg(contentMap, certificate, canisterId);
@@ -108,16 +115,16 @@ export async function callCanisterViaIcrc49Raw(
  * status, otherwise `undefined`.
  */
 async function getReplyArg(
-  contentMap: ArrayBuffer,
-  certificate: ArrayBuffer,
+  contentMap: Uint8Array,
+  certificate: Uint8Array,
   canisterId: Principal,
-): Promise<ArrayBuffer | undefined> {
+): Promise<Uint8Array | undefined> {
   const decodedContentMap = Cbor.decode<
     Icrc49ContentMap & Record<string, unknown>
   >(contentMap);
   // Some ICRC-49 signers return the reply directly in contentMap.
   if (decodedContentMap.reply?.arg) {
-    return decodedContentMap.reply.arg;
+    return toUint8Array(decodedContentMap.reply.arg);
   }
 
   const requestId = requestIdOf(
@@ -127,25 +134,29 @@ async function getReplyArg(
   const validCertificate = await Certificate.create({
     certificate,
     rootKey: MAINNET_ROOT_KEY,
-    canisterId,
+    principal: { canisterId },
   });
 
-  const status = validCertificate.lookup([
+  const status = validCertificate.lookup_path([
     "request_status",
     requestId,
     "status",
   ]);
-  const reply = validCertificate.lookup(["request_status", requestId, "reply"]);
+  const reply = validCertificate.lookup_path([
+    "request_status",
+    requestId,
+    "reply",
+  ]);
 
   if (
-    status.status !== LookupStatus.Found ||
-    new TextDecoder().decode(status.value as ArrayBuffer) !== "replied" ||
-    reply.status !== LookupStatus.Found
+    status.status !== LookupPathStatus.Found ||
+    new TextDecoder().decode(status.value) !== "replied" ||
+    reply.status !== LookupPathStatus.Found
   ) {
     return undefined;
   }
 
-  return reply.value as ArrayBuffer;
+  return reply.value;
 }
 
 /**
@@ -176,4 +187,8 @@ function normalizeCallRequestForRequestId(
   }
 
   return normalized;
+}
+
+function toUint8Array(bytes: Icrc49Bytes): Uint8Array {
+  return bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
 }

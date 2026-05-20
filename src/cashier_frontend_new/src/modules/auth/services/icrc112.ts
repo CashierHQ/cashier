@@ -7,15 +7,14 @@ import type {
   Icrc112RequestInput,
   SignerErrorLike,
 } from "$modules/auth/types/icrc112";
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
+import { IDL } from "@icp-sdk/core/candid";
+import { Principal } from "@icp-sdk/core/principal";
 import type {
   BatchCallCanisterRequest,
   BatchCallCanisterResponse,
   Signer,
   Transport,
 } from "@slide-computer/signer";
-import { Buffer } from "buffer";
 
 /**
  * Checks whether a signer error means the ICRC-112 batch call method is not
@@ -119,9 +118,9 @@ class Icrc112Service<T extends Transport> {
         return {
           canisterId: canisterId.toString(),
           method: request.method,
-          arg: Buffer.from(request.arg).toString("base64"),
+          arg: bytesToBase64(new Uint8Array(request.arg)),
           ...(request.nonce && {
-            nonce: Buffer.from(request.nonce).toString("base64"),
+            nonce: bytesToBase64(new Uint8Array(request.nonce)),
           }),
         };
       }),
@@ -134,10 +133,7 @@ class Icrc112Service<T extends Transport> {
       params: {
         sender,
         requests,
-        validation: {
-          canisterId: cashierBackendCanisterId,
-          method: "icrc114_validate",
-        },
+        validationCanisterId: cashierBackendCanisterId,
       },
     };
 
@@ -256,7 +252,7 @@ class Icrc112Service<T extends Transport> {
   private async validateIcrc114(
     cashierBackendCanisterId: string,
     request: Icrc112RequestInput,
-    replyArg: ArrayBuffer,
+    replyArg: Uint8Array,
   ): Promise<boolean> {
     const actor = this.getValidationActor(cashierBackendCanisterId);
 
@@ -282,7 +278,7 @@ class Icrc112Service<T extends Transport> {
    */
   private getIcrcLedgerReplyStatus(
     method: string,
-    replyArg: ArrayBuffer,
+    replyArg: Uint8Array,
   ): IcrcLedgerReplyStatus {
     if (!isIcrcLedgerMethod(method)) {
       return "not-ledger";
@@ -361,7 +357,7 @@ class Icrc112Service<T extends Transport> {
             senderPrincipal,
             request.canister_id,
             request.method,
-            request.arg,
+            new Uint8Array(request.arg),
           );
           debugIcrc112("fallback request replied", {
             ...requestLabel,
@@ -428,3 +424,12 @@ class Icrc112Service<T extends Transport> {
 }
 
 export default Icrc112Service;
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary);
+}

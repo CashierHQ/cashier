@@ -1,14 +1,6 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@icp-sdk/core/principal";
 
-// Polyfill Buffer in browser only — dynamic import avoids the CJS `buffer`
-// package being evaluated by Vite's ESM module runner in Node.js context.
-if (typeof window !== "undefined" && !window.Buffer) {
-  import("buffer").then(({ Buffer }) => {
-    window.Buffer = Buffer;
-  });
-}
-
 /**
  * Encode an ICP account identifier from a principal string.
  * Converts principal text → AccountIdentifier hex string.

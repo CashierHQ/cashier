@@ -5,20 +5,33 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 
 // Hoisted mock functions for vi.mock factory
-const { mockBuildActor, mockIcrc1BalanceOf, mockTransfer, mockIcrc1Transfer } =
-  vi.hoisted(() => ({
-    mockBuildActor: vi.fn(),
-    mockIcrc1BalanceOf: vi.fn(),
-    mockTransfer: vi.fn(),
-    mockIcrc1Transfer: vi.fn(),
-  }));
+const {
+  mockBuildActor,
+  mockGetSigner,
+  mockCallCanisterViaIcrc49,
+  mockIcrc1BalanceOf,
+  mockTransfer,
+  mockIcrc1Transfer,
+} = vi.hoisted(() => ({
+  mockBuildActor: vi.fn(),
+  mockGetSigner: vi.fn(),
+  mockCallCanisterViaIcrc49: vi.fn(),
+  mockIcrc1BalanceOf: vi.fn(),
+  mockTransfer: vi.fn(),
+  mockIcrc1Transfer: vi.fn(),
+}));
 
 // Mock auth state
 vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: {
     account: { owner: "aaaaa-aa", subaccount: null },
     buildActor: mockBuildActor,
+    getSigner: mockGetSigner,
   },
+}));
+
+vi.mock("$modules/auth/services/icrc49", () => ({
+  callCanisterViaIcrc49: mockCallCanisterViaIcrc49,
 }));
 
 // Mock constants
@@ -83,6 +96,7 @@ describe("IcpLedgerService", () => {
     service = new IcpLedgerService();
     // Default: actor is available
     mockBuildActor.mockReturnValue(mockActor);
+    mockGetSigner.mockReturnValue({});
   });
 
   afterEach(() => {
@@ -114,6 +128,7 @@ describe("IcpLedgerService", () => {
       expect(mockBuildActor).toHaveBeenCalledWith({
         canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
         idlFactory: expect.any(Function),
+        options: { anonymous: true },
       });
       expect(mockIcrc1BalanceOf).toHaveBeenCalledWith({
         owner: Principal.fromText("aaaaa-aa"),
@@ -175,19 +190,27 @@ describe("IcpLedgerService", () => {
 
     it("should transfer successfully and return block height", async () => {
       const blockHeight = 12345n;
-      mockTransfer.mockResolvedValue({ Ok: blockHeight });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockHeight });
 
       const result = await service.transferToAccount(accountIdHex, amount);
 
       expect(decodeAccountID).toHaveBeenCalledWith(accountIdHex);
-      expect(mockTransfer).toHaveBeenCalledWith({
-        to: new Uint8Array([1, 2, 3, 4]),
-        amount: { e8s: amount },
-        fee: { e8s: 10_000n },
-        memo: 0n,
-        from_subaccount: [],
-        created_at_time: [],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: new Uint8Array([1, 2, 3, 4]),
+          amount: { e8s: amount },
+          fee: { e8s: 10_000n },
+          memo: 0n,
+          from_subaccount: [],
+          created_at_time: [],
+        }),
+      );
       expect(result).toBe(blockHeight);
     });
 
@@ -195,7 +218,7 @@ describe("IcpLedgerService", () => {
       const blockHeight = 12345n;
       const memo = new Uint8Array([1, 2, 3]);
       const createdAtTime = 1_700_000_000_000_000_000n;
-      mockTransfer.mockResolvedValue({ Ok: blockHeight });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockHeight });
 
       const result = await service.transferToAccount(accountIdHex, amount, {
         memo,
@@ -203,28 +226,36 @@ describe("IcpLedgerService", () => {
       });
 
       expect(decodeAccountID).toHaveBeenCalledWith(accountIdHex);
-      expect(mockTransfer).toHaveBeenCalledWith({
-        to: new Uint8Array([1, 2, 3, 4]),
-        amount: { e8s: amount },
-        fee: { e8s: 10_000n },
-        memo: expect.any(BigInt),
-        from_subaccount: [],
-        created_at_time: [{ timestamp_nanos: createdAtTime }],
-      });
-      expect(mockTransfer.mock.calls[0][0].memo).not.toBe(0n);
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: new Uint8Array([1, 2, 3, 4]),
+          amount: { e8s: amount },
+          fee: { e8s: 10_000n },
+          memo: expect.any(BigInt),
+          from_subaccount: [],
+          created_at_time: [{ timestamp_nanos: createdAtTime }],
+        }),
+      );
+      expect(mockCallCanisterViaIcrc49.mock.calls[0][6].memo).not.toBe(0n);
       expect(result).toBe(blockHeight);
     });
 
     it("should throw when actor is null (not authenticated)", async () => {
-      mockBuildActor.mockReturnValue(null);
+      mockGetSigner.mockReturnValue(null);
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("User is not authenticated");
+      ).rejects.toThrow("No signer available");
     });
 
     it("should throw on TxTooOld error", async () => {
-      mockTransfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { TxTooOld: { allowed_window_nanos: 1000n } },
       });
 
@@ -234,7 +265,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on BadFee error", async () => {
-      mockTransfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { BadFee: { expected_fee: { e8s: 20_000n } } },
       });
 
@@ -244,7 +275,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should return duplicate block height on TxDuplicate error", async () => {
-      mockTransfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { TxDuplicate: { duplicate_of: 100n } },
       });
 
@@ -254,7 +285,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on InsufficientFunds error", async () => {
-      mockTransfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { InsufficientFunds: { balance: { e8s: 500n } } },
       });
 
@@ -264,7 +295,9 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on TxCreatedInFuture error", async () => {
-      mockTransfer.mockResolvedValue({ Err: { TxCreatedInFuture: null } });
+      mockCallCanisterViaIcrc49.mockResolvedValue({
+        Err: { TxCreatedInFuture: null },
+      });
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
@@ -273,11 +306,17 @@ describe("IcpLedgerService", () => {
 
     it("should handle zero amount transfer", async () => {
       const blockHeight = 99n;
-      mockTransfer.mockResolvedValue({ Ok: blockHeight });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockHeight });
 
       const result = await service.transferToAccount(accountIdHex, 0n);
 
-      expect(mockTransfer).toHaveBeenCalledWith(
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "transfer",
+        expect.any(Array),
+        expect.any(Array),
         expect.objectContaining({
           amount: { e8s: 0n },
         }),
@@ -303,18 +342,26 @@ describe("IcpLedgerService", () => {
 
     it("should transfer successfully via ICRC-1 and return block index", async () => {
       const blockIndex = 67890n;
-      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockIndex });
 
       const result = await service.transferToPrincipal(toPrincipal, amount);
 
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
-        to: { owner: toPrincipal, subaccount: [] },
-        amount,
-        fee: [10_000n],
-        memo: [],
-        from_subaccount: [],
-        created_at_time: [],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "icrc1_transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: { owner: toPrincipal, subaccount: [] },
+          amount,
+          fee: [10_000n],
+          memo: [],
+          from_subaccount: [],
+          created_at_time: [],
+        }),
+      );
       expect(result).toBe(blockIndex);
     });
 
@@ -322,34 +369,42 @@ describe("IcpLedgerService", () => {
       const blockIndex = 67890n;
       const memo = new Uint8Array([1, 2, 3]);
       const createdAtTime = 1_700_000_000_000_000_000n;
-      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockIndex });
 
       const result = await service.transferToPrincipal(toPrincipal, amount, {
         memo,
         createdAtTime,
       });
 
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
-        to: { owner: toPrincipal, subaccount: [] },
-        amount,
-        fee: [10_000n],
-        memo: [memo],
-        from_subaccount: [],
-        created_at_time: [createdAtTime],
-      });
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "icrc1_transfer",
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          to: { owner: toPrincipal, subaccount: [] },
+          amount,
+          fee: [10_000n],
+          memo: [memo],
+          from_subaccount: [],
+          created_at_time: [createdAtTime],
+        }),
+      );
       expect(result).toBe(blockIndex);
     });
 
     it("should throw when actor is null (not authenticated)", async () => {
-      mockBuildActor.mockReturnValue(null);
+      mockGetSigner.mockReturnValue(null);
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("User is not authenticated");
+      ).rejects.toThrow("No signer available");
     });
 
     it("should throw on GenericError", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { GenericError: { message: "Test error", error_code: 500n } },
       });
 
@@ -359,7 +414,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on TemporarilyUnavailable error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { TemporarilyUnavailable: null },
       });
 
@@ -369,7 +424,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on BadBurn error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { BadBurn: { min_burn_amount: 1000n } },
       });
 
@@ -379,7 +434,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should return duplicate block index on Duplicate error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { Duplicate: { duplicate_of: 42n } },
       });
 
@@ -389,7 +444,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on BadFee error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { BadFee: { expected_fee: 20_000n } },
       });
 
@@ -399,7 +454,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on TooOld error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({ Err: { TooOld: null } });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Err: { TooOld: null } });
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
@@ -407,7 +462,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on CreatedInFuture error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { CreatedInFuture: { ledger_time: 1000n } },
       });
 
@@ -417,7 +472,7 @@ describe("IcpLedgerService", () => {
     });
 
     it("should throw on InsufficientFunds error", async () => {
-      mockIcrc1Transfer.mockResolvedValue({
+      mockCallCanisterViaIcrc49.mockResolvedValue({
         Err: { InsufficientFunds: { balance: 100n } },
       });
 
@@ -429,14 +484,20 @@ describe("IcpLedgerService", () => {
     it("should handle large amount transfer", async () => {
       const largeAmount = 1_000_000_000_000n;
       const blockIndex = 999999n;
-      mockIcrc1Transfer.mockResolvedValue({ Ok: blockIndex });
+      mockCallCanisterViaIcrc49.mockResolvedValue({ Ok: blockIndex });
 
       const result = await service.transferToPrincipal(
         toPrincipal,
         largeAmount,
       );
 
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith(
+      expect(mockCallCanisterViaIcrc49).toHaveBeenCalledWith(
+        {},
+        Principal.fromText("aaaaa-aa"),
+        Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+        "icrc1_transfer",
+        expect.any(Array),
+        expect.any(Array),
         expect.objectContaining({ amount: largeAmount }),
       );
       expect(result).toBe(blockIndex);

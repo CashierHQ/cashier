@@ -1,12 +1,14 @@
+export type Icrc49Bytes = ArrayBuffer | Uint8Array;
+
 export type Icrc49ContentMap = {
   reply?: {
-    arg?: ArrayBuffer;
+    arg?: Icrc49Bytes;
   };
   ingress_expiry?: unknown;
 };
 
 export type Icrc49RawCallResult = {
-  contentMap: ArrayBuffer;
-  certificate: ArrayBuffer;
-  replyArg: ArrayBuffer;
+  contentMap: Uint8Array;
+  certificate: Uint8Array;
+  replyArg: Uint8Array;
 };

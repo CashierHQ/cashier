@@ -2,9 +2,9 @@
   import { locale } from "$lib/i18n";
   import { authState } from "$modules/auth/state/auth.svelte";
   import {
-      CASHIER_WALLET_ID,
-      II_SIGNER_WALLET_ID,
-      REAL_NFID_WALLET_ID
+    CASHIER_WALLET_ID,
+    II_SIGNER_WALLET_ID,
+    REAL_NFID_WALLET_ID,
   } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";

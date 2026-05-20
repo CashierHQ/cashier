@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/public";
 import {
+  PUBLIC_CASHIER_WALLET_ORIGIN,
   PUBLIC_SHARED_BUILD_TYPE,
   PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID,
   PUBLIC_SHARED_FEATURE_FLAGS_LOCAL_IDENTITY_PROVIDER,
@@ -56,7 +56,7 @@ export const CASHIER_WALLET_ID = "cashier";
 
 /** Origin URL of the Cashier Wallet app (set via PUBLIC_CASHIER_WALLET_ORIGIN env var). */
 export const CASHIER_WALLET_ORIGIN =
-  env.PUBLIC_CASHIER_WALLET_ORIGIN ?? "http://localhost:9090";
+  PUBLIC_CASHIER_WALLET_ORIGIN || "http://localhost:9090";
 
 /** PNP adapter ID for the local NFID forked wallet. */
 export const NFID_WALLET_ID = "nfid-local";
