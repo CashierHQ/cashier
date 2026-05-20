@@ -1,0 +1,17 @@
+**/node_modules/**
+**/build/**
+**/dist/**
+**/.svelte-kit/**
+**/generated/**
+**/coverage/**
+target/**
+.dfx/**
+
+# Frontend has its own .prettierrc + .prettierignore — let prettier
+# pick those up when running inside src/cashier_frontend_new.
+src/cashier_frontend_new/**
+
+# Lockfiles and machine-formatted files
+pnpm-lock.yaml
+Cargo.lock
+canister_ids.json

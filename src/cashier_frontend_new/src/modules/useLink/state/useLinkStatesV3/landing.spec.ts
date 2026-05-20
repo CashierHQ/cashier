@@ -1,8 +1,8 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import { beforeEach, describe, expect, it } from "vitest";
-import { AddressUnlockedStateV3 } from "./addressUnlocked";
-import { LandingStateV3 } from "./landing";
+import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
+import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 
 describe("LandingStateV3", () => {
   let mockStore: UserLinkStoreV3;

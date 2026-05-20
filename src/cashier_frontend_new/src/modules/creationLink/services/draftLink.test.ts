@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { type Link as SharedLink, LinkState, LinkType } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fixture_of_owner = vi.hoisted(
@@ -18,7 +18,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   authState: fixture_of_auth_state,
 }));
 
-import { draftLinkService } from "./draftLink";
+import { draftLinkService } from "$modules/creationLink/services/draftLink";
 
 function fixture_of_draft_link(overrides?: Partial<SharedLink>): SharedLink {
   return {

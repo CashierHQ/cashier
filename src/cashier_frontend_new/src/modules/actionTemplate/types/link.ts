@@ -13,7 +13,7 @@ import {
   type SharedLinkTypeValue,
 } from "$modules/actionTemplate/types/link_type";
 import { type Link as SharedLink } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Serialized form of SharedLink to use in local storage

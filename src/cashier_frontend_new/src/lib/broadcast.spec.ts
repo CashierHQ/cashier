@@ -7,7 +7,7 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import { TypedBroadcastChannel } from "./broadcast";
+import { TypedBroadcastChannel } from "$lib/broadcast";
 
 describe("TypedBroadcastChannel", () => {
   beforeAll(() => {

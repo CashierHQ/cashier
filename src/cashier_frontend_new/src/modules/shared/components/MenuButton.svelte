@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AppSidebar from "./AppSidebar.svelte";
+  import AppSidebar from "$modules/shared/components/AppSidebar.svelte";
   import { locale } from "$lib/i18n";
 
   let isSidebarOpen = $state(false);

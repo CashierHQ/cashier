@@ -1,4 +1,8 @@
-import { loadTranslations, type Locale, type Translations } from "./i18n";
+import {
+  loadTranslations,
+  type Locale,
+  type Translations,
+} from "$lib/i18n/i18n";
 
 // Current locale state
 let currentLocale = $state<Locale>("en");

@@ -1,10 +1,10 @@
 name: Deploy all canisters to dev
 on:
   pull_request:
-      branches:
-          - dev
-      types:
-          - closed
+    branches:
+      - dev
+    types:
+      - closed
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -21,41 +21,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-            node-version: "22"
-            cache: "pnpm"
+      - name: Setup Rust toolchain
+        uses: ./.github/actions/setup-rust
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-          targets: wasm32-unknown-unknown
-
-      - name: Setup environment
-        run: |
-          export RUST_BACKTRACE="full"
-
-      - name: Install dfx
-        uses: dfinity/setup-dfx@main
-
-      - name: Confirm successful installation
-        run: dfx --version
-
-      - name: Install ic-wasm
-        run: |
-          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
-          chmod +x /usr/local/bin/ic-wasm
-
-      - name: Install candid-extractor
-        run: |
-          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
-          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
-          chmod +x /usr/local/bin/candid-extractor
+      - name: Setup IC tooling
+        uses: ./.github/actions/setup-ic-tools
 
       - name: Install Just command runner
         uses: extractions/setup-just@v4
@@ -76,7 +49,7 @@ jobs:
 
       - name: Deploy to dev environment
         env:
-            DFX_WARNING: -mainnet_plaintext_identity
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           owner=$(dfx identity get-principal)
           backend_log_filter="global,cashier=debug"

@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { describe, expect, it } from "vitest";
-import { validateTotalAmount } from "./validateTotalAmount";
+import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
 
 describe("validateTotalAmount", () => {
   it("should return valid when total amount is within limit", () => {

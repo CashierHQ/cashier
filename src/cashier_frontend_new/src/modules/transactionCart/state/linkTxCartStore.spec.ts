@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@dfinity/principal";
-import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+import { Principal } from "@icp-sdk/core/principal";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock constants
 const CASHIER_BACKEND_CANISTER_ID = "aaaaa-aa";
@@ -48,8 +48,8 @@ vi.mock("$modules/shared/services/feeService", () => ({
   },
 }));
 
-import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/auth/services/icrc112";
+import { authState } from "$modules/auth/state/auth.svelte";
 import { LinkTxCartStore } from "./linkTxCartStore.svelte";
 
 // Test fixtures

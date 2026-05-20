@@ -1,6 +1,6 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import InfoDrawer from "./InfoDrawer.svelte";
+  import InfoDrawer from "$modules/creationLink/components/drawers/InfoDrawer.svelte";
 
   type Props = {
     open?: boolean;

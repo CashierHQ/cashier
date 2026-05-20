@@ -1,5 +1,5 @@
 import { Err, Ok, type Result } from "ts-results-es";
-import { rsMatch } from "./rsMatch";
+import { rsMatch } from "$lib/rsMatch";
 
 type Response<T, E> =
   | {

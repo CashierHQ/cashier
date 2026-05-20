@@ -12,7 +12,7 @@ import {
   IntentType,
   TokenStandard,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 
 const VALID_PRINCIPAL_TEXT = "aaaaa-aa";

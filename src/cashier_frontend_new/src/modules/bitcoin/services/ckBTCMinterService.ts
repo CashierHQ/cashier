@@ -9,7 +9,7 @@ import {
   type WithdrawalFee,
 } from "$modules/bitcoin/types/ckbtc_minter";
 import { mapRetrieveBtcStatus } from "$modules/bitcoin/utils";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**

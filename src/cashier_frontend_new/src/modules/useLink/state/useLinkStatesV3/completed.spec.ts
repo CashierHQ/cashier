@@ -1,6 +1,6 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it } from "vitest";
-import { CompletedStateV3 } from "./completed";
+import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 
 describe("CompletedStateV3", () => {
   let state: CompletedStateV3;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { LinkStep } from "$modules/links/types/linkStep";
-  import ProtectedLinkState from "./ProtectedLinkState.svelte";
+  import ProtectedLinkState from "$modules/guard/components/ProtectedLinkState.svelte";
 
   let { allowedStates }: { allowedStates?: LinkStep[] } = $props();
 </script>

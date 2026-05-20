@@ -2,13 +2,13 @@ import {
   CreateLinkAsset,
   CreateLinkData,
 } from "$modules/creationLink/types/createLinkData";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
-import { Link } from "./link/link";
-import { LinkState } from "./link/linkState";
-import { LinkType } from "./link/linkType";
-import { UnifiedLinkItemMapper } from "./linkList";
-import { TempLink } from "./tempLink";
+import { Link } from "$modules/links/types/link/link";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
+import { TempLink } from "$modules/links/types/tempLink";
 
 describe("UnifiedLinkItemMapper", () => {
   it("maps from real Link instance", () => {

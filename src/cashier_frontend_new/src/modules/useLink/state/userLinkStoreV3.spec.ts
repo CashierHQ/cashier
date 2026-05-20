@@ -1,7 +1,7 @@
 import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserLinkStoreV3 } from "./userLinkStoreV3.svelte";
+import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 
 const mocks = vi.hoisted(() => ({
   LinkDetailStoreV3: vi.fn(),

@@ -3,13 +3,13 @@ import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { describe, expect, it, vi } from "vitest";
 import {
   calculateLinkInfoAssetsWithTokenInfo,
   calculateUsageInfoAssetsWithTokenInfo,
-} from "./usageInfo";
+} from "$modules/detailLink/utils/usageInfo";
 
 function fixture_of_token(): TokenWithPriceAndBalance {
   return {

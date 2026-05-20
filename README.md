@@ -36,8 +36,11 @@ Technically, Cashier is all about flexibly configuring and executing different t
 **Frontend:**
 
 ```bash
-# Install all dependencies
-npm install
+# CI-equivalent install (fails on lockfile drift)
+pnpm install --frozen-lockfile
+
+# When intentionally bumping or adding deps, allow lockfile updates:
+pnpm install
 ```
 
 **Backend:**
@@ -52,7 +55,7 @@ just build
 # deploy backend
 just dfx_local_deploy
 # run frontend
-npm start
+just start_frontend
 # after login, airdrop token for testing
 just dfx_local_airdrop <principal id>
 ```

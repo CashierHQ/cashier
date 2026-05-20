@@ -6,7 +6,7 @@ import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
 import type { TokenMetadata } from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Extract arg/return types from the generated IDL for ICRC-49 encoding.
 const _service = icrcLedger.idlFactory({ IDL }) as unknown as {

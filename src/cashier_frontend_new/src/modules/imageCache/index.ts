@@ -9,7 +9,7 @@
  */
 
 // Export components
-export { default as TokenIcon } from "./components/TokenIcon.svelte";
+export { default as TokenIcon } from "$modules/imageCache/components/TokenIcon.svelte";
 
 // Export utilities
 export {
@@ -20,9 +20,9 @@ export {
   clearCache,
   clearAllCache,
   getCacheSize,
-} from "./utils/imageCache";
+} from "$modules/imageCache/utils/imageCache";
 
-export { getTokenLogo } from "./utils/getTokenLogo";
+export { getTokenLogo } from "$modules/imageCache/utils/getTokenLogo";
 
 export {
   isImagePreloaded,
@@ -31,7 +31,10 @@ export {
   preloadTokenImage,
   preloadTokenImages,
   preloadTokenImagesIdle,
-} from "./utils/preloadTokenImage";
+} from "$modules/imageCache/utils/preloadTokenImage";
 
 // Export types
-export type { ImageCacheEntry, ImageLoadOptions } from "./types";
+export type {
+  ImageCacheEntry,
+  ImageLoadOptions,
+} from "$modules/imageCache/types";

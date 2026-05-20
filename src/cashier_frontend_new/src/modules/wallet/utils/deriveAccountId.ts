@@ -1,5 +1,5 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**

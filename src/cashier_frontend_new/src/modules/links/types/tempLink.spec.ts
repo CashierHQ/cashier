@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { TempLink, TempLinkMapper, type SerializedTempLink } from "./tempLink";
-import { LinkState } from "./link/linkState";
-import { LinkType } from "./link/linkType";
+import {
+  TempLink,
+  TempLinkMapper,
+  type SerializedTempLink,
+} from "$modules/links/types/tempLink";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
 import * as devalue from "devalue";
 import {
   CreateLinkAsset,

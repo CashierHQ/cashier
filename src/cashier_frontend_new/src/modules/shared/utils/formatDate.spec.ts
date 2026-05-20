@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDate } from "./formatDate";
+import { formatDate } from "$modules/shared/utils/formatDate";
 
 describe("formatDate", () => {
   it("formats valid nanosecond timestamp to date string", () => {

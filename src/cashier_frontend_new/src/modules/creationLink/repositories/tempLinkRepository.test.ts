@@ -2,8 +2,11 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-import { tempLinkRepository } from "./tempLinkRepository";
-import { CreateLinkData, CreateLinkAsset } from "../types/createLinkData";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+import {
+  CreateLinkData,
+  CreateLinkAsset,
+} from "$modules/creationLink/types/createLinkData";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkType } from "$modules/links/types/link/linkType";

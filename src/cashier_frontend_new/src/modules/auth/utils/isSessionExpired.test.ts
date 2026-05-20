@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { isSessionExpired } from "./isSessionExpired";
+import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 
 describe("isSessionExpired util", () => {
   const now = 1_700_000_000_000; // fixed epoch ms for deterministic tests

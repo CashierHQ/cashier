@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
+  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
 
   let {
     requireAuth = true,

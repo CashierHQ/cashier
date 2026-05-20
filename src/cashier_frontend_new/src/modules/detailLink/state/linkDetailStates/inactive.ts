@@ -12,7 +12,7 @@ import {
 } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
+import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 
 // State when the link inactive
 export class LinkInactiveState implements LinkDetailState {

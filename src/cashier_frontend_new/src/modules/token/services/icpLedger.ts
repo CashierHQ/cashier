@@ -10,8 +10,8 @@ import {
 } from "$modules/token/constants";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
 import { toNullable } from "@dfinity/utils";
+import { Principal } from "@icp-sdk/core/principal";
 
 const _service = icpLedger.idlFactory({ IDL }) as unknown as {
   _fields: Array<[string, { argTypes: IDL.Type[]; retTypes: IDL.Type[] }]>;

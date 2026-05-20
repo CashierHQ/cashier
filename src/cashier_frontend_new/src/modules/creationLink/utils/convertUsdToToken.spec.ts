@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { describe, expect, it } from "vitest";
-import { convertUsdToToken } from "./convertUsdToToken";
+import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
 
 describe("convertUsdToToken", () => {
   it("should convert USD to token correctly", () => {

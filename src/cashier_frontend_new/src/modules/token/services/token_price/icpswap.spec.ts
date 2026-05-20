@@ -17,7 +17,7 @@ vi.mock("axios", () => ({
 }));
 
 // Import after mocks
-import { icpswapTokenPriceService } from "./icpswap";
+import { icpswapTokenPriceService } from "$modules/token/services/token_price/icpswap";
 
 // Helper: build a valid axios response for ICPSwap token list
 const makeResponse = (tokens: { tokenLedgerId: string; price: string }[]) => ({

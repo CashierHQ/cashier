@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Ok, Err } from "ts-results-es";
-import type { Principal as PrincipalType } from "@dfinity/principal";
+import type { Principal as PrincipalType } from "@icp-sdk/core/principal";
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 // All variables referenced inside vi.mock() factories must be hoisted to avoid
@@ -127,7 +127,8 @@ vi.mock("../utils/sorter", () => ({
   sortWalletTokens: mockSortWalletTokens,
 }));
 
-vi.mock("@dfinity/principal", () => ({
+// v5: store now imports Principal from @icp-sdk/core/principal (mock path updated)
+vi.mock("@icp-sdk/core/principal", () => ({
   Principal: {
     fromText: vi.fn().mockImplementation((text: string) => ({
       toString: () => text,
@@ -138,7 +139,7 @@ vi.mock("@dfinity/principal", () => ({
 
 // ── Import store after mocks ──────────────────────────────────────────────────
 
-import { walletStore } from "./walletStore.svelte";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -304,12 +305,15 @@ describe("WalletStore", () => {
   // ── toggleToken ──────────────────────────────────────────────────────────────
 
   describe("toggleToken", () => {
+    // v5: Principal.fromText now validates checksums; use real Principal ID
+    const NEW_TOKEN_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
     it("calls tokenStorageService.toggleToken", async () => {
       // Arrange
       mockToggleToken.mockResolvedValueOnce(Ok(undefined));
 
       // Act
-      await walletStore.toggleToken("token-abc", true);
+      await walletStore.toggleToken(NEW_TOKEN_ID, true);
 
       // Assert
       expect(mockToggleToken).toHaveBeenCalledTimes(1);
@@ -320,7 +324,7 @@ describe("WalletStore", () => {
       mockToggleToken.mockResolvedValueOnce(Ok(undefined));
 
       // Act
-      await walletStore.toggleToken("token-abc", false);
+      await walletStore.toggleToken(NEW_TOKEN_ID, false);
 
       // Assert
       expect(queryHolder.instance!.refresh).toHaveBeenCalledTimes(1);
@@ -332,7 +336,7 @@ describe("WalletStore", () => {
       mockToggleToken.mockResolvedValueOnce(expected);
 
       // Act
-      const result = await walletStore.toggleToken("token-abc", true);
+      const result = await walletStore.toggleToken(NEW_TOKEN_ID, true);
 
       // Assert
       expect(result).toBe(expected);
@@ -342,13 +346,17 @@ describe("WalletStore", () => {
   // ── addToken ─────────────────────────────────────────────────────────────────
 
   describe("addToken", () => {
+    // v5: Principal.fromText now validates checksums; use real Principal IDs
+    const NEW_TOKEN_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const DUPLICATE_TOKEN_ID = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+
     it("calls query.refresh when addToken succeeds", async () => {
       // Arrange
       queryHolder.instance!.data = [];
       mockAddToken.mockResolvedValueOnce(Ok(undefined));
 
       // Act
-      await walletStore.addToken("new-token");
+      await walletStore.addToken(NEW_TOKEN_ID);
 
       // Assert
       expect(queryHolder.instance!.refresh).toHaveBeenCalledTimes(1);
@@ -360,7 +368,7 @@ describe("WalletStore", () => {
       mockAddToken.mockResolvedValueOnce(Err(new Error("duplicate")));
 
       // Act
-      await walletStore.addToken("duplicate-token");
+      await walletStore.addToken(DUPLICATE_TOKEN_ID);
 
       // Assert
       expect(queryHolder.instance!.refresh).not.toHaveBeenCalled();
@@ -373,7 +381,7 @@ describe("WalletStore", () => {
       mockAddToken.mockResolvedValueOnce(expected);
 
       // Act
-      const result = await walletStore.addToken("new-token");
+      const result = await walletStore.addToken(NEW_TOKEN_ID);
 
       // Assert
       expect(result).toBe(expected);
@@ -385,7 +393,7 @@ describe("WalletStore", () => {
       mockAddToken.mockResolvedValueOnce(Ok(undefined));
 
       // Act
-      await walletStore.addToken("new-token");
+      await walletStore.addToken(NEW_TOKEN_ID);
 
       // Assert — third argument must contain existing token addresses
       expect(mockAddToken).toHaveBeenCalledWith(expect.anything(), undefined, [

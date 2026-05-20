@@ -3,7 +3,7 @@ import {
   getNetworkForToken,
   getNetworkName,
   getNetworkLogo,
-} from "./networkService";
+} from "$modules/wallet/services/networkService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 describe("networkService", () => {

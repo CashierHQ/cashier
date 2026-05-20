@@ -3,7 +3,7 @@ import {
   computeAmountFromInput,
   parseDisplayNumber,
   sanitizeInput,
-} from "./inputAmount";
+} from "$modules/links/utils/inputAmount";
 
 describe("inputAmount utils", () => {
   it("sanitizeInput removes letters and keeps digits, dot, comma", () => {

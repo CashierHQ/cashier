@@ -6,8 +6,8 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
-import { Principal } from "@dfinity/principal";
-import type { BitcoinBlock } from "./bitcoin_transaction";
+import { Principal } from "@icp-sdk/core/principal";
+import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 
 /**
  * Enriched BridgeTransaction type with total amount in USD value

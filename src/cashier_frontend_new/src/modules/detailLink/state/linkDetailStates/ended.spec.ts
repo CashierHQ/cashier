@@ -1,6 +1,6 @@
 import { ActionType } from "$modules/links/types/action/actionType";
 import { describe, expect, it } from "vitest";
-import { LinkEndedState } from "./ended";
+import { LinkEndedState } from "$modules/detailLink/state/linkDetailStates/ended";
 
 describe("LinkEndedState", () => {
   it("createAction should throw that link has ended", async () => {

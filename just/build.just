@@ -28,7 +28,7 @@ build_canisters: pre_build
 # Builds the frontend
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps
-  cd "{{FRONTEND_DIR_NEW}}" && pnpm run build:{{mode}}
+  pnpm --filter cashier_frontend_new build:{{mode}}
 
 # Generates the ts files for the canister services 
 [group('build')]
@@ -38,18 +38,12 @@ generate_frontend_ts:
   just generate_frontend_ts_for_canister icp_ledger_canister
 
 
+# Install workspace deps with frozen lockfile (CI-safe default).
+# Fails fast if pnpm-lock.yaml is out of sync with package.json.
+# When intentionally bumping deps locally, run `pnpm install` directly instead.
 [private]
 install_frontend_deps:
-  # Installs the entire pnpm workspace (workspace root is the repo root).
-  # pnpm walks up to pnpm-workspace.yaml and installs every package,
-  # including the `workspace:*` link to @cashier-wallet/wallet-sdk.
-  # pnpm enforces a frozen lockfile automatically when CI=true.
-  cd "{{FRONTEND_DIR_NEW}}" && pnpm install
-  # Build the wallet SDK so consumers can resolve dist/index.{js,d.ts}.
-  # Required by svelte-check (frontend_check_code), vite build (build_frontend),
-  # and vitest (test_frontend) — pnpm only symlinks workspace packages,
-  # it does not run their build script automatically.
-  pnpm --filter @cashier-wallet/wallet-sdk run build
+  pnpm install --frozen-lockfile
 
 [private]
 generate_frontend_ts_for_canister canister:

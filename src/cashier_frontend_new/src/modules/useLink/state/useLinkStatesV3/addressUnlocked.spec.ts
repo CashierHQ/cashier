@@ -4,9 +4,9 @@ import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AddressUnlockedStateV3 } from "./addressUnlocked";
-import { CompletedStateV3 } from "./completed";
-import { LandingStateV3 } from "./landing";
+import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
+import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
+import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 
 const mocks = vi.hoisted(() => ({
   createActionV3: vi.fn(),

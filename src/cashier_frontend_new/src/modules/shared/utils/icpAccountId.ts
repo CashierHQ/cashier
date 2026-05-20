@@ -1,5 +1,5 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 // Polyfill Buffer in browser only — dynamic import avoids the CJS `buffer`
 // package being evaluated by Vite's ESM module runner in Node.js context.
@@ -52,6 +52,6 @@ export function decodeAccountID(accountHex: string): Uint8Array {
     return AccountIdentifier.fromHex(accountHex).toUint8Array();
   } catch (error) {
     console.error("Error decoding ICP account:", error);
-    throw new Error(`Invalid ICP account ID: ${accountHex}`);
+    throw new Error(`Invalid ICP account ID: ${accountHex}`, { cause: error });
   }
 }
