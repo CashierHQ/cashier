@@ -1,3 +1,4 @@
+import { env } from "$env/dynamic/public";
 import {
   PUBLIC_SHARED_BUILD_TYPE,
   PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID,
@@ -7,7 +8,6 @@ import {
   PUBLIC_SHARED_IC_INTERNET_IDENTITY_PROVIDER,
   PUBLIC_SHARED_TOKEN_STORAGE_CANISTER_ID,
 } from "$env/static/public";
-import { env } from "$env/dynamic/public";
 
 type BuildType = "dev" | "local" | "staging" | "production";
 export const BUILD_TYPE: BuildType = PUBLIC_SHARED_BUILD_TYPE as BuildType;
@@ -56,13 +56,14 @@ export const CASHIER_WALLET_ID = "cashier";
 
 /** Origin URL of the Cashier Wallet app (set via PUBLIC_CASHIER_WALLET_ORIGIN env var). */
 export const CASHIER_WALLET_ORIGIN =
-  env.PUBLIC_CASHIER_WALLET_ORIGIN ?? "http://localhost:5177";
+  env.PUBLIC_CASHIER_WALLET_ORIGIN ?? "http://localhost:9090";
 
 /** PNP adapter ID for the local NFID forked wallet. */
 export const NFID_WALLET_ID = "nfid-local";
 
 /** Origin URL of the local NFID forked wallet. */
-export const NFID_WALLET_ORIGIN = "http://localhost:9090";
+//export const NFID_WALLET_ORIGIN = "http://localhost:9090";
+export const NFID_WALLET_ORIGIN = "https://vx6ob-pyaaa-aaaar-qb7dq-cai.icp0.io";
 
 /** PNP adapter ID for the production NFID wallet. */
 export const REAL_NFID_WALLET_ID = "nfid-real";

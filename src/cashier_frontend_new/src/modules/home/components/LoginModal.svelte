@@ -2,10 +2,10 @@
   import { locale } from "$lib/i18n";
   import { authState } from "$modules/auth/state/auth.svelte";
   import {
-    II_SIGNER_WALLET_ID,
-    NFID_WALLET_ID,
-    OISY_WALLET_ID,
-    REAL_NFID_WALLET_ID,
+      II_SIGNER_WALLET_ID,
+      NFID_WALLET_ID,
+      OISY_WALLET_ID,
+      REAL_NFID_WALLET_ID,
   } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -124,33 +124,6 @@
           </span>
         </button>
 
-        <!-- <button
-          type="button"
-          onclick={() => handleWalletSelect("cashier-wallet")}
-          disabled={isConnecting}
-          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="flex items-center w-full text-[14px]">
-            <img
-              alt="Cashier Wallet account"
-              class="h-6 w-6 mr-[10px]"
-              src="/credit-card-check.svg"
-            />
-            <span class="flex-grow text-left font-medium">
-              {#if isConnecting}
-                {locale.t("home.loginModal.connecting")}
-              {:else}
-                Cashier Wallet (account)
-              {/if}
-            </span>
-            {#if isConnecting}
-              <div
-                class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
-              ></div>
-            {/if}
-          </span>
-        </button> -->
-
         <button
           type="button"
           onclick={() => handleWalletSelect("nfid-wallet")}
@@ -167,7 +140,7 @@
               {#if isConnecting}
                 {locale.t("home.loginModal.connecting")}
               {:else}
-                Cashier Wallet (delegation)
+                Cashier Wallet
               {/if}
             </span>
             {#if isConnecting}
@@ -195,34 +168,6 @@
                 {locale.t("home.loginModal.connecting")}
               {:else}
                 NFID Wallet
-              {/if}
-            </span>
-            {#if isConnecting}
-              <div
-                class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
-              ></div>
-            {/if}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onclick={() => handleWalletSelect("oisy-wallet")}
-          disabled={isConnecting}
-          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="flex items-center w-full text-[14px]">
-            <span
-              class="h-6 w-6 mr-[10px] rounded-full bg-[#6b46ff] text-white flex items-center justify-center text-[13px] font-semibold"
-              aria-hidden="true"
-            >
-              O
-            </span>
-            <span class="flex-grow text-left font-medium">
-              {#if isConnecting}
-                {locale.t("home.loginModal.connecting")}
-              {:else}
-                OISY Wallet
               {/if}
             </span>
             {#if isConnecting}

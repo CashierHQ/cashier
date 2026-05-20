@@ -9,12 +9,13 @@ import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { NFIDSignerAdapter } from "$modules/auth/signer/nfid/NFIDSignerAdapter";
 import {
   BUILD_TYPE,
+  CASHIER_WALLET_ID,
+  CASHIER_WALLET_ORIGIN,
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
   NFID_WALLET_ID,
-  NFID_WALLET_ORIGIN,
   OISY_WALLET_ID,
   REAL_NFID_WALLET_ID,
   REAL_NFID_WALLET_ORIGIN,
@@ -75,15 +76,13 @@ const CONFIG: CreatePnpArgs = {
         },
       },
     },
-    // Local NFID fork — ICRC-34 delegation adapter.
-    // Requests a DelegationChain scoped to backend canisters at login time;
-    // all subsequent canister calls go directly via HttpAgent (no per-call approval).
-    [NFID_WALLET_ID]: {
-      id: NFID_WALLET_ID,
+    // Cashier standalone wallet
+    [CASHIER_WALLET_ID]: {
+      id: CASHIER_WALLET_ID,
       enabled: true,
       adapter: NFIDSignerAdapter,
       config: {
-        walletUrl: `${NFID_WALLET_ORIGIN}/rpc`,
+        walletUrl: `${CASHIER_WALLET_ORIGIN}/rpc`,
         host: HOST_ICP,
         targets: TARGETS,
         derivationOrigin:
@@ -94,7 +93,7 @@ const CONFIG: CreatePnpArgs = {
               : undefined,
       },
     },
-    // Production NFID Wallet — same ICRC-29/34/49 flow as the local NFID fork.
+    // NFID Wallet
     [REAL_NFID_WALLET_ID]: {
       id: REAL_NFID_WALLET_ID,
       enabled: true,
@@ -123,22 +122,6 @@ const CONFIG: CreatePnpArgs = {
               : undefined,
       },
     },
-    // Cashier Wallet — ICRC-29 iframe wallet with II authentication
-    // [CASHIER_WALLET_ID]: {
-    //   id: CASHIER_WALLET_ID,
-    //   enabled: true,
-    //   adapter: CashierWalletSignerAdapter,
-    //   config: {
-    //     walletOrigin: CASHIER_WALLET_ORIGIN,
-    //     host: HOST_ICP,
-    //     // Only set derivationOrigin in production — II (https://identity.ic0.app)
-    //     // must be able to GET /.well-known/ii-alternative-origins from this origin
-    //     // to verify the relationship. That fetch is blocked by browsers when the
-    //     // DApp runs on HTTP (localhost), so we skip it for non-production builds.
-    //     derivationOrigin:
-    //       BUILD_TYPE === "production" ? "https://cashierapp.io" : undefined,
-    //   },
-    // },
   },
 };
 
