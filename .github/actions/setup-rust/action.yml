@@ -1,7 +1,11 @@
 name: "Setup Rust toolchain"
-description: "Installs the stable Rust toolchain with clippy, rustfmt, and the wasm32 target."
+description: "Installs the pinned Rust toolchain with clippy, rustfmt, and optional targets."
 
 inputs:
+  toolchain:
+    description: "Rust toolchain version"
+    required: false
+    default: "1.93.1"
   targets:
     description: "Comma-separated rustup targets"
     required: false
@@ -15,8 +19,9 @@ runs:
   using: "composite"
   steps:
     - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@master
       with:
+        toolchain: ${{ inputs.toolchain }}
         components: ${{ inputs.components }}
         targets: ${{ inputs.targets }}
 
