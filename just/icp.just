@@ -1,6 +1,3 @@
-# icp.just — personal/experimental icp-cli local network recipes.
-# Standalone: run with `just -f just/icp.just <recipe>`, or `import "./just/icp.just"` from the justfile.
-
 # Start local network (PocketIC via icp-cli, port 8000, background).
 [group('icp')]
 icp_local_start: icp_local_stop
@@ -17,9 +14,9 @@ icp_local_stop:
 # Full LOCAL deploy: start network → ledgers + indexes + ckBTC (dfx) → app canisters (icp-cli).
 # ICP ledger + index are auto-provided by nns:true (icp.yaml); the other tokens need dfx because
 # icp-cli 0.2.6 has no --specified-id. dfx runs as a client against the icp-cli network.
-# The `&& (icp_deploy)` runs the app-canister deploy AFTER all ledgers are up.
+# The `&&` post-deps run the app canisters + gate_service AFTER all ledgers are up.
 [group('icp')]
-icp_local_deploy: icp_local_start && (icp_deploy)
+icp_local_deploy: icp_local_start && (icp_deploy) (icp_deploy_gate)
   #!/usr/bin/env bash
   set -e
   cd "$(git rev-parse --show-toplevel)"
@@ -136,14 +133,26 @@ icp_deploy_backend env="local" log_filter="global,cashier=debug":
       token_storage_canister_id=principal \"${token_storage_id}\";
   })"
 
+# Deploy gate_service — local env only (looks up cashier_backend id for the permissions vec).
+#   env:        target environment
+#   log_filter: canister log filter
+[group('icp')]
+icp_deploy_gate env="local" log_filter="global,cashier=debug":
+  #!/usr/bin/env bash
+  set -e
+  owner=$(icp identity principal)
+  cashier_backend_id=$(icp canister status cashier_backend -e {{env}} --id-only)
+  icp deploy gate_service -e {{env}} --args "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt (10000 : nat64); log_filter=opt \"{{log_filter}}\"; };
+      owner=principal \"${owner}\";
+      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
+  })"
+
 # Deploy cashier_frontend_new (uploads src/cashier_frontend_new/build)
 #   env: target environment
 [group('icp')]
 icp_deploy_frontend env="local":
   icp deploy cashier_frontend_new -e {{env}}
-
-
-# ── Airdrop (local testing) ─────────────────────────────────────────────────
 
 # Airdrop ICP + ICRC1 tokens (ckETH, ckUSDC, DOGE) to a principal.
 # ICP is sent from the icp identity (nns:true seeds it with ICP); the ICRC1 tokens are
