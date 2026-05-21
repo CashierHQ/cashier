@@ -31,6 +31,9 @@ runs:
 
     - name: Setup IC tooling
       uses: ./.github/actions/setup-ic-tools
+      with:
+        # dfx-orbit is dfx_core-based — the orbit flow stays on dfx
+        install-dfx: "true"
 
     - name: Install didc
       shell: bash

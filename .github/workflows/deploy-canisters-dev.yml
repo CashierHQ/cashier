@@ -29,6 +29,8 @@ jobs:
 
       - name: Setup IC tooling
         uses: ./.github/actions/setup-ic-tools
+        with:
+          install-icp-cli: "true"
 
       - name: Install Just command runner
         uses: extractions/setup-just@v4
@@ -39,22 +41,18 @@ jobs:
 
       # DANGEROUS: This is a plaintext identity import
       - name: Import Deployer identity
-        run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+        run: icp identity import deployer --from-pem private_key.pem --storage plaintext
       # DANGEROUS: Do not echo the private key to the console
 
-      - name: Get cashier dev address
+      - name: Remove private key file (post-import hygiene)
+        run: rm -f private_key.pem
+
+      - name: Set default identity
         run: |
-          dfx identity use deployer
-          dfx identity get-principal
+          icp identity default deployer
+          icp identity principal
 
       - name: Deploy to dev environment
-        env:
-            DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          owner=$(dfx identity get-principal)
-          backend_log_filter="global,cashier=debug"
-          token_storage_log_filter="global,cashier=debug,token_storage=debug"
-
           just build dev
-          # pass log filters to just dfx_deploy so canisters pick the appropriate level
-          just dfx_deploy "$owner" "--network=dev" "$backend_log_filter" "$token_storage_log_filter"
+          just icp_deploy dev
