@@ -58,7 +58,7 @@ icp_deploy_token_storage env="local" log_filter="global,cashier=debug,token_stor
   owner=$(icp identity principal)
   MODE_FLAG=""
   [ -n "{{mode}}" ] && MODE_FLAG="--mode {{mode}}"
-  icp deploy token_storage -e {{env}} $MODE_FLAG --args "(record {
+  icp deploy token_storage -e {{env}} $MODE_FLAG -y --args "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt (10000 : nat64); log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"${owner}\";
       tokens = opt vec {
@@ -127,7 +127,7 @@ icp_deploy_backend env="local" log_filter="global,cashier=debug":
   set -e
   owner=$(icp identity principal)
   token_storage_id=$(icp canister status token_storage -e {{env}} --id-only)
-  icp deploy cashier_backend -e {{env}} --args "(record {
+  icp deploy cashier_backend -e {{env}} -y --args "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt (10000 : nat64); log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"${owner}\";
       token_storage_canister_id=principal \"${token_storage_id}\";
@@ -142,7 +142,7 @@ icp_deploy_gate env="local" log_filter="global,cashier=debug":
   set -e
   owner=$(icp identity principal)
   cashier_backend_id=$(icp canister status cashier_backend -e {{env}} --id-only)
-  icp deploy gate_service -e {{env}} --args "(record {
+  icp deploy gate_service -e {{env}} -y --args "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt (10000 : nat64); log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"${owner}\";
       permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
@@ -152,7 +152,7 @@ icp_deploy_gate env="local" log_filter="global,cashier=debug":
 #   env: target environment
 [group('icp')]
 icp_deploy_frontend env="local":
-  icp deploy cashier_frontend_new -e {{env}}
+  icp deploy cashier_frontend_new -e {{env}} -y
 
 # Airdrop ICP + ICRC1 tokens (ckETH, ckUSDC, DOGE) to a principal.
 # ICP is sent from the icp identity (nns:true seeds it with ICP); the ICRC1 tokens are
