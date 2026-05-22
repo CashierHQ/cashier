@@ -4,36 +4,36 @@
   import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import {
-      BridgeTransactionStatus,
-      BridgeType,
-      type BridgeTransaction,
+    BridgeTransactionStatus,
+    BridgeType,
+    type BridgeTransaction,
   } from "$modules/bitcoin/types/bridge_transaction";
   import {
-      CKBTC_CANISTER_ID,
-      ICP_INDEX_CANISTER_ID,
-      ICP_LEDGER_CANISTER_ID,
+    CKBTC_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import {
-      getWalletHistoryStore,
-      type WalletHistoryStore,
+    getWalletHistoryStore,
+    type WalletHistoryStore,
   } from "$modules/token/state/walletHistoryStore.svelte";
   import {
-      DisplayTransactionMapper,
-      TransactionKind,
-      type TokenWithPriceAndBalance,
-      type TransactionKindValue,
+    DisplayTransactionMapper,
+    TransactionKind,
+    type TokenWithPriceAndBalance,
+    type TransactionKindValue,
   } from "$modules/token/types/index";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { formatDate, getDateKey } from "$modules/wallet/utils/date";
   import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
   import {
-      ArrowDownLeft,
-      ArrowUpRight,
-      Check,
-      ClockArrowDown,
-      ClockArrowUp,
-      LoaderCircle,
+    ArrowDownLeft,
+    ArrowUpRight,
+    Check,
+    ClockArrowDown,
+    ClockArrowUp,
+    LoaderCircle,
   } from "lucide-svelte";
   import { onDestroy } from "svelte";
 

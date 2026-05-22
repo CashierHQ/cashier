@@ -22,10 +22,7 @@ import {
   type ValidationErrorType,
 } from "$modules/token/services/canisterValidation";
 import type { TokenMetadata } from "$modules/token/types";
-import {
-  parseListTokens,
-  parseTokenDto,
-} from "$modules/token/utils/parser";
+import { parseListTokens, parseTokenDto } from "$modules/token/utils/parser";
 import type { NFT } from "$modules/wallet/types/nft";
 import { NFTMapper } from "$modules/wallet/types/nft";
 import { Principal } from "@icp-sdk/core/principal";

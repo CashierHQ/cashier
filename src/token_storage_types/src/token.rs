@@ -576,7 +576,10 @@ mod tests {
         assert!(!result.enabled_by_default);
         assert_eq!(result.is_rune, Some(true));
         assert_eq!(
-            result.rune_info.as_ref().and_then(|info| info.icon.as_deref()),
+            result
+                .rune_info
+                .as_ref()
+                .and_then(|info| info.icon.as_deref()),
             Some("https://ordinals.com/content/rune-icon")
         );
         match &result.details {

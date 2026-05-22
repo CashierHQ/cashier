@@ -142,7 +142,8 @@
             <TokenIcon
               address={linkCreationFeeItem.asset.address}
               symbol={linkCreationFeeItem.asset.symbol}
-              logo={linkCreationFeeItem.asset.icon ?? getTokenLogo(linkCreationFeeItem.asset.address)}
+              logo={linkCreationFeeItem.asset.icon ??
+                getTokenLogo(linkCreationFeeItem.asset.address)}
               size="sm"
               {failedImageLoads}
               {onImageError}

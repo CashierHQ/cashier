@@ -1,11 +1,9 @@
 {
   "cashier_backend": {
-    "dev": "edrez-4iaaa-aaaam-aekta-cai",
-    "ic": "pnhpm-haaaa-aaaao-a5wna-cai"
+    "dev": "edrez-4iaaa-aaaam-aekta-cai"  
   },
   "token_storage": {
-    "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
-    "ic": "rpfmw-oqaaa-aaaao-a5uaa-cai"
+    "dev": "hmrnm-pqaaa-aaaam-aenea-cai"  
   },
   "cashier_frontend_new": {
     "dev": "bepcz-nyaaa-aaaam-aekoa-cai",

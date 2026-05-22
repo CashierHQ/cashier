@@ -14,7 +14,9 @@ export function getTokenOriginLabel(origin: TokenOrigin): string {
   return `${origin.network} ${origin.protocol}`;
 }
 
-export function getTokenOrigin(tokenDetails: TokenWithPriceAndBalance): TokenOrigin | null {
+export function getTokenOrigin(
+  tokenDetails: TokenWithPriceAndBalance,
+): TokenOrigin | null {
   if (!tokenDetails.isRune) return null;
 
   return {
@@ -22,6 +24,6 @@ export function getTokenOrigin(tokenDetails: TokenWithPriceAndBalance): TokenOri
     protocol: "Rune",
     tokenName: tokenDetails.name,
     tokenId: tokenDetails.runeInfo?.tokenId,
-    runeId: tokenDetails.runeInfo?.runeId
-  }
+    runeId: tokenDetails.runeInfo?.runeId,
+  };
 }

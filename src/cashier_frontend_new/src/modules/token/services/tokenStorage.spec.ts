@@ -198,9 +198,8 @@ describe("TokenStorageService.addToken", () => {
       user_add_token: mockUserAddToken,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     const result = await tokenStorageService.addToken(
       Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
@@ -230,9 +229,8 @@ describe("TokenStorageService.addToken", () => {
       user_add_token: mockUserAddToken,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     const result = await tokenStorageService.addToken(
       Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
@@ -281,9 +279,8 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
     mockBuildActor.mockReturnValue({
       user_create_bridge_transaction: mockUserCreateBridgeTransaction,
     });
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     // Act
     const result = await tokenStorageService.createRuneExportBridgeTransaction({
@@ -325,9 +322,8 @@ describe("TokenStorageService.getBridgeTransactions", () => {
       user_get_bridge_transactions: mockUserGetBridgeTransactions,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     await tokenStorageService.getBridgeTransactions(0, 10);
 
@@ -347,12 +343,10 @@ describe("TokenStorageService.getBridgeTransactions", () => {
       user_get_bridge_transactions: mockUserGetBridgeTransactions,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
-    const { BridgeAssetType } = await import(
-      "$modules/bitcoin/types/bridge_transaction"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
+    const { BridgeAssetType } =
+      await import("$modules/bitcoin/types/bridge_transaction");
 
     await tokenStorageService.getBridgeTransactions(
       0,
@@ -376,9 +370,8 @@ describe("TokenStorageService.getBridgeTransactions", () => {
       user_get_bridge_transactions: mockUserGetBridgeTransactions,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
 
     await tokenStorageService.getBridgeTransactions(
       0,
@@ -403,12 +396,10 @@ describe("TokenStorageService.getBridgeTransactions", () => {
       user_get_bridge_transactions: mockUserGetBridgeTransactions,
     });
 
-    const { tokenStorageService } = await import(
-      "$modules/token/services/tokenStorage"
-    );
-    const { BridgeAssetType, BridgeType } = await import(
-      "$modules/bitcoin/types/bridge_transaction"
-    );
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
+    const { BridgeAssetType, BridgeType } =
+      await import("$modules/bitcoin/types/bridge_transaction");
 
     await tokenStorageService.getBridgeTransactions(
       20,

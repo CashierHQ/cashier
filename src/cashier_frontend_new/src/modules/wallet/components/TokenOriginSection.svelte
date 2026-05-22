@@ -1,7 +1,10 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { getTokenOrigin, getTokenOriginLabel } from "$modules/token/types/tokenOrigin";
+  import {
+    getTokenOrigin,
+    getTokenOriginLabel,
+  } from "$modules/token/types/tokenOrigin";
   import { ChevronDown } from "lucide-svelte";
 
   type Props = {
@@ -12,7 +15,7 @@
   let expanded = $state(false);
 
   const origin = $derived.by(() => {
-    return getTokenOrigin(token)
+    return getTokenOrigin(token);
   });
 </script>
 

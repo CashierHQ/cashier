@@ -32,12 +32,13 @@ class OmnityRunesIndexerService {
       const result = await actor.get_rune_balances_for_outputs(outputs);
       if ("Ok" in result) {
         return Ok(
-          result.Ok.map((entry) =>
-            entry.length === 1
-              ? ([entry[0].map(RuneBalanceMapper.fromOmnityRuneBalance)] as [
-                  RuneBalance[],
-                ])
-              : ([] as []),
+          result.Ok.map(
+            (entry: [] | [Array<omnityRunesIndexer.RuneBalance>]) =>
+              entry.length === 1
+                ? ([entry[0].map(RuneBalanceMapper.fromOmnityRuneBalance)] as [
+                    RuneBalance[],
+                  ])
+                : ([] as []),
           ),
         );
       }

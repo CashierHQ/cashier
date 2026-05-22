@@ -17,10 +17,14 @@ import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { runesPriceStore } from "$modules/token/state/runesPriceStore.svelte";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
-import type { TokenMetadata, TokenWithPriceAndBalance } from "$modules/token/types";
+import type {
+  TokenMetadata,
+  TokenWithPriceAndBalance,
+} from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import { sortWalletTokens } from "$modules/token/utils/sorter";
 import { Principal } from "@icp-sdk/core/principal";
+import { SvelteMap } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
 class WalletStore {
@@ -73,7 +77,7 @@ class WalletStore {
           : {};
         const runesPrices = runesPriceStore.query.data ?? {};
 
-        const balanceByAddress = new Map<string, bigint>();
+        const balanceByAddress = new SvelteMap<string, bigint>();
 
         enabledTokens.forEach((token, index) => {
           balanceByAddress.set(token.address, balances[index] ?? 0n);
