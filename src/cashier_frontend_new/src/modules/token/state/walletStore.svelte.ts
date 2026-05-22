@@ -11,6 +11,7 @@ import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import { sortWalletTokens } from "$modules/token/utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
+import { runesPriceStore } from "./runesPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 import {
   getTokenLogo,
@@ -71,6 +72,7 @@ class WalletStore {
         const prices = tokenPriceStore.query.data
           ? tokenPriceStore.query.data
           : {};
+        const runesPrices = runesPriceStore.query.data ?? {};
 
         const balanceByAddress = new Map<string, bigint>();
 
@@ -81,7 +83,10 @@ class WalletStore {
         const enrichedTokens = tokens.map((token) => ({
           ...token,
           balance: balanceByAddress.get(token.address) ?? 0n,
-          priceUSD: prices[token.address] || 0,
+          priceUSD:
+            token.isRune && token.runeInfo?.tokenId
+              ? (runesPrices[token.runeInfo.tokenId] ?? 0)
+              : prices[token.address] || 0,
         }));
 
         return sortWalletTokens(enrichedTokens);
@@ -111,6 +116,14 @@ class WalletStore {
         // This ensures the effect runs when prices are updated
         const prices = tokenPriceStore.query.data;
         if (prices) {
+          this.#walletTokensQuery.refresh();
+        }
+      });
+
+      // Refresh wallet tokens when Rune prices are updated
+      $effect(() => {
+        const runePrices = runesPriceStore.query.data;
+        if (runePrices) {
           this.#walletTokensQuery.refresh();
         }
       });
