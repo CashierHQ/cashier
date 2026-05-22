@@ -6,6 +6,9 @@
   },
   "ignoreExportsUsedInFile": true,
   "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.{js,mjs,ts}"]
+    },
     "src/cashier_frontend_new": {
       "project": ["src/**"],
       "ignore": [
