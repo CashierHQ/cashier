@@ -7,6 +7,7 @@ import {
   BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
+  type BridgeDetails,
   type BridgeTransaction,
 } from "$modules/bitcoin/types/bridge_transaction";
 import {
@@ -33,15 +34,14 @@ function fixture_of_import_bridge(
     withdrawal_fee: 0n,
     btc_fee: 0n,
     btc_txid: "abc123",
-    ckbtc_block_id: null,
     block_id: null,
     block_timestamp: null,
     confirmations: [],
-    omnity_ticket_id: null,
     vin: [],
     vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
+    details: { kind: "ckbtc", ckbtc_block_id: null } as BridgeDetails,
     ...overrides,
   };
 }
@@ -63,15 +63,14 @@ function fixture_of_export_bridge(
     withdrawal_fee: 500n,
     btc_fee: 500n,
     btc_txid: null,
-    ckbtc_block_id: 42n,
     block_id: null,
     block_timestamp: null,
     confirmations: [],
-    omnity_ticket_id: null,
     vin: [],
     vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
+    details: { kind: "ckbtc", ckbtc_block_id: 42n } as BridgeDetails,
     ...overrides,
   };
 }
@@ -890,7 +889,7 @@ describe("BridgeStore", () => {
     it("it_should_not_update_export_bridge_when_no_btc_txid_and_no_ckbtc_block_id", async () => {
       // Arrange
       const bridge = fixture_of_export_bridge({
-        ckbtc_block_id: null,
+        details: { kind: "ckbtc", ckbtc_block_id: null },
         btc_txid: null,
       });
 
@@ -904,7 +903,7 @@ describe("BridgeStore", () => {
     it("it_should_complete_export_bridge_when_enough_confirmations", async () => {
       // Arrange — bridge has both ckbtc_block_id and btc_txid set
       const bridge = fixture_of_export_bridge({
-        ckbtc_block_id: 42n,
+        details: { kind: "ckbtc", ckbtc_block_id: 42n },
         btc_txid: "exporttxid",
       });
       mockGetTransactionById.mockResolvedValue(

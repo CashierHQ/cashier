@@ -36,15 +36,14 @@ const fixture_of_bridge_transaction = (
   withdrawal_fee: 0n,
   btc_fee: 0n,
   btc_txid: "txid_1",
-  ckbtc_block_id: null,
   block_id: 840_000n,
   block_timestamp: 1_704_067_100n,
   confirmations: [],
-  omnity_ticket_id: null,
   vin: [],
   vout: [],
   retry_times: 0,
   status: BridgeTransactionStatus.Pending,
+  details: { kind: "ckbtc" as const, ckbtc_block_id: null },
   ...overrides,
 });
 

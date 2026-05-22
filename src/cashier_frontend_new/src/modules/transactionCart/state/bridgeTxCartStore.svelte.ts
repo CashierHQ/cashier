@@ -554,7 +554,11 @@ export class BridgeTxCartStore {
     const allBridges = await tokenStorageService.getBridgeTransactions(0, 100);
     const seenTicketIds = new SvelteSet(
       allBridges
-        .map((bridge) => bridge.omnity_ticket_id)
+        .map((bridge) =>
+          bridge.details.kind === "runes"
+            ? bridge.details.omnity_ticket_id
+            : null,
+        )
         .filter((ticketId): ticketId is string => !!ticketId),
     );
 
@@ -607,9 +611,14 @@ export class BridgeTxCartStore {
         .filter(
           (bridge) =>
             bridge.bridge_type === BridgeType.Export &&
-            bridge.ckbtc_block_id !== null,
+            bridge.details.kind === "ckbtc" &&
+            bridge.details.ckbtc_block_id !== null,
         )
-        .map((bridge) => bridge.ckbtc_block_id?.toString()),
+        .map((bridge) =>
+          bridge.details.kind === "ckbtc"
+            ? bridge.details.ckbtc_block_id?.toString()
+            : undefined,
+        ),
     );
 
     const unseenBlockIds = statusByAccountResult

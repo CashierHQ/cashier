@@ -4,7 +4,7 @@
 use candid::Nat;
 use token_storage_types::{
     bitcoin::bridge_transaction::{
-        BridgeAssetType, BridgeTransaction, BridgeTransactionStatus, BridgeType,
+        BridgeAssetType, BridgeDetails, BridgeTransaction, BridgeTransactionStatus, BridgeType,
     },
     dto::bitcoin::CreateBridgeTransactionInputArg,
     error::CanisterError,
@@ -23,11 +23,12 @@ impl BridgeTransactionFactory {
     pub fn from_create_input(
         input: CreateBridgeTransactionInputArg,
     ) -> Result<BridgeTransaction, CanisterError> {
-        let is_runes_export = input.bridge_type == BridgeType::Export
-            && input
-                .asset_infos
-                .iter()
-                .any(|asset| matches!(asset.asset_type, BridgeAssetType::Runes));
+        let is_runes = input
+            .asset_infos
+            .iter()
+            .any(|asset| matches!(asset.asset_type, BridgeAssetType::Runes));
+
+        let is_runes_export = input.bridge_type == BridgeType::Export && is_runes;
 
         if input.bridge_type == BridgeType::Export {
             if input.btc_txid.is_some() {
@@ -134,6 +135,14 @@ impl BridgeTransactionFactory {
                 BridgeTransactionStatus::Created
             });
 
+        let details = if is_runes {
+            BridgeDetails::Runes {
+                omnity_ticket_id: input.omnity_ticket_id,
+            }
+        } else {
+            BridgeDetails::CkBTC { ckbtc_block_id }
+        };
+
         Ok(BridgeTransaction {
             bridge_id,
             icp_address: input.icp_address,
@@ -141,7 +150,6 @@ impl BridgeTransactionFactory {
             bridge_type: input.bridge_type,
             asset_infos,
             btc_txid,
-            ckbtc_block_id,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -152,9 +160,9 @@ impl BridgeTransactionFactory {
             created_at_ts: input.created_at_ts,
             retry_times: 0,
             status,
-            omnity_ticket_id: input.omnity_ticket_id,
             vin: input.vin,
             vout: input.vout,
+            details,
         })
     }
 }
@@ -211,7 +219,12 @@ mod tests {
         assert_eq!(transaction.asset_infos.len(), 0);
         assert_eq!(transaction.bridge_type, BridgeType::Import);
         assert_eq!(transaction.btc_txid, Some("test_txid".to_string()));
-        assert_eq!(transaction.ckbtc_block_id, None);
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::CkBTC {
+                ckbtc_block_id: None
+            }
+        );
         assert_eq!(transaction.block_id, None);
         assert_eq!(transaction.block_confirmations.len(), 0);
         assert_eq!(transaction.status, BridgeTransactionStatus::Pending);
@@ -252,7 +265,12 @@ mod tests {
         assert_eq!(transaction.btc_address, "bc1qreceiver".to_string());
         assert_eq!(transaction.bridge_type, BridgeType::Export);
         assert_eq!(transaction.btc_txid, None);
-        assert_eq!(transaction.ckbtc_block_id, None);
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::CkBTC {
+                ckbtc_block_id: None
+            }
+        );
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(450u64)));
         assert_eq!(transaction.btc_fee, Some(Nat::from(1200u64)));
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
@@ -541,7 +559,12 @@ mod tests {
         // Assert
         assert_eq!(transaction.bridge_id, format!("import_ckbtc_{}", block_id));
         assert_eq!(transaction.btc_txid, None);
-        assert_eq!(transaction.ckbtc_block_id, Some(block_id));
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::CkBTC {
+                ckbtc_block_id: Some(block_id)
+            }
+        );
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
         // deposit fee is deducted from asset amount
         assert_eq!(transaction.asset_infos[0].amount, Nat::from(49_000u64));
@@ -616,6 +639,12 @@ mod tests {
             BridgeAssetType::Runes
         );
         assert_eq!(transaction.asset_infos[0].amount, Nat::from(49_000u64));
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::Runes {
+                omnity_ticket_id: None
+            }
+        );
     }
 
     #[test]
@@ -648,7 +677,12 @@ mod tests {
 
         // Assert
         assert_eq!(transaction.status, BridgeTransactionStatus::Confirmed);
-        assert_eq!(transaction.omnity_ticket_id, Some("rune_txid".to_string()));
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::Runes {
+                omnity_ticket_id: Some("rune_txid".to_string())
+            }
+        );
     }
 
     #[test]
@@ -694,7 +728,12 @@ mod tests {
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
         assert_eq!(transaction.withdrawal_fee, None);
         assert_eq!(transaction.btc_fee, None);
-        assert_eq!(transaction.omnity_ticket_id, None);
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::Runes {
+                omnity_ticket_id: None
+            }
+        );
         assert_eq!(transaction.btc_txid, None);
     }
 }

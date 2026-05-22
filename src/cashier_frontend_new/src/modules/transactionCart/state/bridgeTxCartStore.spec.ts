@@ -140,15 +140,14 @@ const fixture_of_bridge_transaction = (
   withdrawal_fee: 450n,
   btc_fee: 1000n,
   btc_txid: null,
-  ckbtc_block_id: null,
   block_id: null,
   block_timestamp: null,
   confirmations: [],
-  omnity_ticket_id: null,
   vin: [],
   vout: [],
   retry_times: 0,
   status: BridgeTransactionStatus.Created,
+  details: { kind: "ckbtc" as const, ckbtc_block_id: null },
   ...overrides,
 });
 
@@ -235,7 +234,7 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "bridge_existing",
-          ckbtc_block_id: 4n,
+          details: { kind: "ckbtc" as const, ckbtc_block_id: 4n },
           status: BridgeTransactionStatus.Pending,
         }),
       ]);
@@ -590,7 +589,7 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "existing-bridge",
-          omnity_ticket_id: "seen-ticket",
+          details: { kind: "runes" as const, omnity_ticket_id: "seen-ticket" },
         }),
       ]);
       mockGetTxsWithAccount.mockResolvedValue(
@@ -703,7 +702,7 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "existing-bridge",
-          omnity_ticket_id: "seen-ticket",
+          details: { kind: "runes" as const, omnity_ticket_id: "seen-ticket" },
         }),
       ]);
       mockGetTxsWithAccount.mockResolvedValue(

@@ -236,14 +236,13 @@ function fixture_of_bridge(overrides: Record<string, unknown> = {}) {
     withdrawal_fee: 0n,
     btc_fee: 0n,
     btc_txid: "bridge-btc-txid",
-    ckbtc_block_id: null,
     block_id: null,
     block_timestamp: null,
     confirmations: [],
-    omnity_ticket_id: null,
     vin: [],
     vout: [],
     retry_times: 0,
+    details: { kind: "ckbtc", ckbtc_block_id: null },
     asset_infos: [
       {
         asset_type: "BTC",

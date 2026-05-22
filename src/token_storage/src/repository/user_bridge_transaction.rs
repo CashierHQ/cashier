@@ -137,8 +137,8 @@ mod tests {
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::{
         bitcoin::bridge_transaction::{
-            BridgeAssetInfo, BridgeAssetType, BridgeTransaction, BridgeTransactionStatus,
-            BridgeType,
+            BridgeAssetInfo, BridgeAssetType, BridgeDetails, BridgeTransaction,
+            BridgeTransactionStatus, BridgeType,
         },
         dto::bitcoin::GetBridgeTransactionsFilter,
     };
@@ -161,7 +161,6 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
-            ckbtc_block_id: None,
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
@@ -172,9 +171,11 @@ mod tests {
             created_at_ts: 10000u64,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
-            omnity_ticket_id: None,
             vin: None,
             vout: None,
+            details: BridgeDetails::CkBTC {
+                ckbtc_block_id: None,
+            },
         };
 
         // Act
@@ -210,7 +211,6 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
-            ckbtc_block_id: None,
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
@@ -221,9 +221,11 @@ mod tests {
             created_at_ts: 10000u64,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
-            omnity_ticket_id: None,
             vin: None,
             vout: None,
+            details: BridgeDetails::CkBTC {
+                ckbtc_block_id: None,
+            },
         };
 
         // Act: Insert initial transaction
@@ -266,7 +268,6 @@ mod tests {
                 bridge_type: BridgeType::Import,
                 asset_infos: asset_infos.clone(),
                 btc_txid: Some(format!("txid{}", i)),
-                ckbtc_block_id: None,
                 block_id: Some(100u64 + i as u64),
                 block_timestamp: Some(1620000000u64 + i as u64 * 60),
                 block_confirmations: vec![],
@@ -277,9 +278,11 @@ mod tests {
                 created_at_ts: 10000u64 + i as u64,
                 retry_times: 0,
                 status: BridgeTransactionStatus::Created,
-                omnity_ticket_id: None,
                 vin: None,
                 vout: None,
+                details: BridgeDetails::CkBTC {
+                    ckbtc_block_id: None,
+                },
             };
             repo.upsert_bridge_transaction(user_id, bridge_tx.bridge_id.clone(), bridge_tx.clone())
                 .unwrap();
@@ -328,7 +331,6 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
-            ckbtc_block_id: None,
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
@@ -339,9 +341,11 @@ mod tests {
             created_at_ts: 10000u64,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
-            omnity_ticket_id: None,
             vin: None,
             vout: None,
+            details: BridgeDetails::CkBTC {
+                ckbtc_block_id: None,
+            },
         };
 
         // Act: Insert transaction
@@ -373,7 +377,6 @@ mod tests {
                 decimals: 8,
             }],
             btc_txid: Some("txid1".to_string()),
-            ckbtc_block_id: None,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -384,9 +387,11 @@ mod tests {
             created_at_ts: 10000u64,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
-            omnity_ticket_id: None,
             vin: None,
             vout: None,
+            details: BridgeDetails::CkBTC {
+                ckbtc_block_id: None,
+            },
         }
     }
 
@@ -510,7 +515,6 @@ mod tests {
                 decimals: 8,
             }],
             btc_txid: Some("txid1".to_string()),
-            ckbtc_block_id: None,
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
@@ -521,9 +525,11 @@ mod tests {
             created_at_ts: 10000u64,
             retry_times: 0,
             status: BridgeTransactionStatus::Created,
-            omnity_ticket_id: None,
             vin: None,
             vout: None,
+            details: BridgeDetails::Runes {
+                omnity_ticket_id: None,
+            },
         }
     }
 

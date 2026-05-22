@@ -674,14 +674,17 @@ class BtcBridgeStore {
   async processExportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
-    if (!bridgeTx.ckbtc_block_id) {
+    const ckbtc_block_id =
+      bridgeTx.details.kind === "ckbtc"
+        ? bridgeTx.details.ckbtc_block_id
+        : null;
+    if (!ckbtc_block_id) {
       return;
     }
 
     if (!bridgeTx.btc_txid) {
-      const statusResult = await ckBTCMinterService.retrieveBtcStatusV2(
-        bridgeTx.ckbtc_block_id,
-      );
+      const statusResult =
+        await ckBTCMinterService.retrieveBtcStatusV2(ckbtc_block_id);
       if (statusResult.isErr()) {
         console.error(
           `Failed to retrieve BTC status for bridge ${bridgeTx.bridge_id}:`,

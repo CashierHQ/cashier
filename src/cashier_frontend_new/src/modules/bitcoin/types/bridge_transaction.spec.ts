@@ -74,18 +74,17 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee: 2000n,
         btc_fee: 3000n,
         btc_txid: "tx_abc123",
-        ckbtc_block_id: 700000n,
         block_id: 800000n,
         block_timestamp: 1704067100n,
         confirmations: [
           { block_id: 800000n, block_timestamp: 1704067100n },
           { block_id: 800001n, block_timestamp: 1704067700n },
         ],
-        omnity_ticket_id: null,
         vin: [],
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
+        details: { kind: "ckbtc", ckbtc_block_id: 700000n },
       });
     });
 
@@ -124,7 +123,7 @@ describe("BridgeTransactionMapper", () => {
       expect(result.withdrawal_fee).toBe(0n);
       expect(result.btc_fee).toBe(0n);
       expect(result.btc_txid).toBeNull();
-      expect(result.ckbtc_block_id).toBeNull();
+      expect(result.details).toEqual({ kind: "ckbtc", ckbtc_block_id: null });
       expect(result.block_id).toBeNull();
       expect(result.block_timestamp).toBeNull();
       expect(result.confirmations).toEqual([]);
@@ -349,15 +348,14 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee: 2000n,
         btc_fee: 3000n,
         btc_txid: "tx_123",
-        ckbtc_block_id: null,
         block_id: 800000n,
         block_timestamp: 1704067100n,
         confirmations: [],
-        omnity_ticket_id: null,
         vin: [],
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Completed,
+        details: { kind: "ckbtc", ckbtc_block_id: null },
       };
 
       // Act
@@ -403,15 +401,14 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee: 0n,
         btc_fee: 0n,
         btc_txid: null,
-        ckbtc_block_id: null,
         block_id: null,
         block_timestamp: null,
         confirmations: [],
-        omnity_ticket_id: null,
         vin: [],
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Pending,
+        details: { kind: "ckbtc", ckbtc_block_id: null },
       };
 
       // Act
@@ -446,15 +443,14 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee: 200n,
         btc_fee: 300n,
         btc_txid: null,
-        ckbtc_block_id: null,
         block_id: null,
         block_timestamp: null,
         confirmations: [],
-        omnity_ticket_id: null,
         vin: [],
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
+        details: { kind: "ckbtc", ckbtc_block_id: null },
       };
 
       // Test Created status
@@ -503,15 +499,14 @@ describe("BridgeTransactionMapper", () => {
         withdrawal_fee: 0n,
         btc_fee: 0n,
         btc_txid: null,
-        ckbtc_block_id: null,
         block_id: null,
         block_timestamp: null,
         confirmations: [],
-        omnity_ticket_id: null,
         vin: [],
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
+        details: { kind: "ckbtc", ckbtc_block_id: null },
       };
 
       // Act

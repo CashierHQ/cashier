@@ -17,6 +17,14 @@ export type BridgeTransactionWithUsdValue = BridgeTransaction & {
 };
 
 /**
+ * Asset-type-specific fields for a bridge transaction.
+ */
+export type BridgeDetails =
+  | { readonly kind: "ckbtc"; ckbtc_block_id: bigint | null }
+  | { readonly kind: "runes"; omnity_ticket_id: string | null }
+  | { readonly kind: "legacy" };
+
+/**
  * BridgeTransaction type representing a bridge transaction between Bitcoin and ICP
  */
 export type BridgeTransaction = {
@@ -31,15 +39,14 @@ export type BridgeTransaction = {
   withdrawal_fee: bigint;
   btc_fee: bigint;
   btc_txid: string | null;
-  ckbtc_block_id: bigint | null;
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
-  omnity_ticket_id: string | null;
   vin: BridgeUtxo[];
   vout: BridgeUtxo[];
   retry_times: number;
   status: BridgeTransactionStatusValue;
+  details: BridgeDetails;
 };
 
 export type BridgeUtxo = {
@@ -179,6 +186,11 @@ export class BridgeTransactionMapper {
       (utxos) => utxos,
     );
 
+    const is_runes = data.asset_infos.some((a) => "Runes" in a.asset_type);
+    const details: BridgeDetails = is_runes
+      ? { kind: "runes", omnity_ticket_id }
+      : { kind: "ckbtc", ckbtc_block_id };
+
     return {
       bridge_id: data.bridge_id,
       icp_address: data.icp_address.toText(),
@@ -200,17 +212,16 @@ export class BridgeTransactionMapper {
       withdrawal_fee,
       btc_fee,
       btc_txid,
-      ckbtc_block_id,
       block_id,
       block_timestamp,
       confirmations,
-      omnity_ticket_id,
       vin,
       vout,
       retry_times: data.retry_times,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
       ),
+      details,
     };
   }
 

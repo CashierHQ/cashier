@@ -743,13 +743,17 @@ class RuneBridgeStore {
       }
       return;
     } else if (bridgeTx.status === BridgeTransactionStatus.Confirmed) {
-      if (!bridgeTx.omnity_ticket_id) {
+      const confirmed_omnity_ticket_id =
+        bridgeTx.details.kind === "runes"
+          ? bridgeTx.details.omnity_ticket_id
+          : null;
+      if (!confirmed_omnity_ticket_id) {
         return;
       }
 
       const ticketStatusResult =
         await omnityBitcoinService.generateTicketStatus(
-          bridgeTx.omnity_ticket_id,
+          confirmed_omnity_ticket_id,
         );
       if (ticketStatusResult.isErr()) {
         return;
@@ -779,16 +783,19 @@ class RuneBridgeStore {
   async processRuneExportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
-    if (!bridgeTx.omnity_ticket_id) {
+    const omnity_ticket_id =
+      bridgeTx.details.kind === "runes"
+        ? bridgeTx.details.omnity_ticket_id
+        : null;
+    if (!omnity_ticket_id) {
       return;
     }
 
     let btcTxId = bridgeTx.btc_txid;
 
     if (!btcTxId) {
-      const queryTxHashResult = await omnityHubService.queryTxHash(
-        bridgeTx.omnity_ticket_id,
-      );
+      const queryTxHashResult =
+        await omnityHubService.queryTxHash(omnity_ticket_id);
       if (queryTxHashResult.isErr()) {
         console.warn(
           `Failed to query Rune export btc_txid from Omnity Hub for ${bridgeTx.bridge_id}:`,

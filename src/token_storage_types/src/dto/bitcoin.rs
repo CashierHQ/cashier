@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::bitcoin::bridge_transaction::{
-    BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransaction,
+    BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeDetails, BridgeTransaction,
     BridgeTransactionStatus, BridgeType, UTXO,
 };
 use candid::{CandidType, Nat, Principal};
@@ -115,6 +115,11 @@ pub struct UserBridgeTransactionDto {
 
 impl From<BridgeTransaction> for UserBridgeTransactionDto {
     fn from(tx: BridgeTransaction) -> Self {
+        let (ckbtc_block_id, omnity_ticket_id) = match tx.details {
+            BridgeDetails::CkBTC { ckbtc_block_id } => (ckbtc_block_id, None),
+            BridgeDetails::Runes { omnity_ticket_id } => (None, omnity_ticket_id),
+            BridgeDetails::Legacy => (None, None),
+        };
         UserBridgeTransactionDto {
             bridge_id: tx.bridge_id,
             icp_address: tx.icp_address,
@@ -122,7 +127,7 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             bridge_type: tx.bridge_type,
             asset_infos: tx.asset_infos,
             btc_txid: tx.btc_txid,
-            ckbtc_block_id: tx.ckbtc_block_id,
+            ckbtc_block_id,
             block_id: tx.block_id,
             block_timestamp: tx.block_timestamp,
             block_confirmations: tx.block_confirmations,
@@ -133,7 +138,7 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             total_amount: tx.total_amount,
             retry_times: tx.retry_times,
             status: tx.status,
-            omnity_ticket_id: tx.omnity_ticket_id,
+            omnity_ticket_id,
             vin: tx.vin,
             vout: tx.vout,
         }

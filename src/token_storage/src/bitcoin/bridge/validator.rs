@@ -3,7 +3,9 @@
 
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::bridge_transaction::{BridgeAssetType, BridgeTransactionStatus, BridgeType},
+    bitcoin::bridge_transaction::{
+        BridgeAssetType, BridgeDetails, BridgeTransactionStatus, BridgeType,
+    },
     dto::bitcoin::{CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg},
     error::CanisterError,
 };
@@ -134,9 +136,11 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             }
         }
 
-        if let Some(ckbtc_block_id) = input.ckbtc_block_id.as_ref()
-            && let Some(existing_ckbtc_block_id) = existing_transaction.ckbtc_block_id.as_ref()
-            && ckbtc_block_id != existing_ckbtc_block_id
+        if let Some(new_id) = input.ckbtc_block_id.as_ref()
+            && let BridgeDetails::CkBTC {
+                ckbtc_block_id: Some(existing_id),
+            } = &existing_transaction.details
+            && new_id != existing_id
         {
             return Err(CanisterError::ValidationErrors(
                 "ckbtc_block_id is already set and cannot be updated".to_string(),
@@ -227,7 +231,8 @@ mod tests {
     use candid::{Nat, Principal};
     use cashier_common::test_utils::random_principal_id;
     use token_storage_types::bitcoin::bridge_transaction::{
-        BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeTransactionStatus, UTXO,
+        BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeDetails,
+        BridgeTransactionStatus, UTXO,
     };
 
     fn fixture_of_import_create_input(icp_address: Principal) -> CreateBridgeTransactionInputArg {
@@ -671,7 +676,9 @@ mod tests {
             .user_bridge_transaction()
             .get_bridge_transaction_by_id(user_id, &bridge_id)
             .unwrap();
-        stored.ckbtc_block_id = Some(42u64);
+        stored.details = BridgeDetails::CkBTC {
+            ckbtc_block_id: Some(42u64),
+        };
         repo.user_bridge_transaction()
             .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
             .unwrap();
@@ -1012,7 +1019,9 @@ mod tests {
             .get_bridge_transaction_by_id(user_id, &bridge_id)
             .unwrap();
         stored.btc_txid = Some("same-btc-txid".to_string());
-        stored.ckbtc_block_id = Some(42u64);
+        stored.details = BridgeDetails::CkBTC {
+            ckbtc_block_id: Some(42u64),
+        };
         stored.block_id = Some(840_000u64);
         stored.block_timestamp = Some(1_720_000_000u64);
         stored.deposit_fee = Some(Nat::from(1000u64));
