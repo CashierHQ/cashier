@@ -19,6 +19,7 @@ export type TokenMetadata = {
   runeInfo?: {
     runeId: string;
     tokenId: string;
+    icon?: string;
   };
 };
 

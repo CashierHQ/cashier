@@ -1,6 +1,10 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterError = IDL.Rec();
-  const RuneInfo = IDL.Record({ 'token_id' : IDL.Text, 'rune_id' : IDL.Text });
+  const RuneInfo = IDL.Record({
+    'token_id' : IDL.Text,
+    'icon' : IDL.Opt(IDL.Text),
+    'rune_id' : IDL.Text,
+  });
   const IcrcStandard = IDL.Variant({
     'ICRC1' : IDL.Null,
     'ICRC2' : IDL.Null,
@@ -324,7 +328,11 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
-  const RuneInfo = IDL.Record({ 'token_id' : IDL.Text, 'rune_id' : IDL.Text });
+  const RuneInfo = IDL.Record({
+    'token_id' : IDL.Text,
+    'icon' : IDL.Opt(IDL.Text),
+    'rune_id' : IDL.Text,
+  });
   const IcrcStandard = IDL.Variant({
     'ICRC1' : IDL.Null,
     'ICRC2' : IDL.Null,

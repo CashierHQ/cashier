@@ -151,7 +151,11 @@ export type Result_7 = { 'Ok' : UserBridgeTransactionDto } |
   { 'Err' : CanisterError };
 export type Result_8 = { 'Ok' : string } |
   { 'Err' : CanisterError };
-export interface RuneInfo { 'token_id' : string, 'rune_id' : string }
+export interface RuneInfo {
+  'token_id' : string,
+  'icon' : [] | [string],
+  'rune_id' : string,
+}
 export interface TokenDto {
   'id' : TokenId,
   'is_rune' : [] | [boolean],

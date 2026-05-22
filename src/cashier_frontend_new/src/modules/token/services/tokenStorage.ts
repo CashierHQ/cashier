@@ -133,7 +133,7 @@ class TokenStorageService {
         is_rune: isRune ? [true] : [],
         rune_info:
           isRune && runeId && runeTokenId
-            ? [{ rune_id: runeId, token_id: runeTokenId }]
+            ? [{ rune_id: runeId, token_id: runeTokenId, icon: [] }]
             : [],
       });
 

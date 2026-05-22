@@ -148,6 +148,7 @@
               <TokenIcon
                 address={selectedTokenObj.address}
                 symbol={selectedTokenObj.symbol}
+                logo={selectedTokenObj.runeInfo?.icon}
                 size="sm"
                 failedImageLoads={imageLoadFailures}
                 onImageError={handleImageError}

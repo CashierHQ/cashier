@@ -45,7 +45,7 @@
     return `~$${formatUsdAmount(usdValue)}`;
   }
 
-  const tokenLogo = getTokenLogo(token.address);
+  const tokenLogo = token.runeInfo?.icon ?? getTokenLogo(token.address);
   const formattedBalance = formatBalance(token.balance, token.decimals);
   const formattedUSD = formatUSDValue(
     token.balance,

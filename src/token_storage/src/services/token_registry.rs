@@ -382,6 +382,7 @@ mod tests {
         RuneInfo {
             rune_id: "UNCOMMON•GOODS".to_string(),
             token_id: "omnity-rune-token-id".to_string(),
+            icon: Some("https://ordinals.com/content/rune-icon".to_string()),
         }
     }
 

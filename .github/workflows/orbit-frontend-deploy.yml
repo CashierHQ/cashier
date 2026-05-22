@@ -85,7 +85,7 @@ jobs:
           node-version: '22'
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.93.1
         with:
           components: clippy, rustfmt
           targets: wasm32-unknown-unknown

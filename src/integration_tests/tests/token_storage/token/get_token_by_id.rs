@@ -116,6 +116,7 @@ async fn it_should_do_get_token_by_id_with_rune_metadata() {
             rune_info: Some(RuneInfo {
                 rune_id: "UNCOMMON•GOODS".to_string(),
                 token_id: "omnity-rune-id".to_string(),
+                icon: Some("https://ordinals.com/content/rune-icon".to_string()),
             }),
         };
         client.user_add_token(add_input).await.unwrap().unwrap();
@@ -132,6 +133,7 @@ async fn it_should_do_get_token_by_id_with_rune_metadata() {
             Some(RuneInfo {
                 rune_id: "UNCOMMON•GOODS".to_string(),
                 token_id: "omnity-rune-id".to_string(),
+                icon: Some("https://ordinals.com/content/rune-icon".to_string()),
             })
         );
 

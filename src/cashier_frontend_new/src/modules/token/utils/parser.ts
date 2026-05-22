@@ -40,6 +40,8 @@ export function parseListTokens(
             },
           );
 
+          const runeInfo = fromNullable(token.rune_info);
+
           return {
             address: tokenAddress,
             name: token.name,
@@ -51,10 +53,11 @@ export function parseListTokens(
             indexId,
             tokenStandards,
             isRune: fromNullable(token.is_rune),
-            runeInfo: fromNullable(token.rune_info)
+            runeInfo: runeInfo
               ? {
-                  runeId: fromNullable(token.rune_info)!.rune_id,
-                  tokenId: fromNullable(token.rune_info)!.token_id,
+                  runeId: runeInfo.rune_id,
+                  tokenId: runeInfo.token_id,
+                  icon: fromNullable(runeInfo.icon) ?? undefined,
                 }
               : undefined,
           };

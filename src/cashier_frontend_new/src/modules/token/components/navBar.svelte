@@ -23,6 +23,11 @@
     decimals: number;
     priceUSD: number;
     enabled: boolean;
+    runeInfo?: {
+      runeId: string;
+      tokenId: string;
+      icon?: string;
+    };
   };
 
   type Props = {
@@ -87,9 +92,11 @@
 
   let totalBalance = $derived.by(() => calculateTotalBalance());
 
-  let tokenLogo = $derived.by(() =>
-    token ? getTokenLogo(token.address) : null,
-  );
+  let tokenLogo = $derived.by(() => {
+    if (!token) return null;
+    if (token.runeInfo?.icon) return token.runeInfo.icon;
+    return getTokenLogo(token.address);
+  });
 
   function handleSend() {
     onSend?.();

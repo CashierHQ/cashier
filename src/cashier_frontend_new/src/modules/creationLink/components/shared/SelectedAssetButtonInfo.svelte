@@ -38,7 +38,7 @@
       <TokenIcon
         address={selectedToken.address}
         symbol={selectedToken.symbol}
-        logo={getTokenLogo(selectedToken.address)}
+        logo={selectedToken.runeInfo?.icon ?? getTokenLogo(selectedToken.address)}
         size="md"
         {failedImageLoads}
         onImageError={handleImageError}

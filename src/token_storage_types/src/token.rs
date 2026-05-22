@@ -136,6 +136,7 @@ impl ChainTokenDetails {
 pub struct RuneInfo {
     pub rune_id: String,
     pub token_id: String,
+    pub icon: Option<String>,
 }
 
 // Central registry token definition
@@ -556,8 +557,12 @@ mod tests {
                 supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
             },
             enabled_by_default: false,
-            is_rune: None,
-            rune_info: None,
+            is_rune: Some(true),
+            rune_info: Some(RuneInfo {
+                rune_id: "840000:3".to_string(),
+                token_id: "Bitcoin-runes-DOG•GO•TO•THE•MOON".to_string(),
+                icon: Some("https://ordinals.com/content/rune-icon".to_string()),
+            }),
         };
 
         // Encode → serialize → deserialize → decode
@@ -569,6 +574,11 @@ mod tests {
         assert_eq!(result.symbol, "ckBTC");
         assert_eq!(result.decimals, 8);
         assert!(!result.enabled_by_default);
+        assert_eq!(result.is_rune, Some(true));
+        assert_eq!(
+            result.rune_info.as_ref().and_then(|info| info.icon.as_deref()),
+            Some("https://ordinals.com/content/rune-icon")
+        );
         match &result.details {
             ChainTokenDetails::IC {
                 supported_standards,

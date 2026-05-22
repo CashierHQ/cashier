@@ -43,6 +43,7 @@ mod tests {
         RuneInfo {
             rune_id: rune_id.to_string(),
             token_id: token_id.to_string(),
+            icon: None,
         }
     }
 

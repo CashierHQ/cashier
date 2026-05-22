@@ -146,6 +146,7 @@ async function enrichRuneToken(agent, token, index, total) {
   return {
     decimals: token.decimals,
     fee,
+    icon: token.icon[0] ?? null,
     ledgerId,
     name,
     runeId: token.rune_id[0],
@@ -220,8 +221,13 @@ function generateRegistryRecord(token) {
       rune_info = opt record {
         rune_id = "${escapeCandidText(token.runeId)}";
         token_id = "${escapeCandidText(token.tokenId)}";
+        icon = ${formatOptionalText(token.icon)};
       };
     };`;
+}
+
+function formatOptionalText(value) {
+  return value ? `opt "${escapeCandidText(value)}"` : "null : opt text";
 }
 
 function escapeCandidText(value) {

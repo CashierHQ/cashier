@@ -221,7 +221,9 @@ describe("TokenStorageService.addToken", () => {
       },
       index_id: ["qhbym-qaaaa-aaaaa-aaafq-cai"],
       is_rune: [true],
-      rune_info: [{ rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id" }],
+      rune_info: [
+        { rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id", icon: [] },
+      ],
     });
   });
 

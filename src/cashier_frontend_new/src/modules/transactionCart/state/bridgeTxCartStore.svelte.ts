@@ -9,6 +9,7 @@ import {
   BridgeTransactionMapper,
   BridgeTransactionStatus,
   BridgeType,
+  type BridgeAssetInfo,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
@@ -24,6 +25,7 @@ import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
+import type { AssetItem } from "$modules/transactionCart/types/txCart";
 import { SvelteSet } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -94,6 +96,28 @@ export class BridgeTxCartStore {
     return this.bridgeTransaction?.status === BridgeTransactionStatus.Failed;
   }
 
+  #getRuneIcon(assetInfo?: BridgeAssetInfo): string | undefined {
+    if (!assetInfo || assetInfo.asset_type !== BridgeAssetType.Runes) {
+      return undefined;
+    }
+
+    return walletStore.query.data?.find(
+      (token) =>
+        token.isRune &&
+        (token.runeInfo?.runeId === assetInfo.asset_id ||
+          token.runeInfo?.tokenId === assetInfo.asset_id),
+    )?.runeInfo?.icon;
+  }
+
+  #withRuneIcons(assetItems: AssetItem[]) {
+    return assetItems.map((item, index) => ({
+      ...item,
+      icon:
+        item.icon ??
+        this.#getRuneIcon(this.bridgeTransaction?.asset_infos[index]),
+    }));
+  }
+
   /**
    * Get outgoing assets for the bridge transaction
    * @returns Array of AssetAndFee representing outgoing assets
@@ -107,8 +131,8 @@ export class BridgeTxCartStore {
       return [];
     }
 
-    const assetItems = BridgeTransactionMapper.toAssetItems(
-      this.bridgeTransaction,
+    const assetItems = this.#withRuneIcons(
+      BridgeTransactionMapper.toAssetItems(this.bridgeTransaction),
     );
     const assets: AssetAndFee[] = assetItems.map((item) => ({
       asset: item,
@@ -130,8 +154,8 @@ export class BridgeTxCartStore {
       return [];
     }
 
-    const assetItems = BridgeTransactionMapper.toAssetItems(
-      this.bridgeTransaction,
+    const assetItems = this.#withRuneIcons(
+      BridgeTransactionMapper.toAssetItems(this.bridgeTransaction),
     );
     const assets: AssetAndFee[] = assetItems.map((item) => ({
       asset: item,

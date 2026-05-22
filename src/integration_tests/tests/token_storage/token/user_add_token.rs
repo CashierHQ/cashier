@@ -13,6 +13,7 @@ fn fixture_of_rune_info(rune_id: &str, token_id: &str) -> RuneInfo {
     RuneInfo {
         rune_id: rune_id.to_string(),
         token_id: token_id.to_string(),
+        icon: None,
     }
 }
 

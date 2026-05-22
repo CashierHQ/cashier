@@ -172,7 +172,11 @@ describe("parseListTokens", () => {
             is_default: false,
             is_rune: [true],
             rune_info: [
-              { rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id" },
+              {
+                rune_id: "UNCOMMON•GOODS",
+                token_id: "omnity-rune-id",
+                icon: ["https://ordinals.com/content/rune-icon"],
+              },
             ],
           },
         ],
@@ -198,6 +202,7 @@ describe("parseListTokens", () => {
         runeInfo: {
           runeId: "UNCOMMON•GOODS",
           tokenId: "omnity-rune-id",
+          icon: "https://ordinals.com/content/rune-icon",
         },
       },
     ]);

@@ -39,7 +39,7 @@
           <TokenIcon
             address={asset.address}
             symbol={asset.symbol}
-            logo={getTokenLogo(asset.address)}
+            logo={asset.icon ?? getTokenLogo(asset.address)}
             size="sm"
             {failedImageLoads}
             {onImageError}
