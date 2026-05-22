@@ -1,6 +1,6 @@
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
-import type { Principal } from '@dfinity/principal';
+import { Principal } from "@icp-sdk/core/principal";
 
 export type BitcoinAddress = { 'OpReturn' : Uint8Array | number[] } |
   { 'p2wsh_v0' : Uint8Array | number[] } |

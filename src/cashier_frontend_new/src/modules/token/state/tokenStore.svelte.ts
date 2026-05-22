@@ -1,10 +1,10 @@
 import { managedState } from "$lib/managedState";
-import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import type { ManagedState } from "$lib/managedState/managedState.svelte";
 import { tokenMetadataService } from "$modules/token/services/tokenMetadata";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenMetadata } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
+import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Reactive query that fetches a token's registry metadata (including runeInfo)

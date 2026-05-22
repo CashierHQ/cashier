@@ -1,6 +1,6 @@
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
-import type { Principal } from '@dfinity/principal';
+import { Principal } from "@icp-sdk/core/principal";
 
 export interface AddDestChainArgs { 'dest_chain' : string, 'token_id' : string }
 export interface AddRunesTokenReq {
