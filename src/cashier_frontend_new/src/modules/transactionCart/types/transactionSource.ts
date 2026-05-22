@@ -3,7 +3,7 @@ import type { ProcessActionResult } from "$modules/detailLink/types/genericDetai
 import type Action from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
 import type { ReceiveAddressType } from "$modules/wallet/types";
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import type { Result } from "ts-results-es";
 
 /**

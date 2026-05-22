@@ -2,7 +2,7 @@ import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { rsMatch } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CKBTC_MINTER_CANISTER_ID } from "$modules/bitcoin/constants";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { TokenMetadata } from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 

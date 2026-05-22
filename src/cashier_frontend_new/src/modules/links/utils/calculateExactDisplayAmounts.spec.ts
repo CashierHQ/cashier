@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { describe, expect, it } from "vitest";
-import { calculateExactDisplayAmounts } from "./calculateExactDisplayAmounts";
+import { calculateExactDisplayAmounts } from "$modules/links/utils/calculateExactDisplayAmounts";
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";

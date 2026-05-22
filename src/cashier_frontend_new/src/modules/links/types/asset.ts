@@ -1,5 +1,5 @@
 import type { Asset as BackendAsset } from "$lib/generated/cashier_backend/cashier_backend.did";
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import { rsMatch } from "$lib/rsMatch";
 
 // Frontend representation of an Asset

@@ -1,6 +1,6 @@
 import { BitcoinTransactionMapper } from "$modules/bitcoin/types/bitcoin_transaction";
 import type { MempoolTransaction } from "$modules/bitcoin/types/mempool";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 
 describe("BitcoinTransactionMapper", () => {

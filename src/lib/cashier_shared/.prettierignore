@@ -1,0 +1,10 @@
+node_modules/
+generated/
+coverage/
+
+# package.json: managed by pnpm/npm tooling, not prettier
+package.json
+
+# Machine-formatted fixtures
+tests/fixtures/**
+schemas/**

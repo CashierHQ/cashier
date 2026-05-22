@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { describe, expect, it } from "vitest";
-import { syncAssetFormState } from "./syncAssetFormState";
+import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
 
 describe("syncAssetFormState", () => {
   const defaultParams = {

@@ -4,8 +4,8 @@
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
-  import UsdSwitch from "./UsdSwitch.svelte";
-  import AmountActionButtons from "./AmountActionButtons.svelte";
+  import UsdSwitch from "$modules/creationLink/components/shared/UsdSwitch.svelte";
+  import AmountActionButtons from "$modules/creationLink/components/shared/AmountActionButtons.svelte";
   import type { Snippet } from "svelte";
   import { formatDisplayValue } from "$modules/creationLink/utils/formatDisplayValue";
   import { sanitizeNumericInput } from "$modules/creationLink/utils/sanitize-numeric-input";

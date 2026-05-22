@@ -17,10 +17,10 @@ import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { ICP_LEDGER_FEE } from "$modules/token/constants";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { Principal } from "@dfinity/principal";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FeeService } from "./feeService";
+import { FeeService } from "$modules/shared/services/feeService";
 import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
@@ -992,7 +992,8 @@ describe("FeeService - mocked $shared edge cases", () => {
       };
     });
 
-    const { FeeService: FeeServiceWithMock } = await import("./feeService");
+    const { FeeService: FeeServiceWithMock } =
+      await import("$modules/shared/services/feeService");
     const localSvc = new FeeServiceWithMock();
 
     vi.spyOn(localSvc, "getLinkCreationFee").mockReturnValue({
@@ -1054,7 +1055,8 @@ describe("FeeService - mocked $shared edge cases", () => {
       };
     });
 
-    const { FeeService: FeeServiceWithMock } = await import("./feeService");
+    const { FeeService: FeeServiceWithMock } =
+      await import("$modules/shared/services/feeService");
     const localSvc = new FeeServiceWithMock();
 
     const token = createMockToken("mock-token", {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catchError, responseToResult } from "./result";
+import { catchError, responseToResult } from "$lib/result";
 import { Ok } from "ts-results-es";
 
 describe("Result", () => {

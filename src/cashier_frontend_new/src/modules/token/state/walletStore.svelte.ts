@@ -1,28 +1,27 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
-import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
-import { icpLedgerService } from "$modules/token/services/icpLedger";
-import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
-import { tokenStorageService } from "$modules/token/services/tokenStorage";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
-import { Err, Ok, type Result } from "ts-results-es";
-import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
-import { sortWalletTokens } from "$modules/token/utils/sorter";
-import { tokenPriceStore } from "./tokenPriceStore.svelte";
-import { runesPriceStore } from "./runesPriceStore.svelte";
-import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 import {
+  getCachedTokenImage,
   getTokenLogo,
   loadTokenImages,
-  getCachedTokenImage,
 } from "$modules/imageCache";
-import type { TokenMetadata } from "$modules/token/types";
+import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import {
   isMockToken,
   mergeMockBitcoinOriginTokens,
 } from "$modules/token/mock/mockBitcoinOriginTokens";
+import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
+import { icpLedgerService } from "$modules/token/services/icpLedger";
+import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
+import { tokenStorageService } from "$modules/token/services/tokenStorage";
+import { runesPriceStore } from "$modules/token/state/runesPriceStore.svelte";
+import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import type { TokenMetadata, TokenWithPriceAndBalance } from "$modules/token/types";
+import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
+import { sortWalletTokens } from "$modules/token/utils/sorter";
+import { Principal } from "@icp-sdk/core/principal";
+import { Err, Ok, type Result } from "ts-results-es";
 
 class WalletStore {
   #walletTokensQuery;

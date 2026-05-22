@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import {
   ValidationError,
   validateLedgerCanister,
   validateIndexCanister,
-} from "./canisterValidation";
+} from "$modules/token/services/canisterValidation";
 
 // Mock @dfinity/ledger-icrc
 vi.mock("@dfinity/ledger-icrc", () => ({
   IcrcLedgerCanister: {
     create: vi.fn(),
   },
-  IcrcIndexNgCanister: {
+  IcrcIndexCanister: {
     create: vi.fn(),
   },
   mapTokenMetadata: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
 // Import mocked modules after vi.mock
 import {
   IcrcLedgerCanister,
-  IcrcIndexNgCanister,
+  IcrcIndexCanister,
   mapTokenMetadata,
 } from "@dfinity/ledger-icrc";
 
@@ -172,9 +172,9 @@ describe("validateIndexCanister", () => {
     const mockIndexCanister = {
       ledgerId: vi.fn().mockResolvedValue(expectedLedgerId),
     };
-    vi.mocked(IcrcIndexNgCanister.create).mockReturnValue(
+    vi.mocked(IcrcIndexCanister.create).mockReturnValue(
       mockIndexCanister as unknown as ReturnType<
-        typeof IcrcIndexNgCanister.create
+        typeof IcrcIndexCanister.create
       >,
     );
 
@@ -195,9 +195,9 @@ describe("validateIndexCanister", () => {
     const mockIndexCanister = {
       ledgerId: vi.fn().mockResolvedValue(differentLedgerId),
     };
-    vi.mocked(IcrcIndexNgCanister.create).mockReturnValue(
+    vi.mocked(IcrcIndexCanister.create).mockReturnValue(
       mockIndexCanister as unknown as ReturnType<
-        typeof IcrcIndexNgCanister.create
+        typeof IcrcIndexCanister.create
       >,
     );
 
@@ -214,9 +214,9 @@ describe("validateIndexCanister", () => {
     const mockIndexCanister = {
       ledgerId: vi.fn().mockRejectedValue(new Error("Not an index canister")),
     };
-    vi.mocked(IcrcIndexNgCanister.create).mockReturnValue(
+    vi.mocked(IcrcIndexCanister.create).mockReturnValue(
       mockIndexCanister as unknown as ReturnType<
-        typeof IcrcIndexNgCanister.create
+        typeof IcrcIndexCanister.create
       >,
     );
 
@@ -230,7 +230,7 @@ describe("validateIndexCanister", () => {
   });
 
   it("should return Err INVALID_INDEX for invalid principal format", async () => {
-    vi.mocked(IcrcIndexNgCanister.create).mockImplementation(() => {
+    vi.mocked(IcrcIndexCanister.create).mockImplementation(() => {
       throw new Error("Invalid principal");
     });
 
@@ -247,9 +247,9 @@ describe("validateIndexCanister", () => {
     const mockIndexCanister = {
       ledgerId: vi.fn().mockRejectedValue(new Error("Network timeout")),
     };
-    vi.mocked(IcrcIndexNgCanister.create).mockReturnValue(
+    vi.mocked(IcrcIndexCanister.create).mockReturnValue(
       mockIndexCanister as unknown as ReturnType<
-        typeof IcrcIndexNgCanister.create
+        typeof IcrcIndexCanister.create
       >,
     );
 

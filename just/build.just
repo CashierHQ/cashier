@@ -28,7 +28,7 @@ build_canisters: pre_build
 # Builds the frontend
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps
-  cd "{{FRONTEND_DIR_NEW}}" && npm run build:{{mode}}
+  pnpm --filter cashier_frontend_new build:{{mode}}
 
 # Generates the ts files for the canister services 
 [group('build')]
@@ -38,9 +38,12 @@ generate_frontend_ts:
   just generate_frontend_ts_for_canister icp_ledger_canister
 
 
+# Install workspace deps with frozen lockfile (CI-safe default).
+# Fails fast if pnpm-lock.yaml is out of sync with package.json.
+# When intentionally bumping deps locally, run `pnpm install` directly instead.
 [private]
 install_frontend_deps:
-  cd "{{FRONTEND_DIR_NEW}}" && npm install
+  pnpm install --frozen-lockfile
 
 [private]
 generate_frontend_ts_for_canister canister:

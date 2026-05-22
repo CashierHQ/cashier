@@ -5,7 +5,7 @@ import type {
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";

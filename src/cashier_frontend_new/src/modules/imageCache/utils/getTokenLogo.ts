@@ -7,7 +7,7 @@ import {
   CKBTC_CANISTER_ID,
   ICP_LEDGER_CANISTER_ID,
 } from "$modules/token/constants";
-import { getCachedTokenImage } from "./imageCache";
+import { getCachedTokenImage } from "$modules/imageCache/utils/imageCache";
 
 /**
  * Get token logo URL based on token address

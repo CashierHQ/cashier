@@ -3,7 +3,7 @@ import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
 import { IntentState as SharedIntentState } from "$shared";
-import type { FlowDirection } from "./transactionSource";
+import type { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 
 /**
  * Generic asset processing states for UI rendering.

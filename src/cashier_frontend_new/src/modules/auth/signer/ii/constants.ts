@@ -1,4 +1,4 @@
-import { IC_ROOT_KEY } from "@dfinity/agent";
+import { IC_ROOT_KEY } from "@icp-sdk/core/agent";
 import type {
   PermissionScope,
   PermissionState,

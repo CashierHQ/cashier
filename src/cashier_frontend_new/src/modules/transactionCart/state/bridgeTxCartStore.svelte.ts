@@ -173,6 +173,7 @@ export class BridgeTxCartStore {
       return 0;
     }
 
+    let fee: bigint;
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
       const btcPriceUSD =
         tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import {
   principalToAccountId,
   encodeAccountID,
   decodeAccountID,
-} from "./icpAccountId";
+} from "$modules/shared/utils/icpAccountId";
 
 // Known test principal and its corresponding account ID
 // Using aaaaa-aa (management canister) as a stable test case

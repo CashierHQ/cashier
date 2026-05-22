@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ProtectedLinkOwner from "./ProtectedLinkOwner.svelte";
+  import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
 
   let {
     mustBeOwner,

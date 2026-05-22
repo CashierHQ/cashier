@@ -1,7 +1,7 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { TokenIndexService } from "./tokenIndexService";
-import { TransactionKind } from "../types";
+import { TokenIndexService } from "$modules/token/services/tokenIndexService";
+import { TransactionKind } from "$modules/token/types";
 
 // Mock dependencies
 vi.mock("$modules/auth/state/auth.svelte", () => ({
@@ -32,10 +32,10 @@ vi.mock("@dfinity/ledger-icp", () => ({
   },
 }));
 
-// Mock IcrcIndexNgCanister
+// Mock IcrcIndexCanister
 const mockIcrcGetTransactions = vi.fn();
 vi.mock("@dfinity/ledger-icrc", () => ({
-  IcrcIndexNgCanister: {
+  IcrcIndexCanister: {
     create: vi.fn(() => ({
       getTransactions: mockIcrcGetTransactions,
     })),

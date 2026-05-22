@@ -191,7 +191,8 @@ describe("BridgeTxCartStore", () => {
   describe("executeExport", () => {
     it("should_update_export_bridge_to_pending_when_approve_and_retrieve_succeed", async () => {
       // Arrange
-      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const { BridgeTxCartStore } =
+        await import("$modules/transactionCart/state/bridgeTxCartStore.svelte");
       const store = new BridgeTxCartStore("bridge_1");
 
       // Act
@@ -216,7 +217,8 @@ describe("BridgeTxCartStore", () => {
       // Arrange
       mockApproveCkBtcWithdrawal.mockRejectedValue(new Error("approve failed"));
       mockGetAllowanceForCkBtcMinter.mockResolvedValue(50_000n);
-      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const { BridgeTxCartStore } =
+        await import("$modules/transactionCart/state/bridgeTxCartStore.svelte");
       const store = new BridgeTxCartStore("bridge_1");
 
       // Act
@@ -249,7 +251,8 @@ describe("BridgeTxCartStore", () => {
           },
         ]),
       );
-      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const { BridgeTxCartStore } =
+        await import("$modules/transactionCart/state/bridgeTxCartStore.svelte");
       const store = new BridgeTxCartStore("bridge_1");
 
       // Act
@@ -281,7 +284,8 @@ describe("BridgeTxCartStore", () => {
           },
         ]),
       );
-      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const { BridgeTxCartStore } =
+        await import("$modules/transactionCart/state/bridgeTxCartStore.svelte");
       const store = new BridgeTxCartStore("bridge_1");
 
       // Act
@@ -301,7 +305,8 @@ describe("BridgeTxCartStore", () => {
       // Arrange
       mockApproveCkBtcWithdrawal.mockRejectedValue(new Error("approve failed"));
       mockGetAllowanceForCkBtcMinter.mockResolvedValue(1n);
-      const { BridgeTxCartStore } = await import("./bridgeTxCartStore.svelte");
+      const { BridgeTxCartStore } =
+        await import("$modules/transactionCart/state/bridgeTxCartStore.svelte");
       const store = new BridgeTxCartStore("bridge_1");
 
       // Act

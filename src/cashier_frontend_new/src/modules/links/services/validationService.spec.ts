@@ -6,10 +6,10 @@ import {
   TokenStandard as SharedTokenStandard,
   type Link as SharedLink,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LinkType } from "../types/link/linkType";
-import { validationService } from "./validationService";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { validationService } from "$modules/links/services/validationService";
 import {
   CreateLinkAsset,
   CreateLinkData,

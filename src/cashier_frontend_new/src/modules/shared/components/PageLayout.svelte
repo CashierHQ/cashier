@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AppHeader from "./AppHeader.svelte";
+  import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import Footer from "$modules/home/components/Footer.svelte";
 
   const {

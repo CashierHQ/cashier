@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GuardContext } from "./context.svelte";
+import { GuardContext } from "$modules/guard/context.svelte";
 import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";

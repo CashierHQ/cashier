@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import { type Link as SharedLink, LinkState, LinkType } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it } from "vitest";
-import { draftLinkRepository } from "./draftLinkRepository";
+import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 
 const fixture_of_owner = "owner-1";
 const fixture_of_another_owner = "owner-2";

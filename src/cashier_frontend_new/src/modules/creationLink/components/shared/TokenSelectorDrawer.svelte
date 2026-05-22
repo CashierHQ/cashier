@@ -11,7 +11,7 @@
   import { locale } from "$lib/i18n";
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import TokenItem from "./TokenItem.svelte";
+  import TokenItem from "$modules/creationLink/components/shared/TokenItem.svelte";
   import { getTokenLogo, loadTokenImages } from "$modules/imageCache";
 
   type Props = {

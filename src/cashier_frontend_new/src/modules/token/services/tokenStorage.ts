@@ -28,7 +28,7 @@ import {
 } from "$modules/token/utils/parser";
 import type { NFT } from "$modules/wallet/types/nft";
 import { NFTMapper } from "$modules/wallet/types/nft";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -589,7 +589,9 @@ class TokenStorageService {
 
       return bridgeTransactions;
     } catch (err) {
-      throw new Error(`Error fetching bridge transactions: ${err}`);
+      throw new Error(`Error fetching bridge transactions: ${err}`, {
+        cause: err,
+      });
     }
   }
 

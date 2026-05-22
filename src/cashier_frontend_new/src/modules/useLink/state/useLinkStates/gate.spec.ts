@@ -1,11 +1,11 @@
 import type Action from "$modules/links/types/action/action";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { UserLinkStore } from "../userLinkStore.svelte";
-import { AddressLockedState } from "./addressLocked";
-import { AddressUnlockedState } from "./addressUnlocked";
-import { GateState } from "./gate";
-import { LandingState } from "./landing";
+import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
+import { AddressLockedState } from "$modules/useLink/state/useLinkStates/addressLocked";
+import { AddressUnlockedState } from "$modules/useLink/state/useLinkStates/addressUnlocked";
+import { GateState } from "$modules/useLink/state/useLinkStates/gate";
+import { LandingState } from "$modules/useLink/state/useLinkStates/landing";
 
 describe("GateState", () => {
   let mockStore: UserLinkStore;

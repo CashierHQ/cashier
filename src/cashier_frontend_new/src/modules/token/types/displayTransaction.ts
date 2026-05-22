@@ -1,7 +1,10 @@
 import { isTransactionOutgoing } from "$modules/wallet/utils/transactionDisplayType";
-import type { TokenWithPriceAndBalance } from "./tokenMetadata";
-import type { TokenTransaction } from "./tokenTransaction";
-import { TransactionKind, type TransactionKindValue } from "./transactionKind";
+import type { TokenWithPriceAndBalance } from "$modules/token/types/tokenMetadata";
+import type { TokenTransaction } from "$modules/token/types/tokenTransaction";
+import {
+  TransactionKind,
+  type TransactionKindValue,
+} from "$modules/token/types/transactionKind";
 
 /**
  * Display-friendly transaction for UI rendering

@@ -6,6 +6,14 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'src/cashier_frontend_new/**'
+      - 'src/lib/cashier_shared/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'package.json'
+      - 'eslint.config.js'
+      - 'knip.json'
+      - '.prettierrc'
+      - '.prettierignore'
       - '!src/cashier_frontend_new/src/lib/generated/**'
 
 concurrency:
@@ -25,10 +33,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Setup Just
         uses: extractions/setup-just@v4
@@ -45,10 +51,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Setup Just
         uses: extractions/setup-just@v4

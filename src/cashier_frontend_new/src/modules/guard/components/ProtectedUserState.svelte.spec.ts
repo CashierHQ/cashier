@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { GuardContext } from "$modules/guard/context.svelte";
-import ProtectedUserStateTestHost from "./ProtectedUserStateTestHost.svelte";
+import ProtectedUserStateTestHost from "$modules/guard/components/ProtectedUserStateTestHost.svelte";
 
 vi.mock("$app/navigation", () => ({
   goto: vi.fn(),

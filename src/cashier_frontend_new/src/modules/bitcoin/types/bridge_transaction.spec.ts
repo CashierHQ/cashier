@@ -10,7 +10,7 @@ import {
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 
 describe("BridgeTransactionMapper", () => {

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import IntentTask, { IntentTaskMapper } from "./intentTask";
+import IntentTask, {
+  IntentTaskMapper,
+} from "$modules/links/types/action/intentTask";
 import type { IntentTask as BackendIntentTask } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 describe("IntentTask.fromBackendType", () => {

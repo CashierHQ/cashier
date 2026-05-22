@@ -1,7 +1,7 @@
 import type { AssetInfoDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import Asset from "$modules/links/types/asset";
 import { type LinkTypeValue } from "$modules/links/types/link/linkType";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 export class CreateLinkAsset {
   address: string;

@@ -6,11 +6,11 @@ import {
   AddressType as SharedAddressType,
   type Action as SharedAction,
 } from "$shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { LinkDetailStoreV3 } from "../linkDetailStoreV3.svelte";
-import { LinkInactiveStateV3 } from "./inactive";
+import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+import { LinkInactiveStateV3 } from "$modules/detailLink/state/linkDetailStatesV3/inactive";
 
 const mocks = vi.hoisted(() => ({
   createActionV3: vi.fn(),

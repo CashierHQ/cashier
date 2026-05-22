@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDisplayValue } from "./formatDisplayValue";
+import { formatDisplayValue } from "$modules/creationLink/utils/formatDisplayValue";
 
 describe("formatDisplayValue", () => {
   it("should return empty string for empty input", () => {

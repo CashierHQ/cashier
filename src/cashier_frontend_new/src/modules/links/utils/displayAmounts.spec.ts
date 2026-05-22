@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateDisplayAmounts } from "./displayAmounts";
+import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 

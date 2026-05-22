@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getTokenLogo, getCachedTokenImage } from "../utils";
+  import { getTokenLogo, getCachedTokenImage } from "$modules/imageCache/utils";
 
   type Props = {
     address: string;

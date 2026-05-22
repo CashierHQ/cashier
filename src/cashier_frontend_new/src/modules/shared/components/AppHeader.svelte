@@ -6,13 +6,13 @@
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { ChevronLeft } from "lucide-svelte";
-  import MenuButton from "./MenuButton.svelte";
-  import WalletButton from "./WalletButton.svelte";
+  import MenuButton from "$modules/shared/components/MenuButton.svelte";
+  import WalletButton from "$modules/shared/components/WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import WalletDrawer from "./WalletDrawer.svelte";
+  import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
 
   type Props = {
     isLinkFormPage?: boolean;

@@ -1,0 +1,20 @@
+{
+  "name": "cashier",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.6.2",
+  "scripts": {
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "check": "pnpm -r run check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "knip": "^6.13.1",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.59.3"
+  }
+}

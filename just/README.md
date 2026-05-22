@@ -31,7 +31,7 @@ just build        # build canisters and frontend (high-level)
 just check_code   # run rustfmt + clippy and frontend lint
 just dfx_local_deploy  # start local dfx and deploy canisters locally
 just test         # run tests (backend + frontend)
-just start_frontend_new  # run new frontend dev server
+just start_frontend  # run frontend dev server
 ```
 
 Most high-level tasks chain the lower-level helpers (for example `build` will download required artifacts, compile canisters, and generate frontend bindings).

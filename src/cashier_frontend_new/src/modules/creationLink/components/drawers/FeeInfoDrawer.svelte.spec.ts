@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import FeeInfoDrawer from "./FeeInfoDrawer.svelte";
+import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
 
 vi.mock("$lib/i18n", () => ({
   locale: {

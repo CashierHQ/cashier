@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ProtectedValidLink from "./ProtectedValidLink.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
 
   let { redirectTo }: { redirectTo?: string } = $props();
 </script>

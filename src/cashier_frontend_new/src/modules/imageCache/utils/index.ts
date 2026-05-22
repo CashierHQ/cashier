@@ -10,9 +10,9 @@ export {
   clearCache,
   clearAllCache,
   getCacheSize,
-} from "./imageCache";
+} from "$modules/imageCache/utils/imageCache";
 
-export { getTokenLogo } from "./getTokenLogo";
+export { getTokenLogo } from "$modules/imageCache/utils/getTokenLogo";
 
 export {
   isImagePreloaded,
@@ -21,4 +21,4 @@ export {
   preloadTokenImage,
   preloadTokenImages,
   preloadTokenImagesIdle,
-} from "./preloadTokenImage";
+} from "$modules/imageCache/utils/preloadTokenImage";

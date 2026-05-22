@@ -7,26 +7,26 @@ import {
   type Operation,
 } from "@dfinity/ledger-icp";
 import {
-  IcrcIndexNgCanister,
+  IcrcIndexCanister,
   type IcrcIndexNgTransactionWithId,
 } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { fromNullable } from "@dfinity/utils";
-import { ICP_INDEX_CANISTER_ID } from "../constants";
+import { ICP_INDEX_CANISTER_ID } from "$modules/token/constants";
 import {
   TransactionKind,
   type GetTransactionsParams,
   type GetTransactionsResult,
   type TokenTransaction,
   type TransactionKindValue,
-} from "../types";
+} from "$modules/token/types";
 import { assertUnreachable } from "$lib/rsMatch";
 
 const DEFAULT_PAGE_SIZE = 100n;
 
 /**
  * Service to fetch transaction history from index canisters.
- * Handles both ICP (IndexCanister) and ICRC (IcrcIndexNgCanister).
+ * Handles both ICP (IndexCanister) and ICRC (IcrcIndexCanister).
  */
 export class TokenIndexService {
   #canisterId: Principal;
@@ -96,7 +96,7 @@ export class TokenIndexService {
   ): Promise<GetTransactionsResult> {
     const agent = authState.buildAnonymousAgent();
 
-    const indexCanister = IcrcIndexNgCanister.create({
+    const indexCanister = IcrcIndexCanister.create({
       agent,
       canisterId: this.#canisterId,
     });

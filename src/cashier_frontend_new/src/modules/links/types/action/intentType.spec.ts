@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { Principal } from "@dfinity/principal";
-import { TransferDataMapper, TransferFromDataMapper } from "./intentType";
+import { Principal } from "@icp-sdk/core/principal";
+import {
+  TransferDataMapper,
+  TransferFromDataMapper,
+} from "$modules/links/types/action/intentType";
 import type {
   TransferData as BackendTransferData,
   TransferFromData as BackendTransferFromData,

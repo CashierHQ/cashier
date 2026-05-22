@@ -4,7 +4,7 @@ import type {
   MempoolVin,
   MempoolVout,
 } from "$modules/bitcoin/types/mempool";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 /**
  * Type representing a Bitcoin transaction
