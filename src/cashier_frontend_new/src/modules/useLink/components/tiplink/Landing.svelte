@@ -6,7 +6,10 @@
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+  import {
+    tokenMetadataQuery,
+    tokenRegistryQuery,
+  } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
   import { type GenericUserLinkStoreVM } from "$modules/useLink/types/viewModels/genericUserLinkStoreVM";
@@ -28,24 +31,29 @@
     return userLink.link?.asset_info?.[0];
   });
 
-  // Get token from wallet store
-  const walletToken = $derived.by(() => {
-    if (!firstAsset) return null;
-    const tokenAddress =
+  const tokenAddress = $derived.by(() => {
+    if (!firstAsset) return "";
+    return (
       firstAsset.asset.address?.toText?.() ??
       firstAsset.asset.address?.toString?.() ??
-      "";
+      ""
+    );
+  });
+
+  // Get token from wallet store (available when logged in)
+  const walletToken = $derived.by(() => {
     if (!tokenAddress) return null;
     return walletStore.query.data?.find((t) => t.address === tokenAddress);
   });
 
+  // Fallback: fetch from token registry anonymously when not logged in
+  const registryToken = $derived.by(() => {
+    if (!tokenAddress || walletToken) return null;
+    return tokenRegistryQuery(tokenAddress);
+  });
+
   // Get token metadata
   const tokenMeta = $derived.by(() => {
-    if (!firstAsset) return null;
-    const tokenAddress =
-      firstAsset.asset.address?.toText?.() ??
-      firstAsset.asset.address?.toString?.() ??
-      "";
     return tokenAddress ? tokenMetadataQuery(tokenAddress) : null;
   });
 
@@ -53,7 +61,9 @@
   const displayInfo = $derived.by(() => {
     return getFirstAssetDisplayInfo(
       firstAsset ?? null,
-      walletToken ?? null,
+      (walletToken ?? registryToken?.data) as Parameters<
+        typeof getFirstAssetDisplayInfo
+      >[1],
       tokenMeta?.data ?? null,
     );
   });
@@ -94,6 +104,7 @@
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
     decimals={displayInfo.decimals}
+    logo={displayInfo.logo}
     message={locale.t("links.linkForm.useLink.completed.message")}
   />
 {/if}

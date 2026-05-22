@@ -51,6 +51,7 @@
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
     decimals={displayInfo.decimals}
+    logo={displayInfo.logo}
     message={locale.t("links.linkForm.useLink.completed.airdropMessage")}
   />
 {/if}

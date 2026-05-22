@@ -22,7 +22,10 @@ import {
   type ValidationErrorType,
 } from "$modules/token/services/canisterValidation";
 import type { TokenMetadata } from "$modules/token/types";
-import { parseListTokens } from "$modules/token/utils/parser";
+import {
+  parseListTokens,
+  parseTokenDto,
+} from "$modules/token/utils/parser";
 import type { NFT } from "$modules/wallet/types/nft";
 import { NFTMapper } from "$modules/wallet/types/nft";
 import { Principal } from "@dfinity/principal";
@@ -43,6 +46,31 @@ class TokenStorageService {
       canisterId: TOKEN_STORAGE_CANISTER_ID,
       idlFactory: tokenStorage.idlFactory,
     });
+  }
+
+  /**
+   * Get the anonymous Token Storage actor (no authentication required).
+   * Used for public read-only queries on the token registry.
+   */
+  #getAnonymousActor(): tokenStorage._SERVICE {
+    return authState.buildActor({
+      canisterId: TOKEN_STORAGE_CANISTER_ID,
+      idlFactory: tokenStorage.idlFactory,
+      options: { anonymous: true },
+    }) as tokenStorage._SERVICE;
+  }
+
+  /**
+   * Get a single token's metadata from the registry by its canister address.
+   * Uses an anonymous actor so it works without user authentication.
+   * @param address Canister ID of the token ledger
+   * @returns TokenMetadata if found, null otherwise
+   */
+  public async getTokenById(address: Principal): Promise<TokenMetadata | null> {
+    const actor = this.#getAnonymousActor();
+    const res = await actor.get_token_by_id(address);
+    if ("Err" in res) return null;
+    return parseTokenDto(res.Ok);
   }
 
   /**
