@@ -321,9 +321,14 @@
       "noDetails": "No details found for this token.",
       "noHistoryAvailable": "Transaction history not available for this token.",
       "errorLoadingHistory": "Error loading transaction history.",
-      "noTransactions": "Transaction will appear here",
+      "noTransactions": "Transactions will appear here",
       "loadMore": "Load More",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "tokenOrigin": "Token origin",
+      "originBackedBy": "This token is backed by another chain asset",
+      "protocol": "Protocol",
+      "tokenId": "Token ID",
+      "runeId": "Rune ID"
     },
     "nftMessage": "NFT Coming soon! Included in Release 3.",
     "manageTokensBtn": "+Manage tokens",
@@ -467,6 +472,7 @@
   "bitcoin": {
     "receive": {
       "title": "Importing BTC from Bitcoin network",
+      "runeTitle": "Importing Rune from Bitcoin network",
       "history": "History",
       "created": "Created",
       "importing": "Importing (in ~60mins)",
@@ -492,6 +498,7 @@
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",
+      "runeTitle": "Exporting Rune to Bitcoin network",
       "history": "History",
       "created": "Created",
       "exporting": "Exporting (in ~60mins)",

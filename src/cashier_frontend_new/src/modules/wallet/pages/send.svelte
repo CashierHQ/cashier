@@ -512,7 +512,7 @@
       {#if isBitcoinBridgeToken}
         <div class="px-8 btc-gradient rounded-2xl py-4 mt-4 px-8">
           <h3 class="text-normal font-semibold mb-6 text-center">
-            {locale.t("bitcoin.send.title")}
+            {locale.t(isRune ? "bitcoin.send.runeTitle" : "bitcoin.send.title")}
           </h3>
           <label
             for="native-btc-address-input"

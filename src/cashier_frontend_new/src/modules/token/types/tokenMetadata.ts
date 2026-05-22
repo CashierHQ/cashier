@@ -1,3 +1,4 @@
+import type { TokenOrigin } from "$modules/token/types/tokenOrigin";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 
 /**
@@ -13,6 +14,7 @@ export type TokenMetadata = {
   is_default: boolean;
   indexId?: string;
   tokenStandards?: TokenStandard[];
+  origin?: TokenOrigin;
   isRune?: boolean;
   runeInfo?: {
     runeId: string;

@@ -91,16 +91,14 @@
   }
 </script>
 
-<div>
+<div class="px-8 btc-gradient rounded-2xl py-4 mt-6">
   <div class="mb-6 flex justify-center">
-    <Label class="text-base font-semibold">
-      {locale
-        .t("wallet.receive.btcAddress")
-        .replace("{{token}}", token?.symbol ?? "Runes")}
+    <Label class="text-small font-medium">
+      {locale.t("bitcoin.receive.runeTitle")}
     </Label>
   </div>
-  <div class="space-y-4">
-    <Label class="text-base font-semibold">
+  <div class="space-y-2">
+    <Label class="text-small font-medium">
       {locale
         .t("wallet.receive.btcAddress")
         .replace("{{token}}", token?.symbol ?? "Runes")}
@@ -122,7 +120,7 @@
       </button>
     </div>
     <div
-      class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
+      class="text-xs text-grey mt-1 mb-4 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
     >
       {locale.t("wallet.send.addressBitcoinExample")}
     </div>

@@ -1,41 +1,41 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
-  import {
-    getWalletHistoryStore,
-    type WalletHistoryStore,
-  } from "$modules/token/state/walletHistoryStore.svelte";
-  import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
+  import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import {
-    ArrowUpRight,
-    ArrowDownLeft,
-    Check,
-    ClockArrowDown,
-    ClockArrowUp,
-    LoaderCircle,
-  } from "lucide-svelte";
+      BridgeTransactionStatus,
+      BridgeType,
+      type BridgeTransaction,
+  } from "$modules/bitcoin/types/bridge_transaction";
+  import {
+      CKBTC_CANISTER_ID,
+      ICP_INDEX_CANISTER_ID,
+      ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
+  import {
+      getWalletHistoryStore,
+      type WalletHistoryStore,
+  } from "$modules/token/state/walletHistoryStore.svelte";
+  import {
+      DisplayTransactionMapper,
+      TransactionKind,
+      type TokenWithPriceAndBalance,
+      type TransactionKindValue,
+  } from "$modules/token/types/index";
+  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
+  import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { formatDate, getDateKey } from "$modules/wallet/utils/date";
   import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
   import {
-    CKBTC_CANISTER_ID,
-    ICP_LEDGER_CANISTER_ID,
-    ICP_INDEX_CANISTER_ID,
-  } from "$modules/token/constants";
-  import {
-    TransactionKind,
-    type TokenWithPriceAndBalance,
-    type TransactionKindValue,
-    DisplayTransactionMapper,
-  } from "$modules/token/types/index";
-  import {
-    BridgeTransactionStatus,
-    BridgeType,
-    type BridgeTransaction,
-  } from "$modules/bitcoin/types/bridge_transaction";
-  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
-  import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
-  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
-  import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
+      ArrowDownLeft,
+      ArrowUpRight,
+      Check,
+      ClockArrowDown,
+      ClockArrowUp,
+      LoaderCircle,
+  } from "lucide-svelte";
+  import { onDestroy } from "svelte";
 
   interface Props {
     tokenAddress: string;
@@ -302,7 +302,7 @@
   }
 </script>
 
-<div class="space-y-4 mt-8">
+<div class="space-y-4 mt-5">
   {#if !hasIndexCanister && !isCkBtc && !isRune}
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
@@ -321,7 +321,7 @@
     </p>
   {:else}
     {#each transactionsByDate as dateGroup, i (i)}
-      <div class="text-lightblack text-sm mb-4">
+      <div class="text-lightblack font-light text-sm mb-2">
         {dateGroup.date}
       </div>
 
@@ -357,21 +357,21 @@
 
               <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
                 <div class="flex justify-between items-start mb-1">
-                  <p class="text-[#222222]">
+                  <p class="text-[#222222] text-sm">
                     {tx.label}
                   </p>
-                  <p class="text-[#222222] text-right">
+                  <p class="text-[#222222] text-base text-right">
                     {tx.isOutgoing ? "-" : "+"}{tx.amount}
                   </p>
                 </div>
                 <div class="flex justify-between items-start">
-                  <p class="text-[10px]/[100%] text-grey">
+                  <p class="text-[10px]/[100%] font-light text-grey">
                     {new Date(tx.timestamp).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
-                  <p class="text-[10px]/[100%] text-grey text-right">
+                  <p class="text-[10px]/[100%] font-light text-grey text-right">
                     ${tx.usdValue.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
