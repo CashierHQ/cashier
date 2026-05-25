@@ -375,7 +375,6 @@ dependencies = [
  "cashier_shared",
  "ciborium",
  "futures",
- "gate_service_client",
  "gate_service_types",
  "getrandom 0.2.16",
  "ic-cdk",

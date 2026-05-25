@@ -44,8 +44,6 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
   set -e
   just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
-  export TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
-
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend_new {{network}} --upgrade-unchanged
@@ -61,8 +59,7 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
 
   just dfx_deploy "${OWNER}"
 
-  cashier_backend_id=$(dfx canister id cashier_backend)
-  just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
+  just dfx_deploy_gate "${OWNER}"
 
   dfx deploy internet_identity
 
@@ -203,15 +200,19 @@ create_canisters network cycles:
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
+dfx_deploy_backend owner network="" mode="" log_filter="global,cashier=debug":
   #!/usr/bin/env bash
   set -e
+
+  TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
+  GATE_SERVICE_CANISTER_ID=$(dfx canister id gate_service {{network}})
 
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
-  })" {{network}} --upgrade-unchanged
+      gate_service_canister_id=principal \"${GATE_SERVICE_CANISTER_ID}\";
+  })" {{network}} {{mode}} --upgrade-unchanged
 
 # Deploys the token_storage canister
 # params 
@@ -219,7 +220,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug" mode="":
+dfx_deploy_token_storage owner network="" mode="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
@@ -234,17 +235,20 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
 # Deploy Gate canister
 # params:
 # owner: principal id of owner
-# cashier_backend_id: canister id of cashier BE
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_gate owner cashier_backend_id:
+dfx_deploy_gate owner network="" mode="" log_filter="global,cashier=debug":
   #!/usr/bin/env bash
   set -e
 
+  CASHIER_BACKEND_CANISTER_ID=$(dfx canister id cashier_backend {{network}})
+
   dfx deploy gate_service --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
-      permissions=opt (vec { record { principal \"{{cashier_backend_id}}\"; vec { variant { GateCreate } } } });
-  })"
+      permissions=opt (vec { record { principal \"${CASHIER_BACKEND_CANISTER_ID}\"; vec { variant { GateCreate } } } });
+  })" {{network}} {{mode}} --upgrade-unchanged
 
 # Deploy ICRC1 token ledger
 # params minter: principal ID of the ledger minter

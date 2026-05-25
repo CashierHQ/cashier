@@ -37,7 +37,6 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 transaction_manager = { workspace = true }
 token_storage_types = { workspace = true }
-gate_service_client = { workspace = true }
 gate_service_types = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
