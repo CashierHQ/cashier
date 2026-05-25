@@ -173,6 +173,46 @@
         "addAsset": "Add Asset",
         "totalValue": "Total value"
       },
+      "lock": {
+        "title": "Lock transaction",
+        "transactionIs": "Transaction is",
+        "locked": "locked",
+        "notLocked": "not locked",
+        "lockedLockAlt": "Locked lock",
+        "unlockedLockAlt": "Unlocked lock",
+        "chooseLocks": "Choose locks",
+        "resetAll": "Reset all",
+        "comingSoon": "Coming soon",
+        "password": "Password",
+        "xHandle": "X handle",
+        "telegramGroup": "Telegram group",
+        "tokenOrNftOwnership": "Token or NFT ownership",
+        "quizMultipleChoice": "Quiz: multiple choice",
+        "allLocksRequired": "User must open all locks to use transaction",
+        "continue": "Continue",
+        "continuing": "Continuing...",
+        "setLockKeys": "Set lock keys",
+        "closePasswordLockDrawer": "Close password lock drawer",
+        "keyPassword": "Key: Password",
+        "reset": "Reset",
+        "enterPassword": "Enter the password",
+        "confirmPassword": "Confirm password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "lock": "Lock",
+        "lockAdded": "You added a lock",
+        "fees": {
+          "password": "Lock fee - password",
+          "xFollow": "Lock fee - X follow",
+          "total": "Total lock fees",
+          "multipleTokens": "Multiple tokens"
+        },
+        "errors": {
+          "passwordRequired": "Password is required",
+          "confirmPasswordRequired": "Confirm password is required",
+          "passwordsDifferent": "The passwords are different."
+        }
+      },
       "preview": {
         "createSuccess": "Link created successfully: ",
         "createError": "Failed to create link: ",
@@ -190,7 +230,11 @@
         "includingNetworkFees": "Including network fees",
         "linkCreationFee": "Link creation fee",
         "feesBreakdown": "Fees breakdown",
-        "totalFees": "Total fees"
+        "totalFees": "Total fees",
+        "transactionLockStatus": {
+          "locked": "Locked",
+          "unlocked": "Unlocked"
+        }
       },
       "drawers": {
         "txCart": {

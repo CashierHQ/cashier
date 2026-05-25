@@ -2,8 +2,8 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
-import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -69,6 +69,6 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
   // Go back to the add asset state
   async goBack(): Promise<void> {
-    this.#linkStore.state = new AddAssetStateV3(this.#linkStore);
+    this.#linkStore.state = new LockStateV3(this.#linkStore);
   }
 }

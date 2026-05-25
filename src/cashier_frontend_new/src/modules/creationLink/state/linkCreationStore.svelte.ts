@@ -184,6 +184,7 @@ export class LinkCreationStore {
       case LinkStep.ADD_ASSET:
         currentLinkState = LinkState.ADDING_ASSET;
         break;
+      case LinkStep.LOCK:
       case LinkStep.PREVIEW:
         currentLinkState = LinkState.PREVIEW;
         break;

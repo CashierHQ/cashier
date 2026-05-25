@@ -16,6 +16,8 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
+  import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
+  import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -23,6 +25,7 @@
 
   const context = getGuardContext();
   const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
+  const gatingStore = new GatingStore();
 
   let cachedCreationStore:
     | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
@@ -99,13 +102,20 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader {linkStep} {linkTitle} onBack={handleBack} />
+    <CreateLinkHeader
+      {linkStep}
+      {linkTitle}
+      showLockStep={isV3}
+      onBack={handleBack}
+    />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}
       <AddAsset link={linkStore} />
+    {:else if linkStore.step === LinkStep.LOCK}
+      <LockTransaction link={linkStore} store={gatingStore} />
     {:else if linkStore.step === LinkStep.PREVIEW}
-      <Preview link={linkStore} />
+      <Preview link={linkStore} {gatingStore} />
     {:else if linkStore.step === LinkStep.CREATED && linkStore.id && detailStore}
       <CreatedLink link={linkStore} {detailStore} />
     {/if}

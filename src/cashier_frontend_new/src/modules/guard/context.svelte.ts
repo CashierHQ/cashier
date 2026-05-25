@@ -3,6 +3,7 @@ import type { LinkCreationStore } from "$modules/creationLink/state/linkCreation
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
+import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
 import { userProfile } from "$modules/shared/services/userProfile.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
@@ -19,6 +20,7 @@ export class GuardContext {
   userLinkStoreV3 = $state<UserLinkStoreV3 | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
   linkCreationStoreV3 = $state<LinkCreationStoreV3 | null>(null);
+  gatingStore = $state<GatingStore | null>(null);
   // Indicates whether the guard check process has completed
   isGuardCheckComplete = $state(false);
   // Indicates whether an attempt to load a temporary link has been made

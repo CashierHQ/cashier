@@ -193,6 +193,7 @@ export class LinkCreationStoreV3 {
       case LinkStep.ADD_ASSET:
         linkState = SharedLinkState.AddAsset;
         break;
+      case LinkStep.LOCK:
       case LinkStep.PREVIEW:
         linkState = SharedLinkState.Preview;
         break;
