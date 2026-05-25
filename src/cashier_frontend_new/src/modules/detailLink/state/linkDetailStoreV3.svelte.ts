@@ -42,8 +42,6 @@ export class LinkDetailStoreV3 {
           throw linkDetailV3.error;
         }
 
-        console.log("Fetched link detail v3:", linkDetailV3.value);
-
         return linkDetailV3.value;
       },
       watch: true,
