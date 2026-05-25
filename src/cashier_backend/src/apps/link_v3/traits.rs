@@ -22,6 +22,23 @@ use crate::apps::{
     token_standard::traits::TokenStandardCache,
 };
 
+/// Validates that all gates for a link are open for a given user.
+/// Implementations read from a local cache (no inter-canister call).
+pub trait GateValidator {
+    /// Returns `Ok(())` if all gates are open, `Err(Unauthorized)` otherwise.
+    fn check_all_gates_open(&self, link_id: &str, user: Principal) -> Result<(), CanisterError>;
+}
+
+/// A no-op gate validator that always passes — used for `CreateLink` actions where
+/// the creator is never required to open their own gate.
+pub struct NoGateValidator;
+
+impl GateValidator for NoGateValidator {
+    fn check_all_gates_open(&self, _link_id: &str, _user: Principal) -> Result<(), CanisterError> {
+        Ok(())
+    }
+}
+
 pub trait LinkV3Instance {
     /// Create an action associated with the link
     /// # Arguments

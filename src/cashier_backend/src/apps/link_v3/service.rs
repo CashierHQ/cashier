@@ -34,9 +34,15 @@ use transaction_manager::{
 
 use crate::{
     apps::{
-        action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
-        link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
-        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
+        action::v3::ActionServiceV3,
+        link_v3::{
+            factory::LinkFactoryV3,
+            traits::{GateValidator, NoGateValidator},
+            utils::link_v3_asset_principals,
+        },
+        token_balance::traits::TokenBalanceFetcher,
+        token_fee::traits::TokenFeeCache,
+        token_standard::traits::TokenStandardCache,
     },
     repositories::{self, Repositories},
 };
@@ -121,7 +127,7 @@ impl<R: Repositories> LinkV3Service<R> {
         };
         self.user_link_repository.create(new_user_link);
 
-        // create action
+        // create action — creator is not subject to gate checks on their own link
         let action_result = self
             .create_action(
                 link_model.id.as_str(),
@@ -133,6 +139,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                NoGateValidator,
             )
             .await?;
 
@@ -149,11 +156,12 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `canister_id` - The canister ID of the token contract
     /// * `link_id` - The ID of the link for which the action is created
     /// * `action_type` - The type of action to be created
+    /// * `gate_validator` - Validator that checks whether all gates are open for the caller
     /// # Returns
     /// * `Ok(SharedAction)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_action<M, F, S, B>(
+    pub async fn create_action<M, F, S, B, V>(
         &mut self,
         link_id: &str,
         action: SharedAction,
@@ -164,13 +172,17 @@ impl<R: Repositories> LinkV3Service<R> {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_validator: V,
     ) -> Result<CreateActionResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
+        V: GateValidator,
     {
+        gate_validator.check_all_gates_open(link_id, creator)?;
+
         let link_model = self
             .link_v3_repository
             .get(&link_id.to_string())
@@ -690,6 +702,7 @@ mod tests {
                 create_mock_token_fee_service(1_000_000),
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                NoGateValidator,
             )
             .await;
 
@@ -831,6 +844,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                NoGateValidator,
             )
             .await;
 
@@ -894,6 +908,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                NoGateValidator,
             )
             .await;
 

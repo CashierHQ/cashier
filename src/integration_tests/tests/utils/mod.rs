@@ -249,6 +249,7 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
             token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
             token_storage_canister_id: token_storage_principal,
             token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
+            gate_service_canister_id: Principal::anonymous(),
         }),
     )
     .await;
