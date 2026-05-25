@@ -61,6 +61,10 @@ export class DetailStoreViewModelAdapter implements GenericDetailStoreVM {
     await this.detailStore.query.refreshAsync();
   }
 
+  get gates() {
+    return undefined;
+  }
+
   // syncAssetBalanceCache is not supported for V2 links
   syncAssetBalanceCache = undefined;
 }

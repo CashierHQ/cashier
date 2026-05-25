@@ -6,6 +6,7 @@ import type {
   LinkType_1 as BackendLinkTypeV3,
   Link as BackendSharedLink,
   GetLinkResp,
+  GetLinkDetailsResponseV3,
   GetLinkResponseV3,
   LinkDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
@@ -34,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   cashierBackendService: {
     getLink: vi.fn(),
     getLinkV3: vi.fn(),
+    getUserLinkDetailsV3: vi.fn(),
   },
 }));
 
@@ -225,15 +227,18 @@ describe("fetchLinkDetail", () => {
 });
 
 describe("fetchLinkDetailV3", () => {
-  it("should call getLinkV3 once when actionTypeValue is provided", async () => {
+  it("should call getUserLinkDetailsV3 once when actionTypeValue is provided", async () => {
     const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
-    const resp: GetLinkResponseV3 = {
+    const resp: GetLinkDetailsResponseV3 = {
       link: linkDto,
       action: [],
       icrc112_requests: [],
       link_user_state: [],
+      gates: [],
     };
-    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(Ok(resp));
+    vi.mocked(cashierBackendService.getUserLinkDetailsV3).mockResolvedValueOnce(
+      Ok(resp),
+    );
 
     await detailLinkService.fetchLinkDetailV3({
       id: "some-id",
@@ -241,31 +246,35 @@ describe("fetchLinkDetailV3", () => {
       anonymous: false,
     });
 
-    expect(vi.mocked(cashierBackendService.getLinkV3)).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(cashierBackendService.getLinkV3).mock.calls[0];
+    expect(
+      vi.mocked(cashierBackendService.getUserLinkDetailsV3),
+    ).toHaveBeenCalledTimes(1);
+    const callArgs = vi.mocked(cashierBackendService.getUserLinkDetailsV3).mock
+      .calls[0];
     expect(callArgs[0]).toBe("some-id");
     expect(callArgs[1]).toBeDefined();
-    expect(callArgs[2]).toBe(false);
   });
 
-  it("should call getLinkV3 twice for active link when authenticated", async () => {
+  it("should call getUserLinkDetailsV3 twice for active link when authenticated", async () => {
     const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
-    const firstResp: GetLinkResponseV3 = {
+    const firstResp: GetLinkDetailsResponseV3 = {
       link: linkDto,
       action: [],
       icrc112_requests: [],
       link_user_state: [],
+      gates: [],
     };
-    const secondResp: GetLinkResponseV3 = {
+    const secondResp: GetLinkDetailsResponseV3 = {
       link: linkDto,
       action: [],
       icrc112_requests: [],
       link_user_state: [],
+      gates: [],
     };
-    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(
+    vi.mocked(cashierBackendService.getUserLinkDetailsV3).mockResolvedValueOnce(
       Ok(firstResp),
     );
-    vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(
+    vi.mocked(cashierBackendService.getUserLinkDetailsV3).mockResolvedValueOnce(
       Ok(secondResp),
     );
 
@@ -274,10 +283,11 @@ describe("fetchLinkDetailV3", () => {
       anonymous: false,
     });
 
-    expect(vi.mocked(cashierBackendService.getLinkV3)).toHaveBeenCalledTimes(2);
-    const firstCall = vi.mocked(cashierBackendService.getLinkV3).mock.calls[0];
-    const secondCall = vi.mocked(cashierBackendService.getLinkV3).mock.calls[1];
-    expect(firstCall[2]).toBe(false);
+    expect(
+      vi.mocked(cashierBackendService.getUserLinkDetailsV3),
+    ).toHaveBeenCalledTimes(2);
+    const secondCall = vi.mocked(cashierBackendService.getUserLinkDetailsV3)
+      .mock.calls[1];
     expect(secondCall[1]).toBeDefined();
   });
 

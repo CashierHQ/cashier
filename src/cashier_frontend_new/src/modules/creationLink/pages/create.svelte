@@ -18,6 +18,7 @@
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import { GateType } from "$modules/gating/types/gate";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -26,6 +27,17 @@
   const context = getGuardContext();
   const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
   const gatingStore = new GatingStore();
+
+  $effect(() => {
+    const storeV3 = context.linkCreationStoreV3;
+    if (!storeV3) return;
+    const drafts = gatingStore.gateDrafts;
+    if (drafts.length > 0 && drafts[0].type === GateType.PASSWORD) {
+      storeV3.pendingGateDraft = drafts[0];
+    } else {
+      storeV3.pendingGateDraft = null;
+    }
+  });
 
   let cachedCreationStore:
     | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)

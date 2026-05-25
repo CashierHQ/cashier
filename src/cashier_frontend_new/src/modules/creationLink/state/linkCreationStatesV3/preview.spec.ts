@@ -45,7 +45,10 @@ vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
 }));
 
 vi.mock("$modules/links/services/cashierBackend", () => ({
-  cashierBackendService: { createLinkV3: vi.fn() },
+  cashierBackendService: {
+    createLinkV3: vi.fn(),
+    createLinkV3WithGate: vi.fn(),
+  },
 }));
 
 const VALID_PRINCIPAL = Principal.fromText("aaaaa-aa");
@@ -105,6 +108,7 @@ function makeStore(options?: {
     state: undefined,
     backendLink: undefined,
     backendAction: undefined,
+    pendingGateDraft: null,
     initializeCreateLinkActionFromTemplate: vi.fn(() => {
       if (initActionResult === "err") {
         return Err(new Error("template init failed"));
@@ -121,7 +125,7 @@ function makeStore(options?: {
 describe("PreviewStateV3", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(cashierBackendService.createLinkV3).mockResolvedValue(
+    vi.mocked(cashierBackendService.createLinkV3WithGate).mockResolvedValue(
       Ok(MOCK_CREATE_RESPONSE),
     );
   });
@@ -160,7 +164,7 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_fail_go_next_due_to_backend_create_link_failure", async () => {
-      vi.mocked(cashierBackendService.createLinkV3).mockResolvedValue(
+      vi.mocked(cashierBackendService.createLinkV3WithGate).mockResolvedValue(
         Err(new Error("backend error")),
       );
       const store = makeStore();

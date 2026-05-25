@@ -370,6 +370,8 @@
     return linkStore?.link?.state === LinkState.INACTIVE_ENDED;
   });
 
+  const linkHasGates = $derived.by(() => (linkStore?.gates?.length ?? 0) > 0);
+
   const link = $derived(
     `${window.location.origin}/link/${linkStore?.link?.id}`,
   );
@@ -629,6 +631,7 @@
       <!-- Block 2: Transaction Lock -->
       <TransactionLockSection
         gatingStore={gatingStore ?? undefined}
+        hasLocks={linkHasGates}
         isEnded={isTransactionLockEnded}
       />
 

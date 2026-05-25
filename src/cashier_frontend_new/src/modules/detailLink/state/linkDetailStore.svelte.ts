@@ -2,16 +2,16 @@ import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { detailLinkService } from "$modules/detailLink/services/detailLink";
+import type { LinkDetailState } from "$modules/detailLink/state/linkDetailStates";
+import { LinkActiveState } from "$modules/detailLink/state/linkDetailStates/active";
+import { LinkCreatedState } from "$modules/detailLink/state/linkDetailStates/created";
+import { LinkInactiveState } from "$modules/detailLink/state/linkDetailStates/inactive";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { type LinkAction } from "$modules/links/types/linkAndAction";
-import type { LinkDetailState } from "$modules/detailLink/state/linkDetailStates";
-import { LinkActiveState } from "$modules/detailLink/state/linkDetailStates/active";
-import { LinkCreatedState } from "$modules/detailLink/state/linkDetailStates/created";
-import { LinkInactiveState } from "$modules/detailLink/state/linkDetailStates/inactive";
 
 /**
  * Store for created link state management
@@ -31,6 +31,9 @@ export class LinkDetailStore {
         if (linkDetail.isErr()) {
           throw linkDetail.error;
         }
+
+        console.log("Fetched link detail:", linkDetail.value);
+
         return linkDetail.value;
       },
       watch: true,

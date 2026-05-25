@@ -4,6 +4,7 @@ import {
   LinkActionV3,
   LinkActionV3Mapper,
 } from "$modules/detailLink/types/v3/link_action";
+import type { GetLinkDetailsResponseV3 as BackendGetLinkDetailsResponseV3 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { ActionMapper } from "$modules/links/types/action/action";
 import {
@@ -178,11 +179,9 @@ export class DetailLinkService {
         ? { action_type: ActionTypeMapper.toBackendType(actionTypeValue) }
         : undefined;
 
-      const initialResp = await cashierBackendService.getLinkV3(
-        id,
-        options,
-        anonymous,
-      );
+      const initialResp = anonymous
+        ? await cashierBackendService.getLinkV3(id, options, true)
+        : await cashierBackendService.getUserLinkDetailsV3(id, options);
 
       if (initialResp.isErr()) return Err(initialResp.error);
 
@@ -190,27 +189,37 @@ export class DetailLinkService {
       const sharedLink = SharedLinkMapper.toLocalType(initialRes.link);
 
       if (actionTypeValue) {
-        const linkActionV3 = LinkActionV3Mapper.fromBackendResponse(initialRes);
+        const linkActionV3 = anonymous
+          ? LinkActionV3Mapper.fromBackendResponse(initialRes)
+          : LinkActionV3Mapper.fromBackendGetLinkDetailsResponseV3(
+              initialRes as BackendGetLinkDetailsResponseV3,
+            );
         return Ok(linkActionV3);
       }
 
       const actionType = this.determineActionTypeFromLinkV3(sharedLink);
 
-      if (!actionType) return Ok({ link: sharedLink });
+      if (!actionType) {
+        const gates = !anonymous
+          ? (initialRes as BackendGetLinkDetailsResponseV3).gates
+          : undefined;
+        return Ok({ link: sharedLink, gates });
+      }
 
       if (anonymous) {
         // don't fetch action when anonymous: actions may require auth
         return Ok({ link: sharedLink });
       }
 
-      const getLinkResp = await cashierBackendService.getLinkV3(id, {
+      const getLinkResp = await cashierBackendService.getUserLinkDetailsV3(id, {
         action_type: ActionTypeMapper.toBackendType(actionType),
       });
 
       if (getLinkResp.isErr()) return Err(getLinkResp.error);
 
       const res = getLinkResp.unwrap();
-      const linkActionV3 = LinkActionV3Mapper.fromBackendResponse(res);
+      const linkActionV3 =
+        LinkActionV3Mapper.fromBackendGetLinkDetailsResponseV3(res);
       return Ok(linkActionV3);
     } catch (e) {
       return Err(e as Error);

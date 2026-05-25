@@ -1,5 +1,6 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStateV3 } from "$modules/useLink/state/useLinkStatesV3";
+import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
 import { GateStateV3 } from "$modules/useLink/state/useLinkStatesV3/gate";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
@@ -13,7 +14,20 @@ export class AddressLockedStateV3 implements UserLinkStateV3 {
   }
 
   async goNext(): Promise<void> {
-    this.#store.state = new GateStateV3(this.#store);
+    const gates = this.#store.linkDetail.gates;
+    const allOpen =
+      gates.length === 0 ||
+      gates.every(
+        (g) =>
+          g.gate_user_status[0]?.status != null &&
+          "Open" in g.gate_user_status[0].status,
+      );
+
+    if (allOpen) {
+      this.#store.state = new AddressUnlockedStateV3(this.#store);
+    } else {
+      this.#store.state = new GateStateV3(this.#store);
+    }
   }
 
   async goBack(): Promise<void> {

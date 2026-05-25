@@ -1,3 +1,4 @@
+import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
@@ -40,6 +41,9 @@ export class LinkDetailStoreV3 {
         if (linkDetailV3.isErr()) {
           throw linkDetailV3.error;
         }
+
+        console.log("Fetched link detail v3:", linkDetailV3.value);
+
         return linkDetailV3.value;
       },
       watch: true,
@@ -114,6 +118,13 @@ export class LinkDetailStoreV3 {
    */
   get icrc112Requests() {
     return this.#linkDetailQuery.data?.icrc112_requests;
+  }
+
+  /**
+   * Get gates attached to this link
+   */
+  get gates(): GateForUser[] {
+    return this.#linkDetailQuery.data?.gates ?? [];
   }
 
   /**

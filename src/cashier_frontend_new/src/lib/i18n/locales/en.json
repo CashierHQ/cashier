@@ -201,6 +201,11 @@
         "hidePassword": "Hide password",
         "lock": "Lock",
         "lockAdded": "You added a lock",
+        "openLock": "Open lock",
+        "incorrectPassword": "Incorrect password.",
+        "openButton": "Open",
+        "linkLocked": "Link locked",
+        "unlockAllRequired": "To use the transaction, unlock all locks.",
         "fees": {
           "password": "Lock fee - password",
           "xFollow": "Lock fee - X follow",
@@ -325,6 +330,8 @@
         "loading": "Loading...",
         "claimButton": "Claim",
         "continueButton": "Continue",
+        "transactionLocked": "This transaction is locked!",
+        "unlockButton": "Unlock",
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",

@@ -10,6 +10,8 @@ import type {
   UserActionCapableStateV3,
   UserLinkStateV3,
 } from "$modules/useLink/state/useLinkStatesV3";
+import { AddressLockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressLocked";
+import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
 import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 import { findUseActionTypeFromLinkType } from "$modules/useLink/utils/useActionTypeFromLinkType";
@@ -49,6 +51,34 @@ export class UserLinkStoreV3 {
       const s = this.linkDetail.query.data?.link_user_state;
       if (s === LinkUserState.COMPLETED) {
         this.#state = new CompletedStateV3();
+      }
+    });
+
+    // gate guard: sync state with actual gate open/closed status from backend
+    $effect(() => {
+      const gates = this.linkDetail.gates;
+      if (gates.length === 0) return;
+      if (this.linkDetail.action) return;
+
+      const allOpen = gates.every(
+        (g) =>
+          g.gate_user_status[0]?.status != null &&
+          "Open" in g.gate_user_status[0].status,
+      );
+
+      const step = this.#state.step;
+
+      // If gates are closed but state advanced past them, reset back to locked
+      if (!allOpen && step === UserLinkStep.ADDRESS_UNLOCKED) {
+        this.#state = new AddressLockedStateV3(this);
+      }
+
+      // If all gates are already open, skip locked/gate steps and go to unlocked
+      if (
+        allOpen &&
+        (step === UserLinkStep.ADDRESS_LOCKED || step === UserLinkStep.GATE)
+      ) {
+        this.#state = new AddressUnlockedStateV3(this);
       }
     });
   }

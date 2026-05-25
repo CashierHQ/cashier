@@ -5,10 +5,12 @@
 
   type Props = {
     gatingStore?: GatingStore;
+    hasLocks?: boolean;
     isEnded?: boolean;
   };
 
-  let { gatingStore, isEnded = false }: Props = $props();
+  let { gatingStore, hasLocks, isEnded = false }: Props = $props();
+  const showLocked = $derived(gatingStore?.hasLocks ?? hasLocks ?? false);
 </script>
 
 <div
@@ -22,13 +24,13 @@
     class:text-red-600={isEnded}
   >
     <span
-      >{gatingStore?.hasLocks
+      >{showLocked
         ? locale.t("links.linkForm.preview.transactionLockStatus.locked")
         : locale.t(
             "links.linkForm.preview.transactionLockStatus.unlocked",
           )}</span
     >
-    {#if gatingStore?.hasLocks}
+    {#if showLocked}
       <Lock class="h-4 w-4" aria-hidden="true" />
     {:else}
       <LockOpen class="h-4 w-4" aria-hidden="true" />

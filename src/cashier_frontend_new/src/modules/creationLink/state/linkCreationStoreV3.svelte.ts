@@ -1,5 +1,6 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
+import type { GateDraft } from "$modules/gating/types/gate";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
@@ -56,6 +57,7 @@ export class LinkCreationStoreV3 {
   #backendAction = $state<SharedAction | undefined>();
   #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
+  #pendingGateDraft = $state<GateDraft | null>(null);
 
   constructor(draftLink: SharedLink) {
     this.#id = draftLink.id;
@@ -127,6 +129,14 @@ export class LinkCreationStoreV3 {
 
   set icrc112Requests(requests: Icrc112Requests | undefined) {
     this.#icrc112Requests = requests;
+  }
+
+  get pendingGateDraft(): GateDraft | null {
+    return this.#pendingGateDraft;
+  }
+
+  set pendingGateDraft(draft: GateDraft | null) {
+    this.#pendingGateDraft = draft;
   }
 
   get linkType(): SharedLinkType {

@@ -60,7 +60,7 @@ impl GateServiceClient for GateServiceWrapper {
         key: GateKey,
     ) -> Result<OpenGateSuccessResult, CanisterError> {
         let result = Call::bounded_wait(self.canister_id, "open_gate")
-            .with_arg(&(gate_id, key))
+            .with_args(&(gate_id, key))
             .await
             .map_err(CanisterError::from)?;
 

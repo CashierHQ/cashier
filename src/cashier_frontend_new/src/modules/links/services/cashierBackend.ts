@@ -80,7 +80,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult_1,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_12).mapErr(
+    >(response as cashierBackend.Result_13).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -116,7 +116,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11)
+    >(response as cashierBackend.Result_12)
       .map((res) => res.data)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -184,6 +184,98 @@ class CanisterBackendService {
   }
 
   /**
+   * Creates a new link with a gate using the V3 API.
+   * @param link Shared link payload
+   * @param action Shared action payload
+   * @param gateKey Optional gate key to attach (null for no gate)
+   * @returns A Result containing CreateLinkResponseV3 or an Error.
+   */
+  async createLinkV3WithGate(
+    link: SharedLink,
+    action: SharedAction,
+    gateKey: cashierBackend.GateKey | null,
+  ): Promise<Result<CreateLinkResponseV3, Error>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const input = CreateLinkInputV3Mapper.toBackendCreateLinkInputArgV3(
+      link,
+      action,
+    );
+    const response = await actor.user_create_link_v3_with_gate(
+      input,
+      toNullable(gateKey),
+    );
+
+    return responseToResult(
+      response as
+        | { Ok: cashierBackend.CreateLinkResponseV3 }
+        | { Err: cashierBackend.CanisterError },
+    )
+      .map((res) =>
+        CreateLinkResponseV3Mapper.fromBackendCreateLinkResponseV3(res),
+      )
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Retrieve authenticated link details including gate status.
+   * @param id The link ID
+   * @param options Optional GetLinkOptions
+   * @returns A Result containing GetLinkDetailsResponseV3 or an Error.
+   */
+  async getUserLinkDetailsV3(
+    id: string,
+    options?: cashierBackend.GetLinkOptions,
+  ): Promise<Result<cashierBackend.GetLinkDetailsResponseV3, Error>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_get_link_details_v3(
+      id,
+      toNullable(options),
+    );
+
+    return responseToResult<
+      cashierBackend.GetLinkDetailsResponseV3,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_11).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
+  }
+
+  /**
+   * Open a gate on a link by providing the gate key.
+   * @param linkId The link ID
+   * @param gateId The gate ID to unlock
+   * @param gateKey The key to open the gate (e.g. { Password: "..." })
+   * @returns A Result containing OpenGateSuccessResult or an Error.
+   */
+  async openLinkGate(
+    linkId: string,
+    gateId: string,
+    gateKey: cashierBackend.GateKey,
+  ): Promise<Result<cashierBackend.OpenGateSuccessResult, Error>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_open_link_gate(linkId, gateId, gateKey);
+
+    return responseToResult<
+      cashierBackend.OpenGateSuccessResult,
+      cashierBackend.CanisterError
+    >(response as cashierBackend.Result_14).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
+  }
+
+  /**
    *  Process an action by its ID. This method calls the canister's `process_action_v2`
    *  @param actionId The ID of the action to process.
    *  @returns A Result containing LinkDto or an Error.
@@ -205,7 +297,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.ProcessActionDto,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_13)
+    >(response as cashierBackend.Result_15)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
