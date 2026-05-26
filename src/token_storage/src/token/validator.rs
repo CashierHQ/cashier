@@ -21,19 +21,13 @@ fn validate_rune_id(rune_id: &str) -> Result<(), String> {
         ));
     }
 
-    let block: u64 = parts[0].parse().map_err(|_| {
-        format!(
-            "rune_id block component '{}' must be a valid u64",
-            parts[0]
-        )
-    })?;
+    let block: u64 = parts[0]
+        .parse()
+        .map_err(|_| format!("rune_id block component '{}' must be a valid u64", parts[0]))?;
 
-    let tx: u32 = parts[1].parse().map_err(|_| {
-        format!(
-            "rune_id tx component '{}' must be a valid u32",
-            parts[1]
-        )
-    })?;
+    let tx: u32 = parts[1]
+        .parse()
+        .map_err(|_| format!("rune_id tx component '{}' must be a valid u32", parts[1]))?;
 
     if block == 0 && tx == 0 {
         return Err("rune_id '0:0' is reserved and cannot be used as a token record".to_string());
@@ -197,7 +191,11 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("rune_info.rune_id must not be empty"));
+        assert!(
+            result
+                .unwrap_err()
+                .contains("rune_info.rune_id must not be empty")
+        );
     }
 
     #[test]
@@ -210,7 +208,11 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("rune_info.token_id must not be empty"));
+        assert!(
+            result
+                .unwrap_err()
+                .contains("rune_info.token_id must not be empty")
+        );
     }
 
     #[test]

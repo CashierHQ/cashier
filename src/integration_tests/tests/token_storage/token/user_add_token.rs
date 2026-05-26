@@ -104,10 +104,7 @@ async fn it_should_do_user_add_token_with_valid_rune_info() {
             },
             index_id: None,
             is_rune: Some(true),
-            rune_info: Some(fixture_of_rune_info(
-                "840000:1",
-                "omnity-rune-token-id",
-            )),
+            rune_info: Some(fixture_of_rune_info("840000:1", "omnity-rune-token-id")),
         };
 
         // Act
@@ -129,10 +126,7 @@ async fn it_should_do_user_add_token_with_valid_rune_info() {
         assert_eq!(doge_in_list.is_rune, Some(true));
         assert_eq!(
             doge_in_list.rune_info,
-            Some(fixture_of_rune_info(
-                "840000:1",
-                "omnity-rune-token-id",
-            ))
+            Some(fixture_of_rune_info("840000:1", "omnity-rune-token-id",))
         );
 
         Ok(())

@@ -1134,7 +1134,10 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CanisterError::ValidationErrors(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(_)
+        ));
     }
 
     #[test]
@@ -1157,7 +1160,10 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CanisterError::ValidationErrors(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CanisterError::ValidationErrors(_)
+        ));
     }
 
     #[test]
