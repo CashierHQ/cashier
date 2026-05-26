@@ -1,4 +1,4 @@
-import { OMNITY_TARGET_CHAIN_ID } from '$modules/bitcoin/constants';
+import { OMNITY_TARGET_CHAIN_ID } from "$modules/bitcoin/constants";
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionStatus,
@@ -161,6 +161,7 @@ vi.mock("$modules/bitcoin/constants", () => ({
   CKBTC_MINTER_CANISTER_ID: "aaaaa-aa",
   MEMPOOL_API_POOLING_INTERVAL_SECONDS: 60,
   MEMPOOL_API_BASE_URLS: ["https://mempool.space/api"],
+  OMNITY_TARGET_CHAIN_ID: "eICP",
 }));
 
 vi.mock("$modules/token/constants", () => ({

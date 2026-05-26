@@ -1,4 +1,4 @@
-import { OMNITY_TARGET_CHAIN_ID } from '$modules/bitcoin/constants';
+import { OMNITY_TARGET_CHAIN_ID } from "$modules/bitcoin/constants";
 import {
   BridgeAssetType,
   BridgeTransactionStatus,

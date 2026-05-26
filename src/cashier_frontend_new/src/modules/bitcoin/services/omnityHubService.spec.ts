@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { OMNITY_TARGET_CHAIN_ID } from '$modules/bitcoin/constants';
+import { OMNITY_TARGET_CHAIN_ID } from "$modules/bitcoin/constants";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockBuildActor, mockQueryTxHash, mockGetTxsWithAccount } = vi.hoisted(
@@ -20,6 +20,7 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
 
 vi.mock("$modules/bitcoin/constants", () => ({
   OMNITY_HUB_CANISTER_ID: "be2us-64aaa-aaaaa-qaabq-cai",
+  OMNITY_TARGET_CHAIN_ID: "eICP",
 }));
 
 vi.mock("$lib/generated/omnity_hub/omnity_hub.did", () => ({
