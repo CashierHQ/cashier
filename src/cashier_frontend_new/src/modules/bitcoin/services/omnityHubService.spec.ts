@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+import { OMNITY_TARGET_CHAIN_ID } from '$modules/bitcoin/constants';
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockBuildActor, mockQueryTxHash, mockGetTxsWithAccount } = vi.hoisted(
@@ -57,7 +58,7 @@ describe("OmnityHubService", () => {
           sender: ["aaaaa-aa"],
           ticket_time: 1_700_000_000n,
           ticket_type: { Normal: null },
-          src_chain: "eICP",
+          src_chain: OMNITY_TARGET_CHAIN_ID,
           amount: "1200",
           receiver: "tb1qreceiver",
         },

@@ -114,7 +114,7 @@ async fn it_should_do_get_token_by_id_with_rune_metadata() {
             index_id: None,
             is_rune: Some(true),
             rune_info: Some(RuneInfo {
-                rune_id: "UNCOMMON•GOODS".to_string(),
+                rune_id: "840000:1".to_string(),
                 token_id: "omnity-rune-id".to_string(),
                 icon: Some("https://ordinals.com/content/rune-icon".to_string()),
             }),
@@ -131,7 +131,7 @@ async fn it_should_do_get_token_by_id_with_rune_metadata() {
         assert_eq!(
             token_details.rune_info,
             Some(RuneInfo {
-                rune_id: "UNCOMMON•GOODS".to_string(),
+                rune_id: "840000:1".to_string(),
                 token_id: "omnity-rune-id".to_string(),
                 icon: Some("https://ordinals.com/content/rune-icon".to_string()),
             })

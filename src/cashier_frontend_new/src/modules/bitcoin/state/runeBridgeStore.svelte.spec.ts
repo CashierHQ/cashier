@@ -1,3 +1,4 @@
+import { OMNITY_TARGET_CHAIN_ID } from '$modules/bitcoin/constants';
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionStatus,
@@ -734,7 +735,7 @@ describe("RuneBridgeStore", () => {
       // Assert
       expect(mockGenerateTicket).toHaveBeenCalledWith({
         txid: "abc123",
-        target_chain_id: "eICP",
+        target_chain_id: OMNITY_TARGET_CHAIN_ID,
         amount: 1200n,
         receiver: "aaaaa-aa",
         rune_id: "UNCOMMON•GOODS",
@@ -848,7 +849,7 @@ describe("RuneBridgeStore", () => {
       expect(result.unwrap()).toBe(1);
       expect(mockGenerateTicket).toHaveBeenCalledWith({
         txid: "abc123",
-        target_chain_id: "eICP",
+        target_chain_id: OMNITY_TARGET_CHAIN_ID,
         amount: 1200n,
         receiver: "aaaaa-aa",
         rune_id: "UNCOMMON•GOODS",

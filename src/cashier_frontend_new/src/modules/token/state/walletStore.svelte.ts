@@ -7,10 +7,6 @@ import {
 } from "$modules/imageCache";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-import {
-  isMockToken,
-  mergeMockBitcoinOriginTokens,
-} from "$modules/token/mock/mockBitcoinOriginTokens";
 import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -37,22 +33,11 @@ class WalletStore {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
         // fetch list user's tokens (only enabled tokens)
-        const fetchedTokens = await tokenStorageService.listTokens();
-        // TODO(btc): Replace these mocked Bitcoin tokens with real data once backend is ready
-        const tokens: TokenMetadata[] =
-          mergeMockBitcoinOriginTokens(fetchedTokens);
-        const fetchedTokenAddresses = new Set(
-          fetchedTokens.map((token) => token.address),
-        );
+        const tokens: TokenMetadata[] = await tokenStorageService.listTokens();
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
-        const enabledTokens = tokens.filter(
-          (token) =>
-            token.enabled &&
-            (!isMockToken(token.address) ||
-              fetchedTokenAddresses.has(token.address)),
-        );
+        const enabledTokens = tokens.filter((token) => token.enabled);
         const balanceRequests = enabledTokens.map((token) => {
           if (token.address === ICP_LEDGER_CANISTER_ID) {
             return icpLedgerService.getBalance();

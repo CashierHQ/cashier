@@ -68,7 +68,7 @@ async fn it_should_do_user_add_token_batch_with_valid_rune_info() {
                 index_id: None,
                 is_rune: Some(true),
                 rune_info: Some(fixture_of_rune_info(
-                    "UNCOMMON•GOODS",
+                    "840000:1",
                     "omnity-rune-token-id",
                 )),
             }],
@@ -94,7 +94,7 @@ async fn it_should_do_user_add_token_batch_with_valid_rune_info() {
         assert_eq!(
             doge_in_list.rune_info,
             Some(fixture_of_rune_info(
-                "UNCOMMON•GOODS",
+                "840000:1",
                 "omnity-rune-token-id",
             ))
         );
