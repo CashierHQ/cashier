@@ -5,6 +5,9 @@ on:
       - dev
     types:
       - closed
+  push:
+    branches:
+      - feature/deploy-wallet-canister
   workflow_dispatch:
 
 # Permissions needed for the GITHUB_TOKEN
@@ -14,7 +17,7 @@ permissions:
 
 jobs:
   build_and_deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment: dev
 
