@@ -270,9 +270,6 @@ class WalletStore {
   async addToken(
     address: string,
     indexId?: string,
-    isRune?: boolean,
-    runeId?: string,
-    runeTokenId?: string,
   ): Promise<Result<void, ValidationErrorType>> {
     const token = Principal.fromText(address);
 
@@ -284,9 +281,6 @@ class WalletStore {
       token,
       indexId,
       existingTokens,
-      isRune,
-      runeId,
-      runeTokenId,
     );
 
     if (result.isOk()) {

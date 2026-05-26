@@ -120,9 +120,6 @@ class TokenStorageService {
     address: Principal,
     indexId?: string,
     existingTokens?: string[],
-    isRune?: boolean,
-    runeId?: string,
-    runeTokenId?: string,
   ): Promise<Result<void, ValidationErrorType>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -155,11 +152,8 @@ class TokenStorageService {
       const res = await actor.user_add_token({
         token_id: { IC: { ledger_id: address } },
         index_id: indexId ? [indexId] : [],
-        is_rune: isRune ? [true] : [],
-        rune_info:
-          isRune && runeId && runeTokenId
-            ? [{ rune_id: runeId, token_id: runeTokenId, icon: [] }]
-            : [],
+        is_rune: [],
+        rune_info: [],
       });
 
       if ("Err" in res) {
