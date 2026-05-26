@@ -1,12 +1,15 @@
-# Prepare frontend statis assets and submit commit request to orbit
+# Prepare static assets and submit commit request to orbit
 # Returns JSON with: batch_id, evidence, request_url
+# params:
+#   canister_id: target asset canister id
+#   build_dir:   path to built static assets to upload
 [group('orbit')]
-upload_asset canister_id:
+upload_asset canister_id build_dir:
   #!/usr/bin/env bash
   set -euo pipefail
   set -x
   just check_permission {{canister_id}}
-  output=$(dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build 2>&1)
+  output=$(dfx-orbit request asset upload {{canister_id}} --files {{build_dir}} 2>&1)
   
   # Parse batch_id, evidence, and request_url from output
   batch_id=$(echo "$output" | grep -oE 'Batch id: [0-9]+' | sed 's/Batch id: //' || true)

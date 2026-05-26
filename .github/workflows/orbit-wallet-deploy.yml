@@ -1,4 +1,4 @@
-name: Orbit Frontend Deploy
+name: Orbit Wallet Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
       - staging
     paths:
-      - "src/cashier_frontend_new/**"
+      - "src/cashier_wallet/**"
   workflow_dispatch:
     inputs:
       mode:
@@ -86,17 +86,17 @@ jobs:
       - name: Build canisters
         run: just build ${{ needs.setup_environment.outputs.network }}
 
-      - name: Deploy frontend
-        id: frontend
+      - name: Deploy wallet
+        id: wallet
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
           set -o pipefail
           set -x
-          canister_id=$(just get_canister_id cashier_frontend_new ${{ needs.setup_environment.outputs.network }})
+          canister_id=$(just get_canister_id cashier_wallet ${{ needs.setup_environment.outputs.network }})
           # Capture JSON output (last line from upload_asset)
-          output=$(just upload_asset ${canister_id} ./src/cashier_frontend_new/build 2>&1 | tail -1)
+          output=$(just upload_asset ${canister_id} ./src/cashier_wallet/build 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
@@ -113,19 +113,19 @@ jobs:
       - name: Write Job Summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
-          ## 🚀 Orbit Frontend Deploy Summary
+          ## 🚀 Orbit Wallet Deploy Summary
 
           - **Network**: `${{ needs.setup_environment.outputs.network }}`
           - **Mode**: `${{ env.MODE }}`
-          - **Canister id**: `${{ steps.frontend.outputs.canister_id }}`
+          - **Canister id**: `${{ steps.wallet.outputs.canister_id }}`
           - **Operator Principal**: `${{ steps.identity.outputs.operator }}`
 
-          ### Frontend Canister
+          ### Wallet Canister
           | Field | Value |
           |-------|-------|
-          | Batch ID | `${{ steps.frontend.outputs.batch_id }}` |
-          | Evidence | `${{ steps.frontend.outputs.evidence }}` |
-          | Request URL | ${{ steps.frontend.outputs.request_url }} |
+          | Batch ID | `${{ steps.wallet.outputs.batch_id }}` |
+          | Evidence | `${{ steps.wallet.outputs.evidence }}` |
+          | Request URL | ${{ steps.wallet.outputs.request_url }} |
 
           ---
           EOF
