@@ -1,12 +1,6 @@
 name: Orbit Wallet Deploy
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-    paths:
-      - "src/cashier_wallet/**"
   workflow_dispatch:
     inputs:
       mode:
@@ -55,14 +49,11 @@ jobs:
 
       - name: Set deployment mode
         id: set-mode
+        env:
+          DEFAULT_MODE: install
+          INPUT_MODE: ${{ github.event.inputs.mode }}
         run: |
-          # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
-          INPUT_MODE="${{ github.event.inputs.mode }}"
-          if [[ -n "$INPUT_MODE" ]]; then
-            echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
-          else
-            echo "mode=upgrade" >> $GITHUB_OUTPUT
-          fi
+          echo "mode=${INPUT_MODE:-$DEFAULT_MODE}" >> $GITHUB_OUTPUT
 
   deploy:
     name: Prepare and Submit Orbit request (optional)
@@ -73,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Orbit deploy setup
-        id: identity
+        id: setup
         uses: ./.github/actions/orbit-deploy-setup
         with:
           sha: ${{ inputs.sha }}
@@ -82,6 +73,25 @@ jobs:
 
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
+
+      - name: Create the canister id
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister create cashier_wallet --network ${{ needs.setup_environment.outputs.network }}
+
+      - name: Verify the canister id
+        id: canister_ids
+        run: |
+          WALLET_CANISTER_ID=$(just get_canister_id cashier_wallet ${{ needs.setup_environment.outputs.network }})
+          echo "Cashier wallet canister ID: $WALLET_CANISTER_ID"
+          echo "cashier_wallet_id=$WALLET_CANISTER_ID" >> $GITHUB_OUTPUT
+
+      - name: Set Orbit station as the controller
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          dfx canister update-settings cashier_wallet --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Build canisters
         run: just build ${{ needs.setup_environment.outputs.network }}
@@ -94,7 +104,7 @@ jobs:
         run: |
           set -o pipefail
           set -x
-          canister_id=$(just get_canister_id cashier_wallet ${{ needs.setup_environment.outputs.network }})
+          canister_id=${{ steps.canister_ids.outputs.cashier_wallet_id }}
           # Capture JSON output (last line from upload_asset)
           output=$(just upload_asset ${canister_id} ./src/cashier_wallet/build 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
@@ -117,8 +127,8 @@ jobs:
 
           - **Network**: `${{ needs.setup_environment.outputs.network }}`
           - **Mode**: `${{ env.MODE }}`
-          - **Canister id**: `${{ steps.wallet.outputs.canister_id }}`
-          - **Operator Principal**: `${{ steps.identity.outputs.operator }}`
+          - **Canister id**: `${{ steps.canister_ids.outputs.cashier_wallet_id }}`
+          - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
 
           ### Wallet Canister
           | Field | Value |
