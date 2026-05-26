@@ -264,12 +264,14 @@ impl<R: Repositories> TokenRegistryService<R> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
 
-        // First pass: check if any tokens are new
+        // First pass: validate rune fields and check if any tokens are new
         for input in &tokens {
+            validate_rune_input(input.is_rune, &input.rune_info)
+                .map_err(CanisterError::ValidationErrors)?;
+
             let is_new = !self.registry_repository.contains(&input.details.token_id());
             if is_new {
                 any_new_tokens = true;
-                break;
             }
         }
 
@@ -380,7 +382,7 @@ mod tests {
 
     fn fixture_of_rune_info() -> RuneInfo {
         RuneInfo {
-            rune_id: "UNCOMMON•GOODS".to_string(),
+            rune_id: "840000:1".to_string(),
             token_id: "omnity-rune-token-id".to_string(),
             icon: Some("https://ordinals.com/content/rune-icon".to_string()),
         }
@@ -1106,6 +1108,111 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(service.get_metadata().version, version_before);
         assert_eq!(service.get_metadata().last_updated, last_updated_before);
+    }
+
+    #[test]
+    fn it_should_fail_add_bulk_tokens_due_to_invalid_rune_id_format() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = TokenRegistryService::new(&repo);
+        let token = RegistryToken {
+            is_rune: Some(true),
+            rune_info: Some(RuneInfo {
+                rune_id: "UNCOMMON•GOODS".to_string(),
+                token_id: "omnity-rune-token-id".to_string(),
+                icon: None,
+            }),
+            ..fixture_of_token(
+                Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+                "DOG",
+                vec![IcrcStandard::ICRC1],
+            )
+        };
+
+        // Act
+        let result = service.add_bulk_tokens(vec![token], TEST_TIMESTAMP);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), CanisterError::ValidationErrors(_)));
+    }
+
+    #[test]
+    fn it_should_fail_add_bulk_tokens_due_to_missing_rune_info() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = TokenRegistryService::new(&repo);
+        let token = RegistryToken {
+            is_rune: Some(true),
+            rune_info: None,
+            ..fixture_of_token(
+                Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+                "DOG",
+                vec![IcrcStandard::ICRC1],
+            )
+        };
+
+        // Act
+        let result = service.add_bulk_tokens(vec![token], TEST_TIMESTAMP);
+
+        // Assert
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), CanisterError::ValidationErrors(_)));
+    }
+
+    #[test]
+    fn it_should_fail_add_bulk_tokens_due_to_invalid_rune_id_in_one_of_many_tokens() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = TokenRegistryService::new(&repo);
+        let valid_token = fixture_of_token(
+            Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+            "ICP",
+            vec![IcrcStandard::ICRC1],
+        );
+        let invalid_rune_token = RegistryToken {
+            is_rune: Some(true),
+            rune_info: Some(RuneInfo {
+                rune_id: "0:0".to_string(),
+                token_id: "omnity-rune-token-id".to_string(),
+                icon: None,
+            }),
+            ..fixture_of_token(
+                Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
+                "DOG",
+                vec![IcrcStandard::ICRC1],
+            )
+        };
+
+        // Act
+        let result = service.add_bulk_tokens(vec![valid_token, invalid_rune_token], TEST_TIMESTAMP);
+
+        // Assert
+        assert!(result.is_err());
+        assert_eq!(service.registry_repository.list_tokens().len(), 0);
+    }
+
+    #[test]
+    fn it_should_do_add_bulk_tokens_with_valid_rune_token() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = TokenRegistryService::new(&repo);
+        let rune_token = RegistryToken {
+            is_rune: Some(true),
+            rune_info: Some(fixture_of_rune_info()),
+            ..fixture_of_token(
+                Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap(),
+                "DOG",
+                vec![IcrcStandard::ICRC1],
+            )
+        };
+
+        // Act
+        let result = service.add_bulk_tokens(vec![rune_token], TEST_TIMESTAMP);
+
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(service.registry_repository.list_tokens().len(), 1);
     }
 
     #[test]
