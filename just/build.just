@@ -8,13 +8,16 @@ clean:
   cargo clean
   rm -rf {{FRONTEND_DIR_NEW}}/node_modules
   rm -rf {{FRONTEND_DIR_NEW}}/build
+  rm -rf {{FRONTEND_DIR_WALLET}}/node_modules
+  rm -rf {{FRONTEND_DIR_WALLET}}/build
   rm -rf ./node_modules
 
 
 # Builds and download all artifacts
 [group('build')]
-build mode="local_dev": download_artifacts build_canisters generate_frontend_ts 
+build mode="local_dev": download_artifacts build_canisters generate_frontend_ts
   just build_frontend {{mode}}
+  just build_wallet {{mode}}
 
 
 # Builds the canisters
@@ -29,6 +32,11 @@ build_canisters: pre_build
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps
   pnpm --filter cashier_frontend_new build:{{mode}}
+
+# Builds the wallet
+[group('build')]
+build_wallet mode="local_dev": install_frontend_deps
+  pnpm --filter wallet build:{{mode}}
 
 # Generates the ts files for the canister services 
 [group('build')]

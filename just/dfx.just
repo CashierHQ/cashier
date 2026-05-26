@@ -48,6 +48,10 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend_new {{network}} --upgrade-unchanged
+  # NOTE: cashier_wallet deploy intentionally NOT chained here. Phase 2 CI
+  # invokes it via a dedicated step once canister IDs are provisioned on
+  # dev/staging/ic. Chaining now would break existing dev deploy because
+  # canister_ids.json has no entry for cashier_wallet.
 
 # Starts the local dfx server and deploys the canisters
 # params bitcoin: "true" to enable bitcoin node (for ckBTC flows), defaults to "false"

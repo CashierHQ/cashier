@@ -1,0 +1,34 @@
+// IC asset canister per-path header config (replaces hooks.server.ts after
+// static export). The wallet serves as a hidden RPC iframe for any DApp, so
+// all routes allow framing (`frame-ancestors *`) EXCEPT user-facing approval
+// UIs (`/consent`, `/icrc21-consent`, `/icrc25-permissions`) which must block
+// embedding to prevent clickjacking on Approve/Reject buttons.
+//
+// Note: old hooks.server.ts only blocked `/consent`. Migration takes the
+// opportunity to also block the two icrc consent routes (same threat model).
+[
+  {
+    match: "**/*",
+    headers: {
+      "Content-Security-Policy": "frame-ancestors *",
+    },
+  },
+  {
+    match: "consent/**/*",
+    headers: {
+      "Content-Security-Policy": "frame-ancestors 'none'",
+    },
+  },
+  {
+    match: "icrc21-consent/**/*",
+    headers: {
+      "Content-Security-Policy": "frame-ancestors 'none'",
+    },
+  },
+  {
+    match: "icrc25-permissions/**/*",
+    headers: {
+      "Content-Security-Policy": "frame-ancestors 'none'",
+    },
+  },
+]

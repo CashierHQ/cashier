@@ -34,3 +34,11 @@ frontend_check_code: install_frontend_deps
     pnpm --filter @cashier/shared lint
     # Detect unused files / exports / deps across the whole workspace
     pnpm exec knip
+
+# Runs lint and type checks on the wallet
+[group('code_check')]
+wallet_check_code: install_frontend_deps
+    pnpm --filter wallet lint
+    # Copy .env.dev for svelte-check type generation, run check, cleanup
+    cp {{FRONTEND_DIR_WALLET}}/.env.dev {{FRONTEND_DIR_WALLET}}/.env && pnpm --filter wallet check || (rm -f {{FRONTEND_DIR_WALLET}}/.env && exit 1)
+    rm -f {{FRONTEND_DIR_WALLET}}/.env

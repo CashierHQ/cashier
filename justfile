@@ -8,6 +8,7 @@ import "./just/orbit.just"
 
 export RUST_BACKTRACE := "full"
 FRONTEND_DIR_NEW := "./src/cashier_frontend_new"
+FRONTEND_DIR_WALLET := "./src/cashier_wallet"
 ARTIFACTS_DIR := env("ARTIFACTS_DIR", "./target/artifacts")
 LIB_DIR := "./src/lib"
 
