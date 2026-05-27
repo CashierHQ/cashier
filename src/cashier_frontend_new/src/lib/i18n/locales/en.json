@@ -204,6 +204,7 @@
         "openLock": "Open lock",
         "incorrectPassword": "Incorrect password.",
         "openButton": "Open",
+        "processing": "Processing",
         "linkLocked": "Link locked",
         "unlockAllRequired": "To use the transaction, unlock all locks.",
         "fees": {

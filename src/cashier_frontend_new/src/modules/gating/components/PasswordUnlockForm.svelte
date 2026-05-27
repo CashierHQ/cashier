@@ -223,7 +223,14 @@
         onclick={handleOpen}
         class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
       >
-        {locale.t("links.linkForm.lock.openButton") ?? "Open"}
+        {#if isSubmitting}
+          <div
+            class="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"
+          ></div>
+          {locale.t("links.linkForm.lock.processing") ?? "Processing"}
+        {:else}
+          {locale.t("links.linkForm.lock.openButton") ?? "Open"}
+        {/if}
       </Button>
     </div>
   </DrawerContent>
