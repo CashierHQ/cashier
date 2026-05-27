@@ -213,7 +213,10 @@
   $effect(() => {
     if (userStore && onIsLinkChange) {
       const step = userStore.state?.step ?? userStore.step;
-      const isLink = step !== UserLinkStep.ADDRESS_UNLOCKED;
+      const isLink =
+      step !== UserLinkStep.ADDRESS_UNLOCKED &&
+      step !== UserLinkStep.ADDRESS_LOCKED &&
+      step !== UserLinkStep.GATE;
       onIsLinkChange(isLink);
     }
   });

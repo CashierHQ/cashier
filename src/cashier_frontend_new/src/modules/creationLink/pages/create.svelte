@@ -129,7 +129,7 @@
     {:else if linkStore.step === LinkStep.PREVIEW}
       <Preview link={linkStore} {gatingStore} />
     {:else if linkStore.step === LinkStep.CREATED && linkStore.id && detailStore}
-      <CreatedLink link={linkStore} {detailStore} />
+      <CreatedLink link={linkStore} {detailStore} {gatingStore} />
     {/if}
   </div>
 {/if}
