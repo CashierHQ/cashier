@@ -107,14 +107,13 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
   async connect(): Promise<Account> {
     const {
       walletOrigin,
-      host = 'https://icp-api.io',
+      host = "https://icp-api.io",
       establishTimeout = 30_000,
       disconnectTimeout = 30_000,
-      derivationOrigin,
     } = this.config;
 
     // Phase 1 — II login via popup (pass derivationOrigin so wallet uses same II principal)
-    const principal = await this.openLoginPopup(walletOrigin, derivationOrigin);
+    const principal = await this.openLoginPopup(walletOrigin);
     this.principalText = principal;
 
     // Phase 2 — mount iframe + ICRC-29 transport
@@ -132,18 +131,18 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     // Phase 3 — request permissions (shows ICRC-25 permission prompt in wallet)
     try {
       await this.signer.requestPermissions([
-        { method: 'icrc27_accounts' },
-        { method: 'icrc49_call_canister' },
+        { method: "icrc27_accounts" },
+        { method: "icrc49_call_canister" },
       ]);
     } catch (e: unknown) {
       // ICRC-25 error code 3001 (ACTION_ABORTED) means user denied permissions
       const code = (e as { code?: number })?.code;
       if (
         code === 3001 ||
-        String(e).toLowerCase().includes('abort') ||
-        String(e).toLowerCase().includes('denied')
+        String(e).toLowerCase().includes("abort") ||
+        String(e).toLowerCase().includes("denied")
       ) {
-        throw new Error('User denied wallet permissions');
+        throw new Error("User denied wallet permissions");
       }
       throw e;
     }
@@ -155,10 +154,8 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
 
     // Phase 5 — create SignerAgent for update calls (ICRC-49 via iframe wallet)
     this.signerAgent = SignerAgent.createSync({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      signer: this.signer as unknown as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      account: ownerPrincipal! as unknown as any,
+      signer: this.signer,
+      account: ownerPrincipal,
       agent: HttpAgent.createSync({ host }),
     });
 
@@ -167,65 +164,68 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     // upgraded to authenticated update calls by SignerAgent internally, which
     // adds round-trip overhead but ensures authenticated queries work correctly
     // (e.g. user_get_links_v3 which uses ic_cdk::caller() to identify the user).
-    const queryAgent = HttpAgent.createSync({ host });
-    const signerAgentRef = this.signerAgent;
-    this.agent = new Proxy(signerAgentRef, {
-      get(target: unknown, prop: string | symbol) {
-        if (prop === 'readState') {
-          return async (
-            canisterId: unknown,
-            options: { paths?: unknown[] },
-            ...rest: unknown[]
-          ) => {
-            const paths = options?.paths;
-            // Use cross-realm-safe checks: `instanceof ArrayBuffer` breaks
-            // when the buffer was constructed in a different realm (e.g.
-            // jsdom test env, iframe, or Web Worker boundary), so we
-            // detect ArrayBuffer via `Object.prototype.toString.call`
-            // and TypedArrays via `ArrayBuffer.isView`.
-            const firstLabel = Array.isArray(paths?.[0])
-              ? paths[0][0]
-              : undefined;
-            const isBufferLike =
-              firstLabel != null &&
-              typeof firstLabel === 'object' &&
-              (Object.prototype.toString.call(firstLabel) ===
-                '[object ArrayBuffer]' ||
-                ArrayBuffer.isView(firstLabel as ArrayBufferView));
-            const isRequestStatus =
-              Array.isArray(paths) &&
-              paths.length === 1 &&
-              Array.isArray(paths[0]) &&
-              paths[0].length === 2 &&
-              isBufferLike &&
-              new TextDecoder().decode(
-                firstLabel as ArrayBuffer | ArrayBufferView
-              ) === 'request_status';
-            if (isRequestStatus) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return (signerAgentRef as any).readState(
-                canisterId,
-                options,
-                ...rest
-              );
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (queryAgent as any).readState(canisterId, options, ...rest);
-          };
-        }
-        if (prop === 'call') {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (...args: unknown[]) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (signerAgentRef as any).call(...args);
-          };
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const value = (target as any)[prop];
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as unknown as HttpAgent;
+    // const queryAgent = HttpAgent.createSync({ host });
+    // const signerAgentRef = this.signerAgent;
+    // this.agent = new Proxy(signerAgentRef, {
+    //   get(target: unknown, prop: string | symbol) {
+    //     console.log(`Agent method called: ${String(prop)}`);
+    //     if (prop === "readState") {
+    //       return async (
+    //         canisterId: unknown,
+    //         options: { paths?: unknown[] },
+    //         ...rest: unknown[]
+    //       ) => {
+    //         const paths = options?.paths;
+    //         // Use cross-realm-safe checks: `instanceof ArrayBuffer` breaks
+    //         // when the buffer was constructed in a different realm (e.g.
+    //         // jsdom test env, iframe, or Web Worker boundary), so we
+    //         // detect ArrayBuffer via `Object.prototype.toString.call`
+    //         // and TypedArrays via `ArrayBuffer.isView`.
+    //         const firstLabel = Array.isArray(paths?.[0])
+    //           ? paths[0][0]
+    //           : undefined;
+    //         const isBufferLike =
+    //           firstLabel != null &&
+    //           typeof firstLabel === "object" &&
+    //           (Object.prototype.toString.call(firstLabel) ===
+    //             "[object ArrayBuffer]" ||
+    //             ArrayBuffer.isView(firstLabel as ArrayBufferView));
+    //         const isRequestStatus =
+    //           Array.isArray(paths) &&
+    //           paths.length === 1 &&
+    //           Array.isArray(paths[0]) &&
+    //           paths[0].length === 2 &&
+    //           isBufferLike &&
+    //           new TextDecoder().decode(
+    //             firstLabel as ArrayBuffer | ArrayBufferView
+    //           ) === "request_status";
+    //         if (isRequestStatus) {
+    //           // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //           return (signerAgentRef as any).readState(
+    //             canisterId,
+    //             options,
+    //             ...rest
+    //           );
+    //         }
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //         return (queryAgent as any).readState(canisterId, options, ...rest);
+    //       };
+    //     }
+    //     if (prop === "call") {
+    //       console.log(
+    //         "Intercepting call method to route through SignerAgent for updates"
+    //       );
+    //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //       return (...args: unknown[]) => {
+    //         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //         return (signerAgentRef as any).call(...args);
+    //       };
+    //     }
+    //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     const value = (target as any)[prop];
+    //     return typeof value === "function" ? value.bind(target) : value;
+    //   },
+    // }) as unknown as HttpAgent;
 
     return {
       owner: ownerText,

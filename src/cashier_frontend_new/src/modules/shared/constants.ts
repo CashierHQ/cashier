@@ -56,7 +56,7 @@ export const CASHIER_WALLET_ID = "cashier";
 
 /** Origin URL of the Cashier Wallet app (set via PUBLIC_CASHIER_WALLET_ORIGIN env var). */
 export const CASHIER_WALLET_ORIGIN =
-  PUBLIC_CASHIER_WALLET_ORIGIN || "http://localhost:9090";
+  PUBLIC_CASHIER_WALLET_ORIGIN || "https://qfn7t-6aaaa-aaaab-aceyq-cai.icp0.io";
 
 /** PNP adapter ID for the local NFID forked wallet. */
 export const NFID_WALLET_ID = "nfid-local";

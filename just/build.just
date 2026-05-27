@@ -15,7 +15,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build mode="local_dev": download_artifacts build_canisters generate_frontend_ts
+build mode="local_dev": download_artifacts build_canisters generate_frontend_ts build_wallet_sdk
   just build_frontend {{mode}}
   just build_wallet {{mode}}
 
@@ -27,6 +27,12 @@ build_canisters: pre_build
   just build_canister "token_storage" "" "token_storage"
   just build_canister "gate_service" "" "gate_service"
 
+
+# Builds the cashier-wallet-sdk package (must run before build_frontend / build_wallet
+# since both consume the SDK via workspace:* and need fresh dist/)
+[group('build')]
+build_wallet_sdk: install_frontend_deps
+  pnpm --filter @cashier-wallet/wallet-sdk build
 
 # Builds the frontend
 [group('build')]

@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "@amplitude/analytics-browser": "^2.42.2",
+    "@cashier-wallet/wallet-sdk": "workspace:*",
     "@dfinity/ledger-icp": "^9.1.0",
     "@dfinity/ledger-icrc": "^7.1.0",
     "@dfinity/utils": "^4.2.1",
