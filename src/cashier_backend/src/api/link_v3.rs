@@ -11,8 +11,8 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
-            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, CreateLinkWithGateResponseV3,
+            DisableLinkResponseV3, GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
             SyncAssetBalanceCacheResponseV3,
         },
     },
@@ -239,22 +239,22 @@ fn user_disable_link_v3(link_id: &str) -> Result<DisableLinkResponseV3, Canister
     link_v3_service.disable_link(msg_caller(), link_id)
 }
 
-/// Creates a new link V3 with an optional password gate.
-/// After the link is created successfully, if a gate key is provided, a gate is
-/// registered in the GateService and the gate ID is persisted locally.
+/// Creates a new link V3 with zero or more gates applied simultaneously.
+/// After the link is created, each key in `gate_keys` is registered as a separate gate
+/// in the GateService and cached locally. An empty or absent list creates an ungated link.
 /// # Arguments
 /// * `input` - Link creation data
-/// * `gate_key` - Optional gate key to lock the link
+/// * `gate_keys` - Optional list of gate keys to attach (e.g. passwords)
 /// # Returns
-/// * `Ok(CreateLinkResponseV3)` - The created link data
-/// * `Err(CanisterError)` - If link creation or gate registration fails
+/// * `Ok(CreateLinkWithGateResponseV3)` - The created link data plus the created gates
+/// * `Err(CanisterError)` - If link creation or any gate registration fails
 #[update(guard = "is_not_anonymous")]
-async fn user_create_link_v3_with_gate(
+async fn user_create_link_v3_with_gates(
     input: CreateLinkInputV3,
-    gate_key: Option<GateKey>,
-) -> Result<CreateLinkResponseV3, CanisterError> {
-    info!("[user_create_link_v3_with_gate]");
-    debug!("[user_create_link_v3_with_gate] input: {input:?}");
+    gate_keys: Option<Vec<GateKey>>,
+) -> Result<CreateLinkWithGateResponseV3, CanisterError> {
+    info!("[user_create_link_v3_with_gates]");
+    debug!("[user_create_link_v3_with_gates] input: {input:?}");
 
     let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
@@ -266,11 +266,11 @@ async fn user_create_link_v3_with_gate(
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
     let caller = msg_caller();
-    let key = RequestLockKey::CreateLink {
+    let lock_key = RequestLockKey::CreateLink {
         user_principal: caller,
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    let _ = request_lock_service.create(&lock_key, get_state().env.time())?;
     let res = link_v3_service
         .create_link(
             input,
@@ -283,17 +283,25 @@ async fn user_create_link_v3_with_gate(
             token_balance_service,
         )
         .await;
-    let _ = request_lock_service.drop(&key);
+    let _ = request_lock_service.drop(&lock_key);
 
-    let response = res?;
+    let link_response = res?;
 
-    if let Some(key) = gate_key {
-        let link_id = response.link.id.clone();
+    let gates = if let Some(keys) = gate_keys.filter(|v| !v.is_empty()) {
         let mut gate_service = get_state().gate_service;
-        gate_service.add_gate_for_link(&link_id, key).await?;
-    }
+        gate_service
+            .add_gates_for_link(&link_response.link.id, keys)
+            .await?
+    } else {
+        vec![]
+    };
 
-    Ok(response)
+    Ok(CreateLinkWithGateResponseV3 {
+        link: link_response.link,
+        action: link_response.action,
+        icrc112_requests: link_response.icrc112_requests,
+        gates,
+    })
 }
 
 /// Opens a gate for the caller on the specified link.

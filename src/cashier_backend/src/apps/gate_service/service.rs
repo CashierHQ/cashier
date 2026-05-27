@@ -122,6 +122,29 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
         self.gate_client.set_canister_id(canister_id);
     }
 
+    /// Creates gates in GateService for a link for each supplied key, caching each locally.
+    /// Called after link creation. The `subject_id` of every new gate is the link ID.
+    /// If any inter-canister call fails the error is returned immediately; gates that were
+    /// successfully added before the failure remain registered (no rollback).
+    /// # Arguments
+    /// * `link_id` - The ID of the link to add gates to.
+    /// * `gate_keys` - The keys for the gates to create.
+    /// # Returns
+    /// * `Ok(Vec<Gate>)` - All created gates, in the same order as `gate_keys`.
+    /// * `Err(CanisterError)` - If any inter-canister call fails.
+    pub async fn add_gates_for_link(
+        &mut self,
+        link_id: &str,
+        gate_keys: Vec<GateKey>,
+    ) -> Result<Vec<Gate>, CanisterError> {
+        let mut gates = Vec::with_capacity(gate_keys.len());
+        for key in gate_keys {
+            let gate = self.add_gate_for_link(link_id, key).await?;
+            gates.push(gate);
+        }
+        Ok(gates)
+    }
+
     /// Creates a gate in GateService for a link and caches the returned gate locally.
     /// Called after link creation. The `subject_id` of the new gate is the link ID.
     /// # Arguments
@@ -283,24 +306,37 @@ pub mod tests {
     use gate_service_types::GateUserStatus;
 
     pub struct MockGateServiceClient {
-        pub add_gate_result: Option<Result<Gate, CanisterError>>,
+        /// Results returned for successive `add_gate` calls (front = next).
+        /// Uses `RefCell` so the trait's `&self` receiver can still consume items.
+        pub add_gate_results:
+            std::cell::RefCell<std::collections::VecDeque<Result<Gate, CanisterError>>>,
         pub open_gate_result: Option<Result<OpenGateSuccessResult, CanisterError>>,
     }
 
     impl MockGateServiceClient {
         pub fn new() -> Self {
             Self {
-                add_gate_result: None,
+                add_gate_results: std::cell::RefCell::new(std::collections::VecDeque::new()),
                 open_gate_result: None,
             }
+        }
+
+        /// Push a result onto the back of the add_gate queue.
+        pub fn push_add_gate_result(&mut self, result: Result<Gate, CanisterError>) {
+            self.add_gate_results.borrow_mut().push_back(result);
         }
     }
 
     impl GateServiceClient for MockGateServiceClient {
         async fn add_gate(&self, _new_gate: NewGate) -> Result<Gate, CanisterError> {
-            self.add_gate_result
-                .clone()
-                .unwrap_or_else(|| Err(CanisterError::HandleLogicError("not set".to_string())))
+            self.add_gate_results
+                .borrow_mut()
+                .pop_front()
+                .unwrap_or_else(|| {
+                    Err(CanisterError::HandleLogicError(
+                        "add_gate queue empty".to_string(),
+                    ))
+                })
         }
 
         async fn open_gate(
@@ -349,7 +385,7 @@ pub mod tests {
         // Arrange
         let repo = TestRepositories::new();
         let mut mock = MockGateServiceClient::new();
-        mock.add_gate_result = Some(Err(CanisterError::HandleLogicError(
+        mock.push_add_gate_result(Err(CanisterError::HandleLogicError(
             "gate service error".to_string(),
         )));
         let mut svc = make_service(&repo, mock);
@@ -409,6 +445,7 @@ pub mod tests {
         mock.open_gate_result = Some(Err(CanisterError::Unauthorized(
             "Gate key verification failed".to_string(),
         )));
+
         let mut svc = make_service(&repo, mock);
 
         // Act
@@ -462,7 +499,7 @@ pub mod tests {
         let gate = fixture_of_gate(&gate_id, &link_id);
 
         let mut mock = MockGateServiceClient::new();
-        mock.add_gate_result = Some(Ok(gate.clone()));
+        mock.push_add_gate_result(Ok(gate.clone()));
         let mut svc = make_service(&repo, mock);
 
         // Act
@@ -576,5 +613,96 @@ pub mod tests {
             gates[0].gate_user_status.as_ref().unwrap().status,
             GateStatus::Open
         );
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_add_gates_for_link_due_to_client_error_on_second_gate() {
+        // Arrange — queue: Ok(gate_1), then Err
+        let repo = TestRepositories::new();
+        let link_id = random_id_string();
+        let gate_id_1 = format!("gate_{}", random_id_string());
+
+        let mut mock = MockGateServiceClient::new();
+        mock.push_add_gate_result(Ok(fixture_of_gate(&gate_id_1, &link_id)));
+        mock.push_add_gate_result(Err(CanisterError::HandleLogicError(
+            "gate service error".to_string(),
+        )));
+        let mut svc = make_service(&repo, mock);
+
+        // Act
+        let result = svc
+            .add_gates_for_link(
+                &link_id,
+                vec![
+                    GateKey::Password("pw1".to_string()),
+                    GateKey::Password("pw2".to_string()),
+                ],
+            )
+            .await;
+
+        // Assert — error propagated; first gate was already cached before the failure
+        assert!(matches!(result, Err(CanisterError::HandleLogicError(_))));
+        let stored = repo
+            .link_gate()
+            .get(&link_id)
+            .expect("first gate should be cached");
+        assert_eq!(stored.gates.len(), 1);
+        assert_eq!(stored.gates[0].id, gate_id_1);
+    }
+
+    #[tokio::test]
+    async fn it_should_add_gates_for_link_with_multiple_keys() {
+        // Arrange — queue two distinct successful results
+        let repo = TestRepositories::new();
+        let link_id = random_id_string();
+        let gate_id_1 = format!("gate_{}", random_id_string());
+        let gate_id_2 = format!("gate_{}", random_id_string());
+
+        let mut mock = MockGateServiceClient::new();
+        mock.push_add_gate_result(Ok(fixture_of_gate(&gate_id_1, &link_id)));
+        mock.push_add_gate_result(Ok(fixture_of_gate(&gate_id_2, &link_id)));
+        let mut svc = make_service(&repo, mock);
+
+        // Act
+        let result = svc
+            .add_gates_for_link(
+                &link_id,
+                vec![
+                    GateKey::Password("pw1".to_string()),
+                    GateKey::Password("pw2".to_string()),
+                ],
+            )
+            .await;
+
+        // Assert — both gates returned and cached
+        assert!(result.is_ok());
+        let gates = result.unwrap();
+        assert_eq!(gates.len(), 2);
+        assert!(gates.iter().any(|g| g.id == gate_id_1));
+        assert!(gates.iter().any(|g| g.id == gate_id_2));
+
+        let stored = repo
+            .link_gate()
+            .get(&link_id)
+            .expect("gates should be cached");
+        assert_eq!(stored.gates.len(), 2);
+        assert!(stored.gates.iter().any(|g| g.id == gate_id_1));
+        assert!(stored.gates.iter().any(|g| g.id == gate_id_2));
+    }
+
+    #[tokio::test]
+    async fn it_should_add_gates_for_link_returns_empty_for_no_keys() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let link_id = random_id_string();
+        let mut svc = make_service(&repo, MockGateServiceClient::new());
+
+        // Act
+        let result = svc.add_gates_for_link(&link_id, vec![]).await;
+
+        // Assert — empty input, empty output, nothing cached
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_empty());
+        assert!(repo.link_gate().get(&link_id).is_none());
     }
 }

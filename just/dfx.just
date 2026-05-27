@@ -212,7 +212,7 @@ dfx_deploy_backend owner network="" mode="" log_filter="global,cashier=debug":
       owner=principal \"{{owner}}\";
       token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
       gate_service_canister_id=principal \"${GATE_SERVICE_CANISTER_ID}\";
-  })" {{network}} {{mode}} --upgrade-unchanged
+  })" {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Deploys the token_storage canister
 # params 

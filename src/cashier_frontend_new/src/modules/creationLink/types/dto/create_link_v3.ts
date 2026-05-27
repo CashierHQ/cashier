@@ -1,6 +1,8 @@
 import type {
   CreateLinkInputV3 as BackendCreateLinkInputV3,
   CreateLinkResponseV3 as BackendCreateLinkResponseV3,
+  CreateLinkWithGateResponseV3 as BackendCreateLinkWithGateResponseV3,
+  Gate,
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
@@ -31,6 +33,16 @@ export type CreateLinkResponseV3 = {
   link: SharedLink;
   action: SharedAction;
   icrc112_requests?: Icrc112Requests | null;
+};
+
+/**
+ * FE representation of CreateLinkWithGateResponseV3 returned by the backend.
+ */
+export type CreateLinkWithGateResponseV3 = {
+  link: SharedLink;
+  action: SharedAction;
+  icrc112_requests?: Icrc112Requests | null;
+  gates: Gate[];
 };
 
 /**
@@ -86,6 +98,36 @@ export class CreateLinkResponseV3Mapper {
       link,
       action,
       icrc112_requests,
+    };
+  }
+}
+
+export class CreateLinkWithGateResponseV3Mapper {
+  /**
+   * Map CreateLinkWithGateResponseV3 from backend to frontend representation.
+   * @param response - the CreateLinkWithGateResponseV3 from the backend
+   * @returns CreateLinkWithGateResponseV3 with mapped link, action, icrc112_requests and raw gates
+   */
+  static fromBackend(
+    response: BackendCreateLinkWithGateResponseV3,
+  ): CreateLinkWithGateResponseV3 {
+    const link = SharedLinkMapper.toLocalType(response.link);
+    const action = SharedActionMapper.toLocalType(response.action);
+    let icrc112_requests: Icrc112Request[][] | undefined = undefined;
+    if (response.icrc112_requests && response.icrc112_requests.length === 1) {
+      const outer = response.icrc112_requests[0];
+      icrc112_requests = outer.map((innerArr) =>
+        innerArr.map((r: BackendIcrc112Request) =>
+          Icrc112RequestMapper.fromBackendType(r),
+        ),
+      );
+    }
+
+    return {
+      link,
+      action,
+      icrc112_requests,
+      gates: response.gates,
     };
   }
 }

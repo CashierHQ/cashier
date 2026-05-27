@@ -6,7 +6,9 @@ import { CreateLinkInputMapper } from "$modules/creationLink/types/dto/create_li
 import {
   CreateLinkInputV3Mapper,
   CreateLinkResponseV3Mapper,
+  CreateLinkWithGateResponseV3Mapper,
   type CreateLinkResponseV3,
+  type CreateLinkWithGateResponseV3,
 } from "$modules/creationLink/types/dto/create_link_v3";
 import {
   CreateActionInputV3Mapper,
@@ -184,17 +186,17 @@ class CanisterBackendService {
   }
 
   /**
-   * Creates a new link with a gate using the V3 API.
+   * Creates a new link with zero or more gates using the V3 API.
    * @param link Shared link payload
    * @param action Shared action payload
-   * @param gateKey Optional gate key to attach (null for no gate)
-   * @returns A Result containing CreateLinkResponseV3 or an Error.
+   * @param gateKeys Gate keys to attach (empty array for no gates)
+   * @returns A Result containing CreateLinkWithGateResponseV3 or an Error.
    */
-  async createLinkV3WithGate(
+  async createLinkV3WithGates(
     link: SharedLink,
     action: SharedAction,
-    gateKey: cashierBackend.GateKey | null,
-  ): Promise<Result<CreateLinkResponseV3, Error>> {
+    gateKeys: cashierBackend.GateKey[],
+  ): Promise<Result<CreateLinkWithGateResponseV3, Error>> {
     const actor = this.#getActor({ anonymous: false });
     if (!actor) {
       return Err(new Error("User not logged in"));
@@ -204,19 +206,17 @@ class CanisterBackendService {
       link,
       action,
     );
-    const response = await actor.user_create_link_v3_with_gate(
+    const response = await actor.user_create_link_v3_with_gates(
       input,
-      toNullable(gateKey),
+      toNullable(gateKeys.length > 0 ? gateKeys : null),
     );
 
     return responseToResult(
       response as
-        | { Ok: cashierBackend.CreateLinkResponseV3 }
+        | { Ok: cashierBackend.CreateLinkWithGateResponseV3 }
         | { Err: cashierBackend.CanisterError },
     )
-      .map((res) =>
-        CreateLinkResponseV3Mapper.fromBackendCreateLinkResponseV3(res),
-      )
+      .map((res) => CreateLinkWithGateResponseV3Mapper.fromBackend(res))
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 

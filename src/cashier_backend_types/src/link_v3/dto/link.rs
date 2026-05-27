@@ -5,7 +5,7 @@ use candid::CandidType;
 use cashier_shared::types::{
     Action as ActionShared, Link as LinkShared, LinkType as LinkTypeShared,
 };
-use gate_service_types::GateForUser;
+use gate_service_types::{Gate, GateForUser};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -26,6 +26,14 @@ pub struct CreateLinkResponseV3 {
     pub link: LinkShared,
     pub action: ActionShared,
     pub icrc112_requests: Option<Icrc112Requests>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct CreateLinkWithGateResponseV3 {
+    pub link: LinkShared,
+    pub action: ActionShared,
+    pub icrc112_requests: Option<Icrc112Requests>,
+    pub gates: Vec<Gate>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

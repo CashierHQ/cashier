@@ -38,17 +38,17 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       throw new Error("Action must be initialized to create link");
     }
 
-    // call backend API to create the link (with gate if configured)
+    // call backend API to create the link (with gates if configured)
     const gateDraft = this.#linkStore.pendingGateDraft;
-    let gateKey: GateKey | null = null;
+    const gateKeys: GateKey[] = [];
     if (gateDraft?.type === GateType.PASSWORD) {
-      gateKey = { Password: gateDraft.password };
+      gateKeys.push({ Password: gateDraft.password });
     }
 
-    const result = await cashierBackendService.createLinkV3WithGate(
+    const result = await cashierBackendService.createLinkV3WithGates(
       this.#linkStore.draftLink,
       this.#linkStore.draftAction,
-      gateKey,
+      gateKeys,
     );
 
     if (result.isErr()) {
