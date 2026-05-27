@@ -407,6 +407,7 @@ dependencies = [
  "candid",
  "cashier_backend_types",
  "cashier_common",
+ "gate_service_types",
  "ic_mple_client",
  "ic_mple_pocket_ic",
  "serde",

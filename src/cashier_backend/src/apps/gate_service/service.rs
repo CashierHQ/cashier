@@ -58,10 +58,11 @@ impl GateServiceClient for GateServiceWrapper {
             .map_err(|e| CanisterError::HandleLogicError(format!("{e:?}")))
     }
 
-    /// Open a gate for a user by calling to GateService
+    /// Open a gate for `user` by calling to GateService
     /// # Arguments
     /// * `gate_id` - The ID of the gate to open.
     /// * `key` - The key to open the gate, e.g. password.
+    /// * `user` - The principal of the user opening the gate.
     /// # Returns
     /// * `Ok(OpenGateSuccessResult)` if the gate was successfully opened in GateService.
     /// * `Err(CanisterError::Unauthorized)` if the gate key was incorrect.
@@ -71,9 +72,10 @@ impl GateServiceClient for GateServiceWrapper {
         &self,
         gate_id: String,
         key: GateKey,
+        user: Principal,
     ) -> Result<OpenGateSuccessResult, CanisterError> {
         let result = Call::bounded_wait(self.canister_id, "open_gate")
-            .with_args(&(gate_id, key))
+            .with_args(&(gate_id, key, user))
             .await
             .map_err(CanisterError::from)?;
 
@@ -240,7 +242,7 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
 
         let result = self
             .gate_client
-            .open_gate(gate_id.to_string(), gate_key)
+            .open_gate(gate_id.to_string(), gate_key, user)
             .await?;
 
         // Cache the open status so create_action checks don't need an inter-canister call
@@ -346,6 +348,7 @@ pub mod tests {
             &self,
             _gate_id: String,
             _key: GateKey,
+            _user: Principal,
         ) -> Result<OpenGateSuccessResult, CanisterError> {
             self.open_gate_result
                 .clone()

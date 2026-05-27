@@ -140,7 +140,11 @@ async fn it_should_error_open_password_gate_due_to_anonymous_caller() {
 
         // Act
         let result = user_client
-            .open_gate(gate.id, GateKey::Password("wrong_password".to_string()))
+            .open_gate(
+                gate.id,
+                GateKey::Password("wrong_password".to_string()),
+                Principal::anonymous(),
+            )
             .await;
 
         // Assert
@@ -170,7 +174,11 @@ async fn it_should_error_open_password_gate_due_to_invalid_key() {
 
         // Act
         let result = user_client
-            .open_gate(gate.id, GateKey::Password("wrong_password".to_string()))
+            .open_gate(
+                gate.id,
+                GateKey::Password("wrong_password".to_string()),
+                user,
+            )
             .await
             .unwrap();
 
@@ -203,7 +211,11 @@ async fn it_should_open_password_gate() {
 
         // Act
         let result = user_client
-            .open_gate(gate.id.clone(), GateKey::Password(password.to_string()))
+            .open_gate(
+                gate.id.clone(),
+                GateKey::Password(password.to_string()),
+                user,
+            )
             .await
             .unwrap()
             .unwrap();
@@ -235,7 +247,11 @@ async fn benchmark_open_password_gate() {
 
         // Act
         let _result = user_client
-            .open_gate(gate.id.clone(), GateKey::Password(password.to_string()))
+            .open_gate(
+                gate.id.clone(),
+                GateKey::Password(password.to_string()),
+                user,
+            )
             .await
             .unwrap()
             .unwrap();

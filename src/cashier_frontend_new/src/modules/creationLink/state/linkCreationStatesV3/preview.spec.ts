@@ -1,5 +1,6 @@
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { CreateLinkWithGateResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
@@ -253,28 +254,28 @@ describe("PreviewStateV3", () => {
       const store = makeStore({ linkType: LinkType.SendTip });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_airdrop_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendAirdrop });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_token_basket_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendTokenBasket });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_transition_to_add_asset_step", async () => {
       const store = makeStore();
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect((store.state as AddAssetStateV3).step).toBe(LinkStep.ADD_ASSET);
+      expect((store.state as LockStateV3).step).toBe(LinkStep.LOCK);
     });
   });
 });

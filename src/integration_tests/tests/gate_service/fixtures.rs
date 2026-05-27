@@ -51,7 +51,11 @@ pub async fn add_and_open_password_gate_fixture(
     let gate = add_password_gate_fixture(ctx, creator, subject_id, password).await;
     let user_client = ctx.new_gate_service_client(user);
     let open_gate_result = user_client
-        .open_gate(gate.id.clone(), GateKey::Password(password.to_string()))
+        .open_gate(
+            gate.id.clone(),
+            GateKey::Password(password.to_string()),
+            user,
+        )
         .await
         .unwrap()
         .unwrap();

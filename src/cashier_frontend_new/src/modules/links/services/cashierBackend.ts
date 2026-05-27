@@ -82,7 +82,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult_1,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_13).mapErr(
+    >(response as cashierBackend.Result_14).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -118,7 +118,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_12)
+    >(response as cashierBackend.Result_13)
       .map((res) => res.data)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -243,7 +243,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.GetLinkDetailsResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11).mapErr(
+    >(response as cashierBackend.Result_12).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -270,7 +270,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.OpenGateSuccessResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_14).mapErr(
+    >(response as cashierBackend.Result_15).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -297,7 +297,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.ProcessActionDto,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_15)
+    >(response as cashierBackend.Result_16)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -350,7 +350,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.LinkDto,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_9)
+    >(response as cashierBackend.Result_10)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
@@ -374,7 +374,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_10).mapErr(
+    >(response as cashierBackend.Result_11).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -399,7 +399,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_10).mapErr(
+    >(response as cashierBackend.Result_11).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }

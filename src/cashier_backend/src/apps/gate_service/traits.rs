@@ -10,11 +10,12 @@ pub trait GateServiceClient {
     /// Creates a new gate in the GateService canister.
     async fn add_gate(&self, new_gate: NewGate) -> Result<Gate, CanisterError>;
 
-    /// Opens a gate for the caller using the provided key.
+    /// Opens a gate for `user` using the provided key.
     async fn open_gate(
         &self,
         gate_id: String,
         key: GateKey,
+        user: Principal,
     ) -> Result<OpenGateSuccessResult, CanisterError>;
 
     /// Updates the canister ID used for subsequent calls.

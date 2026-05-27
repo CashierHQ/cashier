@@ -12,8 +12,9 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, CreateLinkWithGateResponseV3,
+            DisableLinkResponseV3, GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     service::link::PaginateInput,
@@ -25,6 +26,7 @@ use cashier_shared::types::{
     IntentState as IntentStateShared, IntentType as IntentTypeShared,
     TokenStandard as TokenStandardShared,
 };
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
@@ -203,6 +205,72 @@ impl LinkTestFixtureV3 {
             .as_ref()
             .unwrap()
             .get_link_details_v3(link_id, options)
+            .await
+            .unwrap()
+    }
+
+    /// Creates a new link V3 with zero or more gates applied simultaneously.
+    /// # Arguments
+    /// * `input` - Link creation data
+    /// * `gate_keys` - Gate keys to attach (empty = ungated link)
+    /// # Returns
+    /// * `CreateLinkWithGateResponseV3` - Created link, action, icrc112 requests, and gates
+    pub async fn create_link_v3_with_gates(
+        &self,
+        input: CreateLinkInputV3,
+        gate_keys: Vec<GateKey>,
+    ) -> Result<CreateLinkWithGateResponseV3, CanisterError> {
+        let keys = if gate_keys.is_empty() {
+            None
+        } else {
+            Some(gate_keys)
+        };
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_link_v3_with_gates(input, keys)
+            .await
+            .unwrap()
+    }
+
+    /// Opens a gate for the caller on the specified link.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `gate_id` - The gate ID (obtained from `get_link_details_v3_extended`)
+    /// * `gate_key` - The key to open the gate
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)` - Gate and updated user status on success
+    /// * `Err(CanisterError)` - If the key is wrong or gate not found
+    pub async fn open_link_gate(
+        &self,
+        link_id: &str,
+        gate_id: &str,
+        gate_key: GateKey,
+    ) -> Result<OpenGateSuccessResult, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_open_link_gate(link_id, gate_id, gate_key)
+            .await
+            .unwrap()
+    }
+
+    /// Returns link details with gate metadata and the caller's gate open status.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `options` - Optional action type to include in response
+    /// # Returns
+    /// * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+    /// * `Err(CanisterError)` - If link not found
+    pub async fn get_link_details_v3_extended(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkDetailsResponseV3, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_get_link_details_v3(link_id, options)
             .await
             .unwrap()
     }

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import {
-      BridgeAssetType,
-      BridgeTransactionStatus,
-      type BridgeTransactionWithUsdValue,
-      BridgeType,
+    BridgeAssetType,
+    BridgeTransactionStatus,
+    type BridgeTransactionWithUsdValue,
+    BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import {
-      ArrowDownLeft,
-      ArrowUpRight,
-      ClockArrowDown,
-      ClockArrowUp,
+    ArrowDownLeft,
+    ArrowUpRight,
+    ClockArrowDown,
+    ClockArrowUp,
   } from "lucide-svelte";
 
   interface Props {
