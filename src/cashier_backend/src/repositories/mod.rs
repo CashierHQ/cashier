@@ -509,7 +509,8 @@ pub mod tests {
         /// This is a testing-only implementation of Repositories, which uses an
         /// isolated non thread-local storage.
         pub fn new() -> Self {
-            let mm = MemoryManager::init(DefaultMemoryImpl::default());
+            // Use 1-page (64 KiB) buckets so the backing Vec stays small on 32-bit targets.
+            let mm = MemoryManager::init_with_bucket_size(DefaultMemoryImpl::default(), 1);
             Self {
                 action_intent: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(ACTION_INTENT_MEMORY_ID),
