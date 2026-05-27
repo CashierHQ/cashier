@@ -43,6 +43,7 @@ async fn user_create_link_v3(
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
@@ -62,6 +63,7 @@ async fn user_create_link_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -88,6 +90,7 @@ async fn user_create_action_v3(
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -111,7 +114,7 @@ async fn user_create_action_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
-            get_state().gate_service,
+            gate_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -262,6 +265,7 @@ async fn user_create_link_v3_with_gates(
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
@@ -281,6 +285,7 @@ async fn user_create_link_v3_with_gates(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
         )
         .await;
     let _ = request_lock_service.drop(&lock_key);

@@ -168,18 +168,24 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
     }
 
     /// Checks that all gates for `link_id` have been opened by `user` using the local cache.
+    /// The link's creator always bypasses gate checks on their own link.
     /// # Arguments
     /// * `link_id` - The ID of the link to check gates for.
     /// * `user` - The Principal of the user to check gate open status for.
+    /// * `link_creator` - The Principal of the link's creator; bypasses gate checks when equal to `user`.
     /// # Returns
-    /// * `Ok(())` if all gates for the link are marked Open in the local cache for this user, or if the link has no gates.
-    /// * `Err(CanisterError::Unauthorized)` if any gate for the link is not marked Open in the local cache for this user. Note that this may be a false negative if the user has opened the gate but the cache has not been updated yet.
-    /// * `Err(CanisterError)` if there was an error reading from the local cache.
+    /// * `Ok(())` if `user` is the link creator, the link has no gates, or all gates are Open.
+    /// * `Err(CanisterError::Unauthorized)` if any gate is not yet Open for `user`.
     pub fn check_all_gates_open(
         &self,
         link_id: &str,
         user: Principal,
+        link_creator: Principal,
     ) -> Result<(), CanisterError> {
+        if user == link_creator {
+            return Ok(());
+        }
+
         let Some(link_gate) = self.link_gate_repository.get(link_id) else {
             return Ok(());
         };
@@ -285,16 +291,13 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
 }
 
 impl<R: Repositories, G: GateServiceClient> GateValidator for GateAppService<R, G> {
-    /// Checks that all gates for `link_id` have been opened by `user` using the local cache.
-    /// # Arguments
-    /// * `link_id` - The ID of the link to check gates for.
-    /// * `user` - The Principal of the user to check gate open status for.
-    /// # Returns
-    /// * `Ok(())` if all gates for the link are marked Open in the local cache for this user, or if the link has no gates.
-    /// * `Err(CanisterError::Unauthorized)` if any gate for the link is not marked Open in the local cache for this user. Note that this may be a false negative if the user has opened the gate but the cache has not been updated yet.
-    /// * `Err(CanisterError)` if there was an error reading from the local cache.
-    fn check_all_gates_open(&self, link_id: &str, user: Principal) -> Result<(), CanisterError> {
-        self.check_all_gates_open(link_id, user)
+    fn check_all_gates_open(
+        &self,
+        link_id: &str,
+        user: Principal,
+        link_creator: Principal,
+    ) -> Result<(), CanisterError> {
+        self.check_all_gates_open(link_id, user, link_creator)
     }
 }
 
@@ -475,6 +478,7 @@ pub mod tests {
         let link_id = random_id_string();
         let gate_id = format!("gate_{}", random_id_string());
         let user = random_principal_id();
+        let link_creator = random_principal_id(); // different from user → gate check applies
 
         // gate exists but user has never opened it
         repo.link_gate()
@@ -483,7 +487,7 @@ pub mod tests {
         let svc = make_service(&repo, MockGateServiceClient::new());
 
         // Act
-        let result = svc.check_all_gates_open(&link_id, user);
+        let result = svc.check_all_gates_open(&link_id, user, link_creator);
 
         // Assert
         assert!(result.is_err());
@@ -520,10 +524,11 @@ pub mod tests {
         let repo = TestRepositories::new();
         let link_id = random_id_string();
         let user = random_principal_id();
+        let link_creator = random_principal_id();
         let svc = make_service(&repo, MockGateServiceClient::new());
 
         // Act
-        let result = svc.check_all_gates_open(&link_id, user);
+        let result = svc.check_all_gates_open(&link_id, user, link_creator);
 
         // Assert — ungated links pass immediately
         assert!(result.is_ok());
@@ -570,6 +575,7 @@ pub mod tests {
         let link_id = random_id_string();
         let gate_id = format!("gate_{}", random_id_string());
         let user = random_principal_id();
+        let link_creator = random_principal_id(); // different from user → normal gate logic applies
 
         repo.link_gate()
             .add_gate(&link_id, fixture_of_gate(&gate_id, &link_id));
@@ -579,9 +585,30 @@ pub mod tests {
         let svc = make_service(&repo, MockGateServiceClient::new());
 
         // Act
-        let result = svc.check_all_gates_open(&link_id, user);
+        let result = svc.check_all_gates_open(&link_id, user, link_creator);
 
         // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_pass_check_when_user_is_link_creator() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let link_id = random_id_string();
+        let gate_id = format!("gate_{}", random_id_string());
+        let creator = random_principal_id();
+
+        // gate exists but creator has NOT opened it — bypass should still pass
+        repo.link_gate()
+            .add_gate(&link_id, fixture_of_gate(&gate_id, &link_id));
+
+        let svc = make_service(&repo, MockGateServiceClient::new());
+
+        // Act
+        let result = svc.check_all_gates_open(&link_id, creator, creator);
+
+        // Assert — creator is exempt from gate checks on their own link
         assert!(result.is_ok());
     }
 
