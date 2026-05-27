@@ -1,7 +1,6 @@
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
-import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
