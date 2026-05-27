@@ -3,6 +3,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import {
   BRIDGE_PAGE_SIZE,
   MEMPOOL_API_POOLING_INTERVAL_SECONDS,
+  OMNITY_TARGET_CHAIN_ID,
 } from "$modules/bitcoin/constants";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { omnityBitcoinService } from "$modules/bitcoin/services/omnityBitcoinService";
@@ -705,7 +706,7 @@ class RuneBridgeStore {
 
       const generateTicketResult = await omnityBitcoinService.generateTicket({
         txid: btcTxId,
-        target_chain_id: "eICP",
+        target_chain_id: OMNITY_TARGET_CHAIN_ID,
         amount: matchedBalance.amount,
         receiver: authState.account?.owner || "",
         rune_id: matchedBalance.rune_id,
@@ -950,7 +951,7 @@ class RuneBridgeStore {
       for (const [txid, amount] of Object.entries(aggregatedBalances)) {
         const ticketResult = await omnityBitcoinService.generateTicket({
           txid,
-          target_chain_id: "eICP",
+          target_chain_id: OMNITY_TARGET_CHAIN_ID,
           amount,
           receiver: authState.account?.owner || "",
           rune_id: runeId,

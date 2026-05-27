@@ -1,17 +1,18 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import {
-    BridgeTransactionStatus,
-    type BridgeTransactionWithUsdValue,
-    BridgeType,
+      BridgeAssetType,
+      BridgeTransactionStatus,
+      type BridgeTransactionWithUsdValue,
+      BridgeType,
   } from "$modules/bitcoin/types/bridge_transaction";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import {
-    ArrowDownLeft,
-    ArrowUpRight,
-    ClockArrowDown,
-    ClockArrowUp,
+      ArrowDownLeft,
+      ArrowUpRight,
+      ClockArrowDown,
+      ClockArrowUp,
   } from "lucide-svelte";
 
   interface Props {
@@ -55,10 +56,12 @@
     return locale.t("bitcoin.receive.unknown");
   });
   let amount = $derived.by(() => {
-    if (bridge.asset_infos.length > 0) {
-      const assetInfo = bridge.asset_infos[0];
-      const value = Number(assetInfo.amount) / 10 ** assetInfo.decimals;
-      return formatNumber(value, { tofixed: assetInfo.decimals });
+    const runeAsset = bridge.asset_infos.find(
+      (a) => a.asset_type === BridgeAssetType.Runes,
+    );
+    if (runeAsset) {
+      const value = Number(runeAsset.amount) / 10 ** runeAsset.decimals;
+      return formatNumber(value, { tofixed: runeAsset.decimals });
     }
     if (bridge.total_amount) {
       const btc = Number(bridge.total_amount) / 100_000_000;

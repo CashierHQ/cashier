@@ -31,9 +31,6 @@
   let contractAddress = $state("");
   let indexCanisterId = $state("");
   let isLoading = $state(false);
-  let isRune = $state(false);
-  let runeId = $state("");
-  let runeTokenId = $state("");
 
   // Token metadata fetched from ledger canister
   let tokenData = $state({ name: "", symbol: "", address: "" });
@@ -87,13 +84,6 @@
     if (indexCanisterId.trim()) {
       if (isValidPrincipal(indexCanisterId).isErr()) {
         toast.error(locale.t("wallet.import.errors.invalidIndexCanisterId"));
-        return;
-      }
-    }
-
-    if (isRune) {
-      if (!runeId.trim() || !runeTokenId.trim()) {
-        toast.error(locale.t("wallet.import.errors.runeFieldsRequired"));
         return;
       }
     }
@@ -154,9 +144,6 @@
       const result = await walletStore.addToken(
         contractAddress.trim(),
         indexCanisterId.trim() || undefined,
-        isRune || undefined,
-        runeId.trim() || undefined,
-        runeTokenId.trim() || undefined,
       );
 
       if (result.isErr()) {
@@ -264,48 +251,6 @@
             <Clipboard size={20} />
           </button>
         </div>
-      </div>
-
-      <!-- Rune Token Toggle -->
-      <div class="space-y-3">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            bind:checked={isRune}
-            class="w-4 h-4 rounded border-gray-300 text-green focus:ring-green"
-          />
-          <span class="text-sm font-medium"
-            >{locale.t("wallet.import.isRune")}</span
-          >
-        </label>
-
-        {#if isRune}
-          <!-- Rune ID -->
-          <div class="space-y-1">
-            <Label class="text-sm font-medium"
-              >{locale.t("wallet.import.runeId")}</Label
-            >
-            <input
-              type="text"
-              bind:value={runeId}
-              class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
-              placeholder="UNCOMMON•GOODS"
-            />
-          </div>
-
-          <!-- Rune Token ID -->
-          <div class="space-y-1">
-            <Label class="text-sm font-medium"
-              >{locale.t("wallet.import.runeTokenId")}</Label
-            >
-            <input
-              type="text"
-              bind:value={runeTokenId}
-              class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
-              placeholder="Omnity token identifier"
-            />
-          </div>
-        {/if}
       </div>
 
       <!-- Continue Button -->

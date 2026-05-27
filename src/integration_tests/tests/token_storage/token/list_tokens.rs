@@ -10,7 +10,7 @@ use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
 fn fixture_of_rune_info() -> RuneInfo {
     RuneInfo {
-        rune_id: "UNCOMMON•GOODS".to_string(),
+        rune_id: "840000:1".to_string(),
         token_id: "omnity-rune-token-id".to_string(),
         icon: Some("https://ordinals.com/content/rune-icon".to_string()),
     }

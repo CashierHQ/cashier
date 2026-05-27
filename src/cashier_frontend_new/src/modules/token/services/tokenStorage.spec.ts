@@ -192,38 +192,7 @@ describe("TokenStorageService.addToken", () => {
     mockValidateIndexCanister.mockResolvedValue({ isErr: () => false });
   });
 
-  it("should send rune metadata when adding a rune token", async () => {
-    mockUserAddToken.mockResolvedValue({ Ok: null });
-    mockBuildActor.mockReturnValue({
-      user_add_token: mockUserAddToken,
-    });
-
-    const { tokenStorageService } =
-      await import("$modules/token/services/tokenStorage");
-
-    const result = await tokenStorageService.addToken(
-      Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
-      "qhbym-qaaaa-aaaaa-aaafq-cai",
-      [],
-      true,
-      "UNCOMMON•GOODS",
-      "omnity-rune-id",
-    );
-
-    expect(result.isOk()).toBe(true);
-    expect(mockUserAddToken).toHaveBeenCalledWith({
-      token_id: {
-        IC: { ledger_id: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai") },
-      },
-      index_id: ["qhbym-qaaaa-aaaaa-aaafq-cai"],
-      is_rune: [true],
-      rune_info: [
-        { rune_id: "UNCOMMON•GOODS", token_id: "omnity-rune-id", icon: [] },
-      ],
-    });
-  });
-
-  it("should omit rune metadata when adding a non-rune token", async () => {
+  it("should always send empty rune fields when adding a token", async () => {
     mockUserAddToken.mockResolvedValue({ Ok: null });
     mockBuildActor.mockReturnValue({
       user_add_token: mockUserAddToken,

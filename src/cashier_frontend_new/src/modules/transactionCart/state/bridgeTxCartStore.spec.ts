@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Err, Ok } from "ts-results-es";
+import { OMNITY_TARGET_CHAIN_ID } from "$modules/bitcoin/constants";
 import {
+  BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
-import { BridgeAssetType } from "$modules/bitcoin/types/bridge_transaction";
 import { RetrieveBtcStatusKind } from "$modules/bitcoin/types/ckbtc_minter";
+import { Err, Ok } from "ts-results-es";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockManagedState,
@@ -603,7 +604,7 @@ describe("BridgeTxCartStore", () => {
             sender: ["aaaaa-aa"],
             ticket_time: 1_700_000_000n,
             ticket_type: { Normal: null },
-            src_chain: "eICP",
+            src_chain: OMNITY_TARGET_CHAIN_ID,
             amount: "1200",
             receiver: "tb1qreceiver",
           },
@@ -616,7 +617,7 @@ describe("BridgeTxCartStore", () => {
             sender: ["aaaaa-aa"],
             ticket_time: 1_700_000_100n,
             ticket_type: { Normal: null },
-            src_chain: "eICP",
+            src_chain: OMNITY_TARGET_CHAIN_ID,
             amount: "1200",
             receiver: "tb1qreceiver",
           },
@@ -629,7 +630,7 @@ describe("BridgeTxCartStore", () => {
             sender: ["aaaaa-aa"],
             ticket_time: 1_700_000_200n,
             ticket_type: { Normal: null },
-            src_chain: "eICP",
+            src_chain: OMNITY_TARGET_CHAIN_ID,
             amount: "1200",
             receiver: "tb1qreceiver",
           },
@@ -716,7 +717,7 @@ describe("BridgeTxCartStore", () => {
             sender: ["aaaaa-aa"],
             ticket_time: 1_700_000_000n,
             ticket_type: { Normal: null },
-            src_chain: "eICP",
+            src_chain: OMNITY_TARGET_CHAIN_ID,
             amount: "1200",
             receiver: "tb1qreceiver",
           },

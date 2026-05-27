@@ -396,14 +396,9 @@ describe("WalletStore", () => {
       await walletStore.addToken(NEW_TOKEN_ID);
 
       // Assert — third argument must contain existing token addresses
-      expect(mockAddToken).toHaveBeenCalledWith(
-        expect.anything(),
-        undefined,
-        ["existing-token"],
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(mockAddToken).toHaveBeenCalledWith(expect.anything(), undefined, [
+        "existing-token",
+      ]);
     });
   });
 
