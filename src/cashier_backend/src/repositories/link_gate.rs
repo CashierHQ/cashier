@@ -22,6 +22,10 @@ impl<S: Storage<LinkGateRepositoryStorage>> LinkGateRepository<S> {
     }
 
     /// Returns the `LinkGate` for the given `link_id`, if it exists.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to retrieve gates for.
+    /// # Returns
+    /// An `Option<LinkGate>` which is `Some` if the link exists and `None` if it does not.
     pub fn get(&self, link_id: &str) -> Option<LinkGate> {
         self.storage
             .with_borrow(|store| store.get(&link_id.to_string()))
@@ -29,6 +33,9 @@ impl<S: Storage<LinkGateRepositoryStorage>> LinkGateRepository<S> {
 
     /// Appends `gate` to the list of gates for `link_id`, creating the entry if absent.
     /// The gate returned by GateService already has the password redacted.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to add the gate to.
+    /// * `gate` - The gate to add.
     pub fn add_gate(&mut self, link_id: &str, gate: Gate) {
         self.storage.with_borrow_mut(|store| {
             let mut entry = store.get(&link_id.to_string()).unwrap_or_else(|| LinkGate {

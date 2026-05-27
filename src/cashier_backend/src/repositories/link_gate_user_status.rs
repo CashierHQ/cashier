@@ -29,6 +29,12 @@ impl<S: Storage<LinkGateUserStatusRepositoryStorage>> LinkGateUserStatusReposito
     }
 
     /// Returns the cached gate status for the given (link, user, gate) triplet.
+    /// # Arguments
+    /// * `link_id` - The ID of the link.
+    /// * `user_id` - The Principal of the user.
+    /// * `gate_id` - The ID of the gate.
+    /// # Returns
+    /// An `Option<LinkGateUserStatus>` which is `Some` if the status exists and `None` if it does not.
     pub fn get(
         &self,
         link_id: &str,
@@ -40,6 +46,10 @@ impl<S: Storage<LinkGateUserStatusRepositoryStorage>> LinkGateUserStatusReposito
     }
 
     /// Persists an Open status for the given (link, user, gate) triplet.
+    /// # Arguments
+    /// * `link_id` - The ID of the link.
+    /// * `user_id` - The Principal of the user.
+    /// * `gate_id` - The ID of the gate.
     pub fn set_open(&mut self, link_id: &str, user_id: Principal, gate_id: &str) {
         let key = link_gate_user_status_key(link_id, user_id, gate_id);
         let entry = LinkGateUserStatus {

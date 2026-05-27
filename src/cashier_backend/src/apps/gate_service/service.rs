@@ -17,10 +17,6 @@ use crate::{
     },
 };
 
-// ---------------------------------------------------------------------------
-// GateServiceWrapper — thin inter-canister call layer (mirrors TokenStorageService)
-// ---------------------------------------------------------------------------
-
 /// Makes direct inter-canister calls to the GateService canister.
 pub struct GateServiceWrapper {
     pub canister_id: Principal,
@@ -28,6 +24,8 @@ pub struct GateServiceWrapper {
 
 impl GateServiceWrapper {
     /// Creates a new `GateServiceWrapper`.
+    /// # Arguments
+    /// * `canister_id` - The Principal of the GateService canister to call
     pub fn new(canister_id: Principal) -> Self {
         Self { canister_id }
     }
@@ -42,6 +40,12 @@ impl Default for GateServiceWrapper {
 }
 
 impl GateServiceClient for GateServiceWrapper {
+    /// Add a gate to a link by calling to GateService
+    /// # Arguments
+    /// * `new_gate` - The gate metadata to create, including the `subject_id` (link ID) and `key`.
+    /// # Returns
+    /// * `Ok(Gate)` if the gate was successfully created in GateService.
+    /// * `Err(CanisterError)` if the inter-canister call failed or if GateService returned an error.
     async fn add_gate(&self, new_gate: NewGate) -> Result<Gate, CanisterError> {
         let result = Call::bounded_wait(self.canister_id, "add_gate")
             .with_arg(&new_gate)
@@ -54,6 +58,15 @@ impl GateServiceClient for GateServiceWrapper {
             .map_err(|e| CanisterError::HandleLogicError(format!("{e:?}")))
     }
 
+    /// Open a gate for a user by calling to GateService
+    /// # Arguments
+    /// * `gate_id` - The ID of the gate to open.
+    /// * `key` - The key to open the gate, e.g. password.
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)` if the gate was successfully opened in GateService.
+    /// * `Err(CanisterError::Unauthorized)` if the gate key was incorrect.
+    /// * `Err(CanisterError::NotFound)` if the gate_id does not exist in GateService.
+    /// * `Err(CanisterError)` if the inter-canister call failed or if GateService returned an error.
     async fn open_gate(
         &self,
         gate_id: String,
@@ -74,14 +87,13 @@ impl GateServiceClient for GateServiceWrapper {
         })
     }
 
+    /// Updates the canister ID used for all GateService calls.
+    /// # Arguments
+    /// * `canister_id` - The new Principal of the GateService canister to call
     fn set_canister_id(&mut self, canister_id: Principal) {
         self.canister_id = canister_id;
     }
 }
-
-// ---------------------------------------------------------------------------
-// GateAppService — business logic combining local cache + remote calls
-// ---------------------------------------------------------------------------
 
 /// Coordinates local gate-ID and status caches with remote GateService calls.
 pub struct GateAppService<R: Repositories, G: GateServiceClient> {
@@ -92,6 +104,9 @@ pub struct GateAppService<R: Repositories, G: GateServiceClient> {
 
 impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
     /// Creates a new `GateAppService`.
+    /// # Arguments
+    /// * `repo` - The repositories to use for local caching of gate metadata and user gate open status.
+    /// * `gate_client` - The client to use for making inter-canister calls to the GateService canister.
     pub fn new(repo: &R, gate_client: G) -> Self {
         Self {
             link_gate_repository: repo.link_gate(),
@@ -101,14 +116,20 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
     }
 
     /// Updates the canister ID used for all GateService calls.
+    /// # Arguments
+    /// * `canister_id` - The new Principal of the GateService canister to call.
     pub fn set_canister_id(&mut self, canister_id: Principal) {
         self.gate_client.set_canister_id(canister_id);
     }
 
     /// Creates a gate in GateService for a link and caches the returned gate locally.
-    ///
     /// Called after link creation. The `subject_id` of the new gate is the link ID.
-    /// GateService returns the gate with the password redacted, so the cached copy is safe.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to add the gate to.
+    /// * `gate_key` - The key for the gate, e.g. a password
+    /// # Returns
+    /// * `Ok(Gate)` if the gate was successfully created in GateService and cached locally.
+    /// * `Err(CanisterError)` if the inter-canister call failed or if GateService returned an error. In this case no local cache is written.
     pub async fn add_gate_for_link(
         &mut self,
         link_id: &str,
@@ -124,9 +145,13 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
     }
 
     /// Checks that all gates for `link_id` have been opened by `user` using the local cache.
-    ///
-    /// Returns `CanisterError::Unauthorized` if any gate is not yet opened.
-    /// If the link has no gates this is a no-op (returns `Ok(())`).
+    /// # Arguments
+    /// * `link_id` - The ID of the link to check gates for.
+    /// * `user` - The Principal of the user to check gate open status for.
+    /// # Returns
+    /// * `Ok(())` if all gates for the link are marked Open in the local cache for this user, or if the link has no gates.
+    /// * `Err(CanisterError::Unauthorized)` if any gate for the link is not marked Open in the local cache for this user. Note that this may be a false negative if the user has opened the gate but the cache has not been updated yet.
+    /// * `Err(CanisterError)` if there was an error reading from the local cache.
     pub fn check_all_gates_open(
         &self,
         link_id: &str,
@@ -155,12 +180,17 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
         Ok(())
     }
 
-    /// Relays an `open_gate` call to GateService for a specific gate on the link.
-    ///
-    /// The caller must supply the `gate_id` (obtained from `get_gates_for_link`).
-    /// Returns `NotFound` if `gate_id` is not registered for this link.
-    /// On success, writes an Open status to the local cache so future
-    /// `check_all_gates_open` calls do not need a round-trip.
+    /// Open a gate for a user by calling to GateService, and cache the open status locally if successful.
+    /// # Arguments
+    /// * `link_id` - The ID of the link the gate belongs to, used for caching the open status locally.
+    /// * `gate_id` - The ID of the gate to open.
+    /// * `user` - The Principal of the user opening the gate, used for caching the open status locally.
+    /// * `gate_key` - The key to open the gate, e.g. password.
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)` if the gate was successfully opened in GateService. The open status is cached locally for the user.
+    /// * `Err(CanisterError::Unauthorized)` if the gate key was incorrect. The open status is NOT cached locally in this case.
+    /// * `Err(CanisterError::NotFound)` if the gate_id does not exist in GateService. The open status is NOT cached locally in this case.
+    /// * `Err(CanisterError)` if the inter-canister call failed or if GateService returned an error. The open status is NOT cached locally in this case.
     pub async fn open_link_gate(
         &mut self,
         link_id: &str,
@@ -191,10 +221,14 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
         Ok(result)
     }
 
-    /// Returns gate metadata merged with the caller's cached status for every gate on the link.
+    /// Get all the gates for a link along with the open status for a user.
     ///
-    /// Both gate metadata and user open/closed status are read from local caches — no
-    /// inter-canister call is made.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to get gates for.
+    /// * `user` - The Principal of the user to get gate open status for.
+    /// # Returns
+    /// * `Ok(Vec<GateForUser>)` if the link exists. Each gate in the link is included, even if the user has never opened it (in which case `gate_user_status` will be `None` for that gate).
+    /// * `Err(CanisterError)` if there was an error reading from the local cache.
     pub fn get_gates_for_link(
         &self,
         link_id: &str,
@@ -228,14 +262,18 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
 }
 
 impl<R: Repositories, G: GateServiceClient> GateValidator for GateAppService<R, G> {
+    /// Checks that all gates for `link_id` have been opened by `user` using the local cache.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to check gates for.
+    /// * `user` - The Principal of the user to check gate open status for.
+    /// # Returns
+    /// * `Ok(())` if all gates for the link are marked Open in the local cache for this user, or if the link has no gates.
+    /// * `Err(CanisterError::Unauthorized)` if any gate for the link is not marked Open in the local cache for this user. Note that this may be a false negative if the user has opened the gate but the cache has not been updated yet.
+    /// * `Err(CanisterError)` if there was an error reading from the local cache.
     fn check_all_gates_open(&self, link_id: &str, user: Principal) -> Result<(), CanisterError> {
         self.check_all_gates_open(link_id, user)
     }
 }
-
-// ---------------------------------------------------------------------------
-// Mock for use in unit tests of other modules
-// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 pub mod tests {
@@ -305,8 +343,6 @@ pub mod tests {
     ) -> GateAppService<TestRepositories, MockGateServiceClient> {
         GateAppService::new(repo, mock)
     }
-
-    // --- failure cases ---
 
     #[tokio::test]
     async fn it_should_fail_add_gate_for_link_due_to_client_error() {
@@ -417,8 +453,6 @@ pub mod tests {
         assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
     }
 
-    // --- success cases ---
-
     #[tokio::test]
     async fn it_should_add_gate_for_link() {
         // Arrange
@@ -488,7 +522,8 @@ pub mod tests {
         assert!(result.is_ok());
         let cached = repo.link_gate_user_status().get(&link_id, user, &gate_id);
         assert!(cached.is_some());
-        assert_eq!(cached.unwrap().status, GateStatus::Open);
+        assert_eq!(cached.as_ref().unwrap().gate_id, gate_id);
+        assert_eq!(cached.as_ref().unwrap().status, GateStatus::Open);
     }
 
     #[tokio::test]

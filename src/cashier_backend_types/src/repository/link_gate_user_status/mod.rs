@@ -35,6 +35,12 @@ impl Codec<LinkGateUserStatus> for LinkGateUserStatusCodec {
 }
 
 /// Build the composite storage key for a (link, user, gate) triplet.
+/// # Arguments
+/// * `link_id` - The ID of the link.
+/// * `user_id` - The Principal of the user.
+/// * `gate_id` - The ID of the gate.
+/// # Returns
+/// A string key in the format "LINK#{link_id}#USER#{user_id}#GATE#{gate_id}".
 pub fn link_gate_user_status_key(link_id: &str, user_id: Principal, gate_id: &str) -> String {
     format!("LINK#{link_id}#USER#{user_id}#GATE#{gate_id}")
 }
