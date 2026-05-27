@@ -181,7 +181,10 @@ impl<R: Repositories> LinkV3Service<R> {
         B: TokenBalanceFetcher + 'static,
         V: GateValidator,
     {
-        gate_validator.check_all_gates_open(link_id, creator)?;
+        // Withdraw is a creator-only operation; gate guards apply only to use-link callers
+        if action.action_type != SharedActionType::Withdraw {
+            gate_validator.check_all_gates_open(link_id, creator)?;
+        }
 
         let link_model = self
             .link_v3_repository

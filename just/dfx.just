@@ -199,7 +199,7 @@ create_canisters network cycles:
 # params owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
-[private]
+[group('dfx')]
 dfx_deploy_backend owner network="" mode="" log_filter="global,cashier=debug":
   #!/usr/bin/env bash
   set -e
@@ -219,7 +219,7 @@ dfx_deploy_backend owner network="" mode="" log_filter="global,cashier=debug":
 # owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
-[private]
+[group('dfx')]
 dfx_deploy_token_storage owner network="" mode="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
