@@ -71,9 +71,32 @@
       : "",
   );
 
-  const isBridgeToken = $derived(
-    selectedToken === CKBTC_CANISTER_ID || !!selectedTokenObj?.isRune,
+  const isCkBtc = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isRune = $derived(
+    !!selectedTokenObj?.isRune && !!selectedTokenObj?.runeInfo,
   );
+  const isBridgeToken = $derived(isCkBtc || isRune);
+
+  const runeIcpAddressLabel = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("wallet.receive.runeIcpAddressLabel")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.receive.icpAddress.runeWarning1")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.receive.icpAddress.runeWarning2")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
@@ -168,8 +191,10 @@
 
       <div class="space-y-2 px-8">
         <Label class="text-small font-medium">
-          {#if isBridgeToken}
+          {#if isCkBtc}
             {locale.t("wallet.receive.ckBtcIcpAddressLabel")}
+          {:else if isRune}
+            {runeIcpAddressLabel}
           {:else if selectedTokenObj}
             {locale
               .t("wallet.receive.receiveAddressLabel")
@@ -215,7 +240,7 @@
             </button>
           </div>
         {/if}
-        {#if isBridgeToken}
+        {#if isCkBtc}
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-1.5">
               <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
@@ -231,6 +256,33 @@
                 class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
               >
                 {locale.t("bitcoin.receive.icpAddress.warning2")}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.receive.icpAddress.warning3")}
+              </div>
+            </div>
+          </div>
+        {:else if isRune}
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {runeIcpWarning1}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {runeIcpWarning2}
               </div>
             </div>
             <div class="flex items-center gap-1.5">
