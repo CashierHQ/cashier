@@ -578,7 +578,7 @@
         "warning5": "Transfer time ~1 hour. Track the progress below.",
         "runeWarning1": "Send {{name}} to compatible Bitcoin wallet or exchange.",
         "runeWarning2": "Your {{name}} is auto converted to {{symbol}}.",
-        "runeWarning3": "1.04 ICP export fee plus Bitcoin network fee."
+        "runeWarning3": "~1.05 ICP export fee plus Bitcoin network fee."
       },
       "refreshSuccess": "Export history refreshed.",
       "refreshError": "Failed to refresh history. Please try again.",
