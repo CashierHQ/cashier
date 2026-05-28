@@ -11,7 +11,6 @@
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import {
     ArrowLeftRight,
-    Coins,
     Copy,
     Hourglass,
     LayoutList,
@@ -26,6 +25,28 @@
   let { token }: Props = $props();
 
   const depositAddress = $derived.by(() => runeBridgeStore.runeAddress);
+
+  const runeTitle = $derived.by(() => {
+    if (!token) return locale.t("bitcoin.receive.runeTitle");
+    return locale
+      .t("bitcoin.receive.runeTitle")
+      .replace("{{name}}", token.name);
+  });
+
+  const runeBtcWarning1 = $derived.by(() => {
+    if (!token) return "";
+    return locale
+      .t("bitcoin.receive.btcAddress.runeWarning1")
+      .replace("{{name}}", token.name);
+  });
+
+  const runeBtcWarning2 = $derived.by(() => {
+    if (!token) return "";
+    return locale
+      .t("bitcoin.receive.btcAddress.runeWarning2")
+      .replace("{{name}}", token.name)
+      .replace("{{symbol}}", token.symbol);
+  });
   const shortenDepositAddress = $derived.by(() =>
     transformShortAddress(depositAddress || ""),
   );
@@ -94,7 +115,7 @@
 <div class="px-8 btc-gradient rounded-2xl py-4 mt-6">
   <div class="mb-6 flex justify-center">
     <Label class="text-small font-medium">
-      {locale.t("bitcoin.receive.runeTitle")}
+      {runeTitle}
     </Label>
   </div>
   <div class="space-y-2">
@@ -125,36 +146,22 @@
       {locale.t("wallet.send.addressBitcoinExample")}
     </div>
     <div class="flex flex-col gap-1.5">
-      <div class="flex items-center gap-1.5">
-        <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-        <div
-          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-        >
-          {locale.t("bitcoin.receive.btcAddress.warning1")}
+      <div class="flex items-start gap-1.5">
+        <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+        <div class="text-[10px] text-green">
+          {runeBtcWarning1}
         </div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-        <div
-          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-        >
-          {locale.t("bitcoin.receive.btcAddress.warning2")}
-        </div>
-      </div>
-      <div class="flex items-center gap-1.5">
-        <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-        <div
-          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-        >
-          {locale.t("bitcoin.receive.btcAddress.warning3")}
+      <div class="flex items-start gap-1.5">
+        <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+        <div class="text-[10px] text-green">
+          {runeBtcWarning2}
         </div>
       </div>
       <div class="flex items-center gap-1.5">
         <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-        <div
-          class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-        >
-          {locale.t("bitcoin.receive.btcAddress.warning4")}
+        <div class="text-[10px] text-green">
+          {locale.t("bitcoin.receive.btcAddress.runeWarning3")}
         </div>
       </div>
     </div>

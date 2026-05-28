@@ -117,6 +117,49 @@
   );
   const isBitcoinBridgeToken = $derived(isCkBtc || isRune);
 
+  const runeIcpAddressLabel = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("wallet.send.runeIcpAddressLabel")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeBtcTitle = $derived.by(() => {
+    if (!selectedTokenObj) return locale.t("bitcoin.send.runeTitle");
+    return locale
+      .t("bitcoin.send.runeTitle")
+      .replace("{{name}}", selectedTokenObj.name);
+  });
+
+  const runeIcpWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.icpAddress.runeWarning1")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.icpAddress.runeWarning2")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeBtcWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.btcAddress.runeWarning1")
+      .replace("{{name}}", selectedTokenObj.name);
+  });
+
+  const runeBtcWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.btcAddress.runeWarning2")
+      .replace("{{name}}", selectedTokenObj.name)
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
   const isMaxAvailable = $derived(maxAmount > 0);
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
@@ -418,7 +461,9 @@
         >
           {isCkBtc
             ? locale.t("wallet.send.ckbtcIcpAddressLabel")
-            : locale.t("wallet.send.receiveAddressLabel")}
+            : isRune
+              ? runeIcpAddressLabel
+              : locale.t("wallet.send.receiveAddressLabel")}
         </label>
 
         {#if shouldShowAddressTypeSelector}
@@ -499,6 +544,33 @@
               </div>
             </div>
           </div>
+        {:else if isRune}
+          <div class="flex flex-col gap-1.5 mt-2 bg-lightg">
+            <div class="flex items-center gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {runeIcpWarning1}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {runeIcpWarning2}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div
+                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+              >
+                {locale.t("bitcoin.send.icpAddress.warning3")}
+              </div>
+            </div>
+          </div>
         {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
           <div class="flex items-start gap-1.5 mt-2">
             <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
@@ -512,7 +584,7 @@
       {#if isBitcoinBridgeToken}
         <div class="px-8 btc-gradient rounded-2xl py-4 mt-4 px-8">
           <h3 class="text-normal font-semibold mb-6 text-center">
-            {locale.t(isRune ? "bitcoin.send.runeTitle" : "bitcoin.send.title")}
+            {isRune ? runeBtcTitle : locale.t("bitcoin.send.title")}
           </h3>
           <label
             for="native-btc-address-input"
@@ -542,46 +614,77 @@
             {locale.t("wallet.send.addressBitcoinExample")}
           </div>
           <div class="flex flex-col gap-1.5 mt-2 mb-6">
-            <div class="flex items-center gap-1.5">
-              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning1")}
+            {#if isCkBtc}
+              <div class="flex items-center gap-1.5">
+                <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning1")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning2")}
+              <div class="flex items-center gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning2")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning3")}
+              <div class="flex items-center gap-1.5">
+                <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning3")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning4")}
+              <div class="flex items-center gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning4")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning5")}
+              <div class="flex items-center gap-1.5">
+                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning5")}
+                </div>
               </div>
-            </div>
+            {:else if isRune}
+              <div class="flex items-start gap-1.5">
+                <LayoutList
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
+                <div class="text-[10px] text-green">
+                  {runeBtcWarning1}
+                </div>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <ArrowLeftRight
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
+                <div class="text-[10px] text-green">
+                  {runeBtcWarning2}
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div class="text-[10px] text-green">
+                  {locale.t("bitcoin.send.btcAddress.runeWarning3")}
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div class="text-[10px] text-green">
+                  {locale.t("bitcoin.send.btcAddress.warning5")}
+                </div>
+              </div>
+            {/if}
           </div>
 
           {#if isCkBtc}

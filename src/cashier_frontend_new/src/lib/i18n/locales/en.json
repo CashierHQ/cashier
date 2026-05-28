@@ -173,6 +173,52 @@
         "addAsset": "Add Asset",
         "totalValue": "Total value"
       },
+      "lock": {
+        "title": "Lock transaction",
+        "transactionIs": "Transaction is",
+        "locked": "locked",
+        "notLocked": "not locked",
+        "lockedLockAlt": "Locked lock",
+        "unlockedLockAlt": "Unlocked lock",
+        "chooseLocks": "Choose locks",
+        "resetAll": "Reset all",
+        "comingSoon": "Coming soon",
+        "password": "Password",
+        "xHandle": "X handle",
+        "telegramGroup": "Telegram group",
+        "tokenOrNftOwnership": "Token or NFT ownership",
+        "quizMultipleChoice": "Quiz: multiple choice",
+        "allLocksRequired": "User must open all locks to use transaction",
+        "continue": "Continue",
+        "continuing": "Continuing...",
+        "setLockKeys": "Set lock keys",
+        "closePasswordLockDrawer": "Close password lock drawer",
+        "keyPassword": "Key: Password",
+        "reset": "Reset",
+        "enterPassword": "Enter the password",
+        "confirmPassword": "Confirm password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "lock": "Lock",
+        "lockAdded": "You added a lock",
+        "openLock": "Open lock",
+        "incorrectPassword": "Incorrect password.",
+        "openButton": "Open",
+        "processing": "Processing",
+        "linkLocked": "Link locked",
+        "unlockAllRequired": "To use the transaction, unlock all locks.",
+        "fees": {
+          "password": "Lock fee - password",
+          "xFollow": "Lock fee - X follow",
+          "total": "Total lock fees",
+          "multipleTokens": "Multiple tokens"
+        },
+        "errors": {
+          "passwordRequired": "Password is required",
+          "confirmPasswordRequired": "Confirm password is required",
+          "passwordsDifferent": "The passwords are different."
+        }
+      },
       "preview": {
         "createSuccess": "Link created successfully: ",
         "createError": "Failed to create link: ",
@@ -190,7 +236,11 @@
         "includingNetworkFees": "Including network fees",
         "linkCreationFee": "Link creation fee",
         "feesBreakdown": "Fees breakdown",
-        "totalFees": "Total fees"
+        "totalFees": "Total fees",
+        "transactionLockStatus": {
+          "locked": "Locked",
+          "unlocked": "Unlocked"
+        }
       },
       "drawers": {
         "txCart": {
@@ -281,6 +331,8 @@
         "loading": "Loading...",
         "claimButton": "Claim",
         "continueButton": "Continue",
+        "transactionLocked": "This transaction is locked!",
+        "unlockButton": "Unlock",
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
@@ -343,7 +395,8 @@
       "selectTokenLabel": "Asset",
       "amountLabel": "Amount: (max {{max}})",
       "receiveAddressLabel": "Send address",
-      "ckbtcIcpAddressLabel": "BTC Address (ckBTC on ICP)",
+      "ckbtcIcpAddressLabel": "ICP Address (ckBTC on ICP)",
+      "runeIcpAddressLabel": "ICP Address ({{symbol}} on ICP)",
       "btcAddressLabel": "BTC destination address",
       "btcNativeAddressLabel": "BTC Address (native)",
       "principalId": "Principal ID",
@@ -404,7 +457,8 @@
       "selectTokenLabel": "Receive Token",
       "selectToken": "Select token",
       "receiveAddressLabel": "Receive {{token}} Address",
-      "ckBtcIcpAddressLabel": "BTC Address (ckBTC on ICP)",
+      "ckBtcIcpAddressLabel": "ICP Address (ckBTC on ICP)",
+      "runeIcpAddressLabel": "ICP Address ({{symbol}} on ICP)",
       "copySuccess": "Address copied to clipboard",
       "copyError": "Failed to copy address",
       "copyTooltip": "Copy to clipboard",
@@ -472,7 +526,7 @@
   "bitcoin": {
     "receive": {
       "title": "Importing BTC from Bitcoin network",
-      "runeTitle": "Importing Rune from Bitcoin network",
+      "runeTitle": "Importing {{name}} from Bitcoin network",
       "history": "History",
       "created": "Created",
       "importing": "Importing (in ~60mins)",
@@ -482,12 +536,17 @@
         "warning1": "Receive BTC from Coinbase, Xverse, Ledger, etc.",
         "warning2": "BTC is auto converted to ckBTC on arrival.",
         "warning3": "0.000001 BTC import fee.",
-        "warning4": "Transfer time ~1 hour. Track progress below."
+        "warning4": "Transfer time ~1 hour. Track progress below.",
+        "runeWarning1": "Receive {{name}} from compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "{{name}} is auto converted to {{symbol}} on arrival.",
+        "runeWarning3": "Transfer time ~1 hour. Track progress below."
       },
       "icpAddress": {
         "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
-        "warning3": "Transfer time almost instant."
+        "warning3": "Transfer time almost instant.",
+        "runeWarning1": "Receive {{symbol}} from compatible ICP wallet or exchange.",
+        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
       },
       "noIncomingBalance": "No incoming BTC balance found.",
       "refreshSuccess": "Balance refreshed successfully.",
@@ -498,7 +557,7 @@
     },
     "send": {
       "title": "Exporting BTC to Bitcoin network",
-      "runeTitle": "Exporting Rune to Bitcoin network",
+      "runeTitle": "Exporting {{name}} to Bitcoin network",
       "history": "History",
       "created": "Created",
       "exporting": "Exporting (in ~60mins)",
@@ -507,14 +566,19 @@
       "icpAddress": {
         "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
-        "warning3": "Transfer time almost instant."
+        "warning3": "Transfer time almost instant.",
+        "runeWarning1": "Send {{symbol}} to compatible ICP wallet or exchange.",
+        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
       },
       "btcAddress": {
         "warning1": "Send BTC to Coinbase, Xverse, Ledger, etc.",
         "warning2": "Minimum 0.00005 BTC.",
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
-        "warning5": "Transfer time ~1 hour. Track the progress below."
+        "warning5": "Transfer time ~1 hour. Track the progress below.",
+        "runeWarning1": "Send {{name}} to compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "Your {{name}} is auto converted to {{symbol}}.",
+        "runeWarning3": "~1.05 ICP export fee plus Bitcoin network fee."
       },
       "refreshSuccess": "Export history refreshed.",
       "refreshError": "Failed to refresh history. Please try again.",
