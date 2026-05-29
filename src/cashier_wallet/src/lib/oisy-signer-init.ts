@@ -74,6 +74,35 @@ function installIcrc49RequestLogger(): void {
   w[ICRC49_LOGGER_KEY] = listener;
 }
 
+// ── Persistent ICRC-25 grant cache ───────────────────────────────────────────
+// OISY v4.1.3 always re-fires its prompt for icrc25_request_permissions —
+// it doesn't auto-skip when grants are persisted (their TODO). We cache
+// confirmed grants here so subsequent requests from the same (origin,
+// principal) tuple can be auto-approved without opening the popup.
+type GrantState = 'granted' | 'denied';
+type GrantRecord = Record<string, GrantState>; // keyed by scope.method
+
+function grantsKey(origin: string, principal: string): string {
+  return `cashier_wallet_grants:${origin}:${principal}`;
+}
+
+function readGrants(origin: string, principal: string): GrantRecord {
+  try {
+    const raw = localStorage.getItem(grantsKey(origin, principal));
+    return raw ? (JSON.parse(raw) as GrantRecord) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeGrants(origin: string, principal: string, grants: GrantRecord): void {
+  try {
+    localStorage.setItem(grantsKey(origin, principal), JSON.stringify(grants));
+  } catch {
+    /* quota / privacy mode — silently ignore */
+  }
+}
+
 function uninstallIcrc49RequestLogger(): void {
   const w = window as WindowWithIcrc49Logger;
   const prior = w[ICRC49_LOGGER_KEY];
@@ -96,9 +125,16 @@ let currentIcrc21RequestId: string | null = null;
  * Sets `walletReady = true` on success.
  */
 export async function initOisySigner(): Promise<void> {
+  console.warn("[wallet] initOisySigner called");
   await refreshAuthClient();
   const identity = getIdentity();
+  const principalText = identity?.getPrincipal().toText();
+  const isAnon = identity?.getPrincipal().isAnonymous();
+  console.warn(
+    `[wallet] identity=${principalText} anonymous=${isAnon} signerExisted=${signerInstance !== null}`,
+  );
   if (!identity || identity.getPrincipal().isAnonymous()) {
+    console.warn("[wallet] EARLY RETURN — no auth → OISY not initialized");
     return;
   }
 
@@ -115,21 +151,48 @@ export async function initOisySigner(): Promise<void> {
 
   signerInstance = Signer.init({ owner: identity, host: IC_HOST });
   installIcrc49RequestLogger();
+  console.warn("[wallet] OISY Signer ready — handlers registered");
 
   // ── ICRC-25: permission request prompt ─────────────────────────────────
   // The OISY Signer calls this when a dApp sends icrc25_request_permissions.
-  // We open a popup so the user can grant or deny each scope.
+  // OISY v4.1.3 doesn't auto-skip the prompt when grants are persisted (their
+  // TODO), so we maintain our own grant cache keyed by (origin, principal,
+  // scope) and auto-approve when all requested scopes are already granted.
+  // This makes silent reconnect on page refresh actually silent.
+  const principalKey = identity.getPrincipal().toText();
   signerInstance.register({
     method: ICRC25_REQUEST_PERMISSIONS,
     prompt: ({ origin, requestedScopes, confirm }) => {
-      const requestId = crypto.randomUUID();
+      const scopes = requestedScopes as IcrcScope[];
 
-      createPendingPermission(
-        requestId,
-        requestedScopes as IcrcScope[],
-        origin,
-        confirm
+      // Fast path: every requested scope is already granted in our cache.
+      const cached = readGrants(origin, principalKey);
+      const allGranted = scopes.every(
+        (s) => cached[s.scope.method] === 'granted',
       );
+      if (allGranted) {
+        console.warn(
+          `[wallet] auto-approve ICRC-25 perms for ${origin} (cached grants)`,
+        );
+        confirm(
+          scopes.map((s) => ({ scope: s.scope, state: 'granted' as const })),
+        );
+        return;
+      }
+
+      const requestId = crypto.randomUUID();
+      // Wrap confirm so we persist whatever the user picks before forwarding
+      // the answer to OISY. This is what enables future silent reconnects.
+      const wrappedConfirm: typeof confirm = (confirmedScopes) => {
+        const next = { ...readGrants(origin, principalKey) };
+        for (const s of confirmedScopes) {
+          next[s.scope.method] = s.state as 'granted' | 'denied';
+        }
+        writeGrants(origin, principalKey, next);
+        confirm(confirmedScopes);
+      };
+
+      createPendingPermission(requestId, scopes, origin, wrappedConfirm);
 
       const popup = window.open(
         `/icrc25-permissions?id=${requestId}`,
@@ -139,11 +202,11 @@ export async function initOisySigner(): Promise<void> {
 
       if (!popup) {
         // Popup blocked — deny all scopes immediately
-        const deniedScopes = (requestedScopes as IcrcScope[]).map((s) => ({
+        const deniedScopes = scopes.map((s) => ({
           scope: s.scope,
           state: 'denied' as const,
         }));
-        confirm(deniedScopes);
+        wrappedConfirm(deniedScopes);
         pendingPermissions.delete(requestId);
       }
     },

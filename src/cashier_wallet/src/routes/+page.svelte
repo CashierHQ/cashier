@@ -53,13 +53,36 @@
     // This handles the case where window.opener is null after a cross-origin
     // II redirect (COOP headers), allowing the DApp to still receive the
     // wallet_auth_complete message via event.source.postMessage.
-    window.addEventListener('message', (event: MessageEvent) => {
-      if (event.data?.type !== 'wallet_check_auth') return
-      if (authenticated && principal) {
-        ;(event.source as Window).postMessage(
-          { type: 'wallet_auth_complete', principal },
+    window.addEventListener('message', async (event: MessageEvent) => {
+      if (event.data?.type === 'wallet_check_auth') {
+        if (authenticated && principal) {
+          ;(event.source as Window).postMessage(
+            { type: 'wallet_auth_complete', principal },
+            event.origin,
+          )
+        }
+        return
+      }
+
+      // Logout request from a DApp adapter: clear our II delegation AND
+      // ALL ICRC-25 grants stored for this origin so the next connect
+      // requires a fresh II login + permission popup.
+      if (event.data?.type === 'wallet_logout_request') {
+        disconnectSigner()
+        await logout()
+        authenticated = false
+        principal = ''
+        // Clear every grant entry persisted for the requesting origin.
+        const prefix = `cashier_wallet_grants:${event.origin}:`
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith(prefix)) localStorage.removeItem(k)
+        }
+        ;(event.source as Window | null)?.postMessage(
+          { type: 'wallet_logout_complete' },
           event.origin,
         )
+        return
       }
     })
 

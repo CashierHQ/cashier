@@ -160,8 +160,13 @@ const initPnp = async () => {
     resetLoginState();
     isReady = true;
     return;
-  } else if (walletId === II_SIGNER_WALLET_ID) {
-    // II supports silent reconnect — it reads from IndexedDB without a popup
+  } else if (walletId === II_SIGNER_WALLET_ID || walletId === CASHIER_WALLET_ID) {
+    // Adapters that support silent reconnect on refresh:
+    //  - II   → reads delegation from IndexedDB
+    //  - Cashier Wallet → mounts hidden iframe, requests permissions silently
+    //    via existing ICRC-25 grants in the wallet origin's localStorage
+    // If the silent path in the adapter fails (e.g. session expired, popup
+    // blocked because no user gesture), it throws and we reset cleanly.
     try {
       await authState.login(walletId);
     } catch (error) {
@@ -169,8 +174,8 @@ const initPnp = async () => {
       resetLoginState();
     }
   } else if (walletId) {
-    // External wallet adapters (e.g. Cashier Wallet) require user interaction
-    // to reconnect — clear persisted state so the UI starts fresh
+    // Other external wallet adapters require user interaction to reconnect —
+    // clear persisted state so the UI starts fresh.
     resetLoginState();
   } else {
     // unknown state, clear persisted state

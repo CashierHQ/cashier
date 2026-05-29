@@ -131,6 +131,33 @@ export class IframeTransport implements Transport {
     this.iframe = null;
   }
 
+  /**
+   * Tell the wallet to clear its II delegation + persisted ICRC-25 grants
+   * for our origin BEFORE we tear down the iframe. Best-effort: the wallet
+   * may not respond if the iframe already navigated or never finished
+   * mounting, so we time out after 1s and proceed with teardown either way.
+   */
+  async requestWalletLogout(timeoutMs = 1_000): Promise<void> {
+    const win = this.iframe?.contentWindow;
+    if (!win) return;
+    const targetOrigin = new URL(this.options.url).origin;
+    await new Promise<void>((resolve) => {
+      const handler = (event: MessageEvent) => {
+        if (event.origin !== targetOrigin) return;
+        if (event.data?.type !== "wallet_logout_complete") return;
+        window.removeEventListener("message", handler);
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        window.removeEventListener("message", handler);
+        resolve();
+      }, timeoutMs);
+      window.addEventListener("message", handler);
+      win.postMessage({ type: "wallet_logout_request" }, targetOrigin);
+    });
+  }
+
   // ── Private helpers ─────────────────────────────────────────────────────
 
   /** Create (or reuse) the hidden iframe and wait for it to load. */

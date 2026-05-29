@@ -5,6 +5,7 @@ import { CashierWalletSignerAdapter } from '../CashierWalletSignerAdapter'
 
 const {
   mockIframeDestroy,
+  mockRequestWalletLogout,
   MockIframeTransport,
   mockRequestPermissions,
   mockGetAccounts,
@@ -15,7 +16,11 @@ const {
   mockHttpAgentInstance,
 } = vi.hoisted(() => {
   const mockIframeDestroy = vi.fn()
-  const MockIframeTransport = vi.fn().mockImplementation(() => ({ destroy: mockIframeDestroy }))
+  const mockRequestWalletLogout = vi.fn().mockResolvedValue(undefined)
+  const MockIframeTransport = vi.fn().mockImplementation(() => ({
+    destroy: mockIframeDestroy,
+    requestWalletLogout: mockRequestWalletLogout,
+  }))
 
   const mockRequestPermissions = vi.fn().mockResolvedValue(undefined)
   const mockGetAccounts = vi.fn().mockResolvedValue([
@@ -34,6 +39,7 @@ const {
 
   return {
     mockIframeDestroy,
+    mockRequestWalletLogout,
     MockIframeTransport,
     mockRequestPermissions,
     mockGetAccounts,
@@ -148,7 +154,11 @@ describe('CashierWalletSignerAdapter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    MockIframeTransport.mockImplementation(() => ({ destroy: mockIframeDestroy }))
+    mockRequestWalletLogout.mockResolvedValue(undefined)
+    MockIframeTransport.mockImplementation(() => ({
+      destroy: mockIframeDestroy,
+      requestWalletLogout: mockRequestWalletLogout,
+    }))
     MockSigner.mockImplementation(() => ({
       requestPermissions: mockRequestPermissions,
       getAccounts: mockGetAccounts,

@@ -260,9 +260,13 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
   private async attemptSilentReconnect(
     timeoutMs: number,
   ): Promise<{ principal: string; ownerPrincipal: Principal | undefined } | null> {
-    if (!this.signer) return null;
+    if (!this.signer) {
+      console.warn("[silent-reconnect] no signer (mountTransportAndSigner failed)");
+      return null;
+    }
     const signer = this.signer;
     try {
+      console.warn("[silent-reconnect] requesting permissions...");
       await withTimeout(
         signer.requestPermissions([
           { method: "icrc27_accounts" },
@@ -270,13 +274,22 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
         ]),
         timeoutMs,
       );
+      console.warn("[silent-reconnect] permissions ok, fetching accounts...");
       const accounts = await withTimeout(signer.getAccounts(), timeoutMs);
       const ownerPrincipal = accounts[0]?.owner;
+      console.warn(
+        `[silent-reconnect] accounts=${accounts.length}, owner=${ownerPrincipal?.toText()}, anonymous=${ownerPrincipal?.isAnonymous()}`,
+      );
       // Anonymous principals indicate the wallet's II session expired but
       // ICRC-25 grants are still stored. Treat as silent failure → popup.
-      if (!ownerPrincipal || ownerPrincipal.isAnonymous()) return null;
+      if (!ownerPrincipal || ownerPrincipal.isAnonymous()) {
+        console.warn("[silent-reconnect] FAIL: no owner or anonymous");
+        return null;
+      }
+      console.warn("[silent-reconnect] SUCCESS");
       return { principal: ownerPrincipal.toText(), ownerPrincipal };
-    } catch {
+    } catch (e) {
+      console.warn("[silent-reconnect] FAIL:", e);
       return null;
     }
   }
@@ -331,6 +344,11 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     // Defense in depth: parent already clears its own principalStorageKey,
     // but be explicit so a partial parent failure can't leave residue.
     safeLocalStorageRemove(this.principalStorageKey);
+
+    // Tell the wallet to clear its II delegation + our origin's ICRC-25
+    // grants BEFORE we kill the iframe. Best-effort with a 1s timeout —
+    // if the wallet is unresponsive we still proceed with teardown.
+    await this.iframeTransport?.requestWalletLogout().catch(() => {});
 
     // Close ICRC-29 channel while the iframe is still alive so the wallet
     // receives the close message; tear down the iframe afterwards.
