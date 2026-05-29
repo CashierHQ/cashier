@@ -231,7 +231,7 @@ export function getGuardContext(): GuardContext {
   const context = getContext<GuardContext>(GUARD_CONTEXT_KEY);
   if (!context) {
     throw new Error(
-      "GuardContext not found. Make sure RouteGuard component is wrapping this component.",
+      "GuardContext not found. Make sure createLinkRouteContext is called by this route.",
     );
   }
   return context;

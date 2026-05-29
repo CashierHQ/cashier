@@ -8,13 +8,24 @@
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { draftLinkService } from "$modules/creationLink/services/draftLink";
-  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
-  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
+  import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
+  import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
+  import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";
+  import { resolveRedirect } from "$modules/routing/resolveRedirect";
+  import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
+  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
   import { Principal } from "@dfinity/principal";
+  import { page } from "$app/state";
   import { toast } from "svelte-sonner";
+
+  const input = $derived(buildAuthRedirectInput(page.url));
+  const decision = $derived(resolveRedirect(input));
+  const showE2EMarker = $derived(isE2ERedirectEnabled(page.url));
+
+  useRedirectNavigation(() => decision);
 
   /**
    * Handle the creation of a new link
@@ -40,26 +51,28 @@
   }
 </script>
 
-<RouteGuard>
-  <ProtectedAuth>
-    <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
-      <AppHeader />
+{#if decision.kind === "allow" && showE2EMarker}
+  <E2ERedirectScreen screen={decision.screen ?? "linkList"} />
+{:else if decision.kind === "allow"}
+  <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
+    <AppHeader />
 
+    <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
       <div
-        class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col"
+        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
       >
         <div
-          class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
+          class="sm:max-h-[calc(100vh-158px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
         >
-          <div
-            class="sm:max-h-[calc(100vh-158px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
-          >
-            <LinksPage />
-          </div>
+          <LinksPage />
         </div>
       </div>
-
-      <AddLinkButton onClick={handleCreateNewLink} />
     </div>
-  </ProtectedAuth>
-</RouteGuard>
+
+    <AddLinkButton onClick={handleCreateNewLink} />
+  </div>
+{:else}
+  <ProtectionProcessingState
+    message={decision.kind === "pending" ? "Loading..." : "Redirecting..."}
+  />
+{/if}

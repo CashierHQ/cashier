@@ -32,7 +32,7 @@
     onShowFooterChange?: (showFooter: boolean) => void;
   } = $props();
 
-  // Get userLinkStore from context (created by RouteGuard)
+  // Get userLinkStore from route context.
   const context = getGuardContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
