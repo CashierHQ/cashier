@@ -5,62 +5,48 @@ import { CashierWalletSignerAdapter } from '../CashierWalletSignerAdapter'
 
 const {
   mockIframeDestroy,
+  mockRequestWalletLogout,
   MockIframeTransport,
   mockRequestPermissions,
-  mockAccounts,
+  mockGetAccounts,
   MockSigner,
-  mockSignerAgentReadState,
-  mockSignerAgentCall,
-  mockSignerAgentQuery,
+  mockSignerAgentCreateSync,
   mockSignerAgentInstance,
-  mockHttpAgentReadState,
-  mockHttpAgentCall,
-  mockHttpAgentQuery,
+  mockHttpAgentCreateSync,
   mockHttpAgentInstance,
 } = vi.hoisted(() => {
   const mockIframeDestroy = vi.fn()
-  const MockIframeTransport = vi.fn().mockImplementation(() => ({ destroy: mockIframeDestroy }))
+  const mockRequestWalletLogout = vi.fn().mockResolvedValue(undefined)
+  const MockIframeTransport = vi.fn().mockImplementation(() => ({
+    destroy: mockIframeDestroy,
+    requestWalletLogout: mockRequestWalletLogout,
+  }))
 
   const mockRequestPermissions = vi.fn().mockResolvedValue(undefined)
-  const mockAccounts = vi.fn().mockResolvedValue([
-    { owner: { toText: () => 'owner-principal-text' } },
+  const mockGetAccounts = vi.fn().mockResolvedValue([
+    { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
   ])
   const MockSigner = vi.fn().mockImplementation(() => ({
     requestPermissions: mockRequestPermissions,
-    accounts: mockAccounts,
+    getAccounts: mockGetAccounts,
   }))
 
-  const mockSignerAgentReadState = vi.fn()
-  const mockSignerAgentCall = vi.fn()
-  const mockSignerAgentQuery = vi.fn()
-  const mockSignerAgentInstance = {
-    readState: mockSignerAgentReadState,
-    call: mockSignerAgentCall,
-    query: mockSignerAgentQuery,
-  }
+  const mockSignerAgentInstance = {}
+  const mockSignerAgentCreateSync = vi.fn(() => mockSignerAgentInstance)
 
-  const mockHttpAgentReadState = vi.fn()
-  const mockHttpAgentCall = vi.fn()
-  const mockHttpAgentQuery = vi.fn()
-  const mockHttpAgentInstance = {
-    readState: mockHttpAgentReadState,
-    call: mockHttpAgentCall,
-    query: mockHttpAgentQuery,
-  }
+  const mockHttpAgentInstance = {}
+  const mockHttpAgentCreateSync = vi.fn(() => mockHttpAgentInstance)
 
   return {
     mockIframeDestroy,
+    mockRequestWalletLogout,
     MockIframeTransport,
     mockRequestPermissions,
-    mockAccounts,
+    mockGetAccounts,
     MockSigner,
-    mockSignerAgentReadState,
-    mockSignerAgentCall,
-    mockSignerAgentQuery,
+    mockSignerAgentCreateSync,
     mockSignerAgentInstance,
-    mockHttpAgentReadState,
-    mockHttpAgentCall,
-    mockHttpAgentQuery,
+    mockHttpAgentCreateSync,
     mockHttpAgentInstance,
   }
 })
@@ -72,12 +58,19 @@ const {
 // top-level `class` declaration lives in the temporal dead zone until
 // initialisation order reaches it, so referencing it from the mock
 // factory throws "Cannot access 'FakeBaseSignerAdapter' before initialization".
-const { FakeBaseSignerAdapter } = vi.hoisted(() => {
+const { FakeBaseSignerAdapter, mockSuperDisconnectInternal, mockSuperCleanupInternal, mockSuperOnDispose } = vi.hoisted(() => {
+  const mockSuperDisconnectInternal = vi.fn().mockResolvedValue(undefined)
+  const mockSuperCleanupInternal = vi.fn()
+  const mockSuperOnDispose = vi.fn().mockResolvedValue(undefined)
+
   class FakeBaseSignerAdapter {
     protected config: Record<string, unknown>
     protected signer: unknown = null
     protected signerAgent: unknown = null
     protected agent: unknown = null
+    // PNP's BaseSignerAdapter computes this as `${adapter.id}_principal` —
+    // the adapter under test reads it via `this.principalStorageKey`.
+    protected principalStorageKey = 'cashierWallet_principal'
 
     constructor(args: { config: Record<string, unknown> }) {
       this.config = args.config
@@ -90,8 +83,20 @@ const { FakeBaseSignerAdapter } = vi.hoisted(() => {
     ): T {
       return {} as T
     }
+
+    protected async disconnectInternal(): Promise<void> {
+      await mockSuperDisconnectInternal()
+    }
+
+    protected cleanupInternal(): void {
+      mockSuperCleanupInternal()
+    }
+
+    protected async onDispose(): Promise<void> {
+      await mockSuperOnDispose()
+    }
   }
-  return { FakeBaseSignerAdapter }
+  return { FakeBaseSignerAdapter, mockSuperDisconnectInternal, mockSuperCleanupInternal, mockSuperOnDispose }
 })
 
 vi.mock('@windoge98/plug-n-play', () => ({
@@ -102,24 +107,22 @@ vi.mock('../IframeTransport', () => ({
   IframeTransport: MockIframeTransport,
 }))
 
-vi.mock('@slide-computer/signer', () => ({
+vi.mock('@icp-sdk/signer', () => ({
   Signer: MockSigner,
 }))
 
-vi.mock('@slide-computer/signer-agent', () => ({
-  // Use `vi.fn(() => obj)` rather than `vi.fn().mockReturnValue(obj)` so that
-  // `vi.restoreAllMocks()` in `afterEach` falls back to this initial
-  // implementation between tests instead of wiping it entirely (which makes
-  // `createSync(...)` return undefined for every test after the first
-  // afterEach runs).
+// Use `vi.fn(() => obj)` rather than `vi.fn().mockReturnValue(obj)` so that
+// `vi.restoreAllMocks()` in `afterEach` falls back to this initial
+// implementation between tests instead of wiping it entirely.
+vi.mock('@icp-sdk/signer/agent', () => ({
   SignerAgent: {
-    createSync: vi.fn(() => mockSignerAgentInstance),
+    createSync: mockSignerAgentCreateSync,
   },
 }))
 
-vi.mock('@dfinity/agent', () => ({
+vi.mock('@icp-sdk/core/agent', () => ({
   HttpAgent: {
-    createSync: vi.fn(() => mockHttpAgentInstance),
+    createSync: mockHttpAgentCreateSync,
   },
   Actor: { createActor: vi.fn() },
 }))
@@ -150,13 +153,27 @@ async function connectAdapter(adapter: CashierWalletSignerAdapter) {
 describe('CashierWalletSignerAdapter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    MockIframeTransport.mockImplementation(() => ({ destroy: mockIframeDestroy }))
+    localStorage.clear()
+    mockRequestWalletLogout.mockResolvedValue(undefined)
+    MockIframeTransport.mockImplementation(() => ({
+      destroy: mockIframeDestroy,
+      requestWalletLogout: mockRequestWalletLogout,
+    }))
     MockSigner.mockImplementation(() => ({
       requestPermissions: mockRequestPermissions,
-      accounts: mockAccounts,
+      getAccounts: mockGetAccounts,
     }))
-    mockRequestPermissions.mockResolvedValue(undefined)
-    mockAccounts.mockResolvedValue([{ owner: { toText: () => 'owner-principal-text' } }])
+    // Silent reconnect is exercised by Phase 1's connect() flow before the
+    // popup path. To keep popup-path tests deterministic, default the silent
+    // attempt to FAIL (first requestPermissions call rejects) so connect()
+    // falls through to the popup flow. The popup flow then re-calls
+    // requestPermissions, which resolves (the .mockResolvedValue below).
+    // Tests that want silent-success override these mocks before connecting.
+    mockRequestPermissions.mockReset()
+    mockRequestPermissions
+      .mockRejectedValueOnce(new Error('silent path disabled in default test setup'))
+      .mockResolvedValue(undefined)
+    mockGetAccounts.mockResolvedValue([{ owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } }])
   })
 
   afterEach(() => {
@@ -234,22 +251,6 @@ describe('CashierWalletSignerAdapter', () => {
       )
     })
 
-    it('appends derivationOrigin query param to popup URL when provided', async () => {
-      const openSpy = vi.spyOn(window, 'open').mockReturnValue({
-        closed: false,
-        postMessage: vi.fn(),
-      } as unknown as Window)
-
-      const adapter = makeAdapter({ walletOrigin: WALLET_ORIGIN, derivationOrigin: 'https://dapp.example.com' })
-      const connectPromise = adapter.connect()
-      await new Promise((r) => setTimeout(r, 0))
-      sendMessage({ type: 'wallet_auth_complete', principal: 'p' })
-      await connectPromise
-
-      const url = openSpy.mock.calls[0]?.[0] as string
-      expect(url).toContain('derivationOrigin=https%3A%2F%2Fdapp.example.com')
-    })
-
     it('rejects if the login popup is blocked', async () => {
       vi.spyOn(window, 'open').mockReturnValue(null)
       const adapter = makeAdapter()
@@ -262,12 +263,24 @@ describe('CashierWalletSignerAdapter', () => {
       vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
 
       const adapter = makeAdapter()
-      const connectPromise = adapter.connect()
+      // Capture rejection eagerly to avoid a transient unhandled-rejection
+      // window between the timer firing and `await expect.rejects` attaching.
+      const settled = adapter.connect().then(
+        () => ({ ok: true as const }),
+        (err: Error) => ({ ok: false as const, err }),
+      )
+
+      // Drain microtasks so silent rejects + popup-flow timers register
+      await vi.advanceTimersByTimeAsync(0)
 
       fakePopup.closed = true
-      vi.advanceTimersByTime(600)
+      await vi.advanceTimersByTimeAsync(600)
 
-      await expect(connectPromise).rejects.toThrow('closed before authentication')
+      const outcome = await settled
+      expect(outcome.ok).toBe(false)
+      if (!outcome.ok) {
+        expect(outcome.err.message).toContain('closed before authentication')
+      }
       vi.useRealTimers()
     })
 
@@ -277,11 +290,19 @@ describe('CashierWalletSignerAdapter', () => {
       vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
 
       const adapter = makeAdapter()
-      const connectPromise = adapter.connect()
+      const settled = adapter.connect().then(
+        () => ({ ok: true as const }),
+        (err: Error) => ({ ok: false as const, err }),
+      )
 
-      vi.advanceTimersByTime(5 * 60 * 1_000 + 100)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1_000 + 100)
 
-      await expect(connectPromise).rejects.toThrow('timed out')
+      const outcome = await settled
+      expect(outcome.ok).toBe(false)
+      if (!outcome.ok) {
+        expect(outcome.err.message).toContain('timed out')
+      }
       vi.useRealTimers()
     })
 
@@ -328,90 +349,110 @@ describe('CashierWalletSignerAdapter', () => {
 
       await (adapter as unknown as { disconnectInternal(): Promise<void> }).disconnectInternal()
 
-      expect(mockIframeDestroy).toHaveBeenCalledOnce()
+      // Two iframe.destroy() calls in this flow: (1) silent-attempt teardown
+      // before the popup opens, (2) final disconnect.
+      expect(mockIframeDestroy).toHaveBeenCalledTimes(2)
       expect(await adapter.isConnected()).toBe(false)
       await expect(adapter.getPrincipal()).rejects.toThrow('Not connected')
     })
   })
 
-  // ─── hybrid agent proxy ──────────────────────────────────────────────────────
+  // ─── silent reconnect ─────────────────────────────────────────────────────────
 
-  describe('hybrid agent proxy', () => {
-    it('routes query() to the HTTP agent (queryAgent)', async () => {
+  describe('silent reconnect', () => {
+    // Configure mocks so the silent path succeeds without falling through to popup.
+    function setupSilentSuccess() {
+      mockRequestPermissions.mockReset()
+      mockRequestPermissions.mockResolvedValue(undefined)
+      mockGetAccounts.mockResolvedValue([
+        { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
+      ])
+    }
+
+    it('skips popup when wallet returns accounts silently', async () => {
+      setupSilentSuccess()
+      const openSpy = vi.spyOn(window, 'open')
+
       const adapter = makeAdapter()
-      await connectAdapter(adapter)
+      const result = await adapter.connect()
 
-      const agentProxy = (adapter as unknown as { agent: unknown }).agent as Record<string, unknown>
-      const queryFn = agentProxy.query as (...args: unknown[]) => unknown
-
-      mockHttpAgentQuery.mockResolvedValue('query-result')
-      await queryFn('canister-id', {})
-
-      expect(mockHttpAgentQuery).toHaveBeenCalled()
-      expect(mockSignerAgentQuery).not.toHaveBeenCalled()
+      expect(openSpy).not.toHaveBeenCalled()
+      expect(result.owner).toBe('owner-principal-text')
     })
 
-    it('routes call() to the SignerAgent', async () => {
+    it('persists principal to localStorage on successful silent connect', async () => {
+      setupSilentSuccess()
       const adapter = makeAdapter()
-      await connectAdapter(adapter)
+      await adapter.connect()
 
-      const agentProxy = (adapter as unknown as { agent: unknown }).agent as Record<string, unknown>
-      const callFn = agentProxy.call as (...args: unknown[]) => unknown
-
-      mockSignerAgentCall.mockResolvedValue('call-result')
-      await callFn('canister-id', {})
-
-      expect(mockSignerAgentCall).toHaveBeenCalled()
-      expect(mockHttpAgentCall).not.toHaveBeenCalled()
+      expect(localStorage.getItem('cashierWallet_principal'))
+        .toBe('owner-principal-text')
     })
 
-    it('routes readState with request_status path to SignerAgent', async () => {
+    it('persists principal to localStorage on popup fallback connect', async () => {
+      // Default setup makes silent fail → popup path runs.
       const adapter = makeAdapter()
       await connectAdapter(adapter)
 
-      const agentProxy = (adapter as unknown as { agent: unknown }).agent as Record<string, unknown>
-      const readStateFn = agentProxy.readState as (...args: unknown[]) => unknown
-
-      const requestStatusLabel = new TextEncoder().encode('request_status').buffer
-      const requestIdBytes = new Uint8Array(32)
-
-      mockSignerAgentReadState.mockResolvedValue({ certificate: new Uint8Array() })
-      await readStateFn('canister-id', {
-        paths: [[requestStatusLabel, requestIdBytes]],
-      })
-
-      expect(mockSignerAgentReadState).toHaveBeenCalled()
-      expect(mockHttpAgentReadState).not.toHaveBeenCalled()
+      expect(localStorage.getItem('cashierWallet_principal'))
+        .toBe('owner-principal-text')
     })
 
-    it('routes readState with non-request_status paths to HTTP agent', async () => {
+    it('clears localStorage on disconnect', async () => {
+      setupSilentSuccess()
       const adapter = makeAdapter()
-      await connectAdapter(adapter)
+      await adapter.connect()
+      await (adapter as unknown as { disconnectInternal(): Promise<void> }).disconnectInternal()
 
-      const agentProxy = (adapter as unknown as { agent: unknown }).agent as Record<string, unknown>
-      const readStateFn = agentProxy.readState as (...args: unknown[]) => unknown
+      expect(localStorage.getItem('cashierWallet_principal')).toBeNull()
+    })
 
-      mockHttpAgentReadState.mockResolvedValue({ certificate: new Uint8Array() })
-      await readStateFn('canister-id', {
-        paths: [[new TextEncoder().encode('time').buffer]],
-      })
+    it('falls through to popup when getAccounts returns empty (no owner)', async () => {
+      mockRequestPermissions.mockReset()
+      mockRequestPermissions.mockResolvedValue(undefined)
+      mockGetAccounts.mockReset()
+      mockGetAccounts
+        .mockResolvedValueOnce([])           // silent: no accounts → null owner → fail
+        .mockResolvedValue([
+          { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
+        ])                                   // popup: real owner
 
-      expect(mockHttpAgentReadState).toHaveBeenCalled()
-      expect(mockSignerAgentReadState).not.toHaveBeenCalled()
+      const adapter = makeAdapter()
+      const fakePopup = { closed: false, postMessage: vi.fn() }
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
+
+      const connectPromise = adapter.connect()
+      // Let silent attempt settle and popup listeners register
+      await new Promise((r) => setTimeout(r, 0))
+      sendMessage({ type: 'wallet_auth_complete', principal: 'owner-principal-text' })
+      await connectPromise
+
+      expect(openSpy).toHaveBeenCalled()
     })
   })
 
-  // ─── createActorInternal() ───────────────────────────────────────────────────
+  // ─── SignerAgent wiring ──────────────────────────────────────────────────────
 
-  describe('createActorInternal()', () => {
-    it('throws if agent is null (not connected)', () => {
+  describe('SignerAgent wiring', () => {
+    it('constructs SignerAgent with signer, account, and HttpAgent', async () => {
       const adapter = makeAdapter()
-      expect(() =>
-        (adapter as unknown as { createActorInternal<T>(c: string, i: unknown): T }).createActorInternal(
-          'canister-id',
-          {},
-        ),
-      ).toThrow('not connected')
+      await connectAdapter(adapter)
+
+      expect(mockSignerAgentCreateSync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          signer: expect.anything(),
+          account: expect.anything(),
+          agent: mockHttpAgentInstance,
+        }),
+      )
+    })
+
+    it('exposes signerAgent on the adapter for actor creation', async () => {
+      const adapter = makeAdapter()
+      await connectAdapter(adapter)
+
+      const signerAgent = (adapter as unknown as { signerAgent: unknown }).signerAgent
+      expect(signerAgent).toBe(mockSignerAgentInstance)
     })
   })
 })

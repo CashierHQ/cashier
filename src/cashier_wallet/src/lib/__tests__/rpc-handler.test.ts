@@ -21,13 +21,6 @@ vi.mock('../signer', () => ({
   signMessage: mockSignMessage,
 }))
 
-const mockIcrc1Transfer = vi.fn()
-const mockIcrc1BalanceOf = vi.fn()
-vi.mock('../ledger', () => ({
-  icrc1Transfer: mockIcrc1Transfer,
-  icrc1BalanceOf: mockIcrc1BalanceOf,
-}))
-
 const mockCreatePendingConsent = vi.fn()
 const mockPendingConsents = new Map<string, {
   approvalPromise: Promise<void>
@@ -60,7 +53,7 @@ function sendRequest(
     new MessageEvent('message', {
       data: { jsonrpc: '2.0', id, method, params },
       origin,
-      source: source as unknown as EventTarget,
+      source: source as unknown as MessageEventSource,
     }),
   )
 }
@@ -82,8 +75,12 @@ function addConsentApproved(consentId: string) {
 
 /** Add a consent entry backed by a pre-rejected promise. */
 function addConsentRejected(consentId: string) {
+  // Attach a no-op catch so vitest doesn't flag the synchronous rejection
+  // as unhandled before production code's try/catch runs.
+  const approvalPromise = Promise.reject(new Error('User rejected the request'))
+  approvalPromise.catch(() => {})
   mockPendingConsents.set(consentId, {
-    approvalPromise: Promise.reject(new Error('User rejected the request')),
+    approvalPromise,
     _approve: vi.fn(),
     _reject: vi.fn(),
     method: 'test',
@@ -113,7 +110,7 @@ describe('rpc-handler', () => {
         new MessageEvent('message', {
           data: { jsonrpc: '2.0', id: '1', method: 'ping' },
           origin: '',
-          source: source as unknown as EventTarget,
+          source: source as unknown as MessageEventSource,
         }),
       )
       await tick()
@@ -130,7 +127,7 @@ describe('rpc-handler', () => {
         new MessageEvent('message', {
           data: { jsonrpc: '2.0', id: '1', method: 'ping' },
           origin: 'null',
-          source: source as unknown as EventTarget,
+          source: source as unknown as MessageEventSource,
         }),
       )
       await tick()
@@ -147,7 +144,7 @@ describe('rpc-handler', () => {
         new MessageEvent('message', {
           data: { id: '1', method: 'ping' },
           origin: 'https://dapp.example',
-          source: source as unknown as EventTarget,
+          source: source as unknown as MessageEventSource,
         }),
       )
       await tick()
@@ -449,115 +446,6 @@ describe('rpc-handler', () => {
       initRpcHandler()
 
       sendRequest('sign_message', { consentId: 'c-1' }, source) // no message
-      await tick()
-
-      expect(source.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.objectContaining({ code: -32602 }) }),
-        expect.anything(),
-      )
-    })
-  })
-
-  // ─── icrc1_balance_of (consent-gated) ────────────────────────────────────────
-
-  describe('icrc1_balance_of', () => {
-    it('responds with balance string after consent is approved', async () => {
-      mockIsAuthenticated.mockResolvedValue(true)
-      mockIcrc1BalanceOf.mockResolvedValue(500_000_000n)
-      addConsentApproved('c-bal')
-      mockGetIdentity.mockReturnValue({ getPrincipal: () => ({ toText: () => 'owner-p' }) })
-
-      const { initRpcHandler } = await import('../rpc-handler')
-      const source = makeSource()
-      initRpcHandler()
-
-      sendRequest('icrc1_balance_of', { canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai', owner: 'owner-p', consentId: 'c-bal' }, source)
-      await tick()
-
-      expect(mockIcrc1BalanceOf).toHaveBeenCalledWith('ryjl3-tyaaa-aaaaa-aaaba-cai', 'owner-p')
-      expect(source.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ result: { balance: '500000000' } }),
-        expect.anything(),
-      )
-    })
-
-    it('responds with error -32602 when canisterId is missing', async () => {
-      mockIsAuthenticated.mockResolvedValue(true)
-
-      const { initRpcHandler } = await import('../rpc-handler')
-      const source = makeSource()
-      initRpcHandler()
-
-      sendRequest('icrc1_balance_of', { owner: 'p', consentId: 'c-1' }, source)
-      await tick()
-
-      expect(source.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.objectContaining({ code: -32602 }) }),
-        expect.anything(),
-      )
-    })
-  })
-
-  // ─── icrc1_transfer (consent-gated) ──────────────────────────────────────────
-
-  describe('icrc1_transfer', () => {
-    it('responds with blockIndex after consent is approved', async () => {
-      mockIsAuthenticated.mockResolvedValue(true)
-      mockIcrc1Transfer.mockResolvedValue({ blockIndex: '42' })
-      addConsentApproved('c-tx')
-
-      const { initRpcHandler } = await import('../rpc-handler')
-      const source = makeSource()
-      initRpcHandler()
-
-      sendRequest(
-        'icrc1_transfer',
-        { canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai', to: 'recipient', amount: '1000000', consentId: 'c-tx' },
-        source,
-      )
-      await tick()
-
-      expect(mockIcrc1Transfer).toHaveBeenCalledWith({
-        canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
-        to: 'recipient',
-        amount: 1_000_000n,
-      })
-      expect(source.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ result: { blockIndex: '42' } }),
-        expect.anything(),
-      )
-    })
-
-    it('responds with error -32603 when the ledger returns an error', async () => {
-      mockIsAuthenticated.mockResolvedValue(true)
-      mockIcrc1Transfer.mockResolvedValue({ error: 'TransferError::InsufficientFunds: {}' })
-      addConsentApproved('c-tx-err')
-
-      const { initRpcHandler } = await import('../rpc-handler')
-      const source = makeSource()
-      initRpcHandler()
-
-      sendRequest(
-        'icrc1_transfer',
-        { canisterId: 'ryjl3-tyaaa-aaaaa-aaaba-cai', to: 'r', amount: '999', consentId: 'c-tx-err' },
-        source,
-      )
-      await tick()
-
-      expect(source.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({ error: expect.objectContaining({ code: -32603 }) }),
-        expect.anything(),
-      )
-    })
-
-    it('responds with error -32602 when required params are missing', async () => {
-      mockIsAuthenticated.mockResolvedValue(true)
-
-      const { initRpcHandler } = await import('../rpc-handler')
-      const source = makeSource()
-      initRpcHandler()
-
-      sendRequest('icrc1_transfer', { to: 'r', amount: '100' }, source) // no canisterId
       await tick()
 
       expect(source.postMessage).toHaveBeenCalledWith(

@@ -10,6 +10,9 @@
   let isLoginPopup = false
   let loginPending = false
   let derivationOrigin: string | undefined
+  // Surface init / login failures to the popup UI instead of failing silently
+  // (II popup blocked by chained-popup heuristics is the most common cause).
+  let loginError = ''
 
   onMount(async () => {
     isLoginPopup = !!window.opener
@@ -17,8 +20,14 @@
     // This ensures II derives the same principal as a direct DApp login.
     derivationOrigin = new URLSearchParams(window.location.search).get('derivationOrigin') ?? undefined
 
-    // Init auth client to restore session
-    await initAuthClient()
+    try {
+      // Init auth client to restore session
+      await initAuthClient()
+    } catch (e) {
+      loginError = `initAuthClient failed: ${e instanceof Error ? e.message : String(e)}`
+      console.error('[wallet popup]', loginError)
+      return
+    }
     authenticated = await isAuthenticated()
     if (authenticated) {
       principal = getIdentity()?.getPrincipal().toText() ?? ''
@@ -44,47 +53,75 @@
     // This handles the case where window.opener is null after a cross-origin
     // II redirect (COOP headers), allowing the DApp to still receive the
     // wallet_auth_complete message via event.source.postMessage.
-    window.addEventListener('message', (event: MessageEvent) => {
-      if (event.data?.type !== 'wallet_check_auth') return
-      if (authenticated && principal) {
-        ;(event.source as Window).postMessage(
-          { type: 'wallet_auth_complete', principal },
+    window.addEventListener('message', async (event: MessageEvent) => {
+      if (event.data?.type === 'wallet_check_auth') {
+        if (authenticated && principal) {
+          ;(event.source as Window).postMessage(
+            { type: 'wallet_auth_complete', principal },
+            event.origin,
+          )
+        }
+        return
+      }
+
+      // Logout request from a DApp adapter: clear our II delegation AND
+      // ALL ICRC-25 grants stored for this origin so the next connect
+      // requires a fresh II login + permission popup.
+      if (event.data?.type === 'wallet_logout_request') {
+        disconnectSigner()
+        await logout()
+        authenticated = false
+        principal = ''
+        // Clear every grant entry persisted for the requesting origin.
+        const prefix = `cashier_wallet_grants:${event.origin}:`
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith(prefix)) localStorage.removeItem(k)
+        }
+        ;(event.source as Window | null)?.postMessage(
+          { type: 'wallet_logout_complete' },
           event.origin,
         )
+        return
       }
     })
 
-    // Auto-trigger II when opened as a login popup by the SDK or PNP adapter
-    if (isLoginPopup) {
-      if (authenticated) {
-        // Already authenticated — notify opener and close
-        window.opener?.postMessage({ type: 'wallet_auth_complete', principal }, '*')
-        window.close()
-      } else {
-        // Not yet authenticated — trigger II login flow
-        loginPending = true
-        await handleLogin()
-        loginPending = false
-      }
+    // Auto-close if already authenticated; otherwise wait for user click on
+    // the "Continue with Internet Identity" button. We can't auto-trigger
+    // handleLogin from onMount because the cashier-side click activation has
+    // expired by the time the popup loads + onMount runs, so the II popup
+    // would be blocked by browsers (Safari especially).
+    if (isLoginPopup && authenticated) {
+      window.opener?.postMessage({ type: 'wallet_auth_complete', principal }, '*')
+      window.close()
     }
   })
 
   async function handleLogin() {
-    const result = await login(derivationOrigin)
-    authenticated = result.ok
-    if (result.ok) {
-      principal = getIdentity()?.getPrincipal().toText() ?? ''
+    loginError = ''
+    loginPending = true
+    try {
+      const result = await login(derivationOrigin)
+      authenticated = result.ok
+      if (result.ok) {
+        principal = getIdentity()?.getPrincipal().toText() ?? ''
 
-      // Notify the opener and auto-close. We use '*' as targetOrigin because
-      // any DApp can trigger the login popup; the message only carries the
-      // principal which the user is explicitly sharing by completing login.
-      if (window.opener) {
-        window.opener.postMessage({ type: 'wallet_auth_complete', principal }, '*')
-        window.close()
-      } else if (!isLoginPopup) {
-        // Running as iframe — (re-)initialise the OISY Signer with the new identity
-        await initOisySigner()
+        // Notify the opener and auto-close. We use '*' as targetOrigin because
+        // any DApp can trigger the login popup; the message only carries the
+        // principal which the user is explicitly sharing by completing login.
+        if (window.opener) {
+          window.opener.postMessage({ type: 'wallet_auth_complete', principal }, '*')
+          window.close()
+        } else if (!isLoginPopup) {
+          // Running as iframe — (re-)initialise the OISY Signer with the new identity
+          await initOisySigner()
+        }
+      } else {
+        loginError = result.error ?? 'login failed (no error message)'
+        console.error('[wallet popup] login failed:', loginError)
       }
+    } finally {
+      loginPending = false
     }
   }
 
@@ -105,8 +142,14 @@
         <p style="font-size: 0.85rem; color: #999; margin-top: 0.5rem;">Please complete authentication in the Internet Identity window.</p>
       {:else if authenticated}
         <p style="font-size: 1.1rem; color: green;">Authentication complete. Closing…</p>
+      {:else if loginError}
+        <p style="font-size: 1rem; color: #c00; margin-bottom: 1rem;">Login failed:</p>
+        <p style="font-size: 0.85rem; color: #555; word-break: break-word; margin-bottom: 1rem;">{loginError}</p>
+        <button on:click={handleLogin} style="padding: 0.6rem 1.2rem; font-size: 1rem;">Retry</button>
       {:else}
-        <p style="font-size: 1.1rem; color: #555;">Starting authentication…</p>
+        <p style="font-size: 1.1rem; color: #555;">Ready to authenticate</p>
+        <button on:click={handleLogin} style="margin-top: 1rem; padding: 0.6rem 1.2rem; font-size: 1rem;">Continue with Internet Identity</button>
+        <p style="font-size: 0.8rem; color: #999; margin-top: 0.5rem;">Click to authorise — opens Internet Identity in a new window.</p>
       {/if}
     </div>
   </main>

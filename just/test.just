@@ -1,6 +1,6 @@
-# Run all Rust and TypeScript tests for backend and frontend
+# Run all Rust and TypeScript tests for backend, frontend, and wallet
 [group('test')]
-test_all: test test_frontend
+test_all: test test_frontend test_wallet
 
 
 # Run unit tests
@@ -69,6 +69,11 @@ test_unit_i686 test_name="":
 [group('test')]
 test_frontend: install_frontend_deps
   pnpm --filter cashier_frontend_new test
+
+# Run the wallet tests
+[group('test')]
+test_wallet: install_frontend_deps
+  pnpm --filter wallet test
 
 
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.

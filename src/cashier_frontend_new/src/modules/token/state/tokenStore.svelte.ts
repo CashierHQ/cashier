@@ -12,6 +12,7 @@ export const tokenMetadataQuery = (
     queryFn: async () => {
       return tokenMetadataService.getTokenMetadata(tokenAddress);
     },
+    staleTime: 120_000,
     persistedKey: ["tokenMetadataQuery", tokenAddress],
     storageType: "localStorage",
   });

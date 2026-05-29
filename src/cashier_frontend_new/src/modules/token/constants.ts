@@ -22,8 +22,8 @@ export const ICP_INDEX_CANISTER_ID = PUBLIC_TOKEN_ICP_INDEX_CANISTER_ID;
 
 // Transaction history constants
 export const DEFAULT_TX_PAGE_SIZE = 10n;
-export const TX_STALE_TIME_MS = 30000; // 30s stale time for auto-revalidate
-export const TX_REFETCH_INTERVAL_MS = 30000; // 60s auto-refresh interval
+export const TX_STALE_TIME_MS = 120_000; // 2 min — wallet ICRC-49 roundtrip; keep sparse
+export const TX_REFETCH_INTERVAL_MS = 120_000; // 2 min — keep sparse to avoid queue saturation
 
 // ckBTC Canister ID
 export const CKBTC_CANISTER_ID = PUBLIC_TOKEN_CKBTC_CANISTER_ID;

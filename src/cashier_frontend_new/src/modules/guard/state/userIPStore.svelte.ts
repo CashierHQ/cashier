@@ -25,6 +25,7 @@ export class UserIPStore {
           return null;
         }
       },
+      staleTime: 120_000,
     });
   }
 

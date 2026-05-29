@@ -7,15 +7,14 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: 'es2020',
-  // All ICP / PNP / signer-js packages are peer deps — do not bundle them
+  // All ICP / PNP / signer packages are peer deps — do not bundle them
   external: [
     '@dfinity/agent',
     '@dfinity/candid',
     '@dfinity/identity',
     '@dfinity/principal',
     '@windoge98/plug-n-play',
-    '@slide-computer/signer',
-    '@slide-computer/signer-agent',
-    '@slide-computer/signer-web',
+    '@icp-sdk/core',
+    '@icp-sdk/signer',
   ],
 })

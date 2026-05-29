@@ -27,7 +27,7 @@ const { MockHeartbeatClient, MockPostMessageChannel, mockPostMessageChannel } =
     }
   })
 
-vi.mock('@slide-computer/signer-web', () => ({
+vi.mock('@icp-sdk/signer/web', () => ({
   HeartbeatClient: MockHeartbeatClient,
   PostMessageChannel: MockPostMessageChannel,
 }))
@@ -125,8 +125,8 @@ describe('IframeTransport', () => {
       getCapturedOptions().onEstablish?.('https://wallet.example.com')
       await channelPromise
 
-      expect(getCapturedOptions().establishTimeout).toBe(30_000)
-      expect(getCapturedOptions().disconnectTimeout).toBe(30_000)
+      expect(getCapturedOptions().establishTimeout).toBe(120_000)
+      expect(getCapturedOptions().disconnectTimeout).toBe(120_000)
       expect(getCapturedOptions().statusPollingRate).toBe(300)
     })
 

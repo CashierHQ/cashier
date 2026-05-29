@@ -59,7 +59,8 @@ export class BridgeTxCartStore {
           );
           return bridgeTxWithUsdValue;
         },
-        refetchInterval: 15000, // 15 seconds
+        staleTime: 120_000,
+        refetchInterval: 120_000, // 2 min — wallet ICRC-49 roundtrip; keep sparse
         persistedKey: [`bridgeTxCartStore_bridgeTxDetail_${this.#bridgeId}`],
         storageType: "sessionStorage",
       });

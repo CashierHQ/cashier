@@ -42,12 +42,12 @@ function createMocks({
 describe("loadConfig", () => {
   test("loads deploy.config.json from project root", () => {
     expect(config.deployBranches).toEqual(["main", "staging"]);
-    expect(config.deployTargets).toHaveLength(2);
+    expect(config.deployTargets).toHaveLength(3);
   });
 
-  test("config has backend and frontend targets", () => {
+  test("config has backend, frontend, and wallet targets", () => {
     const names = config.deployTargets.map((t) => t.name);
-    expect(names).toEqual(["backend", "frontend"]);
+    expect(names).toEqual(["backend", "frontend", "wallet"]);
   });
 });
 
@@ -126,6 +126,34 @@ describe("matchDeployTargets", () => {
     expect(matched).toHaveLength(1);
     expect(matched[0].name).toBe("backend");
   });
+
+  test("matches wallet paths", () => {
+    const matched = matchDeployTargets(
+      ["src/cashier_wallet/src/routes/+page.svelte"],
+      config.deployTargets
+    );
+    expect(matched).toHaveLength(1);
+    expect(matched[0].name).toBe("wallet");
+  });
+
+  test("wallet workflow file change triggers wallet deploy", () => {
+    const matched = matchDeployTargets(
+      [".github/workflows/orbit-wallet-deploy.yml"],
+      config.deployTargets
+    );
+    expect(matched).toHaveLength(1);
+    expect(matched[0].name).toBe("wallet");
+  });
+
+  test("wallet changes do not trigger frontend or backend", () => {
+    const matched = matchDeployTargets(
+      ["src/cashier_wallet/package.json"],
+      config.deployTargets
+    );
+    const names = matched.map((t) => t.name);
+    expect(names).not.toContain("frontend");
+    expect(names).not.toContain("backend");
+  });
 });
 
 describe("triggerDeploys", () => {
@@ -187,6 +215,21 @@ describe("triggerDeploys", () => {
     });
     await triggerDeploys({ github, context, core });
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  test("dispatches wallet workflow for wallet changes", async () => {
+    const { github, context, core, dispatch } = createMocks({
+      targetBranch: "staging",
+      changedFiles: ["src/cashier_wallet/src/app.html"],
+    });
+    await triggerDeploys({ github, context, core });
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workflow_id: "orbit-wallet-deploy.yml",
+        ref: "staging",
+      })
+    );
   });
 
   test("passes PR head SHA as dispatch input to avoid stale checkout", async () => {

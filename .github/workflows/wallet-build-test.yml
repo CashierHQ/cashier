@@ -1,0 +1,61 @@
+name: "Build test wallet"
+
+on:
+  pull_request:
+    branches: [main, dev, staging]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "src/cashier_wallet/**"
+      - "src/cashier-wallet-sdk/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "eslint.config.js"
+      - "knip.json"
+      - ".prettierrc"
+      - ".prettierignore"
+      - "!src/cashier_wallet/src/lib/generated/**"
+
+concurrency:
+  group: wallet-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  wallet-check:
+    name: "Wallet Code Check"
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup Just
+        uses: extractions/setup-just@v4
+
+      - name: Run wallet code check
+        run: just wallet_check_code
+
+  wallet-test:
+    name: "Wallet Tests"
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup Just
+        uses: extractions/setup-just@v4
+
+      - name: Run wallet tests
+        run: just test_wallet

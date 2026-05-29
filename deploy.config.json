@@ -20,6 +20,14 @@
         "src/shared/",
         ".github/workflows/orbit-frontend-deploy.yml"
       ]
+    },
+    {
+      "name": "wallet",
+      "workflow": "orbit-wallet-deploy.yml",
+      "paths": [
+        "src/cashier_wallet/",
+        ".github/workflows/orbit-wallet-deploy.yml"
+      ]
     }
   ]
 }

@@ -64,7 +64,8 @@ class WalletStore {
 
         return sortWalletTokens(enrichedTokens);
       },
-      refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
+      staleTime: 120_000,
+      refetchInterval: 120_000, // 2 min — every refetch is a wallet ICRC-49 roundtrip; keep sparse
       persistedKey: ["walletTokensQuery"],
       storageType: "localStorage",
     });

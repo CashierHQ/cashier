@@ -44,6 +44,7 @@ class TokenPriceStore {
 
         return prices;
       },
+      staleTime: 60_000,
       refetchInterval: 60_000, // Refresh every 60 seconds to keep prices up-to-date
       persistedKey: ["tokenPricesQuery"],
       storageType: "localStorage",

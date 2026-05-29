@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte'
   import { marked } from 'marked'
   import type { Consent21Status } from '$lib/icrc21-consent-store'
-  import type { icrc21_consent_info, icrc21_consent_message } from '@dfinity/oisy-wallet-signer'
+  import type { icrc21_consent_info, icrc21_consent_message } from '$lib/icrc21-types'
 
   let requestId = ''
   let status: Consent21Status = 'loading'

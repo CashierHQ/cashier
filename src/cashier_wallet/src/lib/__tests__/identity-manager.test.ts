@@ -1,59 +1,64 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// AuthClient mock factory — each vi.resetModules() call gets a fresh mock
-const mockLogin = vi.fn()
-const mockLogout = vi.fn()
+// AuthClient v7 API: constructor-based, no static create()
+// Mock methods shared across all test instances
+const mockSignIn = vi.fn()
+const mockSignOut = vi.fn()
 const mockGetIdentity = vi.fn()
 const mockIsAuthenticated = vi.fn()
 
-const mockAuthClientInstance = {
-  login: mockLogin,
-  logout: mockLogout,
-  getIdentity: mockGetIdentity,
-  isAuthenticated: mockIsAuthenticated,
-}
+// Hoist FakeAuthClient so vi.mock factory can close over it
+const { MockAuthClient } = vi.hoisted(() => {
+  // A vi.fn() that acts as a constructor — returns instances with the mock methods
+  const MockAuthClient = vi.fn().mockImplementation(() => ({
+    signIn: mockSignIn,
+    signOut: mockSignOut,
+    getIdentity: mockGetIdentity,
+    isAuthenticated: mockIsAuthenticated,
+  }))
+  return { MockAuthClient }
+})
 
-vi.mock('@dfinity/auth-client', () => ({
-  AuthClient: {
-    create: vi.fn(),
-  },
+vi.mock('@icp-sdk/auth/client', () => ({
+  AuthClient: MockAuthClient,
 }))
 
 describe('identity-manager', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    // Default: getIdentity resolves with a fake anonymous identity
+    MockAuthClient.mockImplementation(() => ({
+      signIn: mockSignIn,
+      signOut: mockSignOut,
+      getIdentity: mockGetIdentity,
+      isAuthenticated: mockIsAuthenticated,
+    }))
+    mockGetIdentity.mockResolvedValue({ getPrincipal: () => ({ toText: () => '2vxsx-fae' }) })
   })
 
   // ─── initAuthClient() ────────────────────────────────────────────────────────
 
   describe('initAuthClient()', () => {
-    it('calls AuthClient.create() on first invocation', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
-
+    it('constructs AuthClient on first invocation', async () => {
       const { initAuthClient } = await import('../identity-manager')
       const result = await initAuthClient()
 
-      expect(AuthClient.create).toHaveBeenCalledOnce()
-      expect(result).toBe(mockAuthClientInstance)
+      expect(MockAuthClient).toHaveBeenCalledOnce()
+      expect(result).toBeDefined()
     })
 
     it('returns the cached instance on subsequent calls (singleton)', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
-
       const { initAuthClient } = await import('../identity-manager')
       const first = await initAuthClient()
       const second = await initAuthClient()
 
-      expect(AuthClient.create).toHaveBeenCalledOnce()
+      expect(MockAuthClient).toHaveBeenCalledOnce()
       expect(first).toBe(second)
     })
 
-    it('throws a wrapped error when AuthClient.create() rejects', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      vi.mocked(AuthClient.create).mockRejectedValue(new Error('init failed'))
+    it('throws a wrapped error when getIdentity() rejects during init', async () => {
+      mockGetIdentity.mockRejectedValue(new Error('storage read failed'))
 
       const { initAuthClient } = await import('../identity-manager')
       await expect(initAuthClient()).rejects.toThrow('AuthClient init failed')
@@ -63,61 +68,45 @@ describe('identity-manager', () => {
   // ─── login() ─────────────────────────────────────────────────────────────────
 
   describe('login()', () => {
-    it('calls ac.login() with identityProvider and resolves { ok: true } via onSuccess', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockLogin.mockImplementation(({ onSuccess }: { onSuccess: () => void }) => onSuccess())
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+    it('calls ac.signIn() and resolves { ok: true } on success', async () => {
+      const fakeIdentity = { getPrincipal: () => ({ toText: () => 'user-principal' }) }
+      mockSignIn.mockResolvedValue(fakeIdentity)
 
       const { login } = await import('../identity-manager')
       const result = await login()
 
       expect(result).toEqual({ ok: true })
-      expect(mockLogin).toHaveBeenCalledWith(
-        expect.objectContaining({ identityProvider: 'https://id.ai' }),
-      )
+      expect(mockSignIn).toHaveBeenCalledOnce()
     })
 
-    it('passes derivationOrigin when provided', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockLogin.mockImplementation(({ onSuccess }: { onSuccess: () => void }) => onSuccess())
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+    it('passes derivationOrigin via a new AuthClient when provided', async () => {
+      const fakeIdentity = { getPrincipal: () => ({ toText: () => 'user-principal' }) }
+      mockSignIn.mockResolvedValue(fakeIdentity)
+      mockGetIdentity.mockResolvedValue(fakeIdentity)
 
       const { login } = await import('../identity-manager')
       await login('https://my-dapp.example')
 
-      expect(mockLogin).toHaveBeenCalledWith(
-        expect.objectContaining({ derivationOrigin: 'https://my-dapp.example' }),
+      // Should have constructed AuthClient twice: once on initAuthClient, once with derivationOrigin
+      const calls = MockAuthClient.mock.calls as unknown[][]
+      const withDerivation = calls.find(
+        (args) => (args[0] as { derivationOrigin?: string })?.derivationOrigin === 'https://my-dapp.example'
       )
+      expect(withDerivation).toBeDefined()
     })
 
-    it('does not include derivationOrigin when not provided', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockLogin.mockImplementation(({ onSuccess }: { onSuccess: () => void }) => onSuccess())
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
-
-      const { login } = await import('../identity-manager')
-      await login()
-
-      const callArg = mockLogin.mock.calls[0][0]
-      expect(callArg).not.toHaveProperty('derivationOrigin')
-    })
-
-    it('resolves { ok: false, error } via onError callback', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockLogin.mockImplementation(({ onError }: { onError: (e: string) => void }) =>
-        onError('user cancelled'),
-      )
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+    it('resolves { ok: false, error } when signIn throws', async () => {
+      mockSignIn.mockRejectedValue(new Error('user cancelled'))
 
       const { login } = await import('../identity-manager')
       const result = await login()
 
-      expect(result).toEqual({ ok: false, error: 'user cancelled' })
+      expect(result.ok).toBe(false)
+      expect(result.error).toContain('user cancelled')
     })
 
     it('resolves { ok: false } when initAuthClient fails', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      vi.mocked(AuthClient.create).mockRejectedValue(new Error('no storage'))
+      mockGetIdentity.mockRejectedValue(new Error('no storage'))
 
       const { login } = await import('../identity-manager')
       const result = await login()
@@ -130,16 +119,14 @@ describe('identity-manager', () => {
   // ─── logout() ────────────────────────────────────────────────────────────────
 
   describe('logout()', () => {
-    it('calls ac.logout()', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockLogout.mockResolvedValue(undefined)
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+    it('calls ac.signOut()', async () => {
+      mockSignOut.mockResolvedValue(undefined)
 
       const { initAuthClient, logout } = await import('../identity-manager')
       await initAuthClient()
       await logout()
 
-      expect(mockLogout).toHaveBeenCalledOnce()
+      expect(mockSignOut).toHaveBeenCalledOnce()
     })
   })
 
@@ -151,11 +138,9 @@ describe('identity-manager', () => {
       expect(getIdentity()).toBeNull()
     })
 
-    it('returns authClient.getIdentity() after initialization', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
+    it('returns cached identity after initialization', async () => {
       const fakeIdentity = { getPrincipal: () => ({ toText: () => 'abc' }) }
-      mockGetIdentity.mockReturnValue(fakeIdentity)
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+      mockGetIdentity.mockResolvedValue(fakeIdentity)
 
       const { initAuthClient, getIdentity } = await import('../identity-manager')
       await initAuthClient()
@@ -167,17 +152,14 @@ describe('identity-manager', () => {
   // ─── refreshAuthClient() ─────────────────────────────────────────────────────
 
   describe('refreshAuthClient()', () => {
-    it('clears the cached instance and re-creates via AuthClient.create()', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
-
+    it('clears the cached instance and re-constructs AuthClient', async () => {
       const { initAuthClient, refreshAuthClient } = await import('../identity-manager')
 
       await initAuthClient()
-      expect(AuthClient.create).toHaveBeenCalledTimes(1)
+      expect(MockAuthClient).toHaveBeenCalledTimes(1)
 
       await refreshAuthClient()
-      expect(AuthClient.create).toHaveBeenCalledTimes(2)
+      expect(MockAuthClient).toHaveBeenCalledTimes(2)
     })
   })
 
@@ -190,9 +172,7 @@ describe('identity-manager', () => {
     })
 
     it('delegates to authClient.isAuthenticated()', async () => {
-      const { AuthClient } = await import('@dfinity/auth-client')
-      mockIsAuthenticated.mockResolvedValue(true)
-      vi.mocked(AuthClient.create).mockResolvedValue(mockAuthClientInstance as never)
+      mockIsAuthenticated.mockReturnValue(true)
 
       const { initAuthClient, isAuthenticated } = await import('../identity-manager')
       await initAuthClient()

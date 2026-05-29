@@ -25,7 +25,7 @@
  *   The popup shows an error state (informational) and can close.
  */
 
-import type { icrc21_consent_info } from '@dfinity/oisy-wallet-signer'
+import type { icrc21_consent_info } from './icrc21-types'
 
 export type Consent21Status = 'loading' | 'result' | 'error'
 

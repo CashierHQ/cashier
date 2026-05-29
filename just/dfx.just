@@ -48,6 +48,7 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend_new {{network}} --upgrade-unchanged
+  dfx deploy cashier_wallet {{network}} --upgrade-unchanged
 
 # Starts the local dfx server and deploys the canisters
 # params bitcoin: "true" to enable bitcoin node (for ckBTC flows), defaults to "false"

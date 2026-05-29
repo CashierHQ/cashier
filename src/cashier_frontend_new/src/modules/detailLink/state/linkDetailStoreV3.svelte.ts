@@ -43,6 +43,7 @@ export class LinkDetailStoreV3 {
         return linkDetailV3.value;
       },
       watch: true,
+      staleTime: 120_000,
     });
   }
 
