@@ -31,12 +31,12 @@
   // Get current path to determine if it's create or edit
   const currentPath = $derived.by(() => page.url.pathname);
 
-  // Try to get guard context (may not exist if not wrapped in RouteGuard)
+  // Try to get route context (it only exists on link routes).
   const guardContext = $derived.by(() => {
     try {
       return getGuardContext();
     } catch {
-      // Context doesn't exist, which is fine for pages without RouteGuard
+      // Context does not exist on routes that do not initialize link data.
       return null;
     }
   });

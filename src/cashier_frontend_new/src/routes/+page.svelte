@@ -4,10 +4,12 @@
   import Footer from "$modules/home/components/Footer.svelte";
   import HomePage from "$modules/home/pages/HomePage.svelte";
   import LoginModal from "$modules/home/components/LoginModal.svelte";
-  import { authState } from "$modules/auth/state/auth.svelte";
-  import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
+  import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
+  import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";
+  import { resolveRedirect } from "$modules/routing/resolveRedirect";
+  import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
+  import { page } from "$app/state";
 
   let isLoginModalOpen = $state(false);
 
@@ -15,27 +17,29 @@
     isLoginModalOpen = true;
   }
 
-  const isLoggedIn = $derived(userProfile.isLoggedIn());
+  const input = $derived(buildAuthRedirectInput(page.url));
+  const decision = $derived(resolveRedirect(input));
+  const isLoggedIn = $derived(!!input.currentUserId);
+  const showE2EMarker = $derived(isE2ERedirectEnabled(page.url));
 
-  // Redirect logged in users to /links
-  $effect(() => {
-    if (authState.isReady && authState.isLoggedIn) {
-      goto(resolve("/links"));
-    }
-  });
+  useRedirectNavigation(() => decision);
 </script>
 
-<main class="flex flex-col h-screen">
-  {#if isLoggedIn}
-    <AppHeader />
-  {:else}
-    <Header onLoginClick={openLoginModal} />
-  {/if}
-  <HomePage onLoginClick={openLoginModal} />
-  <Footer />
-</main>
+{#if decision.kind === "allow" && showE2EMarker}
+  <E2ERedirectScreen screen={decision.screen ?? "home"} />
+{:else}
+  <main class="flex flex-col h-screen">
+    {#if isLoggedIn}
+      <AppHeader />
+    {:else}
+      <Header onLoginClick={openLoginModal} />
+    {/if}
+    <HomePage onLoginClick={openLoginModal} />
+    <Footer />
+  </main>
 
-<LoginModal
-  open={isLoginModalOpen}
-  onOpenChange={(open) => (isLoginModalOpen = open)}
-/>
+  <LoginModal
+    open={isLoginModalOpen}
+    onOpenChange={(open) => (isLoginModalOpen = open)}
+  />
+{/if}
