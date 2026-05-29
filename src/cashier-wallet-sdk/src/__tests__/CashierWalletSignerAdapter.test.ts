@@ -19,7 +19,7 @@ const {
 
   const mockRequestPermissions = vi.fn().mockResolvedValue(undefined)
   const mockGetAccounts = vi.fn().mockResolvedValue([
-    { owner: { toText: () => 'owner-principal-text' } },
+    { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
   ])
   const MockSigner = vi.fn().mockImplementation(() => ({
     requestPermissions: mockRequestPermissions,
@@ -62,6 +62,9 @@ const { FakeBaseSignerAdapter, mockSuperDisconnectInternal, mockSuperCleanupInte
     protected signer: unknown = null
     protected signerAgent: unknown = null
     protected agent: unknown = null
+    // PNP's BaseSignerAdapter computes this as `${adapter.id}_principal` —
+    // the adapter under test reads it via `this.principalStorageKey`.
+    protected principalStorageKey = 'cashierWallet_principal'
 
     constructor(args: { config: Record<string, unknown> }) {
       this.config = args.config
@@ -144,13 +147,23 @@ async function connectAdapter(adapter: CashierWalletSignerAdapter) {
 describe('CashierWalletSignerAdapter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     MockIframeTransport.mockImplementation(() => ({ destroy: mockIframeDestroy }))
     MockSigner.mockImplementation(() => ({
       requestPermissions: mockRequestPermissions,
       getAccounts: mockGetAccounts,
     }))
-    mockRequestPermissions.mockResolvedValue(undefined)
-    mockGetAccounts.mockResolvedValue([{ owner: { toText: () => 'owner-principal-text' } }])
+    // Silent reconnect is exercised by Phase 1's connect() flow before the
+    // popup path. To keep popup-path tests deterministic, default the silent
+    // attempt to FAIL (first requestPermissions call rejects) so connect()
+    // falls through to the popup flow. The popup flow then re-calls
+    // requestPermissions, which resolves (the .mockResolvedValue below).
+    // Tests that want silent-success override these mocks before connecting.
+    mockRequestPermissions.mockReset()
+    mockRequestPermissions
+      .mockRejectedValueOnce(new Error('silent path disabled in default test setup'))
+      .mockResolvedValue(undefined)
+    mockGetAccounts.mockResolvedValue([{ owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } }])
   })
 
   afterEach(() => {
@@ -240,12 +253,24 @@ describe('CashierWalletSignerAdapter', () => {
       vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
 
       const adapter = makeAdapter()
-      const connectPromise = adapter.connect()
+      // Capture rejection eagerly to avoid a transient unhandled-rejection
+      // window between the timer firing and `await expect.rejects` attaching.
+      const settled = adapter.connect().then(
+        () => ({ ok: true as const }),
+        (err: Error) => ({ ok: false as const, err }),
+      )
+
+      // Drain microtasks so silent rejects + popup-flow timers register
+      await vi.advanceTimersByTimeAsync(0)
 
       fakePopup.closed = true
-      vi.advanceTimersByTime(600)
+      await vi.advanceTimersByTimeAsync(600)
 
-      await expect(connectPromise).rejects.toThrow('closed before authentication')
+      const outcome = await settled
+      expect(outcome.ok).toBe(false)
+      if (!outcome.ok) {
+        expect(outcome.err.message).toContain('closed before authentication')
+      }
       vi.useRealTimers()
     })
 
@@ -255,11 +280,19 @@ describe('CashierWalletSignerAdapter', () => {
       vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
 
       const adapter = makeAdapter()
-      const connectPromise = adapter.connect()
+      const settled = adapter.connect().then(
+        () => ({ ok: true as const }),
+        (err: Error) => ({ ok: false as const, err }),
+      )
 
-      vi.advanceTimersByTime(5 * 60 * 1_000 + 100)
+      await vi.advanceTimersByTimeAsync(0)
+      await vi.advanceTimersByTimeAsync(5 * 60 * 1_000 + 100)
 
-      await expect(connectPromise).rejects.toThrow('timed out')
+      const outcome = await settled
+      expect(outcome.ok).toBe(false)
+      if (!outcome.ok) {
+        expect(outcome.err.message).toContain('timed out')
+      }
       vi.useRealTimers()
     })
 
@@ -306,9 +339,85 @@ describe('CashierWalletSignerAdapter', () => {
 
       await (adapter as unknown as { disconnectInternal(): Promise<void> }).disconnectInternal()
 
-      expect(mockIframeDestroy).toHaveBeenCalledOnce()
+      // Two iframe.destroy() calls in this flow: (1) silent-attempt teardown
+      // before the popup opens, (2) final disconnect.
+      expect(mockIframeDestroy).toHaveBeenCalledTimes(2)
       expect(await adapter.isConnected()).toBe(false)
       await expect(adapter.getPrincipal()).rejects.toThrow('Not connected')
+    })
+  })
+
+  // ─── silent reconnect ─────────────────────────────────────────────────────────
+
+  describe('silent reconnect', () => {
+    // Configure mocks so the silent path succeeds without falling through to popup.
+    function setupSilentSuccess() {
+      mockRequestPermissions.mockReset()
+      mockRequestPermissions.mockResolvedValue(undefined)
+      mockGetAccounts.mockResolvedValue([
+        { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
+      ])
+    }
+
+    it('skips popup when wallet returns accounts silently', async () => {
+      setupSilentSuccess()
+      const openSpy = vi.spyOn(window, 'open')
+
+      const adapter = makeAdapter()
+      const result = await adapter.connect()
+
+      expect(openSpy).not.toHaveBeenCalled()
+      expect(result.owner).toBe('owner-principal-text')
+    })
+
+    it('persists principal to localStorage on successful silent connect', async () => {
+      setupSilentSuccess()
+      const adapter = makeAdapter()
+      await adapter.connect()
+
+      expect(localStorage.getItem('cashierWallet_principal'))
+        .toBe('owner-principal-text')
+    })
+
+    it('persists principal to localStorage on popup fallback connect', async () => {
+      // Default setup makes silent fail → popup path runs.
+      const adapter = makeAdapter()
+      await connectAdapter(adapter)
+
+      expect(localStorage.getItem('cashierWallet_principal'))
+        .toBe('owner-principal-text')
+    })
+
+    it('clears localStorage on disconnect', async () => {
+      setupSilentSuccess()
+      const adapter = makeAdapter()
+      await adapter.connect()
+      await (adapter as unknown as { disconnectInternal(): Promise<void> }).disconnectInternal()
+
+      expect(localStorage.getItem('cashierWallet_principal')).toBeNull()
+    })
+
+    it('falls through to popup when getAccounts returns empty (no owner)', async () => {
+      mockRequestPermissions.mockReset()
+      mockRequestPermissions.mockResolvedValue(undefined)
+      mockGetAccounts.mockReset()
+      mockGetAccounts
+        .mockResolvedValueOnce([])           // silent: no accounts → null owner → fail
+        .mockResolvedValue([
+          { owner: { toText: () => 'owner-principal-text', isAnonymous: () => false } },
+        ])                                   // popup: real owner
+
+      const adapter = makeAdapter()
+      const fakePopup = { closed: false, postMessage: vi.fn() }
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakePopup as unknown as Window)
+
+      const connectPromise = adapter.connect()
+      // Let silent attempt settle and popup listeners register
+      await new Promise((r) => setTimeout(r, 0))
+      sendMessage({ type: 'wallet_auth_complete', principal: 'owner-principal-text' })
+      await connectPromise
+
+      expect(openSpy).toHaveBeenCalled()
     })
   })
 

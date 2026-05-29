@@ -1,4 +1,5 @@
 import { HttpAgent } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import type { Transport } from "@icp-sdk/signer";
 import { Signer } from "@icp-sdk/signer";
 import { SignerAgent } from "@icp-sdk/signer/agent";
@@ -52,6 +53,48 @@ interface Account {
 
 const POPUP_CLOSED_CHECK_MS = 500;
 const POPUP_TIMEOUT_MS = 5 * 60 * 1_000; // 5 min
+const SILENT_RECONNECT_TIMEOUT_MS = 5_000;
+
+/**
+ * Race a promise against a timeout. The losing branch's errors are swallowed
+ * so we don't leak unhandled rejections when the silent attempt is abandoned.
+ */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`silent-reconnect: timed out after ${ms}ms`)),
+      ms,
+    );
+    p.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
+function safeLocalStorageSet(key: string, value: string): void {
+  try {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(key, value);
+  } catch {
+    /* SSR-safe / quota errors swallowed */
+  }
+}
+
+function safeLocalStorageRemove(key: string): void {
+  try {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(key);
+  } catch {
+    /* SSR-safe */
+  }
+}
 
 /**
  * PNP adapter that connects to the Cashier Wallet via:
@@ -95,14 +138,18 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
   // ── Auth ──────────────────────────────────────────────────────────────
 
   /**
-   * Full connection flow:
-   *  1. Open the wallet as a popup → user completes II login → popup sends
-   *     `wallet_auth_complete` with the principal and closes.
-   *  2. Mount a hidden iframe to the same wallet origin.
-   *  3. Perform ICRC-29 handshake via HeartbeatClient.
-   *  4. Request permissions (icrc27_accounts, icrc49_call_canister).
-   *  5. Fetch the accounts list to confirm authentication.
-   *  6. Return `{ owner, subaccount }` to PNP.
+   * Connection flow with silent reconnect:
+   *
+   *  1. Mount iframe + Signer silently (no popup, no user gesture).
+   *  2. Attempt silent reconnect: requestPermissions + getAccounts within a
+   *     short timeout. OISY auto-returns when grants are persisted in the
+   *     wallet origin's localStorage and the II session is still valid.
+   *  3. On silent success → finalize (persist principal, init SignerAgent).
+   *  4. On silent failure/timeout → tear down silent attempt, open login
+   *     popup, then re-mount and request permissions before finalizing.
+   *
+   * Net effect: page refreshes don't re-prompt while the wallet session and
+   * ICRC-25 grants are still valid.
    */
   async connect(): Promise<Account> {
     const {
@@ -112,29 +159,40 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
       disconnectTimeout = 120_000,
     } = this.config;
 
-    // Phase 1 — II login via popup.
-    // NOTE: `config.derivationOrigin` is intentionally NOT forwarded here.
-    // ICRC-95 derivation-origin support is deferred (see plan unresolved Q#1).
-    // The field is retained on the config interface for future enablement.
-    const principal = await this.openLoginPopup(walletOrigin);
-    this.principalText = principal;
-
-    // Phase 2 — mount iframe + ICRC-29 transport
-    this.iframeTransport = new IframeTransport({
-      url: walletOrigin,
+    // ── Silent attempt ────────────────────────────────────────────────────
+    this.mountTransportAndSigner(
+      walletOrigin,
       establishTimeout,
       disconnectTimeout,
-    });
-    const signer = new Signer<Transport>({
-      transport: this.iframeTransport,
-      // Keep the channel alive across calls (we re-use the iframe)
-      autoCloseTransportChannel: false,
-    });
-    this.signer = signer;
+    );
+    const silent = await this.attemptSilentReconnect(
+      SILENT_RECONNECT_TIMEOUT_MS,
+    );
+    if (silent) {
+      return this.finalizeConnection(
+        host,
+        silent.principal,
+        silent.ownerPrincipal,
+      );
+    }
 
-    // Phase 3 — request permissions (shows ICRC-25 permission prompt in wallet)
+    // ── Popup fallback ────────────────────────────────────────────────────
+    // Tear down the failed silent attempt before opening the popup so the
+    // user-gesture path mounts a fresh iframe + ICRC-29 channel.
+    this.tearDownTransportAndSigner();
+
+    // NOTE: `config.derivationOrigin` is intentionally NOT forwarded here.
+    // ICRC-95 derivation-origin support is deferred (see plan unresolved Q#1).
+    const principal = await this.openLoginPopup(walletOrigin);
+
+    this.mountTransportAndSigner(
+      walletOrigin,
+      establishTimeout,
+      disconnectTimeout,
+    );
+
     try {
-      await signer.requestPermissions([
+      await this.signer!.requestPermissions([
         { method: "icrc27_accounts" },
         { method: "icrc49_call_canister" },
       ]);
@@ -151,16 +209,99 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
       throw e;
     }
 
-    // Phase 4 — verify accounts
-    const accounts = await signer.getAccounts();
+    const accounts = await this.signer!.getAccounts();
     const ownerPrincipal = accounts[0]?.owner;
-    const ownerText = ownerPrincipal ? ownerPrincipal.toText() : principal;
+    return this.finalizeConnection(host, principal, ownerPrincipal);
+  }
 
-    // Phase 5 — SignerAgent routes ALL canister traffic through wallet via ICRC-49.
-    // Queries are upgraded to authenticated update calls internally so callers
-    // relying on ic_cdk::caller() (e.g. user_get_links_v3) work correctly.
+  /**
+   * Mount the hidden iframe and instantiate a Signer over the resulting
+   * ICRC-29 channel. Called twice in the popup-fallback path: once for the
+   * silent attempt, again after the user authenticates.
+   */
+  private mountTransportAndSigner(
+    walletOrigin: string,
+    establishTimeout: number,
+    disconnectTimeout: number,
+  ): void {
+    this.iframeTransport = new IframeTransport({
+      url: walletOrigin,
+      establishTimeout,
+      disconnectTimeout,
+    });
+    this.signer = new Signer<Transport>({
+      transport: this.iframeTransport,
+      // Keep the channel alive across calls (we re-use the iframe)
+      autoCloseTransportChannel: false,
+    });
+  }
+
+  /**
+   * Reverse of `mountTransportAndSigner` — destroys the iframe and clears
+   * the Signer reference. Used when the silent attempt fails so the popup
+   * fallback can mount a clean channel.
+   */
+  private tearDownTransportAndSigner(): void {
+    this.iframeTransport?.destroy();
+    this.iframeTransport = null;
+    this.signer = null;
+  }
+
+  /**
+   * Attempt to rehydrate the session without any user-visible prompt.
+   * Succeeds only when the wallet origin already has ICRC-25 grants for our
+   * scopes AND a non-anonymous II session is active.
+   *
+   * Note: each of the two awaited calls has its own `timeoutMs` budget,
+   * so the worst-case silent window is ~2 * timeoutMs. In practice both
+   * calls return near-instantly when the wallet is in the happy state, so
+   * the simple per-call budget is good enough.
+   */
+  private async attemptSilentReconnect(
+    timeoutMs: number,
+  ): Promise<{ principal: string; ownerPrincipal: Principal | undefined } | null> {
+    if (!this.signer) return null;
+    const signer = this.signer;
+    try {
+      await withTimeout(
+        signer.requestPermissions([
+          { method: "icrc27_accounts" },
+          { method: "icrc49_call_canister" },
+        ]),
+        timeoutMs,
+      );
+      const accounts = await withTimeout(signer.getAccounts(), timeoutMs);
+      const ownerPrincipal = accounts[0]?.owner;
+      // Anonymous principals indicate the wallet's II session expired but
+      // ICRC-25 grants are still stored. Treat as silent failure → popup.
+      if (!ownerPrincipal || ownerPrincipal.isAnonymous()) return null;
+      return { principal: ownerPrincipal.toText(), ownerPrincipal };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Common tail of both silent and popup paths: persist the authenticated
+   * principal, wire up the SignerAgent, and return the Account expected by
+   * PNP. The parent's `principalStorageKey` is computed in the
+   * BaseSignerAdapter ctor as `${adapter.id}_principal`.
+   */
+  private finalizeConnection(
+    host: string,
+    principal: string,
+    ownerPrincipal: Principal | undefined,
+  ): Account {
+    if (!ownerPrincipal) {
+      throw new Error(
+        "CashierWalletSignerAdapter: no owner principal returned by the wallet",
+      );
+    }
+    this.principalText = principal;
+    safeLocalStorageSet(this.principalStorageKey, principal);
+
     const signerAgent = SignerAgent.createSync({
-      signer,
+      signer: this.signer!,
       account: ownerPrincipal,
       agent: HttpAgent.createSync({ host }),
     });
@@ -169,29 +310,7 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
     // any contract-level consumers see a non-null agent.
     this.agent = signerAgent;
 
-    // ── TEMP DIAGNOSTIC: count SignerAgent instances ────────────────────────
-    // Multiple SignerAgents = multiple #pending queues = possible OISY BUSY
-    // collisions. Each instance prints its creation count + unique-instance set.
-    // Remove once root cause is confirmed.
-    type Diag = {
-      __cashier_sa_count?: number;
-      __cashier_sa_instances?: Set<unknown>;
-      __cashier_signer_instances?: Set<unknown>;
-    };
-    const w = window as Window & Diag;
-    w.__cashier_sa_count = (w.__cashier_sa_count ?? 0) + 1;
-    w.__cashier_sa_instances = w.__cashier_sa_instances ?? new Set();
-    w.__cashier_sa_instances.add(signerAgent);
-    w.__cashier_signer_instances = w.__cashier_signer_instances ?? new Set();
-    w.__cashier_signer_instances.add(signer);
-    console.warn(
-      `[SignerAgent diag] connect() #${w.__cashier_sa_count} — unique SignerAgent=${w.__cashier_sa_instances.size}, unique Signer=${w.__cashier_signer_instances.size}`,
-    );
-
-    return {
-      owner: ownerText,
-      subaccount: null,
-    };
+    return { owner: principal, subaccount: null };
   }
 
   async isConnected(): Promise<boolean> {
@@ -209,6 +328,10 @@ export class CashierWalletSignerAdapter extends BaseSignerAdapter<CashierWalletA
   // ── Cleanup ───────────────────────────────────────────────────────────
 
   protected async disconnectInternal(): Promise<void> {
+    // Defense in depth: parent already clears its own principalStorageKey,
+    // but be explicit so a partial parent failure can't leave residue.
+    safeLocalStorageRemove(this.principalStorageKey);
+
     // Close ICRC-29 channel while the iframe is still alive so the wallet
     // receives the close message; tear down the iframe afterwards.
     await super.disconnectInternal();
