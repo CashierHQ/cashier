@@ -1,6 +1,6 @@
-import { HttpAgent, Actor } from '@dfinity/agent'
-import { IDL } from '@dfinity/candid'
-import { Principal } from '@dfinity/principal'
+import { HttpAgent, Actor } from '@icp-sdk/core/agent'
+import { IDL } from '@icp-sdk/core/candid'
+import { Principal } from '@icp-sdk/core/principal'
 import { getIdentity } from './identity-manager'
 
 const IC_HOST = 'https://icp-api.io'

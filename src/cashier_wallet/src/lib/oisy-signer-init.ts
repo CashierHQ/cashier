@@ -20,9 +20,11 @@ import {
   ICRC49_CALL_CANISTER,
 } from '@dfinity/oisy-wallet-signer';
 import { Signer } from '@dfinity/oisy-wallet-signer/signer';
+import type { icrc21_consent_info } from './icrc21-types';
 import {
   createPendingConsent21,
   updateConsent21Error,
+  updateConsent21Result,
 } from './icrc21-consent-store';
 import {
   createPendingPermission,
@@ -37,6 +39,49 @@ const IC_HOST = env.PUBLIC_ICP_HOST ?? 'https://icp-api.io';
 export let walletReady = false;
 
 let signerInstance: Signer | null = null;
+
+// Idempotent ICRC-49 request logger. OISY's prompt payload hides method/canisterId,
+// so we tap the raw JSON-RPC frame at the window-message level. Listener is passive —
+// it doesn't consume the event; OISY still processes the same message normally.
+// Stashed on `window` (not module scope) to survive HMR reloads.
+const ICRC49_LOGGER_KEY = Symbol.for('cashier-wallet.icrc49-request-logger');
+type WindowWithIcrc49Logger = Window & {
+  [ICRC49_LOGGER_KEY]?: (event: MessageEvent) => void;
+};
+
+function installIcrc49RequestLogger(): void {
+  const w = window as WindowWithIcrc49Logger;
+  const prior = w[ICRC49_LOGGER_KEY];
+  if (prior) window.removeEventListener('message', prior);
+
+  const listener = (event: MessageEvent) => {
+    const req = event.data as {
+      jsonrpc?: string;
+      id?: unknown;
+      method?: string;
+      params?: { canisterId?: string; method?: string };
+    } | null;
+    if (req?.jsonrpc !== '2.0' || req.method !== 'icrc49_call_canister') return;
+    const canisterId = req.params?.canisterId ?? '?';
+    const method = req.params?.method ?? '?';
+    // Use console.warn — lint rule blocks console.log; this is a debug breadcrumb,
+    // not an actual warning.
+    console.warn(
+      `[ICRC-49 ⇢] ${canisterId}::${method} id=${String(req.id)} origin=${event.origin}`
+    );
+  };
+  window.addEventListener('message', listener);
+  w[ICRC49_LOGGER_KEY] = listener;
+}
+
+function uninstallIcrc49RequestLogger(): void {
+  const w = window as WindowWithIcrc49Logger;
+  const prior = w[ICRC49_LOGGER_KEY];
+  if (prior) {
+    window.removeEventListener('message', prior);
+    delete w[ICRC49_LOGGER_KEY];
+  }
+}
 
 /**
  * Tracks the requestId of the ICRC-21 consent flow that is currently in
@@ -69,6 +114,7 @@ export async function initOisySigner(): Promise<void> {
   }
 
   signerInstance = Signer.init({ owner: identity, host: IC_HOST });
+  installIcrc49RequestLogger();
 
   // ── ICRC-25: permission request prompt ─────────────────────────────────
   // The OISY Signer calls this when a dApp sends icrc25_request_permissions.
@@ -138,32 +184,43 @@ export async function initOisySigner(): Promise<void> {
         createPendingConsent21(requestId, payload.origin);
         // Popup deferred until 'result' — canister may not support ICRC-21.
       } else if (payload.status === 'result') {
-        console.log(`consent info:`, payload.consentInfo);
+        // Show the consent popup so the user can approve/reject the ICRC-49 call.
+        // The popup reads payload.consentInfo from icrc21-consent-store and posts
+        // the user's decision back via approve()/reject().
+        const requestId = currentIcrc21RequestId;
+        if (!requestId) {
+          // Defensive: no preceding 'loading' phase — bail out and reject.
+          payload.reject();
+          return;
+        }
 
-        // const requestId = currentIcrc21RequestId;
-        // if (!requestId) return;
+        const popup = window.open(
+          `/icrc21-consent?id=${requestId}`,
+          `icrc21_${requestId}`,
+          'width=440,height=600,resizable=no'
+        );
 
-        // const popup = window.open(
-        //   `/icrc21-consent?id=${requestId}`,
-        //   `icrc21_${requestId}`,
-        //   'width=440,height=600,resizable=no'
-        // );
+        if (!popup) {
+          // Popup blocked — must reject so OISY's handler doesn't hang.
+          payload.reject();
+          currentIcrc21RequestId = null;
+          return;
+        }
 
-        // if (!popup) {
-        //   payload.reject();
-        //   currentIcrc21RequestId = null;
-        //   return;
-        // }
+        // OISY wraps consentInfo as a tagged variant: {Ok: ...} | {Warn: {consentInfo: ...}}.
+        // Unwrap to the underlying icrc21_consent_info before handing it to the popup store.
+        const variant = payload.consentInfo as
+          | { Ok: icrc21_consent_info }
+          | { Warn: { consentInfo: icrc21_consent_info } };
+        const consentInfo: icrc21_consent_info =
+          'Ok' in variant ? variant.Ok : variant.Warn.consentInfo;
 
-        // updateConsent21Result(
-        //   requestId,
-        //   payload.consentInfo as icrc21_consent_info,
-        //   payload.approve,
-        //   payload.reject
-        // );
-
-        // auto approve
-        payload.approve();
+        updateConsent21Result(
+          requestId,
+          consentInfo,
+          payload.approve,
+          payload.reject
+        );
       } else if (payload.status === 'error') {
         const requestId = currentIcrc21RequestId;
         if (requestId) {
@@ -181,9 +238,11 @@ export async function initOisySigner(): Promise<void> {
   signerInstance.register({
     method: ICRC49_CALL_CANISTER,
     prompt: ({ status, ...rest }) => {
-      console.log(`ICRC-49 result: status=${status}`, rest);
-      if (status === 'result') {
-        console.log(`ICRC-49 call successful:`, rest);
+      console.log(`ICRC-49 result: status=${status}`);
+      if (status === "result") {
+        console.log(`ICRC-49 call successful:`);
+      } else if (status === "error") {
+        console.error(`ICRC-49 call failed:`);
       }
     },
   });
@@ -200,4 +259,5 @@ export function disconnectSigner(): void {
   signerInstance = null;
   walletReady = false;
   currentIcrc21RequestId = null;
+  uninstallIcrc49RequestLogger();
 }

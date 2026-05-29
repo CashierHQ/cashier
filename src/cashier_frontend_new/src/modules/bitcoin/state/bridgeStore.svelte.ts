@@ -89,7 +89,8 @@ class BridgeStore {
 
         return this.#allBridges;
       },
-      refetchInterval: 30_000, // refresh every 30 seconds
+      staleTime: 120_000,
+      refetchInterval: 120_000, // 2 min — wallet ICRC-49 roundtrip; keep sparse
       persistedKey: ["walletBridgeStore_bridgeTxs"],
       storageType: "sessionStorage",
     });
@@ -125,6 +126,7 @@ class BridgeStore {
 
         return this.#allImportBridges;
       },
+      staleTime: 300_000,
       refetchInterval: 300_000, // refresh every 5 minutes
       persistedKey: ["walletBridgeStore_importBridgeTxs"],
       storageType: "sessionStorage",
@@ -161,6 +163,7 @@ class BridgeStore {
 
         return this.#allExportBridges;
       },
+      staleTime: 300_000,
       refetchInterval: 300_000, // refresh every 5 minutes
       persistedKey: ["walletBridgeStore_exportBridgeTxs"],
       storageType: "sessionStorage",

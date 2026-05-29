@@ -66,7 +66,8 @@ class WalletNftStore {
 
         return this.#allNfts;
       },
-      refetchInterval: 15_000, // Refresh every 15 seconds to keep NFTs up-to-date
+      staleTime: 120_000,
+      refetchInterval: 120_000, // 2 min — every refetch is a wallet ICRC-49 roundtrip; keep sparse
       persistedKey: ["walletNftQuery"],
       storageType: "localStorage",
     });

@@ -9,14 +9,14 @@ const mockActorInstance = {
   icrc1_balance_of: mockIcrc1BalanceOf,
 }
 
-vi.mock('@dfinity/agent', () => ({
+vi.mock('@icp-sdk/core/agent', () => ({
   HttpAgent: { createSync: vi.fn().mockReturnValue({}) },
   Actor: {
     createActor: vi.fn().mockReturnValue(mockActorInstance),
   },
 }))
 
-vi.mock('@dfinity/candid', () => ({
+vi.mock('@icp-sdk/core/candid', () => ({
   IDL: {
     Record: vi.fn().mockReturnValue({}),
     Variant: vi.fn().mockReturnValue({}),
@@ -33,7 +33,7 @@ vi.mock('@dfinity/candid', () => ({
   },
 }))
 
-vi.mock('@dfinity/principal', () => ({
+vi.mock('@icp-sdk/core/principal', () => ({
   Principal: {
     fromText: vi.fn().mockImplementation((text: string) => ({ text, toText: () => text })),
   },
@@ -68,7 +68,7 @@ describe('ledger', () => {
       const { getIdentity } = await import('../identity-manager')
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
-      const { Actor } = await import('@dfinity/agent')
+      const { Actor } = await import('@icp-sdk/core/agent')
       vi.mocked(Actor.createActor).mockReturnValue({ ...mockActorInstance } as never)
       mockIcrc1Transfer.mockResolvedValue({ Ok: 123n })
 
@@ -86,7 +86,7 @@ describe('ledger', () => {
       const { getIdentity } = await import('../identity-manager')
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
-      const { Actor } = await import('@dfinity/agent')
+      const { Actor } = await import('@icp-sdk/core/agent')
       vi.mocked(Actor.createActor).mockReturnValue({ ...mockActorInstance } as never)
       mockIcrc1Transfer.mockResolvedValue({
         Err: { InsufficientFunds: { balance: 500n } },
@@ -106,7 +106,7 @@ describe('ledger', () => {
       const { getIdentity } = await import('../identity-manager')
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
-      const { Actor } = await import('@dfinity/agent')
+      const { Actor } = await import('@icp-sdk/core/agent')
       vi.mocked(Actor.createActor).mockReturnValue({ ...mockActorInstance } as never)
       mockIcrc1Transfer.mockResolvedValue({
         Err: { BadFee: { expected_fee: 10_000n } },
@@ -143,7 +143,7 @@ describe('ledger', () => {
       const { getIdentity } = await import('../identity-manager')
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
-      const { Actor } = await import('@dfinity/agent')
+      const { Actor } = await import('@icp-sdk/core/agent')
       vi.mocked(Actor.createActor).mockReturnValue({ ...mockActorInstance } as never)
       mockIcrc1BalanceOf.mockResolvedValue(42_000_000n)
 
@@ -157,11 +157,11 @@ describe('ledger', () => {
       const { getIdentity } = await import('../identity-manager')
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
-      const { Actor } = await import('@dfinity/agent')
+      const { Actor } = await import('@icp-sdk/core/agent')
       vi.mocked(Actor.createActor).mockReturnValue({ ...mockActorInstance } as never)
       mockIcrc1BalanceOf.mockResolvedValue(0n)
 
-      const { Principal } = await import('@dfinity/principal')
+      const { Principal } = await import('@icp-sdk/core/principal')
 
       const { icrc1BalanceOf } = await import('../ledger')
       await icrc1BalanceOf('ryjl3-tyaaa-aaaaa-aaaba-cai', 'owner-principal')

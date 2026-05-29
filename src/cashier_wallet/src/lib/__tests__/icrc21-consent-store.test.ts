@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { icrc21_consent_info } from '@dfinity/oisy-wallet-signer'
+import type { icrc21_consent_info } from '../icrc21-types'
 
 const mockConsentInfo: icrc21_consent_info = {
   metadata: { language: 'en', utc_offset_minutes: [] },

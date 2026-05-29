@@ -16,7 +16,7 @@ const mockAgentAddTransform = vi.fn().mockImplementation((_: string, cb: unknown
 const mockAgentCall = vi.fn()
 const mockAgentReadState = vi.fn()
 
-vi.mock('@dfinity/agent', () => ({
+vi.mock('@icp-sdk/core/agent', () => ({
   HttpAgent: {
     createSync: vi.fn().mockImplementation(() => ({
       addTransform: mockAgentAddTransform,
@@ -33,7 +33,7 @@ vi.mock('@dfinity/agent', () => ({
   },
 }))
 
-vi.mock('@dfinity/principal', () => ({
+vi.mock('@icp-sdk/core/principal', () => ({
   Principal: {
     fromText: vi.fn().mockImplementation((t: string) => ({ toText: () => t })),
   },
@@ -60,7 +60,7 @@ describe('signer', () => {
     vi.clearAllMocks()
     capturedTransform = null
     // Re-apply the HttpAgent mock implementation after resetModules
-    vi.mock('@dfinity/agent', () => ({
+    vi.mock('@icp-sdk/core/agent', () => ({
       HttpAgent: {
         createSync: vi.fn().mockImplementation(() => ({
           addTransform: mockAgentAddTransform,
@@ -69,7 +69,7 @@ describe('signer', () => {
         })),
       },
       Cbor: {
-        encode: vi.fn().mockImplementation(() => new Uint8Array([1, 2, 3]).buffer),
+        encode: vi.fn().mockImplementation(() => new Uint8Array([1, 2, 3])),
       },
       polling: {
         pollForResponse: vi.fn().mockResolvedValue(undefined),
@@ -190,7 +190,7 @@ describe('signer', () => {
 
       // 'AQID' is base64 for [1, 2, 3]
       let capturedArg: Uint8Array | undefined
-      mockAgentCall.mockImplementation(async ({ arg }: { arg: Uint8Array }) => {
+      mockAgentCall.mockImplementation(async (_canisterId: unknown, { arg }: { arg: Uint8Array }) => {
         capturedArg = arg
         if (capturedTransform) await capturedTransform({ body: {} })
         return { requestId: new Uint8Array(32) }
@@ -212,7 +212,7 @@ describe('signer', () => {
       vi.mocked(getIdentity).mockReturnValue({ getPrincipal: () => ({ toText: () => 'me' }) } as never)
 
       let capturedArg: Uint8Array | undefined
-      mockAgentCall.mockImplementation(async ({ arg }: { arg: Uint8Array }) => {
+      mockAgentCall.mockImplementation(async (_canisterId: unknown, { arg }: { arg: Uint8Array }) => {
         capturedArg = arg
         if (capturedTransform) await capturedTransform({ body: {} })
         return { requestId: new Uint8Array(32) }

@@ -34,6 +34,7 @@ export class LinkDetailStore {
         return linkDetail.value;
       },
       watch: true,
+      staleTime: 120_000,
     });
   }
 

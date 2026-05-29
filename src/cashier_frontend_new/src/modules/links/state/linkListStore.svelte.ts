@@ -48,7 +48,8 @@ export class LinkListStore {
         return [...v2Links, ...v3Links];
       },
       watch: [() => authState.account],
-      refetchInterval: 15 * 1000, // 15 seconds
+      staleTime: 120_000,
+      refetchInterval: 120_000, // 2 min — every refetch is a wallet ICRC-49 roundtrip; keep sparse
       persistedKey: ["linkList"],
       storageType: "localStorage",
       serde: LinkMapper.serde,

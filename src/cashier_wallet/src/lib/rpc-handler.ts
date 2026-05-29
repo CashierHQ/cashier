@@ -12,6 +12,15 @@ import { signMessage } from './signer';
 /** Called each time a valid JSON-RPC request is received, with the method name as argument. */
 type OnRequestCallback = (method: string) => void;
 
+// Idempotent install — repeated calls replace the previous listener instead
+// of stacking (otherwise tests + HMR reloads leak listeners on `window`).
+// We stash the prior listener on `window` itself (not module scope) so it
+// survives `vi.resetModules()` and module-reload cycles where module state resets.
+const RPC_LISTENER_KEY = Symbol.for('cashier-wallet.rpc-listener');
+type WindowWithRpcListener = Window & {
+  [RPC_LISTENER_KEY]?: (event: MessageEvent) => void;
+};
+
 /**
  * Initializes the wallet's postMessage listener.
  *
@@ -22,7 +31,12 @@ type OnRequestCallback = (method: string) => void;
  * decision.
  */
 export function initRpcHandler(onRequest?: OnRequestCallback): void {
-  window.addEventListener('message', async (event: MessageEvent) => {
+  const w = window as WindowWithRpcListener;
+  const prior = w[RPC_LISTENER_KEY];
+  if (prior) {
+    window.removeEventListener('message', prior);
+  }
+  const listener = async (event: MessageEvent) => {
     // Reject messages that have no origin (e.g. file:// or opaque origins)
     if (!event.origin || event.origin === 'null') return;
 
@@ -37,7 +51,9 @@ export function initRpcHandler(onRequest?: OnRequestCallback): void {
     if (!event.source) return;
     const source = event.source as Window;
     await handleRequest(req, source, event.origin);
-  });
+  };
+  window.addEventListener('message', listener);
+  w[RPC_LISTENER_KEY] = listener;
 }
 
 /**

@@ -1,5 +1,5 @@
-import { Cbor, HttpAgent, polling } from '@dfinity/agent'
-import { Principal } from '@dfinity/principal'
+import { Cbor, HttpAgent, polling } from '@icp-sdk/core/agent'
+import { Principal } from '@icp-sdk/core/principal'
 import { env } from '$env/dynamic/public'
 import { getIdentity } from './identity-manager'
 
@@ -73,7 +73,7 @@ export async function callCanister(
   // Create a fresh agent so the addTransform callback doesn't leak across calls
   const agent = HttpAgent.createSync({ identity, host: IC_HOST })
 
-  let contentMap: ArrayBuffer | undefined
+  let contentMap: Uint8Array | undefined
   agent.addTransform('update', async (agentRequest) => {
     contentMap = Cbor.encode(agentRequest.body)
     return agentRequest
@@ -85,13 +85,13 @@ export async function callCanister(
     arg: argBytes,
   })
 
-  const { pollForResponse, defaultStrategy } = polling
-  await pollForResponse(agent, canisterId, submitResponse.requestId, defaultStrategy())
+  const { pollForResponse } = polling
+  await pollForResponse(agent, canisterId, submitResponse.requestId)
 
   const { certificate } = await agent.readState(canisterId, {
     paths: [
       [
-        new TextEncoder().encode('request_status').buffer as ArrayBuffer,
+        new TextEncoder().encode('request_status'),
         submitResponse.requestId,
       ],
     ],
@@ -100,7 +100,7 @@ export async function callCanister(
   if (!contentMap) throw new Error('contentMap was not captured by transform')
 
   return {
-    contentMap: bytesToBase64(new Uint8Array(contentMap)),
+    contentMap: bytesToBase64(contentMap),
     certificate: bytesToBase64(new Uint8Array(certificate)),
   }
 }
