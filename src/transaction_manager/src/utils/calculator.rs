@@ -10,7 +10,7 @@ use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use cashier_shared::{
     IntentParticipants, TokenStandard as SharedTokenStandard,
     calculate_intent_outbound_network_fee, calculate_intent_total_amount,
-    calculate_intent_total_network_fee,
+    calculate_intent_total_network_fee, get_gate_create_fee_amount, get_gate_open_fee_amount,
 };
 use std::collections::HashMap;
 
@@ -42,6 +42,9 @@ pub fn calculate_link_balance_map(
             max_use_count,
             &Nat::from(CREATE_LINK_FEE),
             &Nat::from(0u64),
+            0,
+            &get_gate_create_fee_amount(),
+            &get_gate_open_fee_amount(),
         );
         let sending_amount = intent_amount + asset_network_fee.clone() * Nat::from(max_use_count);
 
@@ -75,6 +78,9 @@ pub fn calculate_icrc2_transfer_intent_amount(
         max_use,
         &Nat::from(CREATE_LINK_FEE),
         &Nat::from(0u64),
+        0,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
     );
     let intent_network_fee = calculate_intent_total_network_fee(
         IntentParticipants::CreatorToLink,
@@ -117,6 +123,9 @@ pub fn calculate_icrc1_transfer_intent_amount(
         max_use,
         &Nat::from(CREATE_LINK_FEE),
         &Nat::from(0u64),
+        0,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
     );
     let intent_network_fee = calculate_intent_total_network_fee(
         IntentParticipants::CreatorToLink,
@@ -147,6 +156,31 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
         1,
         &Nat::from(CREATE_LINK_FEE),
         &Nat::from(0u64),
+        0,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
+    );
+    let default_fee = Nat::from(10_000u64);
+    let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).unwrap_or(&default_fee);
+    (actual_amount.clone(), actual_amount + fee_in_nat.clone())
+}
+
+/// Calculate the total gate fee required at link creation time.
+/// Returns `(actual_amount, approved_amount)` for an ICP ICRC-2 transfer.
+pub fn calculate_gate_fee(
+    gate_count: u64,
+    max_use: u64,
+    fee_map: &HashMap<Principal, Nat>,
+) -> (Nat, Nat) {
+    let actual_amount = calculate_intent_total_amount(
+        IntentParticipants::CreatorToGate,
+        &Nat::from(0u64),
+        max_use,
+        &Nat::from(CREATE_LINK_FEE),
+        &Nat::from(0u64),
+        gate_count,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
     );
     let default_fee = Nat::from(10_000u64);
     let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).unwrap_or(&default_fee);

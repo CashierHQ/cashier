@@ -13,7 +13,7 @@
 
     "AddressType": {
       "type": "string",
-      "enum": ["Creator", "User", "Treasury", "Link"],
+      "enum": ["Creator", "User", "Treasury", "Link", "Gate"],
       "description": "Type of address in the system"
     },
 
@@ -34,6 +34,7 @@
       "enum": [
         "CreatorToTreasury",
         "CreatorToLink",
+        "CreatorToGate",
         "UserToLink",
         "LinkToUser",
         "LinkToCreator"
@@ -201,6 +202,21 @@
           "type": "string",
           "format": "icp-nat",
           "description": "Fee for creating the link"
+        },
+        "gate_create_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Fee for creating one gate"
+        },
+        "gate_open_fee": {
+          "type": "string",
+          "format": "icp-nat",
+          "description": "Fee for opening one gate once"
+        },
+        "gate_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of gates attached to the link"
         },
         "asset_network_fee": {
           "type": "string",

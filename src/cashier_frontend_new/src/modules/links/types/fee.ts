@@ -7,6 +7,7 @@ import type Intent from "$modules/links/types/action/intent";
 export class FeeType {
   static readonly NETWORK_FEE = "NETWORK_FEE";
   static readonly CREATE_LINK_FEE = "CREATE_LINK_FEE";
+  static readonly GATE_FEE = "GATE_FEE";
 }
 
 /**

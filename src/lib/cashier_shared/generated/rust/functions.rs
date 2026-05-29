@@ -11,11 +11,41 @@
 use crate::types::{IntentParticipants, TokenStandard};
 use candid::Nat;
 
+/// Link creation fee in ICP e8s.
+pub fn get_link_creation_fee_amount() -> Nat {
+    Nat::from(10000u64)
+}
+
+/// Gate creation fee in ICP e8s.
+pub fn get_gate_create_fee_amount() -> Nat {
+    Nat::from(100000u64)
+}
+
+/// Gate open fee in ICP e8s.
+pub fn get_gate_open_fee_amount() -> Nat {
+    Nat::from(100000u64)
+}
+
+/// Calculate the total gate fee for all gates on a link.
+///
+/// Formula:
+/// gate_count * (gate_create_fee + max_use * gate_open_fee)
+pub fn calculate_gate_fee_amount(
+    gate_count: u64,
+    max_use: u64,
+    gate_create_fee: &Nat,
+    gate_open_fee: &Nat,
+) -> Nat {
+    Nat::from(gate_count)
+        * (gate_create_fee.clone() + Nat::from(max_use) * gate_open_fee.clone()).clone()
+}
+
 /// Calculate the total amount for an intent based on participants.
 ///
 /// Formula by participant type:
 /// - CreatorToTreasury: link_creation_fee (fee to create the link)
 /// - CreatorToLink: user_input_amount * max_use (funding the link)
+/// - CreatorToGate: gate_count * (gate_create_fee + max_use * gate_open_fee)
 /// - UserToLink: user_input_amount (user sending to link)
 /// - LinkToUser: user_input_amount (user receiving from link)
 /// - LinkToCreator: link_max_asset_amount (withdrawal/refund)
@@ -25,10 +55,16 @@ pub fn calculate_intent_total_amount(
     max_use: u64,
     link_creation_fee: &Nat,
     link_max_asset_amount: &Nat,
+    gate_count: u64,
+    gate_create_fee: &Nat,
+    gate_open_fee: &Nat,
 ) -> Nat {
     match participants {
         IntentParticipants::CreatorToTreasury => link_creation_fee.clone(),
         IntentParticipants::CreatorToLink => user_input_amount.clone() * Nat::from(max_use),
+        IntentParticipants::CreatorToGate => {
+            calculate_gate_fee_amount(gate_count, max_use, gate_create_fee, gate_open_fee)
+        }
         IntentParticipants::UserToLink => user_input_amount.clone(),
         IntentParticipants::LinkToUser => user_input_amount.clone(),
         IntentParticipants::LinkToCreator => link_max_asset_amount.clone(),
@@ -45,6 +81,7 @@ pub fn calculate_intent_total_amount(
 /// Formula by participant type:
 /// - CreatorToTreasury: inbound only (1x or 2x), no outbound
 /// - CreatorToLink: inbound (1x or 2x) + outbound per use
+/// - CreatorToGate: inbound only (1x or 2x), no outbound
 /// - UserToLink: inbound (1x or 2x) + 1x outbound
 /// - LinkToUser: no inbound + 1x outbound
 /// - LinkToCreator: no inbound + 1x outbound
@@ -80,6 +117,7 @@ pub fn calculate_intent_inbound_network_fee(
             asset_network_fee.clone() * inbound_multiplier.clone()
         }
         IntentParticipants::CreatorToLink => asset_network_fee.clone() * inbound_multiplier.clone(),
+        IntentParticipants::CreatorToGate => asset_network_fee.clone() * inbound_multiplier.clone(),
         IntentParticipants::UserToLink => asset_network_fee.clone() * inbound_multiplier.clone(),
         IntentParticipants::LinkToUser => Nat::from(0u64),
         IntentParticipants::LinkToCreator => Nat::from(0u64),
@@ -95,6 +133,7 @@ pub fn calculate_intent_outbound_network_fee(
     match participants {
         IntentParticipants::CreatorToTreasury => Nat::from(0u64),
         IntentParticipants::CreatorToLink => asset_network_fee.clone() * Nat::from(max_use),
+        IntentParticipants::CreatorToGate => Nat::from(0u64),
         IntentParticipants::UserToLink => asset_network_fee.clone(),
         IntentParticipants::LinkToUser => asset_network_fee.clone(),
         IntentParticipants::LinkToCreator => asset_network_fee.clone(),
@@ -108,6 +147,7 @@ pub fn calculate_intent_outbound_network_fee(
 /// Formula by participant type:
 /// - CreatorToTreasury: total_amount + network_fee (pays everything)
 /// - CreatorToLink: network_fee only (amount goes to link)
+/// - CreatorToGate: total_amount + network_fee (pays everything)
 /// - UserToLink: network_fee only
 /// - LinkToUser: 0 (free to receive)
 /// - LinkToCreator: network_fee (pays withdrawal fee)
@@ -121,6 +161,9 @@ pub fn calculate_intent_user_fee(
             intent_total_amount.clone() + intent_total_network_fee.clone()
         }
         IntentParticipants::CreatorToLink => intent_total_network_fee.clone(),
+        IntentParticipants::CreatorToGate => {
+            intent_total_amount.clone() + intent_total_network_fee.clone()
+        }
         IntentParticipants::UserToLink => intent_total_network_fee.clone(),
         IntentParticipants::LinkToUser => Nat::from(0u64),
         IntentParticipants::LinkToCreator => intent_total_network_fee.clone(),

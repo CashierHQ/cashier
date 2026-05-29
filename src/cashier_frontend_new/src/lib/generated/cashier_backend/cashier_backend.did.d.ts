@@ -28,7 +28,8 @@ export type ActionType_1 = { 'Withdraw' : null } |
   { 'Send' : null } |
   { 'CreateLink' : null } |
   { 'Receive' : null };
-export type AddressType = { 'Link' : null } |
+export type AddressType = { 'Gate' : null } |
+  { 'Link' : null } |
   { 'User' : null } |
   { 'Treasury' : null } |
   { 'Creator' : null };

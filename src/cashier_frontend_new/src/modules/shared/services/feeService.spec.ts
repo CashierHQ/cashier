@@ -376,6 +376,44 @@ describe("FeeService", () => {
         `Token not found for address ${unknownAddress}`,
       );
     });
+
+    it("adds gate fee forecast scaled by gate count and max use", () => {
+      const linkFeeInfo = svc.getLinkCreationFee();
+      const tokenA = {
+        address: "token-a",
+        decimals: 8,
+        fee: 10_000n,
+        symbol: "TKNA",
+        priceUSD: 1.0,
+      } as unknown as TokenWithPriceAndBalance;
+      const linkFeeToken = {
+        address: linkFeeInfo.tokenAddress,
+        decimals: 8,
+        fee: 10_000n,
+        symbol: "ICP",
+        priceUSD: 1.0,
+      } as unknown as TokenWithPriceAndBalance;
+      const tokensMap = {
+        [tokenA.address]: tokenA,
+        [linkFeeToken.address]: linkFeeToken,
+      } as Record<string, TokenWithPriceAndBalance>;
+
+      const pairsResult = svc.forecastLinkCreationFees(
+        [{ address: tokenA.address, useAmount: 100_000_000n }],
+        3,
+        tokensMap,
+        2,
+      );
+
+      expect(pairsResult.isOk()).toBe(true);
+      const pairs = pairsResult.unwrap();
+      const gateFee = pairs.find((p) => p.fee?.feeType === FeeType.GATE_FEE);
+
+      expect(gateFee).toBeDefined();
+      expect(gateFee?.asset.label).toBe("Gate fee");
+      expect(gateFee?.fee?.amount).toBe(800_000n);
+      expect(gateFee?.fee?.symbol).toBe("ICP");
+    });
   });
 
   describe("getFlowDirection", () => {

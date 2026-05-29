@@ -46,7 +46,9 @@
 
   const assetsToDisplay = $derived.by(() => {
     return (forecastAssetAndFee || []).filter(
-      (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
+      (item) =>
+        item.fee?.feeType !== FeeType.CREATE_LINK_FEE &&
+        item.fee?.feeType !== FeeType.GATE_FEE,
     );
   });
 

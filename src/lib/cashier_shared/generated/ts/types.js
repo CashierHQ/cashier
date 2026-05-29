@@ -19,6 +19,7 @@ export const AddressType = {
     User: 'User',
     Treasury: 'Treasury',
     Link: 'Link',
+    Gate: 'Gate',
 };
 /**
  * Type of intent
@@ -42,6 +43,7 @@ export const IntentState = {
 export const IntentParticipants = {
     CreatorToTreasury: 'CreatorToTreasury',
     CreatorToLink: 'CreatorToLink',
+    CreatorToGate: 'CreatorToGate',
     UserToLink: 'UserToLink',
     LinkToUser: 'LinkToUser',
     LinkToCreator: 'LinkToCreator',

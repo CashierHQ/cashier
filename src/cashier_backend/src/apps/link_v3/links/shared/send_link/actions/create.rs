@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    constant::INTENT_LABEL_LINK_CREATION_FEE,
+    constant::{INTENT_LABEL_GATE_FEE, INTENT_LABEL_LINK_CREATION_FEE},
     error::CanisterError,
     repository::{
         action::{
@@ -19,7 +19,10 @@ use cashier_backend_types::{
         link::v3::LinkV3,
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::get_link_account};
+use cashier_common::{
+    constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL},
+    utils::get_link_account,
+};
 use icrc_ledger_types::icrc1::account::Account;
 use token_storage_types::token::IcrcStandard;
 use transaction_manager::{
@@ -28,7 +31,7 @@ use transaction_manager::{
         transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     },
     utils::calculator::{
-        calculate_create_link_fee, calculate_icrc1_transfer_intent_amount,
+        calculate_create_link_fee, calculate_gate_fee, calculate_icrc1_transfer_intent_amount,
         calculate_icrc2_transfer_intent_amount,
     },
 };
@@ -61,6 +64,7 @@ impl CreateActionV3 {
         link: &LinkV3,
         canister_id: Principal,
         created_at: u64,
+        gate_count: u64,
         mut token_fee_service: F,
         mut token_standard_service: S,
     ) -> Result<Self, CanisterError>
@@ -192,22 +196,46 @@ impl CreateActionV3 {
         };
         let input = CreateWalletToTreasuryIntentArgs {
             label: INTENT_LABEL_LINK_CREATION_FEE.to_string(),
-            asset: fee_asset,
+            asset: fee_asset.clone(),
             actual_amount,
             approval_amount,
             sender_id: link.creator,
-            spender_account,
+            spender_account: spender_account.clone(),
             receiver_id: canister_id,
+            dest_address_type: AddressTypeV3::Treasury,
             created_at_ts: link.created_at,
         };
 
         let fee_intent = TransferWalletToTreasuryIntent::create(&action.id, input)?;
+
+        let gate_fee_intent = if gate_count > 0 {
+            let (actual_amount, approval_amount) =
+                calculate_gate_fee(gate_count, link.max_use, &token_fee_map);
+            let input = CreateWalletToTreasuryIntentArgs {
+                label: INTENT_LABEL_GATE_FEE.to_string(),
+                asset: fee_asset,
+                actual_amount,
+                approval_amount,
+                sender_id: link.creator,
+                spender_account,
+                receiver_id: FEE_TREASURY_PRINCIPAL,
+                dest_address_type: AddressTypeV3::Gate,
+                created_at_ts: link.created_at,
+            };
+
+            Some(TransferWalletToTreasuryIntent::create(&action.id, input)?)
+        } else {
+            None
+        };
 
         let mut intents = Vec::<IntentV3>::new();
         deposit_intents.iter().for_each(|dintent| {
             intents.push(dintent.intent.clone());
         });
         intents.push(fee_intent.intent);
+        if let Some(gate_fee_intent) = gate_fee_intent {
+            intents.push(gate_fee_intent.intent);
+        }
 
         // enrich action with intent ids
         let intent_ids = intents.iter().map(|intent| intent.id.clone()).collect();
@@ -308,6 +336,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )
@@ -339,6 +368,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )
@@ -369,6 +399,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )
@@ -404,6 +435,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )
@@ -523,6 +555,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )
@@ -630,6 +663,105 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn it_should_succeed_create_action_with_gate_fee_intent() {
+        // Arrange
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000_000u64;
+        let amount = Nat::from(20_000u64);
+        let max_use = 3u64;
+        let gate_count = 2u64;
+        let asset_info = vec![fixture_of_asset_info_v3(ledger_id, amount)];
+        let link = fixture_of_link_v3(creator, asset_info, max_use, created_at);
+        let (token_fee_service, mut token_standard_service) = fixture_of_services(created_at);
+        token_fee_service
+            .fetcher
+            .set_fee(ledger_id, Nat::from(200u64));
+        token_fee_service
+            .fetcher
+            .set_fee(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64));
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC2]);
+
+        // Act
+        let result = CreateActionV3::create(
+            &link,
+            canister_id,
+            created_at,
+            gate_count,
+            token_fee_service,
+            token_standard_service,
+        )
+        .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let created = result.expect("create action should succeed");
+        assert_eq!(created.intents.len(), 3);
+        assert_action_intent_ids_match_intents(&created.action, &created.intents);
+
+        let gate_fee_intent = created
+            .intents
+            .iter()
+            .find(|intent| intent.label == INTENT_LABEL_GATE_FEE)
+            .expect("gate fee intent should exist");
+        assert_eq!(gate_fee_intent.source_address_type, AddressTypeV3::Creator);
+        assert_eq!(gate_fee_intent.dest_address_type, AddressTypeV3::Gate);
+        assert_eq!(gate_fee_intent.dest_address, FEE_TREASURY_PRINCIPAL);
+        assert_eq!(gate_fee_intent.asset.address, ICP_CANISTER_PRINCIPAL);
+
+        let fee_map: HashMap<Principal, Nat> = vec![
+            (ledger_id, Nat::from(200u64)),
+            (ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64)),
+        ]
+        .into_iter()
+        .collect();
+        let (expected_actual_amount, expected_approval_amount) =
+            calculate_gate_fee(gate_count, max_use, &fee_map);
+        assert_eq!(expected_actual_amount, Nat::from(800_000u64));
+
+        match gate_fee_intent
+            .intent_tx_data
+            .clone()
+            .expect("gate fee intent tx data should exist")
+        {
+            IntentTransactionDataV3::TransferFrom(transfer_from_data) => {
+                assert_eq!(transfer_from_data.amount, expected_actual_amount);
+                assert_eq!(
+                    transfer_from_data.approve_amount,
+                    Some(expected_approval_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.actual_amount,
+                    Some(expected_actual_amount)
+                );
+                assert_eq!(
+                    transfer_from_data.asset.get_address(),
+                    ICP_CANISTER_PRINCIPAL
+                );
+                assert_eq!(transfer_from_data.from, Wallet::new(creator));
+                assert_eq!(
+                    transfer_from_data.to,
+                    Wallet::from(Account {
+                        owner: FEE_TREASURY_PRINCIPAL,
+                        subaccount: None,
+                    })
+                );
+                assert_eq!(
+                    transfer_from_data.spender,
+                    Wallet::from(Account {
+                        owner: canister_id,
+                        subaccount: None,
+                    })
+                );
+            }
+            _ => panic!("expected TransferFrom intent transaction data for gate fee intent"),
+        }
+    }
+
+    #[tokio::test]
     async fn it_should_succeed_create_action_with_mixed_icrc1_and_icrc2_deposit_intents() {
         // Arrange
         let creator = random_principal_id();
@@ -667,6 +799,7 @@ mod tests {
             &link,
             canister_id,
             created_at,
+            0,
             token_fee_service,
             token_standard_service,
         )

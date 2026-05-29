@@ -76,6 +76,7 @@
       link.assets,
       link.maxUse,
       tokens,
+      gatingStore?.gateDrafts.length ?? 0,
     );
 
     if (forecastResult.isErr()) {
@@ -105,15 +106,7 @@
   });
 
   const lockFees = $derived.by(() => {
-    if (!gatingStore?.hasLocks) return [];
-    // TODO(gating): Hard-coded for now until we have real lock fee data from backend
-    return [
-      {
-        label: locale.t("links.linkForm.lock.fees.password"),
-        amount: "0.05 ICP",
-        usdAmount: "~$0.2",
-      },
-    ];
+    return [];
   });
 
   let showFeeInfoDrawer = $state(false);

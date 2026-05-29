@@ -53,6 +53,7 @@ const ENUM_VARIANTS: Record<string, string[]> = {
   IntentParticipants: [
     "CreatorToTreasury",
     "CreatorToLink",
+    "CreatorToGate",
     "UserToLink",
     "LinkToUser",
     "LinkToCreator",
@@ -555,12 +556,12 @@ export function generateTypeScriptFunctions(sourceFile: string): string {
 
   // Replace the import path
   let output = source.replace(
-    /import \{ .* \} from '\.\.\/generated\/ts\/types\.js';/,
+    /import \{ .* \} from ["']\.\.\/generated\/ts\/types\.js["'];/,
     "import { IntentParticipants, TokenStandard } from './types.js';"
   );
 
-  // Remove the @ts-ignore comment
-  output = output.replace(/\/\/ @ts-ignore.*\n/g, "");
+  // Remove generation-only type suppression comments.
+  output = output.replace(/\/\/ @ts-(?:ignore|expect-error).*\n/g, "");
 
   // Add header
   const header = [

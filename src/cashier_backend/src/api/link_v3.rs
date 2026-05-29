@@ -64,6 +64,7 @@ async fn user_create_link_v3(
             token_standard_service,
             token_balance_service,
             gate_service,
+            0,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -115,6 +116,7 @@ async fn user_create_action_v3(
             token_standard_service,
             token_balance_service,
             gate_service,
+            0,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -273,6 +275,7 @@ async fn user_create_link_v3_with_gates(
     let lock_key = RequestLockKey::CreateLink {
         user_principal: caller,
     };
+    let gate_count = gate_keys.as_ref().map_or(0, |keys| keys.len() as u64);
 
     let _ = request_lock_service.create(&lock_key, get_state().env.time())?;
     let res = link_v3_service
@@ -286,6 +289,7 @@ async fn user_create_link_v3_with_gates(
             token_standard_service,
             token_balance_service,
             gate_service,
+            gate_count,
         )
         .await;
     let _ = request_lock_service.drop(&lock_key);

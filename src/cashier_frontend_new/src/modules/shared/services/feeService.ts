@@ -43,6 +43,10 @@ import { TokenMetadataHelper } from "$modules/token/types/tokenMetadata";
 import { TokenStandardMapper } from "$modules/token/types/tokenStandard";
 import {
   calculateIntentFees,
+  getGateCreateFeeAmount,
+  getGateOpenFeeAmount,
+  getLinkCreationFeeAmount,
+  AddressType as SharedAddressType,
   IntentParticipants,
   IntentType as SharedIntentType,
   type Intent as SharedIntent,
@@ -172,15 +176,20 @@ export class FeeService {
       );
 
       let feeType = FeeType.NETWORK_FEE;
+      const isGateFeeIntent =
+        action.type === ActionType.CREATE_LINK &&
+        intent.destAddressType === SharedAddressType.Gate;
       if (
         action.type === ActionType.CREATE_LINK &&
         intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
       ) {
-        feeType = FeeType.CREATE_LINK_FEE;
+        feeType = isGateFeeIntent ? FeeType.GATE_FEE : FeeType.CREATE_LINK_FEE;
       }
       const label =
         intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
-          ? "Create link fee"
+          ? isGateFeeIntent
+            ? "Gate fee"
+            : "Create link fee"
           : "";
 
       const ledgerFee = token?.fee ?? ICP_LEDGER_FEE;
@@ -189,7 +198,9 @@ export class FeeService {
         IntentParticipants.CreatorToLink;
       switch (intent.task) {
         case IntentTask.TRANSFER_WALLET_TO_TREASURY:
-          intentParticipants = IntentParticipants.CreatorToTreasury;
+          intentParticipants = isGateFeeIntent
+            ? IntentParticipants.CreatorToGate
+            : IntentParticipants.CreatorToTreasury;
           break;
         case IntentTask.TRANSFER_WALLET_TO_LINK:
           intentParticipants = IntentParticipants.CreatorToLink;
@@ -210,15 +221,21 @@ export class FeeService {
         ),
         user_input_amount: intent.type.payload.amount,
         asset_network_fee: ledgerFee,
-        link_creation_fee: feeConfig.amount,
+        link_creation_fee: isGateFeeIntent
+          ? 0n
+          : intent.type.payload.amount || feeConfig.amount,
+        gate_count: isGateFeeIntent ? 1 : 0,
+        gate_create_fee: isGateFeeIntent ? intent.type.payload.amount : 0n,
+        gate_open_fee: 0n,
         link_max_asset_amount: intent.type.payload.amount,
         max_use: maxUse,
       });
 
       const decimals = token?.decimals ?? 8;
       const symbol = token?.symbol ?? "N/A";
-      let assetAmount =
-        direction === FlowDirection.OUTGOING
+      let assetAmount = isGateFeeIntent
+        ? BigInt(intentFees.intent_total_amount)
+        : direction === FlowDirection.OUTGOING
           ? BigInt(intentFees.intent_total_amount) +
             BigInt(intentFees.intent_total_network_fee)
           : BigInt(intentFees.intent_total_amount);
@@ -256,7 +273,9 @@ export class FeeService {
         intentId: intent.id,
       };
 
-      const feeAmount = BigInt(intentFees.intent_user_fee);
+      const feeAmount = isGateFeeIntent
+        ? BigInt(intentFees.intent_total_amount)
+        : BigInt(intentFees.intent_user_fee);
       const feeUi = parseBalanceUnits(feeAmount, decimals);
       const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
       const fee: FeeItem = {
@@ -346,16 +365,20 @@ export class FeeService {
       if (!token) continue;
 
       const isCreateLinkFee = item.fee.feeType === FeeType.CREATE_LINK_FEE;
+      const isGateFee = item.fee.feeType === FeeType.GATE_FEE;
 
-      const amount = isCreateLinkFee ? item.asset.amount : item.fee.amount;
-      const usdAmount = isCreateLinkFee
-        ? parseFloat(item.asset.usdValueStr ?? "0")
-        : item.fee.usdValue;
+      const amount =
+        isCreateLinkFee || isGateFee ? item.asset.amount : item.fee.amount;
+      const usdAmount =
+        isCreateLinkFee || isGateFee
+          ? parseFloat(item.asset.usdValueStr ?? "0")
+          : item.fee.usdValue;
 
       breakdown.push({
-        name:
-          item.fee.feeType === FeeType.CREATE_LINK_FEE
-            ? "Link creation fee"
+        name: isCreateLinkFee
+          ? "Link creation fee"
+          : isGateFee
+            ? "Gate fee"
             : "Network fee",
         amount,
         tokenAddress: item.asset.address,
@@ -373,7 +396,22 @@ export class FeeService {
    */
   getLinkCreationFee(): FeeConfig {
     return {
-      amount: 10_000n,
+      amount: getLinkCreationFeeAmount(),
+      tokenAddress: ICP_LEDGER_CANISTER_ID,
+      symbol: "ICP",
+      decimals: 8,
+    };
+  }
+
+  getGateFee(gateCount: number, maxUse: number): FeeConfig {
+    const gateCountNum = gateCount || 0;
+    const maxUseNum = maxUse || 1;
+
+    return {
+      amount:
+        BigInt(gateCountNum) *
+        (getGateCreateFeeAmount() +
+          BigInt(maxUseNum) * getGateOpenFeeAmount()),
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
@@ -390,6 +428,7 @@ export class FeeService {
     linkAssets: Array<CreateLinkAsset>,
     maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
+    gateCount: number = 0,
   ): Result<ForecastAssetAndFee[], Error> {
     const pairs: ForecastAssetAndFee[] = [];
 
@@ -522,6 +561,42 @@ export class FeeService {
         usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
       },
     });
+
+    const gateFeeInfo = this.getGateFee(gateCount, maxUse);
+    if (gateFeeInfo.amount > 0n) {
+      const gateFeeToken = tokens[gateFeeInfo.tokenAddress];
+      if (!gateFeeToken) {
+        return Err(new Error("Gate fee token not found"));
+      }
+
+      const gateFeeFormatted = parseBalanceUnits(
+        gateFeeInfo.amount,
+        gateFeeToken.decimals,
+      );
+      const gateFeeUsd = gateFeeToken.priceUSD
+        ? gateFeeFormatted * gateFeeToken.priceUSD
+        : undefined;
+
+      pairs.push({
+        asset: {
+          label: "Gate fee",
+          symbol: gateFeeToken.symbol,
+          address: gateFeeInfo.tokenAddress,
+          amount: formatNumber(gateFeeFormatted),
+          usdValueStr: gateFeeUsd ? formatUsdAmount(gateFeeUsd) : undefined,
+          icon: gateFeeToken.runeInfo?.icon,
+        },
+        fee: {
+          amount: gateFeeInfo.amount,
+          feeType: FeeType.GATE_FEE,
+          amountFormattedStr: formatNumber(gateFeeFormatted),
+          symbol: gateFeeToken.symbol,
+          price: gateFeeToken.priceUSD,
+          usdValue: gateFeeUsd,
+          usdValueStr: gateFeeUsd ? formatUsdAmount(gateFeeUsd) : undefined,
+        },
+      });
+    }
 
     return Ok(pairs);
   }

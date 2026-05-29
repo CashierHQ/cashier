@@ -54,6 +54,7 @@ impl CreatedState {
         canister_id: Principal,
         link: LinkV3,
         created_at: u64,
+        gate_count: u64,
         transaction_manager: M,
         token_fee_service: F,
         token_standard_service: S,
@@ -74,6 +75,7 @@ impl CreatedState {
             &link,
             canister_id,
             created_at,
+            gate_count,
             token_fee_service,
             token_standard_service,
         )
@@ -157,6 +159,7 @@ impl LinkV3State for CreatedState {
         token_fee_service: F,
         token_standard_service: S,
         _token_balance_service: B,
+        gate_count: u64,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -174,6 +177,7 @@ impl LinkV3State for CreatedState {
                     canister_id,
                     link,
                     created_at,
+                    gate_count,
                     transaction_manager,
                     token_fee_service,
                     token_standard_service,
@@ -329,6 +333,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -374,6 +379,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -416,6 +422,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -502,6 +509,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");
@@ -553,6 +561,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");
@@ -609,6 +618,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -662,6 +672,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");

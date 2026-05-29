@@ -230,6 +230,7 @@ pub struct CreateWalletToTreasuryIntentArgs {
     pub sender_id: Principal,
     pub spender_account: Account,
     pub receiver_id: Principal,
+    pub dest_address_type: AddressTypeV3,
     pub created_at_ts: u64,
 }
 

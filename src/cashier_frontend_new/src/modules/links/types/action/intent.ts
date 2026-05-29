@@ -6,6 +6,7 @@ import type IntentTask from "$modules/links/types/action/intentTask";
 import { IntentTaskMapper } from "$modules/links/types/action/intentTask";
 import type IntentType from "$modules/links/types/action/intentType";
 import { IntentTypeMapper } from "$modules/links/types/action/intentType";
+import type { AddressType } from "$shared";
 
 // Frontend representation of an Intent
 class Intent {
@@ -15,6 +16,8 @@ class Intent {
     public type: IntentType,
     public created_at: bigint,
     public state: IntentStateValue,
+    public sourceAddressType?: AddressType,
+    public destAddressType?: AddressType,
   ) {}
 }
 
@@ -35,7 +38,15 @@ export class IntentMapper {
     const task = IntentTaskMapper.fromSharedType(intent);
     const type = IntentTypeMapper.fromSharedType(intent);
     const state = IntentStateMapper.fromSharedType(intent.intent_state);
-    return new Intent(intent.id, task, type, 0n, state);
+    return new Intent(
+      intent.id,
+      task,
+      type,
+      0n,
+      state,
+      intent.source_address_type,
+      intent.dest_address_type,
+    );
   }
 }
 

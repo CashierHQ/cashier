@@ -83,6 +83,7 @@ impl<R: Repositories> LinkV3Service<R> {
         token_standard_service: S,
         token_balance_service: B,
         gate_validator: V,
+        gate_count: u64,
     ) -> Result<CreateLinkResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -102,7 +103,10 @@ impl<R: Repositories> LinkV3Service<R> {
             .action
             .intents
             .iter()
-            .filter(|i| i.dest_address_type != SharedAddressType::Treasury)
+            .filter(|i| {
+                i.dest_address_type != SharedAddressType::Treasury
+                    && i.dest_address_type != SharedAddressType::Gate
+            })
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
@@ -137,6 +141,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_standard_service,
                 token_balance_service,
                 gate_validator,
+                gate_count,
             )
             .await?;
 
@@ -170,6 +175,7 @@ impl<R: Repositories> LinkV3Service<R> {
         token_standard_service: S,
         token_balance_service: B,
         gate_validator: V,
+        gate_count: u64,
     ) -> Result<CreateActionResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -201,6 +207,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                gate_count,
             )
             .await?;
 
@@ -671,6 +678,7 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -709,6 +717,7 @@ mod tests {
                 token_standard_service,
                 MockTokenBalanceService::new(),
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -771,6 +780,7 @@ mod tests {
                 token_standard_service,
                 MockTokenBalanceService::new(),
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -838,6 +848,7 @@ mod tests {
                 token_standard_service,
                 MockTokenBalanceService::new(),
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -980,6 +991,7 @@ mod tests {
                 token_standard_service,
                 MockTokenBalanceService::new(),
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -1044,6 +1056,7 @@ mod tests {
                 token_standard_service,
                 MockTokenBalanceService::new(),
                 make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -1099,6 +1112,7 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
+                0,
             )
             .await
             .expect("create link should succeed");
@@ -1147,6 +1161,7 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
+                0,
             )
             .await
             .expect("create link should succeed");
@@ -1204,6 +1219,7 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
+                0,
             )
             .await
             .expect("create link should succeed");
@@ -1251,6 +1267,7 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
+                0,
             )
             .await
             .expect("create link should succeed");

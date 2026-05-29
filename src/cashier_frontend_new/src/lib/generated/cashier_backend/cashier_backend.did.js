@@ -234,6 +234,7 @@ export const idlFactory = ({ IDL }) => {
     'network_fee' : IDL.Opt(IDL.Nat),
   });
   const AddressType = IDL.Variant({
+    'Gate' : IDL.Null,
     'Link' : IDL.Null,
     'User' : IDL.Null,
     'Treasury' : IDL.Null,
