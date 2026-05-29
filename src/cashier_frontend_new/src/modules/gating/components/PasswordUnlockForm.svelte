@@ -99,7 +99,9 @@
 <div class="flex grow flex-col gap-6 py-2">
   <div class="flex flex-col items-center gap-2">
     <p class="text-sm text-foreground">
-      {locale.t("links.linkForm.lock.linkLocked") ?? "Link locked"}
+      {allOpen
+        ? (locale.t("links.linkForm.lock.linkUnlocked") ?? "Link unlocked")
+        : (locale.t("links.linkForm.lock.linkLocked") ?? "Link locked")}
     </p>
 
     {#if allOpen}
