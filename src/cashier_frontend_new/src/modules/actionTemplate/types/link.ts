@@ -23,6 +23,8 @@ export type SerializedSharedLink = {
   title: string;
   link_type: SharedLinkTypeValue;
   link_state: SharedLinkStateValue;
+  draft_step?: number;
+  draft_gates?: unknown;
   creator: string;
   asset_info: SerializedSharedAssetInfo[];
   max_use: bigint;
@@ -82,6 +84,10 @@ export class SharedLinkMapper {
     serialize: {
       SharedLink: (t: unknown) => {
         const link = t as SharedLink | undefined;
+        const draftMetadata = link as
+          | { draft_step?: unknown; draft_gates?: unknown }
+          | undefined;
+        const draftStep = draftMetadata?.draft_step;
         if (!link || typeof link !== "object" || Array.isArray(link)) {
           return false;
         }
@@ -102,6 +108,8 @@ export class SharedLinkMapper {
           title: link.title,
           link_type: link.link_type,
           link_state: link.link_state,
+          draft_step: typeof draftStep === "number" ? draftStep : undefined,
+          draft_gates: draftMetadata?.draft_gates,
           creator: link.creator.toText(),
           asset_info: link.asset_info.map(SharedAssetInfoMapper.toStorageType),
           max_use: link.max_use,
@@ -119,6 +127,8 @@ export class SharedLinkMapper {
           title: raw.title,
           link_type: raw.link_type,
           link_state: raw.link_state,
+          draft_step: raw.draft_step,
+          draft_gates: raw.draft_gates,
           creator: Principal.fromText(raw.creator),
           asset_info: raw.asset_info.map(SharedAssetInfoMapper.fromStorageType),
           max_use: raw.max_use,

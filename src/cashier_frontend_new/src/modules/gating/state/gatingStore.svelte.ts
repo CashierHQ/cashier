@@ -6,6 +6,15 @@ export class GatingStore {
   #password = $state("");
   #confirmPassword = $state("");
   #configuredPassword = $state<string | null>(null);
+  #onChange: ((gateDrafts: GateDraft[]) => void) | null = null;
+
+  constructor(
+    gateDrafts: GateDraft[] = [],
+    onChange: ((gateDrafts: GateDraft[]) => void) | null = null,
+  ) {
+    this.#onChange = onChange;
+    this.restore(gateDrafts);
+  }
 
   get selectedGateTypes(): GateType[] {
     return this.#selectedGateTypes;
@@ -53,6 +62,21 @@ export class GatingStore {
     return gates;
   }
 
+  restore(gateDrafts: GateDraft[]): void {
+    const passwordGate = gateDrafts.find(
+      (gate) => gate.type === GateType.PASSWORD,
+    );
+
+    this.#configuredPassword = passwordGate?.password ?? null;
+    this.#selectedGateTypes = passwordGate ? [GateType.PASSWORD] : [];
+    this.#password = "";
+    this.#confirmPassword = "";
+  }
+
+  #emitChange(): void {
+    this.#onChange?.(this.gateDrafts);
+  }
+
   setPassword(password: string): void {
     this.#password = password;
   }
@@ -66,6 +90,7 @@ export class GatingStore {
 
     this.#configuredPassword = this.#password.trim();
     this.#selectedGateTypes = [GateType.PASSWORD];
+    this.#emitChange();
   }
 
   clearPasswordDraft(): void {
@@ -78,5 +103,6 @@ export class GatingStore {
     this.#password = "";
     this.#confirmPassword = "";
     this.#configuredPassword = null;
+    this.#emitChange();
   }
 }

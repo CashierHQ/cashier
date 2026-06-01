@@ -5,9 +5,10 @@
 
   type Props = {
     onLoginClick?: () => void;
+    showLogin?: boolean;
   };
 
-  let { onLoginClick }: Props = $props();
+  let { onLoginClick, showLogin = true }: Props = $props();
 
   function handleLoginClick(): void {
     onLoginClick?.();
@@ -19,13 +20,15 @@
     <div class="flex justify-between items-center">
       <!-- Logo -->
       <CashierLogo href={resolve("/")} />
-      <button
-        id="connect"
-        onclick={handleLoginClick}
-        class="h-[45px] font-medium bg-transparent border border-[#e5e5e5] cursor-pointer text-primary !font-bold hover:bg-primary/90 hover:text-primary-foreground hover:border-primary hover:shadow-md transition-all duration-300 rounded-lg px-[15px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        {locale.t("home.header.login")}
-      </button>
+      {#if showLogin}
+        <button
+          id="connect"
+          onclick={handleLoginClick}
+          class="h-[45px] font-medium bg-transparent border border-[#e5e5e5] cursor-pointer text-primary !font-bold hover:bg-primary/90 hover:text-primary-foreground hover:border-primary hover:shadow-md transition-all duration-300 rounded-lg px-[15px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {locale.t("home.header.login")}
+        </button>
+      {/if}
     </div>
   </div>
 </header>

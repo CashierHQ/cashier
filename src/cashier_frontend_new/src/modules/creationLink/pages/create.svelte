@@ -25,7 +25,10 @@
 
   const context = getGuardContext();
   const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
-  const gatingStore = new GatingStore();
+  const fallbackGatingStore = new GatingStore();
+  const gatingStore = $derived.by(
+    () => context.gatingStore ?? fallbackGatingStore,
+  );
 
   let cachedCreationStore:
     | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)

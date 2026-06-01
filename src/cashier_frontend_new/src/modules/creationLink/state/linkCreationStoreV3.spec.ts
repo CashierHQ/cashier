@@ -1,10 +1,13 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
+import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
@@ -81,7 +84,7 @@ const CREATOR_TEXT =
   "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae";
 const CREATOR = Principal.fromText(CREATOR_TEXT);
 
-function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
+function makeDraftLink(overrides?: Partial<DraftLink>): DraftLink {
   return {
     id: "test-id",
     title: "Test Link",
@@ -179,6 +182,16 @@ describe("LinkCreationStoreV3", () => {
         makeDraftLink({ link_state: LinkState.Preview }),
       );
       expect(store.state).toBeInstanceOf(PreviewStateV3);
+    });
+
+    it("it_should_succeed_initialize_with_lock_state_for_local_draft_step", () => {
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({
+          link_state: LinkState.Preview,
+          draft_step: LinkStep.LOCK,
+        }),
+      );
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_initialize_with_created_state_for_created_link_state", () => {
@@ -459,6 +472,25 @@ describe("LinkCreationStoreV3", () => {
       expect(draftLinkService.update).toHaveBeenCalledWith(
         expect.objectContaining({
           updateData: expect.objectContaining({ state: LinkState.Preview }),
+        }),
+      );
+    });
+
+    it("it_should_succeed_sync_lock_step_as_preview_link_state_with_local_draft_step", () => {
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({
+          id: "test-id",
+          link_state: LinkState.Preview,
+          draft_step: LinkStep.LOCK,
+        }),
+      );
+      store.syncDraftLinkToStorage();
+      expect(draftLinkService.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updateData: expect.objectContaining({
+            state: LinkState.Preview,
+            draftStep: LinkStep.LOCK,
+          }),
         }),
       );
     });

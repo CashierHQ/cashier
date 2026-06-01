@@ -8,6 +8,15 @@ import type { RedirectDecision, RedirectInput } from "./types";
  */
 type UserRouteArea = "userLanding" | "userUse";
 
+function debugUserRedirect(
+  message: string,
+  data: Record<string, unknown> = {},
+) {
+  if (import.meta.env.DEV) {
+    console.warn(`[redirect:user] ${message}`, data);
+  }
+}
+
 /**
  * Validates that a public link is loaded and exists.
  *
@@ -40,46 +49,79 @@ export function resolveUserLinkRedirect(
   input: RedirectInput,
   routeArea: UserRouteArea,
 ): RedirectDecision {
+  debugUserRedirect("resolve", {
+    routeArea,
+    linkId: input.linkId,
+    linkExists: input.linkExists,
+    currentUserId: input.currentUserId,
+    userState: input.userState,
+    linkEnded: input.linkEnded,
+    isLoading: input.isLoading,
+  });
+
   const validationRedirect = validatePublicLink(input);
 
   if (validationRedirect) {
+    debugUserRedirect("validation decision", {
+      routeArea,
+      linkId: input.linkId,
+      userState: input.userState,
+      decision: validationRedirect,
+    });
+
     return validationRedirect;
   }
 
   const linkId = input.linkId as string;
+  const withDecisionLog = (decision: RedirectDecision): RedirectDecision => {
+    debugUserRedirect("decision", {
+      routeArea,
+      linkId,
+      userState: input.userState,
+      decision,
+    });
+
+    return decision;
+  };
+
+  // Ended links stop the user flow unless this user has already completed the link.
+  if (input.linkEnded && input.userState !== UserLinkStep.COMPLETED) {
+    return withDecisionLog({ kind: "allow", screen: "linkEnded" });
+  }
 
   // Logged-out visitors can view the public landing page, but not enter the use flow.
   if (!input.currentUserId) {
     return routeArea === "userUse"
-      ? { kind: "redirect", to: paths.userLanding(linkId) }
-      : { kind: "allow", screen: "userLanding" };
-  }
-
-  // Ended links stop the user flow unless this user has already completed the link.
-  if (input.linkEnded && input.userState !== UserLinkStep.COMPLETED) {
-    return { kind: "allow", screen: "linkEnded" };
+      ? withDecisionLog({ kind: "redirect", to: paths.userLanding(linkId) })
+      : withDecisionLog({ kind: "allow", screen: "userLanding" });
   }
 
   // The landing route is only correct before the user enters the flow.
   if (routeArea === "userLanding") {
     return input.userState !== null && input.userState !== UserLinkStep.LANDING
-      ? { kind: "redirect", to: paths.userUse(linkId) }
-      : { kind: "allow", screen: "userLanding" };
+      ? withDecisionLog({ kind: "redirect", to: paths.userUse(linkId) })
+      : withDecisionLog({ kind: "allow", screen: "userLanding" });
   }
 
   switch (input.userState) {
     case null:
     case UserLinkStep.LANDING:
-      return { kind: "redirect", to: paths.userLanding(linkId) };
+      return withDecisionLog({
+        kind: "redirect",
+        to: paths.userLanding(linkId),
+      });
     case UserLinkStep.ADDRESS_UNLOCKED:
-      return { kind: "allow", screen: "userAddressUnlocked" };
+      return withDecisionLog({
+        kind: "allow",
+        screen: "userAddressUnlocked",
+      });
     case UserLinkStep.ADDRESS_LOCKED:
-      return { kind: "allow", screen: "userAddressLocked" };
+      return withDecisionLog({ kind: "allow", screen: "userAddressLocked" });
     case UserLinkStep.GATE:
-      return { kind: "allow", screen: "userGate" };
+      return withDecisionLog({ kind: "allow", screen: "userGate" });
     case UserLinkStep.COMPLETED:
-      return { kind: "allow", screen: "userCompleted" };
+      return withDecisionLog({ kind: "allow", screen: "userCompleted" });
   }
 
-  return { kind: "redirect", to: paths.userLanding(linkId) };
+  return withDecisionLog({ kind: "redirect", to: paths.userLanding(linkId) });
 }

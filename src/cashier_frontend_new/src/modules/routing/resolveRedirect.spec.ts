@@ -105,12 +105,12 @@ describe("routing policy", () => {
     });
 
     it("redirects logged-in users from home to link list", () => {
-      expect(
-        resolveRedirect({ ...baseInput, currentUserId: ownerId }),
-      ).toEqual({
-        kind: "redirect",
-        to: "/links",
-      });
+      expect(resolveRedirect({ ...baseInput, currentUserId: ownerId })).toEqual(
+        {
+          kind: "redirect",
+          to: "/links",
+        },
+      );
     });
 
     it("[LO-02] redirects logged-out users from link list to home", () => {
@@ -203,18 +203,21 @@ describe("routing policy", () => {
       ["NS-04", "add asset"],
       ["NS-05", "lock"],
       ["NS-06", "preview"],
-    ] as const)("[%s] redirects no-state link from %s route to link list", () => {
-      expect(
-        resolveRedirect(
-          ownerInput({
-            linkState: null,
-          }),
-        ),
-      ).toEqual({
-        kind: "redirect",
-        to: "/links",
-      });
-    });
+    ] as const)(
+      "[%s] redirects no-state link from %s route to link list",
+      () => {
+        expect(
+          resolveRedirect(
+            ownerInput({
+              linkState: null,
+            }),
+          ),
+        ).toEqual({
+          kind: "redirect",
+          to: "/links",
+        });
+      },
+    );
 
     it("[NS-07] redirects no-state link from detail route to link list", () => {
       expect(
@@ -232,38 +235,68 @@ describe("routing policy", () => {
 
     it.each([
       [
-        "CT",
+        "CT-03",
+        "choose type",
         LinkStep.CHOOSE_TYPE,
         "createChooseType",
         "choose-type",
       ],
-      ["AA", LinkStep.ADD_ASSET, "createAddAsset", "add-asset"],
-      ["LK", LinkStep.LOCK, "createLock", "lock"],
-      ["PV", LinkStep.PREVIEW, "createPreview", "preview"],
-      ["CR", LinkStep.CREATED, "createCreated", "created"],
+      [
+        "CT-04",
+        "add asset",
+        LinkStep.CHOOSE_TYPE,
+        "createChooseType",
+        "choose-type",
+      ],
+      [
+        "CT-05",
+        "lock",
+        LinkStep.CHOOSE_TYPE,
+        "createChooseType",
+        "choose-type",
+      ],
+      [
+        "CT-06",
+        "preview",
+        LinkStep.CHOOSE_TYPE,
+        "createChooseType",
+        "choose-type",
+      ],
+      [
+        "AA-03",
+        "choose type",
+        LinkStep.ADD_ASSET,
+        "createAddAsset",
+        "add-asset",
+      ],
+      ["AA-04", "add asset", LinkStep.ADD_ASSET, "createAddAsset", "add-asset"],
+      ["AA-05", "lock", LinkStep.ADD_ASSET, "createAddAsset", "add-asset"],
+      ["AA-06", "preview", LinkStep.ADD_ASSET, "createAddAsset", "add-asset"],
+      ["LK-03", "choose type", LinkStep.LOCK, "createLock", "lock"],
+      ["LK-04", "add asset", LinkStep.LOCK, "createLock", "lock"],
+      ["LK-05", "lock", LinkStep.LOCK, "createLock", "lock"],
+      ["LK-06", "preview", LinkStep.LOCK, "createLock", "lock"],
+      ["PV-03", "choose type", LinkStep.PREVIEW, "createPreview", "preview"],
+      ["PV-04", "add asset", LinkStep.PREVIEW, "createPreview", "preview"],
+      ["PV-05", "lock", LinkStep.PREVIEW, "createPreview", "preview"],
+      ["PV-06", "preview", LinkStep.PREVIEW, "createPreview", "preview"],
+      ["CR-03", "choose type", LinkStep.CREATED, "createCreated", "created"],
+      ["CR-04", "add asset", LinkStep.CREATED, "createCreated", "created"],
+      ["CR-05", "lock", LinkStep.CREATED, "createCreated", "created"],
+      ["CR-06", "preview", LinkStep.CREATED, "createCreated", "created"],
     ] as const)(
-      "%s owner create-route scenarios render the correct create screen",
-      (prefix, linkState, screen, label) => {
-        const rows = [
-          [`${prefix}-03`, "choose type"],
-          [`${prefix}-04`, "add asset"],
-          [`${prefix}-05`, "lock"],
-          [`${prefix}-06`, "preview"],
-        ] as const;
-
-        for (const [id, scenario] of rows) {
-          expect(
-            resolveRedirect(
-              ownerInput({
-                linkState,
-              }),
-            ),
-            `[${id}] owner lands on ${scenario} with ${label} link`,
-          ).toEqual({
-            kind: "allow",
-            screen,
-          });
-        }
+      "[%s] owner lands on %s with %s link and sees the correct create screen",
+      (_id, _scenario, linkState, screen, _label) => {
+        expect(
+          resolveRedirect(
+            ownerInput({
+              linkState,
+            }),
+          ),
+        ).toEqual({
+          kind: "allow",
+          screen,
+        });
       },
     );
 
@@ -304,32 +337,31 @@ describe("routing policy", () => {
     });
 
     it.each([
-      ["AC", LinkStep.ACTIVE, "active"],
-      ["IN", LinkStep.INACTIVE, "inactive"],
-      ["IE", LinkStep.ENDED, "ended"],
+      ["AC-03", "choose type", LinkStep.ACTIVE],
+      ["AC-04", "add asset", LinkStep.ACTIVE],
+      ["AC-05", "lock", LinkStep.ACTIVE],
+      ["AC-06", "preview", LinkStep.ACTIVE],
+      ["IN-03", "choose type", LinkStep.INACTIVE],
+      ["IN-04", "add asset", LinkStep.INACTIVE],
+      ["IN-05", "lock", LinkStep.INACTIVE],
+      ["IN-06", "preview", LinkStep.INACTIVE],
+      ["IE-03", "choose type", LinkStep.ENDED],
+      ["IE-04", "add asset", LinkStep.ENDED],
+      ["IE-05", "lock", LinkStep.ENDED],
+      ["IE-06", "preview", LinkStep.ENDED],
     ] as const)(
-      "%s owner create-route scenarios redirect to detail",
-      (prefix, linkState, label) => {
-        const rows = [
-          [`${prefix}-03`, "choose type"],
-          [`${prefix}-04`, "add asset"],
-          [`${prefix}-05`, "lock"],
-          [`${prefix}-06`, "preview"],
-        ] as const;
-
-        for (const [id, scenario] of rows) {
-          expect(
-            resolveRedirect(
-              ownerInput({
-                linkState,
-              }),
-            ),
-            `[${id}] owner lands on ${scenario} with ${label} link`,
-          ).toEqual({
-            kind: "redirect",
-            to: detailPath,
-          });
-        }
+      "[%s] redirects owner from %s to detail",
+      (_id, _scenario, linkState) => {
+        expect(
+          resolveRedirect(
+            ownerInput({
+              linkState,
+            }),
+          ),
+        ).toEqual({
+          kind: "redirect",
+          to: detailPath,
+        });
       },
     );
 
@@ -355,39 +387,60 @@ describe("routing policy", () => {
     );
 
     it.each([
-      ["CT", LinkStep.CHOOSE_TYPE, "choose-type"],
-      ["AA", LinkStep.ADD_ASSET, "add-asset"],
-      ["LK", LinkStep.LOCK, "lock"],
-      ["PV", LinkStep.PREVIEW, "preview"],
-      ["CR", LinkStep.CREATED, "created"],
-      ["AC", LinkStep.ACTIVE, "active"],
-      ["IN", LinkStep.INACTIVE, "inactive"],
-      ["IE", LinkStep.ENDED, "ended"],
+      ["CT-08", "choose type", createPath, LinkStep.CHOOSE_TYPE],
+      ["CT-09", "add asset", createPath, LinkStep.CHOOSE_TYPE],
+      ["CT-10", "lock", createPath, LinkStep.CHOOSE_TYPE],
+      ["CT-11", "preview", createPath, LinkStep.CHOOSE_TYPE],
+      ["CT-12", "link detail", detailPath, LinkStep.CHOOSE_TYPE],
+      ["AA-08", "choose type", createPath, LinkStep.ADD_ASSET],
+      ["AA-09", "add asset", createPath, LinkStep.ADD_ASSET],
+      ["AA-10", "lock", createPath, LinkStep.ADD_ASSET],
+      ["AA-11", "preview", createPath, LinkStep.ADD_ASSET],
+      ["AA-12", "link detail", detailPath, LinkStep.ADD_ASSET],
+      ["LK-08", "choose type", createPath, LinkStep.LOCK],
+      ["LK-09", "add asset", createPath, LinkStep.LOCK],
+      ["LK-10", "lock", createPath, LinkStep.LOCK],
+      ["LK-11", "preview", createPath, LinkStep.LOCK],
+      ["LK-12", "link detail", detailPath, LinkStep.LOCK],
+      ["PV-08", "choose type", createPath, LinkStep.PREVIEW],
+      ["PV-09", "add asset", createPath, LinkStep.PREVIEW],
+      ["PV-10", "lock", createPath, LinkStep.PREVIEW],
+      ["PV-11", "preview", createPath, LinkStep.PREVIEW],
+      ["PV-12", "link detail", detailPath, LinkStep.PREVIEW],
+      ["CR-08", "choose type", createPath, LinkStep.CREATED],
+      ["CR-09", "add asset", createPath, LinkStep.CREATED],
+      ["CR-10", "lock", createPath, LinkStep.CREATED],
+      ["CR-11", "preview", createPath, LinkStep.CREATED],
+      ["CR-12", "link detail", detailPath, LinkStep.CREATED],
+      ["AC-08", "choose type", createPath, LinkStep.ACTIVE],
+      ["AC-09", "add asset", createPath, LinkStep.ACTIVE],
+      ["AC-10", "lock", createPath, LinkStep.ACTIVE],
+      ["AC-11", "preview", createPath, LinkStep.ACTIVE],
+      ["AC-12", "link detail", detailPath, LinkStep.ACTIVE],
+      ["IN-08", "choose type", createPath, LinkStep.INACTIVE],
+      ["IN-09", "add asset", createPath, LinkStep.INACTIVE],
+      ["IN-10", "lock", createPath, LinkStep.INACTIVE],
+      ["IN-11", "preview", createPath, LinkStep.INACTIVE],
+      ["IN-12", "link detail", detailPath, LinkStep.INACTIVE],
+      ["IE-08", "choose type", createPath, LinkStep.ENDED],
+      ["IE-09", "add asset", createPath, LinkStep.ENDED],
+      ["IE-10", "lock", createPath, LinkStep.ENDED],
+      ["IE-11", "preview", createPath, LinkStep.ENDED],
+      ["IE-12", "link detail", detailPath, LinkStep.ENDED],
     ] as const)(
-      "%s other-user owner-route scenarios redirect to link list",
-      (prefix, linkState, label) => {
-        const rows = [
-          [`${prefix}-08`, "choose type", createPath],
-          [`${prefix}-09`, "add asset", createPath],
-          [`${prefix}-10`, "lock", createPath],
-          [`${prefix}-11`, "preview", createPath],
-          [`${prefix}-12`, "link detail", detailPath],
-        ] as const;
-
-        for (const [id, scenario, pathname] of rows) {
-          expect(
-            resolveRedirect(
-              otherUserInput({
-                pathname,
-                linkState,
-              }),
-            ),
-            `[${id}] other user lands on ${scenario} with ${label} link`,
-          ).toEqual({
-            kind: "redirect",
-            to: "/links",
-          });
-        }
+      "[%s] redirects other user from %s to link list",
+      (_id, _scenario, pathname, linkState) => {
+        expect(
+          resolveRedirect(
+            otherUserInput({
+              pathname,
+              linkState,
+            }),
+          ),
+        ).toEqual({
+          kind: "redirect",
+          to: "/links",
+        });
       },
     );
   });
@@ -459,19 +512,45 @@ describe("routing policy", () => {
     );
 
     it.each([
-      ["UE-01", "landing", publicLandingPath],
-      ["UE-02", "address unlocked", publicUsePath],
-      ["UE-03", "address locked", publicUsePath],
-      ["UE-04", "gate", publicUsePath],
-      ["UE-05", "completed", publicUsePath],
+      ["UE-00", "logged-out landing", publicLandingPath, null],
+      ["UE-01", "landing", publicLandingPath, otherUserId],
+      ["UE-02", "address unlocked", publicUsePath, otherUserId],
+      ["UE-03", "address locked", publicUsePath, otherUserId],
+      ["UE-04", "gate", publicUsePath, otherUserId],
+      ["UE-05", "completed", publicUsePath, otherUserId],
     ] as const)(
       "[%s] renders link ended when link ended before completion from %s",
-      (_id, _label, pathname) => {
+      (_id, _label, pathname, currentUserId) => {
         expect(
           resolveRedirect(
             publicInput({
               pathname,
+              currentUserId,
               linkState: LinkStep.ENDED,
+              linkEnded: true,
+              userState: UserLinkStep.ADDRESS_UNLOCKED,
+            }),
+          ),
+        ).toEqual({
+          kind: "allow",
+          screen: "linkEnded",
+        });
+      },
+    );
+
+    it.each([
+      ["UI-01", "logged-out landing", publicLandingPath, null],
+      ["UI-02", "logged-in landing", publicLandingPath, otherUserId],
+      ["UI-03", "logged-in use flow", publicUsePath, otherUserId],
+    ] as const)(
+      "[%s] renders link ended when public link is inactive from %s",
+      (_id, _label, pathname, currentUserId) => {
+        expect(
+          resolveRedirect(
+            publicInput({
+              pathname,
+              currentUserId,
+              linkState: LinkStep.INACTIVE,
               linkEnded: true,
               userState: UserLinkStep.ADDRESS_UNLOCKED,
             }),

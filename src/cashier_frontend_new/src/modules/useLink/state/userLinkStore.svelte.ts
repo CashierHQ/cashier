@@ -18,26 +18,30 @@ import { LandingState } from "./useLinkStates/landing";
  */
 export class UserLinkStore {
   #state = $state<UserLinkState>(new LandingState(this));
+  #persistedStateRestoredOwner = $state<string | null>(null);
   public linkDetail: LinkDetailStoreType;
 
   constructor({ id }: { id: string }) {
     this.linkDetail = new LinkDetailStore({ id });
+    this.#restorePersistedState(id);
 
     // initialize from persisted per-user state if present
     $effect(() => {
-      const owner = authState.account?.owner;
-      if (!owner) return;
-      const persisted = userLinkRepository.getOne(owner, id);
-      if (!persisted) return;
-      if (persisted.step) {
-        this.#state = userLinkStateFromStep(persisted.step, this);
-      }
+      this.#restorePersistedState(id);
     });
 
     // persist changes to the per-user store whenever link id, owner or step changes
     $effect(() => {
       void authState.account?.owner;
       void this.#state;
+      void this.#persistedStateRestoredOwner;
+
+      if (
+        !authState.account?.owner ||
+        this.#persistedStateRestoredOwner !== authState.account.owner
+      ) {
+        return;
+      }
 
       this.syncUserLink();
     });
@@ -49,6 +53,20 @@ export class UserLinkStore {
         this.#state = new CompletedState();
       }
     });
+  }
+
+  #restorePersistedState(id: string): void {
+    const owner = authState.account?.owner;
+    if (!owner) {
+      this.#persistedStateRestoredOwner = null;
+      return;
+    }
+
+    const persisted = userLinkRepository.getOne(owner, id);
+    if (persisted?.step !== undefined) {
+      this.#state = userLinkStateFromStep(persisted.step, this);
+    }
+    this.#persistedStateRestoredOwner = owner;
   }
 
   /**

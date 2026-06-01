@@ -4,6 +4,8 @@
   import Footer from "$modules/home/components/Footer.svelte";
   import LoginModal from "$modules/home/components/LoginModal.svelte";
   import Landing from "$modules/useLink/pages/landing.svelte";
+  import Ended from "$modules/useLink/components/Ended.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
   import { createLinkRouteContext } from "$modules/routing/createLinkRouteContext.svelte";
   import {
@@ -13,6 +15,7 @@
 
   const id = page.params.id!;
   createLinkRouteContext({ linkId: id, storeType: "userLink" });
+  const showLogin = $derived(authState.isReady && !authState.isLoggedIn);
 
   let isLoginModalOpen = $state(false);
   let loginPayload = $state<{ link_type: string; BE_link_id: string } | null>(
@@ -34,8 +37,14 @@
 
 <main class="flex flex-col h-screen">
   <RedirectBoundary>
-    <Header onLoginClick={openLoginModal} />
-    <Landing {openLoginModal} />
+    {#snippet children(decision)}
+      <Header onLoginClick={openLoginModal} {showLogin} />
+      {#if decision.kind === "allow" && decision.screen === "linkEnded"}
+        <Ended />
+      {:else}
+        <Landing {openLoginModal} />
+      {/if}
+    {/snippet}
   </RedirectBoundary>
   <Footer />
 </main>
