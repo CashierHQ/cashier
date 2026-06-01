@@ -652,6 +652,7 @@ class BtcBridgeStore {
       null,
       null,
       null,
+      null,
       updatedRetryTimes,
     );
 

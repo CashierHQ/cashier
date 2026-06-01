@@ -173,16 +173,17 @@ export class BridgeTxCartStore {
       return 0;
     }
 
+    const details = this.bridgeTransaction.details;
+
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
       const btcPriceUSD =
         tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
       if (!btcPriceUSD) {
         return 0;
       }
-
-      return (
-        (Number(this.bridgeTransaction.deposit_fee) / 100_000_000) * btcPriceUSD
-      );
+      const depositFee =
+        details.kind === "ckbtc" ? (details.deposit_fee_btc_sats ?? 0n) : 0n;
+      return (Number(depositFee) / 100_000_000) * btcPriceUSD;
     }
 
     if (this.#isRuneExportBridge(this.bridgeTransaction)) {
@@ -190,9 +191,10 @@ export class BridgeTxCartStore {
         tokenPriceStore.getTokenPriceByCanisterId(ICP_LEDGER_CANISTER_ID) || 0;
       const btcPriceUSD =
         tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0;
+      const withdrawalFeeIcp =
+        details.kind === "runes" ? (details.withdrawal_fee_icp_e8s ?? 0n) : 0n;
       return (
-        (Number(this.bridgeTransaction.withdrawal_fee) / 100_000_000) *
-          icpPriceUSD +
+        (Number(withdrawalFeeIcp) / 100_000_000) * icpPriceUSD +
         (Number(this.bridgeTransaction.btc_fee) / 100_000_000) * btcPriceUSD
       );
     }
@@ -202,11 +204,10 @@ export class BridgeTxCartStore {
     if (!btcPriceUSD) {
       return 0;
     }
-
+    const withdrawalFeeBtc =
+      details.kind === "ckbtc" ? (details.withdrawal_fee_btc_sats ?? 0n) : 0n;
     return (
-      (Number(
-        this.bridgeTransaction.withdrawal_fee + this.bridgeTransaction.btc_fee,
-      ) /
+      (Number(withdrawalFeeBtc + this.bridgeTransaction.btc_fee) /
         100_000_000) *
       btcPriceUSD
     );
@@ -221,10 +222,14 @@ export class BridgeTxCartStore {
       return [];
     }
     const feeItems: FeeBreakdownItem[] = [];
+    const details = this.bridgeTransaction.details;
+
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
+      const depositFee =
+        details.kind === "ckbtc" ? (details.deposit_fee_btc_sats ?? 0n) : 0n;
       feeItems.push({
         name: "BTC - ckBTC conversion fee",
-        amount: this.bridgeTransaction.deposit_fee,
+        amount: depositFee,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
         tokenDecimals: 8,
@@ -232,14 +237,18 @@ export class BridgeTxCartStore {
       });
     } else {
       if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+        const withdrawalFeeIcp =
+          details.kind === "runes"
+            ? (details.withdrawal_fee_icp_e8s ?? 0n)
+            : 0n;
         feeItems.push({
           name: "Rune redeem fee",
-          amount: this.bridgeTransaction.withdrawal_fee,
+          amount: withdrawalFeeIcp,
           tokenAddress: ICP_LEDGER_CANISTER_ID,
           tokenSymbol: "ICP",
           tokenDecimals: 8,
           usdAmount:
-            (Number(this.bridgeTransaction.withdrawal_fee) / 100_000_000) *
+            (Number(withdrawalFeeIcp) / 100_000_000) *
             (tokenPriceStore.getTokenPriceByCanisterId(
               ICP_LEDGER_CANISTER_ID,
             ) || 0),
@@ -261,14 +270,16 @@ export class BridgeTxCartStore {
         return feeItems;
       }
 
+      const withdrawalFeeBtc =
+        details.kind === "ckbtc" ? (details.withdrawal_fee_btc_sats ?? 0n) : 0n;
       feeItems.push({
         name: "ckBTC - BTC conversion fee",
-        amount: this.bridgeTransaction.withdrawal_fee,
+        amount: withdrawalFeeBtc,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
         tokenDecimals: 8,
         usdAmount:
-          (Number(this.bridgeTransaction.withdrawal_fee) / 100_000_000) *
+          (Number(withdrawalFeeBtc) / 100_000_000) *
           (tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0),
       });
       feeItems.push({
@@ -444,6 +455,7 @@ export class BridgeTxCartStore {
       [],
       null,
       null,
+      null,
       withdrawalFee,
       null,
       null,
@@ -483,6 +495,7 @@ export class BridgeTxCartStore {
       null,
       null,
       [],
+      null,
       null,
       null,
       null,

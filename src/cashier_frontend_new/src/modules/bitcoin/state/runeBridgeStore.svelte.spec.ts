@@ -53,8 +53,7 @@ function fixture_of_rune_bridge(
     bridge_type: BridgeType.Import,
     total_amount: 1200n,
     created_at_ts: 1_704_067_200n,
-    deposit_fee: 0n,
-    withdrawal_fee: 0n,
+
     btc_fee: 0n,
     btc_txid: "abc123",
     block_id: null,
@@ -64,7 +63,11 @@ function fixture_of_rune_bridge(
     vout: [{ txid: "abc123", vout: 1 }],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
-    details: { kind: "runes", omnity_ticket_id: null } as BridgeDetails,
+    details: {
+      kind: "runes",
+      omnity_ticket_id: null,
+      withdrawal_fee_icp_e8s: null,
+    } as BridgeDetails,
     ...overrides,
   };
 }
@@ -704,6 +707,7 @@ describe("RuneBridgeStore", () => {
         null,
         null,
         null,
+        null,
         bridge.vin,
         bridge.vout,
       );
@@ -754,6 +758,7 @@ describe("RuneBridgeStore", () => {
         null,
         null,
         null,
+        null,
         "abc123",
         [],
         [],
@@ -772,7 +777,11 @@ describe("RuneBridgeStore", () => {
       // Arrange
       const bridge = fixture_of_rune_bridge({
         status: BridgeTransactionStatus.Confirmed,
-        details: { kind: "runes", omnity_ticket_id: "abc123" },
+        details: {
+          kind: "runes",
+          omnity_ticket_id: "abc123",
+          withdrawal_fee_icp_e8s: null,
+        },
       });
       mockGetTransactionById.mockResolvedValue(
         Ok(fixture_of_bitcoin_transaction()),
@@ -876,7 +885,11 @@ describe("RuneBridgeStore", () => {
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
         btc_txid: null,
-        details: { kind: "runes", omnity_ticket_id: "ticket-123" },
+        details: {
+          kind: "runes",
+          omnity_ticket_id: "ticket-123",
+          withdrawal_fee_icp_e8s: null,
+        },
       });
       mockQueryTxHash.mockResolvedValue(Ok("btc-txid-123"));
       mockUpdateBridgeTransaction.mockResolvedValue(Ok(bridge));
@@ -903,7 +916,11 @@ describe("RuneBridgeStore", () => {
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
         btc_txid: "btc-txid-123",
-        details: { kind: "runes", omnity_ticket_id: "ticket-123" },
+        details: {
+          kind: "runes",
+          omnity_ticket_id: "ticket-123",
+          withdrawal_fee_icp_e8s: null,
+        },
       });
       mockGetTransactionById.mockResolvedValue(
         Ok(
@@ -941,7 +958,11 @@ describe("RuneBridgeStore", () => {
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
         btc_txid: null,
-        details: { kind: "runes", omnity_ticket_id: "ticket-123" },
+        details: {
+          kind: "runes",
+          omnity_ticket_id: "ticket-123",
+          withdrawal_fee_icp_e8s: null,
+        },
       });
       mockQueryTxHash.mockResolvedValue(Ok("btc-txid-123"));
       mockGetTransactionById.mockResolvedValue(
@@ -1056,7 +1077,11 @@ describe("RuneBridgeStore", () => {
         bridge_type: BridgeType.Export,
         status: BridgeTransactionStatus.Pending,
         btc_txid: "export-txid",
-        details: { kind: "runes", omnity_ticket_id: "ticket-export-123" },
+        details: {
+          kind: "runes",
+          omnity_ticket_id: "ticket-export-123",
+          withdrawal_fee_icp_e8s: null,
+        },
       });
       mockGetBridgeTransactions
         .mockResolvedValueOnce([bridge])

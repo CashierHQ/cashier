@@ -161,8 +161,7 @@ const fixture_of_bridge_transaction = () => ({
   total_amount: 1_000n,
   created_at_ts: 0n,
   icp_address: "aaaaa-aa",
-  deposit_fee: null,
-  withdrawal_fee: null,
+
   btc_fee: null,
   btc_txid: null,
   ckbtc_block_id: null,

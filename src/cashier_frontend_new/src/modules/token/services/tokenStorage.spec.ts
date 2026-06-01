@@ -82,8 +82,9 @@ function fixture_of_bridge_transaction_dto(
     block_id: [],
     block_timestamp: [],
     block_confirmations: [],
-    deposit_fee: [1000n],
-    withdrawal_fee: [],
+    deposit_fee_btc_sats: [1000n],
+    withdrawal_fee_btc_sats: [],
+    withdrawal_fee_icp_e8s: [],
     btc_fee: [],
     created_at_ts: 1000n,
     total_amount: [50000n],
@@ -154,7 +155,7 @@ describe("TokenStorageService.createManualImportBridgeTransaction", () => {
     expect(callArgs.ckbtc_block_id).toEqual([123n]);
     expect(callArgs.status).toEqual([{ Completed: null }]);
     expect(callArgs.btc_txid).toEqual(["deadbeef"]);
-    expect(callArgs.deposit_fee).toEqual([1000n]);
+    expect(callArgs.deposit_fee_btc_sats).toEqual([1000n]);
     expect(callArgs.omnity_ticket_id).toEqual([]);
   });
 
@@ -240,8 +241,8 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
       status: { Created: null },
       total_amount: [1_200n],
       ckbtc_block_id: [],
-      deposit_fee: [],
-      withdrawal_fee: [],
+      deposit_fee_btc_sats: [],
+      withdrawal_fee_btc_sats: [],
       btc_fee: [],
     });
     mockUserCreateBridgeTransaction.mockResolvedValue({ Ok: dto });
@@ -276,7 +277,7 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
       },
     ]);
     expect(callArgs.status).toEqual([{ Created: null }]);
-    expect(callArgs.withdrawal_fee).toEqual([0n]);
+    expect(callArgs.withdrawal_fee_icp_e8s).toEqual([0n]);
     expect(callArgs.btc_fee).toEqual([]);
   });
 
@@ -297,8 +298,8 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
       status: { Created: null },
       total_amount: [500n],
       ckbtc_block_id: [],
-      deposit_fee: [],
-      withdrawal_fee: [withdrawalFee],
+      deposit_fee_btc_sats: [],
+      withdrawal_fee_btc_sats: [withdrawalFee],
       btc_fee: [],
     });
     mockUserCreateBridgeTransaction.mockResolvedValue({ Ok: dto });
@@ -319,7 +320,7 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
 
     // Assert
     const callArgs = mockUserCreateBridgeTransaction.mock.calls[0][0];
-    expect(callArgs.withdrawal_fee).toEqual([withdrawalFee]);
+    expect(callArgs.withdrawal_fee_icp_e8s).toEqual([withdrawalFee]);
   });
 });
 

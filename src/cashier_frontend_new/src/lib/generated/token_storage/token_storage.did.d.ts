@@ -82,19 +82,20 @@ export type ChainTokenDetails = {
   };
 export interface CreateBridgeTransactionInputArg {
   'vin' : [] | [Array<UTXO>],
+  'deposit_fee_btc_sats' : [] | [bigint],
   'status' : [] | [BridgeTransactionStatus],
+  'withdrawal_fee_btc_sats' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
   'vout' : [] | [Array<UTXO>],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
+  'withdrawal_fee_icp_e8s' : [] | [bigint],
   'omnity_ticket_id' : [] | [string],
   'created_at_ts' : bigint,
-  'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
   'ckbtc_block_id' : [] | [bigint],
   'btc_address' : string,
   'bridge_type' : BridgeType,
-  'deposit_fee' : [] | [bigint],
 }
 export interface GetUserBridgeTransactionsInputArg {
   'status' : [] | [BridgeTransactionStatus],
@@ -190,20 +191,21 @@ export interface TokenStorageInitData {
 export interface UTXO { 'txid' : string, 'vout' : number }
 export interface UpdateBridgeTransactionInputArg {
   'vin' : [] | [Array<UTXO>],
+  'deposit_fee_btc_sats' : [] | [bigint],
   'retry_times' : [] | [number],
   'status' : [] | [BridgeTransactionStatus],
   'block_confirmations' : [] | [Array<BlockConfirmation>],
+  'withdrawal_fee_btc_sats' : [] | [bigint],
   'block_id' : [] | [bigint],
   'asset_infos' : [] | [Array<BridgeAssetInfo>],
   'vout' : [] | [Array<UTXO>],
   'btc_txid' : [] | [string],
+  'withdrawal_fee_icp_e8s' : [] | [bigint],
   'omnity_ticket_id' : [] | [string],
-  'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
   'ckbtc_block_id' : [] | [bigint],
   'bridge_id' : string,
-  'deposit_fee' : [] | [bigint],
 }
 export interface UpdateTokenInput {
   'token_id' : TokenId,
@@ -215,25 +217,26 @@ export interface UpdateTokenStandardsInput {
 }
 export interface UserBridgeTransactionDto {
   'vin' : [] | [Array<UTXO>],
+  'deposit_fee_btc_sats' : [] | [bigint],
   'retry_times' : number,
   'status' : BridgeTransactionStatus,
   'block_confirmations' : Array<BlockConfirmation>,
+  'withdrawal_fee_btc_sats' : [] | [bigint],
   'block_id' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
   'total_amount' : [] | [bigint],
   'vout' : [] | [Array<UTXO>],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
+  'withdrawal_fee_icp_e8s' : [] | [bigint],
   'omnity_ticket_id' : [] | [string],
   'created_at_ts' : bigint,
-  'withdrawal_fee' : [] | [bigint],
   'btc_fee' : [] | [bigint],
   'block_timestamp' : [] | [bigint],
   'ckbtc_block_id' : [] | [bigint],
   'bridge_id' : string,
   'btc_address' : string,
   'bridge_type' : BridgeType,
-  'deposit_fee' : [] | [bigint],
 }
 export interface UserNftDto { 'nft' : Nft, 'user' : Principal }
 export interface UserPreference {

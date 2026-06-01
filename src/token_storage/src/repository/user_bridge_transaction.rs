@@ -164,8 +164,6 @@ mod tests {
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
@@ -175,6 +173,8 @@ mod tests {
             vout: None,
             details: BridgeDetails::CkBTC {
                 ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             },
         };
 
@@ -214,8 +214,6 @@ mod tests {
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
@@ -225,6 +223,8 @@ mod tests {
             vout: None,
             details: BridgeDetails::CkBTC {
                 ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             },
         };
 
@@ -271,8 +271,6 @@ mod tests {
                 block_id: Some(100u64 + i as u64),
                 block_timestamp: Some(1620000000u64 + i as u64 * 60),
                 block_confirmations: vec![],
-                deposit_fee: None,
-                withdrawal_fee: None,
                 btc_fee: None,
                 total_amount: None,
                 created_at_ts: 10000u64 + i as u64,
@@ -282,6 +280,8 @@ mod tests {
                 vout: None,
                 details: BridgeDetails::CkBTC {
                     ckbtc_block_id: None,
+                    deposit_fee_btc_sats: None,
+                    withdrawal_fee_btc_sats: None,
                 },
             };
             repo.upsert_bridge_transaction(user_id, bridge_tx.bridge_id.clone(), bridge_tx.clone())
@@ -334,8 +334,6 @@ mod tests {
             block_id: Some(100u64),
             block_timestamp: Some(1620000000u64),
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
@@ -345,6 +343,8 @@ mod tests {
             vout: None,
             details: BridgeDetails::CkBTC {
                 ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             },
         };
 
@@ -380,8 +380,6 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
@@ -391,6 +389,8 @@ mod tests {
             vout: None,
             details: BridgeDetails::CkBTC {
                 ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             },
         }
     }
@@ -518,8 +518,6 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
@@ -529,6 +527,7 @@ mod tests {
             vout: None,
             details: BridgeDetails::Runes {
                 omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: None,
             },
         }
     }

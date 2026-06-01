@@ -668,6 +668,7 @@ class RuneBridgeStore {
       null,
       null,
       null,
+      null,
       bridgeTx.vin,
       bridgeTx.vout.length > 0
         ? bridgeTx.vout
@@ -721,6 +722,7 @@ class RuneBridgeStore {
             null,
             null,
             [],
+            null,
             null,
             null,
             null,

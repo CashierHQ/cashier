@@ -15,15 +15,21 @@ pub struct UTXO {
     pub vout: u32,
 }
 
-/// Asset-type-specific fields for a bridge transaction.
+/// Asset-type-specific fields for a bridge transaction, including denomination-explicit fee fields.
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
 pub enum BridgeDetails {
     CkBTC {
         ckbtc_block_id: Option<u64>,
+        /// ckBTC mint deposit fee denominated in BTC satoshis.
+        deposit_fee_btc_sats: Option<Nat>,
+        /// ckBTC burn withdrawal fee denominated in BTC satoshis.
+        withdrawal_fee_btc_sats: Option<Nat>,
     },
     Runes {
         omnity_ticket_id: Option<String>,
+        /// Omnity ICP redeem fee denominated in ICP e8s.
+        withdrawal_fee_icp_e8s: Option<Nat>,
     },
     /// Migration fallback for records that predate asset classification.
     Legacy,
@@ -78,9 +84,10 @@ pub struct BridgeTransactionV2 {
     pub vout: Option<Vec<UTXO>>,
 }
 
+/// V3 snapshot of BridgeTransaction (before fees were moved into BridgeDetails).
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
-pub struct BridgeTransaction {
+pub struct BridgeTransactionV3 {
     pub bridge_id: String,
     pub icp_address: Principal,
     pub btc_address: String,
@@ -97,11 +104,34 @@ pub struct BridgeTransaction {
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
     pub status: BridgeTransactionStatus,
+    pub vin: Option<Vec<UTXO>>,
+    pub vout: Option<Vec<UTXO>>,
+    pub details: BridgeDetails,
+}
+
+#[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
+#[storable]
+pub struct BridgeTransaction {
+    pub bridge_id: String,
+    pub icp_address: Principal,
+    pub btc_address: String,
+    pub bridge_type: BridgeType,
+    pub asset_infos: Vec<BridgeAssetInfo>,
+    pub btc_txid: Option<String>,
+    pub block_id: Option<u64>,
+    pub block_timestamp: Option<u64>,
+    pub block_confirmations: Vec<BlockConfirmation>,
+    /// Bitcoin network fee (miner fee), separate from minter/protocol fees stored in details.
+    pub btc_fee: Option<Nat>,
+    pub created_at_ts: u64,
+    pub total_amount: Option<Nat>,
+    pub retry_times: u8,
+    pub status: BridgeTransactionStatus,
     /// Input UTXOs of the Bitcoin transaction used for bridging.
     pub vin: Option<Vec<UTXO>>,
     /// Output UTXOs of the Bitcoin transaction used for bridging.
     pub vout: Option<Vec<UTXO>>,
-    /// Asset-type-specific fields (ckbtc_block_id for CkBTC, omnity_ticket_id for Runes).
+    /// Asset-type-specific fields including denomination-explicit fee amounts.
     pub details: BridgeDetails,
 }
 
@@ -128,12 +158,6 @@ impl BridgeTransaction {
         if let Some(block_confirmations) = input.block_confirmations {
             self.block_confirmations = block_confirmations;
         }
-        if let Some(deposit_fee) = input.deposit_fee {
-            self.deposit_fee = Some(deposit_fee);
-        }
-        if let Some(withdrawal_fee) = input.withdrawal_fee {
-            self.withdrawal_fee = Some(withdrawal_fee);
-        }
         if let Some(btc_fee) = input.btc_fee {
             self.btc_fee = Some(btc_fee);
         }
@@ -151,24 +175,43 @@ impl BridgeTransaction {
         }
 
         match &mut self.details {
-            BridgeDetails::CkBTC { ckbtc_block_id } => {
+            BridgeDetails::CkBTC {
+                ckbtc_block_id,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+            } => {
                 if let Some(id) = input.ckbtc_block_id {
                     *ckbtc_block_id = Some(id);
                 }
+                if let Some(f) = input.deposit_fee_btc_sats {
+                    *deposit_fee_btc_sats = Some(f);
+                }
+                if let Some(f) = input.withdrawal_fee_btc_sats {
+                    *withdrawal_fee_btc_sats = Some(f);
+                }
             }
-            BridgeDetails::Runes { omnity_ticket_id } => {
+            BridgeDetails::Runes {
+                omnity_ticket_id,
+                withdrawal_fee_icp_e8s,
+            } => {
                 if let Some(t) = input.omnity_ticket_id {
                     *omnity_ticket_id = Some(t);
+                }
+                if let Some(f) = input.withdrawal_fee_icp_e8s {
+                    *withdrawal_fee_icp_e8s = Some(f);
                 }
             }
             BridgeDetails::Legacy => {
                 if input.ckbtc_block_id.is_some() {
                     self.details = BridgeDetails::CkBTC {
                         ckbtc_block_id: input.ckbtc_block_id,
+                        deposit_fee_btc_sats: input.deposit_fee_btc_sats,
+                        withdrawal_fee_btc_sats: input.withdrawal_fee_btc_sats,
                     };
                 } else if input.omnity_ticket_id.is_some() {
                     self.details = BridgeDetails::Runes {
                         omnity_ticket_id: input.omnity_ticket_id,
+                        withdrawal_fee_icp_e8s: input.withdrawal_fee_icp_e8s,
                     };
                 }
             }
@@ -221,7 +264,8 @@ pub struct BlockConfirmation {
 pub enum BridgeTransactionCodec {
     V1(Vec<BridgeTransactionV1>),
     V2(Vec<BridgeTransactionV2>),
-    V3(Vec<BridgeTransaction>),
+    V3(Vec<BridgeTransactionV3>),
+    V4(Vec<BridgeTransaction>),
 }
 
 impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
@@ -239,8 +283,6 @@ impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
                     block_id: tx.block_id,
                     block_timestamp: tx.block_timestamp,
                     block_confirmations: tx.block_confirmations,
-                    deposit_fee: tx.deposit_fee,
-                    withdrawal_fee: tx.withdrawal_fee,
                     btc_fee: tx.btc_fee,
                     created_at_ts: tx.created_at_ts,
                     total_amount: tx.total_amount,
@@ -250,6 +292,8 @@ impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
                     vout: None,
                     details: BridgeDetails::CkBTC {
                         ckbtc_block_id: tx.ckbtc_block_id,
+                        deposit_fee_btc_sats: tx.deposit_fee,
+                        withdrawal_fee_btc_sats: tx.withdrawal_fee,
                     },
                 })
                 .collect(),
@@ -263,10 +307,13 @@ impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
                     let details = if is_runes {
                         BridgeDetails::Runes {
                             omnity_ticket_id: tx.omnity_ticket_id,
+                            withdrawal_fee_icp_e8s: tx.withdrawal_fee,
                         }
                     } else {
                         BridgeDetails::CkBTC {
                             ckbtc_block_id: tx.ckbtc_block_id,
+                            deposit_fee_btc_sats: tx.deposit_fee,
+                            withdrawal_fee_btc_sats: tx.withdrawal_fee,
                         }
                     };
                     BridgeTransaction {
@@ -279,8 +326,6 @@ impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
                         block_id: tx.block_id,
                         block_timestamp: tx.block_timestamp,
                         block_confirmations: tx.block_confirmations,
-                        deposit_fee: tx.deposit_fee,
-                        withdrawal_fee: tx.withdrawal_fee,
                         btc_fee: tx.btc_fee,
                         created_at_ts: tx.created_at_ts,
                         total_amount: tx.total_amount,
@@ -292,12 +337,50 @@ impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
                     }
                 })
                 .collect(),
-            BridgeTransactionCodec::V3(txs) => txs,
+            BridgeTransactionCodec::V3(txs) => txs
+                .into_iter()
+                .map(|tx| {
+                    let details = match tx.details {
+                        BridgeDetails::CkBTC { ckbtc_block_id, .. } => BridgeDetails::CkBTC {
+                            ckbtc_block_id,
+                            deposit_fee_btc_sats: tx.deposit_fee,
+                            withdrawal_fee_btc_sats: tx.withdrawal_fee,
+                        },
+                        BridgeDetails::Runes {
+                            omnity_ticket_id, ..
+                        } => BridgeDetails::Runes {
+                            omnity_ticket_id,
+                            withdrawal_fee_icp_e8s: tx.withdrawal_fee,
+                        },
+                        BridgeDetails::Legacy => BridgeDetails::Legacy,
+                    };
+                    BridgeTransaction {
+                        bridge_id: tx.bridge_id,
+                        icp_address: tx.icp_address,
+                        btc_address: tx.btc_address,
+                        bridge_type: tx.bridge_type,
+                        asset_infos: tx.asset_infos,
+                        btc_txid: tx.btc_txid,
+                        block_id: tx.block_id,
+                        block_timestamp: tx.block_timestamp,
+                        block_confirmations: tx.block_confirmations,
+                        btc_fee: tx.btc_fee,
+                        created_at_ts: tx.created_at_ts,
+                        total_amount: tx.total_amount,
+                        retry_times: tx.retry_times,
+                        status: tx.status,
+                        vin: tx.vin,
+                        vout: tx.vout,
+                        details,
+                    }
+                })
+                .collect(),
+            BridgeTransactionCodec::V4(txs) => txs,
         }
     }
 
     fn encode(dest: Vec<BridgeTransaction>) -> Self {
-        BridgeTransactionCodec::V3(dest)
+        BridgeTransactionCodec::V4(dest)
     }
 }
 
@@ -317,8 +400,6 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
             btc_fee: None,
             total_amount: None,
             created_at_ts: 0,
@@ -328,6 +409,8 @@ mod tests {
             vout: None,
             details: BridgeDetails::CkBTC {
                 ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             },
         }
     }
@@ -360,8 +443,9 @@ mod tests {
             block_id: Some(100u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
-            deposit_fee: Some(Nat::from(1000u32)),
-            withdrawal_fee: Some(Nat::from(500u32)),
+            deposit_fee_btc_sats: Some(Nat::from(1000u32)),
+            withdrawal_fee_btc_sats: Some(Nat::from(500u32)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(200u32)),
             retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
@@ -381,14 +465,14 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::CkBTC {
-                ckbtc_block_id: Some(99u64)
+                ckbtc_block_id: Some(99u64),
+                deposit_fee_btc_sats: Some(Nat::from(1000u32)),
+                withdrawal_fee_btc_sats: Some(Nat::from(500u32)),
             }
         );
         assert_eq!(transaction.block_id, Some(100u64));
         assert_eq!(transaction.block_timestamp, Some(1620001200u64));
         assert_eq!(transaction.block_confirmations.len(), 2);
-        assert_eq!(transaction.deposit_fee, Some(Nat::from(1000u32)));
-        assert_eq!(transaction.withdrawal_fee, Some(Nat::from(500u32)));
         assert_eq!(transaction.btc_fee, Some(Nat::from(200u32)));
         assert_eq!(transaction.retry_times, 1);
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
@@ -400,6 +484,7 @@ mod tests {
         let mut transaction = BridgeTransaction {
             details: BridgeDetails::Runes {
                 omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: None,
             },
             ..fixture_of_ckbtc_bridge_transaction()
         };
@@ -412,8 +497,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -429,7 +515,140 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::Runes {
-                omnity_ticket_id: Some("ticket-123".to_string())
+                omnity_ticket_id: Some("ticket-123".to_string()),
+                withdrawal_fee_icp_e8s: None,
+            }
+        );
+    }
+
+    #[test]
+    fn it_should_update_runes_withdrawal_fee_icp_e8s() {
+        // Arrange
+        let mut transaction = BridgeTransaction {
+            details: BridgeDetails::Runes {
+                omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: None,
+            },
+            ..fixture_of_ckbtc_bridge_transaction()
+        };
+
+        let update_input = UpdateBridgeTransactionInputArg {
+            bridge_id: "test_bridge_id".to_string(),
+            asset_infos: None,
+            btc_txid: None,
+            ckbtc_block_id: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: Some(Nat::from(10_000u32)),
+            btc_fee: None,
+            retry_times: None,
+            status: None,
+            omnity_ticket_id: None,
+            vin: None,
+            vout: None,
+        };
+
+        // Act
+        transaction.update(update_input);
+
+        // Assert
+        assert_eq!(
+            transaction.details,
+            BridgeDetails::Runes {
+                omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: Some(Nat::from(10_000u32)),
+            }
+        );
+    }
+
+    #[test]
+    fn it_should_migrate_v3_ckbtc_fees_into_details() {
+        // Arrange — a V3 record with deposit/withdrawal fees at top level
+        let v3_tx = BridgeTransactionV3 {
+            bridge_id: "bridge_v3".to_string(),
+            icp_address: Principal::from_text("aaaaa-aa").unwrap(),
+            btc_address: "bc1qtest".to_string(),
+            bridge_type: BridgeType::Import,
+            asset_infos: vec![],
+            btc_txid: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: vec![],
+            deposit_fee: Some(Nat::from(1_000u32)),
+            withdrawal_fee: None,
+            btc_fee: Some(Nat::from(200u32)),
+            created_at_ts: 0,
+            total_amount: None,
+            retry_times: 0,
+            status: BridgeTransactionStatus::Created,
+            vin: None,
+            vout: None,
+            details: BridgeDetails::CkBTC {
+                ckbtc_block_id: Some(42u64),
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
+            },
+        };
+
+        // Act
+        let decoded: Vec<BridgeTransaction> =
+            BridgeTransactionCodec::decode(BridgeTransactionCodec::V3(vec![v3_tx]));
+
+        // Assert
+        assert_eq!(decoded.len(), 1);
+        assert_eq!(
+            decoded[0].details,
+            BridgeDetails::CkBTC {
+                ckbtc_block_id: Some(42u64),
+                deposit_fee_btc_sats: Some(Nat::from(1_000u32)),
+                withdrawal_fee_btc_sats: None,
+            }
+        );
+        assert_eq!(decoded[0].btc_fee, Some(Nat::from(200u32)));
+    }
+
+    #[test]
+    fn it_should_migrate_v3_runes_withdrawal_fee_into_details() {
+        // Arrange — a V3 Runes export record with withdrawal_fee at top level
+        let v3_tx = BridgeTransactionV3 {
+            bridge_id: "rune_v3".to_string(),
+            icp_address: Principal::from_text("aaaaa-aa").unwrap(),
+            btc_address: "tb1qtest".to_string(),
+            bridge_type: BridgeType::Export,
+            asset_infos: vec![],
+            btc_txid: None,
+            block_id: None,
+            block_timestamp: None,
+            block_confirmations: vec![],
+            deposit_fee: None,
+            withdrawal_fee: Some(Nat::from(10_000u32)),
+            btc_fee: None,
+            created_at_ts: 0,
+            total_amount: None,
+            retry_times: 0,
+            status: BridgeTransactionStatus::Created,
+            vin: None,
+            vout: None,
+            details: BridgeDetails::Runes {
+                omnity_ticket_id: Some("ticket-abc".to_string()),
+                withdrawal_fee_icp_e8s: None,
+            },
+        };
+
+        // Act
+        let decoded: Vec<BridgeTransaction> =
+            BridgeTransactionCodec::decode(BridgeTransactionCodec::V3(vec![v3_tx]));
+
+        // Assert
+        assert_eq!(decoded.len(), 1);
+        assert_eq!(
+            decoded[0].details,
+            BridgeDetails::Runes {
+                omnity_ticket_id: Some("ticket-abc".to_string()),
+                withdrawal_fee_icp_e8s: Some(Nat::from(10_000u32)),
             }
         );
     }

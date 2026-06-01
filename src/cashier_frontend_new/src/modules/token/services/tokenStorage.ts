@@ -352,8 +352,9 @@ class TokenStorageService {
         ],
         bridge_type: { Import: null },
         vout: [],
-        deposit_fee: [depositFee],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [depositFee],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
         ckbtc_block_id: [ckbtcBlockId],
@@ -509,8 +510,9 @@ class TokenStorageService {
         ],
         bridge_type: { Import: null },
         vout: args.vout && args.vout.length > 0 ? [args.vout] : [],
-        deposit_fee: [],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
         ckbtc_block_id: [],
@@ -625,8 +627,9 @@ class TokenStorageService {
    * @param block_timestamp the timestamp of the block where the transaction was confirmed
    * @param confirmations list of Bitcoin blocks confirming the transaction
    * @param btc_txid the Bitcoin transaction ID
-   * @param deposit_fee ckBTC deposit fee
-   * @param withdrawal_fee ckBTC withdrawal fee
+   * @param deposit_fee_btc_sats ckBTC deposit fee in BTC satoshis
+   * @param withdrawal_fee_btc_sats ckBTC withdrawal fee in BTC satoshis
+   * @param withdrawal_fee_icp_e8s Rune redeem fee in ICP e8s
    * @param btc_fee Bitcoin network fee
    * @param retry_times number of retry attempts for updating balance
    * @returns updated BridgeTransaction or error message
@@ -639,8 +642,9 @@ class TokenStorageService {
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] = [],
     btc_txid: string | null = null,
-    deposit_fee: bigint | null = null,
-    withdrawal_fee: bigint | null = null,
+    deposit_fee_btc_sats: bigint | null = null,
+    withdrawal_fee_btc_sats: bigint | null = null,
+    withdrawal_fee_icp_e8s: bigint | null = null,
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
     omnity_ticket_id: string | null = null,
@@ -662,8 +666,9 @@ class TokenStorageService {
         block_timestamp,
         confirmations,
         btc_txid,
-        deposit_fee,
-        withdrawal_fee,
+        deposit_fee_btc_sats,
+        withdrawal_fee_btc_sats,
+        withdrawal_fee_icp_e8s,
         btc_fee,
         retry_times,
         omnity_ticket_id,

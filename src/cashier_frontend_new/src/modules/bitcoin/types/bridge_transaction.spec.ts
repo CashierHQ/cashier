@@ -33,8 +33,9 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: { Import: null },
         total_amount: [150000n],
         created_at_ts: 1704067200n,
-        deposit_fee: [1000n],
-        withdrawal_fee: [2000n],
+        deposit_fee_btc_sats: [1000n],
+        withdrawal_fee_btc_sats: [2000n],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [3000n],
         btc_txid: ["tx_abc123"],
         ckbtc_block_id: [700000n],
@@ -70,8 +71,7 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: BridgeType.Import,
         total_amount: 150000n,
         created_at_ts: 1704067200n,
-        deposit_fee: 1000n,
-        withdrawal_fee: 2000n,
+
         btc_fee: 3000n,
         btc_txid: "tx_abc123",
         block_id: 800000n,
@@ -84,7 +84,12 @@ describe("BridgeTransactionMapper", () => {
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
-        details: { kind: "ckbtc", ckbtc_block_id: 700000n },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: 700000n,
+          deposit_fee_btc_sats: 1000n,
+          withdrawal_fee_btc_sats: 2000n,
+        },
       });
     });
 
@@ -99,8 +104,9 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: { Export: null },
         total_amount: [],
         created_at_ts: 1704067300n,
-        deposit_fee: [],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         btc_txid: [],
         ckbtc_block_id: [],
@@ -119,11 +125,14 @@ describe("BridgeTransactionMapper", () => {
 
       // Assert
       expect(result.total_amount).toBe(0n);
-      expect(result.deposit_fee).toBe(0n);
-      expect(result.withdrawal_fee).toBe(0n);
       expect(result.btc_fee).toBe(0n);
       expect(result.btc_txid).toBeNull();
-      expect(result.details).toEqual({ kind: "ckbtc", ckbtc_block_id: null });
+      expect(result.details).toEqual({
+        kind: "ckbtc",
+        ckbtc_block_id: null,
+        deposit_fee_btc_sats: null,
+        withdrawal_fee_btc_sats: null,
+      });
       expect(result.block_id).toBeNull();
       expect(result.block_timestamp).toBeNull();
       expect(result.confirmations).toEqual([]);
@@ -161,8 +170,9 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: { Import: null },
         total_amount: [],
         created_at_ts: 1704067400n,
-        deposit_fee: [],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         btc_txid: [],
         ckbtc_block_id: [],
@@ -197,8 +207,9 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: { Export: null },
         total_amount: [],
         created_at_ts: 1704067500n,
-        deposit_fee: [],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         btc_txid: [],
         ckbtc_block_id: [],
@@ -344,8 +355,7 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: BridgeType.Import,
         total_amount: 100000000n,
         created_at_ts: 1704067200n,
-        deposit_fee: 1000n,
-        withdrawal_fee: 2000n,
+
         btc_fee: 3000n,
         btc_txid: "tx_123",
         block_id: 800000n,
@@ -355,7 +365,12 @@ describe("BridgeTransactionMapper", () => {
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Completed,
-        details: { kind: "ckbtc", ckbtc_block_id: null },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: null,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
       };
 
       // Act
@@ -397,8 +412,7 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: BridgeType.Export,
         total_amount: 0n,
         created_at_ts: 1704067300n,
-        deposit_fee: 0n,
-        withdrawal_fee: 0n,
+
         btc_fee: 0n,
         btc_txid: null,
         block_id: null,
@@ -408,7 +422,12 @@ describe("BridgeTransactionMapper", () => {
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Pending,
-        details: { kind: "ckbtc", ckbtc_block_id: null },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: null,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
       };
 
       // Act
@@ -439,8 +458,7 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: BridgeType.Import,
         total_amount: 1000n,
         created_at_ts: 1704067400n,
-        deposit_fee: 100n,
-        withdrawal_fee: 200n,
+
         btc_fee: 300n,
         btc_txid: null,
         block_id: null,
@@ -450,7 +468,12 @@ describe("BridgeTransactionMapper", () => {
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
-        details: { kind: "ckbtc", ckbtc_block_id: null },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: null,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
       };
 
       // Test Created status
@@ -495,8 +518,7 @@ describe("BridgeTransactionMapper", () => {
         bridge_type: BridgeType.Import,
         total_amount: 1n,
         created_at_ts: 1704067500n,
-        deposit_fee: 0n,
-        withdrawal_fee: 0n,
+
         btc_fee: 0n,
         btc_txid: null,
         block_id: null,
@@ -506,7 +528,12 @@ describe("BridgeTransactionMapper", () => {
         vout: [],
         retry_times: 0,
         status: BridgeTransactionStatus.Created,
-        details: { kind: "ckbtc", ckbtc_block_id: null },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: null,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
       };
 
       // Act
@@ -570,8 +597,9 @@ describe("BridgeTransactionMapper", () => {
         { block_id: 800001n, block_timestamp: 1704067800n },
       ];
       const btc_txid = "tx_update_123";
-      const deposit_fee = 1000n;
-      const withdrawal_fee = 2000n;
+      const deposit_fee_btc_sats = 1000n;
+      const withdrawal_fee_btc_sats = 2000n;
+      const withdrawal_fee_icp_e8s = null;
       const btc_fee = 3000n;
       const retry_times = 3;
       const asset_infos: BridgeAssetInfo[] = [
@@ -592,8 +620,9 @@ describe("BridgeTransactionMapper", () => {
         block_timestamp,
         confirmations,
         btc_txid,
-        deposit_fee,
-        withdrawal_fee,
+        deposit_fee_btc_sats,
+        withdrawal_fee_btc_sats,
+        withdrawal_fee_icp_e8s,
         btc_fee,
         retry_times,
         null,
@@ -626,8 +655,9 @@ describe("BridgeTransactionMapper", () => {
           ],
         ],
         btc_txid: ["tx_update_123"],
-        deposit_fee: [1000n],
-        withdrawal_fee: [2000n],
+        deposit_fee_btc_sats: [1000n],
+        withdrawal_fee_btc_sats: [2000n],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [3000n],
         omnity_ticket_id: [],
         vin: [],
@@ -665,8 +695,9 @@ describe("BridgeTransactionMapper", () => {
         block_timestamp: [],
         block_confirmations: [],
         btc_txid: [],
-        deposit_fee: [],
-        withdrawal_fee: [],
+        deposit_fee_btc_sats: [],
+        withdrawal_fee_btc_sats: [],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         omnity_ticket_id: [],
         vin: [],
@@ -738,8 +769,9 @@ describe("BridgeTransactionMapper", () => {
       );
       expect(result.bridge_type).toEqual({ Export: null });
       expect(result.btc_txid).toEqual([]);
-      expect(result.deposit_fee).toEqual([]);
-      expect(result.withdrawal_fee).toEqual([450n]);
+      expect(result.deposit_fee_btc_sats).toEqual([]);
+      expect(result.withdrawal_fee_btc_sats).toEqual([450n]);
+      expect(result.withdrawal_fee_icp_e8s).toEqual([]);
       expect(result.btc_fee).toEqual([1200n]);
       expect(result.omnity_ticket_id).toEqual([]);
       expect(result.asset_infos).toEqual([
@@ -771,7 +803,7 @@ describe("BridgeTransactionMapper", () => {
         );
 
       // Assert
-      expect(result.withdrawal_fee).toEqual([withdrawalFee]);
+      expect(result.withdrawal_fee_icp_e8s).toEqual([withdrawalFee]);
       expect(result.bridge_type).toEqual({ Export: null });
       expect(result.icp_address.toText()).toBe("aaaaa-aa");
       expect(result.btc_address).toBe(

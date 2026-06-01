@@ -139,6 +139,7 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
         if let Some(new_id) = input.ckbtc_block_id.as_ref()
             && let BridgeDetails::CkBTC {
                 ckbtc_block_id: Some(existing_id),
+                ..
             } = &existing_transaction.details
             && new_id != existing_id
         {
@@ -173,21 +174,39 @@ impl<R: Repositories> BridgeTransactionValidator<R> {
             ));
         }
 
-        if let Some(deposit_fee) = input.deposit_fee.as_ref()
-            && let Some(existing_deposit_fee) = existing_transaction.deposit_fee.as_ref()
-            && deposit_fee != existing_deposit_fee
+        if let Some(new_fee) = input.deposit_fee_btc_sats.as_ref()
+            && let BridgeDetails::CkBTC {
+                deposit_fee_btc_sats: Some(existing_fee),
+                ..
+            } = &existing_transaction.details
+            && new_fee != existing_fee
         {
             return Err(CanisterError::ValidationErrors(
-                "deposit_fee is already set and cannot be updated".to_string(),
+                "deposit_fee_btc_sats is already set and cannot be updated".to_string(),
             ));
         }
 
-        if let Some(withdrawal_fee) = input.withdrawal_fee.as_ref()
-            && let Some(existing_withdrawal_fee) = existing_transaction.withdrawal_fee.as_ref()
-            && withdrawal_fee != existing_withdrawal_fee
+        if let Some(new_fee) = input.withdrawal_fee_btc_sats.as_ref()
+            && let BridgeDetails::CkBTC {
+                withdrawal_fee_btc_sats: Some(existing_fee),
+                ..
+            } = &existing_transaction.details
+            && new_fee != existing_fee
         {
             return Err(CanisterError::ValidationErrors(
-                "withdrawal_fee is already set and cannot be updated".to_string(),
+                "withdrawal_fee_btc_sats is already set and cannot be updated".to_string(),
+            ));
+        }
+
+        if let Some(new_fee) = input.withdrawal_fee_icp_e8s.as_ref()
+            && let BridgeDetails::Runes {
+                withdrawal_fee_icp_e8s: Some(existing_fee),
+                ..
+            } = &existing_transaction.details
+            && new_fee != existing_fee
+        {
+            return Err(CanisterError::ValidationErrors(
+                "withdrawal_fee_icp_e8s is already set and cannot be updated".to_string(),
             ));
         }
 
@@ -242,8 +261,9 @@ mod tests {
             btc_address: "tb1qbtcaddress".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -266,8 +286,9 @@ mod tests {
                 amount: Nat::from(125_000u64),
                 decimals: 8,
             }],
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -292,8 +313,9 @@ mod tests {
                 amount: Nat::from(50_000u64),
                 decimals: 8,
             }],
-            deposit_fee: Some(Nat::from(1000u64)),
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -324,8 +346,9 @@ mod tests {
                 amount: Nat::from(125_000u64),
                 decimals: 8,
             }],
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -362,8 +385,9 @@ mod tests {
             btc_address: "tb1qbtcaddress".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None, // neither btc_txid nor ckbtc_block_id
@@ -555,8 +579,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(900u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
@@ -587,8 +612,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -638,8 +664,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -678,6 +705,8 @@ mod tests {
             .unwrap();
         stored.details = BridgeDetails::CkBTC {
             ckbtc_block_id: Some(42u64),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
         };
         repo.user_bridge_transaction()
             .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
@@ -690,8 +719,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -740,8 +770,9 @@ mod tests {
             block_id: Some(840_001u64),
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -790,8 +821,9 @@ mod tests {
             block_id: None,
             block_timestamp: Some(1_720_000_001u64),
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -844,8 +876,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: Some(vec![confirmation]),
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -882,7 +915,13 @@ mod tests {
             .user_bridge_transaction()
             .get_bridge_transaction_by_id(user_id, &bridge_id)
             .unwrap();
-        stored.deposit_fee = Some(Nat::from(1000u64));
+        if let BridgeDetails::CkBTC {
+            ref mut deposit_fee_btc_sats,
+            ..
+        } = stored.details
+        {
+            *deposit_fee_btc_sats = Some(Nat::from(1000u64));
+        }
         repo.user_bridge_transaction()
             .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
             .unwrap();
@@ -894,8 +933,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: Some(Nat::from(2000u64)),
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: Some(Nat::from(2000u64)),
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -913,7 +953,7 @@ mod tests {
         assert!(matches!(
             result.unwrap_err(),
             CanisterError::ValidationErrors(message)
-                if message == "deposit_fee is already set and cannot be updated"
+                if message == "deposit_fee_btc_sats is already set and cannot be updated"
         ));
     }
 
@@ -937,8 +977,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(500u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(500u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
@@ -956,7 +997,7 @@ mod tests {
         assert!(matches!(
             result.unwrap_err(),
             CanisterError::ValidationErrors(message)
-                if message == "withdrawal_fee is already set and cannot be updated"
+                if message == "withdrawal_fee_btc_sats is already set and cannot be updated"
         ));
     }
 
@@ -980,8 +1021,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1500u64)),
             retry_times: None,
             status: None,
@@ -1021,11 +1063,11 @@ mod tests {
         stored.btc_txid = Some("same-btc-txid".to_string());
         stored.details = BridgeDetails::CkBTC {
             ckbtc_block_id: Some(42u64),
+            deposit_fee_btc_sats: Some(Nat::from(1000u64)),
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
         };
         stored.block_id = Some(840_000u64);
         stored.block_timestamp = Some(1_720_000_000u64);
-        stored.deposit_fee = Some(Nat::from(1000u64));
-        stored.withdrawal_fee = Some(Nat::from(450u64));
         stored.btc_fee = Some(Nat::from(1200u64));
         repo.user_bridge_transaction()
             .upsert_bridge_transaction(user_id, bridge_id.clone(), stored)
@@ -1039,8 +1081,9 @@ mod tests {
             block_id: Some(840_000u64),
             block_timestamp: Some(1_720_000_000u64),
             block_confirmations: None,
-            deposit_fee: Some(Nat::from(1000u64)),
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             retry_times: None,
             status: None,
@@ -1084,8 +1127,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: Some(2), // same value, not increasing
             status: None,
@@ -1127,8 +1171,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
@@ -1177,8 +1222,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Failed),
@@ -1221,8 +1267,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Pending),
@@ -1260,8 +1307,9 @@ mod tests {
                 block_id: 840_000,
                 block_timestamp: 1_720_000_000,
             }]),
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
@@ -1297,8 +1345,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: Some(BridgeTransactionStatus::Completed),
@@ -1345,8 +1394,9 @@ mod tests {
             block_id: None,
             block_timestamp: None,
             block_confirmations: None,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             retry_times: None,
             status: None,
