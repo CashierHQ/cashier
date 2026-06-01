@@ -1,10 +1,12 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
+import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
@@ -81,7 +83,7 @@ const CREATOR_TEXT =
   "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae";
 const CREATOR = Principal.fromText(CREATOR_TEXT);
 
-function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
+function makeDraftLink(overrides?: Partial<DraftLink>): DraftLink {
   return {
     id: "test-id",
     title: "Test Link",
@@ -462,5 +464,6 @@ describe("LinkCreationStoreV3", () => {
         }),
       );
     });
+
   });
 });

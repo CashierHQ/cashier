@@ -126,12 +126,6 @@ test.describe("redirect routing", () => {
       screen: "createAddAsset",
     },
     {
-      group: "lock link",
-      prefix: "LK",
-      linkState: "lock",
-      screen: "createLock",
-    },
-    {
       group: "preview link",
       prefix: "PV",
       linkState: "preview",
@@ -325,6 +319,27 @@ test.describe("redirect routing", () => {
           e2eUrl(path, {
             auth: "otherUser",
             linkState: "ended",
+            userState: "addressUnlocked",
+            linkEnded: true,
+          }),
+        );
+
+        await expectScreen(page, "linkEnded");
+      });
+    }
+
+    for (const [id, label, path, auth] of [
+      ["UI-01", "logged-out landing", "/link/e2e-link", "loggedOut"],
+      ["UI-02", "logged-in landing", "/link/e2e-link", "otherUser"],
+      ["UI-03", "logged-in use flow", "/link/e2e-link/use", "otherUser"],
+    ] as const) {
+      test(`[${id}] inactive public link shows link ended from ${label}`, async ({
+        page,
+      }) => {
+        await page.goto(
+          e2eUrl(path, {
+            auth,
+            linkState: "inactive",
             userState: "addressUnlocked",
             linkEnded: true,
           }),

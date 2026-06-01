@@ -9,6 +9,10 @@ import type { RedirectInput } from "./types";
 type LinkLike = {
   creator?: { toString(): string } | string;
   state?: string;
+  link_use_action_counter?: bigint | number;
+  link_use_action_max_count?: bigint | number;
+  use_count?: bigint | number;
+  max_use?: bigint | number;
 };
 
 type StepState<TStep> = {
@@ -18,6 +22,12 @@ type StepState<TStep> = {
 type StatefulStore<TStep> = {
   state: StepState<TStep>;
 };
+
+function debugRedirectInput(data: RedirectInput) {
+  if (import.meta.env.DEV && data.pathname.startsWith("/link/")) {
+    console.warn("[redirect:input]", data);
+  }
+}
 
 /**
  * Reads the current authenticated principal from the route context.
@@ -102,9 +112,19 @@ function getIsLoading(context: GuardContext): boolean {
  */
 function getLinkEnded(context: GuardContext, linkState: LinkStep | null) {
   const link = context.getLink() as LinkLike | undefined;
+  const useCount = link?.link_use_action_counter ?? link?.use_count;
+  const maxUse = link?.link_use_action_max_count ?? link?.max_use;
+  const isFullyUsed =
+    useCount !== undefined &&
+    maxUse !== undefined &&
+    BigInt(maxUse) > 0n &&
+    BigInt(useCount) >= BigInt(maxUse);
+
   return (
     linkState === LinkStep.ENDED ||
-    link?.state === LegacyLinkState.INACTIVE_ENDED
+    link?.state === LegacyLinkState.INACTIVE ||
+    link?.state === LegacyLinkState.INACTIVE_ENDED ||
+    isFullyUsed
   );
 }
 
@@ -130,7 +150,7 @@ export function buildRedirectInput(
   const route = parseRoute(pathname);
   const linkState = getOwnerLinkState(context);
 
-  return {
+  const input = {
     pathname,
     isAuthReady: context.authState.isReady,
     isLoading: getIsLoading(context),
@@ -142,4 +162,8 @@ export function buildRedirectInput(
     userState: getUserState(context),
     linkEnded: getLinkEnded(context, linkState),
   };
+
+  debugRedirectInput(input);
+
+  return input;
 }

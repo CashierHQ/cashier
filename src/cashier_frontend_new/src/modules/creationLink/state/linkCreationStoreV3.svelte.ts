@@ -1,6 +1,7 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
@@ -33,6 +34,15 @@ import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
+function debugCreateStore(
+  message: string,
+  data: Record<string, unknown> = {},
+) {
+  if (import.meta.env.DEV) {
+    console.warn(`[create-store:v3] ${message}`, data);
+  }
+}
+
 /**
  * Store for draft link state management
  */
@@ -57,9 +67,18 @@ export class LinkCreationStoreV3 {
   #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
 
-  constructor(draftLink: SharedLink) {
+  constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
-    this.#state = this.getStateHandler(draftLink.link_state);
+    debugCreateStore("initialize from draft", {
+      id: draftLink.id,
+      draftLinkState: draftLink.link_state,
+    });
+
+    this.#state = this.getStateHandler(draftLink);
+    debugCreateStore("initialized step", {
+      id: draftLink.id,
+      initializedStep: this.#state.step,
+    });
 
     this.#draftLink = draftLink;
 
@@ -148,10 +167,10 @@ export class LinkCreationStoreV3 {
    * @param state LinkStateValue to initialize from
    * @returns LinkCreationState corresponding to the given state
    */
-  private getStateHandler(state: SharedLinkState): LinkCreationStateV3 {
+  private getStateHandler(draftLink: DraftLink): LinkCreationStateV3 {
     let initialState: LinkCreationStateV3;
 
-    switch (state) {
+    switch (draftLink.link_state) {
       case SharedLinkState.ChooseType:
         initialState = new ChooseLinkTypeStateV3(this);
         break;
@@ -205,6 +224,12 @@ export class LinkCreationStoreV3 {
       default:
         assertUnreachable(this.#state.step);
     }
+
+    debugCreateStore("persist draft step", {
+      id: this.#id,
+      currentStep: this.#state.step,
+      persistedLinkState: linkState,
+    });
 
     if (this.#id && authState.account) {
       draftLinkService.update({

@@ -18,6 +18,7 @@
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import { paths } from "$modules/routing/paths";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
 
@@ -78,7 +79,7 @@
       linkStore.step === LinkStep.CHOOSE_TYPE ||
       linkStore.step === LinkStep.CREATED
     ) {
-      goto(resolve("/links"));
+      goto(resolve(paths.links()));
     } else {
       try {
         await linkStore.goBack();

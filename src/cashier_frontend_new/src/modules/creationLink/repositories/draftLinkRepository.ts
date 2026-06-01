@@ -8,6 +8,8 @@ import {
 } from "$shared";
 import * as devalue from "devalue";
 
+export type DraftLink = SharedLink;
+
 /**
  * Repository for managing temporary links in localStorage
  */
@@ -26,12 +28,12 @@ export class DraftLinkRepository {
    * @param owner owner identifier for loading
    * @returns array of SharedLink objects
    */
-  private load(owner: string): SharedLink[] {
+  private load(owner: string): DraftLink[] {
     const key = this.storeKey(owner);
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     try {
-      const list: SharedLink[] = devalue.parse(
+      const list: DraftLink[] = devalue.parse(
         raw,
         SharedLinkMapper.serde.deserialize,
       );
@@ -49,7 +51,7 @@ export class DraftLinkRepository {
    * @param links array of SharedLink objects to save
    * @param owner owner identifier for saving
    */
-  save(links: SharedLink[], owner: string): void {
+  save(links: DraftLink[], owner: string): void {
     const key = this.storeKey(owner);
     const stringified = devalue.stringify(
       links,
@@ -71,7 +73,7 @@ export class DraftLinkRepository {
   }: {
     id: string;
     owner: string;
-    draftLink: SharedLink;
+    draftLink: DraftLink;
   }) {
     const links = this.load(owner);
     const idx = links.findIndex((x) => String(x.id) === id);
@@ -108,7 +110,7 @@ export class DraftLinkRepository {
     const draftLink = links.find((x) => String(x.id) === id);
     if (!draftLink) return;
 
-    const updated: SharedLink = {
+    const updated: DraftLink = {
       ...draftLink,
       title: updateData.title ?? draftLink.title,
       link_type: updateData.linkType ?? draftLink.link_type,
@@ -142,7 +144,7 @@ export class DraftLinkRepository {
    * @param owner owner identifier for retrieving
    * @returns array of SharedLink objects
    */
-  get(owner: string): SharedLink[] {
+  get(owner: string): DraftLink[] {
     const list = this.load(owner);
 
     return list;
@@ -154,7 +156,7 @@ export class DraftLinkRepository {
    * @param tempLinkId local identifier for the temp link to retrieve
    * @returns the SharedLink object or undefined if not found
    */
-  getOne(owner: string, tempLinkId: string): SharedLink | undefined {
+  getOne(owner: string, tempLinkId: string): DraftLink | undefined {
     const links = this.load(owner);
     if (!links.length) return undefined;
     return links.find((x) => String(x.id) === tempLinkId);

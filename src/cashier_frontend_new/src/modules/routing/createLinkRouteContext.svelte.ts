@@ -12,6 +12,15 @@ type LinkRouteContextOptions = {
   storeType?: "userLink" | "linkDetail";
 };
 
+function debugCreateRouteContext(
+  message: string,
+  data: Record<string, unknown> = {},
+) {
+  if (import.meta.env.DEV) {
+    console.warn(`[route-context:create] ${message}`, data);
+  }
+}
+
 /**
  * Initializes route-scoped link data and exposes it through Svelte context.
  *
@@ -42,18 +51,47 @@ export function createLinkRouteContext({
 
   $effect(() => {
     if (draftLinkId && context.authState.isReady) {
+      debugCreateRouteContext("load draft link", {
+        draftLinkId,
+        isAuthReady: context.authState.isReady,
+      });
+
       const draftLink = draftLinkService.getDraftLink(draftLinkId);
 
       if (draftLink) {
-        context.setLinkCreationStoreV3(new LinkCreationStoreV3(draftLink));
+        debugCreateRouteContext("found draft link", {
+          draftLinkId,
+          draftLinkState: draftLink.link_state,
+        });
+
+        const store = new LinkCreationStoreV3(draftLink);
+        context.setLinkCreationStoreV3(store);
+
+        debugCreateRouteContext("created v3 store", {
+          draftLinkId,
+          storeStep: store.state.step,
+        });
       } else {
+        debugCreateRouteContext("missing v3 draft link, checking temp link", {
+          draftLinkId,
+        });
+
         const tempLinkResult = LinkCreationStore.getTempLink(draftLinkId);
 
         if (tempLinkResult.isOk()) {
+          debugCreateRouteContext("found temp link", {
+            draftLinkId,
+            tempLinkState: tempLinkResult.value.state,
+          });
+
           context.setLinkCreationStore(
             new LinkCreationStore(tempLinkResult.value),
           );
         } else {
+          debugCreateRouteContext("missing all create link stores", {
+            draftLinkId,
+          });
+
           clearMissingDraftStores(context);
         }
       }

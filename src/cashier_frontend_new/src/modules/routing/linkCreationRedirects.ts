@@ -8,6 +8,15 @@ import type { RedirectDecision, RedirectInput } from "./types";
  */
 type OwnerRouteArea = "create" | "detail";
 
+function debugCreationRedirect(
+  message: string,
+  data: Record<string, unknown> = {},
+) {
+  if (import.meta.env.DEV) {
+    console.warn(`[redirect:create] ${message}`, data);
+  }
+}
+
 /**
  * Applies owner-flow validation before state-specific redirects.
  *
@@ -48,30 +57,71 @@ export function resolveCreationRedirect(
   input: RedirectInput,
   routeArea: OwnerRouteArea,
 ): RedirectDecision {
+  debugCreationRedirect("resolve", {
+    routeArea,
+    linkId: input.linkId,
+    linkExists: input.linkExists,
+    linkOwnerId: input.linkOwnerId,
+    currentUserId: input.currentUserId,
+    linkState: input.linkState,
+    isLoading: input.isLoading,
+  });
+
   const validationRedirect = validateOwnerAccess(input);
 
   if (validationRedirect) {
+    debugCreationRedirect("validation decision", {
+      routeArea,
+      linkId: input.linkId,
+      linkState: input.linkState,
+      decision: validationRedirect,
+    });
+
     return validationRedirect;
   }
 
   const linkId = input.linkId as string;
 
+  const withDecisionLog = (decision: RedirectDecision): RedirectDecision => {
+    debugCreationRedirect("decision", {
+      routeArea,
+      linkId,
+      linkState: input.linkState,
+      decision,
+    });
+
+    return decision;
+  };
+
   if (routeArea === "create") {
     switch (input.linkState) {
       case LinkStep.CHOOSE_TYPE:
-        return { kind: "allow", screen: "createChooseType" };
+        return withDecisionLog({
+          kind: "allow",
+          screen: "createChooseType",
+        });
       case LinkStep.ADD_ASSET:
-        return { kind: "allow", screen: "createAddAsset" };
-      case LinkStep.LOCK:
-        return { kind: "allow", screen: "createLock" };
+        return withDecisionLog({
+          kind: "allow",
+          screen: "createAddAsset",
+        });
       case LinkStep.PREVIEW:
-        return { kind: "allow", screen: "createPreview" };
+        return withDecisionLog({
+          kind: "allow",
+          screen: "createPreview",
+        });
       case LinkStep.CREATED:
-        return { kind: "allow", screen: "createCreated" };
+        return withDecisionLog({
+          kind: "allow",
+          screen: "createCreated",
+        });
       case LinkStep.ACTIVE:
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
-        return { kind: "redirect", to: paths.detail(linkId) };
+        return withDecisionLog({
+          kind: "redirect",
+          to: paths.detail(linkId),
+        });
     }
   }
 
@@ -79,16 +129,24 @@ export function resolveCreationRedirect(
     switch (input.linkState) {
       case LinkStep.CHOOSE_TYPE:
       case LinkStep.ADD_ASSET:
-      case LinkStep.LOCK:
       case LinkStep.PREVIEW:
-        return { kind: "redirect", to: paths.create(linkId) };
+        return withDecisionLog({
+          kind: "redirect",
+          to: paths.create(linkId),
+        });
       case LinkStep.CREATED:
       case LinkStep.ACTIVE:
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
-        return { kind: "allow", screen: "linkDetail" };
+        return withDecisionLog({
+          kind: "allow",
+          screen: "linkDetail",
+        });
     }
   }
 
-  return { kind: "redirect", to: paths.links() };
+  return withDecisionLog({
+    kind: "redirect",
+    to: paths.links(),
+  });
 }
