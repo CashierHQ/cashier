@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
   import { buildRedirectInput } from "$modules/routing/buildRedirectInput";
   import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
@@ -16,7 +16,7 @@
     children: Snippet<[RedirectDecision]>;
   } = $props();
 
-  const context = getGuardContext();
+  const context = getRouteContext();
   // Convert route stores into pure redirect input, then let policy decide.
   const input = $derived(buildRedirectInput(context, page.url));
   const decision = $derived(resolveRedirect(input));

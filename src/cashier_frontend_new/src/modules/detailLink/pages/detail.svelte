@@ -40,7 +40,7 @@
     calculateLinkInfoAssetsWithTokenInfo,
     calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
@@ -68,7 +68,7 @@
     onBack: () => Promise<void>;
   } = $props();
 
-  const context = getGuardContext();
+  const context = getRouteContext();
   const linkStore = $derived.by(() => {
     const storeV3 = context.linkDetailStoreV3;
     if (storeV3) {

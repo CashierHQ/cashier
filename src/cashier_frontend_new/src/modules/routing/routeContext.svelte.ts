@@ -8,9 +8,9 @@ import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte"
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import { getContext, setContext } from "svelte";
 
-const GUARD_CONTEXT_KEY = Symbol("guardContext");
+const ROUTE_CONTEXT_KEY = Symbol("routeContext");
 
-export class GuardContext {
+export class RouteContext {
   authState = authState;
   userProfile = userProfile;
   linkDetailStore = $state<LinkDetailStore | null>(null);
@@ -19,8 +19,6 @@ export class GuardContext {
   userLinkStoreV3 = $state<UserLinkStoreV3 | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
   linkCreationStoreV3 = $state<LinkCreationStoreV3 | null>(null);
-  // Indicates whether the guard check process has completed
-  isGuardCheckComplete = $state(false);
   // Indicates whether an attempt to load a temporary link has been made
   hasTempLinkLoadAttempted = $state(false);
   // Indicates whether an attempt to load a draft link has been made
@@ -76,10 +74,6 @@ export class GuardContext {
 
   setLinkCreationStoreV3(store: LinkCreationStoreV3) {
     this.linkCreationStoreV3 = store;
-  }
-
-  setGuardCheckComplete(complete: boolean) {
-    this.isGuardCheckComplete = complete;
   }
 
   setHasTempLinkLoadAttempted(attempted: boolean) {
@@ -220,16 +214,16 @@ export class GuardContext {
   }
 }
 
-export function setGuardContext(context: GuardContext): GuardContext {
-  setContext(GUARD_CONTEXT_KEY, context);
+export function setRouteContext(context: RouteContext): RouteContext {
+  setContext(ROUTE_CONTEXT_KEY, context);
   return context;
 }
 
-export function getGuardContext(): GuardContext {
-  const context = getContext<GuardContext>(GUARD_CONTEXT_KEY);
+export function getRouteContext(): RouteContext {
+  const context = getContext<RouteContext>(ROUTE_CONTEXT_KEY);
   if (!context) {
     throw new Error(
-      "GuardContext not found. Make sure createLinkRouteContext is called by this route.",
+      "RouteContext not found. Make sure createLinkRouteContext is called by this route.",
     );
   }
   return context;
