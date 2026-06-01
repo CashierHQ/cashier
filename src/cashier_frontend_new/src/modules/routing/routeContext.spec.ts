@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { GuardContext } from "./context.svelte";
+import { RouteContext } from "./routeContext.svelte";
 import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
@@ -24,8 +24,8 @@ vi.mock("$modules/shared/services/userProfile.svelte", () => ({
   userProfile: mockUserProfile,
 }));
 
-describe("GuardContext", () => {
-  let context: GuardContext;
+describe("RouteContext", () => {
+  let context: RouteContext;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,7 +35,7 @@ describe("GuardContext", () => {
     mockAuthState.account = null;
     mockUserProfile.isLoggedIn = () => false;
 
-    context = new GuardContext();
+    context = new RouteContext();
   });
 
   describe("constructor", () => {
@@ -43,7 +43,6 @@ describe("GuardContext", () => {
       expect(context.linkDetailStore).toBeNull();
       expect(context.userLinkStore).toBeNull();
       expect(context.linkCreationStore).toBeNull();
-      expect(context.isGuardCheckComplete).toBe(false);
       expect(context.hasTempLinkLoadAttempted).toBe(false);
     });
 
@@ -52,7 +51,7 @@ describe("GuardContext", () => {
         link: null,
         query: { isLoading: false },
       } as unknown as LinkDetailStore;
-      const ctx = new GuardContext({ linkDetailStore: mockStore });
+      const ctx = new RouteContext({ linkDetailStore: mockStore });
 
       expect(ctx.linkDetailStore).toBe(mockStore);
       expect(ctx.userLinkStore).toBeNull();
@@ -64,7 +63,7 @@ describe("GuardContext", () => {
         link: null,
         linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
-      const ctx = new GuardContext({ userLinkStore: mockStore });
+      const ctx = new RouteContext({ userLinkStore: mockStore });
 
       expect(ctx.userLinkStore).toBe(mockStore);
       expect(ctx.linkDetailStore).toBeNull();
@@ -73,7 +72,7 @@ describe("GuardContext", () => {
 
     it("should initialize with provided linkCreationStore", () => {
       const mockStore = { link: null } as unknown as LinkCreationStore;
-      const ctx = new GuardContext({ linkCreationStore: mockStore });
+      const ctx = new RouteContext({ linkCreationStore: mockStore });
 
       expect(ctx.linkCreationStore).toBe(mockStore);
       expect(ctx.linkDetailStore).toBeNull();
@@ -91,7 +90,7 @@ describe("GuardContext", () => {
       } as unknown as UserLinkStore;
       const mockCreationStore = { link: null } as unknown as LinkCreationStore;
 
-      const ctx = new GuardContext({
+      const ctx = new RouteContext({
         linkDetailStore: mockDetailStore,
         userLinkStore: mockUserStore,
         linkCreationStore: mockCreationStore,
@@ -133,18 +132,6 @@ describe("GuardContext", () => {
       context.setLinkCreationStore(mockStore);
 
       expect(context.linkCreationStore).toBe(mockStore);
-    });
-  });
-
-  describe("setGuardCheckComplete", () => {
-    it("should set isGuardCheckComplete to true", () => {
-      context.setGuardCheckComplete(true);
-      expect(context.isGuardCheckComplete).toBe(true);
-    });
-
-    it("should set isGuardCheckComplete to false", () => {
-      context.setGuardCheckComplete(false);
-      expect(context.isGuardCheckComplete).toBe(false);
     });
   });
 

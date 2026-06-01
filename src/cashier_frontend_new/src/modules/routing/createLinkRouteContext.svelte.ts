@@ -3,8 +3,8 @@ import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-import { GuardContext, setGuardContext } from "$modules/guard/context.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
+import { RouteContext, setRouteContext } from "$modules/routing/routeContext.svelte";
 import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 
 type LinkRouteContextOptions = {
@@ -25,9 +25,9 @@ function debugCreateRouteContext(
 /**
  * Initializes route-scoped link data and exposes it through Svelte context.
  *
- * This replaces the old UI guard wrapper. It does not decide redirects and it
- * does not render UI. Its only job is to create the stores needed by the real
- * page components and by `buildRedirectInput`.
+ * This does not decide redirects and it does not render UI. Its only job is to
+ * create the stores needed by the real page components and by
+ * `buildRedirectInput`.
  *
  * @param options route setup options for owner or public link routes
  * @param options.linkId backend link id for detail/user routes
@@ -39,8 +39,8 @@ export function createLinkRouteContext({
   linkId,
   draftLinkId,
   storeType,
-}: LinkRouteContextOptions): GuardContext {
-  const context = new GuardContext();
+}: LinkRouteContextOptions): RouteContext {
+  const context = new RouteContext();
 
   if (linkId && storeType === "userLink") {
     context.setUserLinkStoreV3(new UserLinkStoreV3({ id: linkId }));
@@ -122,7 +122,7 @@ export function createLinkRouteContext({
     }
   });
 
-  return setGuardContext(context);
+  return setRouteContext(context);
 }
 
 /**
@@ -134,7 +134,7 @@ export function createLinkRouteContext({
  *
  * @param context route context containing create stores
  */
-function clearMissingDraftStores(context: GuardContext) {
+function clearMissingDraftStores(context: RouteContext) {
   context.gatingStore = null;
 
   const existingV3 = context.linkCreationStoreV3;

@@ -1,4 +1,4 @@
-import type { GuardContext } from "$modules/guard/context.svelte";
+import type { RouteContext } from "$modules/routing/routeContext.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
@@ -35,7 +35,7 @@ function debugRedirectInput(data: RedirectInput) {
  * @param context route data context initialized by `createLinkRouteContext`
  * @returns current user id, or null when logged out
  */
-function getCurrentUserId(context: GuardContext): string | null {
+function getCurrentUserId(context: RouteContext): string | null {
   if (!context.userProfile.isLoggedIn()) return null;
   return context.authState.account?.owner ?? null;
 }
@@ -50,7 +50,7 @@ function getCurrentUserId(context: GuardContext): string | null {
  * @param context route data context initialized by `createLinkRouteContext`
  * @returns owner id, or null when it cannot be resolved
  */
-function getLinkOwnerId(context: GuardContext): string | null {
+function getLinkOwnerId(context: RouteContext): string | null {
   if (context.linkCreationStore || context.linkCreationStoreV3) {
     return getCurrentUserId(context);
   }
@@ -66,7 +66,7 @@ function getLinkOwnerId(context: GuardContext): string | null {
  * @param context route data context initialized by `createLinkRouteContext`
  * @returns owner-flow link step, or null when no owner store/state is available
  */
-function getOwnerLinkState(context: GuardContext): LinkStep | null {
+function getOwnerLinkState(context: RouteContext): LinkStep | null {
   const store =
     context.linkDetailStoreV3 ??
     context.linkDetailStore ??
@@ -88,7 +88,7 @@ function getOwnerLinkState(context: GuardContext): LinkStep | null {
  * @param context route data context initialized by `createLinkRouteContext`
  * @returns user-flow step, or null when unavailable
  */
-function getUserState(context: GuardContext): UserLinkStep | null {
+function getUserState(context: RouteContext): UserLinkStep | null {
   const store = context.userLinkStoreV3 ?? context.userLinkStore;
   return store?.step ?? null;
 }
@@ -99,7 +99,7 @@ function getUserState(context: GuardContext): UserLinkStep | null {
  * @param context route data context initialized by `createLinkRouteContext`
  * @returns true while redirect policy should wait for route data
  */
-function getIsLoading(context: GuardContext): boolean {
+function getIsLoading(context: RouteContext): boolean {
   return context.isLoading({ checkTempLinkLoad: true });
 }
 
@@ -110,7 +110,7 @@ function getIsLoading(context: GuardContext): boolean {
  * @param linkState normalized owner-flow step, when available
  * @returns true when the link should be treated as ended
  */
-function getLinkEnded(context: GuardContext, linkState: LinkStep | null) {
+function getLinkEnded(context: RouteContext, linkState: LinkStep | null) {
   const link = context.getLink() as LinkLike | undefined;
   const useCount = link?.link_use_action_counter ?? link?.use_count;
   const maxUse = link?.link_use_action_max_count ?? link?.max_use;
@@ -140,7 +140,7 @@ function getLinkEnded(context: GuardContext, linkState: LinkStep | null) {
  * @returns normalized input containing all data redirect policy needs
  */
 export function buildRedirectInput(
-  context: GuardContext,
+  context: RouteContext,
   location: string | URL,
 ): RedirectInput {
   const e2eInput = buildE2ERedirectInput(location);

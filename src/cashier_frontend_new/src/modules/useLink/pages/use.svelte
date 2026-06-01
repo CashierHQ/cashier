@@ -8,7 +8,7 @@
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -33,7 +33,7 @@
   } = $props();
 
   // Get userLinkStore from route context.
-  const context = getGuardContext();
+  const context = getRouteContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {

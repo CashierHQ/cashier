@@ -10,7 +10,7 @@
   import WalletButton from "./WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "./WalletDrawer.svelte";
 
@@ -32,9 +32,9 @@
   const currentPath = $derived.by(() => page.url.pathname);
 
   // Try to get route context (it only exists on link routes).
-  const guardContext = $derived.by(() => {
+  const routeContext = $derived.by(() => {
     try {
-      return getGuardContext();
+      return getRouteContext();
     } catch {
       // Context does not exist on routes that do not initialize link data.
       return null;
@@ -42,7 +42,7 @@
   });
 
   // Get userLinkStore from context if available
-  const userLinkStore = $derived.by(() => guardContext?.userLinkStore ?? null);
+  const userLinkStore = $derived.by(() => routeContext?.userLinkStore ?? null);
 
   // Get current user link step
   const userLinkStep = $derived(userLinkStore?.step ?? null);

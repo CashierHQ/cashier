@@ -18,12 +18,12 @@
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
 
-  const context = getGuardContext();
+  const context = getRouteContext();
   const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
   const fallbackGatingStore = new GatingStore();
   const gatingStore = $derived.by(
