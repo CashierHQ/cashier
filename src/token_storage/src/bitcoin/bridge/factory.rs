@@ -37,13 +37,13 @@ impl BridgeTransactionFactory {
                 ));
             }
 
-            if input.deposit_fee.is_some() {
+            if input.deposit_fee_btc_sats.is_some() {
                 return Err(CanisterError::ValidationErrors(
                     "deposit_fee must not be set for export bridges".to_string(),
                 ));
             }
 
-            if input.withdrawal_fee.is_none() && !is_runes_export {
+            if input.withdrawal_fee_btc_sats.is_none() && !is_runes_export {
                 return Err(CanisterError::ValidationErrors(
                     "withdrawal_fee is required for export bridges".to_string(),
                 ));
@@ -66,18 +66,10 @@ impl BridgeTransactionFactory {
         let mut btc_txid = None;
         let mut asset_infos = input.asset_infos.clone();
 
-        let mut deposit_fee = None;
-        if let Some(fee) = input.deposit_fee {
-            deposit_fee = Some(fee);
-        }
-        let mut withdrawal_fee = None;
-        if let Some(fee) = input.withdrawal_fee {
-            withdrawal_fee = Some(fee);
-        }
-        let mut btc_fee = None;
-        if let Some(fee) = input.btc_fee {
-            btc_fee = Some(fee);
-        }
+        let deposit_fee_btc_sats = input.deposit_fee_btc_sats.clone();
+        let withdrawal_fee_btc_sats = input.withdrawal_fee_btc_sats.clone();
+        let withdrawal_fee_icp_e8s = input.withdrawal_fee_icp_e8s.clone();
+        let btc_fee = input.btc_fee.clone();
 
         let mut ckbtc_block_id = None;
 
@@ -97,13 +89,13 @@ impl BridgeTransactionFactory {
             }
 
             // deduct the deposit fee from the first asset info amount
-            if let Some(deposit_fee) = &deposit_fee {
+            if let Some(fee) = &deposit_fee_btc_sats {
                 // find first asset with amount greater than deposit fee and deduct the fee
                 if let Some(first_asset) = asset_infos
                     .iter_mut()
-                    .find(|asset| asset.amount.clone() > deposit_fee.clone())
+                    .find(|asset| asset.amount.clone() > fee.clone())
                 {
-                    first_asset.amount -= deposit_fee.clone();
+                    first_asset.amount -= fee.clone();
                 } else {
                     return Err(CanisterError::ValidationErrors(
                         "No asset with sufficient amount to cover deposit fee".to_string(),
@@ -118,7 +110,7 @@ impl BridgeTransactionFactory {
         }
 
         if input.bridge_type == BridgeType::Import
-            && total_amount < deposit_fee.clone().unwrap_or(Nat::from(0u32))
+            && total_amount < deposit_fee_btc_sats.clone().unwrap_or(Nat::from(0u32))
         {
             return Err(CanisterError::ValidationErrors(
                 "Deposit fee exceeds total amount".to_string(),
@@ -138,9 +130,14 @@ impl BridgeTransactionFactory {
         let details = if is_runes {
             BridgeDetails::Runes {
                 omnity_ticket_id: input.omnity_ticket_id,
+                withdrawal_fee_icp_e8s,
             }
         } else {
-            BridgeDetails::CkBTC { ckbtc_block_id }
+            BridgeDetails::CkBTC {
+                ckbtc_block_id,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+            }
         };
 
         Ok(BridgeTransaction {
@@ -153,8 +150,6 @@ impl BridgeTransactionFactory {
             block_id: None,
             block_timestamp: None,
             block_confirmations: vec![],
-            deposit_fee,
-            withdrawal_fee,
             btc_fee,
             total_amount: Some(total_amount),
             created_at_ts: input.created_at_ts,
@@ -198,8 +193,9 @@ mod tests {
             btc_address: "test_btc_address".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -222,7 +218,9 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::CkBTC {
-                ckbtc_block_id: None
+                ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: None,
             }
         );
         assert_eq!(transaction.block_id, None);
@@ -246,8 +244,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
             ckbtc_block_id: None,
@@ -268,10 +267,11 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::CkBTC {
-                ckbtc_block_id: None
+                ckbtc_block_id: None,
+                deposit_fee_btc_sats: None,
+                withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
             }
         );
-        assert_eq!(transaction.withdrawal_fee, Some(Nat::from(450u64)));
         assert_eq!(transaction.btc_fee, Some(Nat::from(1200u64)));
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
         assert_eq!(transaction.status, BridgeTransactionStatus::Created);
@@ -291,8 +291,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 123,
             ckbtc_block_id: None,
@@ -328,8 +329,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: Some(Nat::from(1000u64)),
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: Some(Nat::from(1000u64)),
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -365,8 +367,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -402,8 +405,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -434,8 +438,9 @@ mod tests {
             btc_address: "bc1qreceiver".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: Some(Nat::from(450u64)),
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: Some(Nat::from(450u64)),
+            withdrawal_fee_icp_e8s: None,
             btc_fee: Some(Nat::from(1200u64)),
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -466,8 +471,9 @@ mod tests {
             btc_address: "test_btc_address".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -503,8 +509,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Import,
-            deposit_fee: Some(Nat::from(1000u64)),
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: Some(Nat::from(1000u64)),
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -542,8 +549,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Import,
-            deposit_fee: Some(Nat::from(1000u64)),
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: Some(Nat::from(1000u64)),
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: Some(block_id),
@@ -562,7 +570,9 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::CkBTC {
-                ckbtc_block_id: Some(block_id)
+                ckbtc_block_id: Some(block_id),
+                deposit_fee_btc_sats: Some(Nat::from(1000u64)),
+                withdrawal_fee_btc_sats: None,
             }
         );
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
@@ -579,8 +589,9 @@ mod tests {
             btc_address: "test_btc_address".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -613,8 +624,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Import,
-            deposit_fee: Some(Nat::from(1_000u64)),
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: Some(Nat::from(1_000u64)),
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -642,7 +654,8 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::Runes {
-                omnity_ticket_id: None
+                omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: None,
             }
         );
     }
@@ -661,8 +674,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: None,
             btc_fee: None,
             created_at_ts: 0,
             ckbtc_block_id: None,
@@ -680,7 +694,8 @@ mod tests {
         assert_eq!(
             transaction.details,
             BridgeDetails::Runes {
-                omnity_ticket_id: Some("rune_txid".to_string())
+                omnity_ticket_id: Some("rune_txid".to_string()),
+                withdrawal_fee_icp_e8s: None,
             }
         );
     }
@@ -700,8 +715,9 @@ mod tests {
                 decimals: 8,
             }],
             bridge_type: BridgeType::Export,
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee_btc_sats: None,
+            withdrawal_fee_btc_sats: None,
+            withdrawal_fee_icp_e8s: Some(Nat::from(10_000u64)),
             btc_fee: None,
             created_at_ts: 123,
             ckbtc_block_id: None,
@@ -726,12 +742,12 @@ mod tests {
         );
         assert_eq!(transaction.asset_infos[0].asset_id, "UNCOMMON•GOODS");
         assert_eq!(transaction.total_amount, Some(Nat::from(125_000u64)));
-        assert_eq!(transaction.withdrawal_fee, None);
         assert_eq!(transaction.btc_fee, None);
         assert_eq!(
             transaction.details,
             BridgeDetails::Runes {
-                omnity_ticket_id: None
+                omnity_ticket_id: None,
+                withdrawal_fee_icp_e8s: Some(Nat::from(10_000u64)),
             }
         );
         assert_eq!(transaction.btc_txid, None);

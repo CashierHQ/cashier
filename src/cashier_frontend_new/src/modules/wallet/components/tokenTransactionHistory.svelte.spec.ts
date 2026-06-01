@@ -232,8 +232,7 @@ function fixture_of_bridge(overrides: Record<string, unknown> = {}) {
     total_amount_usd: 2.5,
     bridge_type: BridgeType.Import,
     status: BridgeTransactionStatus.Completed,
-    deposit_fee: 0n,
-    withdrawal_fee: 0n,
+
     btc_fee: 0n,
     btc_txid: "bridge-btc-txid",
     block_id: null,
@@ -242,7 +241,12 @@ function fixture_of_bridge(overrides: Record<string, unknown> = {}) {
     vin: [],
     vout: [],
     retry_times: 0,
-    details: { kind: "ckbtc", ckbtc_block_id: null },
+    details: {
+      kind: "ckbtc",
+      ckbtc_block_id: null,
+      deposit_fee_btc_sats: null,
+      withdrawal_fee_btc_sats: null,
+    },
     asset_infos: [
       {
         asset_type: "BTC",

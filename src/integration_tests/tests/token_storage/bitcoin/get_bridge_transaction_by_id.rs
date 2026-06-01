@@ -20,8 +20,9 @@ fn import_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
         btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
         asset_infos: vec![],
         bridge_type: BridgeType::Import,
-        deposit_fee: None,
-        withdrawal_fee: None,
+        deposit_fee_btc_sats: None,
+        withdrawal_fee_btc_sats: None,
+        withdrawal_fee_icp_e8s: None,
         btc_fee: None,
         created_at_ts: 0,
         ckbtc_block_id: None,
@@ -44,8 +45,9 @@ fn export_bridge_input(caller: Principal) -> CreateBridgeTransactionInputArg {
             decimals: 8,
         }],
         bridge_type: BridgeType::Export,
-        deposit_fee: None,
-        withdrawal_fee: Some(450u64.into()),
+        deposit_fee_btc_sats: None,
+        withdrawal_fee_btc_sats: Some(450u64.into()),
+        withdrawal_fee_icp_e8s: None,
         btc_fee: Some(1200u64.into()),
         created_at_ts: 100,
         ckbtc_block_id: None,
@@ -68,8 +70,9 @@ fn fixture_of_runes_import_bridge_input(caller: Principal) -> CreateBridgeTransa
             decimals: 8,
         }],
         bridge_type: BridgeType::Import,
-        deposit_fee: Some(1_000u64.into()),
-        withdrawal_fee: None,
+        deposit_fee_btc_sats: Some(1_000u64.into()),
+        withdrawal_fee_btc_sats: None,
+        withdrawal_fee_icp_e8s: None,
         btc_fee: None,
         created_at_ts: 200,
         ckbtc_block_id: None,
@@ -98,8 +101,9 @@ fn fixture_of_runes_export_bridge_input(caller: Principal) -> CreateBridgeTransa
             decimals: 8,
         }],
         bridge_type: BridgeType::Export,
-        deposit_fee: None,
-        withdrawal_fee: None,
+        deposit_fee_btc_sats: None,
+        withdrawal_fee_btc_sats: None,
+        withdrawal_fee_icp_e8s: None,
         btc_fee: None,
         created_at_ts: 300,
         ckbtc_block_id: None,
@@ -312,7 +316,7 @@ async fn it_should_get_runes_export_bridge_transaction_by_id() {
         assert_eq!(bridge.asset_infos[0].asset_id, "UNCOMMON•GOODS".to_string());
         assert_eq!(bridge.omnity_ticket_id, None);
         assert_eq!(bridge.btc_txid, None);
-        assert_eq!(bridge.withdrawal_fee, None);
+        assert_eq!(bridge.withdrawal_fee_icp_e8s, None);
 
         Ok(())
     })

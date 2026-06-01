@@ -181,19 +181,20 @@ export const idlFactory = ({ IDL }) => {
   const BridgeType = IDL.Variant({ 'Import' : IDL.Null, 'Export' : IDL.Null });
   const CreateBridgeTransactionInputArg = IDL.Record({
     'vin' : IDL.Opt(IDL.Vec(UTXO)),
+    'deposit_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'status' : IDL.Opt(BridgeTransactionStatus),
+    'withdrawal_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
     'vout' : IDL.Opt(IDL.Vec(UTXO)),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
+    'withdrawal_fee_icp_e8s' : IDL.Opt(IDL.Nat),
     'omnity_ticket_id' : IDL.Opt(IDL.Text),
     'created_at_ts' : IDL.Nat64,
-    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
     'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
-    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const BlockConfirmation = IDL.Record({
     'block_id' : IDL.Nat64,
@@ -201,25 +202,26 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserBridgeTransactionDto = IDL.Record({
     'vin' : IDL.Opt(IDL.Vec(UTXO)),
+    'deposit_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'retry_times' : IDL.Nat8,
     'status' : BridgeTransactionStatus,
     'block_confirmations' : IDL.Vec(BlockConfirmation),
+    'withdrawal_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'block_id' : IDL.Opt(IDL.Nat64),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
     'total_amount' : IDL.Opt(IDL.Nat),
     'vout' : IDL.Opt(IDL.Vec(UTXO)),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
+    'withdrawal_fee_icp_e8s' : IDL.Opt(IDL.Nat),
     'omnity_ticket_id' : IDL.Opt(IDL.Text),
     'created_at_ts' : IDL.Nat64,
-    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
     'block_timestamp' : IDL.Opt(IDL.Nat64),
     'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'bridge_id' : IDL.Text,
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
-    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const Result_7 = IDL.Variant({
     'Ok' : UserBridgeTransactionDto,
@@ -240,20 +242,21 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateBridgeTransactionInputArg = IDL.Record({
     'vin' : IDL.Opt(IDL.Vec(UTXO)),
+    'deposit_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'retry_times' : IDL.Opt(IDL.Nat8),
     'status' : IDL.Opt(BridgeTransactionStatus),
     'block_confirmations' : IDL.Opt(IDL.Vec(BlockConfirmation)),
+    'withdrawal_fee_btc_sats' : IDL.Opt(IDL.Nat),
     'block_id' : IDL.Opt(IDL.Nat64),
     'asset_infos' : IDL.Opt(IDL.Vec(BridgeAssetInfo)),
     'vout' : IDL.Opt(IDL.Vec(UTXO)),
     'btc_txid' : IDL.Opt(IDL.Text),
+    'withdrawal_fee_icp_e8s' : IDL.Opt(IDL.Nat),
     'omnity_ticket_id' : IDL.Opt(IDL.Text),
-    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_fee' : IDL.Opt(IDL.Nat),
     'block_timestamp' : IDL.Opt(IDL.Nat64),
     'ckbtc_block_id' : IDL.Opt(IDL.Nat64),
     'bridge_id' : IDL.Text,
-    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const UpdateTokenInput = IDL.Record({
     'token_id' : TokenId,

@@ -15,8 +15,12 @@ pub struct CreateBridgeTransactionInputArg {
     pub btc_address: String,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub bridge_type: BridgeType,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis. Only for ckBTC import bridges.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis. Only for ckBTC export bridges.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s. Only for Rune export bridges.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     /// ckBTC ledger block index of the mint transaction.
@@ -42,8 +46,12 @@ pub struct UpdateBridgeTransactionInputArg {
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Option<Vec<BlockConfirmation>>,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub retry_times: Option<u8>,
     pub status: Option<BridgeTransactionStatus>,
@@ -101,8 +109,12 @@ pub struct UserBridgeTransactionDto {
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis. Populated for ckBTC import bridges.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis. Populated for ckBTC export bridges.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s. Populated for Rune export bridges.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
@@ -115,10 +127,29 @@ pub struct UserBridgeTransactionDto {
 
 impl From<BridgeTransaction> for UserBridgeTransactionDto {
     fn from(tx: BridgeTransaction) -> Self {
-        let (ckbtc_block_id, omnity_ticket_id) = match tx.details {
-            BridgeDetails::CkBTC { ckbtc_block_id } => (ckbtc_block_id, None),
-            BridgeDetails::Runes { omnity_ticket_id } => (None, omnity_ticket_id),
-            BridgeDetails::Legacy => (None, None),
+        let (
+            ckbtc_block_id,
+            omnity_ticket_id,
+            deposit_fee_btc_sats,
+            withdrawal_fee_btc_sats,
+            withdrawal_fee_icp_e8s,
+        ) = match tx.details {
+            BridgeDetails::CkBTC {
+                ckbtc_block_id,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+            } => (
+                ckbtc_block_id,
+                None,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+                None,
+            ),
+            BridgeDetails::Runes {
+                omnity_ticket_id,
+                withdrawal_fee_icp_e8s,
+            } => (None, omnity_ticket_id, None, None, withdrawal_fee_icp_e8s),
+            BridgeDetails::Legacy => (None, None, None, None, None),
         };
         UserBridgeTransactionDto {
             bridge_id: tx.bridge_id,
@@ -131,8 +162,9 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             block_id: tx.block_id,
             block_timestamp: tx.block_timestamp,
             block_confirmations: tx.block_confirmations,
-            deposit_fee: tx.deposit_fee,
-            withdrawal_fee: tx.withdrawal_fee,
+            deposit_fee_btc_sats,
+            withdrawal_fee_btc_sats,
+            withdrawal_fee_icp_e8s,
             btc_fee: tx.btc_fee,
             created_at_ts: tx.created_at_ts,
             total_amount: tx.total_amount,

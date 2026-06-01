@@ -137,8 +137,7 @@ const fixture_of_bridge_transaction = (
   total_amount: 50_000n,
   total_amount_usd: 0,
   created_at_ts: 1_700_000_000n,
-  deposit_fee: 0n,
-  withdrawal_fee: 450n,
+
   btc_fee: 1000n,
   btc_txid: null,
   block_id: null,
@@ -148,7 +147,12 @@ const fixture_of_bridge_transaction = (
   vout: [],
   retry_times: 0,
   status: BridgeTransactionStatus.Created,
-  details: { kind: "ckbtc" as const, ckbtc_block_id: null },
+  details: {
+    kind: "ckbtc" as const,
+    ckbtc_block_id: null,
+    deposit_fee_btc_sats: null,
+    withdrawal_fee_btc_sats: null,
+  },
   ...overrides,
 });
 
@@ -235,7 +239,12 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "bridge_existing",
-          details: { kind: "ckbtc" as const, ckbtc_block_id: 4n },
+          details: {
+            kind: "ckbtc" as const,
+            ckbtc_block_id: 4n,
+            deposit_fee_btc_sats: null,
+            withdrawal_fee_btc_sats: null,
+          },
           status: BridgeTransactionStatus.Pending,
         }),
       ]);
@@ -390,6 +399,7 @@ describe("BridgeTxCartStore", () => {
         null,
         null,
         [],
+        null,
         null,
         null,
         20_000n,
@@ -590,7 +600,11 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "existing-bridge",
-          details: { kind: "runes" as const, omnity_ticket_id: "seen-ticket" },
+          details: {
+            kind: "runes" as const,
+            omnity_ticket_id: "seen-ticket",
+            withdrawal_fee_icp_e8s: null,
+          },
         }),
       ]);
       mockGetTxsWithAccount.mockResolvedValue(
@@ -665,6 +679,7 @@ describe("BridgeTxCartStore", () => {
         [],
         null,
         null,
+        null,
         20_000n,
         null,
         null,
@@ -703,7 +718,11 @@ describe("BridgeTxCartStore", () => {
       mockGetBridgeTransactions.mockResolvedValue([
         fixture_of_bridge_transaction({
           bridge_id: "existing-bridge",
-          details: { kind: "runes" as const, omnity_ticket_id: "seen-ticket" },
+          details: {
+            kind: "runes" as const,
+            omnity_ticket_id: "seen-ticket",
+            withdrawal_fee_icp_e8s: null,
+          },
         }),
       ]);
       mockGetTxsWithAccount.mockResolvedValue(
@@ -784,6 +803,7 @@ describe("BridgeTxCartStore", () => {
         null,
         null,
         [],
+        null,
         null,
         null,
         null,
@@ -883,6 +903,7 @@ describe("BridgeTxCartStore", () => {
         null,
         null,
         [],
+        null,
         null,
         null,
         20_000n,

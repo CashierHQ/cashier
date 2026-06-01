@@ -30,8 +30,7 @@ function fixture_of_import_bridge(
     bridge_type: BridgeType.Import,
     total_amount: 49_000n,
     created_at_ts: 1_704_067_200n,
-    deposit_fee: 1_000n,
-    withdrawal_fee: 0n,
+
     btc_fee: 0n,
     btc_txid: "abc123",
     block_id: null,
@@ -41,7 +40,12 @@ function fixture_of_import_bridge(
     vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
-    details: { kind: "ckbtc", ckbtc_block_id: null } as BridgeDetails,
+    details: {
+      kind: "ckbtc",
+      ckbtc_block_id: null,
+      deposit_fee_btc_sats: null,
+      withdrawal_fee_btc_sats: null,
+    } as BridgeDetails,
     ...overrides,
   };
 }
@@ -59,8 +63,7 @@ function fixture_of_export_bridge(
     bridge_type: BridgeType.Export,
     total_amount: 49_000n,
     created_at_ts: 1_704_067_200n,
-    deposit_fee: 0n,
-    withdrawal_fee: 500n,
+
     btc_fee: 500n,
     btc_txid: null,
     block_id: null,
@@ -70,7 +73,12 @@ function fixture_of_export_bridge(
     vout: [],
     retry_times: 0,
     status: BridgeTransactionStatus.Pending,
-    details: { kind: "ckbtc", ckbtc_block_id: 42n } as BridgeDetails,
+    details: {
+      kind: "ckbtc",
+      ckbtc_block_id: 42n,
+      deposit_fee_btc_sats: null,
+      withdrawal_fee_btc_sats: null,
+    } as BridgeDetails,
     ...overrides,
   };
 }
@@ -795,6 +803,7 @@ describe("BridgeStore", () => {
         null,
         null,
         null,
+        null,
         null, // retry_times unchanged
       );
     });
@@ -832,6 +841,7 @@ describe("BridgeStore", () => {
         840_000n,
         1_704_000_000n,
         confirmingBlocks,
+        null,
         null,
         null,
         null,
@@ -889,7 +899,12 @@ describe("BridgeStore", () => {
     it("it_should_not_update_export_bridge_when_no_btc_txid_and_no_ckbtc_block_id", async () => {
       // Arrange
       const bridge = fixture_of_export_bridge({
-        details: { kind: "ckbtc", ckbtc_block_id: null },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: null,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
         btc_txid: null,
       });
 
@@ -903,7 +918,12 @@ describe("BridgeStore", () => {
     it("it_should_complete_export_bridge_when_enough_confirmations", async () => {
       // Arrange — bridge has both ckbtc_block_id and btc_txid set
       const bridge = fixture_of_export_bridge({
-        details: { kind: "ckbtc", ckbtc_block_id: 42n },
+        details: {
+          kind: "ckbtc",
+          ckbtc_block_id: 42n,
+          deposit_fee_btc_sats: null,
+          withdrawal_fee_btc_sats: null,
+        },
         btc_txid: "exporttxid",
       });
       mockGetTransactionById.mockResolvedValue(
