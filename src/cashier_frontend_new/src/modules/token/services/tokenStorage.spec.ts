@@ -257,6 +257,7 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
       runeId: "UNCOMMON•GOODS",
       amount: 1_200n,
       decimals: 8,
+      withdrawalFee: 0n,
     });
 
     // Assert
@@ -275,8 +276,50 @@ describe("TokenStorageService.createRuneExportBridgeTransaction", () => {
       },
     ]);
     expect(callArgs.status).toEqual([{ Created: null }]);
-    expect(callArgs.withdrawal_fee).toEqual([]);
+    expect(callArgs.withdrawal_fee).toEqual([0n]);
     expect(callArgs.btc_fee).toEqual([]);
+  });
+
+  it("it_should_pass_withdrawal_fee_to_canister", async () => {
+    // Arrange
+    const withdrawalFee = 10_000n;
+    const dto = fixture_of_bridge_transaction_dto({
+      bridge_id: "export_rune_456",
+      bridge_type: { Export: null },
+      asset_infos: [
+        {
+          asset_type: { Runes: null },
+          asset_id: "UNCOMMON•GOODS",
+          amount: 500n,
+          decimals: 8,
+        },
+      ],
+      status: { Created: null },
+      total_amount: [500n],
+      ckbtc_block_id: [],
+      deposit_fee: [],
+      withdrawal_fee: [withdrawalFee],
+      btc_fee: [],
+    });
+    mockUserCreateBridgeTransaction.mockResolvedValue({ Ok: dto });
+    mockBuildActor.mockReturnValue({
+      user_create_bridge_transaction: mockUserCreateBridgeTransaction,
+    });
+    const { tokenStorageService } =
+      await import("$modules/token/services/tokenStorage");
+
+    // Act
+    await tokenStorageService.createRuneExportBridgeTransaction({
+      receiverBtcAddress: "tb1qreceiver",
+      runeId: "UNCOMMON•GOODS",
+      amount: 500n,
+      decimals: 8,
+      withdrawalFee,
+    });
+
+    // Assert
+    const callArgs = mockUserCreateBridgeTransaction.mock.calls[0][0];
+    expect(callArgs.withdrawal_fee).toEqual([withdrawalFee]);
   });
 });
 

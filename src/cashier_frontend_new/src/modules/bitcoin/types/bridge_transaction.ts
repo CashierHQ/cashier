@@ -541,6 +541,7 @@ export class BridgeTransactionMapper {
     runeId: string,
     amount: bigint,
     decimals: number,
+    withdrawalFee: bigint,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     return {
       vin: [],
@@ -558,7 +559,7 @@ export class BridgeTransactionMapper {
       bridge_type: { Export: null },
       vout: [],
       deposit_fee: [],
-      withdrawal_fee: [],
+      withdrawal_fee: [withdrawalFee],
       btc_fee: [],
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
       ckbtc_block_id: [],

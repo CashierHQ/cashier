@@ -433,6 +433,7 @@ class TokenStorageService {
     runeId: string;
     amount: bigint;
     decimals: number;
+    withdrawalFee: bigint;
   }): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -447,6 +448,7 @@ class TokenStorageService {
           args.runeId,
           args.amount,
           args.decimals,
+          args.withdrawalFee,
         );
 
       const res = await actor.user_create_bridge_transaction(inputArgs);

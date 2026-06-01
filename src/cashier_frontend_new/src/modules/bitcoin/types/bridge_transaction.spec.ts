@@ -754,6 +754,41 @@ describe("BridgeTransactionMapper", () => {
     });
   });
 
+  describe("toCreateRuneExportBridgeTransactionArgs", () => {
+    it("it_should_set_withdrawal_fee_in_rune_export_args", () => {
+      // Arrange
+      const withdrawalFee = 10_000n;
+
+      // Act
+      const result =
+        BridgeTransactionMapper.toCreateRuneExportBridgeTransactionArgs(
+          "aaaaa-aa",
+          "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+          "UNCOMMON•GOODS",
+          500_000n,
+          2,
+          withdrawalFee,
+        );
+
+      // Assert
+      expect(result.withdrawal_fee).toEqual([withdrawalFee]);
+      expect(result.bridge_type).toEqual({ Export: null });
+      expect(result.icp_address.toText()).toBe("aaaaa-aa");
+      expect(result.btc_address).toBe(
+        "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+      );
+      expect(result.asset_infos).toEqual([
+        {
+          asset_type: { Runes: null },
+          asset_id: "UNCOMMON•GOODS",
+          amount: 500_000n,
+          decimals: 2,
+        },
+      ]);
+      expect(result.status).toEqual([{ Created: null }]);
+    });
+  });
+
   describe("toBridgeTypeCanister", () => {
     it("it_should_map_bridge_type_import_to_canister_format", () => {
       // Act

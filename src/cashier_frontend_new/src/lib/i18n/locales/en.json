@@ -426,7 +426,8 @@
         "amountExceedsMax": "Amount exceeds maximum balance of {{max}}",
         "amountExceedsWithdrawalMax": "Amount plus withdrawal fees exceeds your ckBTC balance.",
         "amountBelowWithdrawalMin": "Amount must be at least {{min}} BTC for ckBTC export.",
-        "invalidReceiveType": "Invalid receive type selected."
+        "invalidReceiveType": "Invalid receive type selected.",
+        "insufficientIcpForRuneFee": "Insufficient ICP balance to cover the Rune withdrawal fee."
       },
       "confirmDrawer": {
         "title": "Send transaction",

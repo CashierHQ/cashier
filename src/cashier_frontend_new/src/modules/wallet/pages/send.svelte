@@ -3,7 +3,6 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
   import SendRunes from "$modules/bitcoin/components/sendRunes.svelte";
-  import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
   import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
@@ -17,7 +16,6 @@
     ICP_INDEX_CANISTER_ID,
     ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
-  import { tokenStorageService } from "$modules/token/services/tokenStorage";
   import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -261,14 +259,14 @@
     }
 
     if (isBitcoinBridgeToken && nativeBtcAddress.trim()) {
-      const result = walletSendStore.validateSend({
+      const result = walletSendStore.validateSend(
         selectedToken,
-        receiveAddress: nativeBtcAddress,
+        nativeBtcAddress,
         amount,
         receiveType,
         maxAmount,
-        isBitcoinAddress: true,
-      });
+        true,
+      );
       if (result.isErr()) {
         toast.error(result.error);
       } else {
@@ -277,14 +275,14 @@
       return;
     }
 
-    const result = walletSendStore.validateSend({
+    const result = walletSendStore.validateSend(
       selectedToken,
       receiveAddress,
       amount,
       receiveType,
       maxAmount,
-      isBitcoinAddress: false,
-    });
+      false,
+    );
     if (result.isErr()) {
       toast.error(result.error);
     } else {
@@ -304,96 +302,43 @@
   }
 
   async function handleCreateCkBtcExportBridge() {
-    if (!selectedTokenObj || amount <= 0) {
-      return;
-    }
+    if (!selectedTokenObj || amount <= 0) return;
 
-    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
     isCreatingExportBridge = true;
     try {
-      const minterInfo = await ckBTCMinterService.getMinterInfo();
-      if (amountBigInt < minterInfo.retrieve_btc_min_amount) {
-        const minAmount = parseBalanceUnits(
-          minterInfo.retrieve_btc_min_amount,
-          selectedTokenObj.decimals,
-        ).toFixed(selectedTokenObj.decimals);
-        toast.error(
-          locale
-            .t("wallet.send.errors.amountBelowWithdrawalMin")
-            .replace("{{min}}", minAmount),
-        );
-        return;
-      }
-
-      const withdrawalFee =
-        await ckBTCMinterService.getWithdrawalFee(amountBigInt);
-      const totalDebit =
-        amountBigInt + withdrawalFee.minter_fee + withdrawalFee.bitcoin_fee;
-      const maxAmountResult = calculateMaxSendAmount(
-        selectedTokenObj.address,
-        walletStore.query.data ?? [],
+      const result = await walletSendStore.createCkBtcExportBridge(
+        nativeBtcAddress.trim(),
+        amount,
+        selectedTokenObj,
       );
-
-      if (maxAmountResult.isErr() || totalDebit > maxAmountResult.unwrap()) {
-        toast.error(locale.t("wallet.send.errors.amountExceedsWithdrawalMax"));
+      if (result.isErr()) {
+        toast.error(result.unwrapErr());
         return;
       }
-
-      const createResult =
-        await tokenStorageService.createExportBridgeTransaction(
-          nativeBtcAddress.trim(),
-          amountBigInt,
-          withdrawalFee.minter_fee,
-          withdrawalFee.bitcoin_fee,
-        );
-
-      if (createResult.isErr()) {
-        toast.error(createResult.unwrapErr());
-        return;
-      }
-
-      bridgeSource = {
-        bridge: createResult.unwrap(),
-      };
+      bridgeSource = { bridge: result.unwrap() };
       showConfirmDrawer = true;
-    } catch (error) {
-      toast.error((error as Error).message);
     } finally {
       isCreatingExportBridge = false;
     }
   }
 
   async function handleCreateRuneExportBridge() {
-    if (
-      !selectedTokenObj?.isRune ||
-      !selectedTokenObj.runeInfo ||
-      amount <= 0
-    ) {
+    if (!selectedTokenObj?.isRune || !selectedTokenObj.runeInfo || amount <= 0)
       return;
-    }
 
-    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
     isCreatingExportBridge = true;
     try {
-      const createResult =
-        await tokenStorageService.createRuneExportBridgeTransaction({
-          receiverBtcAddress: nativeBtcAddress.trim(),
-          runeId: selectedTokenObj.runeInfo.runeId,
-          amount: amountBigInt,
-          decimals: selectedTokenObj.decimals,
-        });
-
-      if (createResult.isErr()) {
-        toast.error(createResult.unwrapErr());
+      const result = await walletSendStore.createRuneExportBridge(
+        nativeBtcAddress.trim(),
+        amount,
+        selectedTokenObj,
+      );
+      if (result.isErr()) {
+        toast.error(result.unwrapErr());
         return;
       }
-
-      bridgeSource = {
-        bridge: createResult.unwrap(),
-      };
+      bridgeSource = { bridge: result.unwrap() };
       showConfirmDrawer = true;
-    } catch (error) {
-      toast.error((error as Error).message);
     } finally {
       isCreatingExportBridge = false;
     }
@@ -651,7 +596,9 @@
               </div>
             {:else if isRune}
               <div class="flex items-start gap-1.5">
-                <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+                <LayoutList
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
                 <div class="text-[10px] text-green">
                   {runeBtcWarning1}
                 </div>
@@ -671,7 +618,9 @@
                 </div>
               </div>
               <div class="flex items-start gap-1.5">
-                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+                <Hourglass
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
                 <div class="text-[10px] text-green">
                   {locale.t("bitcoin.send.btcAddress.warning5")}
                 </div>
