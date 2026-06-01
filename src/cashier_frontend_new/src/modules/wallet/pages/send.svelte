@@ -546,27 +546,21 @@
           </div>
         {:else if isRune}
           <div class="flex flex-col gap-1.5 mt-2 bg-lightg">
-            <div class="flex items-center gap-1.5">
-              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
+            <div class="flex items-start gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
                 {runeIcpWarning1}
               </div>
             </div>
-            <div class="flex items-center gap-1.5">
-              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
+            <div class="flex items-start gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
                 {runeIcpWarning2}
               </div>
             </div>
-            <div class="flex items-center gap-1.5">
-              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
+            <div class="flex items-start gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
                 {locale.t("bitcoin.send.icpAddress.warning3")}
               </div>
             </div>
@@ -657,9 +651,7 @@
               </div>
             {:else if isRune}
               <div class="flex items-start gap-1.5">
-                <LayoutList
-                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
-                />
+                <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
                 <div class="text-[10px] text-green">
                   {runeBtcWarning1}
                 </div>
@@ -672,14 +664,14 @@
                   {runeBtcWarning2}
                 </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div class="flex items-start gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
                 <div class="text-[10px] text-green">
                   {locale.t("bitcoin.send.btcAddress.runeWarning3")}
                 </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+              <div class="flex items-start gap-1.5">
+                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
                 <div class="text-[10px] text-green">
                   {locale.t("bitcoin.send.btcAddress.warning5")}
                 </div>

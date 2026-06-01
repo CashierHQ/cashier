@@ -158,8 +158,8 @@
           {runeBtcWarning2}
         </div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+      <div class="flex items-start gap-1.5">
+        <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
         <div class="text-[10px] text-green">
           {locale.t("bitcoin.receive.btcAddress.runeWarning3")}
         </div>
