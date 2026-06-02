@@ -100,6 +100,7 @@ export interface AssetItem {
   amountFormattedStr: string;
   /** in formmated string */
   usdValueStr?: string;
+  icon?: string;
   /** direction of the asset based on current user*/
   direction: FlowDirection;
   /** Intent ID for ActionSource - used to match asset to intent for state sync */

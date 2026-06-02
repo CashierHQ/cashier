@@ -2,7 +2,7 @@
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
@@ -18,15 +18,26 @@
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
-  const btcAddress = $derived.by(() => bridgeStore.btcAddress);
-  const shortenBtcAddress = $derived.by(() =>
-    transformShortAddress(btcAddress || ""),
+  type Props = {
+    tokenSymbol?: string | null;
+  };
+
+  let { tokenSymbol = null }: Props = $props();
+
+  const depositAddress = $derived.by(() => btcBridgeStore.btcAddress);
+  const shortenDepositAddress = $derived.by(() =>
+    transformShortAddress(depositAddress || ""),
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
+  let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
+  const importBridgeTxs = $derived.by(
+    () => btcBridgeStore.importBridgeTxs ?? [],
+  );
+  const hasMoreImports = $derived.by(() => btcBridgeStore.hasMoreImports);
+  const isRefreshing = $derived.by(() => btcBridgeStore.isRefreshing);
+
   let historyExpanded = $state(true);
-  let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
-  const importBridgeTxs = $derived.by(() => bridgeStore.importBridgeTxs ?? []);
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -34,7 +45,7 @@
   }
 
   function handleSelectBridge(bridgeId: string) {
-    const bridge = bridgeStore.bridgeTxs?.find((b) => b.bridge_id === bridgeId);
+    const bridge = importBridgeTxs.find((b) => b.bridge_id === bridgeId);
 
     if (!bridge) return;
 
@@ -50,13 +61,12 @@
   }
 
   function handleLoadMore() {
-    bridgeStore.loadMoreImports();
+    btcBridgeStore.loadMoreImports();
   }
 
-  const isRefreshing = $derived.by(() => bridgeStore.isRefreshing);
-
   async function handleRefresh() {
-    const result = await bridgeStore.manualRefreshBalance();
+    const result = await btcBridgeStore.manualRefreshBalance();
+
     if (result.isErr()) {
       toast.error(locale.t("bitcoin.receive.refreshError"));
     } else if (result.unwrap() === 0) {
@@ -73,20 +83,23 @@
       {locale.t("bitcoin.receive.title")}
     </Label>
   </div>
+
   <div class="space-y-2">
     <Label class="text-small font-medium">
-      {locale.t("wallet.receive.btcAddress").replace("{{token}}", "BTC")}
+      {locale
+        .t("wallet.receive.btcAddress")
+        .replace("{{token}}", tokenSymbol ?? "BTC")}
     </Label>
 
     <div class="relative">
       <input
         type="text"
-        value={shortenBtcAddress}
+        value={shortenDepositAddress}
         readonly
         class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none text-sm font-mono break-all"
       />
       <button
-        onclick={() => handleCopy(btcAddress ?? "")}
+        onclick={() => handleCopy(depositAddress ?? "")}
         class="absolute right-3 top-1/2 -translate-y-1/2 text-[#36A18B] hover:text-[#2d8a75] transition-colors"
         title={locale.t("wallet.receive.copyTooltip")}
       >
@@ -166,10 +179,11 @@
       {/if}
     </div>
   </div>
+
   {#if historyExpanded}
     <BridgeList
       bridgeTxs={importBridgeTxs}
-      hasMore={bridgeStore.hasMoreImports}
+      hasMore={hasMoreImports}
       emptyText={locale.t("wallet.receive.noBtcImportTxs")}
       onSelectBridge={handleSelectBridge}
       onLoadMore={handleLoadMore}

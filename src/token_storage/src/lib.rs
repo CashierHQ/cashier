@@ -7,4 +7,6 @@ mod build_data;
 mod ext;
 mod icrc7;
 mod repository;
+mod runes;
 mod services;
+mod token;

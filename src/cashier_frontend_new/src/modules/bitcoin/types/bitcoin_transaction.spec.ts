@@ -265,6 +265,7 @@ describe("BitcoinTransactionMapper", () => {
 
       // Assert
       expect(result).toEqual({
+        vin: [],
         btc_txid: ["test_txid"],
         icp_address: Principal.fromText(icpAddress),
         btc_address: senderBtcAddress,
@@ -276,13 +277,16 @@ describe("BitcoinTransactionMapper", () => {
             decimals: 8,
           },
         ],
+        vout: [],
         bridge_type: { Import: null },
-        deposit_fee: [depositFee],
-        withdrawal_fee: [withdrawalFee],
+        deposit_fee_btc_sats: [depositFee],
+        withdrawal_fee_btc_sats: [withdrawalFee],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         created_at_ts: 1704067200n,
         ckbtc_block_id: [],
         status: [],
+        omnity_ticket_id: [],
       });
     });
 
@@ -308,17 +312,21 @@ describe("BitcoinTransactionMapper", () => {
 
       // Assert
       expect(result).toEqual({
+        vin: [],
         btc_txid: ["test_txid"],
         icp_address: Principal.fromText(icpAddress),
         btc_address: receiverBtcAddress, // Uses receiver for export
         asset_infos: [], // Empty for export
+        vout: [],
         bridge_type: { Export: null },
-        deposit_fee: [depositFee],
-        withdrawal_fee: [withdrawalFee],
+        deposit_fee_btc_sats: [depositFee],
+        withdrawal_fee_btc_sats: [withdrawalFee],
+        withdrawal_fee_icp_e8s: [],
         btc_fee: [],
         created_at_ts: 1704067200n,
         ckbtc_block_id: [],
         status: [],
+        omnity_ticket_id: [],
       });
     });
 

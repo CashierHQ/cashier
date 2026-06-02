@@ -1,10 +1,10 @@
 name: Deploy all canisters to dev
 on:
   pull_request:
-      branches:
-          - dev
-      types:
-          - closed
+    branches:
+      - dev
+    types:
+      - closed
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -49,7 +49,7 @@ jobs:
 
       - name: Deploy to dev environment
         env:
-            DFX_WARNING: -mainnet_plaintext_identity
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           owner=$(dfx identity get-principal)
           backend_log_filter="global,cashier=debug"

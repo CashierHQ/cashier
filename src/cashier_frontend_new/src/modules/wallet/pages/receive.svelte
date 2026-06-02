@@ -5,6 +5,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
+  import ReceiveRunes from "$modules/bitcoin/components/receiveRunes.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { TokenIcon } from "$modules/imageCache";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
@@ -70,7 +71,32 @@
       : "",
   );
 
-  const isBTC = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isCkBtc = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isRune = $derived(
+    !!selectedTokenObj?.isRune && !!selectedTokenObj?.runeInfo,
+  );
+  const isBridgeToken = $derived(isCkBtc || isRune);
+
+  const runeIcpAddressLabel = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("wallet.receive.runeIcpAddressLabel")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.receive.icpAddress.runeWarning1")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.receive.icpAddress.runeWarning2")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
@@ -112,7 +138,7 @@
 <div class="grow-1 flex flex-col -mx-4">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      {#if !isBTC}
+      {#if !isBridgeToken}
         <div class="flex items-start gap-1.5 px-8">
           <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
           <div class="text-sm text-green">
@@ -145,6 +171,7 @@
               <TokenIcon
                 address={selectedTokenObj.address}
                 symbol={selectedTokenObj.symbol}
+                logo={selectedTokenObj.runeInfo?.icon}
                 size="sm"
                 failedImageLoads={imageLoadFailures}
                 onImageError={handleImageError}
@@ -164,8 +191,10 @@
 
       <div class="space-y-2 px-8">
         <Label class="text-small font-medium">
-          {#if isBTC}
+          {#if isCkBtc}
             {locale.t("wallet.receive.ckBtcIcpAddressLabel")}
+          {:else if isRune}
+            {runeIcpAddressLabel}
           {:else if selectedTokenObj}
             {locale
               .t("wallet.receive.receiveAddressLabel")
@@ -194,9 +223,9 @@
         </div>
         <div
           class="text-xs text-grey mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
-          class:mb-3={isBTC}
+          class:mb-3={isBridgeToken}
         >
-          {#if isBTC}
+          {#if isBridgeToken}
             {locale.t("wallet.send.addressPrincipleExample")}
           {/if}
         </div>
@@ -211,7 +240,7 @@
             </button>
           </div>
         {/if}
-        {#if isBTC}
+        {#if isCkBtc}
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-1.5">
               <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
@@ -238,11 +267,34 @@
               </div>
             </div>
           </div>
+        {:else if isRune}
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-start gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {runeIcpWarning1}
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {runeIcpWarning2}
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {locale.t("bitcoin.receive.icpAddress.warning3")}
+              </div>
+            </div>
+          </div>
         {/if}
       </div>
 
-      {#if isBTC}
-        <ReceiveBTC />
+      {#if selectedToken === CKBTC_CANISTER_ID}
+        <ReceiveBTC tokenSymbol={selectedTokenObj?.symbol} />
+      {:else if selectedTokenObj?.isRune}
+        <ReceiveRunes token={selectedTokenObj} />
       {/if}
 
       <div class="flex-grow-1 flex flex-col justify-end items-center px-8">

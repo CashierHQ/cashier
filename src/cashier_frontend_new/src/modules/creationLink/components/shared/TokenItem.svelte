@@ -39,13 +39,13 @@
   ): string {
     const parsedBalance = parseBalanceUnits(balance, decimals);
     if (parsedBalance === 0 || !priceUSD || priceUSD === 0) {
-      return "-";
+      return "$0.00";
     }
     const usdValue = parsedBalance * priceUSD;
     return `~$${formatUsdAmount(usdValue)}`;
   }
 
-  const tokenLogo = getTokenLogo(token.address);
+  const tokenLogo = token.runeInfo?.icon ?? getTokenLogo(token.address);
   const formattedBalance = formatBalance(token.balance, token.decimals);
   const formattedUSD = formatUSDValue(
     token.balance,
@@ -61,12 +61,12 @@
 <li>
   <button
     type="button"
-    class="w-full text-left p-2 rounded cursor-pointer hover:bg-gray-50"
+    class="w-full text-left px-2 py-1.5 rounded cursor-pointer hover:bg-gray-50"
     class:bg-gray-100={selectedAddress === token.address}
     onclick={() => onSelect(token.address)}
   >
     <div class="flex justify-between items-center">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <TokenIcon
           address={token.address}
           symbol={token.symbol}
@@ -76,18 +76,18 @@
           onImageError={handleImageError}
         />
         <div>
-          <strong>{token.symbol}</strong>
-          <div class="text-sm text-gray-500">
+          <p class="text-sm">{token.symbol}</p>
+          <div class="text-[10px] font-light text-gray-400">
             {formatTokenPrice(token.priceUSD)}
           </div>
         </div>
       </div>
 
       <div>
-        <div class="text-sm text-gray-500 text-right">
+        <div class="text-sm text-gray-900 text-right">
           {isBalanceHidden ? "*****" : formattedBalance}
         </div>
-        <div class="text-sm text-gray-500 text-right">
+        <div class="text-[10px] font-light text-gray-400 text-right">
           {isBalanceHidden ? "*****" : formattedUSD}
         </div>
       </div>

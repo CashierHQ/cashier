@@ -8,6 +8,7 @@ export interface FirstAssetDisplayInfo {
   symbol: string;
   amount: number; // Changed to number for proper formatting
   decimals: number;
+  logo?: string;
 }
 
 /**
@@ -68,5 +69,6 @@ export function getFirstAssetDisplayInfo(
     symbol,
     amount,
     decimals,
+    logo: walletToken?.runeInfo?.icon,
   };
 }

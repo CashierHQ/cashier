@@ -7,6 +7,7 @@ pub mod bitcoin;
 pub mod init_and_upgrade;
 pub mod inspect_message;
 pub mod nft;
+pub mod runes;
 pub mod token;
 pub mod token_manager;
 

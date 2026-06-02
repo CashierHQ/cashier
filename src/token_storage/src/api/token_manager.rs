@@ -1,9 +1,14 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use ic_cdk::{
     api::{msg_caller, time},
     update,
 };
 use log::{debug, info};
-use token_storage_types::{auth::Permission, token::UpdateTokenStandardsInput};
+use token_storage_types::{
+    auth::Permission, error::CanisterError, token::UpdateTokenStandardsInput,
+};
 
 use crate::api::state::get_state;
 
@@ -11,7 +16,7 @@ use crate::api::state::get_state;
 #[update]
 pub fn token_manager_update_token_standards(
     input: UpdateTokenStandardsInput,
-) -> Result<(), String> {
+) -> Result<(), CanisterError> {
     info!("[token_manager_update_token_standards]");
     debug!("[token_manager_update_token_standards] input: {input:?}");
 

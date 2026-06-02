@@ -1,42 +1,41 @@
 <script lang="ts">
-  import {
-    getWalletHistoryStore,
-    type WalletHistoryStore,
-  } from "$modules/token/state/walletHistoryStore.svelte";
-  import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
-  import {
-    ArrowUpRight,
-    ArrowDownLeft,
-    Check,
-    ClockArrowDown,
-    ClockArrowUp,
-    LoaderCircle,
-  } from "lucide-svelte";
-  import { formatDate, getDateKey } from "$modules/wallet/utils/date";
-  import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
-  import {
-    CKBTC_CANISTER_ID,
-    ICP_LEDGER_CANISTER_ID,
-    ICP_INDEX_CANISTER_ID,
-  } from "$modules/token/constants";
-  import {
-    TransactionKind,
-    type TokenWithPriceAndBalance,
-    type TransactionKindValue,
-    DisplayTransactionMapper,
-  } from "$modules/token/types/index";
-  import { tokenStorageService } from "$modules/token/services/tokenStorage";
-  import { BRIDGE_PAGE_SIZE } from "$modules/bitcoin/constants";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
+  import { runeBridgeStore } from "$modules/bitcoin/state/runeBridgeStore.svelte";
   import {
     BridgeTransactionStatus,
     BridgeType,
     type BridgeTransaction,
   } from "$modules/bitcoin/types/bridge_transaction";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import {
+    CKBTC_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
+  import {
+    getWalletHistoryStore,
+    type WalletHistoryStore,
+  } from "$modules/token/state/walletHistoryStore.svelte";
+  import {
+    DisplayTransactionMapper,
+    TransactionKind,
+    type TokenWithPriceAndBalance,
+    type TransactionKindValue,
+  } from "$modules/token/types/index";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
-  import { SvelteMap, SvelteSet } from "svelte/reactivity";
+  import { formatDate, getDateKey } from "$modules/wallet/utils/date";
+  import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
+  import {
+    ArrowDownLeft,
+    ArrowUpRight,
+    Check,
+    ClockArrowDown,
+    ClockArrowUp,
+    LoaderCircle,
+  } from "lucide-svelte";
+  import { onDestroy } from "svelte";
 
   interface Props {
     tokenAddress: string;
@@ -77,70 +76,56 @@
 
   // Create store when indexId is available, recreate when token changes
   let historyStore = $state<WalletHistoryStore | null>(null);
-  let bridgeTransactions = $state<BridgeTransaction[]>([]);
-  let bridgeHasMore = $state(true);
-  let bridgeIsLoading = $state(false);
-  let bridgeIsLoadingMore = $state(false);
-  let bridgeError = $state<string | null>(null);
-  let bridgePage = $state(0);
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
   const isCkBtc = $derived(tokenAddress === CKBTC_CANISTER_ID);
-  const minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
-
-  async function loadBridgeTransactions(page: number, append: boolean) {
-    if (!isCkBtc) {
-      bridgeTransactions = [];
-      bridgeHasMore = false;
-      bridgeError = null;
-      return;
-    }
-
-    if (append) {
-      bridgeIsLoadingMore = true;
-    } else {
-      bridgeIsLoading = true;
-    }
-    bridgeError = null;
-
-    try {
-      const start = page * BRIDGE_PAGE_SIZE;
-      const fetched = await tokenStorageService.getBridgeTransactions(
-        start,
-        BRIDGE_PAGE_SIZE,
-      );
-
-      bridgeHasMore = fetched.length >= BRIDGE_PAGE_SIZE;
-      if (append) {
-        const existingIds = new SvelteSet(
-          bridgeTransactions.map((bridge) => bridge.bridge_id),
-        );
-        bridgeTransactions = [
-          ...bridgeTransactions,
-          ...fetched.filter((bridge) => !existingIds.has(bridge.bridge_id)),
-        ];
-      } else {
-        bridgeTransactions = fetched;
-      }
-      bridgePage = page;
-    } catch (error) {
-      bridgeError = String(error);
-    } finally {
-      bridgeIsLoading = false;
-      bridgeIsLoadingMore = false;
-    }
-  }
+  const isRune = $derived(!!tokenDetails?.isRune && !!tokenDetails?.runeInfo);
+  const minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
 
   function getBridgeLabel(bridge: BridgeTransaction): string {
     if (bridge.bridge_type === BridgeType.Import) {
-      return bridge.status === BridgeTransactionStatus.Completed
-        ? locale.t("bitcoin.receive.imported")
-        : locale.t("bitcoin.receive.importing");
+      if (bridge.status === BridgeTransactionStatus.Completed) {
+        return locale.t("bitcoin.receive.imported");
+      }
+
+      if (bridge.status === BridgeTransactionStatus.Failed) {
+        return locale.t("bitcoin.receive.failed");
+      }
+
+      if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
+        return locale.t("bitcoin.receive.importing");
+      }
+
+      if (bridge.status === BridgeTransactionStatus.Created) {
+        return locale.t("bitcoin.receive.created");
+      }
+
+      return locale.t("bitcoin.receive.unknown");
     }
 
-    return bridge.status === BridgeTransactionStatus.Completed
-      ? locale.t("bitcoin.send.exported")
-      : locale.t("bitcoin.send.exporting");
+    if (bridge.status === BridgeTransactionStatus.Completed) {
+      return locale.t("bitcoin.send.exported");
+    }
+
+    if (bridge.status === BridgeTransactionStatus.Failed) {
+      return locale.t("bitcoin.send.failed");
+    }
+
+    if (
+      bridge.status === BridgeTransactionStatus.Pending ||
+      bridge.status === BridgeTransactionStatus.Confirmed
+    ) {
+      return locale.t("bitcoin.send.exporting");
+    }
+
+    if (bridge.status === BridgeTransactionStatus.Created) {
+      return locale.t("bitcoin.send.created");
+    }
+
+    return locale.t("bitcoin.receive.unknown");
   }
 
   $effect(() => {
@@ -153,16 +138,65 @@
   });
 
   $effect(() => {
-    if (isCkBtc) {
-      void loadBridgeTransactions(0, false);
-    } else {
-      bridgeTransactions = [];
-      bridgeHasMore = false;
-      bridgeIsLoading = false;
-      bridgeIsLoadingMore = false;
-      bridgeError = null;
-      bridgePage = 0;
+    if (!isRune) {
+      runeBridgeStore.setRuneId(null);
+      return;
     }
+
+    const runeId = tokenDetails?.runeInfo?.runeId ?? null;
+    runeBridgeStore.setRuneId(runeId);
+  });
+
+  onDestroy(() => {
+    runeBridgeStore.setRuneId(null);
+  });
+
+  const bridgeTransactions = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.bridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.bridgesHistory;
+    }
+
+    return [];
+  });
+
+  const bridgeHasMore = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.hasMoreBridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.hasMoreBridgesHistory;
+    }
+
+    return false;
+  });
+
+  const bridgeIsLoading = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.isLoadingBridgesHistory;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.isLoadingBridgesHistory;
+    }
+
+    return false;
+  });
+
+  const bridgeError = $derived.by(() => {
+    if (isCkBtc) {
+      return btcBridgeStore.bridgesHistoryError;
+    }
+
+    if (isRune) {
+      return runeBridgeStore.bridgesHistoryError;
+    }
+
+    return undefined;
   });
 
   // Transform TokenTransaction[] to DisplayTransaction[]
@@ -181,24 +215,26 @@
       usdValue: calculateUsdValue(tx.amount),
     }));
 
-    const bridgeHistory = isCkBtc
-      ? bridgeTransactions.map((bridge) => {
-          const amount = bridge.total_amount
-            ? Number(bridge.total_amount) / 10 ** (tokenDetails?.decimals ?? 8)
-            : 0;
+    const bridgeHistory =
+      isCkBtc || isRune
+        ? bridgeTransactions.map((bridge) => {
+            const amount = bridge.total_amount
+              ? Number(bridge.total_amount) /
+                10 ** (tokenDetails?.decimals ?? 8)
+              : 0;
 
-          return {
-            id: `bridge-${bridge.bridge_id}`,
-            kind: TransactionKind.TRANSFER,
-            isOutgoing: bridge.bridge_type === BridgeType.Export,
-            amount,
-            timestamp: Number(bridge.created_at_ts) * 1000,
-            label: getBridgeLabel(bridge),
-            usdValue: calculateUsdValue(amount),
-            bridge,
-          };
-        })
-      : [];
+            return {
+              id: `bridge-${bridge.bridge_id}`,
+              kind: TransactionKind.TRANSFER,
+              isOutgoing: bridge.bridge_type === BridgeType.Export,
+              amount,
+              timestamp: Number(bridge.created_at_ts) * 1000,
+              label: getBridgeLabel(bridge),
+              usdValue: calculateUsdValue(amount),
+              bridge,
+            };
+          })
+        : [];
 
     return [...tokenTransactions, ...bridgeHistory].sort(
       (a, b) => b.timestamp - a.timestamp,
@@ -206,17 +242,17 @@
   });
 
   const transactionsByDate = $derived.by(() => {
-    const grouped = new SvelteMap<string, HistoryItem[]>();
+    const grouped: Record<string, HistoryItem[]> = {};
 
     transactions.forEach((tx) => {
       const dateKey = getDateKey(tx.timestamp);
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, []);
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
       }
-      grouped.get(dateKey)!.push(tx);
+      grouped[dateKey].push(tx);
     });
 
-    return Array.from(grouped.entries()).map(([, txs]) => ({
+    return Object.values(grouped).map((txs) => ({
       date: formatDate(txs[0].timestamp),
       transactions: txs,
     }));
@@ -234,8 +270,14 @@
       tasks.push(historyStore.loadMore());
     }
 
-    if (isCkBtc && bridgeHasMore && !bridgeIsLoadingMore) {
-      tasks.push(loadBridgeTransactions(bridgePage + 1, true));
+    if ((isCkBtc || isRune) && bridgeHasMore && !bridgeIsLoading) {
+      tasks.push(
+        Promise.resolve(
+          isCkBtc
+            ? btcBridgeStore.loadMoreBridgesHistory()
+            : runeBridgeStore.loadMoreBridgesHistory(),
+        ),
+      );
     }
 
     await Promise.all(tasks);
@@ -260,8 +302,8 @@
   }
 </script>
 
-<div class="space-y-4 mt-8">
-  {#if !hasIndexCanister && !isCkBtc}
+<div class="space-y-4 mt-5">
+  {#if !hasIndexCanister && !isCkBtc && !isRune}
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
     </p>
@@ -279,7 +321,7 @@
     </p>
   {:else}
     {#each transactionsByDate as dateGroup, i (i)}
-      <div class="text-lightblack text-sm mb-4">
+      <div class="text-lightblack font-light text-sm mb-2">
         {dateGroup.date}
       </div>
 
@@ -315,21 +357,21 @@
 
               <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
                 <div class="flex justify-between items-start mb-1">
-                  <p class="text-[#222222]">
+                  <p class="text-[#222222] text-sm">
                     {tx.label}
                   </p>
-                  <p class="text-[#222222] text-right">
+                  <p class="text-[#222222] text-base text-right">
                     {tx.isOutgoing ? "-" : "+"}{tx.amount}
                   </p>
                 </div>
                 <div class="flex justify-between items-start">
-                  <p class="text-[10px]/[100%] text-grey">
+                  <p class="text-[10px]/[100%] font-light text-grey">
                     {new Date(tx.timestamp).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
-                  <p class="text-[10px]/[100%] text-grey text-right">
+                  <p class="text-[10px]/[100%] font-light text-grey text-right">
                     ${tx.usdValue.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
@@ -343,14 +385,14 @@
       </div>
     {/each}
 
-    {#if historyStore?.hasMore || (isCkBtc && bridgeHasMore)}
+    {#if historyStore?.hasMore || ((isCkBtc || isRune) && bridgeHasMore)}
       <div class="flex justify-center pt-4">
         <button
           onclick={handleLoadMore}
-          disabled={historyStore?.isLoadingMore || bridgeIsLoadingMore}
+          disabled={historyStore?.isLoadingMore || bridgeIsLoading}
           class="px-4 py-2 text-sm text-green border border-green rounded-lg hover:bg-green/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {#if historyStore?.isLoadingMore || bridgeIsLoadingMore}
+          {#if historyStore?.isLoadingMore || bridgeIsLoading}
             <LoaderCircle class="w-4 h-4 animate-spin" />
             {locale.t("wallet.tokenInfo.loading")}
           {:else}

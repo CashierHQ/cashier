@@ -3,6 +3,7 @@ CKBTC_LEDGER_ID:="mxzaz-hqaaa-aaaar-qaada-cai"
 CKBTC_INDEXER_ID:="n5wcd-faaaa-aaaar-qaaea-cai"
 CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
 CKBTC_KYT_ID:="o6ude-eyaaa-aaaar-qal6a-cai"
+OMNITY_BITCOIN_ID:="7rvjr-3qaaa-aaaar-qaeyq-cai"
 
 # Start the local dfx server
 # params bitcoin: "true" to enable bitcoin node (requires bitcoind on 127.0.0.1:18444), otherwise disabled
@@ -222,65 +223,13 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
   #!/usr/bin/env bash
   set -e
 
-  dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
-      owner=principal \"{{owner}}\";
-      tokens = opt vec {
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
-              index_id = opt principal \"qhbym-qaaaa-aaaaa-aaafq-cai\";
-              fee = 10000 : nat;
-              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
-            }
-          };
-          symbol = \"ICP\";
-          name = \"Internet Computer\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"{{CKBTC_LEDGER_ID}}\";
-              index_id = opt principal \"{{CKBTC_INDEXER_ID}}\";
-              fee = 10 : nat;
-              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
-            }
-          };
-          symbol = \"ckBTC\";
-          name = \"Chain Key Bitcoin\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"ss2fx-dyaaa-aaaar-qacoq-cai\";
-              index_id = opt principal \"s3zol-vqaaa-aaaar-qacpa-cai\";
-              fee = 2_000_000_000_000 : nat;
-              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
-            }
-          };
-          symbol = \"ckETH\";
-          name = \"Chain Key Ethereum\";
-          decimals = 18;
-          enabled_by_default = true;
-        };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"xevnm-gaaaa-aaaar-qafnq-cai\";
-              index_id = opt principal \"xrs4b-hiaaa-aaaar-qafoa-cai\";
-              fee = 10_000 : nat;
-              supported_standards = vec { variant { ICRC1 }; variant { ICRC2 } };
-            }
-          };
-          symbol = \"ckUSDC\";
-          name = \"Chain Key USD Coin\";
-          decimals = 6;
-          enabled_by_default = true;
-        };
-      };
-      ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
-  })" {{network}} {{mode}} --upgrade-unchanged
+  arg_file=$(mktemp "${TMPDIR:-/tmp}/token_storage_args.XXXXXX")
+  trap 'rm -f "$arg_file"' EXIT
+
+  just build_token_storage_args "{{owner}}" "{{log_filter}}" "{{CKBTC_MINTER_ID}}" "{{OMNITY_BITCOIN_ID}}" "$arg_file"
+
+  dfx deploy token_storage --argument-file "$arg_file" {{network}} {{mode}} --yes --upgrade-unchanged
+
 
 # Deploy Gate canister
 # params:

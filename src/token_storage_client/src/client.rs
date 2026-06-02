@@ -12,7 +12,8 @@ use token_storage_types::{
     },
     error::CanisterError,
     token::{
-        AddTokenInput, TokenDto, TokenListResponse, UpdateTokenInput, UpdateTokenStandardsInput,
+        AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenInput,
+        UpdateTokenStandardsInput,
     },
 };
 
@@ -88,7 +89,9 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Lists the tokens in the registry for the caller
-    pub async fn list_tokens(&self) -> CanisterClientResult<Result<TokenListResponse, String>> {
+    pub async fn list_tokens(
+        &self,
+    ) -> CanisterClientResult<Result<TokenListResponse, CanisterError>> {
         self.client.query("list_tokens", ()).await
     }
 
@@ -96,7 +99,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn user_update_token_enable(
         &self,
         input: UpdateTokenInput,
-    ) -> CanisterClientResult<Result<(), String>> {
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
             .update("user_update_token_enable", (input,))
             .await
@@ -106,8 +109,16 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn user_add_token(
         &self,
         input: AddTokenInput,
-    ) -> CanisterClientResult<Result<(), String>> {
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client.update("user_add_token", (input,)).await
+    }
+
+    /// Adds multiple tokens to the caller's list
+    pub async fn user_add_token_batch(
+        &self,
+        input: AddTokensInput,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client.update("user_add_token_batch", (input,)).await
     }
 
     /// Adds a new NFT to the user's collection
@@ -138,6 +149,15 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         &self,
     ) -> CanisterClientResult<Result<String, CanisterError>> {
         self.client.update("user_get_btc_address", ()).await
+    }
+
+    /// Retrieves the Rune deposit address associated with the calling user
+    /// # Returns
+    /// * `String` - The Rune deposit address of the user, or a CanisterError
+    pub async fn user_get_rune_address(
+        &self,
+    ) -> CanisterClientResult<Result<String, CanisterError>> {
+        self.client.update("user_get_rune_address", ()).await
     }
 
     /// Creates a new bridge transaction for the calling user
@@ -200,7 +220,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn token_manager_update_token_standards(
         &self,
         input: UpdateTokenStandardsInput,
-    ) -> CanisterClientResult<Result<(), String>> {
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
             .update("token_manager_update_token_standards", (input,))
             .await
@@ -214,7 +234,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn get_token_by_id(
         self,
         ledger_id: Principal,
-    ) -> CanisterClientResult<Result<TokenDto, String>> {
+    ) -> CanisterClientResult<Result<TokenDto, CanisterError>> {
         self.client.query("get_token_by_id", (ledger_id,)).await
     }
 }
