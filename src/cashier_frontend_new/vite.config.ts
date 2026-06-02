@@ -4,6 +4,7 @@ import { defineConfig } from "vite";
 import packageConfig from "./package.json";
 import * as child from "child_process";
 import { svelteTesting } from "@testing-library/svelte/vite";
+import { icpBindgen } from "@icp-sdk/bindgen/plugins/vite";
 // Get commit hash. In restricted envs (e.g. sandboxed CI) shelling out may be blocked.
 let commitHash: string;
 try {
@@ -17,7 +18,25 @@ process.env.VITE_DEV_BUILD_APP_VERSION = packageConfig.version;
 process.env.VITE_DEV_BUILD_TIMESTAMP = new Date().toISOString();
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()],
+  plugins: [
+    icpBindgen({
+      didFile: "./src/lib/generated/.did/cashier_backend.did",
+      outDir: "./src/lib/generated/cashier_backend",
+      output: { declarations: { flat: true } },
+    }),
+    icpBindgen({
+      didFile: "./src/lib/generated/.did/token_storage.did",
+      outDir: "./src/lib/generated/token_storage",
+      output: { declarations: { flat: true } },
+    }),
+    icpBindgen({
+      didFile: "./src/lib/generated/.did/icp_ledger_canister.did",
+      outDir: "./src/lib/generated/icp_ledger_canister",
+      output: { declarations: { flat: true } },
+    }),
+    tailwindcss(),
+    sveltekit(),
+  ],
   optimizeDeps: {
     esbuildOptions: {
       define: {

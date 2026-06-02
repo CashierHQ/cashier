@@ -96,6 +96,9 @@ importers:
       '@eslint/compat':
         specifier: ^2.1.0
         version: 2.1.0(eslint@10.4.0(jiti@2.7.0))
+      '@icp-sdk/bindgen':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
         version: 3.0.10(@sveltejs/kit@2.60.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.7(@typescript-eslint/types@8.59.3))(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)))(svelte@5.55.7(@typescript-eslint/types@8.59.3))(typescript@5.9.3)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)))
@@ -918,6 +921,10 @@ packages:
     resolution: {integrity: sha512-FkNzd/ayptPByWebY0GWnDZB27EXfzxiIxjUdDZ7bl1V55s5ghHQ/4lwnUAjrvT8dwdi7xZwIoYEDMvlkHCTSw==}
     peerDependencies:
       '@icp-sdk/core': ^5
+
+  '@icp-sdk/bindgen@0.4.0':
+    resolution: {integrity: sha512-WXJoPIVnqCgFSNcprVpHwPBNWA1prwPh1/ezQYVrCP+Zj8CCJ7zj9L7p5cFcN7ghxoxfbx6tYT8t/HN9fyeYkA==}
+    hasBin: true
 
   '@icp-sdk/canisters@3.6.0':
     resolution: {integrity: sha512-GALqQiywObRabz98etHccTq1DpLy5Sbx3adrYO27ffbDgZGLY5sZcAQfR0CkP0Da6KUEauzZk3gBi8UDzbydHg==}
@@ -2181,6 +2188,10 @@ packages:
   combined-stream@1.0.8:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
+
+  commander@14.0.3:
+    resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
+    engines: {node: '>=20'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -4613,6 +4624,10 @@ snapshots:
       '@icp-sdk/signer': 5.3.1(@icp-sdk/core@5.4.0)
       idb: 7.1.1
 
+  '@icp-sdk/bindgen@0.4.0':
+    dependencies:
+      commander: 14.0.3
+
   '@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0)':
     dependencies:
       '@dfinity/utils': 4.2.1(@icp-sdk/core@5.4.0)
@@ -5892,6 +5907,8 @@ snapshots:
   combined-stream@1.0.8:
     dependencies:
       delayed-stream: 1.0.0
+
+  commander@14.0.3: {}
 
   concat-map@0.0.1: {}
 

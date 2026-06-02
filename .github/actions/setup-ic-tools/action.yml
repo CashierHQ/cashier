@@ -1,5 +1,5 @@
 name: "Setup IC tooling"
-description: "Installs dfx, ic-wasm, and candid-extractor for building IC canisters."
+description: "Installs IC tooling — ic-wasm + candid-extractor always; dfx and icp-cli are opt-in."
 
 inputs:
   ic-wasm-version:
@@ -10,22 +10,53 @@ inputs:
     description: "candid-extractor release version"
     required: false
     default: "0.1.6"
+  install-dfx:
+    description: "Install dfx (deprecated — opt-in for legacy/orbit flows)."
+    required: false
+    default: "false"
   dfx-version:
-    description: "Optional dfx version to pin (e.g. 0.29.2). Leave empty to use latest."
+    description: "Optional dfx version to pin (e.g. 0.29.2). Empty = latest."
     required: false
     default: ""
+  install-icp-cli:
+    description: "Install icp-cli (the deploy CLI)."
+    required: false
+    default: "false"
+  icp-cli-version:
+    description: "icp-cli release version (release tag, without the leading 'v')."
+    required: false
+    default: "0.2.7"
 
 runs:
   using: "composite"
   steps:
     - name: Install dfx
+      if: ${{ inputs.install-dfx == 'true' }}
       uses: dfinity/setup-dfx@main
       with:
         dfx-version: ${{ inputs.dfx-version }}
 
     - name: Confirm dfx installation
+      if: ${{ inputs.install-dfx == 'true' }}
       shell: bash
       run: dfx --version
+
+    - name: Install icp-cli
+      if: ${{ inputs.install-icp-cli == 'true' }}
+      shell: bash
+      env:
+        # Pin the install location, skip shell-profile edits — PATH is wired via $GITHUB_PATH below.
+        ICP_CLI_INSTALL_DIR: ${{ runner.temp }}/icp-cli
+        ICP_CLI_NO_MODIFY_PATH: "1"
+      run: |
+        curl --proto '=https' --tlsv1.2 -LsSf \
+          "https://github.com/dfinity/icp-cli/releases/download/v${{ inputs.icp-cli-version }}/icp-cli-installer.sh" | sh
+        echo "${ICP_CLI_INSTALL_DIR}/bin" >> "$GITHUB_PATH"
+
+    - name: Confirm icp-cli installation
+      if: ${{ inputs.install-icp-cli == 'true' }}
+      shell: bash
+      run: icp --version
 
     - name: Install ic-wasm
       shell: bash

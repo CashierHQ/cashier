@@ -10,186 +10,91 @@
       "candid": "./target/artifacts/token_storage.did",
       "wasm": "./target/artifacts/token_storage.wasm.gz"
     },
-    "cashier_frontend_new": {
-      "source": ["./src/cashier_frontend_new/build"],
-      "type": "assets",
-      "build": ""
-    },
     "gate_service": {
       "type": "custom",
       "candid": "./target/artifacts/gate_service.did",
       "wasm": "./target/artifacts/gate_service.wasm.gz"
     },
-    "icp_ledger_canister": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icp.did",
-      "wasm": "./target/artifacts/ledger-suite-icp.wasm.gz",
-      "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      "remote": {
-        "id": {
-          "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
-        }
-      }
-    },
-    "ckETH": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "ss2fx-dyaaa-aaaar-qacoq-cai",
-      "remote": {
-        "id": {
-          "ic": "ss2fx-dyaaa-aaaar-qacoq-cai"
-        }
-      }
-    },
-    "ckUSDC": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "xevnm-gaaaa-aaaar-qafnq-cai",
-      "remote": {
-        "id": {
-          "ic": "xevnm-gaaaa-aaaar-qafnq-cai"
-        }
-      }
-    },
-    "DOGE": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "x5qut-viaaa-aaaar-qajda-cai",
-      "remote": {
-        "id": {
-          "ic": "x5qut-viaaa-aaaar-qajda-cai"
-        }
-      }
-    },
-    "ALICE": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "oj6if-riaaa-aaaaq-aaeha-cai",
-      "remote": {
-        "id": {
-          "ic": "oj6if-riaaa-aaaaq-aaeha-cai"
-        }
-      }
-    },
-    "BOB": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "7pail-xaaaa-aaaas-aabmq-cai",
-      "remote": {
-        "id": {
-          "ic": "7pail-xaaaa-aaaas-aabmq-cai"
-        }
-      }
-    },
-    "internet_identity": {
-      "type": "custom",
-      "candid": "./target/artifacts/internet_identity.did",
-      "wasm": "./target/artifacts/internet_identity.wasm.gz",
-      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
-      "remote": {
-        "id": {
-          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-        }
-      }
-    },
-    "icp_index": {
-      "type": "custom",
-      "candid": "./target/artifacts/icp_index.did",
-      "wasm": "./target/artifacts/icp_index.wasm.gz",
-      "specified_id": "qhbym-qaaaa-aaaaa-aaafq-cai",
-      "remote": {
-        "id": {
-          "ic": "qhbym-qaaaa-aaaaa-aaafq-cai"
-        }
-      }
-    },
-    "ckBTC_index": {
-      "type": "custom",
-      "candid": "./target/artifacts/icrc_index_ng.did",
-      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
-      "specified_id": "n5wcd-faaaa-aaaar-qaaea-cai",
-      "remote": {
-        "id": {
-          "ic": "n5wcd-faaaa-aaaar-qaaea-cai"
-        }
-      }
-    },
-    "ckETH_index": {
-      "type": "custom",
-      "candid": "./target/artifacts/icrc_index_ng.did",
-      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
-      "specified_id": "s3zol-vqaaa-aaaar-qacpa-cai",
-      "remote": {
-        "id": {
-          "ic": "s3zol-vqaaa-aaaar-qacpa-cai"
-        }
-      }
-    },
-    "ckUSDC_index": {
-      "type": "custom",
-      "candid": "./target/artifacts/icrc_index_ng.did",
-      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
-      "specified_id": "xrs4b-hiaaa-aaaar-qafoa-cai",
-      "remote": {
-        "id": {
-          "ic": "xrs4b-hiaaa-aaaar-qafoa-cai"
-        }
-      }
-    },
-    "ICRC7NFT": {
-      "type": "custom",
-      "candid": "./target/artifacts/icrc7_nft_canister.did",
-      "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz",
-      "specified_id": "cvvmr-dyaaa-aaaai-q32oq-cai",
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
+    "cashier_frontend_new": {
+      "source": ["./src/cashier_frontend_new/build"],
+      "type": "assets",
+      "build": ""
     },
     "ckbtc_ledger": {
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_ledger.did",
       "wasm": "./target/artifacts/ckbtc_ledger.wasm.gz",
       "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
+      "metadata": [{ "name": "candid:service" }]
     },
     "ckbtc_minter": {
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_minter.did",
       "wasm": "./target/artifacts/ckbtc_minter.wasm.gz",
       "specified_id": "ml52i-qqaaa-aaaar-qaaba-cai",
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
+      "metadata": [{ "name": "candid:service" }]
     },
     "ckbtc_kyt": {
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_kyt.did",
       "wasm": "./target/artifacts/ckbtc_kyt.wasm.gz",
       "specified_id": "o6ude-eyaaa-aaaar-qal6a-cai",
-      "metadata": [
-        {
-          "name": "candid:service"
-        }
-      ]
-    }
-  },
-  "defaults": {
-    "build": {
-      "args": "",
-      "packtool": ""
+      "metadata": [{ "name": "candid:service" }]
+    },
+    "ckETH": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "ss2fx-dyaaa-aaaar-qacoq-cai"
+    },
+    "ckUSDC": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "xevnm-gaaaa-aaaar-qafnq-cai"
+    },
+    "DOGE": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "x5qut-viaaa-aaaar-qajda-cai"
+    },
+    "ALICE": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "oj6if-riaaa-aaaaq-aaeha-cai"
+    },
+    "BOB": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "7pail-xaaaa-aaaas-aabmq-cai"
+    },
+    "ckBTC_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
+      "specified_id": "n5wcd-faaaa-aaaar-qaaea-cai"
+    },
+    "ckETH_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
+      "specified_id": "s3zol-vqaaa-aaaar-qacpa-cai"
+    },
+    "ckUSDC_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
+      "specified_id": "xrs4b-hiaaa-aaaar-qafoa-cai"
+    },
+    "ICRC7NFT": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc7_nft_canister.did",
+      "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz",
+      "specified_id": "cvvmr-dyaaa-aaaai-q32oq-cai",
+      "metadata": [{ "name": "candid:service" }]
     }
   },
   "networks": {
@@ -206,10 +111,9 @@
       "providers": ["https://icp0.io"]
     },
     "local": {
-      "bind": "127.0.0.1:4943",
-      "type": "ephemeral"
+      "type": "ephemeral",
+      "providers": ["http://127.0.0.1:8000"]
     }
   },
-  "output_env_file": ".env",
   "version": 1
 }
