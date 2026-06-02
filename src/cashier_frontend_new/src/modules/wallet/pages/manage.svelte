@@ -205,6 +205,7 @@
                     <TokenIcon
                       address={token.address}
                       symbol={token.symbol}
+                      logo={token.runeInfo?.icon}
                       size="md"
                       {failedImageLoads}
                       onImageError={handleImageError}

@@ -2,23 +2,26 @@
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
   import { BridgeType } from "$modules/bitcoin/types/bridge_transaction";
   import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
   import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { ChevronDown, ChevronUp, RefreshCw } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
-  const exportBridgeTxs = $derived.by(() => bridgeStore.exportBridgeTxs ?? []);
+  const exportBridgeTxs = $derived.by(
+    () => btcBridgeStore.exportBridgeTxs ?? [],
+  );
 
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
+
+  let minConfirmations = $derived.by(() => btcBridgeStore.minConfirmations);
   let historyExpanded = $state(true);
   let exportHistoryRefreshing = $state(false);
-  let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
 
   function handleSelectBridge(bridgeId: string) {
-    const bridge = bridgeStore.exportBridgeTxs?.find(
+    const bridge = btcBridgeStore.exportBridgeTxs?.find(
       (b) => b.bridge_id === bridgeId,
     );
 
@@ -36,13 +39,13 @@
   }
 
   function handleLoadMore() {
-    bridgeStore.loadMoreExports();
+    btcBridgeStore.loadMoreExports();
   }
 
   async function handleRefreshExportHistory() {
     exportHistoryRefreshing = true;
     try {
-      await bridgeStore.refreshExportHistoryAsync();
+      await btcBridgeStore.refreshExportHistoryAsync();
       toast.success(locale.t("bitcoin.send.refreshSuccess"));
     } catch {
       toast.error(locale.t("bitcoin.send.refreshError"));
@@ -92,7 +95,7 @@
   {#if historyExpanded}
     <BridgeList
       bridgeTxs={exportBridgeTxs}
-      hasMore={bridgeStore.hasMoreExports}
+      hasMore={btcBridgeStore.hasMoreExports}
       emptyText={locale.t("wallet.send.noBtcExportTxs")}
       onSelectBridge={handleSelectBridge}
       onLoadMore={handleLoadMore}

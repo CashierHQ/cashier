@@ -1,19 +1,31 @@
 import { managedState } from "$lib/managedState";
+import { OMNITY_ICP_CANISTER_ID } from "$modules/bitcoin/constants";
 import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
+import { omnityHubService } from "$modules/bitcoin/services/omnityHubService";
+import { omnityIcpService } from "$modules/bitcoin/services/omnityIcpService";
 import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  BridgeAssetType,
   BridgeTransactionMapper,
   BridgeTransactionStatus,
   BridgeType,
+  type BridgeAssetInfo,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
-import { CKBTC_CANISTER_ID } from "$modules/token/constants";
+import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
+import {
+  CKBTC_CANISTER_ID,
+  ICP_LEDGER_CANISTER_ID,
+  ICP_LEDGER_FEE,
+} from "$modules/token/constants";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import type { AssetItem } from "$modules/transactionCart/types/txCart";
 import { SvelteSet } from "svelte/reactivity";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -80,6 +92,32 @@ export class BridgeTxCartStore {
     );
   }
 
+  get canRetryFailedBridge() {
+    return this.bridgeTransaction?.status === BridgeTransactionStatus.Failed;
+  }
+
+  #getRuneIcon(assetInfo?: BridgeAssetInfo): string | undefined {
+    if (!assetInfo || assetInfo.asset_type !== BridgeAssetType.Runes) {
+      return undefined;
+    }
+
+    return walletStore.query.data?.find(
+      (token) =>
+        token.isRune &&
+        (token.runeInfo?.runeId === assetInfo.asset_id ||
+          token.runeInfo?.tokenId === assetInfo.asset_id),
+    )?.runeInfo?.icon;
+  }
+
+  #withRuneIcons(assetItems: AssetItem[]) {
+    return assetItems.map((item, index) => ({
+      ...item,
+      icon:
+        item.icon ??
+        this.#getRuneIcon(this.bridgeTransaction?.asset_infos[index]),
+    }));
+  }
+
   /**
    * Get outgoing assets for the bridge transaction
    * @returns Array of AssetAndFee representing outgoing assets
@@ -93,8 +131,8 @@ export class BridgeTxCartStore {
       return [];
     }
 
-    const assetItems = BridgeTransactionMapper.toAssetItems(
-      this.bridgeTransaction,
+    const assetItems = this.#withRuneIcons(
+      BridgeTransactionMapper.toAssetItems(this.bridgeTransaction),
     );
     const assets: AssetAndFee[] = assetItems.map((item) => ({
       asset: item,
@@ -116,8 +154,8 @@ export class BridgeTxCartStore {
       return [];
     }
 
-    const assetItems = BridgeTransactionMapper.toAssetItems(
-      this.bridgeTransaction,
+    const assetItems = this.#withRuneIcons(
+      BridgeTransactionMapper.toAssetItems(this.bridgeTransaction),
     );
     const assets: AssetAndFee[] = assetItems.map((item) => ({
       asset: item,
@@ -135,23 +173,44 @@ export class BridgeTxCartStore {
       return 0;
     }
 
-    let fee: bigint;
+    const details = this.bridgeTransaction.details;
+
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
-      fee = this.bridgeTransaction.deposit_fee;
-    } else {
-      fee =
-        this.bridgeTransaction.withdrawal_fee + this.bridgeTransaction.btc_fee;
+      const btcPriceUSD =
+        tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+      if (!btcPriceUSD) {
+        return 0;
+      }
+      const depositFee =
+        details.kind === "ckbtc" ? (details.deposit_fee_btc_sats ?? 0n) : 0n;
+      return (Number(depositFee) / 100_000_000) * btcPriceUSD;
+    }
+
+    if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+      const icpPriceUSD =
+        tokenPriceStore.getTokenPriceByCanisterId(ICP_LEDGER_CANISTER_ID) || 0;
+      const btcPriceUSD =
+        tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0;
+      const withdrawalFeeIcp =
+        details.kind === "runes" ? (details.withdrawal_fee_icp_e8s ?? 0n) : 0n;
+      return (
+        (Number(withdrawalFeeIcp) / 100_000_000) * icpPriceUSD +
+        (Number(this.bridgeTransaction.btc_fee) / 100_000_000) * btcPriceUSD
+      );
     }
 
     const btcPriceUSD =
       tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
-
     if (!btcPriceUSD) {
       return 0;
     }
-
-    const amountInBtc = Number(fee) / 100_000_000;
-    return amountInBtc * btcPriceUSD;
+    const withdrawalFeeBtc =
+      details.kind === "ckbtc" ? (details.withdrawal_fee_btc_sats ?? 0n) : 0n;
+    return (
+      (Number(withdrawalFeeBtc + this.bridgeTransaction.btc_fee) /
+        100_000_000) *
+      btcPriceUSD
+    );
   }
 
   /**
@@ -163,24 +222,64 @@ export class BridgeTxCartStore {
       return [];
     }
     const feeItems: FeeBreakdownItem[] = [];
+    const details = this.bridgeTransaction.details;
+
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
+      const depositFee =
+        details.kind === "ckbtc" ? (details.deposit_fee_btc_sats ?? 0n) : 0n;
       feeItems.push({
         name: "BTC - ckBTC conversion fee",
-        amount: this.bridgeTransaction.deposit_fee,
+        amount: depositFee,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
         tokenDecimals: 8,
         usdAmount: this.totalFeesUsd,
       });
     } else {
+      if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+        const withdrawalFeeIcp =
+          details.kind === "runes"
+            ? (details.withdrawal_fee_icp_e8s ?? 0n)
+            : 0n;
+        feeItems.push({
+          name: "Rune redeem fee",
+          amount: withdrawalFeeIcp,
+          tokenAddress: ICP_LEDGER_CANISTER_ID,
+          tokenSymbol: "ICP",
+          tokenDecimals: 8,
+          usdAmount:
+            (Number(withdrawalFeeIcp) / 100_000_000) *
+            (tokenPriceStore.getTokenPriceByCanisterId(
+              ICP_LEDGER_CANISTER_ID,
+            ) || 0),
+        });
+        if (this.bridgeTransaction.btc_fee > 0n) {
+          feeItems.push({
+            name: "Network fees",
+            amount: this.bridgeTransaction.btc_fee,
+            tokenAddress: CKBTC_CANISTER_ID,
+            tokenSymbol: "BTC",
+            tokenDecimals: 8,
+            usdAmount:
+              (Number(this.bridgeTransaction.btc_fee) / 100_000_000) *
+              (tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) ||
+                0),
+          });
+        }
+
+        return feeItems;
+      }
+
+      const withdrawalFeeBtc =
+        details.kind === "ckbtc" ? (details.withdrawal_fee_btc_sats ?? 0n) : 0n;
       feeItems.push({
         name: "ckBTC - BTC conversion fee",
-        amount: this.bridgeTransaction.withdrawal_fee,
+        amount: withdrawalFeeBtc,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
         tokenDecimals: 8,
         usdAmount:
-          (Number(this.bridgeTransaction.withdrawal_fee) / 100_000_000) *
+          (Number(withdrawalFeeBtc) / 100_000_000) *
           (tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID) || 0),
       });
       feeItems.push({
@@ -221,7 +320,11 @@ export class BridgeTxCartStore {
    * @returns The approval memo as a Uint8Array.
    */
   #toApprovalMemo(bridgeId: string): Uint8Array {
-    return new TextEncoder().encode(bridgeId);
+    // Keep the memo deterministic but bounded to the ledger memo limit.
+    const bridgeIdBytes = new TextEncoder().encode(bridgeId);
+    const memo = new Uint8Array(32);
+    memo.set(bridgeIdBytes.slice(0, memo.length));
+    return memo;
   }
 
   /**
@@ -231,6 +334,78 @@ export class BridgeTxCartStore {
    */
   #toCreatedAtTimeNanoseconds(createdAtTs: bigint): bigint {
     return createdAtTs * 1_000_000_000n;
+  }
+
+  #isRuneExportBridge(bridge: BridgeTransactionWithUsdValue): boolean {
+    return (
+      bridge.bridge_type === BridgeType.Export &&
+      bridge.asset_infos.some(
+        (asset) => asset.asset_type === BridgeAssetType.Runes,
+      )
+    );
+  }
+
+  #getRuneExportToken() {
+    if (!this.bridgeTransaction) {
+      return null;
+    }
+
+    const runeAsset = this.bridgeTransaction.asset_infos.find(
+      (asset) => asset.asset_type === BridgeAssetType.Runes,
+    );
+    if (!runeAsset) {
+      return null;
+    }
+
+    return (walletStore.query.data ?? []).find(
+      (token) => token.isRune && token.runeInfo?.runeId === runeAsset.asset_id,
+    );
+  }
+
+  #buildIcpLedgerService(): IcrcLedgerService {
+    return new IcrcLedgerService({
+      name: "Internet Computer",
+      symbol: "ICP",
+      address: ICP_LEDGER_CANISTER_ID,
+      decimals: 8,
+      enabled: true,
+      fee: ICP_LEDGER_FEE,
+      is_default: true,
+    });
+  }
+
+  async #approveSpenderWithAllowanceRecovery(
+    ledgerService: IcrcLedgerService,
+    spenderCanisterId: string,
+    amount: bigint,
+    memo: Uint8Array,
+    createdAtTime: bigint,
+  ): Promise<Result<void, string>> {
+    try {
+      await ledgerService.approveSpender(
+        spenderCanisterId,
+        amount,
+        memo,
+        createdAtTime,
+      );
+      return Ok(undefined);
+    } catch (approvalError) {
+      console.error(
+        `Error occurred while approving spender ${spenderCanisterId}:`,
+        approvalError,
+      );
+      try {
+        const allowance =
+          await ledgerService.getAllowanceForSpender(spenderCanisterId);
+
+        if (allowance < amount) {
+          return Err("Approval amount is lower than required allowance.");
+        }
+        return Ok(undefined);
+      } catch (allowanceError) {
+        return Err((allowanceError as Error).message);
+      }
+    }
   }
 
   /**
@@ -263,6 +438,166 @@ export class BridgeTxCartStore {
     return Ok(this.bridgeTransaction);
   }
 
+  async #updateRuneBridgeToPending(
+    omnityTicketId: string,
+    withdrawalFee: bigint,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Pending,
+      null,
+      null,
+      null,
+      [],
+      null,
+      null,
+      null,
+      withdrawalFee,
+      null,
+      null,
+      omnityTicketId,
+    );
+    if (updateResult.isErr()) {
+      return Err(updateResult.unwrapErr());
+    }
+
+    await this.refreshAsync();
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction refresh failed.");
+    }
+
+    return Ok(this.bridgeTransaction);
+  }
+
+  async retryFailedBridge(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    if (!this.canRetryFailedBridge) {
+      return Err("Bridge transaction is not retryable.");
+    }
+
+    if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+      return this.#retryFailedRuneExport();
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Pending,
+      null,
+      null,
+      null,
+      [],
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      [],
+      [],
+      this.bridgeTransaction.asset_infos.map((assetInfo) => ({
+        ...assetInfo,
+        amount: 0n,
+      })),
+    );
+
+    if (updateResult.isErr()) {
+      return Err(updateResult.unwrapErr());
+    }
+
+    await this.refreshAsync();
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction refresh failed.");
+    }
+
+    return Ok(this.bridgeTransaction);
+  }
+
+  async #failRuneBridge(
+    errorMessage: string,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const failResult = await tokenStorageService.updateBridgeTransaction(
+      this.bridgeTransaction.bridge_id,
+      BridgeTransactionStatus.Failed,
+    );
+    if (failResult.isErr()) {
+      return Err(failResult.unwrapErr());
+    }
+
+    await this.refreshAsync();
+    return Err(errorMessage);
+  }
+
+  async #recoverRuneExportWithExistingTicket(
+    runeTokenId: string,
+    withdrawalFee: bigint,
+  ): Promise<Result<BridgeTransactionWithUsdValue, string>> {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const now = BigInt(currentSecondTimestamp());
+    const oneDayAgo = now - 86_400n;
+
+    const ticketsResult = await omnityHubService.getTxsWithAccount({
+      sender: this.bridgeTransaction.icp_address,
+      receiver: this.bridgeTransaction.btc_address,
+      tokenId: runeTokenId,
+      timeRange: [oneDayAgo, now],
+      start: 0n,
+      limit: 100n,
+    });
+    if (ticketsResult.isErr()) {
+      return this.#failRuneBridge(ticketsResult.unwrapErr());
+    }
+
+    const allBridges = await tokenStorageService.getBridgeTransactions(0, 100);
+    const seenTicketIds = new SvelteSet(
+      allBridges
+        .map((bridge) =>
+          bridge.details.kind === "runes"
+            ? bridge.details.omnity_ticket_id
+            : null,
+        )
+        .filter((ticketId): ticketId is string => !!ticketId),
+    );
+
+    const unseenTickets = ticketsResult
+      .unwrap()
+      .filter(
+        (ticket) =>
+          ticket.token === runeTokenId &&
+          ticket.receiver === this.bridgeTransaction?.btc_address &&
+          !seenTicketIds.has(ticket.ticket_id) &&
+          "Redeem" in ticket.action,
+      )
+      .sort((left, right) => Number(right.ticket_time - left.ticket_time));
+
+    if (unseenTickets.length === 0) {
+      return this.#failRuneBridge(
+        "Unable to recover Rune export bridge transaction.",
+      );
+    }
+
+    return this.#updateRuneBridgeToPending(
+      unseenTickets[0].ticket_id,
+      withdrawalFee,
+    );
+  }
+
   /**
    * Recover pending export bridge by checking the retrieval request status from the ckBTC minter
    * @returns Result containing the updated bridge transaction or an error message.
@@ -289,9 +624,14 @@ export class BridgeTxCartStore {
         .filter(
           (bridge) =>
             bridge.bridge_type === BridgeType.Export &&
-            bridge.ckbtc_block_id !== null,
+            bridge.details.kind === "ckbtc" &&
+            bridge.details.ckbtc_block_id !== null,
         )
-        .map((bridge) => bridge.ckbtc_block_id?.toString()),
+        .map((bridge) =>
+          bridge.details.kind === "ckbtc"
+            ? bridge.details.ckbtc_block_id?.toString()
+            : undefined,
+        ),
     );
 
     const unseenBlockIds = statusByAccountResult
@@ -331,6 +671,10 @@ export class BridgeTxCartStore {
       return Err("Bridge transaction is not ready for confirmation.");
     }
 
+    if (this.#isRuneExportBridge(this.bridgeTransaction)) {
+      return this.#executeRuneExport();
+    }
+
     const approvalAmount = this.bridgeTransaction.total_amount;
     const approvalMemo = this.#toApprovalMemo(this.bridgeTransaction.bridge_id);
     const approvalCreatedAtTime = this.#toCreatedAtTimeNanoseconds(
@@ -364,5 +708,83 @@ export class BridgeTxCartStore {
     }
 
     return this.#updateBridgeToPending(retrieveResult.unwrap());
+  }
+
+  async #runRuneExportFaultToleranceFlow(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    if (!this.bridgeTransaction) {
+      return Err("Bridge transaction not found.");
+    }
+
+    const runeToken = this.#getRuneExportToken();
+    if (!runeToken?.runeInfo?.tokenId) {
+      return Err("Rune token metadata not found.");
+    }
+
+    const approvalMemo = this.#toApprovalMemo(this.bridgeTransaction.bridge_id);
+    const approvalCreatedAtTime = this.#toCreatedAtTimeNanoseconds(
+      this.bridgeTransaction.created_at_ts,
+    );
+
+    const redeemFeeResult = await omnityIcpService.getRedeemFee("Bitcoin");
+    if (redeemFeeResult.isErr()) {
+      return Err(redeemFeeResult.unwrapErr());
+    }
+
+    const redeemFee = redeemFeeResult.unwrap();
+
+    const icpApprovalResult = await this.#approveSpenderWithAllowanceRecovery(
+      this.#buildIcpLedgerService(),
+      OMNITY_ICP_CANISTER_ID,
+      redeemFee,
+      approvalMemo,
+      approvalCreatedAtTime,
+    );
+
+    if (icpApprovalResult.isErr()) {
+      return this.#failRuneBridge(icpApprovalResult.unwrapErr());
+    }
+
+    const runeApprovalResult = await this.#approveSpenderWithAllowanceRecovery(
+      new IcrcLedgerService(runeToken),
+      OMNITY_ICP_CANISTER_ID,
+      this.bridgeTransaction.total_amount,
+      approvalMemo,
+      approvalCreatedAtTime,
+    );
+    if (runeApprovalResult.isErr()) {
+      return this.#failRuneBridge(runeApprovalResult.unwrapErr());
+    }
+
+    const ticketResult = await omnityIcpService.generateTicketV2({
+      action: { Redeem: null },
+      token_id: runeToken.runeInfo.tokenId,
+      from_subaccount: [],
+      target_chain_id: "Bitcoin",
+      amount: this.bridgeTransaction.total_amount,
+      receiver: this.bridgeTransaction.btc_address,
+    });
+
+    if (ticketResult.isErr()) {
+      return this.#recoverRuneExportWithExistingTicket(
+        runeToken.runeInfo.tokenId,
+        redeemFee,
+      );
+    }
+
+    return this.#updateRuneBridgeToPending(ticketResult.unwrap(), redeemFee);
+  }
+
+  async #executeRuneExport(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    return this.#runRuneExportFaultToleranceFlow();
+  }
+
+  async #retryFailedRuneExport(): Promise<
+    Result<BridgeTransactionWithUsdValue, string>
+  > {
+    return this.#runRuneExportFaultToleranceFlow();
   }
 }

@@ -45,6 +45,11 @@ fn init(init_data: TokenStorageInitData) {
         init_data.ckbtc_minter_id
     );
     state.set_ckbtc_minter_id(init_data.ckbtc_minter_id);
+    info!(
+        "[init] Set Omnity Bitcoin canister id to {}",
+        init_data.omnity_bitcoin_id
+    );
+    state.set_omnity_bitcoin_id(init_data.omnity_bitcoin_id);
 
     init_ic_rand();
 }
@@ -66,9 +71,15 @@ fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
         upgrade_data.ckbtc_minter_id
     );
     state.set_ckbtc_minter_id(upgrade_data.ckbtc_minter_id);
+    info!(
+        "[init] Set Omnity Bitcoin canister id to {}",
+        upgrade_data.omnity_bitcoin_id
+    );
+    state.set_omnity_bitcoin_id(upgrade_data.omnity_bitcoin_id);
 
     if let Some(tokens) = upgrade_data.tokens {
         info!("[post_upgrade] Upserting {} tokens", tokens.len());
+
         match state.token_registry.add_bulk_tokens(tokens, updated_at) {
             Ok(_) => {}
             Err(e) => {

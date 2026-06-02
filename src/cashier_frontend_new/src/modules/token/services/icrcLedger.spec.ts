@@ -290,6 +290,40 @@ describe("IcrcLedgerService", () => {
     });
   });
 
+  describe("approveSpender", () => {
+    it("should approve an arbitrary spender", async () => {
+      // Arrange
+      const spenderCanisterId = "be2us-64aaa-aaaaa-qaabq-cai";
+      const memo = new Uint8Array([9, 9, 9]);
+      const createdAtTime = 1_700_000_000_000_000_000n;
+      mockIcrc2Approve.mockResolvedValue({ Ok: 456n });
+
+      // Act
+      const result = await service.approveSpender(
+        spenderCanisterId,
+        77_000n,
+        memo,
+        createdAtTime,
+      );
+
+      // Assert
+      expect(result).toBe(456n);
+      expect(mockIcrc2Approve).toHaveBeenCalledWith({
+        spender: {
+          owner: Principal.fromText(spenderCanisterId),
+          subaccount: [],
+        },
+        amount: 77_000n,
+        fee: [mockToken.fee],
+        memo: [memo],
+        created_at_time: [createdAtTime],
+        expected_allowance: [],
+        expires_at: [],
+        from_subaccount: [],
+      });
+    });
+  });
+
   describe("getAllowanceForCkBtcMinter", () => {
     it("should return allowance for ckBTC minter spender", async () => {
       // Arrange
@@ -310,6 +344,33 @@ describe("IcrcLedgerService", () => {
         },
         spender: {
           owner: Principal.fromText(CKBTC_MINTER_CANISTER_ID),
+          subaccount: [],
+        },
+      });
+    });
+  });
+
+  describe("getAllowanceForSpender", () => {
+    it("should return allowance for an arbitrary spender", async () => {
+      // Arrange
+      const spenderCanisterId = "be2us-64aaa-aaaaa-qaabq-cai";
+      mockIcrc2Allowance.mockResolvedValue({
+        allowance: 123_000n,
+        expires_at: [],
+      });
+
+      // Act
+      const result = await service.getAllowanceForSpender(spenderCanisterId);
+
+      // Assert
+      expect(result).toBe(123_000n);
+      expect(mockIcrc2Allowance).toHaveBeenCalledWith({
+        account: {
+          owner: Principal.fromText("aaaaa-aa"),
+          subaccount: [],
+        },
+        spender: {
+          owner: Principal.fromText(spenderCanisterId),
           subaccount: [],
         },
       });

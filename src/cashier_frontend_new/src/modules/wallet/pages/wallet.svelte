@@ -100,7 +100,7 @@
   onTabChange={handleTabChange}
 />
 
-<div class="px-4 pb-6">
+<div class="pb-6">
   {#if currentTab === WalletTab.TOKENS}
     {#if walletStore.query.data}
       <TokenList
@@ -111,10 +111,10 @@
         {failedImageLoads}
       />
 
-      <div class="mt-6 text-center">
+      <div class="mt-2 text-center">
         <button
           onclick={handleManageTokens}
-          class="text-green hover:text-teal-700 font-medium text-base transition-colors"
+          class="text-green hover:text-teal-700 text-sm transition-colors"
         >
           {locale.t("wallet.manageTokensBtn")}
         </button>

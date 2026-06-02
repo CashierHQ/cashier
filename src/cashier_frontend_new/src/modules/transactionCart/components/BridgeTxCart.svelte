@@ -55,6 +55,9 @@
   let canConfirmExport = $derived.by(
     () => bridgeTxCartStore?.canConfirmExport ?? false,
   );
+  let canRetryFailedBridge = $derived.by(
+    () => bridgeTxCartStore?.canRetryFailedBridge ?? false,
+  );
   let isCreatedExport = $derived.by(
     () =>
       bridgeTransaction?.bridge_type === BridgeType.Export &&
@@ -103,6 +106,23 @@
    */
   async function handleConfirm() {
     if (!bridgeTxCartStore || isProcessing) {
+      return;
+    }
+
+    if (canRetryFailedBridge) {
+      isProcessing = true;
+      errorMessage = null;
+      successMessage = null;
+
+      const retryResult = await bridgeTxCartStore.retryFailedBridge();
+      isProcessing = false;
+
+      if (retryResult.isErr()) {
+        errorMessage = retryResult.unwrapErr();
+        return;
+      }
+
+      successMessage = locale.t("bitcoin.txCart.successMessage");
       return;
     }
 
@@ -230,6 +250,8 @@
       >
         {#if isProcessing}
           {locale.t(`bitcoin.txCart.processing`)}
+        {:else if canRetryFailedBridge}
+          {locale.t(`bitcoin.txCart.retry`)}
         {:else if errorMessage && isCreatedExport}
           {locale.t(`bitcoin.txCart.retry`)}
         {:else if canConfirmExport}

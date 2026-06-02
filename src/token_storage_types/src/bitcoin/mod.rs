@@ -6,3 +6,4 @@ pub mod bridge_transaction;
 pub mod ckbtc_kyt;
 pub mod ckbtc_ledger;
 pub mod ckbtc_minter;
+pub mod omnity_bitcoin;

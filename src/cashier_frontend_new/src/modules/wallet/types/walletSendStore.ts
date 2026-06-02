@@ -11,15 +11,6 @@ export enum TxState {
   ERROR = "ERROR",
 }
 
-export interface ValidateSendParams {
-  selectedToken: string;
-  receiveAddress: string;
-  amount: number;
-  receiveType: ReceiveAddressType;
-  maxAmount: number;
-  isBitcoinAddress?: boolean;
-}
-
 export interface ComputeSendFeeParams {
   selectedToken: string;
   amount: number;

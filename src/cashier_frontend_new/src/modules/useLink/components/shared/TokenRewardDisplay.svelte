@@ -8,6 +8,7 @@
     symbol,
     decimals,
     message,
+    logo,
     claimedCount,
     totalCount,
   }: {
@@ -16,14 +17,12 @@
     symbol: string;
     decimals: number;
     message: string;
+    logo?: string;
     claimedCount?: number;
     totalCount?: number;
   } = $props();
 
-  // Use skipStore=true to always fetch from URL (not from walletStore cache)
-  const tokenLogo = $derived.by(() => {
-    return getTokenLogo(tokenAddress, true);
-  });
+  const tokenLogo = $derived(logo ?? getTokenLogo(tokenAddress, true));
   let imageError = $state(false);
 
   const firstLetter = $derived(symbol?.[0]?.toUpperCase() ?? "?");

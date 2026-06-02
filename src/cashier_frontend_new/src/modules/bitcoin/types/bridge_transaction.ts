@@ -17,6 +17,26 @@ export type BridgeTransactionWithUsdValue = BridgeTransaction & {
 };
 
 /**
+ * Asset-type-specific fields for a bridge transaction, including denomination-explicit fee fields.
+ */
+export type BridgeDetails =
+  | {
+      readonly kind: "ckbtc";
+      ckbtc_block_id: bigint | null;
+      /** ckBTC mint deposit fee denominated in BTC satoshis. */
+      deposit_fee_btc_sats: bigint | null;
+      /** ckBTC burn withdrawal fee denominated in BTC satoshis. */
+      withdrawal_fee_btc_sats: bigint | null;
+    }
+  | {
+      readonly kind: "runes";
+      omnity_ticket_id: string | null;
+      /** Omnity ICP redeem fee denominated in ICP e8s. */
+      withdrawal_fee_icp_e8s: bigint | null;
+    }
+  | { readonly kind: "legacy" };
+
+/**
  * BridgeTransaction type representing a bridge transaction between Bitcoin and ICP
  */
 export type BridgeTransaction = {
@@ -27,16 +47,23 @@ export type BridgeTransaction = {
   bridge_type: BridgeTypeValue;
   total_amount: bigint;
   created_at_ts: bigint;
-  deposit_fee: bigint;
-  withdrawal_fee: bigint;
+  /** Bitcoin network fee (miner fee). Protocol/minter fees are in details. */
   btc_fee: bigint;
   btc_txid: string | null;
-  ckbtc_block_id: bigint | null;
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
+  vin: BridgeUtxo[];
+  vout: BridgeUtxo[];
   retry_times: number;
   status: BridgeTransactionStatusValue;
+  /** Asset-type-specific fields including denomination-explicit fee amounts. */
+  details: BridgeDetails;
+};
+
+export type BridgeUtxo = {
+  txid: string;
+  vout: number;
 };
 
 /**
@@ -81,6 +108,7 @@ export type BridgeTypeValue =
 export class BridgeTransactionStatus {
   static readonly Created = "Created";
   static readonly Pending = "Pending";
+  static readonly Confirmed = "Confirmed";
   static readonly Completed = "Completed";
   static readonly Failed = "Failed";
 }
@@ -88,6 +116,7 @@ export class BridgeTransactionStatus {
 export type BridgeTransactionStatusValue =
   | typeof BridgeTransactionStatus.Created
   | typeof BridgeTransactionStatus.Pending
+  | typeof BridgeTransactionStatus.Confirmed
   | typeof BridgeTransactionStatus.Completed
   | typeof BridgeTransactionStatus.Failed;
 
@@ -108,15 +137,26 @@ export class BridgeTransactionMapper {
     if (data_total_amount.length === 1) {
       total_amount = data_total_amount[0];
     }
-    let deposit_fee = 0n;
-    const data_deposit_fee = data.deposit_fee as [] | [bigint];
-    if (data_deposit_fee.length === 1) {
-      deposit_fee = data_deposit_fee[0];
+    let deposit_fee_btc_sats = null;
+    const data_deposit_fee_btc_sats = data.deposit_fee_btc_sats as
+      | []
+      | [bigint];
+    if (data_deposit_fee_btc_sats.length === 1) {
+      deposit_fee_btc_sats = data_deposit_fee_btc_sats[0];
     }
-    let withdrawal_fee = 0n;
-    const data_withdrawal_fee = data.withdrawal_fee as [] | [bigint];
-    if (data_withdrawal_fee.length === 1) {
-      withdrawal_fee = data_withdrawal_fee[0];
+    let withdrawal_fee_btc_sats = null;
+    const data_withdrawal_fee_btc_sats = data.withdrawal_fee_btc_sats as
+      | []
+      | [bigint];
+    if (data_withdrawal_fee_btc_sats.length === 1) {
+      withdrawal_fee_btc_sats = data_withdrawal_fee_btc_sats[0];
+    }
+    let withdrawal_fee_icp_e8s = null;
+    const data_withdrawal_fee_icp_e8s = data.withdrawal_fee_icp_e8s as
+      | []
+      | [bigint];
+    if (data_withdrawal_fee_icp_e8s.length === 1) {
+      withdrawal_fee_icp_e8s = data_withdrawal_fee_icp_e8s[0];
     }
     let btc_fee = 0n;
     const data_btc_fee = data.btc_fee as [] | [bigint];
@@ -156,6 +196,29 @@ export class BridgeTransactionMapper {
       }));
     }
 
+    let omnity_ticket_id = null;
+    const data_omnity_ticket_id = data.omnity_ticket_id as [] | [string];
+    if (data_omnity_ticket_id.length === 1) {
+      omnity_ticket_id = data_omnity_ticket_id[0];
+    }
+
+    const vin = (data.vin as [] | [tokenStorage.UTXO[]]).flatMap(
+      (utxos) => utxos,
+    );
+    const vout = (data.vout as [] | [tokenStorage.UTXO[]]).flatMap(
+      (utxos) => utxos,
+    );
+
+    const is_runes = data.asset_infos.some((a) => "Runes" in a.asset_type);
+    const details: BridgeDetails = is_runes
+      ? { kind: "runes", omnity_ticket_id, withdrawal_fee_icp_e8s }
+      : {
+          kind: "ckbtc",
+          ckbtc_block_id,
+          deposit_fee_btc_sats,
+          withdrawal_fee_btc_sats,
+        };
+
     return {
       bridge_id: data.bridge_id,
       icp_address: data.icp_address.toText(),
@@ -173,18 +236,18 @@ export class BridgeTransactionMapper {
       ),
       total_amount,
       created_at_ts: data.created_at_ts,
-      deposit_fee,
-      withdrawal_fee,
       btc_fee,
       btc_txid,
-      ckbtc_block_id,
       block_id,
       block_timestamp,
       confirmations,
+      vin,
+      vout,
       retry_times: data.retry_times,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
       ),
+      details,
     };
   }
 
@@ -240,6 +303,23 @@ export class BridgeTransactionMapper {
   }
 
   /**
+   * Map frontend BridgeAssetTypeValue to token storage BridgeAssetType canister format
+   * @param assetType
+   * @returns tokenStorage.BridgeAssetType
+   */
+  public static toBridgeAssetTypeCanister(
+    assetType: BridgeAssetTypeValue,
+  ): tokenStorage.BridgeAssetType {
+    if (assetType === BridgeAssetType.BTC) {
+      return { BTC: null };
+    } else if (assetType === BridgeAssetType.Runes) {
+      return { Runes: null };
+    } else {
+      return { Ordinals: null };
+    }
+  }
+
+  /**
    * Map token storage BridgeTransactionStatus to frontend BridgeTransactionStatusValue
    * @param status
    * @returns BridgeTransactionStatusValue
@@ -251,6 +331,8 @@ export class BridgeTransactionMapper {
       return BridgeTransactionStatus.Created;
     } else if ("Pending" in status) {
       return BridgeTransactionStatus.Pending;
+    } else if ("Confirmed" in status) {
+      return BridgeTransactionStatus.Confirmed;
     } else if ("Completed" in status) {
       return BridgeTransactionStatus.Completed;
     } else if ("Failed" in status) {
@@ -272,7 +354,10 @@ export class BridgeTransactionMapper {
       state = AssetProcessState.SUCCEED;
     } else if (bridge.status === BridgeTransactionStatus.Failed) {
       state = AssetProcessState.FAILED;
-    } else if (bridge.status === BridgeTransactionStatus.Pending) {
+    } else if (
+      bridge.status === BridgeTransactionStatus.Pending ||
+      bridge.status === BridgeTransactionStatus.Confirmed
+    ) {
       state = AssetProcessState.PROCESSING;
     }
     let direction = FlowDirection.INCOMING;
@@ -325,6 +410,8 @@ export class BridgeTransactionMapper {
         return { Created: null };
       case BridgeTransactionStatus.Pending:
         return { Pending: null };
+      case BridgeTransactionStatus.Confirmed:
+        return { Confirmed: null };
       case BridgeTransactionStatus.Completed:
         return { Completed: null };
       case BridgeTransactionStatus.Failed:
@@ -343,8 +430,9 @@ export class BridgeTransactionMapper {
    * @param block_timestamp
    * @param confirmations
    * @param btc_txid
-   * @param deposit_fee
-   * @param withdrawal_fee
+   * @param deposit_fee_btc_sats - ckBTC deposit fee in BTC satoshis
+   * @param withdrawal_fee_btc_sats - ckBTC withdrawal fee in BTC satoshis
+   * @param withdrawal_fee_icp_e8s - Rune redeem fee in ICP e8s
    * @param btc_fee
    * @param retry_times
    * @returns tokenStorage.UpdateBridgeTransactionInputArg
@@ -357,11 +445,29 @@ export class BridgeTransactionMapper {
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] | [] = [],
     btc_txid: string | null = null,
-    deposit_fee: bigint | null = null,
-    withdrawal_fee: bigint | null = null,
+    deposit_fee_btc_sats: bigint | null = null,
+    withdrawal_fee_btc_sats: bigint | null = null,
+    withdrawal_fee_icp_e8s: bigint | null = null,
     btc_fee: bigint | null = null,
     retry_times: number | null = null,
+    omnity_ticket_id: string | null = null,
+    vin: BridgeUtxo[] = [],
+    vout: BridgeUtxo[] = [],
+    asset_infos: BridgeAssetInfo[] = [],
   ): tokenStorage.UpdateBridgeTransactionInputArg {
+    const asset_infos_arg: [] | [tokenStorage.BridgeAssetInfo[]] =
+      asset_infos.length > 0
+        ? [
+            asset_infos.map((assetInfo) => ({
+              asset_type: BridgeTransactionMapper.toBridgeAssetTypeCanister(
+                assetInfo.asset_type,
+              ),
+              asset_id: assetInfo.asset_id,
+              amount: assetInfo.amount,
+              decimals: assetInfo.decimals,
+            })),
+          ]
+        : [];
     const ckbtc_block_id_arg: [] | [bigint] =
       ckbtc_block_id !== null ? [ckbtc_block_id] : [];
     const block_id_arg: [] | [bigint] = block_id !== null ? [block_id] : [];
@@ -374,15 +480,23 @@ export class BridgeTransactionMapper {
     const block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
       block_confirmations.length > 0 ? [block_confirmations] : [];
     const btc_txid_arg: [] | [string] = btc_txid !== null ? [btc_txid] : [];
-    const deposit_fee_arg: [] | [bigint] =
-      deposit_fee !== null ? [deposit_fee] : [];
-    const withdrawal_fee_arg: [] | [bigint] =
-      withdrawal_fee !== null ? [withdrawal_fee] : [];
+    const deposit_fee_btc_sats_arg: [] | [bigint] =
+      deposit_fee_btc_sats !== null ? [deposit_fee_btc_sats] : [];
+    const withdrawal_fee_btc_sats_arg: [] | [bigint] =
+      withdrawal_fee_btc_sats !== null ? [withdrawal_fee_btc_sats] : [];
+    const withdrawal_fee_icp_e8s_arg: [] | [bigint] =
+      withdrawal_fee_icp_e8s !== null ? [withdrawal_fee_icp_e8s] : [];
     const btc_fee_arg: [] | [bigint] = btc_fee !== null ? [btc_fee] : [];
     const retry_times_arg: [] | [number] =
       retry_times !== null ? [retry_times] : [];
+    const omnity_ticket_id_arg: [] | [string] =
+      omnity_ticket_id !== null ? [omnity_ticket_id] : [];
+    const vin_arg: [] | [tokenStorage.UTXO[]] = vin.length > 0 ? [vin] : [];
+    const vout_arg: [] | [tokenStorage.UTXO[]] = vout.length > 0 ? [vout] : [];
 
     return {
+      asset_infos: asset_infos_arg,
+      vin: vin_arg,
       bridge_id: bridgeId,
       status: status
         ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
@@ -391,9 +505,12 @@ export class BridgeTransactionMapper {
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
+      vout: vout_arg,
       btc_txid: btc_txid_arg,
-      deposit_fee: deposit_fee_arg,
-      withdrawal_fee: withdrawal_fee_arg,
+      omnity_ticket_id: omnity_ticket_id_arg,
+      deposit_fee_btc_sats: deposit_fee_btc_sats_arg,
+      withdrawal_fee_btc_sats: withdrawal_fee_btc_sats_arg,
+      withdrawal_fee_icp_e8s: withdrawal_fee_icp_e8s_arg,
       btc_fee: btc_fee_arg,
       retry_times: retry_times_arg,
     };
@@ -416,6 +533,7 @@ export class BridgeTransactionMapper {
     btcFee: bigint,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     return {
+      vin: [],
       btc_txid: [],
       icp_address: Principal.fromText(icpAddress),
       btc_address: btcAddress,
@@ -428,12 +546,58 @@ export class BridgeTransactionMapper {
         },
       ],
       bridge_type: { Export: null },
-      deposit_fee: [],
-      withdrawal_fee: [withdrawalFee],
+      vout: [],
+      deposit_fee_btc_sats: [],
+      withdrawal_fee_btc_sats: [withdrawalFee],
+      withdrawal_fee_icp_e8s: [],
       btc_fee: [btcFee],
       created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
       ckbtc_block_id: [],
       status: [],
+      omnity_ticket_id: [],
+    };
+  }
+
+  /**
+   * Create export bridge transaction input argument for Rune assets
+   * @param icpAddress
+   * @param btcAddress
+   * @param runeId
+   * @param amount
+   * @param decimals
+   * @returns
+   */
+  public static toCreateRuneExportBridgeTransactionArgs(
+    icpAddress: string,
+    btcAddress: string,
+    runeId: string,
+    amount: bigint,
+    decimals: number,
+    withdrawalFee: bigint,
+  ): tokenStorage.CreateBridgeTransactionInputArg {
+    return {
+      vin: [],
+      btc_txid: [],
+      icp_address: Principal.fromText(icpAddress),
+      btc_address: btcAddress,
+      asset_infos: [
+        {
+          asset_type: { Runes: null },
+          asset_id: runeId,
+          amount,
+          decimals,
+        },
+      ],
+      bridge_type: { Export: null },
+      vout: [],
+      deposit_fee_btc_sats: [],
+      withdrawal_fee_btc_sats: [],
+      withdrawal_fee_icp_e8s: [withdrawalFee],
+      btc_fee: [],
+      created_at_ts: BigInt(Math.floor(Date.now() / 1000)),
+      ckbtc_block_id: [],
+      status: [{ Created: null }],
+      omnity_ticket_id: [],
     };
   }
 }

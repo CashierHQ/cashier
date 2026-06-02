@@ -1,22 +1,27 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
+import {
+  getCachedTokenImage,
+  getTokenLogo,
+  loadTokenImages,
+} from "$modules/imageCache";
+import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
+import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { Principal } from "@icp-sdk/core/principal";
-import { Err, Ok, type Result } from "ts-results-es";
-import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import { runesPriceStore } from "$modules/token/state/runesPriceStore.svelte";
+import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
+import type {
+  TokenMetadata,
+  TokenWithPriceAndBalance,
+} from "$modules/token/types";
 import type { TransferDeduplicationFields } from "$modules/token/types/transferDeduplication";
 import { sortWalletTokens } from "$modules/token/utils/sorter";
-import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
-import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
-import {
-  getTokenLogo,
-  loadTokenImages,
-  getCachedTokenImage,
-} from "$modules/imageCache";
+import { Principal } from "@icp-sdk/core/principal";
+import { SvelteMap } from "svelte/reactivity";
+import { Err, Ok, type Result } from "ts-results-es";
 
 class WalletStore {
   #walletTokensQuery;
@@ -28,7 +33,7 @@ class WalletStore {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
         // fetch list user's tokens (only enabled tokens)
-        const tokens = await tokenStorageService.listTokens();
+        const tokens: TokenMetadata[] = await tokenStorageService.listTokens();
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
@@ -55,11 +60,21 @@ class WalletStore {
         const prices = tokenPriceStore.query.data
           ? tokenPriceStore.query.data
           : {};
+        const runesPrices = runesPriceStore.query.data ?? {};
 
-        const enrichedTokens = tokens.map((token, index) => ({
+        const balanceByAddress = new SvelteMap<string, bigint>();
+
+        enabledTokens.forEach((token, index) => {
+          balanceByAddress.set(token.address, balances[index] ?? 0n);
+        });
+
+        const enrichedTokens = tokens.map((token) => ({
           ...token,
-          balance: balances[index] ?? 0n,
-          priceUSD: prices[token.address] || 0,
+          balance: balanceByAddress.get(token.address) ?? 0n,
+          priceUSD:
+            token.isRune && token.runeInfo?.tokenId
+              ? (runesPrices[token.runeInfo.tokenId] ?? 0)
+              : prices[token.address] || 0,
         }));
 
         return sortWalletTokens(enrichedTokens);
@@ -89,6 +104,14 @@ class WalletStore {
         // This ensures the effect runs when prices are updated
         const prices = tokenPriceStore.query.data;
         if (prices) {
+          this.#walletTokensQuery.refresh();
+        }
+      });
+
+      // Refresh wallet tokens when Rune prices are updated
+      $effect(() => {
+        const runePrices = runesPriceStore.query.data;
+        if (runePrices) {
           this.#walletTokensQuery.refresh();
         }
       });
@@ -224,6 +247,9 @@ class WalletStore {
    * Add a new token to the wallet with validation
    * @param address Token canister ID
    * @param indexId Optional index canister ID for the token
+   * @param isRune Whether the token is a Bitcoin Rune bridged via Omnity
+   * @param runeId The Rune ID (e.g. UNCOMMON•GOODS), required when isRune is true
+   * @param runeTokenId The Omnity token identifier, required when isRune is true
    * @returns Result with void on success or ValidationError on failure
    */
   async addToken(
