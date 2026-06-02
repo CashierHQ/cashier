@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 </script>
 
@@ -6,11 +7,15 @@
   class="mx-auto flex min-h-[28rem] w-full max-w-xl flex-col items-center justify-center gap-6 px-6 py-12 text-center"
 >
   <div class="space-y-3">
-    <h2 class="text-2xl font-semibold">This link has ended</h2>
+    <h2 class="text-2xl font-semibold">
+      {locale.t("links.linkForm.useLink.ended.title")}
+    </h2>
     <p class="mx-auto max-w-sm text-sm text-muted-foreground">
-      This link is no longer available, so it cannot be claimed or used.
+      {locale.t("links.linkForm.useLink.ended.description")}
     </p>
   </div>
 
-  <Button href="/" class="w-full max-w-xs rounded-full">Go Back</Button>
+  <Button href="/" class="w-full max-w-xs rounded-full">
+    {locale.t("links.linkForm.useLink.ended.backButton")}
+  </Button>
 </div>

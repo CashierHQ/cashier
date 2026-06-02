@@ -38,7 +38,11 @@
 <main class="flex flex-col h-screen">
   <RedirectBoundary>
     {#snippet children(decision)}
-      <Header onLoginClick={openLoginModal} {showLogin} />
+      <Header
+        onLoginClick={openLoginModal}
+        showLogin={showLogin &&
+          !(decision.kind === "allow" && decision.screen === "linkEnded")}
+      />
       {#if decision.kind === "allow" && decision.screen === "linkEnded"}
         <Ended />
       {:else}

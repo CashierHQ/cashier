@@ -331,6 +331,12 @@ test.describe("redirect routing", () => {
         );
 
         await expectScreen(page, "linkEnded");
+
+        if (id === "UI-01") {
+          await expect(
+            page.getByRole("button", { name: "Login" }),
+          ).toBeHidden();
+        }
       });
     }
 

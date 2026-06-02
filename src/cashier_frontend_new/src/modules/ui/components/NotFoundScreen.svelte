@@ -1,5 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { paths } from "$modules/routing/paths";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
@@ -12,13 +13,17 @@
 
   <section class="flex flex-1 items-center justify-center px-4 py-10">
     <div class="w-full max-w-xl rounded-2xl bg-white px-6 py-12 text-center shadow-sm sm:px-10">
-      <p class="text-sm font-semibold uppercase tracking-wide text-primary">404</p>
-      <h1 class="mt-3 text-3xl font-bold text-gray-950 sm:text-4xl">Page not found</h1>
+      <p class="text-sm font-semibold uppercase tracking-wide text-primary">
+        {locale.t("notFound.code")}
+      </p>
+      <h1 class="mt-3 text-3xl font-bold text-gray-950 sm:text-4xl">
+        {locale.t("notFound.title")}
+      </h1>
       <p class="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
-        The page you are looking for does not exist or is no longer available.
+        {locale.t("notFound.description")}
       </p>
       <Button href={resolve(paths.home())} class="mt-8 w-full max-w-xs rounded-full">
-        Go Home
+        {locale.t("notFound.homeButton")}
       </Button>
     </div>
   </section>
