@@ -52,6 +52,12 @@
     "contactEmail": "Contact Email",
     "copiedToClipboard": "Copied to clipboard"
   },
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or is no longer available.",
+    "homeButton": "Go Home"
+  },
   "links": {
     "page": {
       "title": "Cashier links",
@@ -339,7 +345,13 @@
           "airdropMessage": "Congratulations, you received an airdrop!",
           "tokenBasketMessage": "Congratulations, you received a token basket!",
           "claimButton": "Claim",
-          "claimedButton": "Claimed"
+          "claimedButton": "Claimed",
+          "continueButton": "Continue"
+        },
+        "ended": {
+          "title": "This link has ended",
+          "description": "This link is no longer available, so it cannot be claimed or used.",
+          "backButton": "Go Back"
         },
         "errors": {
           "linkDetailMissing": "Link detail is missing",
