@@ -241,19 +241,6 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
-    // Deploy gate_service first so cashier_backend can be initialized with its real principal.
-    let gate_service_principal = deploy_canister(
-        &client,
-        None,
-        get_gate_service_canister_bytecode(),
-        &(GateServiceInitData {
-            log_settings: Some(log.clone()),
-            owner: TestUser::GateServiceAdmin.get_principal(),
-            permissions: None,
-        }),
-    )
-    .await;
-
     let cashier_backend_principal = deploy_canister(
         &client,
         None,
