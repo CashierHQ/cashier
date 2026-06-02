@@ -200,11 +200,6 @@ class BtcBridgeStore {
             this.processPendingTxsTask = null;
           }
 
-          if (this.mempoolTxsTask) {
-            clearInterval(this.mempoolTxsTask);
-            this.mempoolTxsTask = null;
-          }
-
           this.fetchBtcAddress().then((address) => {
             this.#btcAddress.current = address;
           });

@@ -182,7 +182,11 @@ class WalletSendStore {
 
       const icpBalance = await icpLedgerService.getBalance();
       if (icpBalance < redeemFee) {
-        return Err(locale.t("wallet.send.errors.insufficientIcpForRuneFee"));
+        return Err(
+          locale
+            .t("wallet.send.errors.insufficientIcpForRuneFee")
+            .replace("{{amount}}", String(parseBalanceUnits(redeemFee, 8))),
+        );
       }
 
       const amountBigInt = formatBalanceUnits(

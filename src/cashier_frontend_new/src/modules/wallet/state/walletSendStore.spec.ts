@@ -25,7 +25,10 @@ const {
 // Mock dependencies
 vi.mock("$lib/i18n", () => ({
   locale: {
-    t: (key: string) => key,
+    t: (key: string) =>
+      key === "wallet.send.errors.insufficientIcpForRuneFee"
+        ? "Insufficient ICP balance to cover the Rune withdrawal fee, required {{amount}} ICP."
+        : key,
   },
 }));
 
@@ -406,7 +409,7 @@ describe("WalletSendStore", () => {
       // Assert
       expect(result.isErr()).toBe(true);
       expect(result.unwrapErr()).toBe(
-        "wallet.send.errors.insufficientIcpForRuneFee",
+        "Insufficient ICP balance to cover the Rune withdrawal fee, required 0.0001 ICP.",
       );
     });
 
