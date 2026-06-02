@@ -5,6 +5,7 @@
   import DetailLink from "$modules/detailLink/pages/detail.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
   import { createLinkRouteContext } from "$modules/routing/createLinkRouteContext.svelte";
+  import { paths } from "$modules/routing/paths";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
@@ -13,7 +14,7 @@
   createLinkRouteContext({ linkId: id, storeType: "linkDetail" });
 
   const handleBack = async () => {
-    goto(resolve("/links"));
+    goto(resolve(paths.links()));
   };
 
   onMount(() => {

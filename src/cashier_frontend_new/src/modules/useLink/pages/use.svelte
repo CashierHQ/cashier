@@ -111,7 +111,7 @@
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
         // Redirect to error page instead of showing toast
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         return;
       }
 
@@ -138,7 +138,7 @@
 
       // Check if result requires redirect to 404
       if (shouldRedirectTo404(result, userStore.link ?? undefined)) {
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         return result;
       }
 
@@ -153,7 +153,7 @@
     } catch (err) {
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         // Return a result with the current action if it exists
         if (!userStore.action) {
           throw new Error(

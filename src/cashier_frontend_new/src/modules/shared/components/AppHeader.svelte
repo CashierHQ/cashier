@@ -11,6 +11,7 @@
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { paths } from "$modules/routing/paths";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
 
@@ -87,14 +88,13 @@
     await appHeaderStore.triggerBack();
   }
 
-  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
+  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to link list.
   async function handleLogoClick() {
     if (appHeaderStore.hasLogoClickHandler()) {
       await appHeaderStore.triggerLogoClick();
       return;
     }
-    // No handler set = navigate to /links
-    goto(resolve("/links"));
+    goto(resolve(paths.links()));
   }
 </script>
 
@@ -139,7 +139,7 @@
       <MenuButton />
     </div>
   {:else if isWalletPage}
-    <button onclick={() => goto(resolve("/links"))}>
+    <button onclick={() => goto(resolve(paths.links()))}>
       <X class="h-6 w-6" />
     </button>
   {/if}
