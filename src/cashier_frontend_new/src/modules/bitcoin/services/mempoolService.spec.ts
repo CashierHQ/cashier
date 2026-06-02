@@ -160,4 +160,35 @@ describe("MempoolService", () => {
       expect(result.unwrap().is_confirmed).toBe(true);
     });
   });
+
+  describe("getAddressTransactions", () => {
+    it("it_should_fail_get_address_transactions_due_to_network_error", async () => {
+      vi.doMock("$modules/bitcoin/constants", () => ({
+        MEMPOOL_API_BASE_URLS: ["https://endpoint1.example.com/api"],
+      }));
+      vi.stubGlobal("fetch", mockFetchThrow("Network error"));
+      const mod = await import("$modules/bitcoin/services/mempoolService");
+
+      const result =
+        await mod.mempoolService.getAddressTransactions("bc1qreceiver");
+
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toContain("bc1qreceiver");
+    });
+
+    it("it_should_get_address_transactions", async () => {
+      vi.doMock("$modules/bitcoin/constants", () => ({
+        MEMPOOL_API_BASE_URLS: ["https://endpoint1.example.com/api"],
+      }));
+      vi.stubGlobal("fetch", mockFetchOk([fixture_of_mempool_transaction]));
+      const mod = await import("$modules/bitcoin/services/mempoolService");
+
+      const result =
+        await mod.mempoolService.getAddressTransactions("bc1qreceiver");
+
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toHaveLength(1);
+      expect(result.unwrap()[0].txid).toBe("abc123");
+    });
+  });
 });

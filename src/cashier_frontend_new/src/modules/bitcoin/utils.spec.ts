@@ -32,16 +32,22 @@ const fixture_of_bridge_transaction = (
   bridge_type: BridgeType.Import,
   total_amount: 100_000_000n,
   created_at_ts: 1_704_067_200n,
-  deposit_fee: 1_000n,
-  withdrawal_fee: 0n,
+
   btc_fee: 0n,
   btc_txid: "txid_1",
-  ckbtc_block_id: null,
   block_id: 840_000n,
   block_timestamp: 1_704_067_100n,
   confirmations: [],
+  vin: [],
+  vout: [],
   retry_times: 0,
   status: BridgeTransactionStatus.Pending,
+  details: {
+    kind: "ckbtc" as const,
+    ckbtc_block_id: null,
+    deposit_fee_btc_sats: null,
+    withdrawal_fee_btc_sats: null,
+  },
   ...overrides,
 });
 

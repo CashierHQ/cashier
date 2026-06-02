@@ -127,17 +127,21 @@ export class BitcoinTransactionMapper {
     }
 
     return {
+      vin: [],
       btc_txid: [bitcoinTransaction.txid],
       icp_address: Principal.fromText(icpAddress),
       btc_address: btcAddress,
       asset_infos: asset_infos,
+      vout: [],
       bridge_type: isImporting ? { Import: null } : { Export: null },
-      deposit_fee: [depositFee],
-      withdrawal_fee: [withdrawalFee],
+      deposit_fee_btc_sats: [depositFee],
+      withdrawal_fee_btc_sats: [withdrawalFee],
+      withdrawal_fee_icp_e8s: [],
       btc_fee: [],
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
       ckbtc_block_id: [],
       status: [],
+      omnity_ticket_id: [],
     };
   }
 }

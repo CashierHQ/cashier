@@ -77,7 +77,7 @@ export function getAssetWithTokenInfo(
   const usdValue = priceUSD ? amount * priceUSD : 0;
 
   // Get token logo URL
-  const logo = getTokenLogo(address);
+  const logo = walletToken?.runeInfo?.icon ?? getTokenLogo(address);
 
   return {
     address,

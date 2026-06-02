@@ -251,6 +251,7 @@ export class FeeService {
           ? formatNumber(amountUi)
           : amountUi.toString(),
         usdValueStr: amountUsd ? formatUsdAmount(amountUsd) : undefined,
+        icon: token.runeInfo?.icon,
         direction,
         intentId: intent.id,
       };
@@ -311,6 +312,7 @@ export class FeeService {
           usdValueStr: token.priceUSD
             ? formatUsdAmount(totalUi * token.priceUSD)
             : undefined,
+          icon: token.runeInfo?.icon,
           direction: FlowDirection.OUTGOING,
         },
         fee: {
@@ -438,6 +440,7 @@ export class FeeService {
             usdValueStr: assetAmountUsd
               ? formatUsdAmount(assetAmountUsd)
               : undefined,
+            icon: token.runeInfo?.icon,
           },
           fee: {
             amount: totalNetworkFees,
@@ -507,6 +510,7 @@ export class FeeService {
         address: linkFeeInfo.tokenAddress,
         amount: formatNumber(linkFeeFormatted),
         usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
+        icon: linkFeeToken.runeInfo?.icon,
       },
       fee: {
         amount: linkCreationFeeTotal,

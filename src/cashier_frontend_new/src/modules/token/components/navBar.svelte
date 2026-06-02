@@ -23,6 +23,11 @@
     decimals: number;
     priceUSD: number;
     enabled: boolean;
+    runeInfo?: {
+      runeId: string;
+      tokenId: string;
+      icon?: string;
+    };
   };
 
   type Props = {
@@ -87,9 +92,11 @@
 
   let totalBalance = $derived.by(() => calculateTotalBalance());
 
-  let tokenLogo = $derived.by(() =>
-    token ? getTokenLogo(token.address) : null,
-  );
+  let tokenLogo = $derived.by(() => {
+    if (!token) return null;
+    if (token.runeInfo?.icon) return token.runeInfo.icon;
+    return getTokenLogo(token.address);
+  });
 
   function handleSend() {
     onSend?.();
@@ -151,7 +158,7 @@
       <!-- Token Logo -->
       <div class="flex justify-center mb-2.5">
         {#if tokenLogo && !failedImageLoad}
-          <div class="w-[30px] h-[30px] rounded-full overflow-hidden">
+          <div class="w-[48px] h-[48px] rounded-full overflow-hidden">
             <img
               alt={token.symbol}
               class="w-full h-full object-cover"
@@ -161,7 +168,7 @@
           </div>
         {:else}
           <div
-            class="w-16 h-16 flex items-center justify-center bg-gray-200 rounded-full text-2xl font-semibold"
+            class="w-[48px] h-[48px] flex items-center justify-center bg-gray-200 rounded-full text-2xl font-semibold"
           >
             {token.symbol[0]?.toUpperCase() || "?"}
           </div>
@@ -170,7 +177,7 @@
 
       <!-- Token Balance -->
       <div class="mx-auto w-fit gap-3 relative">
-        <div class="text-[32px]/[100%] font-bold text-black">
+        <div class="text-[32px]/[100%] font-semibold text-black">
           {#if isBalanceVisible}
             {parseBalanceUnits(token.balance, token.decimals).toFixed(5)}
             {token.symbol}
@@ -208,42 +215,42 @@
     <div class="flex justify-center gap-6 max-w-md mx-auto">
       <button
         onclick={handleSend}
-        class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+        class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
       >
         <div
           class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
         >
           <ArrowUp size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500 font-medium"
           >{locale.t("wallet.navBar.sendBtn")}</span
         >
       </button>
 
       <button
         onclick={handleReceive}
-        class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+        class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
       >
         <div
           class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
         >
           <ArrowDown size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500"
           >{locale.t("wallet.navBar.receiveBtn")}</span
         >
       </button>
 
       <button
         onclick={handleSwap}
-        class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+        class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
       >
         <div
           class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
         >
           <ArrowUpDown size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500"
           >{locale.t("wallet.navBar.swapBtn")}</span
         >
       </button>
@@ -251,10 +258,10 @@
   </div>
 {:else}
   <!-- Default Wallet View -->
-  <div class="pb-6">
+  <div class="pb-3">
     <div class="text-center mb-8">
       <div class="mx-auto w-fit gap-3 relative">
-        <div class="text-[32px]/[100%] font-bold text-black">
+        <div class="text-[32px]/[100%] font-semibold text-black">
           {#if isBalanceVisible}
             ${totalBalance.toFixed(2)}
           {:else}
@@ -285,7 +292,7 @@
         >
           <ArrowUp size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500"
           >{locale.t("wallet.navBar.sendBtn")}</span
         >
       </button>
@@ -299,7 +306,7 @@
         >
           <ArrowDown size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500"
           >{locale.t("wallet.navBar.receiveBtn")}</span
         >
       </button>
@@ -313,7 +320,7 @@
         >
           <ArrowUpDown size={20} />
         </div>
-        <span class="text-xs text-gray-600 font-medium"
+        <span class="text-xs text-gray-500"
           >{locale.t("wallet.navBar.swapBtn")}</span
         >
       </button>
@@ -322,24 +329,28 @@
     <div class="flex mt-8">
       <button
         onclick={handleTokensTab}
-        class="flex-1 pb-3 text-center font-semibold transition-colors relative"
+        class="flex-1 pb-3 text-center font-medium transition-colors relative"
         class:text-green={activeTab === WalletTab.TOKENS}
         class:text-gray-500={activeTab !== WalletTab.TOKENS}
       >
         {locale.t("wallet.navBar.tokensTabBtn")}
         {#if activeTab === WalletTab.TOKENS}
-          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-green"></div>
+          <div
+            class="absolute bottom-1 left-0 right-0 h-[1.5px] bg-green"
+          ></div>
         {/if}
       </button>
       <button
         onclick={handleNFTsTab}
-        class="flex-1 pb-3 text-center font-semibold transition-colors relative"
+        class="flex-1 pb-3 text-center font-medium transition-colors relative"
         class:text-green={activeTab === WalletTab.NFTS}
         class:text-gray-500={activeTab !== WalletTab.NFTS}
       >
         {locale.t("wallet.navBar.nftsTabBtn")}
         {#if activeTab === WalletTab.NFTS}
-          <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-green"></div>
+          <div
+            class="absolute bottom-1 left-0 right-0 h-[1.5px] bg-green"
+          ></div>
         {/if}
       </button>
     </div>

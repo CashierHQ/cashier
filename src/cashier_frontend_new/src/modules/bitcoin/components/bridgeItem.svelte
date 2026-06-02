@@ -1,6 +1,7 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import {
+    BridgeAssetType,
     BridgeTransactionStatus,
     type BridgeTransactionWithUsdValue,
     BridgeType,
@@ -26,7 +27,10 @@
         return locale.t("bitcoin.receive.imported");
       } else if (bridge.status === BridgeTransactionStatus.Failed) {
         return locale.t("bitcoin.receive.failed");
-      } else if (bridge.status === BridgeTransactionStatus.Pending) {
+      } else if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
         return locale.t("bitcoin.receive.importing");
       } else if (bridge.status === BridgeTransactionStatus.Created) {
         return locale.t("bitcoin.receive.created");
@@ -38,7 +42,10 @@
         return locale.t("bitcoin.send.exported");
       } else if (bridge.status === BridgeTransactionStatus.Failed) {
         return locale.t("bitcoin.send.failed");
-      } else if (bridge.status === BridgeTransactionStatus.Pending) {
+      } else if (
+        bridge.status === BridgeTransactionStatus.Pending ||
+        bridge.status === BridgeTransactionStatus.Confirmed
+      ) {
         return locale.t("bitcoin.send.exporting");
       } else if (bridge.status === BridgeTransactionStatus.Created) {
         return locale.t("bitcoin.send.created");
@@ -49,8 +56,14 @@
     return locale.t("bitcoin.receive.unknown");
   });
   let amount = $derived.by(() => {
+    const runeAsset = bridge.asset_infos.find(
+      (a) => a.asset_type === BridgeAssetType.Runes,
+    );
+    if (runeAsset) {
+      const value = Number(runeAsset.amount) / 10 ** runeAsset.decimals;
+      return formatNumber(value, { tofixed: runeAsset.decimals });
+    }
     if (bridge.total_amount) {
-      // total_amount is in satoshis for BTC
       const btc = Number(bridge.total_amount) / 100_000_000;
       return formatNumber(btc, { tofixed: 8 });
     }

@@ -12,6 +12,7 @@ import {
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
+  BridgeAssetType,
   BridgeTransactionStatus,
   BridgeType,
   type BridgeTransaction,
@@ -29,9 +30,9 @@ import { PersistedState } from "runed";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
- * Store for user bridge transactions and bitcoin data.
+ * Bitcoin bridges store
  */
-class BridgeStore {
+class BtcBridgeStore {
   #btcAddress: PersistedState<string | null> = new PersistedState(
     "btcAddress",
     null,
@@ -62,10 +63,17 @@ class BridgeStore {
   constructor() {
     this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#currentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
           BRIDGE_PAGE_SIZE,
+          null,
+          null,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -89,19 +97,24 @@ class BridgeStore {
 
         return this.#allBridges;
       },
-      refetchInterval: 30_000, // refresh every 30 seconds
-      persistedKey: ["walletBridgeStore_bridgeTxs"],
+      refetchInterval: 30_000,
+      persistedKey: ["walletBtcBridgeStore_bridgeTxs"],
       storageType: "sessionStorage",
     });
 
     this.#importBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#importCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Import,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -126,18 +139,23 @@ class BridgeStore {
         return this.#allImportBridges;
       },
       refetchInterval: 30_000,
-      persistedKey: ["walletBridgeStore_importBridgeTxs"],
+      persistedKey: ["walletBtcBridgeStore_importBridgeTxs"],
       storageType: "sessionStorage",
     });
 
     this.#exportBridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const start = this.#exportCurrentPage * BRIDGE_PAGE_SIZE;
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           start,
           BRIDGE_PAGE_SIZE,
           null,
           BridgeType.Export,
+          BridgeAssetType.BTC,
         );
 
         if (bridgeTxs.length < BRIDGE_PAGE_SIZE) {
@@ -162,7 +180,7 @@ class BridgeStore {
         return this.#allExportBridges;
       },
       refetchInterval: 30_000,
-      persistedKey: ["walletBridgeStore_exportBridgeTxs"],
+      persistedKey: ["walletBtcBridgeStore_exportBridgeTxs"],
       storageType: "sessionStorage",
     });
 
@@ -222,8 +240,55 @@ class BridgeStore {
     return this.#exportBridgeTxQuery.data;
   }
 
+  get bridgesHistory() {
+    const dedupedBridges = [
+      ...(this.importBridgeTxs ?? []),
+      ...(this.exportBridgeTxs ?? []),
+    ].reduce<BridgeTransactionWithUsdValue[]>((acc, bridge) => {
+      if (
+        acc.some(
+          (existingBridge) => existingBridge.bridge_id === bridge.bridge_id,
+        )
+      ) {
+        return acc;
+      }
+
+      acc.push(bridge);
+      return acc;
+    }, []);
+
+    return dedupedBridges.sort((a, b) =>
+      Number(b.created_at_ts - a.created_at_ts),
+    );
+  }
+
+  get hasMoreBridgesHistory() {
+    return this.hasMoreImports || this.hasMoreExports;
+  }
+
+  get isLoadingBridgesHistory() {
+    return (
+      this.#importBridgeTxQuery.isLoading || this.#exportBridgeTxQuery.isLoading
+    );
+  }
+
+  get bridgesHistoryError() {
+    return this.#importBridgeTxQuery.error ?? this.#exportBridgeTxQuery.error;
+  }
+
+  public loadMoreBridgesHistory() {
+    if (this.hasMoreImports) {
+      this.loadMoreImports();
+    }
+
+    if (this.hasMoreExports) {
+      this.loadMoreExports();
+    }
+  }
+
   /**
-   * Load more bridges for pagination (unified history)
+   * Load more bridge transactions for pagination
+   * @returns
    */
   public loadMore() {
     if (!this.hasMore) {
@@ -234,7 +299,8 @@ class BridgeStore {
   }
 
   /**
-   * Load more import bridges for pagination (Receive page)
+   * Load more import bridge transactions for pagination
+   * @returns
    */
   public loadMoreImports() {
     if (!this.hasMoreImports) {
@@ -245,7 +311,8 @@ class BridgeStore {
   }
 
   /**
-   * Load more export bridges for pagination (Send page)
+   * Load more export bridge transactions for pagination
+   * @returns
    */
   public loadMoreExports() {
     if (!this.hasMoreExports) {
@@ -299,8 +366,8 @@ class BridgeStore {
   }
 
   /**
-   * Fetch the BTC address associated with the user's wallet.
-   * @returns The BTC address or null if not available.
+   * Fetch the BTC address for the current user
+   * @returns btc address or null if failed to fetch
    */
   async fetchBtcAddress(): Promise<string | null> {
     try {
@@ -310,6 +377,7 @@ class BridgeStore {
           `Get BTC address error: ${JSON.stringify(result.unwrapErr())}`,
         );
       }
+
       return result.unwrap();
     } catch (error) {
       console.error("Failed to fetch BTC address:", error);
@@ -318,12 +386,12 @@ class BridgeStore {
   }
 
   /**
-   * Fetch and update the ckBTC minter info state.
+   * Fetch ckBTC minter info, including min confirmations required for deposits
+   * @returns minter info or null if failed to fetch
    */
   async fetchMinterInfo(): Promise<MinterInfo | null> {
     try {
-      const minterInfo = await ckBTCMinterService.getMinterInfo();
-      return minterInfo;
+      return await ckBTCMinterService.getMinterInfo();
     } catch (error) {
       console.error("Failed to fetch ckBTC minter info:", error);
       return null;
@@ -381,12 +449,12 @@ class BridgeStore {
    * @param txs
    */
   async processMempoolTransactions(txs: BitcoinTransaction[]) {
-    if (!this.btcAddress) {
-      return;
-    }
-
     for (const btcTx of txs) {
       if (this.isMempoolTxProcessed(btcTx.txid)) {
+        continue;
+      }
+
+      if (!this.btcAddress) {
         continue;
       }
 
@@ -416,7 +484,7 @@ class BridgeStore {
   /**
    * Check if a mempool transaction has already been processed into a bridge transaction.
    * @param txid
-   * @returns True if processed, false otherwise.
+   * @returns true if the transaction has already been processed, false otherwise
    */
   isMempoolTxProcessed(txid: string): boolean {
     if (!this.bridgeTxs) {
@@ -426,8 +494,8 @@ class BridgeStore {
   }
 
   /**
-   * Create a periodic task to process pending bridge transactions.
-   * This function runs in the background and updates the status of pending transactions.
+   * Create a scheduled task to process pending bridge transactions
+   * @returns
    */
   createPendingBridgeTransactionsTask(): NodeJS.Timeout {
     return setInterval(async () => {
@@ -446,8 +514,8 @@ class BridgeStore {
   }
 
   /**
-   * Process a bridge transaction based on its type.
-   * @param bridgeTx The bridge transaction to process.
+   * Process bridge transaction by checking its type and calling corresponding processing function
+   * @param bridgeTx
    */
   async processBridgeTransaction(bridgeTx: BridgeTransaction): Promise<void> {
     if (bridgeTx.bridge_type === BridgeType.Export) {
@@ -458,19 +526,18 @@ class BridgeStore {
   }
 
   /**
-   * Process import bridge
-   * @param bridgeTx The bridge transaction to process
+   * Process import bridge transaction automatically utilizing the mempool API and ckBTC minter to track btc transaction status and update bridge accordingly
+   * @param bridgeTx
+   * @returns
    */
   async processImportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
     const btcTxId = bridgeTx.btc_txid;
     if (!btcTxId) {
-      // mark as failed if no BTC txid
-      const updatedStatus = BridgeTransactionStatus.Failed;
       const updateResult = await tokenStorageService.updateBridgeTransaction(
         bridgeTx.bridge_id,
-        updatedStatus,
+        BridgeTransactionStatus.Failed,
         null,
         bridgeTx.block_id ?? 0n,
         bridgeTx.block_timestamp ?? 0n,
@@ -489,118 +556,131 @@ class BridgeStore {
     }
 
     const btcTx = btcTxResult.unwrap();
-    if (btcTx.is_confirmed && btcTx.block_id && btcTx.block_timestamp) {
-      const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
-      if (!ckBTCMinterInfo) {
-        return;
-      }
-      const currentTipHeightResult = await mempoolService.getTipHeight();
-      if (currentTipHeightResult.isErr()) {
-        return;
-      }
-      const currentTipHeight = currentTipHeightResult.unwrap();
+    if (!btcTx.is_confirmed || !btcTx.block_id || !btcTx.block_timestamp) {
+      return;
+    }
 
-      const maxHeight = Math.min(
-        Number(currentTipHeight),
-        Number(btcTx.block_id) + ckBTCMinterInfo.min_confirmations - 1,
-      );
-      const confirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
-        maxHeight,
-        Number(btcTx.block_id),
-      );
+    const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
+    if (!ckBTCMinterInfo) {
+      return;
+    }
 
-      let bridgeStatus = bridgeTx.status;
-      let retryTimes = bridgeTx.retry_times;
-      if (
-        Number(currentTipHeight) - Number(btcTx.block_id) + 1 >=
-        Number(ckBTCMinterInfo.min_confirmations)
-      ) {
-        const update = await ckBTCMinterService.updateBalanceWithMintedInfo();
-        if (update.isErr()) {
-          console.error(
-            "Failed to update ckBTC balance during bridge processing:",
-            update.unwrapErr(),
-          );
-        } else {
-          bridgeStatus = BridgeTransactionStatus.Completed;
-        }
+    const currentTipHeightResult = await mempoolService.getTipHeight();
+    if (currentTipHeightResult.isErr()) {
+      return;
+    }
 
-        retryTimes += 1;
-        if (retryTimes >= CKBTC_UPDATE_BALANCE_MAX_RETRY_TIMES) {
-          bridgeStatus = BridgeTransactionStatus.Completed;
-        }
-      }
+    const currentTipHeight = currentTipHeightResult.unwrap();
+    const maxHeight = Math.min(
+      Number(currentTipHeight),
+      Number(btcTx.block_id) + ckBTCMinterInfo.min_confirmations - 1,
+    );
+    const confirmingBlocks = await mempoolService.getLatestBlocksFromHeight(
+      maxHeight,
+      Number(btcTx.block_id),
+    );
 
-      const bridgeBlockId = bridgeTx.block_id ?? 0n;
-      const bridgeBlockTimestamp = bridgeTx.block_timestamp ?? 0n;
-
-      let isUpdateNeeded = false;
-      let updatedStatus = null;
-      if (bridgeStatus !== bridgeTx.status) {
-        isUpdateNeeded = true;
-        updatedStatus = bridgeStatus;
-      }
-      let updatedRetryTimes = null;
-      if (retryTimes !== bridgeTx.retry_times) {
-        isUpdateNeeded = true;
-        updatedRetryTimes = retryTimes;
-      }
-      let updatedBlockId = null;
-      if (BigInt(btcTx.block_id) !== BigInt(bridgeBlockId)) {
-        isUpdateNeeded = true;
-        updatedBlockId = btcTx.block_id;
-      }
-      let updatedBlockTimestamp = null;
-      if (BigInt(btcTx.block_timestamp) !== BigInt(bridgeBlockTimestamp)) {
-        isUpdateNeeded = true;
-        updatedBlockTimestamp = btcTx.block_timestamp;
-      }
-      let updatedConfirmingBlocks: BitcoinBlock[] = [];
-      if (confirmingBlocks.length !== bridgeTx.confirmations.length) {
-        isUpdateNeeded = true;
-        updatedConfirmingBlocks = confirmingBlocks;
-      }
-
-      if (isUpdateNeeded) {
-        const updateResult = await tokenStorageService.updateBridgeTransaction(
-          bridgeTx.bridge_id,
-          updatedStatus,
-          null,
-          updatedBlockId,
-          updatedBlockTimestamp,
-          updatedConfirmingBlocks,
-          null,
-          null,
-          null,
-          null,
-          updatedRetryTimes,
+    let bridgeStatus = bridgeTx.status;
+    let retryTimes = bridgeTx.retry_times;
+    if (
+      Number(currentTipHeight) - Number(btcTx.block_id) + 1 >=
+      Number(ckBTCMinterInfo.min_confirmations)
+    ) {
+      const update = await ckBTCMinterService.updateBalanceWithMintedInfo();
+      if (update.isErr()) {
+        console.error(
+          "Failed to update ckBTC balance during bridge processing:",
+          update.unwrapErr(),
         );
-
-        if (updateResult.isErr()) {
-          console.error(
-            `Failed to update bridge transaction ${bridgeTx.bridge_id}:`,
-            updateResult.unwrapErr(),
-          );
-        } else {
-          this.#bridgeTxQuery.refresh();
-          this.#importBridgeTxQuery.refresh();
-        }
+      } else {
+        bridgeStatus = BridgeTransactionStatus.Completed;
       }
+
+      retryTimes += 1;
+      if (retryTimes >= CKBTC_UPDATE_BALANCE_MAX_RETRY_TIMES) {
+        bridgeStatus = BridgeTransactionStatus.Completed;
+      }
+    }
+
+    const bridgeBlockId = bridgeTx.block_id ?? 0n;
+    const bridgeBlockTimestamp = bridgeTx.block_timestamp ?? 0n;
+
+    let isUpdateNeeded = false;
+    let updatedStatus = null;
+    if (bridgeStatus !== bridgeTx.status) {
+      isUpdateNeeded = true;
+      updatedStatus = bridgeStatus;
+    }
+    let updatedRetryTimes = null;
+    if (retryTimes !== bridgeTx.retry_times) {
+      isUpdateNeeded = true;
+      updatedRetryTimes = retryTimes;
+    }
+    let updatedBlockId = null;
+    if (BigInt(btcTx.block_id) !== BigInt(bridgeBlockId)) {
+      isUpdateNeeded = true;
+      updatedBlockId = btcTx.block_id;
+    }
+    let updatedBlockTimestamp = null;
+    if (BigInt(btcTx.block_timestamp) !== BigInt(bridgeBlockTimestamp)) {
+      isUpdateNeeded = true;
+      updatedBlockTimestamp = btcTx.block_timestamp;
+    }
+    let updatedConfirmingBlocks: BitcoinBlock[] = [];
+    if (confirmingBlocks.length !== bridgeTx.confirmations.length) {
+      isUpdateNeeded = true;
+      updatedConfirmingBlocks = confirmingBlocks;
+    }
+
+    if (!isUpdateNeeded) {
+      return;
+    }
+
+    const updateResult = await tokenStorageService.updateBridgeTransaction(
+      bridgeTx.bridge_id,
+      updatedStatus,
+      null,
+      updatedBlockId,
+      updatedBlockTimestamp,
+      updatedConfirmingBlocks,
+      null,
+      null,
+      null,
+      null,
+      null,
+      updatedRetryTimes,
+    );
+
+    if (updateResult.isErr()) {
+      console.error(
+        `Failed to update bridge transaction ${bridgeTx.bridge_id}:`,
+        updateResult.unwrapErr(),
+      );
+    } else {
+      this.#bridgeTxQuery.refresh();
+      this.#importBridgeTxQuery.refresh();
     }
   }
 
   /**
-   * Process export bridge transaction
-   * @param bridgeTx The bridge transaction to process
+   * Process export bridge automatically utilizing the ckBTC minter and mempool API to track btc transaction status and update bridge accordingly
+   * @param bridgeTx
    * @returns
    */
   async processExportBridgeTransaction(
     bridgeTx: BridgeTransaction,
   ): Promise<void> {
-    if (bridgeTx.ckbtc_block_id && !bridgeTx.btc_txid) {
-      const statusResult = await ckBTCMinterService.retrieveBtcStatusV2(
-        bridgeTx.ckbtc_block_id,
-      );
+    const ckbtc_block_id =
+      bridgeTx.details.kind === "ckbtc"
+        ? bridgeTx.details.ckbtc_block_id
+        : null;
+    if (!ckbtc_block_id) {
+      return;
+    }
+
+    if (!bridgeTx.btc_txid) {
+      const statusResult =
+        await ckBTCMinterService.retrieveBtcStatusV2(ckbtc_block_id);
       if (statusResult.isErr()) {
         console.error(
           `Failed to retrieve BTC status for bridge ${bridgeTx.bridge_id}:`,
@@ -652,14 +732,9 @@ class BridgeStore {
       return;
     }
 
-    if (!bridgeTx.btc_txid) {
-      return;
-    }
-
     const btcTxResult = await mempoolService.getTransactionById(
       bridgeTx.btc_txid,
     );
-
     if (btcTxResult.isErr()) {
       return;
     }
@@ -669,7 +744,6 @@ class BridgeStore {
       btcTx.block_id && bridgeTx.block_id !== btcTx.block_id
         ? btcTx.block_id
         : null;
-
     const updatedBlockTimestamp =
       btcTx.block_timestamp &&
       bridgeTx.block_timestamp !== btcTx.block_timestamp
@@ -720,14 +794,17 @@ class BridgeStore {
       this.#exportBridgeTxQuery.refresh();
     }
   }
+
   /**
-   * Manually trigger a ckBTC balance refresh.
-   * Calls update_balance on the ckBTC minter and creates a Completed import
-   * bridge transaction for each newly minted UTXO found.
-   * @returns Ok(count) where count is the number of minted UTXOs processed,
-   *          Ok(0) when no incoming balance was found, or Err on failure.
+   * Process import bridge manually by calling update balance on ckBTC minter, then create or update bridge transactions based on the minted info returned from ckBTC minter and mempool API
+   * @returns
    */
   async manualRefreshBalance(): Promise<Result<number, string>> {
+    const btcAddress = this.btcAddress;
+    if (!btcAddress) {
+      return Err("BTC address not available");
+    }
+
     this.isRefreshing = true;
     try {
       const mintedResult =
@@ -741,11 +818,6 @@ class BridgeStore {
         return Ok(0);
       }
 
-      const btcAddress = this.btcAddress;
-      if (!btcAddress) {
-        return Err("BTC address not available");
-      }
-
       const depositFee = await ckBTCMinterService.getDepositFee();
       const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
       const tipHeightResult = await mempoolService.getTipHeight();
@@ -754,7 +826,6 @@ class BridgeStore {
         : null;
 
       for (const mintedInfo of mintedInfos) {
-        // Fetch confirming blocks (needed for both create and update paths)
         let confirmingBlocks: BitcoinBlock[] = [];
         if (currentTipHeight !== null && ckBTCMinterInfo) {
           const maxHeight = Math.min(
@@ -767,8 +838,6 @@ class BridgeStore {
           );
         }
 
-        // Check if a bridge for this BTC txid already exists (created by the
-        // automatic mempool polling flow while the user was away)
         const existingBridge = (this.bridgeTxs ?? []).find(
           (tx) => tx.btc_txid === mintedInfo.btcTxid,
         );
@@ -777,7 +846,7 @@ class BridgeStore {
           if (existingBridge.status === BridgeTransactionStatus.Completed) {
             continue;
           }
-          // Update existing Pending bridge to Completed with confirmation blocks
+
           const updateResult =
             await tokenStorageService.updateBridgeTransaction(
               existingBridge.bridge_id,
@@ -798,7 +867,6 @@ class BridgeStore {
           continue;
         }
 
-        // No existing bridge — create a new one
         const createResult =
           await tokenStorageService.createManualImportBridgeTransaction(
             btcAddress,
@@ -844,4 +912,4 @@ class BridgeStore {
   }
 }
 
-export const bridgeStore = new BridgeStore();
+export const btcBridgeStore = new BtcBridgeStore();

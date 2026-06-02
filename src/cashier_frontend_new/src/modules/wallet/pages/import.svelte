@@ -1,23 +1,23 @@
 <script lang="ts">
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
-  import { getTokenLogo } from "$modules/imageCache";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { getTokenLogo } from "$modules/imageCache";
+  import NavBar from "$modules/token/components/navBar.svelte";
   import {
-    validateLedgerCanister,
     validateIndexCanister,
+    validateLedgerCanister,
   } from "$modules/token/services/canisterValidation";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     MOCK_NETWORKS,
     SECURITY_LEARN_MORE_URL,
   } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
   import { getValidationErrorMessage } from "$modules/wallet/utils/validationErrorMessage";
+  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     onNavigateBack: () => void;

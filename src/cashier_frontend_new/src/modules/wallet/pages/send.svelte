@@ -1,19 +1,33 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import {
-    parseBalanceUnits,
-    formatBalanceUnits,
-  } from "$modules/shared/utils/converter";
-  import {
-    ICP_LEDGER_CANISTER_ID,
-    ICP_INDEX_CANISTER_ID,
-    CKBTC_CANISTER_ID,
-  } from "$modules/token/constants";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
+  import SendRunes from "$modules/bitcoin/components/sendRunes.svelte";
+  import { btcBridgeStore } from "$modules/bitcoin/state/btcBridgeStore.svelte";
+  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
+  import InputAmount from "$modules/shared/components/InputAmount.svelte";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import {
+    CKBTC_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
+  import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
+  import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
+  import type {
+    BridgeSource,
+    WalletSource,
+  } from "$modules/transactionCart/types/transactionSource";
+  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+  import { ReceiveAddressType } from "$modules/wallet/types";
+  import { Principal } from "@icp-sdk/core/principal";
   import {
     ArrowLeftRight,
     Bitcoin,
@@ -24,21 +38,6 @@
     LayoutList,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
-  import InputAmount from "$modules/shared/components/InputAmount.svelte";
-  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
-  import { ReceiveAddressType } from "$modules/wallet/types";
-  import { Principal } from "@icp-sdk/core/principal";
-  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
-  import type {
-    BridgeSource,
-    WalletSource,
-  } from "$modules/transactionCart/types/transactionSource";
-  import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
-  import { tokenStorageService } from "$modules/token/services/tokenStorage";
-  import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
-  import SendBTC from "$modules/bitcoin/components/sendBTC.svelte";
 
   type Props = {
     initialToken?: string;
@@ -111,6 +110,53 @@
   );
 
   const isCkBtc = $derived(selectedToken === CKBTC_CANISTER_ID);
+  const isRune = $derived(
+    !!selectedTokenObj?.isRune && !!selectedTokenObj?.runeInfo,
+  );
+  const isBitcoinBridgeToken = $derived(isCkBtc || isRune);
+
+  const runeIcpAddressLabel = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("wallet.send.runeIcpAddressLabel")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeBtcTitle = $derived.by(() => {
+    if (!selectedTokenObj) return locale.t("bitcoin.send.runeTitle");
+    return locale
+      .t("bitcoin.send.runeTitle")
+      .replace("{{name}}", selectedTokenObj.name);
+  });
+
+  const runeIcpWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.icpAddress.runeWarning1")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeIcpWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.icpAddress.runeWarning2")
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
+
+  const runeBtcWarning1 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.btcAddress.runeWarning1")
+      .replace("{{name}}", selectedTokenObj.name);
+  });
+
+  const runeBtcWarning2 = $derived.by(() => {
+    if (!selectedTokenObj) return "";
+    return locale
+      .t("bitcoin.send.btcAddress.runeWarning2")
+      .replace("{{name}}", selectedTokenObj.name)
+      .replace("{{symbol}}", selectedTokenObj.symbol);
+  });
 
   const isMaxAvailable = $derived(maxAmount > 0);
   const isLoading = $derived(
@@ -212,31 +258,31 @@
       return;
     }
 
-    if (isCkBtc && nativeBtcAddress.trim()) {
-      const result = walletSendStore.validateSend({
+    if (isBitcoinBridgeToken && nativeBtcAddress.trim()) {
+      const result = walletSendStore.validateSend(
         selectedToken,
-        receiveAddress: nativeBtcAddress,
+        nativeBtcAddress,
         amount,
         receiveType,
         maxAmount,
-        isBitcoinAddress: true,
-      });
+        true,
+      );
       if (result.isErr()) {
         toast.error(result.error);
       } else {
-        await handleCreateExportBridge();
+        await handleCreateBridgeExport();
       }
       return;
     }
 
-    const result = walletSendStore.validateSend({
+    const result = walletSendStore.validateSend(
       selectedToken,
       receiveAddress,
       amount,
       receiveType,
       maxAmount,
-      isBitcoinAddress: false,
-    });
+      false,
+    );
     if (result.isErr()) {
       toast.error(result.error);
     } else {
@@ -244,61 +290,55 @@
     }
   }
 
-  async function handleCreateExportBridge() {
-    if (!selectedTokenObj || amount <= 0) {
+  async function handleCreateBridgeExport() {
+    if (isCkBtc) {
+      await handleCreateCkBtcExportBridge();
       return;
     }
 
-    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
+    if (isRune) {
+      await handleCreateRuneExportBridge();
+    }
+  }
+
+  async function handleCreateCkBtcExportBridge() {
+    if (!selectedTokenObj || amount <= 0) return;
+
     isCreatingExportBridge = true;
     try {
-      const minterInfo = await ckBTCMinterService.getMinterInfo();
-      if (amountBigInt < minterInfo.retrieve_btc_min_amount) {
-        const minAmount = parseBalanceUnits(
-          minterInfo.retrieve_btc_min_amount,
-          selectedTokenObj.decimals,
-        ).toFixed(selectedTokenObj.decimals);
-        toast.error(
-          locale
-            .t("wallet.send.errors.amountBelowWithdrawalMin")
-            .replace("{{min}}", minAmount),
-        );
-        return;
-      }
-
-      const withdrawalFee =
-        await ckBTCMinterService.getWithdrawalFee(amountBigInt);
-      const totalDebit =
-        amountBigInt + withdrawalFee.minter_fee + withdrawalFee.bitcoin_fee;
-      const maxAmountResult = calculateMaxSendAmount(
-        selectedTokenObj.address,
-        walletStore.query.data ?? [],
+      const result = await walletSendStore.createCkBtcExportBridge(
+        nativeBtcAddress.trim(),
+        amount,
+        selectedTokenObj,
       );
-
-      if (maxAmountResult.isErr() || totalDebit > maxAmountResult.unwrap()) {
-        toast.error(locale.t("wallet.send.errors.amountExceedsWithdrawalMax"));
+      if (result.isErr()) {
+        toast.error(result.unwrapErr());
         return;
       }
-
-      const createResult =
-        await tokenStorageService.createExportBridgeTransaction(
-          nativeBtcAddress.trim(),
-          amountBigInt,
-          withdrawalFee.minter_fee,
-          withdrawalFee.bitcoin_fee,
-        );
-
-      if (createResult.isErr()) {
-        toast.error(createResult.unwrapErr());
-        return;
-      }
-
-      bridgeSource = {
-        bridge: createResult.unwrap(),
-      };
+      bridgeSource = { bridge: result.unwrap() };
       showConfirmDrawer = true;
-    } catch (error) {
-      toast.error((error as Error).message);
+    } finally {
+      isCreatingExportBridge = false;
+    }
+  }
+
+  async function handleCreateRuneExportBridge() {
+    if (!selectedTokenObj?.isRune || !selectedTokenObj.runeInfo || amount <= 0)
+      return;
+
+    isCreatingExportBridge = true;
+    try {
+      const result = await walletSendStore.createRuneExportBridge(
+        nativeBtcAddress.trim(),
+        amount,
+        selectedTokenObj,
+      );
+      if (result.isErr()) {
+        toast.error(result.unwrapErr());
+        return;
+      }
+      bridgeSource = { bridge: result.unwrap() };
+      showConfirmDrawer = true;
     } finally {
       isCreatingExportBridge = false;
     }
@@ -327,7 +367,9 @@
       usdAmount = "";
       lastBlockId = null;
       bridgeSource = null;
-      void bridgeStore.fetchBtcAddress();
+      if (isCkBtc) {
+        void btcBridgeStore.fetchBtcAddress();
+      }
     }
   }
 </script>
@@ -364,7 +406,9 @@
         >
           {isCkBtc
             ? locale.t("wallet.send.ckbtcIcpAddressLabel")
-            : locale.t("wallet.send.receiveAddressLabel")}
+            : isRune
+              ? runeIcpAddressLabel
+              : locale.t("wallet.send.receiveAddressLabel")}
         </label>
 
         {#if shouldShowAddressTypeSelector}
@@ -445,6 +489,27 @@
               </div>
             </div>
           </div>
+        {:else if isRune}
+          <div class="flex flex-col gap-1.5 mt-2 bg-lightg">
+            <div class="flex items-start gap-1.5">
+              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {runeIcpWarning1}
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <Bitcoin class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {runeIcpWarning2}
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+              <div class="text-[10px] text-green">
+                {locale.t("bitcoin.send.icpAddress.warning3")}
+              </div>
+            </div>
+          </div>
         {:else if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
           <div class="flex items-start gap-1.5 mt-2">
             <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
@@ -455,10 +520,10 @@
         {/if}
       </div>
 
-      {#if isCkBtc}
+      {#if isBitcoinBridgeToken}
         <div class="px-8 btc-gradient rounded-2xl py-4 mt-4 px-8">
           <h3 class="text-normal font-semibold mb-6 text-center">
-            {locale.t("bitcoin.send.title")}
+            {isRune ? runeBtcTitle : locale.t("bitcoin.send.title")}
           </h3>
           <label
             for="native-btc-address-input"
@@ -488,49 +553,89 @@
             {locale.t("wallet.send.addressBitcoinExample")}
           </div>
           <div class="flex flex-col gap-1.5 mt-2 mb-6">
-            <div class="flex items-center gap-1.5">
-              <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning1")}
+            {#if isCkBtc}
+              <div class="flex items-center gap-1.5">
+                <LayoutList class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning1")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning2")}
+              <div class="flex items-center gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning2")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning3")}
+              <div class="flex items-center gap-1.5">
+                <ArrowLeftRight class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning3")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning4")}
+              <div class="flex items-center gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning4")}
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
-              <div
-                class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
-              >
-                {locale.t("bitcoin.send.btcAddress.warning5")}
+              <div class="flex items-center gap-1.5">
+                <Hourglass class="h-3 w-3 text-[#36A18B] flex-shrink-0" />
+                <div
+                  class="text-[10px] text-green whitespace-nowrap overflow-hidden text-ellipsis"
+                >
+                  {locale.t("bitcoin.send.btcAddress.warning5")}
+                </div>
               </div>
-            </div>
+            {:else if isRune}
+              <div class="flex items-start gap-1.5">
+                <LayoutList
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
+                <div class="text-[10px] text-green">
+                  {runeBtcWarning1}
+                </div>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <ArrowLeftRight
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
+                <div class="text-[10px] text-green">
+                  {runeBtcWarning2}
+                </div>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <Coins class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5" />
+                <div class="text-[10px] text-green">
+                  {locale.t("bitcoin.send.btcAddress.runeWarning3")}
+                </div>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <Hourglass
+                  class="h-3 w-3 text-[#36A18B] flex-shrink-0 mt-0.5"
+                />
+                <div class="text-[10px] text-green">
+                  {locale.t("bitcoin.send.btcAddress.warning5")}
+                </div>
+              </div>
+            {/if}
           </div>
 
-          <SendBTC />
+          {#if isCkBtc}
+            <SendBTC />
+          {:else if isRune}
+            <SendRunes
+              token={selectedTokenObj}
+              minConfirmations={btcBridgeStore.minConfirmations}
+            />
+          {/if}
         </div>
       {/if}
 
@@ -581,7 +686,7 @@
   <BridgeTxCart
     source={bridgeSource}
     bind:isOpen={showConfirmDrawer}
-    minConfirmations={bridgeStore.minConfirmations}
+    minConfirmations={btcBridgeStore.minConfirmations}
     onCloseDrawer={handleCloseDrawer}
   />
 {/if}

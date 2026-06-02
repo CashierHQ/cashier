@@ -150,7 +150,7 @@ export function calculateAssetsWithTokenInfo(
         priceUSD: token.priceUSD,
       },
       usdValue,
-      logo: getTokenLogo(asset.address),
+      logo: token.runeInfo?.icon || getTokenLogo(asset.address),
     });
   }
 

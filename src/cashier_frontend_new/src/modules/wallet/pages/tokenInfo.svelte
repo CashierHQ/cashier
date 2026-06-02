@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import { toast } from "svelte-sonner";
-  import { Copy, LoaderCircle } from "lucide-svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import TokenOriginSection from "$modules/wallet/components/TokenOriginSection.svelte";
   import TokenTransactionHistory from "$modules/wallet/components/tokenTransactionHistory.svelte";
+  import { Copy, LoaderCircle } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     token: string;
@@ -61,7 +62,7 @@
   onBack={onNavigateBack}
 />
 
-<div class="px-4 pb-6">
+<div class="pb-6">
   {#if walletStore.query.isLoading && !walletStore.query.data}
     <div class="text-center py-12 space-y-4">
       <LoaderCircle class="w-10 h-10 animate-spin mx-auto mb-4" />
@@ -70,50 +71,55 @@
   {:else if tokenDetails}
     <div class="space-y-6">
       <div class="pt-4">
-        <h1 class="text-lg font-normal text-green mb-2">
+        <h1 class="text-[16px] font-normal text-green mb-2">
           {locale.t("wallet.tokenInfo.aboutToken")}
           {tokenDetails.symbol}
         </h1>
 
-        <div class="space-y-2">
+        <div class="space-y-3">
           <div class="flex justify-between items-center">
-            <span class="text-gray-700"
+            <span class="text-black text-sm"
               >{locale.t("wallet.tokenInfo.tokenName")}</span
             >
-            <span class="font-medium text-gray-900">
+            <span class="text-gray-700 text-sm font-light">
               {tokenDetails.symbol}
             </span>
           </div>
 
           <div class="flex justify-between items-center">
-            <span class="text-gray-700"
+            <span class="text-black text-sm"
               >{locale.t("wallet.tokenInfo.network")}</span
             >
-            <span class="font-medium text-gray-900">
+            <span class="text-gray-700 text-sm font-light">
               {locale.t("wallet.tokenInfo.internetComputer")}
             </span>
           </div>
 
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-2 min-w-0 flex-1">
-              <span class="text-gray-700"
+              <span class="text-black text-sm"
                 >{locale.t("wallet.tokenInfo.contract")}</span
               >
-              <button
-                onclick={() => copyToClipboard(tokenDetails.address)}
-                class="text-green hover:text-green/80 transition-colors flex-shrink-0"
-                aria-label={locale.t("wallet.tokenInfo.copyContract")}
-              >
-                <Copy class="w-4 h-4" />
-              </button>
             </div>
             <span
               title={tokenDetails.address}
-              class="font-medium text-gray-900 truncate max-w-[50%]"
+              class="text-gray-700 text-sm font-light"
             >
-              {tokenDetails.address}
+              {tokenDetails.address.slice(0, 16)}
+              {tokenDetails.address.length > 16 ? "..." : ""}
             </span>
+            <button
+              onclick={() => copyToClipboard(tokenDetails.address)}
+              class="text-green hover:text-green/80 transition-colors flex-shrink-0"
+              aria-label={locale.t("wallet.tokenInfo.copyContract")}
+            >
+              <div class="pl-1 cursor-pointer">
+                <Copy class="w-4 h-4" />
+              </div>
+            </button>
           </div>
+
+          <TokenOriginSection token={tokenDetails} />
         </div>
       </div>
 

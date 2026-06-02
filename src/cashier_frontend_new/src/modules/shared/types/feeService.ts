@@ -16,6 +16,7 @@ export type ForecastAssetAndFee = {
     amount: string;
     /** in formatted string */
     usdValueStr?: string;
+    icon?: string;
   };
   fee?: FeeItem;
 };

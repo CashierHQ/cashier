@@ -2,7 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::bitcoin::bridge_transaction::{
-    BlockConfirmation, BridgeAssetInfo, BridgeTransaction, BridgeTransactionStatus, BridgeType,
+    BlockConfirmation, BridgeAssetInfo, BridgeAssetType, BridgeDetails, BridgeTransaction,
+    BridgeTransactionStatus, BridgeType, UTXO,
 };
 use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
@@ -14,8 +15,12 @@ pub struct CreateBridgeTransactionInputArg {
     pub btc_address: String,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub bridge_type: BridgeType,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis. Only for ckBTC import bridges.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis. Only for ckBTC export bridges.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s. Only for Rune export bridges.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     /// ckBTC ledger block index of the mint transaction.
@@ -24,21 +29,60 @@ pub struct CreateBridgeTransactionInputArg {
     /// Override the initial bridge status. If None, the default status for the
     /// bridge type is used (Import → Pending, Export → Created).
     pub status: Option<BridgeTransactionStatus>,
+    /// Omnity platform ticket id for Runes bridging.
+    pub omnity_ticket_id: Option<String>,
+    /// Input UTXOs of the Bitcoin transaction used for bridging.
+    pub vin: Option<Vec<UTXO>>,
+    /// Output UTXOs of the Bitcoin transaction used for bridging.
+    pub vout: Option<Vec<UTXO>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdateBridgeTransactionInputArg {
     pub bridge_id: String,
+    pub asset_infos: Option<Vec<BridgeAssetInfo>>,
     pub btc_txid: Option<String>,
     pub ckbtc_block_id: Option<u64>,
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Option<Vec<BlockConfirmation>>,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub retry_times: Option<u8>,
     pub status: Option<BridgeTransactionStatus>,
+    /// Omnity platform ticket id for Runes bridging.
+    pub omnity_ticket_id: Option<String>,
+    /// Input UTXOs of the Bitcoin transaction used for bridging.
+    pub vin: Option<Vec<UTXO>>,
+    /// Output UTXOs of the Bitcoin transaction used for bridging.
+    pub vout: Option<Vec<UTXO>>,
+}
+
+/// Filter parameters for `get_bridge_transactions`.
+#[derive(Clone, Debug, Default)]
+pub struct GetBridgeTransactionsFilter {
+    pub status: Option<BridgeTransactionStatus>,
+    pub bridge_type: Option<BridgeType>,
+    /// Filter by asset type (e.g. BTC-only or Runes-only).
+    pub asset_type: Option<BridgeAssetType>,
+    /// Filter by specific rune asset ID (matches against asset_infos[*].asset_id).
+    pub rune_id: Option<String>,
+}
+
+impl From<&GetUserBridgeTransactionsInputArg> for GetBridgeTransactionsFilter {
+    fn from(input: &GetUserBridgeTransactionsInputArg) -> Self {
+        Self {
+            status: input.status.clone(),
+            bridge_type: input.bridge_type.clone(),
+            asset_type: input.asset_type.clone(),
+            rune_id: input.rune_id.clone(),
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -47,6 +91,10 @@ pub struct GetUserBridgeTransactionsInputArg {
     pub limit: Option<u32>,
     pub status: Option<BridgeTransactionStatus>,
     pub bridge_type: Option<BridgeType>,
+    /// Filter by asset type (e.g. BTC-only or Runes-only).
+    pub asset_type: Option<BridgeAssetType>,
+    /// Filter by specific rune asset ID (matches against asset_infos[*].asset_id).
+    pub rune_id: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -61,17 +109,48 @@ pub struct UserBridgeTransactionDto {
     pub block_id: Option<u64>,
     pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
-    pub deposit_fee: Option<Nat>,
-    pub withdrawal_fee: Option<Nat>,
+    /// ckBTC mint deposit fee denominated in BTC satoshis. Populated for ckBTC import bridges.
+    pub deposit_fee_btc_sats: Option<Nat>,
+    /// ckBTC burn withdrawal fee denominated in BTC satoshis. Populated for ckBTC export bridges.
+    pub withdrawal_fee_btc_sats: Option<Nat>,
+    /// Omnity ICP redeem fee denominated in ICP e8s. Populated for Rune export bridges.
+    pub withdrawal_fee_icp_e8s: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
     pub retry_times: u8,
     pub status: BridgeTransactionStatus,
+    pub omnity_ticket_id: Option<String>,
+    pub vin: Option<Vec<UTXO>>,
+    pub vout: Option<Vec<UTXO>>,
 }
 
 impl From<BridgeTransaction> for UserBridgeTransactionDto {
     fn from(tx: BridgeTransaction) -> Self {
+        let (
+            ckbtc_block_id,
+            omnity_ticket_id,
+            deposit_fee_btc_sats,
+            withdrawal_fee_btc_sats,
+            withdrawal_fee_icp_e8s,
+        ) = match tx.details {
+            BridgeDetails::CkBTC {
+                ckbtc_block_id,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+            } => (
+                ckbtc_block_id,
+                None,
+                deposit_fee_btc_sats,
+                withdrawal_fee_btc_sats,
+                None,
+            ),
+            BridgeDetails::Runes {
+                omnity_ticket_id,
+                withdrawal_fee_icp_e8s,
+            } => (None, omnity_ticket_id, None, None, withdrawal_fee_icp_e8s),
+            BridgeDetails::Legacy => (None, None, None, None, None),
+        };
         UserBridgeTransactionDto {
             bridge_id: tx.bridge_id,
             icp_address: tx.icp_address,
@@ -79,17 +158,21 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             bridge_type: tx.bridge_type,
             asset_infos: tx.asset_infos,
             btc_txid: tx.btc_txid,
-            ckbtc_block_id: tx.ckbtc_block_id,
+            ckbtc_block_id,
             block_id: tx.block_id,
             block_timestamp: tx.block_timestamp,
             block_confirmations: tx.block_confirmations,
-            deposit_fee: tx.deposit_fee,
-            withdrawal_fee: tx.withdrawal_fee,
+            deposit_fee_btc_sats,
+            withdrawal_fee_btc_sats,
+            withdrawal_fee_icp_e8s,
             btc_fee: tx.btc_fee,
             created_at_ts: tx.created_at_ts,
             total_amount: tx.total_amount,
             retry_times: tx.retry_times,
             status: tx.status,
+            omnity_ticket_id,
+            vin: tx.vin,
+            vout: tx.vout,
         }
     }
 }

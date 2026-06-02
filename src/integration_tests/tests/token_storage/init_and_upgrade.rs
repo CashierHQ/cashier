@@ -82,10 +82,13 @@ async fn should_upgrade_with_tokens_upsert() {
             name: "New Test Token".to_string(),
             decimals: 8,
             enabled_by_default: false,
+            is_rune: None,
+            rune_info: None,
         };
 
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
+        let omnity_bitcoin_principal = ctx.omnity_bitcoin_principal;
 
         // Act
         ctx.upgrade_canister(
@@ -94,6 +97,7 @@ async fn should_upgrade_with_tokens_upsert() {
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
+                omnity_bitcoin_id: omnity_bitcoin_principal,
                 tokens: Some(vec![new_token]),
             },),
         )
@@ -144,6 +148,7 @@ async fn should_upgrade_without_tokens_preserve_registry() {
 
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
+        let omnity_bitcoin_principal = ctx.omnity_bitcoin_principal;
 
         // Act
         ctx.upgrade_canister(
@@ -152,6 +157,7 @@ async fn should_upgrade_without_tokens_preserve_registry() {
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
+                omnity_bitcoin_id: omnity_bitcoin_principal,
                 tokens: None,
             },),
         )
@@ -178,6 +184,7 @@ async fn should_upgrade_upsert_existing_token() {
 
         let ckbtc_minter_principal =
             Principal::from_text(crate::constant::ckbtc::CKBTC_MINTER_PRINCIPAL_ID).unwrap();
+        let omnity_bitcoin_principal = ctx.omnity_bitcoin_principal;
 
         let updated_icp = RegistryToken {
             details: ChainTokenDetails::IC {
@@ -194,6 +201,8 @@ async fn should_upgrade_upsert_existing_token() {
             name: "Internet Computer".to_string(),
             decimals: 8,
             enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
         };
 
         // Act
@@ -203,6 +212,7 @@ async fn should_upgrade_upsert_existing_token() {
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
                 ckbtc_minter_id: ckbtc_minter_principal,
+                omnity_bitcoin_id: omnity_bitcoin_principal,
                 tokens: Some(vec![updated_icp]),
             },),
         )

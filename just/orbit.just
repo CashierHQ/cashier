@@ -90,24 +90,25 @@ build_backend_args owner token_storage_canister_id log_filter file_name:
 
 # Build init and upgrade hex argument for token storage canister
 [group('orbit')]
-build_token_storage_args_hex owner log_filter ckbtc_minter_id output_file:
+build_token_storage_args_hex owner log_filter ckbtc_minter_id omnity_bitcoin_id output_file:
   #!/usr/bin/env bash
   set -e
 
   # step 1: build argument text by injecting fields values
-  just build_token_storage_args "{{owner}}" "{{log_filter}}" "{{ckbtc_minter_id}}" "{{output_file}}.txt"
+  just build_token_storage_args "{{owner}}" "{{log_filter}}" "{{ckbtc_minter_id}}" "{{omnity_bitcoin_id}}" "{{output_file}}.txt"
 
   # step 2: encode argument text to hex format using didc and candid types
-  didc encode -d ./target/artifacts/token_storage.did -t "(TokenStorageInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+  didc encode -d ./target/artifacts/token_storage.did -t "(TokenStorageInitData)" < {{output_file}}.txt > {{output_file}}.hex
 
 # Build token_storage canister args and save to file
 [group('orbit')]
-build_token_storage_args owner log_filter ckbtc_minter_id file_name:
+build_token_storage_args owner log_filter ckbtc_minter_id omnity_bitcoin_id file_name:
   #!/usr/bin/env bash
   sed \
     -e 's/__OWNER__/{{owner}}/g' \
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     -e 's/__CKBTC_MINTER_ID__/{{ckbtc_minter_id}}/g' \
+    -e 's/__OMNITY_BITCOIN_ID__/{{omnity_bitcoin_id}}/g' \
     scripts/args/token_storage_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
@@ -123,7 +124,7 @@ sha256_encoded_candid arg_file did_file:
     encoded_hex=$(cat {{arg_file}})
   else
     # Candid text: encode to hex first
-    encoded_hex=$(didc encode "$(cat {{arg_file}})" --defs {{did_file}})
+    encoded_hex=$(didc encode --defs {{did_file}} < {{arg_file}})
   fi
   # Convert hex string to bytes and compute SHA-256 checksum
   checksum=$(echo -n "$encoded_hex" | xxd -r -p | just sha256_stdin)

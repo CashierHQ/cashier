@@ -92,7 +92,7 @@
           <TokenIcon
             address={asset.address}
             symbol={asset.symbol}
-            logo={getTokenLogo(asset.address)}
+            logo={asset.icon ?? getTokenLogo(asset.address)}
             size="sm"
             {failedImageLoads}
             {onImageError}
@@ -133,7 +133,8 @@
             <TokenIcon
               address={linkCreationFeeItem.asset.address}
               symbol={linkCreationFeeItem.asset.symbol}
-              logo={getTokenLogo(linkCreationFeeItem.asset.address)}
+              logo={linkCreationFeeItem.asset.icon ??
+                getTokenLogo(linkCreationFeeItem.asset.address)}
               size="sm"
               {failedImageLoads}
               {onImageError}
