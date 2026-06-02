@@ -18,6 +18,7 @@
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import { paths } from "$modules/routing/paths";
   import { getRouteContext } from "$modules/routing/routeContext.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -84,7 +85,7 @@
       linkStore.step === LinkStep.CHOOSE_TYPE ||
       linkStore.step === LinkStep.CREATED
     ) {
-      goto(resolve("/links"));
+      goto(resolve(paths.links()));
     } else {
       try {
         await linkStore.goBack();

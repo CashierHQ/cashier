@@ -2,6 +2,7 @@
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
+  import { paths } from "$modules/routing/paths";
 
   type Props = {
     onLoginClick?: () => void;
@@ -19,7 +20,7 @@
   <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <div class="flex justify-between items-center">
       <!-- Logo -->
-      <CashierLogo href={resolve("/")} />
+      <CashierLogo href={resolve(paths.home())} />
       {#if showLogin}
         <button
           id="connect"

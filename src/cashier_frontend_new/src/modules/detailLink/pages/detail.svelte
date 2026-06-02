@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { paths } from "$modules/routing/paths";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
@@ -131,7 +132,7 @@
       // Remove the query parameter from URL without reload
       const newUrl = new URL(page.url);
       newUrl.searchParams.delete("created");
-      goto(resolve(`/link/detail/${id}`), {
+      goto(resolve(paths.detail(id)), {
         replaceState: true,
         noScroll: true,
       });
@@ -541,7 +542,7 @@
   }
 
   function goToLinks() {
-    goto(resolve("/links"));
+    goto(resolve(paths.links()));
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {

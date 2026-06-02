@@ -13,6 +13,7 @@
   import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
   import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
   import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";
+  import { paths } from "$modules/routing/paths";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
   import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
@@ -44,7 +45,7 @@
       const draftLink = draftLinkResult.unwrap();
       // Track Link list plus (user pressed + button)
       trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_PLUS, {});
-      goto(resolve(`/link/create/${draftLink.id}`));
+      goto(resolve(paths.create(draftLink.id)));
     } catch {
       toast.error(locale.t("links.createLinkError"));
     }
