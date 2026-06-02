@@ -484,5 +484,17 @@ test.describe("redirect routing", () => {
       await expectPath(page, "/404");
       await expect(page.getByText("Page not found")).toBeVisible();
     });
+
+    test("[IP-03] unknown app route renders not found", async ({ page }) => {
+      await page.goto("/test");
+
+      await expect(page).toHaveURL((url) => url.pathname === "/test");
+      await expect(page.getByText("404")).toBeVisible();
+      await expect(page.getByText("Page not found")).toBeVisible();
+      await expect(page.getByRole("link", { name: "Go Home" })).toHaveAttribute(
+        "href",
+        "/",
+      );
+    });
   });
 });
