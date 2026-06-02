@@ -9,6 +9,7 @@
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { paths } from "$modules/routing/paths";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -277,6 +278,12 @@
     if (!userStore) {
       return;
     }
+
+    if (userStore.step === UserLinkStep.COMPLETED) {
+      await goto(resolve(paths.home()));
+      return;
+    }
+
     try {
       await userStore.goToLanding();
     } catch (error) {
