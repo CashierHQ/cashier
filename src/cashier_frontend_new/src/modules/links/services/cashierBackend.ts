@@ -70,17 +70,13 @@ class CanisterBackendService {
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-    console.warn("[links:list:v3] request", {
-      params,
-      owner: authState.account?.owner ?? null,
-    });
+
     const response = await actor.user_get_links_v3(
       toNullable({
         offset: BigInt(params.offset),
         limit: BigInt(params.limit),
       }),
     );
-    console.warn("[links:list:v3] raw response", response);
 
     return responseToResult<
       cashierBackend.PaginateResult_1,
@@ -111,17 +107,13 @@ class CanisterBackendService {
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-    console.warn("[links:list:v2] request", {
-      params,
-      owner: authState.account?.owner ?? null,
-    });
+
     const response = await actor.user_get_links_v2(
       toNullable({
         offset: BigInt(params.offset),
         limit: BigInt(params.limit),
       }),
     );
-    console.warn("[links:list:v2] raw response", response);
 
     return responseToResult<
       cashierBackend.PaginateResult,

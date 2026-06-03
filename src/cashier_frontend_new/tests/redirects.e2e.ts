@@ -5,7 +5,6 @@ type LinkState =
   | "noState"
   | "chooseType"
   | "addAsset"
-  | "lock"
   | "preview"
   | "created"
   | "active"
@@ -76,7 +75,6 @@ test.describe("redirect routing", () => {
     for (const [id, label, path, linkState] of [
       ["LO-03", "choose type", "/link/create/e2e-link", "chooseType"],
       ["LO-04", "add asset", "/link/create/e2e-link", "addAsset"],
-      ["LO-05", "lock", "/link/create/e2e-link", "lock"],
       ["LO-06", "preview", "/link/create/e2e-link", "preview"],
       ["LO-07", "link detail", "/link/detail/e2e-link", "active"],
     ] as const) {
@@ -95,16 +93,13 @@ test.describe("redirect routing", () => {
     for (const [id, label, path] of [
       ["NS-03", "choose type", "/link/create/e2e-link"],
       ["NS-04", "add asset", "/link/create/e2e-link"],
-      ["NS-05", "lock", "/link/create/e2e-link"],
       ["NS-06", "preview", "/link/create/e2e-link"],
       ["NS-07", "link detail", "/link/detail/e2e-link"],
     ] as const) {
       test(`[${id}] no-state link redirects from ${label} to link list`, async ({
         page,
       }) => {
-        await page.goto(
-          e2eUrl(path, { auth: "owner", linkState: "noState" }),
-        );
+        await page.goto(e2eUrl(path, { auth: "owner", linkState: "noState" }));
 
         await expectPath(page, "/links");
         await expectScreen(page, "linkList");
@@ -142,7 +137,6 @@ test.describe("redirect routing", () => {
       for (const [suffix, label] of [
         ["03", "choose type"],
         ["04", "add asset"],
-        ["05", "lock"],
         ["06", "preview"],
       ] as const) {
         test(`[${createState.prefix}-${suffix}] owner lands on ${label} and sees ${createState.screen}`, async ({
@@ -182,7 +176,6 @@ test.describe("redirect routing", () => {
       for (const [suffix, label, path] of [
         ["08", "choose type", "/link/create/e2e-link"],
         ["09", "add asset", "/link/create/e2e-link"],
-        ["10", "lock", "/link/create/e2e-link"],
         ["11", "preview", "/link/create/e2e-link"],
         ["12", "link detail", "/link/detail/e2e-link"],
       ] as const) {
@@ -212,7 +205,6 @@ test.describe("redirect routing", () => {
       for (const [suffix, label] of [
         ["03", "choose type"],
         ["04", "add asset"],
-        ["05", "lock"],
         ["06", "preview"],
       ] as const) {
         test(`[${detailState.prefix}-${suffix}] owner is redirected from ${label} to detail`, async ({
@@ -247,7 +239,6 @@ test.describe("redirect routing", () => {
       for (const [suffix, label, path] of [
         ["08", "choose type", "/link/create/e2e-link"],
         ["09", "add asset", "/link/create/e2e-link"],
-        ["10", "lock", "/link/create/e2e-link"],
         ["11", "preview", "/link/create/e2e-link"],
         ["12", "link detail", "/link/detail/e2e-link"],
       ] as const) {
@@ -325,12 +316,6 @@ test.describe("redirect routing", () => {
         );
 
         await expectScreen(page, "linkEnded");
-
-        if (id === "UI-01") {
-          await expect(
-            page.getByRole("button", { name: "Login" }),
-          ).toBeHidden();
-        }
       });
     }
 

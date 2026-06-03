@@ -34,15 +34,6 @@ import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
-function debugCreateStore(
-  message: string,
-  data: Record<string, unknown> = {},
-) {
-  if (import.meta.env.DEV) {
-    console.warn(`[create-store:v3] ${message}`, data);
-  }
-}
-
 /**
  * Store for draft link state management
  */
@@ -69,16 +60,7 @@ export class LinkCreationStoreV3 {
 
   constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
-    debugCreateStore("initialize from draft", {
-      id: draftLink.id,
-      draftLinkState: draftLink.link_state,
-    });
-
     this.#state = this.getStateHandler(draftLink);
-    debugCreateStore("initialized step", {
-      id: draftLink.id,
-      initializedStep: this.#state.step,
-    });
 
     this.#draftLink = draftLink;
 
@@ -224,12 +206,6 @@ export class LinkCreationStoreV3 {
       default:
         assertUnreachable(this.#state.step);
     }
-
-    debugCreateStore("persist draft step", {
-      id: this.#id,
-      currentStep: this.#state.step,
-      persistedLinkState: linkState,
-    });
 
     if (this.#id && authState.account) {
       draftLinkService.update({

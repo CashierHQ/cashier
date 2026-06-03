@@ -69,7 +69,8 @@ export function buildE2ERedirectInput(
   const linkState = readMappedValue(url.searchParams, "linkState", linkStates);
   const userState = readMappedValue(url.searchParams, "userState", userStates);
   const linkEnded =
-    url.searchParams.get("linkEnded") === "true" || linkState === LinkStep.ENDED;
+    url.searchParams.get("linkEnded") === "true" ||
+    linkState === LinkStep.ENDED;
 
   return {
     pathname: url.pathname,

@@ -6,7 +6,6 @@ import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
-import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
@@ -20,7 +19,6 @@ import {
   TokenStandard as SharedTokenStandard,
   type Action as SharedAction,
   type Intent,
-  type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
@@ -464,6 +462,5 @@ describe("LinkCreationStoreV3", () => {
         }),
       );
     });
-
   });
 });

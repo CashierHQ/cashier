@@ -12,7 +12,9 @@
   </header>
 
   <section class="flex flex-1 items-center justify-center px-4 py-10">
-    <div class="w-full max-w-xl rounded-2xl bg-white px-6 py-12 text-center shadow-sm sm:px-10">
+    <div
+      class="w-full max-w-xl rounded-2xl bg-white px-6 py-12 text-center shadow-sm sm:px-10"
+    >
       <p class="text-sm font-semibold uppercase tracking-wide text-primary">
         {locale.t("notFound.code")}
       </p>
@@ -22,7 +24,10 @@
       <p class="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
         {locale.t("notFound.description")}
       </p>
-      <Button href={resolve(paths.home())} class="mt-8 w-full max-w-xs rounded-full">
+      <Button
+        href={resolve(paths.home())}
+        class="mt-8 w-full max-w-xs rounded-full"
+      >
         {locale.t("notFound.homeButton")}
       </Button>
     </div>

@@ -106,13 +106,13 @@ Tests:
 - E2E: `tests/redirects.e2e.ts`
 - UI: `src/modules/home/components/Header.svelte.spec.ts`
 
-| ID    | Scenario           | Expected                         | Status |
-| ----- | ------------------ | -------------------------------- | ------ |
-| UI-01 | Logged-out landing | Show link ended                  | Pass   |
-| UI-02 | Logged-in landing  | Show link ended                  | Pass   |
-| UI-03 | Logged-in use      | Show link ended                  | Pass   |
-| UI-04 | Header logged in   | Hide public-page login CTA       | Pass   |
-| UI-05 | Header logged out  | Show public-page login CTA       | Pass   |
+| ID    | Scenario           | Expected                   | Status |
+| ----- | ------------------ | -------------------------- | ------ |
+| UI-01 | Logged-out landing | Show link ended            | Pass   |
+| UI-02 | Logged-in landing  | Show link ended            | Pass   |
+| UI-03 | Logged-in use      | Show link ended            | Pass   |
+| UI-04 | Header logged in   | Hide public-page login CTA | Pass   |
+| UI-05 | Header logged out  | Show public-page login CTA | Pass   |
 
 ## User No State
 

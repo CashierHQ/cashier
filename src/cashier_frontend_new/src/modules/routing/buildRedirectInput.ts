@@ -23,12 +23,6 @@ type StatefulStore<TStep> = {
   state: StepState<TStep>;
 };
 
-function debugRedirectInput(data: RedirectInput) {
-  if (import.meta.env.DEV && data.pathname.startsWith("/link/")) {
-    console.warn("[redirect:input]", data);
-  }
-}
-
 /**
  * Reads the current authenticated principal from the route context.
  *
@@ -162,8 +156,6 @@ export function buildRedirectInput(
     userState: getUserState(context),
     linkEnded: getLinkEnded(context, linkState),
   };
-
-  debugRedirectInput(input);
 
   return input;
 }

@@ -28,40 +28,13 @@ export class LinkListStore {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
         if (!authState.account?.owner) {
-          console.warn("[links:list] skip fetch: no authenticated owner");
           return [];
         }
-
-        console.warn("[links:list] fetch start", {
-          owner: authState.account.owner,
-        });
 
         const [v2Res, v3Res] = await Promise.all([
           cashierBackendService.getLinks(),
           cashierBackendService.getLinksV3(),
         ]);
-
-        console.warn("[links:list] fetch response", {
-          owner: authState.account.owner,
-          v2: v2Res.isOk()
-            ? {
-                ok: true,
-                links: v2Res.unwrap(),
-              }
-            : {
-                ok: false,
-                error: v2Res.unwrapErr(),
-              },
-          v3: v3Res.isOk()
-            ? {
-                ok: true,
-                result: v3Res.unwrap(),
-              }
-            : {
-                ok: false,
-                error: v3Res.unwrapErr(),
-              },
-        });
 
         const v2Links: Link[] = v2Res.isOk()
           ? v2Res.unwrap().map((b) => LinkMapper.fromBackendType(b))
@@ -71,14 +44,6 @@ export class LinkListStore {
           v3Res.isOk() && v3Res.unwrap().data
             ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
             : [];
-
-        console.warn("[links:list] mapped links", {
-          owner: authState.account.owner,
-          v2Count: v2Links.length,
-          v3Count: v3Links.length,
-          totalCount: v2Links.length + v3Links.length,
-          links: [...v2Links, ...v3Links],
-        });
 
         return [...v2Links, ...v3Links];
       },

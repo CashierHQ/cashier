@@ -3,7 +3,10 @@ import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { RouteContext, setRouteContext } from "$modules/routing/routeContext.svelte";
+import {
+  RouteContext,
+  setRouteContext,
+} from "$modules/routing/routeContext.svelte";
 import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 
 type LinkRouteContextOptions = {
@@ -11,15 +14,6 @@ type LinkRouteContextOptions = {
   draftLinkId?: string;
   storeType?: "userLink" | "linkDetail";
 };
-
-function debugCreateRouteContext(
-  message: string,
-  data: Record<string, unknown> = {},
-) {
-  if (import.meta.env.DEV) {
-    console.warn(`[route-context:create] ${message}`, data);
-  }
-}
 
 /**
  * Initializes route-scoped link data and exposes it through Svelte context.
@@ -51,47 +45,19 @@ export function createLinkRouteContext({
 
   $effect(() => {
     if (draftLinkId && context.authState.isReady) {
-      debugCreateRouteContext("load draft link", {
-        draftLinkId,
-        isAuthReady: context.authState.isReady,
-      });
-
       const draftLink = draftLinkService.getDraftLink(draftLinkId);
 
       if (draftLink) {
-        debugCreateRouteContext("found draft link", {
-          draftLinkId,
-          draftLinkState: draftLink.link_state,
-        });
-
         const store = new LinkCreationStoreV3(draftLink);
         context.setLinkCreationStoreV3(store);
-
-        debugCreateRouteContext("created v3 store", {
-          draftLinkId,
-          storeStep: store.state.step,
-        });
       } else {
-        debugCreateRouteContext("missing v3 draft link, checking temp link", {
-          draftLinkId,
-        });
-
         const tempLinkResult = LinkCreationStore.getTempLink(draftLinkId);
 
         if (tempLinkResult.isOk()) {
-          debugCreateRouteContext("found temp link", {
-            draftLinkId,
-            tempLinkState: tempLinkResult.value.state,
-          });
-
           context.setLinkCreationStore(
             new LinkCreationStore(tempLinkResult.value),
           );
         } else {
-          debugCreateRouteContext("missing all create link stores", {
-            draftLinkId,
-          });
-
           clearMissingDraftStores(context);
         }
       }
@@ -132,7 +98,9 @@ function clearMissingDraftStores(context: RouteContext) {
 
   const existing = context.linkCreationStore;
   const isInCreatedState =
-    existing && "state" in existing && existing.state?.step === LinkStep.CREATED;
+    existing &&
+    "state" in existing &&
+    existing.state?.step === LinkStep.CREATED;
 
   if (!isInCreatedState) {
     context.linkCreationStore = null;

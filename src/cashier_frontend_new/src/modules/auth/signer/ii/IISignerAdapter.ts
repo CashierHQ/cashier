@@ -126,9 +126,11 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     });
 
     this.agent = agent;
+    // Plug-N-Play exposes @icp-sdk/signer types, while this adapter still uses
+    // the slide-computer signer implementation expected by the current flow.
     this.signer = new Signer<IITransport>({
       transport: transport,
-    });
+    }) as unknown as typeof this.signer;
   }
 
   async connect(): Promise<Account> {
