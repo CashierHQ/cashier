@@ -23,25 +23,6 @@
         "dest_address_type": "Link",
         "dependencies": [],
         "intent_state": "Created"
-      },
-      {
-        "id": "fee_intent_id",
-        "intent_type": "Send",
-        "asset": {
-          "address": "useor-pyaaa-aaaad-ac2ya-cai",
-          "network_fee": "10000",
-          "token_standard": "ICRC2"
-        },
-        "amount": "10000",
-        "total_network_fee": "10000",
-        "user_fee": "10000",
-        "total_amount": "10000",
-        "source_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
-        "source_address_type": "Creator",
-        "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
-        "dest_address_type": "Treasury",
-        "dependencies": [],
-        "intent_state": "Created"
       }
     ],
     "action_state": "Created"

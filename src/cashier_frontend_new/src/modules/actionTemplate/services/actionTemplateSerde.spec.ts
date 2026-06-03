@@ -1,8 +1,12 @@
 import {
   deserializeActionTemplate,
+  deserializeIntentTemplate,
   serializeActionTemplate,
 } from "$modules/actionTemplate/services/actionTemplateSerde";
-import type { ActionTemplateJson } from "$modules/actionTemplate/types";
+import type {
+  ActionTemplateJson,
+  IntentTemplateJson,
+} from "$modules/actionTemplate/types";
 import type { Action } from "$shared";
 import {
   ActionState,
@@ -51,6 +55,31 @@ function makeValidTemplate(
   };
 }
 
+function makeValidIntentTemplate(
+  overrides?: Partial<IntentTemplateJson>,
+): IntentTemplateJson {
+  return {
+    id: "intent-1",
+    intent_type: IntentType.Send,
+    asset: {
+      address: VALID_PRINCIPAL_TEXT,
+      network_fee: "100",
+      token_standard: TokenStandard.ICRC1,
+    },
+    amount: "1000",
+    total_network_fee: "50",
+    user_fee: "10",
+    total_amount: "1010",
+    source_address: VALID_PRINCIPAL_TEXT,
+    source_address_type: AddressType.Creator,
+    dest_address: VALID_PRINCIPAL_TEXT,
+    dest_address_type: AddressType.Link,
+    dependencies: [],
+    intent_state: IntentState.Created,
+    ...overrides,
+  };
+}
+
 function makeValidAction(overrides?: Partial<Action>): Action {
   return {
     id: "action-1",
@@ -81,6 +110,68 @@ function makeValidAction(overrides?: Partial<Action>): Action {
     ...overrides,
   };
 }
+
+describe("deserializeIntentTemplate", () => {
+  it("it_should_succeed_deserialize_valid_intent_template", () => {
+    const result = deserializeIntentTemplate(
+      makeValidIntentTemplate(),
+      VALID_PRINCIPAL,
+    );
+    expect(result.isOk()).toBe(true);
+
+    const intent = result.unwrap();
+    expect(intent.id).toBe("intent-1");
+    expect(intent.intent_type).toBe(IntentType.Send);
+    expect(intent.asset.address.toText()).toBe(VALID_PRINCIPAL_TEXT);
+    expect(intent.asset.network_fee).toBe(100n);
+    expect(intent.asset.token_standard).toBe(TokenStandard.ICRC1);
+    expect(intent.amount).toBe(1000n);
+    expect(intent.network_fee).toBe(50n);
+    expect(intent.user_fee).toBe(10n);
+    expect(intent.total_amount).toBe(1010n);
+    expect(intent.source_address.toText()).toBe(VALID_PRINCIPAL_TEXT);
+    expect(intent.source_address_type).toBe(AddressType.Creator);
+    expect(intent.dest_address.toText()).toBe(VALID_PRINCIPAL_TEXT);
+    expect(intent.dest_address_type).toBe(AddressType.Link);
+    expect(intent.dependencies).toEqual([]);
+    expect(intent.intent_state).toBe(IntentState.Created);
+  });
+
+  it("it_should_succeed_deserialize_gate_address_type", () => {
+    const result = deserializeIntentTemplate(
+      makeValidIntentTemplate({ dest_address_type: AddressType.Gate }),
+      VALID_PRINCIPAL,
+    );
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().dest_address_type).toBe(AddressType.Gate);
+  });
+
+  it("it_should_succeed_use_creator_fallback_for_missing_addresses", () => {
+    const result = deserializeIntentTemplate(
+      makeValidIntentTemplate({
+        source_address: undefined as unknown as string,
+        dest_address: undefined as unknown as string,
+      }),
+      VALID_PRINCIPAL,
+    );
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().source_address.toText()).toBe(VALID_PRINCIPAL_TEXT);
+    expect(result.unwrap().dest_address.toText()).toBe(VALID_PRINCIPAL_TEXT);
+  });
+
+  it("it_should_fail_deserialize_due_to_unknown_intent_type", () => {
+    const result = deserializeIntentTemplate(
+      makeValidIntentTemplate({
+        intent_type: "UnknownIntentType" as IntentType,
+      }),
+      VALID_PRINCIPAL,
+    );
+    expect(result.isErr()).toBe(true);
+    expect(result.isErr() && result.error.message).toContain(
+      "Unknown intent type",
+    );
+  });
+});
 
 describe("deserializeActionTemplate", () => {
   it("it_should_fail_deserialize_due_to_invalid_creator_principal", () => {

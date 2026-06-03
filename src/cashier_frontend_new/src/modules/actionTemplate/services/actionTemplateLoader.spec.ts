@@ -4,12 +4,16 @@ import {
   ActionType,
   AddressType,
   calculateIntentFees,
+  getLinkCreationFeeAmount,
   IntentParticipants,
   IntentState,
   LinkType,
   TokenStandard,
 } from "$shared";
-import { FEE_TREASURY_PRINCIPAL } from "$modules/shared/constants";
+import {
+  CASHIER_BACKEND_CANISTER_ID,
+  FEE_TREASURY_PRINCIPAL,
+} from "$modules/shared/constants";
 import {
   ICP_LEDGER_CANISTER_ID,
   ICP_LEDGER_FEE,
@@ -167,6 +171,7 @@ describe("createActionFromTemplate", () => {
     action.intents.forEach((intent) => {
       expect(intent.id).not.toBe("asset_intent_id");
       expect(intent.id).not.toBe("fee_intent_id");
+      expect(intent.id).not.toBe("link_creation_fee_intent_id");
     });
   });
 
@@ -212,6 +217,115 @@ describe("createActionFromTemplate", () => {
     );
     expect(result.isOk()).toBe(true);
     expect(result.unwrap().intents.length).toBeGreaterThan(0);
+  });
+
+  it("it_should_append_populated_link_creation_fee_intent_for_create_link", () => {
+    const result = loader.createActionFromTemplate(
+      LinkType.SendTip,
+      ActionType.CreateLink,
+      CREATOR,
+    );
+    expect(result.isOk()).toBe(true);
+
+    const action = result.unwrap();
+    const linkCreationFeeIntent = action.intents.find(
+      (intent) => intent.dest_address_type === AddressType.Treasury,
+    );
+    expect(linkCreationFeeIntent).toBeDefined();
+
+    const expectedFees = calculateIntentFees({
+      intent_participants: IntentParticipants.CreatorToTreasury,
+      token_standard: TokenStandard.ICRC2,
+      asset_network_fee: ICP_LEDGER_FEE,
+      link_creation_fee: getLinkCreationFeeAmount(),
+    });
+
+    expect(linkCreationFeeIntent?.source_address.toText()).toBe(
+      CREATOR.toText(),
+    );
+    expect(linkCreationFeeIntent?.source_address_type).toBe(
+      AddressType.Creator,
+    );
+    expect(linkCreationFeeIntent?.dest_address.toText()).toBe(
+      FEE_TREASURY_PRINCIPAL,
+    );
+    expect(linkCreationFeeIntent?.asset.address.toText()).toBe(
+      ICP_LEDGER_CANISTER_ID || ICP_LEDGER_CANISTER_ID_FALLBACK,
+    );
+    expect(linkCreationFeeIntent?.asset.network_fee).toBe(ICP_LEDGER_FEE);
+    expect(linkCreationFeeIntent?.asset.token_standard).toBe(
+      TokenStandard.ICRC2,
+    );
+    expect(linkCreationFeeIntent?.amount).toBe(
+      BigInt(expectedFees.intent_total_amount),
+    );
+    expect(linkCreationFeeIntent?.total_amount).toBe(
+      BigInt(expectedFees.intent_total_amount),
+    );
+    expect(linkCreationFeeIntent?.network_fee).toBe(
+      BigInt(expectedFees.intent_total_network_fee),
+    );
+    expect(linkCreationFeeIntent?.user_fee).toBe(
+      BigInt(expectedFees.intent_user_fee),
+    );
+  });
+
+  it("it_should_populate_asset_intent_from_selected_asset_info", () => {
+    const assetPrincipal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const result = loader.createActionFromTemplate(
+      LinkType.SendTip,
+      ActionType.CreateLink,
+      CREATOR,
+      {
+        assetInfo: [
+          {
+            asset: {
+              address: assetPrincipal,
+              network_fee: 500n,
+              token_standard: TokenStandard.ICRC1,
+            },
+            amount: 999n,
+            label: "ICP",
+          },
+        ],
+      },
+    );
+    expect(result.isOk()).toBe(true);
+
+    const action = result.unwrap();
+    const assetIntent = action.intents.find(
+      (intent) => intent.dest_address_type === AddressType.Link,
+    );
+    expect(assetIntent).toBeDefined();
+    expect(assetIntent?.asset.address.toText()).toBe(assetPrincipal.toText());
+    expect(assetIntent?.asset.network_fee).toBe(500n);
+    expect(assetIntent?.asset.token_standard).toBe(TokenStandard.ICRC1);
+    expect(assetIntent?.amount).toBe(999n);
+    expect(assetIntent?.source_address.toText()).toBe(CREATOR.toText());
+    expect(assetIntent?.source_address_type).toBe(AddressType.Creator);
+    expect(assetIntent?.dest_address.toText()).toBe(
+      CASHIER_BACKEND_CANISTER_ID ||
+        "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
+    );
+  });
+
+  it("it_should_preserve_asset_template_placeholders_when_no_asset_info_is_supplied", () => {
+    const result = loader.createActionFromTemplate(
+      LinkType.SendTip,
+      ActionType.CreateLink,
+      CREATOR,
+    );
+    expect(result.isOk()).toBe(true);
+
+    const action = result.unwrap();
+    const assetIntent = action.intents.find(
+      (intent) => intent.dest_address_type === AddressType.Link,
+    );
+    expect(assetIntent).toBeDefined();
+    expect(assetIntent?.amount).toBe(10_000_000_000n);
+    expect(assetIntent?.dest_address.toText()).toBe(
+      "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
+    );
   });
 
   it("it_should_not_include_gate_fee_intent_without_gate_fee_options", () => {

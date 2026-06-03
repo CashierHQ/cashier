@@ -5,19 +5,17 @@ import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
+import { GateType } from "$modules/gating/types/gate";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
   ActionState,
   ActionType,
   AddressType,
-  IntentState,
-  IntentType,
   LinkState,
   LinkType,
   TokenStandard as SharedTokenStandard,
   type Action as SharedAction,
-  type Intent,
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
@@ -49,18 +47,6 @@ vi.mock("$modules/creationLink/services/draftLink", () => ({
 
 vi.mock("$modules/token/state/walletStore.svelte", () => ({
   walletStore: { findTokenByAddress: vi.fn() },
-}));
-
-vi.mock("$modules/shared/constants", () => ({
-  CASHIER_BACKEND_CANISTER_ID: "aaaaa-aa",
-  FEE_TREASURY_PRINCIPAL:
-    "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae",
-  LINK_CREATION_FEE: 10_000n,
-}));
-
-vi.mock("$modules/token/constants", () => ({
-  ICP_LEDGER_CANISTER_ID: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-  ICP_LEDGER_FEE: 10_000n,
 }));
 
 vi.mock("$modules/links/services/cashierBackend", () => ({
@@ -95,29 +81,6 @@ function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
   };
 }
 
-function makeIntent(
-  sourceType: (typeof AddressType)[keyof typeof AddressType],
-  destType: (typeof AddressType)[keyof typeof AddressType],
-  id: string,
-): Intent {
-  return {
-    id,
-    intent_type: IntentType.Send,
-    asset: {
-      address: CREATOR,
-      network_fee: 100n,
-      token_standard: SharedTokenStandard.ICRC2,
-    },
-    amount: 0n,
-    source_address: CREATOR,
-    source_address_type: sourceType,
-    dest_address: CREATOR,
-    dest_address_type: destType,
-    dependencies: [],
-    intent_state: IntentState.Created,
-  };
-}
-
 // Use a factory to avoid sharing mutable intent objects between tests
 function makeMockActionFull(): SharedAction {
   return {
@@ -126,30 +89,9 @@ function makeMockActionFull(): SharedAction {
     creator_address_type: AddressType.Creator,
     action_type: ActionType.CreateLink,
     action_state: ActionState.Created,
-    intents: [
-      makeIntent(AddressType.Creator, AddressType.Link, "asset-intent"),
-      makeIntent(AddressType.Creator, AddressType.Treasury, "fee-intent"),
-    ],
+    intents: [],
   };
 }
-
-const MOCK_ACTION_NO_INTENTS: SharedAction = {
-  id: "action-id",
-  creator: CREATOR,
-  creator_address_type: AddressType.Creator,
-  action_type: ActionType.CreateLink,
-  action_state: ActionState.Created,
-  intents: [],
-};
-
-const MOCK_ACTION_NO_TREASURY: SharedAction = {
-  id: "action-id",
-  creator: CREATOR,
-  creator_address_type: AddressType.Creator,
-  action_type: ActionType.CreateLink,
-  action_state: ActionState.Created,
-  intents: [makeIntent(AddressType.Creator, AddressType.Link, "asset-intent")],
-};
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -315,30 +257,6 @@ describe("LinkCreationStoreV3", () => {
       );
     });
 
-    it("it_should_fail_initialize_action_due_to_no_creator_to_link_intent", () => {
-      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
-        Ok(MOCK_ACTION_NO_INTENTS),
-      );
-      const store = new LinkCreationStoreV3(makeDraftLink());
-      const result = store.initializeCreateLinkActionFromTemplate();
-      expect(result.isErr()).toBe(true);
-      expect(result.isErr() && result.error.message).toContain(
-        "Asset intent not found in action intents",
-      );
-    });
-
-    it("it_should_fail_initialize_action_due_to_no_creator_to_treasury_intent", () => {
-      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
-        Ok(MOCK_ACTION_NO_TREASURY),
-      );
-      const store = new LinkCreationStoreV3(makeDraftLink());
-      const result = store.initializeCreateLinkActionFromTemplate();
-      expect(result.isErr()).toBe(true);
-      expect(result.isErr() && result.error.message).toContain(
-        "Fee intent not found in action intents",
-      );
-    });
-
     it("it_should_succeed_initialize_action_and_set_draft_action", () => {
       vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
         Ok(makeMockActionFull()),
@@ -349,48 +267,75 @@ describe("LinkCreationStoreV3", () => {
       expect(store.draftAction).toBeDefined();
     });
 
-    it("it_should_succeed_initialize_action_populate_fee_intent_with_icp_and_creation_fee", () => {
-      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
-        Ok(makeMockActionFull()),
-      );
-      const store = new LinkCreationStoreV3(makeDraftLink());
-      store.initializeCreateLinkActionFromTemplate();
-      const feeIntent = store.draftAction?.intents.find(
-        (i) => i.dest_address_type === AddressType.Treasury,
-      );
-      expect(feeIntent).toBeDefined();
-      expect(feeIntent!.amount).toBe(10_000n);
-      expect(feeIntent!.asset.token_standard).toBe(SharedTokenStandard.ICRC2);
-    });
-
-    it("it_should_succeed_initialize_action_populate_asset_intent_from_draft_link", () => {
+    it("it_should_succeed_initialize_action_with_selected_assets_passed_to_loader", () => {
       vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
         Ok(makeMockActionFull()),
       );
       const assetPrincipal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+      const assetInfo = [
+        {
+          asset: {
+            address: assetPrincipal,
+            network_fee: 500n,
+            token_standard: SharedTokenStandard.ICRC1,
+          },
+          amount: 999n,
+          label: "test",
+        },
+      ];
       const store = new LinkCreationStoreV3(
         makeDraftLink({
-          asset_info: [
-            {
-              asset: {
-                address: assetPrincipal,
-                network_fee: 500n,
-                token_standard: SharedTokenStandard.ICRC1,
-              },
-              amount: 999n,
-              label: "test",
-            },
-          ],
+          asset_info: assetInfo,
+          max_use: 3n,
         }),
       );
-      store.initializeCreateLinkActionFromTemplate();
-      const assetIntent = store.draftAction?.intents.find(
-        (i) => i.dest_address_type === AddressType.Link,
+      const result = store.initializeCreateLinkActionFromTemplate();
+      expect(result.isOk()).toBe(true);
+      expect(
+        actionTemplateLoader.createActionFromTemplate,
+      ).toHaveBeenCalledWith(
+        LinkType.SendTip,
+        ActionType.CreateLink,
+        expect.any(Principal),
+        {
+          assetInfo,
+          gateCount: 0,
+          maxUse: 3,
+        },
       );
-      expect(assetIntent).toBeDefined();
-      expect(assetIntent!.amount).toBe(999n);
-      expect(assetIntent!.asset.address.toText()).toBe(
-        "ryjl3-tyaaa-aaaaa-aaaba-cai",
+      const creatorArg = vi.mocked(
+        actionTemplateLoader.createActionFromTemplate,
+      ).mock.calls[0][2];
+      expect(creatorArg.toText()).toBe(CREATOR_TEXT);
+    });
+
+    it("it_should_succeed_initialize_action_with_gate_context_passed_to_loader", () => {
+      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
+        Ok(makeMockActionFull()),
+      );
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({
+          max_use: 5n,
+        }),
+      );
+      store.pendingGateDraft = {
+        type: GateType.PASSWORD,
+        password: "secret",
+      };
+
+      const result = store.initializeCreateLinkActionFromTemplate();
+      expect(result.isOk()).toBe(true);
+      expect(
+        actionTemplateLoader.createActionFromTemplate,
+      ).toHaveBeenCalledWith(
+        LinkType.SendTip,
+        ActionType.CreateLink,
+        expect.any(Principal),
+        {
+          assetInfo: [],
+          gateCount: 1,
+          maxUse: 5,
+        },
       );
     });
   });

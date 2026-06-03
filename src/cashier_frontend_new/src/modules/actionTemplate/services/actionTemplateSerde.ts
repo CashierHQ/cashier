@@ -1,5 +1,8 @@
-import type { ActionTemplateJson } from "$modules/actionTemplate/types";
-import type { Action } from "$shared";
+import type {
+  ActionTemplateJson,
+  IntentTemplateJson,
+} from "$modules/actionTemplate/types";
+import type { Action, Intent } from "$shared";
 import {
   ActionState,
   ActionType,
@@ -10,6 +13,63 @@ import {
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
+
+/**
+ * Deserializes a standalone intent JSON template into a shared Intent.
+ *
+ * The creator fallback is used when source or destination addresses are absent
+ * from the template.
+ *
+ * @param template JSON intent template to deserialize.
+ * @param creatorFallback Principal used as fallback for missing intent addresses.
+ * @returns The parsed intent, or an error when required fields cannot be parsed.
+ */
+export function deserializeIntentTemplate(
+  template: IntentTemplateJson,
+  creatorFallback: Principal,
+): Result<Intent, Error> {
+  try {
+    const creatorText = creatorFallback.toText();
+
+    return Ok({
+      id: template.id,
+      intent_type: parseIntentType(template.intent_type),
+      asset: {
+        address: Principal.fromText(template.asset?.address ?? "aaaaa-aa"),
+        network_fee: parseBigintOrUndefined(template.asset?.network_fee),
+        token_standard: parseTokenStandard(template.asset?.token_standard),
+      },
+      amount: parseBigint(template.amount, 0n),
+      user_fee: parseBigintOrUndefined(template.user_fee),
+      total_amount: parseBigintOrUndefined(template.total_amount),
+      network_fee: parseBigintOrUndefined(template.total_network_fee),
+      source_address: parsePrincipalOrFallback(
+        template.source_address,
+        creatorText,
+      ),
+      source_address_type: parseAddressType(
+        template.source_address_type,
+        AddressType.Link,
+      ),
+      dest_address: parsePrincipalOrFallback(
+        template.dest_address,
+        creatorText,
+      ),
+      dest_address_type: parseAddressType(
+        template.dest_address_type,
+        AddressType.Creator,
+      ),
+      dependencies: template.dependencies ?? [],
+      intent_state: parseIntentState(template.intent_state),
+    });
+  } catch (error) {
+    return Err(
+      error instanceof Error
+        ? error
+        : new Error("Failed to deserialize intent template"),
+    );
+  }
+}
 
 /**
  * Deserialize an ActionTemplateJson into an Action instance.
@@ -23,34 +83,12 @@ export function deserializeActionTemplate(
   try {
     const creatorText = template.creator;
     const creator = Principal.fromText(creatorText);
-
-    const intents = template.intents.map((intent) => ({
-      id: intent.id,
-      intent_type: parseIntentType(intent.intent_type),
-      asset: {
-        address: Principal.fromText(intent.asset?.address ?? "aaaaa-aa"),
-        network_fee: parseBigintOrUndefined(intent.asset?.network_fee),
-        token_standard: parseTokenStandard(intent.asset?.token_standard),
-      },
-      amount: parseBigint(intent.amount, 0n),
-      user_fee: parseBigintOrUndefined(intent.user_fee),
-      total_amount: parseBigintOrUndefined(intent.total_amount),
-      source_address: parsePrincipalOrFallback(
-        intent.source_address,
-        creatorText,
-      ),
-      source_address_type: parseAddressType(
-        intent.source_address_type,
-        AddressType.Link,
-      ),
-      dest_address: parsePrincipalOrFallback(intent.dest_address, creatorText),
-      dest_address_type: parseAddressType(
-        intent.dest_address_type,
-        AddressType.Creator,
-      ),
-      dependencies: intent.dependencies ?? [],
-      intent_state: parseIntentState(intent.intent_state),
-    }));
+    const intents: Intent[] = [];
+    for (const intentTemplate of template.intents) {
+      const intent = deserializeIntentTemplate(intentTemplate, creator);
+      if (intent.isErr()) return Err(intent.error);
+      intents.push(intent.value);
+    }
 
     return Ok({
       id: template.id,
@@ -153,6 +191,8 @@ function parseAddressType(
       return AddressType.User;
     case AddressType.Link:
       return AddressType.Link;
+    case AddressType.Gate:
+      return AddressType.Gate;
     default:
       return fallback;
   }
