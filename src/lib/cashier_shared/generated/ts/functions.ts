@@ -21,6 +21,7 @@
  */
 
 // These types are imported from generated types
+import { IntentParticipants, TokenStandard } from './types.js';
 import { getGateCreateFeeTableAmount, getGateOpenFeeTableAmount, getLinkCreationFeeTableAmount } from './fee-table.js';
 
 /**

@@ -132,8 +132,7 @@ export class FeeService {
 
       let feeType = FeeType.NETWORK_FEE;
       const isGateFeeIntent =
-        action.type === ActionType.CREATE_LINK &&
-        intent.label === "GATE_FEE";
+        action.type === ActionType.CREATE_LINK && intent.label === "GATE_FEE";
       if (
         action.type === ActionType.CREATE_LINK &&
         intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY

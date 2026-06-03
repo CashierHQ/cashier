@@ -525,6 +525,7 @@ export function transpileToRust(
     "// nullish coalescing (??), and union types.",
     "",
     "#![allow(dead_code)]",
+    "#![allow(clippy::too_many_arguments)]",
     "",
     "use candid::Nat;",
     "use crate::types::{IntentParticipants, TokenStandard};",
@@ -565,11 +566,11 @@ export function generateTypeScriptFunctions(
 
   // Replace the import path
   let output = source.replace(
-    /import \{ .* \} from ["']\.\.\/generated\/ts\/types\.js["'];/,
+    /(?:\/\/ @ts-(?:ignore|expect-error).*\n)?import \{\s*IntentParticipants,\s*TokenStandard\s*\} from ["']\.\.\/generated\/ts\/types\.js["'];/,
     "import { IntentParticipants, TokenStandard } from './types.js';"
   );
   output = output.replace(
-    /import \{[\s\S]*?getGateCreateFeeTableAmount,[\s\S]*?getGateOpenFeeTableAmount,[\s\S]*?getLinkCreationFeeTableAmount,[\s\S]*?\} from ["']\.\.\/generated\/ts\/fee-table\.js["'];/,
+    /(?:\/\/ @ts-(?:ignore|expect-error).*\n)?import \{[^}]*getGateCreateFeeTableAmount,[^}]*getGateOpenFeeTableAmount,[^}]*getLinkCreationFeeTableAmount,[^}]*\} from ["']\.\.\/generated\/ts\/fee-table\.js["'];/,
     "import { getGateCreateFeeTableAmount, getGateOpenFeeTableAmount, getLinkCreationFeeTableAmount } from './fee-table.js';"
   );
 

@@ -43,5 +43,4 @@ export class ActionMapper {
   }
 }
 
-
 export default Action;

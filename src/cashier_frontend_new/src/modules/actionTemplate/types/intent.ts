@@ -34,6 +34,7 @@ export class SharedIntentMapper {
       action_id: intent.action_id ? [intent.action_id] : [],
       dependencies: intent.dependencies ? [intent.dependencies] : [],
       intent_state: SharedIntentStateMapper.toBackendType(intent.intent_state),
+      label: intent.label,
     };
   }
 

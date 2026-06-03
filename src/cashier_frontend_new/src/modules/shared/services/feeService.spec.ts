@@ -42,7 +42,14 @@ const createIntentWithPayload = (
   amount: bigint,
 ): Intent => {
   const payload = getPayloadTransfer(amount);
-  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
+  return new Intent(
+    id,
+    task,
+    new IntentType(payload),
+    0n,
+    IntentState.CREATED,
+    "",
+  );
 };
 
 const createIntentWithPayloadAndAsset = (
@@ -57,7 +64,14 @@ const createIntentWithPayloadAndAsset = (
     fromWallet,
     amount,
   );
-  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
+  return new Intent(
+    id,
+    task,
+    new IntentType(payload),
+    0n,
+    IntentState.CREATED,
+    "",
+  );
 };
 
 const LEDGER_FEE = 10_000n; // 0.0001 token in e8s
