@@ -601,6 +601,7 @@ mod tests {
             dependencies: Some(vec![]),
             action_id: None,
             intent_state: SharedIntentState::Created,
+            label: String::new(),
         }
     }
 

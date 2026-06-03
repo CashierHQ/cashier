@@ -62,13 +62,13 @@ fn merge_fee_transactions_by_group(
     let mut grouped_intent_ids = HashMap::<String, Vec<String>>::new();
 
     for intent in intents {
-        if let Some(txs) = intent_txs_map.get(&intent.id) {
-            if let Some(key) = fee_merge_group_key(intent, txs) {
-                grouped_intent_ids
-                    .entry(key)
-                    .or_default()
-                    .push(intent.id.clone());
-            }
+        if let Some(txs) = intent_txs_map.get(&intent.id)
+            && let Some(key) = fee_merge_group_key(intent, txs)
+        {
+            grouped_intent_ids
+                .entry(key)
+                .or_default()
+                .push(intent.id.clone());
         }
     }
 

@@ -366,6 +366,7 @@ impl LinkTestFixtureV3 {
             dependencies: None,
             action_id: None,
             intent_state: IntentStateShared::Created,
+            label: String::new(),
         };
 
         let asset_intents: Vec<IntentShared> = tokens
@@ -396,6 +397,7 @@ impl LinkTestFixtureV3 {
                     dependencies: None,
                     action_id: None,
                     intent_state: IntentStateShared::Created,
+                    label: String::new(),
                 }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
                     Some(token_principal) => Ok(IntentShared {
@@ -421,6 +423,7 @@ impl LinkTestFixtureV3 {
                         dependencies: None,
                         action_id: None,
                         intent_state: IntentStateShared::Created,
+                        label: String::new(),
                     }),
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
                 },

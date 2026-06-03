@@ -49,6 +49,7 @@ impl CreatedState {
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_action<M, F, S>(
         caller: Principal,
         canister_id: Principal,

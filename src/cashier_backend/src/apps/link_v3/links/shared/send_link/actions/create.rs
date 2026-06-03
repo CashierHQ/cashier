@@ -200,7 +200,7 @@ impl CreateActionV3 {
             actual_amount,
             approval_amount,
             sender_id: link.creator,
-            spender_account: spender_account.clone(),
+            spender_account,
             receiver_id: canister_id,
             dest_address_type: AddressTypeV3::Treasury,
             created_at_ts: link.created_at,
