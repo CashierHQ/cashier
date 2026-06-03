@@ -135,6 +135,22 @@ describe("PreviewStateV3", () => {
     });
   });
 
+  describe("constructor", () => {
+    it("it_should_initialize_draft_action_on_construction", () => {
+      const store = makeStore();
+      new PreviewStateV3(store);
+      expect(
+        store.initializeCreateLinkActionFromTemplate,
+      ).toHaveBeenCalledTimes(1);
+      expect(store.draftAction).toEqual(MOCK_ACTION);
+    });
+
+    it("it_should_succeed_construction_when_init_action_fails", () => {
+      const store = makeStore({ initActionResult: "err" });
+      expect(() => new PreviewStateV3(store)).not.toThrow();
+    });
+  });
+
   describe("goNext", () => {
     it("it_should_fail_go_next_due_to_undefined_draft_link", async () => {
       const store = makeStore({ draftLinkUndefined: true });
@@ -145,7 +161,11 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_fail_go_next_due_to_initialize_action_failure", async () => {
-      const store = makeStore({ initActionResult: "err" });
+      // initActionResult: "err" means every call fails (constructor + goNext)
+      const store = makeStore({
+        initActionResult: "err",
+        setDraftActionOnInit: false,
+      });
       const state = new PreviewStateV3(store);
       await expect(state.goNext()).rejects.toThrow(
         "Failed to initialize action from template: template init failed",

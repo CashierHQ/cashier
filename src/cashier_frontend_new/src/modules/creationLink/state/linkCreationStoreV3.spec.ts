@@ -95,6 +95,9 @@ describe("LinkCreationStoreV3", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.account = { owner: CREATOR_TEXT };
+    vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
+      Err(new Error("no template configured")),
+    );
   });
 
   describe("constructor / getStateHandler", () => {

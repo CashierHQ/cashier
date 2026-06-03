@@ -25,12 +25,10 @@
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
-  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
   import type {
     AddAssetItem,
     GenericCreationLinkStoreVM,
   } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
@@ -195,53 +193,9 @@
     return [];
   });
 
-  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
-  const createLinkForecastAssetAndFee = $derived.by(() => {
-    if (
-      !linkStore ||
-      !linkStore.link ||
-      linkStore.link.state !== LinkState.CREATE_LINK ||
-      linkStore.action
-    ) {
-      return [];
-    }
-
-    const tokens = Object.fromEntries(
-      (walletStore.query.data ?? []).map((t) => [t.address, t]),
-    );
-    const maxUse = Number(linkStore.link.link_use_action_max_count);
-
-    if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
-      return [];
-    }
-
-    const linkAssets: CreateLinkAsset[] = linkStore.link.asset_info
-      .map((ai) => {
-        const address = ai.asset.address?.toString();
-        if (!address) return null;
-        return new CreateLinkAsset(address, ai.amount_per_link_use_action);
-      })
-      .filter((a): a is CreateLinkAsset => a !== null);
-
-    const result = feeService.forecastLinkCreationFees(
-      linkAssets,
-      maxUse,
-      tokens,
-    );
-    if (result.isErr()) {
-      return [];
-    }
-    return result.unwrap();
-  });
-
   // Total fees in USD from backend action (CREATE_LINK state)
   const totalFeesUsd = $derived.by(() => {
-    const feesSource =
-      createLinkActionAssetAndFee.length > 0
-        ? createLinkActionAssetAndFee
-        : createLinkForecastAssetAndFee;
-
-    return feesSource.reduce(
+    return createLinkActionAssetAndFee.reduce(
       (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
@@ -256,16 +210,9 @@
       return [];
     }
 
-    if (createLinkActionAssetAndFee.length > 0) {
-      return feeService.buildBreakdown(
-        createLinkActionAssetAndFee,
-        walletStore.query.data ?? [],
-      );
-    }
-
-    return buildPreviewFeesBreakdown(
-      createLinkForecastAssetAndFee,
-      walletStore.findTokenByAddress.bind(walletStore),
+    return feeService.buildBreakdown(
+      createLinkActionAssetAndFee,
+      walletStore.query.data ?? [],
     );
   });
 
@@ -289,10 +236,7 @@
       ) {
         return [];
       }
-      if (createLinkActionAssetAndFee.length > 0) {
-        return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
-      }
-      return createLinkForecastAssetAndFee;
+      return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
     },
   );
 

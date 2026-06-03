@@ -22,14 +22,12 @@ import {
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 
-import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import { FeeType, type FeeItem } from "$modules/links/types/fee";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type {
   AssetAndFee,
   AssetAndFeeList,
   FeeConfig,
-  ForecastAssetAndFee,
   WalletAssetInput,
 } from "$modules/shared/types/feeService";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
@@ -46,7 +44,6 @@ import {
   IntentType as SharedIntentType,
   type Intent as SharedIntent,
 } from "$shared";
-import { Err, Ok, Result } from "ts-results-es";
 
 export class FeeService {
   /**
@@ -400,196 +397,6 @@ export class FeeService {
       symbol: "ICP",
       decimals: 8,
     };
-  }
-
-  /**
-   * Forecasts asset and fee rows for the create-link preview before backend action creation.
-   *
-   * The forecast uses shared fee calculation logic for funding intents,
-   * link-creation fees, and optional gate fees. It is intended for preview UI
-   * only; the backend remains authoritative for persisted action fees.
-   *
-   * @param linkAssets Assets selected for the draft link.
-   * @param maxUse Maximum number of times the link can be used.
-   * @param tokens Token metadata lookup keyed by token canister address.
-   * @param gateCount Number of gates configured on the draft link.
-   * @returns Forecast asset and fee rows, or an error when required token metadata is missing.
-   */
-  forecastLinkCreationFees(
-    linkAssets: Array<CreateLinkAsset>,
-    maxUse: number,
-    tokens: Record<string, TokenWithPriceAndBalance>,
-    gateCount: number = 0,
-  ): Result<ForecastAssetAndFee[], Error> {
-    const pairs: ForecastAssetAndFee[] = [];
-
-    for (const assetData of linkAssets) {
-      const token = tokens[assetData.address];
-
-      if (!token) {
-        return Err(
-          new Error(`Token not found for address ${assetData.address}`),
-        );
-      } else {
-        const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        const tokenStandard = TokenMetadataHelper.getTokenStandard(token);
-
-        // use shared package to calculate intent fees
-        const intentFees = calculateIntentFees({
-          intent_participants: IntentParticipants.CreatorToLink,
-          token_standard: TokenStandardMapper.toSharedType(tokenStandard),
-          user_input_amount: assetData.useAmount,
-          max_use: maxUse,
-          asset_network_fee: tokenFee,
-        });
-
-        const assetAmount =
-          BigInt(intentFees.intent_total_amount) +
-          BigInt(intentFees.intent_total_network_fee);
-        const assetAmountUi = parseBalanceUnits(assetAmount, token.decimals);
-        const assetAmountUsd = token.priceUSD
-          ? assetAmountUi * token.priceUSD
-          : undefined;
-
-        // Total network fees = tokenFee * maxUse (for funding) + tokenFee (for claiming)
-        const totalNetworkFees = BigInt(intentFees.intent_total_network_fee);
-        const totalNetworkFeesUi = parseBalanceUnits(
-          totalNetworkFees,
-          token.decimals,
-        );
-        const totalNetworkFeesUsd = token.priceUSD
-          ? totalNetworkFeesUi * token.priceUSD
-          : undefined;
-
-        pairs.push({
-          asset: {
-            label: "",
-            symbol: token.symbol,
-            address: assetData.address,
-            amount: formatNumber(assetAmountUi),
-            usdValueStr: assetAmountUsd
-              ? formatUsdAmount(assetAmountUsd)
-              : undefined,
-            icon: token.runeInfo?.icon,
-          },
-          fee: {
-            amount: totalNetworkFees,
-            feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: formatNumber(totalNetworkFeesUi),
-            symbol: token.symbol,
-            price: token.priceUSD,
-            usdValue: totalNetworkFeesUsd,
-            usdValueStr: totalNetworkFeesUsd
-              ? formatUsdAmount(totalNetworkFeesUsd)
-              : undefined,
-          },
-        });
-      }
-    }
-
-    // Add link creation fee item
-    const linkFeeInfo = this.getLinkCreationFee();
-    const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
-    if (!linkFeeToken) {
-      return Err(new Error("Link fee token not found"));
-    }
-
-    const isFeeTokenAlsoAsset =
-      linkFeeInfo.tokenAddress !== undefined &&
-      linkAssets.some(
-        (a) =>
-          a.address.toLowerCase() === linkFeeInfo.tokenAddress!.toLowerCase(),
-      );
-
-    const intentFees = calculateIntentFees({
-      intent_participants: IntentParticipants.CreatorToTreasury,
-      token_standard: TokenStandardMapper.toSharedType(
-        TokenMetadataHelper.getTokenStandard(linkFeeToken),
-      ),
-      user_input_amount: 0n,
-      max_use: maxUse,
-      asset_network_fee: linkFeeToken.fee,
-      link_creation_fee: linkFeeInfo.amount,
-    });
-
-    // When fee token is also used as an asset, one ledger fee overlaps between
-    // the asset network fees and the link creation fee intent. Align preview
-    // with max-amount validation (and backend/shared calculations) by
-    // subtracting a single ledger fee from the displayed link creation fee.
-    const linkCreationFeeTotalRaw =
-      BigInt(intentFees.intent_total_amount) +
-      BigInt(intentFees.intent_total_network_fee);
-    const overlapFee = isFeeTokenAlsoAsset ? (linkFeeToken.fee ?? 0n) : 0n;
-    const linkCreationFeeTotal =
-      linkCreationFeeTotalRaw > overlapFee
-        ? linkCreationFeeTotalRaw - overlapFee
-        : 0n;
-
-    const linkFeeFormatted = parseBalanceUnits(
-      linkCreationFeeTotal,
-      linkFeeToken.decimals,
-    );
-    const linkFeeUsd = linkFeeToken.priceUSD
-      ? linkFeeFormatted * linkFeeToken.priceUSD
-      : undefined;
-
-    pairs.push({
-      asset: {
-        label: "Create link fee",
-        symbol: linkFeeToken.symbol,
-        address: linkFeeInfo.tokenAddress,
-        amount: formatNumber(linkFeeFormatted),
-        usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
-        icon: linkFeeToken.runeInfo?.icon,
-      },
-      fee: {
-        amount: linkCreationFeeTotal,
-        feeType: FeeType.CREATE_LINK_FEE,
-        amountFormattedStr: formatNumber(linkFeeFormatted),
-        symbol: linkFeeToken.symbol,
-        price: linkFeeToken.priceUSD,
-        usdValue: linkFeeUsd,
-        usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
-      },
-    });
-
-    const gateFeeInfo = this.getGateFee(gateCount, maxUse);
-    if (gateFeeInfo.amount > 0n) {
-      const gateFeeToken = tokens[gateFeeInfo.tokenAddress];
-      if (!gateFeeToken) {
-        return Err(new Error("Gate fee token not found"));
-      }
-
-      const gateFeeFormatted = parseBalanceUnits(
-        gateFeeInfo.amount,
-        gateFeeToken.decimals,
-      );
-      const gateFeeUsd = gateFeeToken.priceUSD
-        ? gateFeeFormatted * gateFeeToken.priceUSD
-        : undefined;
-
-      pairs.push({
-        asset: {
-          label: "Gate fee",
-          symbol: gateFeeToken.symbol,
-          address: gateFeeInfo.tokenAddress,
-          amount: formatNumber(gateFeeFormatted),
-          usdValueStr: gateFeeUsd ? formatUsdAmount(gateFeeUsd) : undefined,
-          icon: gateFeeToken.runeInfo?.icon,
-        },
-        fee: {
-          amount: gateFeeInfo.amount,
-          feeType: FeeType.GATE_FEE,
-          amountFormattedStr: formatNumber(gateFeeFormatted),
-          symbol: gateFeeToken.symbol,
-          price: gateFeeToken.priceUSD,
-          usdValue: gateFeeUsd,
-          usdValueStr: gateFeeUsd ? formatUsdAmount(gateFeeUsd) : undefined,
-        },
-      });
-    }
-
-    return Ok(pairs);
   }
 }
 

@@ -6,19 +6,21 @@
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import { feeService } from "$modules/shared/services/feeService";
-  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import type {
+    AssetAndFeeList,
+    ForecastAssetAndFee,
+  } from "$modules/shared/types/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { toast } from "svelte-sonner";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-  import { locale } from "$lib/i18n";
 
   const {
     link,
@@ -64,44 +66,55 @@
     );
   });
 
-  // Forecast link creation fees for preview
-  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
-    if (!link.assets || link.assets.length === 0) return [];
+  function assetAndFeeListToForecastShape(
+    list: AssetAndFeeList,
+  ): ForecastAssetAndFee[] {
+    return list.map((item) => ({
+      asset: {
+        label: item.asset.label,
+        symbol: item.asset.symbol,
+        address: item.asset.address,
+        amount: item.asset.amountFormattedStr,
+        usdValueStr: item.asset.usdValueStr,
+        icon: item.asset.icon,
+      },
+      fee: item.fee,
+    }));
+  }
+
+  const assetAndFeeList: AssetAndFeeList = $derived.by(() => {
+    const action = link.action;
+    const walletPrincipal = authState.account?.owner;
+    if (!action || !walletPrincipal) return [];
 
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    const forecastResult = feeService.forecastLinkCreationFees(
-      link.assets,
+    return feeService.buildFromAction(
+      action,
       link.maxUse,
       tokens,
-      gatingStore?.gateDrafts.length ?? 0,
+      walletPrincipal,
     );
-
-    if (forecastResult.isErr()) {
-      console.error(
-        "Error forecasting link creation fees:",
-        forecastResult.unwrapErr(),
-      );
-      return [];
-    }
-
-    return forecastResult.unwrap();
   });
+
+  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived(
+    assetAndFeeListToForecastShape(assetAndFeeList),
+  );
 
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return forecastLinkCreationFees.reduce(
-      (total, item) => total + (item.fee?.usdValue || 0),
+    return assetAndFeeList.reduce(
+      (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
   });
 
   const feesBreakdown = $derived.by(() => {
-    return buildPreviewFeesBreakdown(
-      forecastLinkCreationFees,
-      walletStore.findTokenByAddress.bind(walletStore),
+    return feeService.buildBreakdown(
+      assetAndFeeList,
+      walletStore.query.data ?? [],
     );
   });
 

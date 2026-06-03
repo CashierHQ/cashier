@@ -16,6 +16,7 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
   constructor(linkStore: LinkCreationStoreV3) {
     this.#linkStore = linkStore;
+    this.#linkStore.initializeCreateLinkActionFromTemplate();
   }
 
   // Create the link using the backend service and move to the created state
