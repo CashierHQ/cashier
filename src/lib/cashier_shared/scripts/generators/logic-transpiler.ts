@@ -473,14 +473,19 @@ function convertFunction(func: FunctionDeclaration): string {
 }
 
 // Main transpile function
-export function transpileToRust(sourceFile: string): string {
+export function transpileToRust(
+  sourceFile: string,
+  sourceText?: string
+): string {
   const project = new Project({
     compilerOptions: {
       target: 99, // ESNext
     },
   });
 
-  const source = project.addSourceFileAtPath(sourceFile);
+  const source = sourceText
+    ? project.createSourceFile(sourceFile, sourceText, { overwrite: true })
+    : project.addSourceFileAtPath(sourceFile);
   FUNCTION_PARAM_TYPES.clear();
   for (const func of source.getFunctions()) {
     const funcName = func.getName();
@@ -523,6 +528,7 @@ export function transpileToRust(sourceFile: string): string {
     "",
     "use candid::Nat;",
     "use crate::types::{IntentParticipants, TokenStandard};",
+    "use crate::fee_table::{get_gate_create_fee_table_amount, get_gate_open_fee_table_amount, get_link_creation_fee_table_amount};",
     "",
   ];
 
@@ -551,13 +557,20 @@ export function transpileToRust(sourceFile: string): string {
 }
 
 // Generate TypeScript functions file (copy with proper imports)
-export function generateTypeScriptFunctions(sourceFile: string): string {
-  const source = fs.readFileSync(sourceFile, "utf-8");
+export function generateTypeScriptFunctions(
+  sourceFile: string,
+  sourceText?: string
+): string {
+  const source = sourceText ?? fs.readFileSync(sourceFile, "utf-8");
 
   // Replace the import path
   let output = source.replace(
     /import \{ .* \} from ["']\.\.\/generated\/ts\/types\.js["'];/,
     "import { IntentParticipants, TokenStandard } from './types.js';"
+  );
+  output = output.replace(
+    /import \{[\s\S]*?getGateCreateFeeTableAmount,[\s\S]*?getGateOpenFeeTableAmount,[\s\S]*?getLinkCreationFeeTableAmount,[\s\S]*?\} from ["']\.\.\/generated\/ts\/fee-table\.js["'];/,
+    "import { getGateCreateFeeTableAmount, getGateOpenFeeTableAmount, getLinkCreationFeeTableAmount } from './fee-table.js';"
   );
 
   // Remove generation-only type suppression comments.

@@ -11,7 +11,10 @@ type TemplateJsonValue<T> = T extends bigint
         ? { [K in keyof T]: TemplateJsonValue<T[K]> }
         : T;
 
-type IntentTemplateJson = Omit<TemplateJsonValue<Intent>, "network_fee"> & {
+export type IntentTemplateJson = Omit<
+  TemplateJsonValue<Intent>,
+  "network_fee"
+> & {
   total_network_fee?: string;
 };
 

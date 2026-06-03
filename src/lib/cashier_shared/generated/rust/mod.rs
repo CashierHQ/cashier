@@ -3,5 +3,7 @@
 
 pub mod types;
 pub use types::*;
+pub mod fee_table;
+pub use fee_table::*;
 pub mod functions;
 pub use functions::*;

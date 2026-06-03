@@ -12,7 +12,7 @@
  * - Avoid closures, async, or complex types
  *
  * To add/modify fee logic:
- * 1. Edit THIS file only
+ * 1. Edit this file for formulas, or templates/fees.json for static fee amounts
  * 2. Run `pnpm run generate`
  * 3. Both TS and Rust code will be updated
  */
@@ -20,26 +20,38 @@
 // These types are imported from generated types
 // @ts-expect-error - Will be replaced during generation
 import { IntentParticipants, TokenStandard } from "../generated/ts/types.js";
+// @ts-expect-error - Will be replaced during generation
+import {
+  getGateCreateFeeTableAmount,
+  getGateOpenFeeTableAmount,
+  getLinkCreationFeeTableAmount,
+} from "../generated/ts/fee-table.js";
 
 /**
  * Link creation fee in ICP e8s.
+ *
+ * Loaded from templates/fees.json through the generated fee table.
  */
 export function getLinkCreationFeeAmount(): bigint {
-  return 10000n;
+  return getLinkCreationFeeTableAmount();
 }
 
 /**
  * Gate creation fee in ICP e8s.
+ *
+ * Loaded from templates/fees.json through the generated fee table.
  */
 export function getGateCreateFeeAmount(): bigint {
-  return 100000n;
+  return getGateCreateFeeTableAmount();
 }
 
 /**
  * Gate open fee in ICP e8s.
+ *
+ * Loaded from templates/fees.json through the generated fee table.
  */
 export function getGateOpenFeeAmount(): bigint {
-  return 100000n;
+  return getGateOpenFeeTableAmount();
 }
 
 /**

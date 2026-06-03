@@ -13,7 +13,6 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import {
   CASHIER_BACKEND_CANISTER_ID,
   FEE_TREASURY_PRINCIPAL,
-  LINK_CREATION_FEE,
 } from "$modules/shared/constants";
 import {
   ICP_LEDGER_CANISTER_ID,
@@ -29,6 +28,7 @@ import {
   TokenStandard as SharedTokenStandard,
   type Action as SharedAction,
   type Link as SharedLink,
+  getLinkCreationFeeAmount,
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
@@ -281,10 +281,17 @@ export class LinkCreationStoreV3 {
     }
 
     const creator = Principal.fromText(authState.account.owner);
+    const gateCount = this.#pendingGateDraft ? 1 : 0;
     const loadedActionResult = actionTemplateLoader.createActionFromTemplate(
       this.linkType,
       SharedActionType.CreateLink,
       creator,
+      gateCount > 0
+        ? {
+            gateCount,
+            maxUse: Number(this.#draftLink.max_use),
+          }
+        : undefined,
     );
     if (loadedActionResult.isErr()) {
       return Err(new Error("Failed to load action from template"));
@@ -372,7 +379,7 @@ export class LinkCreationStoreV3 {
       network_fee: ICP_LEDGER_FEE,
       token_standard: SharedTokenStandard.ICRC2,
     };
-    intent.amount = LINK_CREATION_FEE;
+    intent.amount = getLinkCreationFeeAmount();
     intent.source_address = this.#draftAction.creator;
     intent.source_address_type = this.#draftAction.creator_address_type;
     intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);

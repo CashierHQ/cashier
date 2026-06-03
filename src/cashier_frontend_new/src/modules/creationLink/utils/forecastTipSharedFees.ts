@@ -1,6 +1,5 @@
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import { FeeType } from "$modules/links/types/fee";
-import { LINK_CREATION_FEE } from "$modules/shared/constants";
 import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import {
@@ -14,16 +13,26 @@ import {
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import {
   calculateIntentFees,
+  getLinkCreationFeeAmount,
   IntentParticipants,
   TokenStandard as SharedTokenStandard,
 } from "$shared";
 
 /**
- * Forecast link creation fees for TIP_SHARED_TEST using the shared fee-calculations.ts logic.
+ * Forecasts SendTip create-link preview rows using shared fee calculation logic.
  *
- * This helper is intentionally isolated from the legacy fee logic used by other link types.
- * It relies solely on the shared package (calculateIntentFees + schemas) so that
- * frontend and backend stay in sync for this template.
+ * This helper is intentionally isolated from legacy fee logic used by other
+ * preview flows. It uses shared package fee calculation functions for
+ * CreatorToLink funding rows and the CreatorToTreasury link creation fee so
+ * preview amounts stay aligned with shared/backend formulas.
+ *
+ * Assets whose token metadata cannot be resolved are skipped and logged. The
+ * link creation fee row is included only when ICP token metadata is available.
+ *
+ * @param linkAssets Assets selected for the draft tip link.
+ * @param maxUse Maximum number of times the link can be used.
+ * @param tokens Token metadata lookup keyed by token canister address.
+ * @returns Forecast asset and fee rows for rendering the SendTip preview.
  */
 export function forecastTipSharedFees(
   linkAssets: Array<CreateLinkAsset>,
@@ -101,7 +110,7 @@ export function forecastTipSharedFees(
 
   // 2. Link creation fee via CreatorToTreasury intent
   const linkFeeInfo = {
-    amount: LINK_CREATION_FEE,
+    amount: getLinkCreationFeeAmount(),
     tokenAddress: ICP_LEDGER_CANISTER_ID,
   };
   const linkFeeToken = tokens[linkFeeInfo.tokenAddress];

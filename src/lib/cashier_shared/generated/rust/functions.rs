@@ -8,22 +8,32 @@
 
 #![allow(dead_code)]
 
+use crate::fee_table::{
+    get_gate_create_fee_table_amount, get_gate_open_fee_table_amount,
+    get_link_creation_fee_table_amount,
+};
 use crate::types::{IntentParticipants, TokenStandard};
 use candid::Nat;
 
 /// Link creation fee in ICP e8s.
+///
+/// Loaded from templates/fees.json through the generated fee table.
 pub fn get_link_creation_fee_amount() -> Nat {
-    Nat::from(10000u64)
+    get_link_creation_fee_table_amount()
 }
 
 /// Gate creation fee in ICP e8s.
+///
+/// Loaded from templates/fees.json through the generated fee table.
 pub fn get_gate_create_fee_amount() -> Nat {
-    Nat::from(100000u64)
+    get_gate_create_fee_table_amount()
 }
 
 /// Gate open fee in ICP e8s.
+///
+/// Loaded from templates/fees.json through the generated fee table.
 pub fn get_gate_open_fee_amount() -> Nat {
-    Nat::from(100000u64)
+    get_gate_open_fee_table_amount()
 }
 
 /// Calculate the total gate fee for all gates on a link.
