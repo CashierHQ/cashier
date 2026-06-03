@@ -49,6 +49,7 @@ function makeValidTemplate(
         dest_address_type: AddressType.Link,
         dependencies: [],
         intent_state: IntentState.Created,
+        label: "TEST_LABEL",
       },
     ],
     ...overrides,
@@ -76,6 +77,7 @@ function makeValidIntentTemplate(
     dest_address_type: AddressType.Link,
     dependencies: [],
     intent_state: IntentState.Created,
+    label: "TEST_LABEL",
     ...overrides,
   };
 }
@@ -105,6 +107,7 @@ function makeValidAction(overrides?: Partial<Action>): Action {
         dest_address_type: AddressType.Link,
         dependencies: [],
         intent_state: IntentState.Created,
+        label: "TEST_LABEL",
       },
     ],
     ...overrides,

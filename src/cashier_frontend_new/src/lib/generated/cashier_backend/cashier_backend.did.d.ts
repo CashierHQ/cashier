@@ -266,6 +266,7 @@ export interface Intent {
   'asset' : Asset_1,
   'dest_address_type' : AddressType,
   'dest_address' : Principal,
+  'label' : string,
   'source_address' : Principal,
   'intent_state' : IntentState_1,
   'source_address_type' : AddressType,

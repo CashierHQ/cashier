@@ -15,5 +15,6 @@
   "dest_address": "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae",
   "dest_address_type": "Gate",
   "dependencies": [],
-  "intent_state": "Created"
+  "intent_state": "Created",
+  "label": "GATE_FEE"
 }

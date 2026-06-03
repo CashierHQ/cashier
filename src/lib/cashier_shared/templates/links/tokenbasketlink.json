@@ -22,7 +22,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id2",
@@ -41,7 +42,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id3",
@@ -60,7 +62,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id4",
@@ -79,7 +82,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id5",
@@ -98,7 +102,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id6",
@@ -117,7 +122,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id7",
@@ -136,7 +142,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id8",
@@ -155,7 +162,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id9",
@@ -174,7 +182,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id10",
@@ -193,7 +202,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       }
     ],
     "action_state": "Created"
@@ -221,7 +231,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id2",
@@ -240,7 +251,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id3",
@@ -259,7 +271,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id4",
@@ -278,7 +291,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id5",
@@ -297,7 +311,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id6",
@@ -316,7 +331,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id7",
@@ -335,7 +351,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id8",
@@ -354,7 +371,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id9",
@@ -373,7 +391,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id10",
@@ -392,7 +411,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       }
     ],
     "action_state": "Created"
@@ -420,7 +440,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id2",
@@ -439,7 +460,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id3",
@@ -458,7 +480,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id4",
@@ -477,7 +500,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id5",
@@ -496,7 +520,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id6",
@@ -515,7 +540,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id7",
@@ -534,7 +560,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id8",
@@ -553,7 +580,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id9",
@@ -572,7 +600,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       },
       {
         "id": "asset_intent_id10",
@@ -591,7 +620,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_TOKEN_BASKET_ASSET"
       }
     ],
     "action_state": "Created"

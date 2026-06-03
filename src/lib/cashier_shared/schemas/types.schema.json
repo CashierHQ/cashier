@@ -163,6 +163,10 @@
         },
         "intent_state": {
           "$ref": "#/definitions/IntentState"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label for the intent"
         }
       },
       "required": [
@@ -174,7 +178,8 @@
         "source_address_type",
         "dest_address",
         "dest_address_type",
-        "intent_state"
+        "intent_state",
+        "label"
       ]
     },
 

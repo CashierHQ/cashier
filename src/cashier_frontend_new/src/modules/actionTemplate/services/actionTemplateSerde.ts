@@ -61,6 +61,7 @@ export function deserializeIntentTemplate(
       ),
       dependencies: template.dependencies ?? [],
       intent_state: parseIntentState(template.intent_state),
+      label: template.label,
     });
   } catch (error) {
     return Err(
@@ -147,6 +148,7 @@ export function serializeActionTemplate(action: Action): ActionTemplateJson {
       dest_address_type: intent.dest_address_type,
       dependencies: intent.dependencies ?? [],
       intent_state: intent.intent_state,
+      label: intent.label,
     })),
     action_state: action.action_state,
   };

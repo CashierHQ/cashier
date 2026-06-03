@@ -173,6 +173,8 @@ export interface Intent {
   /** ID of the action this intent belongs to */
   action_id?: string;
   intent_state: IntentState;
+  /** Human-readable label for the intent */
+  label: string;
 }
 
 /**

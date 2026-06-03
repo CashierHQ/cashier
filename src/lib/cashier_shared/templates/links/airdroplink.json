@@ -22,7 +22,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Link",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_AIRDROP_ASSET"
       }
     ],
     "action_state": "Created"
@@ -50,7 +51,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "User",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_AIRDROP_ASSET"
       }
     ],
     "action_state": "Created"
@@ -78,7 +80,8 @@
         "dest_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
         "dest_address_type": "Creator",
         "dependencies": [],
-        "intent_state": "Created"
+        "intent_state": "Created",
+        "label": "SEND_AIRDROP_ASSET"
       }
     ],
     "action_state": "Created"

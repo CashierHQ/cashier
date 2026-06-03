@@ -247,6 +247,8 @@ pub struct Intent {
     /// ID of the action this intent belongs to
     pub action_id: Option<String>,
     pub intent_state: IntentState,
+    /// Human-readable label for the intent
+    pub label: String,
 }
 
 /// Input parameters for fee calculation

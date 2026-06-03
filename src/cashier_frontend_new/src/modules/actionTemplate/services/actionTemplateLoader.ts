@@ -19,6 +19,7 @@ import {
 import {
   ActionState,
   calculateIntentFees,
+  getLinkCreationFeeAmount,
   IntentParticipants,
   IntentState,
   ActionType as SharedActionType,
@@ -28,7 +29,6 @@ import {
   type Action,
   type AssetInfo,
   type Intent,
-  getLinkCreationFeeAmount,
 } from "$shared";
 import gateFeeIntentTemplate from "$sharedTemplates/intents/gatefee.json";
 import linkCreationFeeIntentTemplate from "$sharedTemplates/intents/linkCreationFee.json";
@@ -251,6 +251,7 @@ export class ActionTemplateLoader {
       intent.source_address_type = action.creator_address_type;
       intent.dest_address = linkAddress;
       intent.dest_address_type = SharedAddressType.Link;
+      intent.label = `${intent.label}_${linkAssetInfo.asset.address.toText()}`;
     }
 
     return Ok(undefined);

@@ -249,6 +249,7 @@ export const idlFactory = ({ IDL }) => {
     'asset' : Asset_1,
     'dest_address_type' : AddressType,
     'dest_address' : IDL.Principal,
+    'label' : IDL.Text,
     'source_address' : IDL.Principal,
     'intent_state' : IntentState_1,
     'source_address_type' : AddressType,
