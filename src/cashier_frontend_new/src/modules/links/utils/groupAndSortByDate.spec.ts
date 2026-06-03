@@ -61,7 +61,7 @@ describe("groupAndSortByDate util", () => {
     expect(result[0].links).toEqual([link1, link2]);
   });
 
-  it("includes temp links in grouping", () => {
+  it("includes draft links in grouping", () => {
     const time = 1746835200000000000n;
     const link = makeLink(time);
     const link2 = makeLink(time + 60n * 60n * 1000000000n); // +1 hour
@@ -74,7 +74,7 @@ describe("groupAndSortByDate util", () => {
     expect(result[0].links).toContainEqual(link2);
   });
 
-  it("groups temp links and persisted links on different days", () => {
+  it("groups draft links and persisted links on different days", () => {
     const day1 = 1746835200000000000n;
     const day2 = day1 + 24n * 60n * 60n * 1000000000n; // +1 day
     const day3 = day2 + 24n * 60n * 60n * 1000000000n; // +1 day
@@ -82,8 +82,8 @@ describe("groupAndSortByDate util", () => {
     const link = makeLink(day1);
     const link2 = makeLink(day2);
     const link3 = makeLink(day3);
-    link2.title = "Temp Link 1";
-    link3.title = "Temp Link 2";
+    link2.title = "Draft Link 1";
+    link3.title = "Draft Link 2";
 
     const result = groupAndSortByDate([link, link2, link3]);
 
@@ -95,50 +95,50 @@ describe("groupAndSortByDate util", () => {
     expect(result[2].links).toEqual([link]);
   });
 
-  it("handles only temp links", () => {
+  it("handles only draft links", () => {
     const time = 1746835200000000000n;
-    const tempLink1: UnifiedLinkItem = {
-      id: "t1",
-      title: "Temp 1",
+    const draftLink1: UnifiedLinkItem = {
+      id: "d1",
+      title: "Draft 1",
       linkCreateAt: time,
       state: LinkState.ADDING_ASSET,
       linkType: LinkType.TIP,
     };
-    const tempLink2: UnifiedLinkItem = {
-      id: "t2",
-      title: "Temp 2",
+    const draftLink2: UnifiedLinkItem = {
+      id: "d2",
+      title: "Draft 2",
       linkCreateAt: time + 60n * 60n * 1000000000n,
       state: LinkState.PREVIEW,
       linkType: LinkType.TIP,
     };
 
-    const result = groupAndSortByDate([tempLink1, tempLink2]);
+    const result = groupAndSortByDate([draftLink1, draftLink2]);
 
     expect(result).toHaveLength(1);
     expect(result[0].links).toHaveLength(2);
-    expect(result[0].links).toContainEqual(tempLink1);
-    expect(result[0].links).toContainEqual(tempLink2);
+    expect(result[0].links).toContainEqual(draftLink1);
+    expect(result[0].links).toContainEqual(draftLink2);
   });
 
-  it("sorts links within same day by newest first (temp link newest)", () => {
+  it("sorts links within same day by newest first (draft link newest)", () => {
     const baseTime = 1746835200000000000n;
     // persisted link older
     const persisted = makeLink(baseTime);
-    // temp link newer by +1 hour
+    // draft link newer by +1 hour
 
-    const tempNew: UnifiedLinkItem = {
-      id: "temp-new",
+    const draftNew: UnifiedLinkItem = {
+      id: "draft-new",
       title: "Newest",
       linkCreateAt: baseTime + 60n * 60n * 1000000000n,
       state: LinkState.PREVIEW,
       linkType: LinkType.TIP,
     };
 
-    const result = groupAndSortByDate([persisted, tempNew]);
+    const result = groupAndSortByDate([persisted, draftNew]);
 
     expect(result).toHaveLength(1);
     // newest should be first
-    expect(result[0].links[0]).toEqual(tempNew);
+    expect(result[0].links[0]).toEqual(draftNew);
     expect(result[0].links[1]).toEqual(persisted);
   });
 

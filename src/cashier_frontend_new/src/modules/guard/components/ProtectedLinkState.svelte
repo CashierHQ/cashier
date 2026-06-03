@@ -28,10 +28,7 @@
   const context = getGuardContext();
 
   const linkStore = $derived(
-    context.linkDetailStoreV3 ||
-      context.linkDetailStore ||
-      context.linkCreationStore ||
-      context.linkCreationStoreV3,
+    context.linkDetailStoreV3 || context.linkCreationStoreV3,
   );
 
   const currentStep = $derived(

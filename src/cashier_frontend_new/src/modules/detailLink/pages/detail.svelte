@@ -34,7 +34,6 @@
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
-  import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import {
     calculateLinkInfoAssetsWithTokenInfo,
@@ -74,10 +73,6 @@
     const storeV3 = context.linkDetailStoreV3;
     if (storeV3) {
       return new DetailStoreV3ViewModelAdapter(storeV3);
-    }
-    const store = context.linkDetailStore;
-    if (store) {
-      return new DetailStoreViewModelAdapter(store);
     }
     return null;
   });

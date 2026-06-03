@@ -1,4 +1,4 @@
-import type { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import type { CreateLinkData } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 import {
   calculateRequiredAssetAmount,
   calculateTotalAssetAmount,

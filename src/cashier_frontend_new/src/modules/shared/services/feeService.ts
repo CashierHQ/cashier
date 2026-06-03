@@ -22,14 +22,8 @@ import {
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 
-import { assertUnreachable } from "$lib/rsMatch";
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
-import {
-  FeeType,
-  type ComputeAmountAndFeeInput,
-  type ComputeAmountAndFeeOutput,
-  type FeeItem,
-} from "$modules/links/types/fee";
+import { FeeType, type FeeItem } from "$modules/links/types/fee";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import type {
   AssetAndFee,
@@ -91,55 +85,6 @@ export class FeeService {
       return FlowDirection.INCOMING;
     }
     throw new Error("User is neither sender nor receiver");
-  }
-
-  /**
-   * Computes the displayed amount and fee for a legacy action intent.
-   *
-   * The calculation depends on the action type and whether the intent moves
-   * funds to treasury, to a link, from a link, or between wallets.
-   *
-   * @param input Intent, ledger fee, and action type used for calculation.
-   * @returns Display amount and fee for the intent.
-   */
-  computeAmount({
-    intent,
-    ledgerFee,
-    actionType,
-  }: ComputeAmountAndFeeInput): ComputeAmountAndFeeOutput {
-    let output: ComputeAmountAndFeeOutput;
-    switch (actionType) {
-      case ActionType.CREATE_LINK:
-        if (intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY) {
-          const total = ledgerFee * 2n + intent.type.payload.amount;
-          output = { amount: total, fee: total };
-        } else {
-          output = {
-            amount: ledgerFee + intent.type.payload.amount,
-            fee: ledgerFee,
-          };
-        }
-        break;
-      case ActionType.WITHDRAW:
-        output = {
-          amount: intent.type.payload.amount,
-          fee: ledgerFee,
-        };
-        break;
-      case ActionType.SEND:
-        output = {
-          amount: intent.type.payload.amount + ledgerFee,
-          fee: ledgerFee,
-        };
-        break;
-      case ActionType.RECEIVE:
-        output = { amount: intent.type.payload.amount, fee: undefined };
-        break;
-      default:
-        return assertUnreachable(actionType);
-    }
-
-    return output;
   }
 
   /**

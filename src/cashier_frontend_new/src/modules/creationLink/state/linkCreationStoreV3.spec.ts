@@ -57,10 +57,6 @@ vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
   draftLinkRepository: { delete: vi.fn() },
 }));
 
-vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
-  tempLinkRepository: { delete: vi.fn() },
-}));
-
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
 const CREATOR_TEXT =

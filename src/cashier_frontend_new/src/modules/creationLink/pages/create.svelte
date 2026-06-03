@@ -7,13 +7,10 @@
   import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
   import Preview from "$modules/creationLink/components/preview.svelte";
   import { CreationStoreV3ViewModelAdapter } from "$modules/creationLink/state/adapters/storeV3ViewModelAdapter";
-  import { CreationStoreViewModelAdapter } from "$modules/creationLink/state/adapters/storeViewModelAdapter";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { ChooseLinkTypeVM } from "$modules/creationLink/types/viewModels/chooseLinkTypeVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
-  import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
@@ -25,7 +22,6 @@
   import { onMount } from "svelte";
 
   const context = getGuardContext();
-  const isV3 = $derived.by(() => !!context.linkCreationStoreV3);
   const gatingStore = new GatingStore();
 
   $effect(() => {
@@ -46,16 +42,9 @@
     (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null
   >(() => {
     const storeV3 = context.linkCreationStoreV3;
-    if (isV3 && storeV3) {
+    if (storeV3) {
       if (!cachedCreationStore) {
         cachedCreationStore = new CreationStoreV3ViewModelAdapter(storeV3);
-      }
-      return cachedCreationStore;
-    }
-    const store = context.linkCreationStore;
-    if (store) {
-      if (!cachedCreationStore) {
-        cachedCreationStore = new CreationStoreViewModelAdapter(store);
       }
       return cachedCreationStore;
     }
@@ -71,18 +60,13 @@
     const backendId = linkStore?.backendId;
     if (!backendId) return null;
 
-    const detailStoreKey = `${isV3 ? "v3" : "v2"}:${backendId}`;
+    const detailStoreKey = `v3:${backendId}`;
     if (cachedDetailStoreKey === detailStoreKey && cachedDetailStore) {
       return cachedDetailStore;
     }
 
-    if (isV3) {
-      const detailStoreV3 = new LinkDetailStoreV3({ id: backendId });
-      cachedDetailStore = new DetailStoreV3ViewModelAdapter(detailStoreV3);
-    } else {
-      const detailStoreV2 = new LinkDetailStore({ id: backendId });
-      cachedDetailStore = new DetailStoreViewModelAdapter(detailStoreV2);
-    }
+    const detailStoreV3 = new LinkDetailStoreV3({ id: backendId });
+    cachedDetailStore = new DetailStoreV3ViewModelAdapter(detailStoreV3);
     cachedDetailStoreKey = detailStoreKey;
     return cachedDetailStore;
   });
@@ -117,7 +101,7 @@
     <CreateLinkHeader
       {linkStep}
       {linkTitle}
-      showLockStep={isV3}
+      showLockStep={true}
       onBack={handleBack}
     />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}

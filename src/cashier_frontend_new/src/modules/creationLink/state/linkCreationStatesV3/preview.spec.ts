@@ -40,10 +40,6 @@ vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
   draftLinkRepository: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
 }));
 
-vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
-  tempLinkRepository: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
-}));
-
 vi.mock("$modules/links/services/cashierBackend", () => ({
   cashierBackendService: {
     createLinkV3: vi.fn(),
@@ -217,19 +213,13 @@ describe("PreviewStateV3", () => {
       expect(store.id).toBe(MOCK_BACKEND_LINK.id);
     });
 
-    it("it_should_succeed_go_next_delete_draft_and_temp_link_from_storage", async () => {
+    it("it_should_succeed_go_next_delete_draft_link_from_storage", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
-      const { tempLinkRepository } =
-        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: "test-store-id" });
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(draftLinkRepository.delete).toHaveBeenCalledWith(
-        "test-store-id",
-        "test-owner-principal",
-      );
-      expect(tempLinkRepository.delete).toHaveBeenCalledWith(
         "test-store-id",
         "test-owner-principal",
       );
@@ -238,13 +228,10 @@ describe("PreviewStateV3", () => {
     it("it_should_succeed_go_next_not_delete_from_storage_when_no_link_backend_id", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
-      const { tempLinkRepository } =
-        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: null });
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(draftLinkRepository.delete).not.toHaveBeenCalled();
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
     });
   });
 

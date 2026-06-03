@@ -46,11 +46,11 @@ export type CreateLinkWithGateResponseV3 = {
 };
 
 /**
- * Mapper for converting CreateLinkData and SharedAction to CreateLinkInputV3 argument for BE API calls.
+ * Mapper for converting a shared action to CreateLinkInputV3 argument for BE API calls.
  */
 export class CreateLinkInputV3Mapper {
   /**
-   * Convert CreateLinkData and SharedAction to CreateLinkInputV3 argument for backend API calls
+   * Convert SharedAction to CreateLinkInputV3 argument for backend API calls.
    * @param link - the SharedLink containing link details
    * @param action - the SharedAction containing action details
    * @returns Result containing CreateLinkInputV3 or an Error if conversion fails

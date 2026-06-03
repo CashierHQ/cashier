@@ -22,13 +22,13 @@
   const isOwner = $derived.by(() => context.isOwner());
 
   const isLoading = $derived.by(() =>
-    context.isLoading({ checkTempLinkLoad: false }),
+    context.isLoading({ checkDraftLinkLoad: false }),
   );
 
   const isReady = $derived(
     !context.authState.isReady || !linkStore
       ? false
-      : context.linkCreationStore
+      : context.linkCreationStoreV3
         ? true
         : !isLoading,
   );

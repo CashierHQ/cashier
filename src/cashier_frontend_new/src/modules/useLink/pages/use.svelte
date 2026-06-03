@@ -20,7 +20,6 @@
   import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
   import { Lock } from "lucide-svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
-  import { UserLinkStoreViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreViewModelAdapter";
   import {
     shouldRedirectErrorTo404,
     shouldRedirectTo404,
@@ -41,10 +40,6 @@
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {
       return new UserLinkStoreV3ViewModelAdapter(storeV3);
-    }
-    const store = context.userLinkStore;
-    if (store) {
-      return new UserLinkStoreViewModelAdapter(store);
     }
     return null;
   });

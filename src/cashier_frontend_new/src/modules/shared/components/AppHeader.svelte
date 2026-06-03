@@ -41,8 +41,10 @@
     }
   });
 
-  // Get userLinkStore from context if available
-  const userLinkStore = $derived.by(() => guardContext?.userLinkStore ?? null);
+  // Get userLinkStoreV3 from context if available
+  const userLinkStore = $derived.by(
+    () => guardContext?.userLinkStoreV3 ?? null,
+  );
 
   // Get current user link step
   const userLinkStep = $derived(userLinkStore?.step ?? null);
