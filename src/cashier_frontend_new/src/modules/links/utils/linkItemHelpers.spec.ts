@@ -17,7 +17,7 @@ describe("linkItemHelpers", () => {
       "links.status.transferPending": "Transfer Pending",
       "links.status.active": "Active",
       "links.status.inactive": "Inactive",
-      "links.status.ended": "Ended",
+      "links.status.ended": "Inactive (Empty)",
     };
     return translations[key] || key;
   };
@@ -43,8 +43,10 @@ describe("linkItemHelpers", () => {
       expect(getStatusLabel(LinkState.INACTIVE, mockT)).toBe("Inactive");
     });
 
-    it("should return ended label for inactive ended state", () => {
-      expect(getStatusLabel(LinkState.INACTIVE_ENDED, mockT)).toBe("Ended");
+    it("should return inactive empty label for inactive ended state", () => {
+      expect(getStatusLabel(LinkState.INACTIVE_ENDED, mockT)).toBe(
+        "Inactive (Empty)",
+      );
     });
   });
 

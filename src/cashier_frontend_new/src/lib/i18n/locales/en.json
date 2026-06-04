@@ -93,7 +93,7 @@
       "draft": "Draft",
       "active": "Active",
       "inactive": "Inactive",
-      "ended": "Ended"
+      "ended": "Inactive (Empty)"
     },
     "linkForm": {
       "header": {
@@ -236,7 +236,7 @@
         "transactionLock": "Transaction lock",
         "transactionLockUnlock": "Unlocked",
         "transactionLockLock": "Lock",
-        "transactionLockEnded": "Ended",
+        "transactionLockEnded": "Inactive (Empty)",
         "youSend": "You send",
         "youReceive": "You receive",
         "includingNetworkFees": "Including network fees",
