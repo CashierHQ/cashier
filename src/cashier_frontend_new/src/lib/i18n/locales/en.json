@@ -286,7 +286,7 @@
       },
       "detail": {
         "loading": "Loading...",
-        "endLink": "End link",
+        "endLink": "Deactivate Link",
         "copyLink": "Copy link",
         "copied": "Copied successfully",
         "copyFailed": "Failed to copy link",
@@ -309,13 +309,13 @@
           "balanceSyncSuccess": "Balance synced successfully."
         },
         "endLinkConfirm": {
-          "title": "End link",
+          "title": "Deactivate Link",
           "firstStep": {
-            "text": "Ending the link will deactivate the link page, and you will need not be able to retrieve the remaining assets.",
+            "text": "Deactivating the link will make the link page unavailable. You will still be able to retrieve the remaining assets.",
             "confirmButton": "Confirm"
           },
           "secondStep": {
-            "text": "Are you sure you want to end the link? This action cannot be undone.",
+            "text": "Are you sure you want to deactivate the link? This action cannot be undone.",
             "deleteButton": "Delete"
           }
         },
