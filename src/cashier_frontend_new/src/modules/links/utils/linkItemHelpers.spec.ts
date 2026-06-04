@@ -78,7 +78,7 @@ describe("linkItemHelpers", () => {
 
     it("should return ended classes for inactive ended state", () => {
       expect(getStatusClasses(LinkState.INACTIVE_ENDED)).toBe(
-        "bg-red-50 text-red-700",
+        "bg-gray-200 text-gray-700",
       );
     });
   });
