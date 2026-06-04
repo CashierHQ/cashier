@@ -345,8 +345,7 @@
           "airdropMessage": "Congratulations, you received an airdrop!",
           "tokenBasketMessage": "Congratulations, you received a token basket!",
           "claimButton": "Claim",
-          "claimedButton": "Claimed",
-          "continueButton": "Continue"
+          "claimedButton": "Claimed"
         },
         "ended": {
           "title": "This link has ended",
