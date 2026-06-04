@@ -351,7 +351,7 @@
         "ended": {
           "title": "This link has ended",
           "description": "This link is no longer available, so it cannot be claimed or used.",
-          "backButton": "Go Back"
+          "backButton": "Go to Cashier home"
         },
         "errors": {
           "linkDetailMissing": "Link detail is missing",
