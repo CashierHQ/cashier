@@ -88,13 +88,9 @@
     await appHeaderStore.triggerBack();
   }
 
-  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to link list.
+  // Handle logo click - always returns to the public home page.
   async function handleLogoClick() {
-    if (appHeaderStore.hasLogoClickHandler()) {
-      await appHeaderStore.triggerLogoClick();
-      return;
-    }
-    goto(resolve(paths.links()));
+    await goto(resolve(paths.home()));
   }
 </script>
 

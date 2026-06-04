@@ -273,34 +273,12 @@
     await appHeaderStore.triggerBack();
   };
 
-  // Register logo click handler for AppHeader on the use flow
-  const handleLogoClick = async () => {
-    if (!userStore) {
-      return;
-    }
-
-    if (userStore.step === UserLinkStep.COMPLETED) {
-      await goto(resolve(paths.home()));
-      return;
-    }
-
-    try {
-      await userStore.goToLanding();
-    } catch (error) {
-      // goToLanding throws if action exists or invalid state
-      // Stay on current page - do nothing
-      console.warn("goToLanding blocked:", error);
-    }
-  };
-
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
-    appHeaderStore.setLogoClickHandler(handleLogoClick);
   });
 
   onDestroy(() => {
     appHeaderStore.clearBackHandler();
-    appHeaderStore.clearLogoClickHandler();
   });
 </script>
 
