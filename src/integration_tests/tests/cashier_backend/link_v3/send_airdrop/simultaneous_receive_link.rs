@@ -386,7 +386,8 @@ async fn it_should_cap_at_max_use_when_oversubscribed() {
         let mut action_ids = Vec::new();
         for receiver in receivers {
             let fixture =
-                LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee.clone()).await;
+                LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee.clone())
+                    .await;
             let action = fixture
                 .create_action_v3(CreateActionInputV3 {
                     link_id: link_id.clone(),
@@ -442,7 +443,10 @@ async fn it_should_cap_at_max_use_when_oversubscribed() {
             .unwrap()
             .link;
         assert_eq!(link.max_use, 2);
-        assert_eq!(link.use_count, 2, "use_count must be exactly 2 (no over-claim)");
+        assert_eq!(
+            link.use_count, 2,
+            "use_count must be exactly 2 (no over-claim)"
+        );
         assert_eq!(link.link_state, LinkStateShared::Ended);
         assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
 
@@ -465,7 +469,11 @@ async fn it_should_cap_at_max_use_when_oversubscribed() {
             if bal == airdrop_amount {
                 paid += 1;
             } else {
-                assert_eq!(bal, Nat::from(0u64), "a non-winning receiver must be unpaid");
+                assert_eq!(
+                    bal,
+                    Nat::from(0u64),
+                    "a non-winning receiver must be unpaid"
+                );
             }
         }
         assert_eq!(paid, 2, "exactly two receivers should be paid");

@@ -146,10 +146,7 @@ async fn it_should_not_corrupt_link_when_two_users_claim_simultaneously() {
             })
             .await
             .unwrap();
-        let paid_receivers = [&bal1, &bal2]
-            .iter()
-            .filter(|b| ***b == tip_amount)
-            .count();
+        let paid_receivers = [&bal1, &bal2].iter().filter(|b| ***b == tip_amount).count();
         assert_eq!(
             paid_receivers, 1,
             "exactly one receiver should receive the tip (bal1={bal1}, bal2={bal2})"

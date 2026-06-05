@@ -164,84 +164,76 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     }
 
     let mut registry_tokens = vec![
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::ICP_TOKEN.to_string(),
-                    name: "Internet Computer".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKBTC_ICRC_TOKEN.to_string(),
-                    name: "Chain Key Bitcoin".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_ETH_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap(),
-                        ),
-                        fee: Nat::from(2_000_000_000_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKETH_ICRC_TOKEN.to_string(),
-                    name: "Chain Key Ethereum".to_string(),
-                    decimals: 18,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_USDC_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
-                    name: "Chain Key USD Coin".to_string(),
-                    decimals: 6,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(TESTICP_PRINCIPAL).unwrap(),
-                        index_id: None,
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1],
-                    },
-                    symbol: constant::TESTICP_ICRC_TOKEN.to_string(),
-                    name: "Test Internet Computer".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::ICP_TOKEN.to_string(),
+            name: "Internet Computer".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap()),
+                fee: Nat::from(10u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKBTC_ICRC_TOKEN.to_string(),
+            name: "Chain Key Bitcoin".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_ETH_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap()),
+                fee: Nat::from(2_000_000_000_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKETH_ICRC_TOKEN.to_string(),
+            name: "Chain Key Ethereum".to_string(),
+            decimals: 18,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_USDC_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap()),
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
+            name: "Chain Key USD Coin".to_string(),
+            decimals: 6,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(TESTICP_PRINCIPAL).unwrap(),
+                index_id: None,
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1],
+            },
+            symbol: constant::TESTICP_ICRC_TOKEN.to_string(),
+            name: "Test Internet Computer".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
     ];
     for (symbol, pid) in extra_basket_tokens.iter() {
         registry_tokens.push(RegistryToken {

@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
-use cashier_common::constant::RESERVATION_TTL_NS;
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
@@ -19,6 +18,7 @@ use cashier_backend_types::{
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
 };
+use cashier_common::constant::RESERVATION_TTL_NS;
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};

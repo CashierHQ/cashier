@@ -1,8 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::{
+    apps::{
+        action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
+        link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
+        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
+    },
+    repositories::{self, Repositories},
+};
 use candid::{Nat, Principal};
-use std::collections::HashMap;
 use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
     dto::{action::Icrc112Requests, link::GetLinkOptions},
@@ -29,18 +36,11 @@ use cashier_shared::{
     AddressType as SharedAddressType,
     types::{Action as SharedAction, ActionType as SharedActionType},
 };
+use log::{error, info};
+use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
     v3::traits::TransactionManagerV3,
-};
-use log::{error, info};
-use crate::{
-    apps::{
-        action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
-        link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
-        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
-    },
-    repositories::{self, Repositories},
 };
 
 pub struct LinkV3Service<R: Repositories> {
@@ -365,8 +365,7 @@ impl<R: Repositories> LinkV3Service<R> {
 
         info!(
             "Formatted response for processed action {:#?} for link {:#?}",
-            result.process_action_result.action,
-            result.link,
+            result.process_action_result.action, result.link,
         );
 
         Ok(ProcessActionResponseV3 {

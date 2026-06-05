@@ -73,7 +73,7 @@ mod tests {
         let reservations = vec![reservation("action-1", 100), reservation("action-2", 200)];
 
         // Act
-        repo.put(&link_id, reservations.clone());
+        repo.put(&link_id, reservations);
 
         // Assert
         let retrieved = repo.get(&link_id);

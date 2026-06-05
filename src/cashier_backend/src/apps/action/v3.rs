@@ -21,9 +21,9 @@ use cashier_backend_types::{
     service::action::v3::ActionDataV3,
 };
 use cashier_shared::types::Action as ActionShared;
+use log::error;
 use std::collections::HashMap;
 use uuid::Uuid;
-use log::{error};
 
 use crate::repositories::{self, Repositories};
 
@@ -217,12 +217,10 @@ impl<R: Repositories> ActionServiceV3<R> {
             };
 
             self.user_link_action_repository.update(link_action);
-        }
-        else {
+        } else {
             error!(
                 "Link user state not updated for action {:#?} of link {:#?} due to unsuccessful processing or non-matching action type/state",
-                action,
-                result.link,
+                action, result.link,
             );
         }
     }

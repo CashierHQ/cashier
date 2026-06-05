@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use log::error;
 use cashier_backend_types::{
     error::CanisterError,
     link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
@@ -13,6 +12,7 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
+use log::error;
 use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
@@ -126,8 +126,7 @@ impl ActiveState {
             if link.use_count >= link.max_use {
                 link.state = LinkState::Ended;
             }
-        }
-        else {
+        } else {
             error!(
                 "Failed to process RECEIVE action for link {}, action {:#?}, errors: {:?}",
                 link.id, process_action_result.action, process_action_result.errors

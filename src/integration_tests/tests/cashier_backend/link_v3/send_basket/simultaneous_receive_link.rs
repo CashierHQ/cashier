@@ -22,10 +22,7 @@ use crate::{
 /// Builds the list of 10 distinct ICRC tokens for the basket: ckBTC + ckUSDC + 8 generic
 /// basket ledgers. All are ICRC2, so the test code can treat every asset uniformly.
 fn ten_basket_tokens() -> Vec<String> {
-    let mut tokens = vec![
-        CKBTC_ICRC_TOKEN.to_string(),
-        CKUSDC_ICRC_TOKEN.to_string(),
-    ];
+    let mut tokens = vec![CKBTC_ICRC_TOKEN.to_string(), CKUSDC_ICRC_TOKEN.to_string()];
     tokens.extend(EXTRA_BASKET_TOKENS.iter().map(|s| s.to_string()));
     tokens
 }

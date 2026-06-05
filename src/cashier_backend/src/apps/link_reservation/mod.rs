@@ -42,6 +42,7 @@ impl<R: Repositories> LinkReservationService<R> {
     /// Expired reservations (older than `ttl`) are evicted first, self-healing leaks.
     ///
     /// Returns `Err` if the link has no free use for this `action_type`.
+    #[allow(clippy::too_many_arguments)]
     pub fn reserve(
         &mut self,
         link_id: &str,
@@ -67,7 +68,7 @@ impl<R: Repositories> LinkReservationService<R> {
             return Ok(());
         }
 
-        // use_count is the source-of-truth for committed uses; 
+        // use_count is the source-of-truth for committed uses;
         // live.len() is the count of in-flight uses
         let is_max_use_reached = if Self::consumes_use(&action_type) {
             let live_uses = live
@@ -91,7 +92,11 @@ impl<R: Repositories> LinkReservationService<R> {
             )));
         }
 
-        live.push(LinkReservation::new(action_id.to_string(), action_type, now));
+        live.push(LinkReservation::new(
+            action_id.to_string(),
+            action_type,
+            now,
+        ));
         self.link_reservation_repository.put(link_id, live);
 
         info!(
