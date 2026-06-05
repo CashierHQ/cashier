@@ -166,7 +166,12 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
 }
 
 /// Calculate the total gate fee required at link creation time.
-/// Returns `(actual_amount, approved_amount)` for an ICP ICRC-2 transfer.
+/// # Arguments
+/// * `gate_count` - The number of gates in the link
+/// * `max_use` - The maximum number of uses for the link
+/// * `fee_map` - A map of token principal to its corresponding fee
+/// # Returns
+/// * `(actual_amount: Nat, approved_amount: Nat)` - A tuple containing the actual gate fee amount and the approved gate fee amount
 pub fn calculate_gate_fee(
     gate_count: u64,
     max_use: u64,
@@ -301,7 +306,7 @@ mod tests {
     #[test]
     fn it_should_calculate_create_link_fee() {
         // Arrange
-        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(5u64))]
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
             .into_iter()
             .collect();
 
@@ -310,7 +315,7 @@ mod tests {
 
         // Assert
         assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
-        assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 5u64));
+        assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 10_000u64));
     }
 
     #[test]
@@ -414,5 +419,147 @@ mod tests {
         let expected_total_amount = expected_actual_amount.clone() + expected_inbound_fee;
         assert_eq!(actual_amount, expected_actual_amount);
         assert_eq!(total_amount, expected_total_amount);
+    }
+
+    #[test]
+    fn it_should_use_default_fee_due_to_non_icp_principal_in_fee_map_for_create_link_fee() {
+        // Arrange - fee_map has a non-ICP principal, so ICP lookup falls back to default 10_000
+        let other_principal = Principal::anonymous();
+        let fee_map: HashMap<Principal, Nat> = vec![(other_principal, Nat::from(999u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_create_link_fee(&fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
+        assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_create_link_fee_with_zero_network_fee() {
+        // Arrange
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(0u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_create_link_fee(&fee_map);
+
+        // Assert - approved equals actual when network fee is zero
+        assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
+        assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE));
+    }
+
+    #[test]
+    fn it_should_use_default_fee_due_to_missing_icp_fee_in_map_for_gate_fee() {
+        // Arrange - gate_count=1, max_use=1; ICP not in fee_map so approved uses default 10_000
+        // actual = 1 * (100_000 + 1 * 100_000) = 200_000
+        let fee_map: HashMap<Principal, Nat> = HashMap::new();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(1, 1, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(200_000u64));
+        assert_eq!(approved_amount, Nat::from(200_000u64 + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_use_default_fee_due_to_non_icp_principal_in_fee_map_for_gate_fee() {
+        // Arrange - fee_map has an unrelated principal; ICP lookup falls back to default 10_000
+        // actual = 1 * (100_000 + 1 * 100_000) = 200_000
+        let other_principal = Principal::anonymous();
+        let fee_map: HashMap<Principal, Nat> = vec![(other_principal, Nat::from(999u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(1, 1, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(200_000u64));
+        assert_eq!(approved_amount, Nat::from(200_000u64 + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_gate_fee_with_zero_gates() {
+        // Arrange - gate_count=0 collapses the formula to 0 regardless of max_use
+        // actual = 0 * (100_000 + 5 * 100_000) = 0
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(0, 5, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(0u64));
+        assert_eq!(approved_amount, Nat::from(10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_gate_fee_with_zero_max_use() {
+        // Arrange - max_use=0; gate_open_fee term vanishes, only gate_create_fee remains
+        // actual = 1 * (100_000 + 0 * 100_000) = 100_000
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(1, 0, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(100_000u64));
+        assert_eq!(approved_amount, Nat::from(100_000u64 + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_gate_fee_with_single_gate_and_single_use() {
+        // Arrange
+        // actual = 1 * (100_000 + 1 * 100_000) = 200_000
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(1, 1, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(200_000u64));
+        assert_eq!(approved_amount, Nat::from(200_000u64 + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_gate_fee_with_multiple_gates_and_uses() {
+        // Arrange
+        // actual = 2 * (100_000 + 3 * 100_000) = 2 * 400_000 = 800_000
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_gate_fee(2, 3, &fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(800_000u64));
+        assert_eq!(approved_amount, Nat::from(800_000u64 + 10_000u64));
+    }
+
+    #[test]
+    fn it_should_calculate_gate_fee_scales_linearly_with_gate_count() {
+        // Arrange - verify that doubling gate_count doubles the actual fee
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(10_000u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_1gate, _) = calculate_gate_fee(1, 2, &fee_map);
+        let (actual_2gates, _) = calculate_gate_fee(2, 2, &fee_map);
+
+        // Assert - actual = gate_count * (100_000 + 2 * 100_000) = gate_count * 300_000
+        assert_eq!(actual_1gate, Nat::from(300_000u64));
+        assert_eq!(actual_2gates, Nat::from(600_000u64));
     }
 }
