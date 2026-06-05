@@ -334,6 +334,11 @@ async fn user_open_link_gate(
     debug!("[user_open_link_gate] link_id: {link_id}, gate_id: {gate_id}");
 
     let caller = msg_caller();
+    let now_ns = get_state().env.time();
+
+    let mut rate_limit_service = get_state().rate_limit_service;
+    rate_limit_service.check_and_record(caller, now_ns)?;
+
     let mut gate_service = get_state().gate_service;
     gate_service
         .open_link_gate(&link_id, &gate_id, caller, gate_key)

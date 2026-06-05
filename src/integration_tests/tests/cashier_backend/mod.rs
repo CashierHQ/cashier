@@ -6,6 +6,7 @@ pub mod admin;
 pub mod inspect_message;
 pub mod link_v2;
 pub mod link_v3;
+pub mod rate_limit;
 pub mod request_lock;
 
 /// Tests that the cashier backend canister can be deployed.

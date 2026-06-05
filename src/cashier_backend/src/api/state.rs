@@ -20,6 +20,7 @@ use crate::{
         gate_service::service::{GateAppService, GateServiceWrapper},
         link_v2::service::LinkV2Service,
         link_v3::service::LinkV3Service,
+        rate_limit::RateLimitService,
         request_lock::RequestLockService,
         settings::SettingsService,
         token_balance::service::TokenBalanceService,
@@ -55,6 +56,7 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
         TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
     pub token_balance_service: TokenBalanceService,
     pub gate_service: GateAppService<ThreadlocalRepositories, GateServiceWrapper>,
+    pub rate_limit_service: RateLimitService<ThreadlocalRepositories>,
     pub validator_service: IcValidatorService<IcTransactionValidator>,
     pub executor_service: IcExecutorService<IcTransactionExecutor>,
     pub env: E,
@@ -85,6 +87,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let gate_service_canister_id = GATE_SERVICE_CANISTER_ID.with(|id| *id.borrow());
         let gate_service =
             GateAppService::new(&*repo, GateServiceWrapper::new(gate_service_canister_id));
+        let rate_limit_service = RateLimitService::new(&*repo);
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -99,6 +102,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             token_standard_service,
             token_balance_service,
             gate_service,
+            rate_limit_service,
             validator_service,
             executor_service,
             env,

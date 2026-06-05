@@ -61,6 +61,12 @@ use crate::repositories::link_gate::{LinkGateRepository, LinkGateRepositoryStora
 use crate::repositories::link_gate_user_status::{
     LinkGateUserStatusRepository, LinkGateUserStatusRepositoryStorage,
 };
+use crate::repositories::rate_limit_config::{
+    RateLimitConfigRepository, RateLimitConfigRepositoryStorage,
+};
+use crate::repositories::rate_limit_state::{
+    RateLimitStateRepository, RateLimitStateRepositoryStorage,
+};
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
@@ -85,6 +91,8 @@ pub mod link;
 pub mod link_action;
 pub mod link_gate;
 pub mod link_gate_user_status;
+pub mod rate_limit_config;
+pub mod rate_limit_state;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
@@ -113,6 +121,7 @@ const ACTION_V3_MEMORY_ID: MemoryId = MemoryId::new(16);
 const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
 const LINK_GATE_MEMORY_ID: MemoryId = MemoryId::new(18);
 const LINK_GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(19);
+const RATE_LIMIT_CONFIG_MEMORY_ID: MemoryId = MemoryId::new(20);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -137,6 +146,8 @@ pub trait Repositories {
     type TokenStandard: Storage<TokenStandardRepositoryStorage>;
     type LinkGate: Storage<LinkGateRepositoryStorage>;
     type LinkGateUserStatus: Storage<LinkGateUserStatusRepositoryStorage>;
+    type RateLimitConfig: Storage<RateLimitConfigRepositoryStorage>;
+    type RateLimitState: Storage<RateLimitStateRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -157,6 +168,8 @@ pub trait Repositories {
     fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard>;
     fn link_gate(&self) -> LinkGateRepository<Self::LinkGate>;
     fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus>;
+    fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig>;
+    fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -182,6 +195,8 @@ impl Repositories for ThreadlocalRepositories {
     type TokenStandard = &'static LocalKey<RefCell<TokenStandardRepositoryStorage>>;
     type LinkGate = &'static LocalKey<RefCell<LinkGateRepositoryStorage>>;
     type LinkGateUserStatus = &'static LocalKey<RefCell<LinkGateUserStatusRepositoryStorage>>;
+    type RateLimitConfig = &'static LocalKey<RefCell<RateLimitConfigRepositoryStorage>>;
+    type RateLimitState = &'static LocalKey<RefCell<RateLimitStateRepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -257,6 +272,14 @@ impl Repositories for ThreadlocalRepositories {
 
     fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus> {
         LinkGateUserStatusRepository::new(&LINK_GATE_USER_STATUS_STORE)
+    }
+
+    fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig> {
+        RateLimitConfigRepository::new(&RATE_LIMIT_CONFIG_STORE)
+    }
+
+    fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
+        RateLimitStateRepository::new(&RATE_LIMIT_STATE_STORE)
     }
 }
 
@@ -472,6 +495,20 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(LINK_GATE_USER_STATUS_MEMORY_ID)),
         )
     );
+
+    static RATE_LIMIT_CONFIG_STORE: RefCell<RateLimitConfigRepositoryStorage> =
+        RefCell::new(
+            VersionedStableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(RATE_LIMIT_CONFIG_MEMORY_ID)),
+                Default::default(),
+            )
+        );
+}
+
+thread_local! {
+    // Heap-based store — intentionally volatile, resets on canister upgrade.
+    static RATE_LIMIT_STATE_STORE: RefCell<RateLimitStateRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
 #[cfg(test)]
@@ -501,6 +538,8 @@ pub mod tests {
         token_standard: Rc<RefCell<TokenStandardRepositoryStorage>>,
         link_gate: Rc<RefCell<LinkGateRepositoryStorage>>,
         link_gate_user_status: Rc<RefCell<LinkGateUserStatusRepositoryStorage>>,
+        rate_limit_config: Rc<RefCell<RateLimitConfigRepositoryStorage>>,
+        rate_limit_state: Rc<RefCell<RateLimitStateRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -566,6 +605,11 @@ pub mod tests {
                 link_gate_user_status: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_GATE_USER_STATUS_MEMORY_ID),
                 ))),
+                rate_limit_config: Rc::new(RefCell::new(VersionedStableCell::init(
+                    mm.get(RATE_LIMIT_CONFIG_MEMORY_ID),
+                    Default::default(),
+                ))),
+                rate_limit_state: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
             }
         }
     }
@@ -590,6 +634,8 @@ pub mod tests {
         type TokenStandard = Rc<RefCell<TokenStandardRepositoryStorage>>;
         type LinkGate = Rc<RefCell<LinkGateRepositoryStorage>>;
         type LinkGateUserStatus = Rc<RefCell<LinkGateUserStatusRepositoryStorage>>;
+        type RateLimitConfig = Rc<RefCell<RateLimitConfigRepositoryStorage>>;
+        type RateLimitState = Rc<RefCell<RateLimitStateRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -665,6 +711,14 @@ pub mod tests {
 
         fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus> {
             LinkGateUserStatusRepository::new(self.link_gate_user_status.clone())
+        }
+
+        fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig> {
+            RateLimitConfigRepository::new(self.rate_limit_config.clone())
+        }
+
+        fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
+            RateLimitStateRepository::new(self.rate_limit_state.clone())
         }
     }
 }
