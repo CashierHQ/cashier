@@ -203,6 +203,7 @@
         "lockAdded": "You added a lock",
         "openLock": "Open lock",
         "incorrectPassword": "Incorrect password.",
+        "tooManyRequests": "Too many requests. Please wait before retrying.",
         "openButton": "Open",
         "processing": "Processing",
         "linkLocked": "Link locked",

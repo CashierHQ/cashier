@@ -80,9 +80,22 @@
         localOpenGates = { ...localOpenGates };
         drawerOpen = false;
       } else {
-        error =
-          locale.t("links.linkForm.lock.incorrectPassword") ??
-          "Incorrect password.";
+        const message = result.unwrapErr().message;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(message);
+        } catch {
+          parsed = null;
+        }
+        if (parsed && typeof parsed === "object" && "RateLimited" in parsed) {
+          error =
+            locale.t("links.linkForm.lock.tooManyRequests") ??
+            "Too many requests. Please wait before retrying.";
+        } else {
+          error =
+            locale.t("links.linkForm.lock.incorrectPassword") ??
+            "Incorrect password.";
+        }
       }
     } finally {
       isSubmitting = false;
