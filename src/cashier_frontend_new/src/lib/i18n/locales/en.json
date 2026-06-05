@@ -204,6 +204,7 @@
         "openLock": "Open lock",
         "incorrectPassword": "Incorrect password.",
         "tooManyRequests": "Too many requests. Please wait before retrying.",
+        "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying.",
         "openButton": "Open",
         "processing": "Processing",
         "linkLocked": "Link locked",

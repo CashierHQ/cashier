@@ -87,7 +87,28 @@
         } catch {
           parsed = null;
         }
-        if (parsed && typeof parsed === "object" && "RateLimited" in parsed) {
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          "BackoffThrottled" in parsed
+        ) {
+          const backoffMsg = (parsed as { BackoffThrottled: string })
+            .BackoffThrottled;
+          const match = backoffMsg.match(/Try again in (\d+)s/);
+          const remainingSecs = match ? parseInt(match[1], 10) : 0;
+          const timeStr =
+            remainingSecs >= 60
+              ? `${Math.ceil(remainingSecs / 60)} minutes`
+              : `${remainingSecs} seconds`;
+          const template =
+            locale.t("links.linkForm.lock.tooManyFailedAttempts") ??
+            "Too many failed attempts. Please wait {{time}} before retrying.";
+          error = template.replace("{{time}}", timeStr);
+        } else if (
+          parsed &&
+          typeof parsed === "object" &&
+          "RateLimited" in parsed
+        ) {
           error =
             locale.t("links.linkForm.lock.tooManyRequests") ??
             "Too many requests. Please wait before retrying.";

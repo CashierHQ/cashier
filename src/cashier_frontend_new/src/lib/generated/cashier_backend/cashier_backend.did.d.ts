@@ -50,6 +50,10 @@ export interface Asset_1 {
   'address' : Principal,
   'network_fee' : [] | [bigint],
 }
+export interface BackoffConfig {
+  'enabled' : boolean,
+  'base_wait_secs' : bigint,
+}
 export interface BuildData {
   'rustc_semver' : string,
   'git_branch' : string,
@@ -67,6 +71,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'TransactionTimeout' : string } |
   { 'BatchError' : Array<CanisterError> } |
   { 'AuthError' : string } |
+  { 'BackoffThrottled' : string } |
   { 'InvalidInput' : string } |
   { 'HandleLogicError' : string } |
   { 'ParsePrincipalError' : string } |
@@ -516,6 +521,33 @@ export interface _SERVICE {
    * to fetch fresh data from the token storage canister.
    */
   'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
+  /**
+   * Returns the current gate API exponential backoff configuration.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_backoff_get' : ActorMethod<[], BackoffConfig>,
+  /**
+   * Clears the backoff state for a specific user, allowing them to retry immediately.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_backoff_reset_user' : ActorMethod<[Principal], Result>,
+  /**
+   * Updates the gate API exponential backoff configuration.
+   * 
+   * Changes take effect immediately on the next `user_open_link_gate` call.
+   * Set `enabled: false` to disable backoff entirely (e.g. for emergency access).
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_backoff_update' : ActorMethod<[BackoffConfig], Result>,
   /**
    * Returns the current gate API rate limit configuration.
    * 

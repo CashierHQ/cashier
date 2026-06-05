@@ -1,4 +1,5 @@
 use candid::Principal;
+use cashier_backend_types::backoff::BackoffConfig;
 use cashier_backend_types::rate_limit::RateLimitConfig;
 use cashier_backend_types::{
     auth::Permission,
@@ -438,6 +439,31 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
             .update("admin_gate_rate_limit_reset_user", (user,))
+            .await
+    }
+
+    /// Updates the gate API exponential backoff configuration.
+    pub async fn admin_gate_backoff_update(
+        &self,
+        config: BackoffConfig,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_gate_backoff_update", (config,))
+            .await
+    }
+
+    /// Returns the current gate API exponential backoff configuration.
+    pub async fn admin_gate_backoff_get(&self) -> CanisterClientResult<BackoffConfig> {
+        self.client.query("admin_gate_backoff_get", ()).await
+    }
+
+    /// Clears the backoff state for a specific user.
+    pub async fn admin_gate_backoff_reset_user(
+        &self,
+        user: Principal,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_gate_backoff_reset_user", (user,))
             .await
     }
 }

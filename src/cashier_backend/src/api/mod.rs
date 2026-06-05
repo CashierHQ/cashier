@@ -13,6 +13,7 @@ pub mod state;
 
 use candid::Principal;
 use cashier_backend_types::auth::*;
+use cashier_backend_types::backoff::BackoffConfig;
 use cashier_backend_types::dto::action::*;
 use cashier_backend_types::dto::link::*;
 use cashier_backend_types::error::CanisterError;

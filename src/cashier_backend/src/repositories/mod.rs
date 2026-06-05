@@ -45,6 +45,10 @@ use crate::repositories::action::{
 };
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
 use crate::repositories::auth::AuthServiceStorage;
+use crate::repositories::backoff_config::{
+    BackoffConfigRepository, BackoffConfigRepositoryStorage,
+};
+use crate::repositories::backoff_state::{BackoffStateRepository, BackoffStateRepositoryStorage};
 use crate::repositories::intent::{
     v1::{IntentRepository, IntentRepositoryStorage},
     v3::{IntentV3Repository, IntentV3RepositoryStorage},
@@ -85,6 +89,8 @@ use crate::repositories::user_link_action::{
 pub mod action;
 pub mod action_intent;
 pub mod auth;
+pub mod backoff_config;
+pub mod backoff_state;
 pub mod intent;
 pub mod intent_transaction;
 pub mod link;
@@ -122,6 +128,7 @@ const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
 const LINK_GATE_MEMORY_ID: MemoryId = MemoryId::new(18);
 const LINK_GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(19);
 const RATE_LIMIT_CONFIG_MEMORY_ID: MemoryId = MemoryId::new(20);
+const BACKOFF_CONFIG_MEMORY_ID: MemoryId = MemoryId::new(21);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -148,6 +155,8 @@ pub trait Repositories {
     type LinkGateUserStatus: Storage<LinkGateUserStatusRepositoryStorage>;
     type RateLimitConfig: Storage<RateLimitConfigRepositoryStorage>;
     type RateLimitState: Storage<RateLimitStateRepositoryStorage>;
+    type BackoffConfig: Storage<BackoffConfigRepositoryStorage>;
+    type BackoffState: Storage<BackoffStateRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -170,6 +179,8 @@ pub trait Repositories {
     fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus>;
     fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig>;
     fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState>;
+    fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig>;
+    fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -197,6 +208,8 @@ impl Repositories for ThreadlocalRepositories {
     type LinkGateUserStatus = &'static LocalKey<RefCell<LinkGateUserStatusRepositoryStorage>>;
     type RateLimitConfig = &'static LocalKey<RefCell<RateLimitConfigRepositoryStorage>>;
     type RateLimitState = &'static LocalKey<RefCell<RateLimitStateRepositoryStorage>>;
+    type BackoffConfig = &'static LocalKey<RefCell<BackoffConfigRepositoryStorage>>;
+    type BackoffState = &'static LocalKey<RefCell<BackoffStateRepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -280,6 +293,14 @@ impl Repositories for ThreadlocalRepositories {
 
     fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
         RateLimitStateRepository::new(&RATE_LIMIT_STATE_STORE)
+    }
+
+    fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig> {
+        BackoffConfigRepository::new(&BACKOFF_CONFIG_STORE)
+    }
+
+    fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState> {
+        BackoffStateRepository::new(&BACKOFF_STATE_STORE)
     }
 }
 
@@ -503,11 +524,22 @@ thread_local! {
                 Default::default(),
             )
         );
+
+    static BACKOFF_CONFIG_STORE: RefCell<BackoffConfigRepositoryStorage> =
+        RefCell::new(
+            VersionedStableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(BACKOFF_CONFIG_MEMORY_ID)),
+                Default::default(),
+            )
+        );
 }
 
 thread_local! {
-    // Heap-based store — intentionally volatile, resets on canister upgrade.
+    // Heap-based stores — intentionally volatile, reset on canister upgrade.
     static RATE_LIMIT_STATE_STORE: RefCell<RateLimitStateRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
+
+    static BACKOFF_STATE_STORE: RefCell<BackoffStateRepositoryStorage> =
         const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
@@ -540,6 +572,8 @@ pub mod tests {
         link_gate_user_status: Rc<RefCell<LinkGateUserStatusRepositoryStorage>>,
         rate_limit_config: Rc<RefCell<RateLimitConfigRepositoryStorage>>,
         rate_limit_state: Rc<RefCell<RateLimitStateRepositoryStorage>>,
+        backoff_config: Rc<RefCell<BackoffConfigRepositoryStorage>>,
+        backoff_state: Rc<RefCell<BackoffStateRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -610,6 +644,11 @@ pub mod tests {
                     Default::default(),
                 ))),
                 rate_limit_state: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
+                backoff_config: Rc::new(RefCell::new(VersionedStableCell::init(
+                    mm.get(BACKOFF_CONFIG_MEMORY_ID),
+                    Default::default(),
+                ))),
+                backoff_state: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
             }
         }
     }
@@ -636,6 +675,8 @@ pub mod tests {
         type LinkGateUserStatus = Rc<RefCell<LinkGateUserStatusRepositoryStorage>>;
         type RateLimitConfig = Rc<RefCell<RateLimitConfigRepositoryStorage>>;
         type RateLimitState = Rc<RefCell<RateLimitStateRepositoryStorage>>;
+        type BackoffConfig = Rc<RefCell<BackoffConfigRepositoryStorage>>;
+        type BackoffState = Rc<RefCell<BackoffStateRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -719,6 +760,14 @@ pub mod tests {
 
         fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
             RateLimitStateRepository::new(self.rate_limit_state.clone())
+        }
+
+        fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig> {
+            BackoffConfigRepository::new(self.backoff_config.clone())
+        }
+
+        fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState> {
+            BackoffStateRepository::new(self.backoff_state.clone())
         }
     }
 }

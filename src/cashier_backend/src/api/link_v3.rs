@@ -336,13 +336,28 @@ async fn user_open_link_gate(
     let caller = msg_caller();
     let now_ns = get_state().env.time();
 
+    // 1. Backoff check — dominant guard after any failure
+    let backoff_service = get_state().backoff_service;
+    backoff_service.check(caller, now_ns)?;
+
+    // 2. Rate limit check — first-line guard before any failure
     let mut rate_limit_service = get_state().rate_limit_service;
     rate_limit_service.check_and_record(caller, now_ns)?;
 
+    // 3. Expensive inter-canister call
     let mut gate_service = get_state().gate_service;
-    gate_service
+    let result = gate_service
         .open_link_gate(&link_id, &gate_id, caller, gate_key)
-        .await
+        .await;
+
+    // 4. Update backoff state based on outcome
+    let mut backoff_service = get_state().backoff_service;
+    match &result {
+        Ok(_) => backoff_service.record_success(&caller),
+        Err(_) => backoff_service.record_failure(caller, now_ns),
+    }
+
+    result
 }
 
 /// Returns link details together with gate metadata and the caller's gate status.
