@@ -40,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
       'AlreadyExists' : IDL.Text,
       'DependencyError' : IDL.Text,
       'CandidError' : IDL.Text,
+      'RateLimited' : IDL.Text,
       'AnonymousCall' : IDL.Null,
       'CanisterCallError' : IDL.Record({
         'method' : IDL.Text,
@@ -51,6 +52,11 @@ export const idlFactory = ({ IDL }) => {
     })
   );
   const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
+  const RateLimitConfig = IDL.Record({
+    'window_secs' : IDL.Nat64,
+    'enabled' : IDL.Bool,
+    'max_requests' : IDL.Nat32,
+  });
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
   const Result_1 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
@@ -515,6 +521,13 @@ export const idlFactory = ({ IDL }) => {
     'admin_fee_cache_clear' : IDL.Func([], [Result], []),
     'admin_fee_cache_clear_token' : IDL.Func([IDL.Principal], [Result], []),
     'admin_flush_token_standard_cache' : IDL.Func([], [Result], []),
+    'admin_gate_rate_limit_get' : IDL.Func([], [RateLimitConfig], ['query']),
+    'admin_gate_rate_limit_reset_user' : IDL.Func(
+        [IDL.Principal],
+        [Result],
+        [],
+      ),
+    'admin_gate_rate_limit_update' : IDL.Func([RateLimitConfig], [Result], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],

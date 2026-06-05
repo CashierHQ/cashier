@@ -80,6 +80,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'AlreadyExists' : string } |
   { 'DependencyError' : string } |
   { 'CandidError' : string } |
+  { 'RateLimited' : string } |
   { 'AnonymousCall' : null } |
   {
     'CanisterCallError' : {
@@ -391,6 +392,11 @@ export interface ProcessActionResponseV3 {
 }
 export interface ProcessActionV2Input { 'action_id' : string }
 export type Protocol = { 'IC' : IcTransaction };
+export interface RateLimitConfig {
+  'window_secs' : bigint,
+  'enabled' : boolean,
+  'max_requests' : number,
+}
 export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
@@ -510,6 +516,33 @@ export interface _SERVICE {
    * to fetch fresh data from the token storage canister.
    */
   'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
+  /**
+   * Returns the current gate API rate limit configuration.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_rate_limit_get' : ActorMethod<[], RateLimitConfig>,
+  /**
+   * Clears the rate limit state for a specific user, allowing them to make requests immediately.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_rate_limit_reset_user' : ActorMethod<[Principal], Result>,
+  /**
+   * Updates the gate API rate limit configuration.
+   * 
+   * Changes take effect immediately on the next `user_open_link_gate` call.
+   * Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_gate_rate_limit_update' : ActorMethod<[RateLimitConfig], Result>,
   /**
    * Enables/disables the inspect message.
    */
