@@ -96,6 +96,7 @@
       maxUse: link.maxUse,
       handleProcessAction,
     }}
+    showProgressBanner={true}
     {onCloseDrawer}
     onFeeInfoDrawerClose={() => {
       // Reset showTxCart when FeeInfoDrawer is closed via X button

@@ -251,7 +251,13 @@
             "retryButton": "Retry",
             "processingButton": "Processing...",
             "successMessage": "Process action completed successfully.",
-            "errorMessagePrefix": "Process action failed:"
+            "errorMessagePrefix": "Process action failed:",
+            "phase1Label": "Phase 1",
+            "phase1Description": "Executing the transactions",
+            "phase2Label": "Phase 2",
+            "phase2Description": "Confirming the transactions",
+            "phase3Label": "Transaction confirmed",
+            "phase3Description": "All steps completed"
           },
           "wallet": {
             "title": "Confirm transaction",

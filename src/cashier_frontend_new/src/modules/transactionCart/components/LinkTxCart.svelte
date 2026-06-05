@@ -6,6 +6,7 @@
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import TxProgressBanner from "$modules/transactionCart/components/shared/TxProgressBanner.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
@@ -14,7 +15,7 @@
     FlowDirection,
     type ActionSource,
   } from "$modules/transactionCart/types/transactionSource";
-  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import { TxProgressPhase } from "$modules/transactionCart/types/txCart";
   import { X } from "lucide-svelte";
   import { onMount } from "svelte";
 
@@ -23,11 +24,13 @@
     isOpen: isOpenProp = $bindable(false),
     onCloseDrawer,
     onFeeInfoDrawerClose,
+    showProgressBanner = false,
   }: {
     source: ActionSource;
     isOpen: boolean;
     onCloseDrawer: () => void;
     onFeeInfoDrawerClose?: () => void;
+    showProgressBanner?: boolean;
   } = $props();
 
   // Internal state for drawer - prevents binding from syncing back to showTxCart
@@ -38,7 +41,6 @@
   let linkTxCartStore = $state<LinkTxCartStore | null>(null);
 
   let errorMessage: string | null = $state(null);
-  let successMessage: string | null = $state(null);
 
   // Build tokens map from walletStore
   const tokensMap = $derived.by(() =>
@@ -65,11 +67,12 @@
   // Use reactive assetAndFeeList
   const assetAndFee = $derived(linkTxCartStore?.assetAndFeeList ?? []);
 
-  // Derived: true if any asset is in PROCESSING state
-  const hasProcessingAssets = $derived.by(() =>
-    assetAndFee.some(
-      (item) => item.asset.state === AssetProcessState.PROCESSING,
-    ),
+  // Current execution phase from store
+  const phase = $derived(linkTxCartStore?.phase ?? TxProgressPhase.IDLE);
+
+  // True while FE or BE execution is in progress (disables confirm button and fee interaction)
+  const isProcessing = $derived(
+    phase === TxProgressPhase.FE_PHASE || phase === TxProgressPhase.BE_PHASE,
   );
 
   const outgoingAssets = $derived.by(() =>
@@ -89,7 +92,7 @@
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {
-    if (hasProcessingAssets) return;
+    if (isProcessing) return;
     // Close LinkTxCart drawer and show FeeInfoDrawer
     // isOpen will sync back to showTxCart via binding, but we want to keep component mounted
     // So we'll handle this in handleOpenChange to prevent unmounting
@@ -126,14 +129,13 @@
   async function handleConfirm() {
     if (!linkTxCartStore) return;
     errorMessage = null;
-    successMessage = null;
 
     try {
       const result = await linkTxCartStore.execute();
       if (result.isSuccess) {
-        successMessage = locale.t(`${txCartI18nKey}.successMessage`);
+        // Phase 3 banner shows success — do not auto-close so it remains visible.
+        // The parent's $effect handles redirect when the link becomes ACTIVE.
         source.onSuccess?.(result);
-        onCloseDrawer?.();
       } else {
         errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${result.errors.join(", ")}`;
       }
@@ -229,15 +231,12 @@
             {errorMessage}
           </div>
         {/if}
-        {#if successMessage}
-          <div
-            class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
-          >
-            {successMessage}
-          </div>
-        {/if}
 
         <div class="mt-2 space-y-4">
+          {#if showProgressBanner}
+            <TxProgressBanner {phase} />
+          {/if}
+
           {#if outgoingAssets.length > 0}
             <YouSendSection
               assets={outgoingAssets}
@@ -258,7 +257,7 @@
             <FeesBreakdownSection
               {totalFeesUsd}
               onBreakdownClick={handleFeeBreakdownClick}
-              disabled={hasProcessingAssets}
+              disabled={isProcessing}
             />
           {/if}
 
@@ -278,9 +277,9 @@
         <Button
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           onclick={handleConfirm}
-          disabled={hasProcessingAssets}
+          disabled={isProcessing}
         >
-          {hasProcessingAssets
+          {isProcessing
             ? locale.t(`${txCartI18nKey}.processingButton`)
             : errorMessage
               ? locale.t(`${txCartI18nKey}.retryButton`)

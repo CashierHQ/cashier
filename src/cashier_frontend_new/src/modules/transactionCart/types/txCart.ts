@@ -6,6 +6,19 @@ import { IntentState as SharedIntentState } from "$shared";
 import type { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 
 /**
+ * Transaction execution phase for progress indication in the TxCart UI.
+ */
+export enum TxProgressPhase {
+  IDLE = "IDLE",
+  /** FE is executing ICRC-112 batch request (~2s) */
+  FE_PHASE = "FE_PHASE",
+  /** BE is processing the action (~6-8s) */
+  BE_PHASE = "BE_PHASE",
+  /** Transaction completed successfully */
+  COMPLETED = "COMPLETED",
+}
+
+/**
  * Generic asset processing states for UI rendering.
  * Source-agnostic - mapped from source-specific states.
  */
