@@ -1,7 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{Nat, Principal};
+use std::collections::HashMap;
 use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
     dto::{action::Icrc112Requests, link::GetLinkOptions},
@@ -14,6 +15,7 @@ use cashier_backend_types::{
         },
     },
     repository::{
+        action::v1::ActionType,
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
         link::{v1::LinkType, v3::LinkState},
@@ -31,7 +33,7 @@ use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
     v3::traits::TransactionManagerV3,
 };
-
+use log::{error, info};
 use crate::{
     apps::{
         action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
@@ -260,6 +262,16 @@ impl<R: Repositories> LinkV3Service<R> {
             .get(&action_data.action.link_id)
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
+        // Capture the pre-action snapshot so the success commit can apply the handler's
+        // deltas onto a FRESH re-read of the link (concurrent claims must not lose each
+        // other's use_count / available_amount updates).
+        let prev_use_count = link_model.use_count;
+        let prev_available_by_asset: HashMap<Principal, Option<Nat>> = link_model
+            .asset_info
+            .iter()
+            .map(|info| (info.asset.address, info.available_amount.clone()))
+            .collect();
+
         let link = LinkFactoryV3::create_from_link_model(link_model, canister_id)?;
         let result = link
             .process_action(
@@ -273,8 +285,70 @@ impl<R: Repositories> LinkV3Service<R> {
             )
             .await?;
 
-        // save data to DB
-        self.link_v3_repository.update(result.link.clone());
+        // Persist link state only on success. The handler leaves the link unchanged on
+        // failure, so writing it back then would just clobber a concurrent claim's committed
+        // state — hence we skip the write entirely on failure (this supersedes the old
+        // `Ended`-terminal guard).
+        if result.process_action_result.is_success {
+            let action_type = result.process_action_result.action.action_type.clone();
+            if matches!(action_type, ActionType::Receive | ActionType::Send) {
+                // Use-consuming actions can race across users: re-read the FRESH link and apply
+                // the handler's deltas (computed against `prev_*`) instead of writing the stale
+                // snapshot, so concurrent claims don't lose each other's updates.
+                let use_inc = result.link.use_count.saturating_sub(prev_use_count);
+                // The link must still exist (we read it above). A missing link here is an
+                // invariant violation — surface it rather than silently degrading to the
+                // stale-snapshot (lost-update) path.
+                let mut fresh = self
+                    .link_v3_repository
+                    .get(&result.link.id)
+                    .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+                fresh.use_count = fresh.use_count.saturating_add(use_inc);
+
+                for fresh_asset in fresh.asset_info.iter_mut() {
+                    let addr = fresh_asset.asset.address;
+                    let prev = prev_available_by_asset.get(&addr).cloned().flatten();
+                    let new = result
+                        .link
+                        .asset_info
+                        .iter()
+                        .find(|a| a.asset.address == addr)
+                        .and_then(|a| a.available_amount.clone());
+                    match (prev, new, fresh_asset.available_amount.clone()) {
+                        (Some(prev_amt), Some(new_amt), Some(fresh_amt)) if prev_amt >= new_amt => {
+                            // Amount this claim deducted = prev - new, which the handler
+                            // computed as (transfer amount + network fee). Apply that same
+                            // decrement to the fresh value (clamped, never underflows).
+                            let deducted = prev_amt - new_amt;
+                            fresh_asset.available_amount = Some(if fresh_amt >= deducted {
+                                fresh_amt - deducted
+                            } else {
+                                Nat::from(0u8)
+                            });
+                        }
+                        _ => {
+                            error!(
+                                "Could not apply available_amount delta for asset {} on link {} (missing snapshot/result/available)",
+                                addr, result.link.id
+                            );
+                        }
+                    }
+                }
+
+                // Ended decision uses the FRESH count (not the snapshot-derived state), and
+                // only for actions that actually consumed a use.
+                if use_inc > 0 && fresh.use_count >= fresh.max_use {
+                    fresh.state = LinkState::Ended;
+                }
+
+                self.link_v3_repository.update(fresh);
+            } else {
+                // Creator-only actions (activate / withdraw) are not subject to the
+                // concurrent-claim race → persist the handler result directly.
+                self.link_v3_repository.update(result.link.clone());
+            }
+        }
         self.action_service.update_action_data(
             result.process_action_result.action.clone(),
             result.process_action_result.intents.clone(),
@@ -288,6 +362,12 @@ impl<R: Repositories> LinkV3Service<R> {
             .process_action_result
             .action
             .to_shared(result.process_action_result.intents);
+
+        info!(
+            "Formatted response for processed action {:#?} for link {:#?}",
+            result.process_action_result.action,
+            result.link,
+        );
 
         Ok(ProcessActionResponseV3 {
             link: link_shared,

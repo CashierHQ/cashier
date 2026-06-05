@@ -17,6 +17,7 @@ use transaction_manager::{
 use crate::{
     apps::{
         auth::AuthService,
+        link_reservation::LinkReservationService,
         link_v2::service::LinkV2Service,
         link_v3::service::LinkV3Service,
         request_lock::RequestLockService,
@@ -41,6 +42,7 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub link_v3_service: LinkV3Service<ThreadlocalRepositories>,
     pub link_v2_service: LinkV2Service<ThreadlocalRepositories>,
+    pub link_reservation_service: LinkReservationService<ThreadlocalRepositories>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -79,6 +81,7 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
+            link_reservation_service: LinkReservationService::new(&repo),
             link_v2_service,
             link_v3_service,
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),

@@ -19,6 +19,7 @@ use cashier_backend_types::repository::link::{
     v3::{LinkCodecV3, LinkV3},
 };
 use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
+use cashier_backend_types::repository::link_reservation::{LinkReservation, LinkReservationCodec};
 use cashier_backend_types::repository::request_lock::RequestLockCodec;
 use cashier_backend_types::repository::transaction::v1::TransactionCodec;
 use cashier_backend_types::repository::user_action::v1::UserActionCodec;
@@ -55,6 +56,9 @@ use crate::repositories::link::{
     v3::{LinkV3Repository, LinkV3RepositoryStorage},
 };
 use crate::repositories::link_action::{LinkActionRepository, LinkActionRepositoryStorage};
+use crate::repositories::link_reservation::{
+    LinkReservationRepository, LinkReservationRepositoryStorage,
+};
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
@@ -77,6 +81,7 @@ pub mod intent;
 pub mod intent_transaction;
 pub mod link;
 pub mod link_action;
+pub mod link_reservation;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
@@ -103,6 +108,7 @@ const USER_LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(14);
 const LINK_V3_MEMORY_ID: MemoryId = MemoryId::new(15);
 const ACTION_V3_MEMORY_ID: MemoryId = MemoryId::new(16);
 const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
+const LINK_RESERVATION_MEMORY_ID: MemoryId = MemoryId::new(18);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -114,6 +120,7 @@ pub trait Repositories {
     type IntentTransaction: Storage<IntentTransactionRepositoryStorage>;
     type Link: Storage<LinkRepositoryStorage>;
     type LinkAction: Storage<LinkActionRepositoryStorage>;
+    type LinkReservation: Storage<LinkReservationRepositoryStorage>;
     type RequestLock: Storage<RequestLockRepositoryStorage>;
     type Settings: Storage<SettingsRepositoryStorage>;
     type TokenFee: Storage<TokenFeeRepositoryStorage>;
@@ -132,6 +139,7 @@ pub trait Repositories {
     fn intent_transaction(&self) -> IntentTransactionRepository<Self::IntentTransaction>;
     fn link(&self) -> LinkRepository<Self::Link>;
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction>;
+    fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
     fn settings(&self) -> SettingsRepository<Self::Settings>;
     fn token_fee(&self) -> TokenFeeRepository<Self::TokenFee>;
@@ -155,6 +163,7 @@ impl Repositories for ThreadlocalRepositories {
     type IntentTransaction = &'static LocalKey<RefCell<IntentTransactionRepositoryStorage>>;
     type Link = &'static LocalKey<RefCell<LinkRepositoryStorage>>;
     type LinkAction = &'static LocalKey<RefCell<LinkActionRepositoryStorage>>;
+    type LinkReservation = &'static LocalKey<RefCell<LinkReservationRepositoryStorage>>;
     type RequestLock = &'static LocalKey<RefCell<RequestLockRepositoryStorage>>;
     type Settings = &'static LocalKey<RefCell<SettingsRepositoryStorage>>;
     type TokenFee = &'static LocalKey<RefCell<TokenFeeRepositoryStorage>>;
@@ -189,6 +198,10 @@ impl Repositories for ThreadlocalRepositories {
 
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
         LinkActionRepository::new(&LINK_ACTION_STORE)
+    }
+
+    fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation> {
+        LinkReservationRepository::new(&LINK_RESERVATION_STORE)
     }
 
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
@@ -376,6 +389,15 @@ thread_local! {
         VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
     );
 
+    static LINK_RESERVATION_STORE: RefCell<VersionedBTreeMap<
+        String,
+        Vec<LinkReservation>,
+        LinkReservationCodec,
+        Memory
+    >> = RefCell::new(
+        VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_RESERVATION_MEMORY_ID))),
+    );
+
     static SETTINGS_STORE: RefCell<VersionedStableCell<
         Settings,
         SettingsCodec,
@@ -442,6 +464,7 @@ pub mod tests {
         intent_transaction: Rc<RefCell<IntentTransactionRepositoryStorage>>,
         link: Rc<RefCell<LinkRepositoryStorage>>,
         link_action: Rc<RefCell<LinkActionRepositoryStorage>>,
+        link_reservation: Rc<RefCell<LinkReservationRepositoryStorage>>,
         request_lock: Rc<RefCell<RequestLockRepositoryStorage>>,
         settings: Rc<RefCell<SettingsRepositoryStorage>>,
         token_fee: Rc<RefCell<TokenFeeRepositoryStorage>>,
@@ -480,6 +503,9 @@ pub mod tests {
                 ))),
                 link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
+                ))),
+                link_reservation: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(LINK_RESERVATION_MEMORY_ID),
                 ))),
                 request_lock: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(REQUEST_LOCK_MEMORY_ID),
@@ -522,6 +548,7 @@ pub mod tests {
         type IntentTransaction = Rc<RefCell<IntentTransactionRepositoryStorage>>;
         type Link = Rc<RefCell<LinkRepositoryStorage>>;
         type LinkAction = Rc<RefCell<LinkActionRepositoryStorage>>;
+        type LinkReservation = Rc<RefCell<LinkReservationRepositoryStorage>>;
         type RequestLock = Rc<RefCell<RequestLockRepositoryStorage>>;
         type Settings = Rc<RefCell<SettingsRepositoryStorage>>;
         type TokenFee = Rc<RefCell<TokenFeeRepositoryStorage>>;
@@ -556,6 +583,10 @@ pub mod tests {
 
         fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
             LinkActionRepository::new(self.link_action.clone())
+        }
+
+        fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation> {
+            LinkReservationRepository::new(self.link_reservation.clone())
         }
 
         fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {

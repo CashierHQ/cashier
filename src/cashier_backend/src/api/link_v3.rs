@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
+use cashier_common::constant::RESERVATION_TTL_NS;
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
@@ -129,6 +130,7 @@ async fn user_process_action_v3(
     debug!("[user_process_action_v3] input: {input:?}");
 
     let mut request_lock_service = get_state().request_lock_service;
+    let mut reservation_service = get_state().link_reservation_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let validator_service = get_state().validator_service;
@@ -136,15 +138,44 @@ async fn user_process_action_v3(
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
+    let now = get_state().env.time();
+
+    // Resolve the link context for the reservation (sync, read-only).
+    let action_data = link_v3_service
+        .action_service
+        .get_action_data(&input.action_id)
+        .map_err(|_| CanisterError::NotFound("Action not found".to_string()))?;
+    let link = link_v3_service
+        .link_v3_repository
+        .get(&action_data.action.link_id)
+        .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+    let link_id = link.id.clone();
+    let action_type = action_data.action.action_type.clone();
+
     let key = RequestLockKey::ProcessAction {
         user_principal: caller,
         action_id: input.action_id.clone(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    // 1) Anti-spam: reject a concurrent duplicate of THIS request (binary lock).
+    let _ = request_lock_service.create(&key, now)?;
+    // 2) Capacity: reserve one of the link's uses; release the lock if there is none free.
+    if let Err(e) = reservation_service.reserve(
+        &link_id,
+        &input.action_id,
+        action_type,
+        link.max_use,
+        link.use_count,
+        now,
+        RESERVATION_TTL_NS,
+    ) {
+        let _ = request_lock_service.drop(&key);
+        return Err(e);
+    }
+
     let res = link_v3_service
         .process_action(
-            msg_caller(),
+            caller,
             canister_id,
             &input.action_id,
             transaction_manager_v3,
@@ -152,6 +183,9 @@ async fn user_process_action_v3(
             executor_service,
         )
         .await;
+
+    // Release on every path (success OR error); drop the lock last. TTL backstops a rare trap.
+    reservation_service.release(&link_id, &input.action_id);
     let _ = request_lock_service.drop(&key);
 
     res

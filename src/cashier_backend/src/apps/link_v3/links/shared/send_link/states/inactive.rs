@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
+use log::error;
 use cashier_backend_types::{
     error::CanisterError,
     link_v3::link_result::{LinkCreateActionResult, LinkProcessActionResult},
@@ -140,6 +141,11 @@ impl InactiveState {
         if process_action_result.is_success {
             link.state = LinkState::Ended;
             update_link_available_amount_after_withdraw(&mut link, &process_action_result.intents)?;
+        } else {
+            error!(
+                "Failed to process WITHDRAW action for link {}, action {}, errors: {:?}",
+                link.id, process_action_result.action.id, process_action_result.errors
+            );
         }
 
         Ok(LinkProcessActionResult {
