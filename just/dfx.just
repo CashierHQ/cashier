@@ -18,7 +18,7 @@ dfx_local_start bitcoin="false": dfx_prepare_env dfx_local_stop
   fi
 
   # Start the local dfx server
-  dfx start $BITCOIN_FLAGS --background --clean --host 127.0.0.1:8000 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
+  dfx start $BITCOIN_FLAGS --background --clean --host 127.0.0.1:8000 --artificial-delay 2000 2> "{{DFX_LOGFILE}}"
 
   # Add cycles to the wallet
   wallet_principal=$(dfx identity get-wallet) && dfx ledger fabricate-cycles --t 10000000 --canister $wallet_principal
@@ -64,7 +64,7 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
   cashier_backend_id=$(dfx canister id cashier_backend)
   just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
 
-  dfx deploy internet_identity
+  just dfx_local_deploy_internet_identity
 
   # Deploy token ledgers
   just dfx_local_deploy_icp_ledger
@@ -83,6 +83,32 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
 
   # Deploy ckBTC canisters
   just dfx_local_deploy_ckbtc_canisters "${OWNER}" "{{CKBTC_LEDGER_ID}}" "{{CKBTC_MINTER_ID}}" "{{CKBTC_KYT_ID}}"
+
+
+# Deploy the two Internet Identity canisters locally (backend rdmx6 + frontend uqzsh).
+# The frontend serves the login UI and MUST be wired to the backend via init args.
+# IMPORTANT: origins use the live webserver port (this project runs on :8000); a port
+# mismatch makes II reject the auth flow. Login URL = the FRONTEND canister, not rdmx6.
+[private]
+dfx_local_deploy_internet_identity:
+  #!/usr/bin/env bash
+  set -e
+
+  # Backend: auth logic only (backend-only dev wasm). No init arg required locally.
+  dfx deploy internet_identity --upgrade-unchanged
+
+  port=$(dfx info webserver-port)
+  ii_backend=$(dfx canister id internet_identity)
+  ii_frontend="uqzsh-gqaaa-aaaaq-qaada-cai"
+
+  # Frontend: login UI, wired to the backend. fetch_root_key + dev_csp required for local HTTP.
+  dfx deploy internet_identity_frontend --argument "(record {
+      backend_canister_id = principal \"${ii_backend}\";
+      backend_origin = \"http://${ii_backend}.localhost:${port}\";
+      related_origins = opt vec { \"http://${ii_frontend}.localhost:${port}\" };
+      fetch_root_key = opt true;
+      dev_csp = opt true;
+  })" --upgrade-unchanged
 
 
 # Deploy ICRC token to local networks
@@ -114,6 +140,7 @@ dfx_local_info:
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
+  internet_identity_frontend_id=$(dfx canister id internet_identity_frontend 2>/dev/null || echo "not deployed")
   gate_service_id=$(dfx canister id gate_service)
 
   # Index canister IDs (may not be deployed yet)
@@ -133,7 +160,8 @@ dfx_local_info:
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
-  echo "internet_identity id: $internet_identity_id"
+  echo "internet_identity (backend) id: $internet_identity_id"
+  echo "internet_identity_frontend id: $internet_identity_frontend_id"
   echo "gate_service_id: $gate_service_id"
 
   echo "icp_index id: $icp_index_id"
@@ -147,7 +175,8 @@ dfx_local_info:
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
-  echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
+  # II login UI is served by the FRONTEND canister (certified domain, not .raw) — this is the identity provider URL.
+  echo "internet_identity LOGIN url: http://$internet_identity_frontend_id.localhost:$dfx_webserver_port"
   echo "gate_service url: http://$gate_service_id.raw.localhost:$dfx_webserver_port"
 
 # Airdrop tokens to the target principal

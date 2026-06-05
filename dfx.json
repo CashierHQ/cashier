@@ -97,6 +97,17 @@
         }
       }
     },
+    "internet_identity_frontend": {
+      "type": "custom",
+      "candid": "./target/artifacts/internet_identity_frontend.did",
+      "wasm": "./target/artifacts/internet_identity_frontend.wasm.gz",
+      "specified_id": "uqzsh-gqaaa-aaaaq-qaada-cai",
+      "remote": {
+        "id": {
+          "ic": "uqzsh-gqaaa-aaaaq-qaada-cai"
+        }
+      }
+    },
     "icp_index": {
       "type": "custom",
       "candid": "./target/artifacts/icp_index.did",
