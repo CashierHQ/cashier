@@ -285,28 +285,21 @@ impl<R: Repositories> LinkV3Service<R> {
             )
             .await?;
 
-        // Persist link state only on success. The handler leaves the link unchanged on
-        // failure, so writing it back then would just clobber a concurrent claim's committed
-        // state — hence we skip the write entirely on failure (this supersedes the old
-        // `Ended`-terminal guard).
         if result.process_action_result.is_success {
             let action_type = result.process_action_result.action.action_type.clone();
             if matches!(action_type, ActionType::Receive | ActionType::Send) {
-                // Use-consuming actions can race across users: re-read the FRESH link and apply
-                // the handler's deltas (computed against `prev_*`) instead of writing the stale
-                // snapshot, so concurrent claims don't lose each other's updates.
-                let use_inc = result.link.use_count.saturating_sub(prev_use_count);
-                // The link must still exist (we read it above). A missing link here is an
-                // invariant violation — surface it rather than silently degrading to the
-                // stale-snapshot (lost-update) path.
-                let mut fresh = self
+                // expected increment to use_count based on the handler's processing (normally 1)
+                let use_inc_expected = result.link.use_count.saturating_sub(prev_use_count);
+                // refreshed link have lastest use_count 
+                let mut fresh_link = self
                     .link_v3_repository
                     .get(&result.link.id)
                     .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-                fresh.use_count = fresh.use_count.saturating_add(use_inc);
+                // if the handler updated use_count, it must be exactly the expected increment (no more, no less)
+                fresh_link.use_count = fresh_link.use_count.saturating_add(use_inc_expected);
 
-                for fresh_asset in fresh.asset_info.iter_mut() {
+                for fresh_asset in fresh_link.asset_info.iter_mut() {
                     let addr = fresh_asset.asset.address;
                     let prev = prev_available_by_asset.get(&addr).cloned().flatten();
                     let new = result
@@ -338,11 +331,11 @@ impl<R: Repositories> LinkV3Service<R> {
 
                 // Ended decision uses the FRESH count (not the snapshot-derived state), and
                 // only for actions that actually consumed a use.
-                if use_inc > 0 && fresh.use_count >= fresh.max_use {
-                    fresh.state = LinkState::Ended;
+                if use_inc_expected > 0 && fresh_link.use_count >= fresh_link.max_use {
+                    fresh_link.state = LinkState::Ended;
                 }
 
-                self.link_v3_repository.update(fresh);
+                self.link_v3_repository.update(fresh_link);
             } else {
                 // Creator-only actions (activate / withdraw) are not subject to the
                 // concurrent-claim race → persist the handler result directly.
@@ -362,11 +355,6 @@ impl<R: Repositories> LinkV3Service<R> {
             .process_action_result
             .action
             .to_shared(result.process_action_result.intents);
-
-        info!(
-            "Formatted response for processed action {:#?} for link {:#?}",
-            result.process_action_result.action, result.link,
-        );
 
         Ok(ProcessActionResponseV3 {
             link: link_shared,
