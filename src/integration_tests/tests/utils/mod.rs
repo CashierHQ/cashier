@@ -146,14 +146,24 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
-    let token_storage_principal = deploy_canister(
-        &client,
-        None,
-        get_token_storage_canister_bytecode(),
-        &(TokenStorageInitData {
-            log_settings: Some(log.clone()),
-            owner: TestUser::TokenStorageAdmin.get_principal(),
-            tokens: Some(vec![
+    // Deploy extra generic ICRC2 ledgers (dynamic principals) so token-basket tests can use
+    // baskets with many distinct assets. They are registered in token_storage below and added
+    // to `icrc_token_map` so the fixtures can resolve them by symbol.
+    let mut extra_basket_tokens: Vec<(String, Principal)> = Vec::new();
+    for symbol in constant::EXTRA_BASKET_TOKENS {
+        let pid = token_icrc::deploy_single_icrc_ledger_canister(
+            &client,
+            format!("Basket Token {symbol}"),
+            symbol.to_string(),
+            8,
+            10_000,
+            None,
+        )
+        .await;
+        extra_basket_tokens.push((symbol.to_string(), pid));
+    }
+
+    let mut registry_tokens = vec![
                 RegistryToken {
                     details: ChainTokenDetails::IC {
                         ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
@@ -232,7 +242,32 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
                     is_rune: None,
                     rune_info: None,
                 },
-            ]),
+    ];
+    for (symbol, pid) in extra_basket_tokens.iter() {
+        registry_tokens.push(RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: *pid,
+                index_id: None,
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: symbol.clone(),
+            name: format!("Basket Token {symbol}"),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        });
+    }
+
+    let token_storage_principal = deploy_canister(
+        &client,
+        None,
+        get_token_storage_canister_bytecode(),
+        &(TokenStorageInitData {
+            log_settings: Some(log.clone()),
+            owner: TestUser::TokenStorageAdmin.get_principal(),
+            tokens: Some(registry_tokens),
             ckbtc_minter_id: ckbtc_minter_principal,
             omnity_bitcoin_id: Principal::management_canister(),
         }),
@@ -327,6 +362,9 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     icrc_token_map.insert(constant::CKUSDC_ICRC_TOKEN.to_string(), ck_usdc_principal);
     icrc_token_map.insert(constant::TESTICP_ICRC_TOKEN.to_string(), test_icp_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
+    for (symbol, pid) in extra_basket_tokens.iter() {
+        icrc_token_map.insert(symbol.clone(), *pid);
+    }
 
     let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
         &client,
