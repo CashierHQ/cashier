@@ -36,7 +36,7 @@ use cashier_shared::{
     AddressType as SharedAddressType,
     types::{Action as SharedAction, ActionType as SharedActionType},
 };
-use log::{error, info};
+use log::error;
 use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
