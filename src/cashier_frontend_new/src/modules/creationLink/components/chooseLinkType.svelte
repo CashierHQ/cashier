@@ -90,10 +90,13 @@
   }
 
   function handleSlideChange(index: number) {
-    if (index >= 0 && index < linkTypes.length) {
-      link.setLinkType(linkTypes[index]);
-      currentSlide = index;
+    if (index < 0 || index >= linkTypes.length) return;
+
+    const newLinkType = linkTypes[index];
+    if (newLinkType !== link.linkType) {
+      link.resetForTypeChange(newLinkType);
     }
+    currentSlide = index;
   }
 
   function handleOnInput(
@@ -120,19 +123,10 @@
 
   async function goNext() {
     try {
-      const currentLinkType = link.linkType;
       trackEvent(AnalyticsEvent.LINK_CREATION_TEMPLATE_CONTINUE, {
         link_type: link.createLinkData.linkType,
         FE_link_id: link.id ?? "",
       });
-
-      const newLinkType = linkTypes[currentSlide];
-
-      // If selecting link type is different than existing link type in store,
-      // reset the link data (assets and maxUse)
-      if (currentLinkType !== newLinkType) {
-        link.resetForTypeChange(newLinkType);
-      }
 
       await link.goNext();
     } catch (e) {
