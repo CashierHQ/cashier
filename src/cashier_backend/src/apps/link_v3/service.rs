@@ -290,7 +290,7 @@ impl<R: Repositories> LinkV3Service<R> {
             if matches!(action_type, ActionType::Receive | ActionType::Send) {
                 // expected increment to use_count based on the handler's processing (normally 1)
                 let use_inc_expected = result.link.use_count.saturating_sub(prev_use_count);
-                // refreshed link have lastest use_count 
+                // refreshed link have lastest use_count
                 let mut fresh_link = self
                     .link_v3_repository
                     .get(&result.link.id)
