@@ -35,9 +35,9 @@ interface GeneratorOptions {
 
 interface FeeTable {
   fees: {
-    link_creation: { amount: string };
-    gate_create: { amount: string };
-    gate_open: { amount: string };
+    link_creation: { amount_e8s: string };
+    gate_create: { amount_e8s: string };
+    gate_open: { amount_e8s: string };
   };
 }
 
@@ -69,9 +69,9 @@ function writeFile(filePath: string, content: string): void {
 
 function validateFeeTable(feeTable: FeeTable): void {
   const replacements: Array<[string, string]> = [
-    ["getLinkCreationFeeAmount", feeTable.fees.link_creation.amount],
-    ["getGateCreateFeeAmount", feeTable.fees.gate_create.amount],
-    ["getGateOpenFeeAmount", feeTable.fees.gate_open.amount],
+    ["getLinkCreationFeeAmount", feeTable.fees.link_creation.amount_e8s],
+    ["getGateCreateFeeAmount", feeTable.fees.gate_create.amount_e8s],
+    ["getGateOpenFeeAmount", feeTable.fees.gate_open.amount_e8s],
   ];
 
   for (const [functionName, amount] of replacements) {
@@ -88,15 +88,15 @@ function generateTypeScriptFeeTable(feeTable: FeeTable): string {
     "// Generated from: templates/fees.json",
     "",
     "export function getLinkCreationFeeTableAmount(): bigint {",
-    `  return ${feeTable.fees.link_creation.amount}n;`,
+    `  return ${feeTable.fees.link_creation.amount_e8s}n;`,
     "}",
     "",
     "export function getGateCreateFeeTableAmount(): bigint {",
-    `  return ${feeTable.fees.gate_create.amount}n;`,
+    `  return ${feeTable.fees.gate_create.amount_e8s}n;`,
     "}",
     "",
     "export function getGateOpenFeeTableAmount(): bigint {",
-    `  return ${feeTable.fees.gate_open.amount}n;`,
+    `  return ${feeTable.fees.gate_open.amount_e8s}n;`,
     "}",
     "",
   ].join("\n");
@@ -113,15 +113,15 @@ function generateRustFeeTable(feeTable: FeeTable): string {
     "use candid::Nat;",
     "",
     "pub fn get_link_creation_fee_table_amount() -> Nat {",
-    `    Nat::from(${feeTable.fees.link_creation.amount}u64)`,
+    `    Nat::from(${feeTable.fees.link_creation.amount_e8s}u64)`,
     "}",
     "",
     "pub fn get_gate_create_fee_table_amount() -> Nat {",
-    `    Nat::from(${feeTable.fees.gate_create.amount}u64)`,
+    `    Nat::from(${feeTable.fees.gate_create.amount_e8s}u64)`,
     "}",
     "",
     "pub fn get_gate_open_fee_table_amount() -> Nat {",
-    `    Nat::from(${feeTable.fees.gate_open.amount}u64)`,
+    `    Nat::from(${feeTable.fees.gate_open.amount_e8s}u64)`,
     "}",
     "",
   ].join("\n");
