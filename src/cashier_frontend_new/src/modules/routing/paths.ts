@@ -1,15 +1,4 @@
-/**
- * Internal app paths that can be used for redirects.
- */
-export type AppPath =
-  | "/"
-  | "/404"
-  | "/links"
-  | `/link/create/${string}`
-  | `/link/detail/${string}`
-  | `/link/detail/${string}?created=true`
-  | `/link/${string}`
-  | `/link/${string}/use`;
+import type { AppPath } from "./types";
 
 /**
  * Path builders used by redirect policy.

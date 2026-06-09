@@ -1,6 +1,27 @@
 import type { LinkStep } from "$modules/links/types/linkStep";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
-import type { AppPath } from "./paths";
+
+/**
+ * Internal app paths that can be used for redirects.
+ */
+export type AppPath =
+  | "/"
+  | "/404"
+  | "/links"
+  | `/link/create/${string}`
+  | `/link/detail/${string}`
+  | `/link/detail/${string}?created=true`
+  | `/link/${string}`
+  | `/link/${string}/use`;
+
+/**
+ * Options used when creating route-scoped link context.
+ */
+export type LinkRouteContextOptions = {
+  linkId?: string;
+  draftLinkId?: string;
+  storeType?: "userLink" | "linkDetail";
+};
 
 /**
  * Screens that redirect policy can allow a route to render.

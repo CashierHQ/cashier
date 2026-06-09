@@ -8,12 +8,7 @@ import {
   setRouteContext,
 } from "$modules/routing/routeContext.svelte";
 import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
-
-type LinkRouteContextOptions = {
-  linkId?: string;
-  draftLinkId?: string;
-  storeType?: "userLink" | "linkDetail";
-};
+import type { LinkRouteContextOptions } from "./types";
 
 /**
  * Initializes route-scoped link data and exposes it through Svelte context.
