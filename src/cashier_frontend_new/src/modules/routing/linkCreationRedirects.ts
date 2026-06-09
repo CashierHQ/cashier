@@ -1,12 +1,6 @@
 import { LinkStep } from "$modules/links/types/linkStep";
 import { paths } from "./paths";
-import type { RedirectDecision, RedirectInput } from "./types";
-
-/**
- * `create` maps to `/link/create/[id]` and `detail` maps to `/link/detail/[id]`,
- * but they share the same owner-flow access rules and screen rendering logic.
- */
-type OwnerRouteArea = "create" | "detail";
+import type { OwnerRouteArea, RedirectDecision, RedirectInput } from "./types";
 
 /**
  * Applies owner-flow validation before state-specific redirects.
@@ -17,7 +11,9 @@ type OwnerRouteArea = "create" | "detail";
  * @param input normalized redirect input for the current route and link context
  * @returns a redirect or pending decision if validation fails, otherwise null
  */
-function validateOwnerAccess(input: RedirectInput): RedirectDecision | null {
+export function validateOwnerAccess(
+  input: RedirectInput,
+): RedirectDecision | null {
   if (input.isLoading) {
     return { kind: "pending" };
   }

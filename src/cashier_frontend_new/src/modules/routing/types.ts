@@ -24,6 +24,14 @@ export type LinkRouteContextOptions = {
 };
 
 /**
+ * Owner routes that share create/detail redirect rules.
+ *
+ * `create` maps to `/link/create/[id]` and `detail` maps to `/link/detail/[id]`,
+ * but both use the same owner-flow access checks and state mapping.
+ */
+export type OwnerRouteArea = "create" | "detail";
+
+/**
  * Screens that redirect policy can allow a route to render.
  *
  * These are UI-level screens, not URL paths. A single route can render
