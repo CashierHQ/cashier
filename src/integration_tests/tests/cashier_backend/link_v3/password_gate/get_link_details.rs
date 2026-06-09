@@ -65,10 +65,7 @@ async fn it_should_return_empty_gates_for_ungated_link() {
         fixture.airdrop().await;
         let link_fixture = LinkTestFixtureV3::new(Arc::new(ctx.clone()), creator, icp_fee).await;
         let input = fixture.tip_link_input().unwrap();
-        let create_result = link_fixture
-            .create_link_v3_with_gates(input, vec![])
-            .await
-            .unwrap();
+        let create_result = link_fixture.create_link_v3(input).await;
 
         // Act
         let result = link_fixture

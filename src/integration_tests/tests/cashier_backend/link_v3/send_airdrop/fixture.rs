@@ -90,6 +90,7 @@ impl AirdropLinkV3Fixture {
             link_type: LinkTypeShared::SendAirdrop,
             max_use: self.max_use_count,
             action: create_action,
+            gate_keys: None,
         })
     }
 

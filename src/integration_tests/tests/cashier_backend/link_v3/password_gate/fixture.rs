@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::link_v3::dto::link::{CreateLinkInputV3, CreateLinkWithGateResponseV3};
+use cashier_backend_types::link_v3::dto::link::{CreateLinkInputV3, CreateLinkResponseV3};
 use cashier_shared::types::LinkType as LinkTypeShared;
 use gate_service_types::{Gate, GateKey};
 use std::sync::Arc;
@@ -46,12 +46,10 @@ impl PasswordGateLinkFixture {
 
     /// Creates a gated tip link with a single password gate.
     /// Returns the full response including the created gate.
-    pub async fn create_link(&self) -> CreateLinkWithGateResponseV3 {
-        let input = self.tip_link_input().unwrap();
-        self.link_fixture
-            .create_link_v3_with_gates(input, vec![GateKey::Password(self.password.clone())])
-            .await
-            .expect("create_link_v3_with_gates should succeed")
+    pub async fn create_link(&self) -> CreateLinkResponseV3 {
+        let mut input = self.tip_link_input().unwrap();
+        input.gate_keys = Some(vec![GateKey::Password(self.password.clone())]);
+        self.link_fixture.create_link_v3(input).await
     }
 
     /// Airdrops enough ICP (and optionally the tip token) to cover fees and the tip amount.
@@ -79,6 +77,7 @@ impl PasswordGateLinkFixture {
             link_type: LinkTypeShared::SendTip,
             max_use: 3,
             action: create_action,
+            gate_keys: None,
         })
     }
 }

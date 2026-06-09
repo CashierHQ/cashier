@@ -389,21 +389,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateLinkDto = IDL.Record({ 'action' : ActionDto, 'link' : LinkDto });
   const Result_7 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
-  const CreateLinkInputV3 = IDL.Record({
-    'title' : IDL.Text,
-    'action' : Action,
-    'link_type' : LinkType_1,
-    'max_use' : IDL.Nat64,
-  });
-  const CreateLinkResponseV3 = IDL.Record({
-    'action' : Action,
-    'link' : Link,
-    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
-  });
-  const Result_8 = IDL.Variant({
-    'Ok' : CreateLinkResponseV3,
-    'Err' : CanisterError,
-  });
   const GateKey = IDL.Variant({
     'Password' : IDL.Text,
     'XFollowing' : IDL.Text,
@@ -411,25 +396,32 @@ export const idlFactory = ({ IDL }) => {
     'PasswordRedacted' : IDL.Null,
     'TelegramGroup' : IDL.Text,
   });
+  const CreateLinkInputV3 = IDL.Record({
+    'title' : IDL.Text,
+    'action' : Action,
+    'link_type' : LinkType_1,
+    'gate_keys' : IDL.Opt(IDL.Vec(GateKey)),
+    'max_use' : IDL.Nat64,
+  });
   const Gate = IDL.Record({
     'id' : IDL.Text,
     'key' : GateKey,
     'creator' : IDL.Principal,
     'subject_id' : IDL.Text,
   });
-  const CreateLinkWithGateResponseV3 = IDL.Record({
+  const CreateLinkResponseV3 = IDL.Record({
     'action' : Action,
     'link' : Link,
     'gates' : IDL.Vec(Gate),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_9 = IDL.Variant({
-    'Ok' : CreateLinkWithGateResponseV3,
+  const Result_8 = IDL.Variant({
+    'Ok' : CreateLinkResponseV3,
     'Err' : CanisterError,
   });
-  const Result_10 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
+  const Result_9 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
   const DisableLinkResponseV3 = IDL.Record({ 'link' : Link });
-  const Result_11 = IDL.Variant({
+  const Result_10 = IDL.Variant({
     'Ok' : DisableLinkResponseV3,
     'Err' : CanisterError,
   });
@@ -450,7 +442,7 @@ export const idlFactory = ({ IDL }) => {
     'gates' : IDL.Vec(GateForUser),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_12 = IDL.Variant({
+  const Result_11 = IDL.Variant({
     'Ok' : GetLinkDetailsResponseV3,
     'Err' : CanisterError,
   });
@@ -469,7 +461,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(LinkDto),
   });
-  const Result_13 = IDL.Variant({
+  const Result_12 = IDL.Variant({
     'Ok' : PaginateResult,
     'Err' : CanisterError,
   });
@@ -477,7 +469,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(Link),
   });
-  const Result_14 = IDL.Variant({
+  const Result_13 = IDL.Variant({
     'Ok' : PaginateResult_1,
     'Err' : CanisterError,
   });
@@ -485,7 +477,7 @@ export const idlFactory = ({ IDL }) => {
     'gate_user_status' : GateUserStatus,
     'gate' : Gate,
   });
-  const Result_15 = IDL.Variant({
+  const Result_14 = IDL.Variant({
     'Ok' : OpenGateSuccessResult,
     'Err' : CanisterError,
   });
@@ -496,7 +488,7 @@ export const idlFactory = ({ IDL }) => {
     'errors' : IDL.Vec(IDL.Text),
     'is_success' : IDL.Bool,
   });
-  const Result_16 = IDL.Variant({
+  const Result_15 = IDL.Variant({
     'Ok' : ProcessActionDto,
     'Err' : CanisterError,
   });
@@ -507,7 +499,7 @@ export const idlFactory = ({ IDL }) => {
     'is_success' : IDL.Bool,
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_17 = IDL.Variant({
+  const Result_16 = IDL.Variant({
     'Ok' : ProcessActionResponseV3,
     'Err' : CanisterError,
   });
@@ -559,44 +551,39 @@ export const idlFactory = ({ IDL }) => {
     'user_create_action_v3' : IDL.Func([CreateActionInputV3], [Result_6], []),
     'user_create_link_v2' : IDL.Func([CreateLinkInput], [Result_7], []),
     'user_create_link_v3' : IDL.Func([CreateLinkInputV3], [Result_8], []),
-    'user_create_link_v3_with_gates' : IDL.Func(
-        [CreateLinkInputV3, IDL.Opt(IDL.Vec(GateKey))],
-        [Result_9],
-        [],
-      ),
-    'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_10], []),
-    'user_disable_link_v3' : IDL.Func([IDL.Text], [Result_11], []),
+    'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_9], []),
+    'user_disable_link_v3' : IDL.Func([IDL.Text], [Result_10], []),
     'user_get_link_details_v3' : IDL.Func(
         [IDL.Text, IDL.Opt(GetLinkOptions)],
-        [Result_12],
+        [Result_11],
         ['query'],
       ),
     'user_get_links_v2' : IDL.Func(
         [IDL.Opt(PaginateInput)],
-        [Result_13],
+        [Result_12],
         ['query'],
       ),
     'user_get_links_v3' : IDL.Func(
         [IDL.Opt(PaginateInput)],
-        [Result_14],
+        [Result_13],
         ['query'],
       ),
     'user_open_link_gate' : IDL.Func(
         [IDL.Text, IDL.Text, GateKey],
-        [Result_15],
+        [Result_14],
         [],
       ),
     'user_process_action_v2' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_16],
+        [Result_15],
         [],
       ),
     'user_process_action_v3' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_17],
+        [Result_16],
         [],
       ),
-    'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_11], []),
+    'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),
   });
 };
 export const init = ({ IDL }) => {

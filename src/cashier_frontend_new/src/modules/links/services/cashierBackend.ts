@@ -4,9 +4,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import {
   CreateLinkInputV3Mapper,
   CreateLinkResponseV3Mapper,
-  CreateLinkWithGateResponseV3Mapper,
   type CreateLinkResponseV3,
-  type CreateLinkWithGateResponseV3,
 } from "$modules/creationLink/types/dto/create_link_v3";
 import {
   CreateActionInputV3Mapper,
@@ -76,7 +74,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult_1,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_14).mapErr(
+    >(response as cashierBackend.Result_13).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -87,9 +85,17 @@ class CanisterBackendService {
    * @param input V3 link creation payload
    * @returns A Result containing CreateLinkResponseV3 or an Error.
    */
+  /**
+   * Creates a new link, optionally with one or more gates, using the V3 API.
+   * @param link Shared link payload
+   * @param action Shared action payload
+   * @param gateKeys Gate keys to attach (empty array for no gates)
+   * @returns A Result containing CreateLinkResponseV3 or an Error.
+   */
   async createLinkV3(
     link: SharedLink,
     action: SharedAction,
+    gateKeys: cashierBackend.GateKey[] = [],
   ): Promise<Result<CreateLinkResponseV3, Error>> {
     const actor = this.#getActor({
       anonymous: false,
@@ -101,6 +107,7 @@ class CanisterBackendService {
     const input = CreateLinkInputV3Mapper.toBackendCreateLinkInputArgV3(
       link,
       action,
+      gateKeys,
     );
     const response = await actor.user_create_link_v3(input);
 
@@ -112,41 +119,6 @@ class CanisterBackendService {
       .map((res) =>
         CreateLinkResponseV3Mapper.fromBackendCreateLinkResponseV3(res),
       )
-      .mapErr((err) => new Error(JSON.stringify(err)));
-  }
-
-  /**
-   * Creates a new link with zero or more gates using the V3 API.
-   * @param link Shared link payload
-   * @param action Shared action payload
-   * @param gateKeys Gate keys to attach (empty array for no gates)
-   * @returns A Result containing CreateLinkWithGateResponseV3 or an Error.
-   */
-  async createLinkV3WithGates(
-    link: SharedLink,
-    action: SharedAction,
-    gateKeys: cashierBackend.GateKey[],
-  ): Promise<Result<CreateLinkWithGateResponseV3, Error>> {
-    const actor = this.#getActor({ anonymous: false });
-    if (!actor) {
-      return Err(new Error("User not logged in"));
-    }
-
-    const input = CreateLinkInputV3Mapper.toBackendCreateLinkInputArgV3(
-      link,
-      action,
-    );
-    const response = await actor.user_create_link_v3_with_gates(
-      input,
-      toNullable(gateKeys.length > 0 ? gateKeys : null),
-    );
-
-    return responseToResult(
-      response as
-        | { Ok: cashierBackend.CreateLinkWithGateResponseV3 }
-        | { Err: cashierBackend.CanisterError },
-    )
-      .map((res) => CreateLinkWithGateResponseV3Mapper.fromBackend(res))
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
 
@@ -173,7 +145,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.GetLinkDetailsResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_12).mapErr(
+    >(response as cashierBackend.Result_11).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -200,7 +172,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.OpenGateSuccessResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_15).mapErr(
+    >(response as cashierBackend.Result_14).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -252,7 +224,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11).mapErr(
+    >(response as cashierBackend.Result_10).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -277,7 +249,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11).mapErr(
+    >(response as cashierBackend.Result_10).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }

@@ -13,8 +13,8 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, CreateLinkWithGateResponseV3,
-            DisableLinkResponseV3, GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
             SyncAssetBalanceCacheResponseV3,
         },
     },
@@ -347,23 +347,6 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     ) -> CanisterClientResult<Result<SyncAssetBalanceCacheResponseV3, CanisterError>> {
         self.client
             .update("user_sync_asset_balance_cache", (link_id,))
-            .await
-    }
-
-    /// Creates a new link V3 with zero or more password gates.
-    /// # Arguments
-    /// * `input` - Link creation data
-    /// * `gate_keys` - Optional list of gate keys to attach
-    /// # Returns
-    /// * `Ok(CreateLinkWithGateResponseV3)` - The created link data plus gates
-    /// * `Err(CanisterError)` - If creation or gate registration fails
-    pub async fn user_create_link_v3_with_gates(
-        &self,
-        input: CreateLinkInputV3,
-        gate_keys: Option<Vec<GateKey>>,
-    ) -> CanisterClientResult<Result<CreateLinkWithGateResponseV3, CanisterError>> {
-        self.client
-            .update("user_create_link_v3_with_gates", (input, gate_keys))
             .await
     }
 
