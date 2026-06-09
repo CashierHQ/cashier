@@ -4,24 +4,7 @@ import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkStat
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { buildE2ERedirectInput } from "./e2eRedirectInput";
 import { parseRoute } from "./routeScreen";
-import type { RedirectInput } from "./types";
-
-type LinkLike = {
-  creator?: { toString(): string } | string;
-  state?: string;
-  link_use_action_counter?: bigint | number;
-  link_use_action_max_count?: bigint | number;
-  use_count?: bigint | number;
-  max_use?: bigint | number;
-};
-
-type StepState<TStep> = {
-  step: TStep;
-};
-
-type StatefulStore<TStep> = {
-  state: StepState<TStep>;
-};
+import type { LinkLike, RedirectInput, StatefulStore } from "./types";
 
 /**
  * Reads the current authenticated principal from the route context.

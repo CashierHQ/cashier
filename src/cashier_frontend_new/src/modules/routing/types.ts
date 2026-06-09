@@ -66,3 +66,32 @@ export type RedirectInput = {
   userState: UserLinkStep | null;
   linkEnded: boolean;
 };
+
+/**
+ * Minimal link payload shape required by the redirect input adapter.
+ *
+ * The active route context can expose links from draft, detail, or legacy
+ * stores, so the adapter reads only the fields needed for redirect decisions.
+ */
+export type LinkLike = {
+  creator?: { toString(): string } | string;
+  state?: string;
+  link_use_action_counter?: bigint | number;
+  link_use_action_max_count?: bigint | number;
+  use_count?: bigint | number;
+  max_use?: bigint | number;
+};
+
+/**
+ * Generic state wrapper used by owner-flow stores.
+ */
+export type StepState<TStep> = {
+  step: TStep;
+};
+
+/**
+ * Minimal store shape for reading the active route step.
+ */
+export type StatefulStore<TStep> = {
+  state: StepState<TStep>;
+};
