@@ -1,27 +1,4 @@
-/**
- * Known route areas that the redirect policy understands.
- *
- * These are broad URL areas, not renderable screens.
- */
-export type RouteArea =
-  | "home"
-  | "linkList"
-  | "create"
-  | "detail"
-  | "userLanding"
-  | "userUse"
-  | "unknown";
-
-/**
- * Parsed result of matching a pathname to a known route pattern.
- *
- * @property area the high-level route area the pathname belongs to
- * @property linkId the link id parsed from the pathname, if any
- */
-export type RouteMatch = {
-  area: RouteArea;
-  linkId: string | null;
-};
+import type { RouteArea, RouteMatch } from "./types";
 
 function getPathParts(pathname: string): string[] {
   return pathname.split("/").filter(Boolean);
