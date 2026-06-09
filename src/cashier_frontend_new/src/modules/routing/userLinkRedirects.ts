@@ -1,12 +1,6 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { paths } from "./paths";
-import type { RedirectDecision, RedirectInput } from "./types";
-
-/**
- * `userLanding` maps to `/link/[id]` and `userUse` maps to `/link/[id]/use`,
- * but they share the same public-link access rules and screen rendering logic.
- */
-type UserRouteArea = "userLanding" | "userUse";
+import type { RedirectDecision, RedirectInput, UserRouteArea } from "./types";
 
 /**
  * Validates that a public link is loaded and exists.
@@ -17,7 +11,9 @@ type UserRouteArea = "userLanding" | "userUse";
  * @param input normalized redirect input for the current public link route
  * @returns a redirect or pending decision if validation fails, otherwise null
  */
-function validatePublicLink(input: RedirectInput): RedirectDecision | null {
+export function validatePublicLink(
+  input: RedirectInput,
+): RedirectDecision | null {
   if (input.isLoading) {
     return { kind: "pending" };
   }

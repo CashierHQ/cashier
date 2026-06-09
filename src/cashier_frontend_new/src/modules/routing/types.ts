@@ -32,6 +32,14 @@ export type LinkRouteContextOptions = {
 export type OwnerRouteArea = "create" | "detail";
 
 /**
+ * Public user routes that share recipient-flow redirect rules.
+ *
+ * `userLanding` maps to `/link/[id]` and `userUse` maps to `/link/[id]/use`,
+ * but both use the same public-link access checks and state mapping.
+ */
+export type UserRouteArea = "userLanding" | "userUse";
+
+/**
  * Known route areas that the redirect policy understands.
  *
  * These are broad URL areas, not renderable screens.
