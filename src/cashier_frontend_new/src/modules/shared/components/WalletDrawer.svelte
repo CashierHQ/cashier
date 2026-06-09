@@ -1,11 +1,14 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import {
     WalletViewType,
     type WalletView,
   } from "$modules/shared/types/wallet";
   import ImportPage from "$modules/wallet/pages/import.svelte";
   import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
+  import ManageCollectionsPage from "$modules/wallet/pages/manageCollections.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
+  import ReceiveNftPage from "$modules/wallet/pages/receiveNft.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
@@ -51,6 +54,10 @@
     currentView = { type: WalletViewType.RECEIVE, token };
   }
 
+  function navigateToNftReceive(collectionId?: string) {
+    currentView = { type: WalletViewType.NFT_RECEIVE, collectionId };
+  }
+
   function navigateToSend(token?: string) {
     currentView = { type: WalletViewType.SEND, token };
   }
@@ -70,6 +77,10 @@
 
   function navigateToAddNft() {
     currentView = { type: WalletViewType.ADD_NFT };
+  }
+
+  function navigateToManageCollections() {
+    currentView = { type: WalletViewType.MANAGE_COLLECTIONS };
   }
 
   function navigateToMainNft() {
@@ -93,17 +104,19 @@
     class="fixed z-[40] gap-4 bg-white shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm w-full flex flex-col h-full"
     tabindex="-1"
   >
-    <div class="absolute right-4 top-4 z-10">
+    <div class="flex items-center justify-between px-4 py-4">
+      <img
+        alt={locale.t("wallet.drawer.logoAlt")}
+        class="max-w-[130px]"
+        src="/logo.svg"
+      />
       <button
         type="button"
         onclick={handleClose}
         class="cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
-        <X
-          size={24}
-          class="text-gray-500 hover:text-gray-700 transition-colors"
-        />
-        <span class="sr-only">Close wallet</span>
+        <X size={28} class="text-black transition-colors hover:text-gray-700" />
+        <span class="sr-only">{locale.t("wallet.drawer.close")}</span>
       </button>
     </div>
 
@@ -121,7 +134,7 @@
     <div
       class="flex-1 flex flex-col overflow-y-auto p-4 {currentView.type ===
       'main'
-        ? 'pt-10'
+        ? 'pt-0'
         : ''}"
     >
       {#if currentView.type === WalletViewType.MAIN}
@@ -131,8 +144,9 @@
           onNavigateToManage={navigateToManage}
           onNavigateToSend={navigateToSend}
           onNavigateToReceive={navigateToReceive}
+          onNavigateToNftReceive={navigateToNftReceive}
           onNavigateToSwap={navigateToSwap}
-          onNavigateToAddNft={navigateToAddNft}
+          onNavigateToManageNfts={navigateToManageCollections}
           onTabChange={handleSwitchMainTab}
         />
       {:else if currentView.type === WalletViewType.TOKEN}
@@ -147,6 +161,11 @@
         <ReceivePage
           initialToken={currentView.token}
           onNavigateBack={navigateToMain}
+        />
+      {:else if currentView.type === WalletViewType.NFT_RECEIVE}
+        <ReceiveNftPage
+          initialCollectionId={currentView.collectionId}
+          onNavigateBack={navigateToMainNft}
         />
       {:else if currentView.type === WalletViewType.SEND}
         <SendPage
@@ -166,6 +185,8 @@
         />
       {:else if currentView.type === WalletViewType.ADD_NFT}
         <ImportNftPage onNavigateBack={navigateToMainNft} />
+      {:else if currentView.type === WalletViewType.MANAGE_COLLECTIONS}
+        <ManageCollectionsPage onNavigateBack={navigateToMainNft} />
       {/if}
     </div>
   </div>

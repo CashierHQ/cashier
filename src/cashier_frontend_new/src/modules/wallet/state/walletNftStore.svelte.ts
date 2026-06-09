@@ -2,6 +2,10 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { NFT_PAGE_SIZE } from "$modules/wallet/constants";
+import {
+  MOCK_DISABLED_COLLECTION_IDS,
+  MOCK_NFTS,
+} from "$modules/wallet/mock/mockNfts";
 import { Icrc7Service } from "$modules/wallet/services/icrc7Service";
 import type {
   CollectionMetadata,
@@ -9,6 +13,7 @@ import type {
   NFT,
 } from "$modules/wallet/types/nft";
 import type { Principal } from "@icp-sdk/core/principal";
+import { SvelteSet } from "svelte/reactivity";
 
 /**
  * Store managing the user's wallet NFTs
@@ -18,16 +23,32 @@ class WalletNftStore {
   collectionMetadataCache: Map<string, CollectionMetadata> = new Map();
   #currentPage: number = 0;
   #allNfts: EnrichedNFT[] = [];
+  #disabledCollectionIds = new SvelteSet<string>(MOCK_DISABLED_COLLECTION_IDS);
   hasMore = $state<boolean>(true);
 
   constructor() {
     this.#walletNftQuery = managedState<EnrichedNFT[]>({
       queryFn: async () => {
         const start = this.#currentPage * NFT_PAGE_SIZE;
-        const nfts: NFT[] = await tokenStorageService.getNfts(
-          start,
-          NFT_PAGE_SIZE,
-        );
+        let nfts: NFT[] = [];
+
+        try {
+          nfts = await tokenStorageService.getNfts(start, NFT_PAGE_SIZE);
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            this.hasMore = false;
+            this.#allNfts = MOCK_NFTS;
+            return this.#allNfts;
+          }
+
+          throw error;
+        }
+
+        if (import.meta.env.DEV && nfts.length === 0) {
+          this.hasMore = false;
+          this.#allNfts = MOCK_NFTS;
+          return this.#allNfts;
+        }
 
         if (nfts.length < NFT_PAGE_SIZE) {
           this.hasMore = false;
@@ -106,8 +127,43 @@ class WalletNftStore {
   public reset() {
     this.#currentPage = 0;
     this.#allNfts = [];
+    this.resetCollectionVisibility();
     this.hasMore = true;
     this.#walletNftQuery.reset();
+  }
+
+  /**
+   * Check whether a collection should be visible in the wallet NFT list.
+   * @param collectionId collection canister id
+   * @returns true when the collection is not hidden locally
+   */
+  public isCollectionEnabled(collectionId: string): boolean {
+    return !this.#disabledCollectionIds.has(collectionId);
+  }
+
+  /**
+   * Toggle local collection visibility until backend persistence exists.
+   * @param collectionId collection canister id
+   * @param enabled whether the collection should be shown in the NFT list
+   */
+  public setCollectionEnabled(collectionId: string, enabled: boolean): void {
+    if (enabled) {
+      this.#disabledCollectionIds.delete(collectionId);
+      return;
+    }
+
+    this.#disabledCollectionIds.add(collectionId);
+  }
+
+  /**
+   * Reset local collection visibility to the mock UI defaults.
+   */
+  private resetCollectionVisibility(): void {
+    this.#disabledCollectionIds.clear();
+
+    for (const collectionId of MOCK_DISABLED_COLLECTION_IDS) {
+      this.#disabledCollectionIds.add(collectionId);
+    }
   }
 
   /**

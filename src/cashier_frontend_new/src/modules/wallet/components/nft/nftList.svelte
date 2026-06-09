@@ -1,35 +1,53 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import NFTItem from "$modules/wallet/components/nft/nftItem.svelte";
+  import NftCollectionCard from "$modules/wallet/components/nft/nftCollectionCard.svelte";
   import type { EnrichedNFT } from "$modules/wallet/types/nft";
+  import { getNftCollectionSummaries } from "$modules/wallet/utils/nftCollections";
+  import { Image } from "lucide-svelte";
 
   interface Props {
     nfts: EnrichedNFT[];
     hasMore: boolean;
-    onSelectNFT: (collectionId: string, tokenId: bigint) => void;
+    onSelectCollection: (collectionId: string) => void;
     onLoadMore: () => void;
+    onManageNfts: () => void;
   }
 
-  let { nfts, hasMore, onSelectNFT, onLoadMore }: Props = $props();
+  let { nfts, hasMore, onSelectCollection, onLoadMore, onManageNfts }: Props =
+    $props();
+
+  const collections = $derived(getNftCollectionSummaries(nfts));
 </script>
 
 <div>
-  {#if nfts.length === 0}
-    <div class="text-center py-8">
-      <p class="text-gray-500 mb-4">
-        {locale.t("wallet.noNFTsMsg")}
+  {#if collections.length === 0}
+    <div class="flex flex-col items-center py-20 text-center">
+      <div
+        class="mb-4 flex h-14 w-14 items-center justify-center rounded-xl border border-[#E5EAE8] bg-white shadow-[0_1px_2px_0_rgba(16,24,40,0.05)]"
+      >
+        <Image class="text-walletpurple" size={28} />
+      </div>
+      <p class="mb-3 text-lg font-medium text-[#242424]">
+        {locale.t("wallet.nfts.noCollections")}
       </p>
+      <button
+        type="button"
+        onclick={onManageNfts}
+        class="text-walletpurple hover:text-walletpurple/80 text-base font-medium transition-colors"
+      >
+        {locale.t("wallet.nfts.manageCta")}
+      </button>
     </div>
   {:else}
-    <div class="grid grid-cols-2 gap-4">
-      {#each nfts as nft (nft.collectionId + nft.tokenId.toString())}
-        <NFTItem item={nft} onSelect={onSelectNFT} />
+    <div class="grid grid-cols-2 gap-2">
+      {#each collections as collection (collection.collectionId)}
+        <NftCollectionCard {collection} onSelect={onSelectCollection} />
       {/each}
     </div>
     {#if hasMore}
       <div class="text-center mt-4">
         <button
-          class="text-green hover:text-teal-700 font-medium text-base transition-colors"
+          class="text-walletpurple hover:text-walletpurple/80 font-medium text-base transition-colors"
           onclick={onLoadMore}
         >
           {locale.t("wallet.loadMore")}

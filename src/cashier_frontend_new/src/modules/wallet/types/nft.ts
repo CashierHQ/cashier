@@ -35,6 +35,23 @@ export type EnrichedNFT = NFT & {
   readonly description: string;
   readonly imageUrl: string;
   readonly collectionName: string;
+  readonly rarity?: string;
+};
+
+/**
+ * NFT collection display model used by collection grid and manage screens.
+ */
+export type NftCollectionSummary = {
+  readonly collectionId: string;
+  readonly name: string;
+  readonly description: string;
+  readonly imageUrl: string;
+  readonly itemCount: number;
+  readonly supply?: string;
+  readonly floor?: string;
+  readonly type?: string;
+  readonly standard?: string;
+  readonly symbol?: string;
 };
 
 /**

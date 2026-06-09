@@ -361,12 +361,53 @@
     }
   },
   "wallet": {
+    "drawer": {
+      "logoAlt": "Cashier logo",
+      "close": "Close wallet"
+    },
     "navBar": {
       "sendBtn": "Send",
       "receiveBtn": "Receive",
       "swapBtn": "Swap",
+      "manageBtn": "Manage",
+      "toggleBalance": "Toggle balance visibility",
       "tokensTabBtn": "Tokens",
-      "nftsTabBtn": "NFT's"
+      "nftsTabBtn": "NFTs"
+    },
+    "nfts": {
+      "summaryTitle": "NFTs",
+      "collectionsPrefix": "in",
+      "collectionsSuffix": "collections",
+      "noCollections": "No NFT Collections",
+      "manageCta": "+ Manage",
+      "manage": {
+        "header": "Manage Collections",
+        "searchPlaceholder": "Search a collection",
+        "emptyTitle": "No collections found",
+        "unknownCollection": "Unknown Collection",
+        "itemSingular": "item",
+        "itemPlural": "items",
+        "toggleAria": "Toggle {{collection}}"
+      },
+      "detail": {
+        "supply": "Supply: ",
+        "floor": "Floor: ",
+        "type": "Type",
+        "standard": "Standard",
+        "symbol": "Symbol",
+        "receiveNft": "Receive NFT",
+        "rarity": "Rarity: ",
+        "refreshAria": "Refresh collection"
+      },
+      "receive": {
+        "header": "Receive NFT",
+        "selectionWarning": "Cashier can only display NFTs from collections you have enabled. Select the collection you expect to receive.",
+        "selectedWarning": "Only NFTs from {{collection}} will appear in your wallet. If you receive an NFT from an unsupported collection, it will not be visible until you enable that collection.",
+        "enabledCollections": "Your enabled collections",
+        "collectionLabel": "Receive NFT Collection",
+        "addressLabel": "Receive ICP Address",
+        "standardFallback": "ICRC-7"
+      }
     },
     "tokenInfo": {
       "aboutToken": "About",
