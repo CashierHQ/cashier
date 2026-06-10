@@ -285,6 +285,8 @@ async fn user_open_link_gate(
     let mut rate_service = get_state().rate_limit_service;
     let _rate_guard = RateLimitGuard::new(&mut rate_service, caller, now_ns)?;
 
+    backoff_guard.mark_attempted();
+
     let mut gate_service = get_state().gate_service;
     let result = gate_service
         .open_link_gate(&link_id, &gate_id, caller, gate_key)

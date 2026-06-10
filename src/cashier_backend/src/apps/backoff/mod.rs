@@ -15,15 +15,22 @@ use crate::repositories::{
 /// RAII guard that ensures an exponential-backoff penalty is recorded for
 /// every gate attempt, including when the inter-canister callback traps.
 ///
-/// Create the guard before the inter-canister call. Call `on_success()` if
-/// the call succeeds; otherwise (including on trap) `Drop` records a failure
-/// and advances the backoff window.
+/// Create the guard before the inter-canister call. Call `mark_attempted()`
+/// immediately before the gate call so that only real gate attempts (not
+/// calls rejected earlier by the rate limiter) incur a backoff penalty.
+/// Call `on_success()` if the gate call succeeds; otherwise `Drop` records
+/// a failure and advances the backoff window.
 pub struct BackoffGuard {
     user: Principal,
     /// IC timestamp at guard creation, used to compute `next_allowed_ns`.
     now_ns: u64,
     base_wait_secs: u64,
     enabled: bool,
+    /// Set to `true` just before the inter-canister gate call. `Drop` only
+    /// records a failure/success when this is `true`, so calls that are
+    /// rejected by the rate limiter before reaching the gate do not incur
+    /// a spurious backoff penalty.
+    attempted: bool,
     succeeded: bool,
 }
 
@@ -48,8 +55,18 @@ impl BackoffGuard {
             now_ns,
             base_wait_secs: config.base_wait_secs,
             enabled: config.enabled,
+            attempted: false,
             succeeded: false,
         })
+    }
+
+    /// Signal that the actual inter-canister gate call is about to be made.
+    ///
+    /// Must be called after all pre-call guards (e.g. rate limiter) have
+    /// passed. `Drop` only records a backoff outcome when `attempted` is
+    /// `true`, so calls rejected before reaching the gate incur no penalty.
+    pub fn mark_attempted(&mut self) {
+        self.attempted = true;
     }
 
     /// Mark the gate call as successful; `Drop` will clear the backoff state
@@ -61,7 +78,7 @@ impl BackoffGuard {
 
 impl Drop for BackoffGuard {
     fn drop(&mut self) {
-        if !self.enabled {
+        if !self.enabled || !self.attempted {
             return;
         }
         BACKOFF_STATE_STORE.with(|store| {
@@ -381,15 +398,33 @@ mod tests {
         let svc = make_service(&repo);
         let user = random_principal_id();
 
-        // Act — drop without calling on_success
+        // Act — mark_attempted then drop without calling on_success
         {
-            let _guard = BackoffGuard::new(&svc, user, 0).unwrap();
+            let mut guard = BackoffGuard::new(&svc, user, 0).unwrap();
+            guard.mark_attempted();
         }
 
         // Assert — failure recorded in the real thread-local
         let state = read_backoff_state(&user).expect("state should exist");
         assert_eq!(state.failure_count, 1);
         assert_eq!(state.next_allowed_ns, 180 * 1_000_000_000);
+    }
+
+    #[test]
+    fn it_should_not_record_failure_when_not_attempted() {
+        // Arrange — guard dropped without mark_attempted (e.g. rate limiter blocked)
+        reset_backoff_store();
+        let repo = TestRepositories::new();
+        let svc = make_service(&repo);
+        let user = random_principal_id();
+
+        // Act — drop without mark_attempted
+        {
+            let _guard = BackoffGuard::new(&svc, user, 0).unwrap();
+        }
+
+        // Assert — no state written
+        assert!(read_backoff_state(&user).is_none());
     }
 
     #[test]
@@ -419,9 +454,10 @@ mod tests {
             );
         });
 
-        // Act — drop after on_success
+        // Act — mark_attempted then drop after on_success
         {
             let mut guard = BackoffGuard::new(&svc, user, 0).unwrap();
+            guard.mark_attempted();
             guard.on_success();
         }
 
@@ -458,7 +494,8 @@ mod tests {
 
         // Failure 1: wait = 180s
         {
-            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+            let mut g = BackoffGuard::new(&svc, user, t0).unwrap();
+            g.mark_attempted();
         }
         let s1 = read_backoff_state(&user).unwrap();
         assert_eq!(s1.failure_count, 1);
@@ -466,7 +503,8 @@ mod tests {
 
         // Failure 2: wait = 360s
         {
-            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+            let mut g = BackoffGuard::new(&svc, user, t0).unwrap();
+            g.mark_attempted();
         }
         let s2 = read_backoff_state(&user).unwrap();
         assert_eq!(s2.failure_count, 2);
@@ -474,7 +512,8 @@ mod tests {
 
         // Failure 3: wait = 720s
         {
-            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+            let mut g = BackoffGuard::new(&svc, user, t0).unwrap();
+            g.mark_attempted();
         }
         let s3 = read_backoff_state(&user).unwrap();
         assert_eq!(s3.failure_count, 3);
