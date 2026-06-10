@@ -25,3 +25,14 @@ impl Default for RateLimitConfig {
         }
     }
 }
+
+/// Per-user sliding window counter state. Stored on the heap — resets on canister upgrade.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct UserRateLimitState {
+    /// IC timestamp (nanoseconds) when the current window opened.
+    pub window_start_ns: u64,
+    /// Number of requests recorded in the current window.
+    pub current_count: u32,
+    /// Number of requests recorded in the previous (fully elapsed) window.
+    pub prev_count: u32,
+}

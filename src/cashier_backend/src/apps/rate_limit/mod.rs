@@ -1,16 +1,71 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::cell::RefCell;
+use std::collections::BTreeSet;
+
 use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 
-use cashier_backend_types::rate_limit::RateLimitConfig;
+use cashier_backend_types::rate_limit::{RateLimitConfig, UserRateLimitState};
 
 use crate::repositories::{
-    Repositories,
-    rate_limit_config::RateLimitConfigRepository,
-    rate_limit_state::{RateLimitStateRepository, UserRateLimitState},
+    Repositories, rate_limit_config::RateLimitConfigRepository,
+    rate_limit_state::RateLimitStateRepository,
 };
+
+thread_local! {
+    /// Tracks principals with an in-flight `open_gate` request.
+    /// Released via Drop even when the inter-canister callback traps.
+    static RATE_LIMIT_IN_FLIGHT: RefCell<BTreeSet<Principal>> =
+        const { RefCell::new(BTreeSet::new()) };
+}
+
+/// RAII guard that prevents concurrent `open_gate` calls per user and
+/// enforces the sliding-window rate limit.
+///
+/// Acquiring the guard atomically checks both the in-flight lock and the
+/// sliding-window counter. The in-flight lock is released in `Drop`, which
+/// the IC CDK invokes even when a callback traps (`ic0.call_on_cleanup`).
+pub struct RateLimitGuard {
+    user: Principal,
+}
+
+impl RateLimitGuard {
+    /// Check rate limit and acquire the in-flight lock for `user`.
+    /// # Arguments
+    /// * `service` - the RateLimitService to use for checking and recording the request
+    /// * `user` - the user for whom to acquire the guard
+    /// * `now_ns` - the current IC timestamp in nanoseconds for rate limit calculations
+    /// # Returns
+    /// * `Ok(RateLimitGuard)` if the guard was successfully acquired,
+    /// * `Err(CanisterError::RateLimited)` if the user is already in-flight or exceeds the rate limit    
+    pub fn new(
+        service: &mut RateLimitService<impl Repositories>,
+        user: Principal,
+        now_ns: u64,
+    ) -> Result<Self, CanisterError> {
+        let already_in_flight = RATE_LIMIT_IN_FLIGHT.with(|s| s.borrow().contains(&user));
+        if already_in_flight {
+            return Err(CanisterError::RateLimited(
+                "Request already in progress for this user.".to_string(),
+            ));
+        }
+        service.check_and_record(user, now_ns)?;
+        RATE_LIMIT_IN_FLIGHT.with(|s| {
+            s.borrow_mut().insert(user);
+        });
+        Ok(Self { user })
+    }
+}
+
+impl Drop for RateLimitGuard {
+    fn drop(&mut self) {
+        RATE_LIMIT_IN_FLIGHT.with(|s| {
+            s.borrow_mut().remove(&self.user);
+        });
+    }
+}
 
 /// Per-user sliding window rate limiter for the gate API.
 pub struct RateLimitService<R: Repositories> {
@@ -33,9 +88,12 @@ impl<R: Repositories> RateLimitService<R> {
     /// (weighted by how much of it still overlaps the current moment) with the current
     /// window's count, giving a smooth rate without boundary exploits.
     ///
-    /// Returns `Err(CanisterError::RateLimited)` if the limit is exceeded; the state is
-    /// NOT updated in that case. Returns `Ok(())` and persists the incremented counter
-    /// when the request is allowed.
+    /// # Arguments
+    /// * `user` - the user for whom to check the rate limit
+    /// * `now_ns` - the current IC timestamp in nanoseconds for rate limit calculations
+    /// # Returns
+    /// * `Ok(())` if the request is within the rate limit and has been recorded
+    /// * `Err(CanisterError::RateLimited)` if the request exceeds the rate limit (state is NOT updated in this case)
     pub fn check_and_record(&mut self, user: Principal, now_ns: u64) -> Result<(), CanisterError> {
         let config = self.config_repo.read(Clone::clone);
         if !config.enabled {
@@ -92,11 +150,15 @@ impl<R: Repositories> RateLimitService<R> {
     }
 
     /// Replace the rate limit configuration. Takes effect on the next request.
+    /// # Arguments
+    /// * `config` - the new rate limit configuration to set
     pub fn update_config(&mut self, config: RateLimitConfig) {
         self.config_repo.update(|cfg| *cfg = config);
     }
 
     /// Clear the rate limit state for a specific user (admin utility).
+    /// # Arguments
+    /// * `user` - the user for whom to clear the rate limit state
     pub fn reset_user(&mut self, user: &Principal) {
         self.state_repo.remove(user);
     }
@@ -120,6 +182,88 @@ mod tests {
             max_requests,
             window_secs,
         }
+    }
+
+    /// Clear the in-flight set before each guard test to ensure isolation.
+    fn reset_in_flight() {
+        RATE_LIMIT_IN_FLIGHT.with(|s| s.borrow_mut().clear());
+    }
+
+    #[test]
+    fn it_should_prevent_concurrent_requests_for_same_user() {
+        // Arrange
+        reset_in_flight();
+        let repo = TestRepositories::new();
+        let mut svc = make_service(&repo);
+        // Allow up to 10 requests so the sliding window isn't the constraint.
+        svc.update_config(fixture_of_config(true, 10, 60));
+        let user = random_principal_id();
+
+        let _guard = RateLimitGuard::new(&mut svc, user, MINUTE_NS).unwrap();
+
+        // Act — second concurrent request for the same user
+        let result = RateLimitGuard::new(&mut svc, user, MINUTE_NS + 1);
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::RateLimited(_))));
+    }
+
+    #[test]
+    fn it_should_allow_concurrent_requests_for_different_users() {
+        // Arrange
+        reset_in_flight();
+        let repo = TestRepositories::new();
+        let mut svc = make_service(&repo);
+        svc.update_config(fixture_of_config(true, 10, 60));
+        let user_a = random_principal_id();
+        let user_b = random_principal_id();
+
+        // Act
+        let guard_a = RateLimitGuard::new(&mut svc, user_a, MINUTE_NS);
+        let guard_b = RateLimitGuard::new(&mut svc, user_b, MINUTE_NS);
+
+        // Assert
+        assert!(guard_a.is_ok());
+        assert!(guard_b.is_ok());
+    }
+
+    #[test]
+    fn it_should_release_lock_on_drop() {
+        // Arrange
+        reset_in_flight();
+        let repo = TestRepositories::new();
+        let mut svc = make_service(&repo);
+        svc.update_config(fixture_of_config(true, 10, 60));
+        let user = random_principal_id();
+
+        {
+            let _guard = RateLimitGuard::new(&mut svc, user, MINUTE_NS).unwrap();
+            // guard is in-flight here
+        } // guard dropped here
+
+        // Act — new guard after drop
+        let result = RateLimitGuard::new(&mut svc, user, MINUTE_NS + 1);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_reject_when_rate_limit_exceeded() {
+        // Arrange — default config: 1 req / 60s
+        reset_in_flight();
+        let repo = TestRepositories::new();
+        let mut svc = make_service(&repo);
+        let user = random_principal_id();
+
+        // Exhaust the sliding window via the service directly (no guard needed)
+        svc.check_and_record(user, MINUTE_NS).unwrap();
+
+        // Act — guard creation should fail due to sliding window
+        let result = RateLimitGuard::new(&mut svc, user, MINUTE_NS + 1);
+
+        // Assert
+        assert!(matches!(result, Err(CanisterError::RateLimited(_))));
     }
 
     #[test]

@@ -4,18 +4,8 @@
 use std::collections::BTreeMap;
 
 use candid::Principal;
+use cashier_backend_types::rate_limit::UserRateLimitState;
 use ic_mple_log::service::Storage;
-
-/// Per-user sliding window counter state. Stored on the heap — resets on canister upgrade.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct UserRateLimitState {
-    /// IC timestamp (nanoseconds) when the current window opened.
-    pub window_start_ns: u64,
-    /// Number of requests recorded in the current window.
-    pub current_count: u32,
-    /// Number of requests recorded in the previous (fully elapsed) window.
-    pub prev_count: u32,
-}
 
 pub type RateLimitStateRepositoryStorage = BTreeMap<Principal, UserRateLimitState>;
 
@@ -31,17 +21,26 @@ impl<S: Storage<RateLimitStateRepositoryStorage>> RateLimitStateRepository<S> {
     }
 
     /// Get the current rate limit state for a user.
+    /// # Arguments
+    /// * `user` - the user for whom to get the rate limit state
+    /// # Returns
+    /// * `Some(UserRateLimitState)` if the user has a rate limit state, `None` otherwise
     pub fn get(&self, user: &Principal) -> Option<UserRateLimitState> {
         self.storage.with_borrow(|store| store.get(user).cloned())
     }
 
     /// Insert or overwrite the rate limit state for a user.
+    /// # Arguments
+    /// * `user` - the user for whom to insert or overwrite the rate limit state
+    /// * `state` - the rate limit state to insert or overwrite
     pub fn insert(&mut self, user: &Principal, state: UserRateLimitState) {
         self.storage
             .with_borrow_mut(|store| store.insert(*user, state));
     }
 
     /// Remove the rate limit state for a user.
+    /// # Arguments
+    /// * `user` - the user for whom to remove the rate limit state
     pub fn remove(&mut self, user: &Principal) {
         self.storage.with_borrow_mut(|store| store.remove(user));
     }

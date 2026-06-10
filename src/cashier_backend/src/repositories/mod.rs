@@ -536,10 +536,10 @@ thread_local! {
 
 thread_local! {
     // Heap-based stores — intentionally volatile, reset on canister upgrade.
-    static RATE_LIMIT_STATE_STORE: RefCell<RateLimitStateRepositoryStorage> =
+    pub(crate) static RATE_LIMIT_STATE_STORE: RefCell<RateLimitStateRepositoryStorage> =
         const { RefCell::new(std::collections::BTreeMap::new()) };
 
-    static BACKOFF_STATE_STORE: RefCell<BackoffStateRepositoryStorage> =
+    pub(crate) static BACKOFF_STATE_STORE: RefCell<BackoffStateRepositoryStorage> =
         const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 

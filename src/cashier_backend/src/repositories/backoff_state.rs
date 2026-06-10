@@ -4,16 +4,8 @@
 use std::collections::BTreeMap;
 
 use candid::Principal;
+use cashier_backend_types::backoff::BackoffState;
 use ic_mple_log::service::Storage;
-
-/// Per-user exponential backoff state. Stored on the heap — resets on canister upgrade.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct BackoffState {
-    /// Number of consecutive failed gate attempts.
-    pub failure_count: u32,
-    /// IC timestamp (nanoseconds) before which the next attempt is blocked.
-    pub next_allowed_ns: u64,
-}
 
 pub type BackoffStateRepositoryStorage = BTreeMap<Principal, BackoffState>;
 
@@ -29,17 +21,30 @@ impl<S: Storage<BackoffStateRepositoryStorage>> BackoffStateRepository<S> {
     }
 
     /// Get the current backoff state for a user.
+    /// # Arguments
+    /// * `user` - the user for whom to get the backoff state
+    /// # Returns
+    /// * `Some(BackoffState)` if the user has a backoff state, `None` otherwise
     pub fn get(&self, user: &Principal) -> Option<BackoffState> {
         self.storage.with_borrow(|store| store.get(user).cloned())
     }
 
     /// Insert or overwrite the backoff state for a user.
+    ///
+    /// Only compiled in test mode — production mutation goes through
+    /// `BackoffGuard::drop()` which accesses the thread-local directly.
+    /// # Arguments
+    /// * `user` - the user for whom to insert or overwrite the backoff state
+    /// * `state` - the backoff state to insert or overwrite
+    #[cfg(test)]
     pub fn insert(&mut self, user: &Principal, state: BackoffState) {
         self.storage
             .with_borrow_mut(|store| store.insert(*user, state));
     }
 
     /// Remove the backoff state for a user.
+    /// # Arguments
+    /// * `user` - the user for whom to remove the backoff state
     pub fn remove(&mut self, user: &Principal) {
         self.storage.with_borrow_mut(|store| store.remove(user));
     }

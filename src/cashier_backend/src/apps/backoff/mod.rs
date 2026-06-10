@@ -2,13 +2,88 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::{backoff::BackoffConfig, error::CanisterError};
+use cashier_backend_types::{
+    backoff::{BackoffConfig, BackoffState},
+    error::CanisterError,
+};
 
 use crate::repositories::{
-    Repositories,
-    backoff_config::BackoffConfigRepository,
-    backoff_state::{BackoffState, BackoffStateRepository},
+    BACKOFF_STATE_STORE, Repositories, backoff_config::BackoffConfigRepository,
+    backoff_state::BackoffStateRepository,
 };
+
+/// RAII guard that ensures an exponential-backoff penalty is recorded for
+/// every gate attempt, including when the inter-canister callback traps.
+///
+/// Create the guard before the inter-canister call. Call `on_success()` if
+/// the call succeeds; otherwise (including on trap) `Drop` records a failure
+/// and advances the backoff window.
+pub struct BackoffGuard {
+    user: Principal,
+    /// IC timestamp at guard creation, used to compute `next_allowed_ns`.
+    now_ns: u64,
+    base_wait_secs: u64,
+    enabled: bool,
+    succeeded: bool,
+}
+
+impl BackoffGuard {
+    /// Check the backoff window and, if clear, create a guard.
+    /// # Arguments
+    /// * `service` - the BackoffService to use for checking the backoff window
+    /// * `user` - the user for whom to create the guard
+    /// * `now_ns` - the current IC timestamp in nanoseconds for backoff calculations
+    /// # Returns
+    /// * `Ok(BackoffGuard)` if the user is allowed to proceed and the guard was successfully created
+    /// * `Err(CanisterError::BackoffThrottled)` if the user is still within a backoff window and should be throttled
+    pub fn new(
+        service: &BackoffService<impl Repositories>,
+        user: Principal,
+        now_ns: u64,
+    ) -> Result<Self, CanisterError> {
+        service.check(user, now_ns)?;
+        let config = service.get_config();
+        Ok(Self {
+            user,
+            now_ns,
+            base_wait_secs: config.base_wait_secs,
+            enabled: config.enabled,
+            succeeded: false,
+        })
+    }
+
+    /// Mark the gate call as successful; `Drop` will clear the backoff state
+    /// instead of recording a failure.
+    pub fn on_success(&mut self) {
+        self.succeeded = true;
+    }
+}
+
+impl Drop for BackoffGuard {
+    fn drop(&mut self) {
+        if !self.enabled {
+            return;
+        }
+        BACKOFF_STATE_STORE.with(|store| {
+            let mut borrow = store.borrow_mut();
+            if self.succeeded {
+                borrow.remove(&self.user);
+            } else {
+                let state = borrow.entry(self.user).or_default();
+                let new_count = state.failure_count.saturating_add(1);
+                let exponent = (new_count - 1).min(30);
+                let wait_ns = self
+                    .base_wait_secs
+                    .saturating_mul(1u64 << exponent)
+                    .saturating_mul(1_000_000_000);
+                *state = BackoffState {
+                    failure_count: new_count,
+                    next_allowed_ns: self.now_ns.saturating_add(wait_ns),
+                };
+            }
+        });
+    }
+}
 
 /// Per-user exponential backoff throttler for the gate API.
 ///
@@ -33,6 +108,12 @@ impl<R: Repositories> BackoffService<R> {
     ///
     /// This is a read-only check — state is not mutated here. Call before
     /// the inter-canister gate call (and before the rate limiter).
+    /// # Arguments
+    /// * `user` - the user to check
+    /// * `now_ns` - current IC timestamp in nanoseconds, used to check against `next_allowed_ns`
+    /// # Returns
+    /// * `Ok(())` if the user is allowed to proceed with the gate call
+    /// * `Err(CanisterError::BackoffThrottled)` if the user is still within a backoff window and should be throttled
     pub fn check(&self, user: Principal, now_ns: u64) -> Result<(), CanisterError> {
         let config = self.config_repo.read(Clone::clone);
         if !config.enabled {
@@ -55,9 +136,13 @@ impl<R: Repositories> BackoffService<R> {
 
     /// Record a failed gate attempt for `user`.
     ///
-    /// Increments the failure counter and sets `next_allowed_ns` to
-    /// `now_ns + base_wait_secs * 2^(failure_count - 1)`.
-    /// The exponent is capped at 30 to prevent u64 overflow.
+    /// Only compiled in test mode — production code uses `BackoffGuard::drop()`
+    /// which writes directly to the thread-local, ensuring the penalty is applied
+    /// even when an inter-canister callback traps.
+    /// # Arguments
+    /// * `user` - the user for whom to record the failure
+    /// * `now_ns` - current IC timestamp in nanoseconds, used to compute `next_allowed_ns`
+    #[cfg(test)]
     pub fn record_failure(&mut self, user: Principal, now_ns: u64) {
         let config = self.config_repo.read(Clone::clone);
         if !config.enabled {
@@ -82,6 +167,11 @@ impl<R: Repositories> BackoffService<R> {
     }
 
     /// Record a successful gate attempt for `user`, resetting the failure counter.
+    ///
+    /// Only compiled in test mode — production code uses `BackoffGuard::drop()`.
+    /// # Arguments
+    /// * `user` - the user for whom to record the success
+    #[cfg(test)]
     pub fn record_success(&mut self, user: &Principal) {
         self.state_repo.remove(user);
     }
@@ -92,11 +182,15 @@ impl<R: Repositories> BackoffService<R> {
     }
 
     /// Replace the backoff configuration. Takes effect on the next request.
+    /// # Arguments
+    /// * `config` - the new backoff configuration to apply
     pub fn update_config(&mut self, config: BackoffConfig) {
         self.config_repo.update(|cfg| *cfg = config);
     }
 
     /// Clear the backoff state for a specific user (admin utility).
+    /// # Arguments
+    /// * `user` - the user for whom to clear the backoff state
     pub fn reset_user(&mut self, user: &Principal) {
         self.state_repo.remove(user);
     }
@@ -266,5 +360,124 @@ mod tests {
 
         // Assert
         assert!(svc.check(user, t0 + 2).is_ok());
+    }
+
+    // ── BackoffGuard tests ────────────────────────────────────────────────
+
+    /// Clear the BACKOFF_STATE_STORE thread-local before each guard test.
+    fn reset_backoff_store() {
+        BACKOFF_STATE_STORE.with(|s| s.borrow_mut().clear());
+    }
+
+    fn read_backoff_state(user: &Principal) -> Option<BackoffState> {
+        BACKOFF_STATE_STORE.with(|s| s.borrow().get(user).cloned())
+    }
+
+    #[test]
+    fn it_should_record_failure_on_drop() {
+        // Arrange
+        reset_backoff_store();
+        let repo = TestRepositories::new();
+        let svc = make_service(&repo);
+        let user = random_principal_id();
+
+        // Act — drop without calling on_success
+        {
+            let _guard = BackoffGuard::new(&svc, user, 0).unwrap();
+        }
+
+        // Assert — failure recorded in the real thread-local
+        let state = read_backoff_state(&user).expect("state should exist");
+        assert_eq!(state.failure_count, 1);
+        assert_eq!(state.next_allowed_ns, 180 * 1_000_000_000);
+    }
+
+    #[test]
+    fn it_should_record_success_on_drop_after_on_success() {
+        // Arrange — pre-seed one failure so there is existing state to clear
+        reset_backoff_store();
+        BACKOFF_STATE_STORE.with(|s| {
+            s.borrow_mut().insert(
+                Principal::anonymous(),
+                BackoffState {
+                    failure_count: 1,
+                    next_allowed_ns: 0,
+                },
+            );
+        });
+        let repo = TestRepositories::new();
+        let svc = make_service(&repo);
+        let user = random_principal_id();
+        // Seed state for this specific user
+        BACKOFF_STATE_STORE.with(|s| {
+            s.borrow_mut().insert(
+                user,
+                BackoffState {
+                    failure_count: 2,
+                    next_allowed_ns: 0,
+                },
+            );
+        });
+
+        // Act — drop after on_success
+        {
+            let mut guard = BackoffGuard::new(&svc, user, 0).unwrap();
+            guard.on_success();
+        }
+
+        // Assert — state removed (same as record_success)
+        assert!(read_backoff_state(&user).is_none());
+    }
+
+    #[test]
+    fn it_should_not_mutate_state_when_disabled() {
+        // Arrange
+        reset_backoff_store();
+        let repo = TestRepositories::new();
+        let mut svc = make_service(&repo);
+        svc.update_config(fixture_of_config(false, 180));
+        let user = random_principal_id();
+
+        // Act — drop without on_success; backoff is disabled
+        {
+            let _guard = BackoffGuard::new(&svc, user, 0).unwrap();
+        }
+
+        // Assert — no state written
+        assert!(read_backoff_state(&user).is_none());
+    }
+
+    #[test]
+    fn it_should_double_wait_on_each_failure_via_guard() {
+        // Arrange
+        reset_backoff_store();
+        let repo = TestRepositories::new();
+        let svc = make_service(&repo);
+        let user = random_principal_id();
+        let t0 = 0u64;
+
+        // Failure 1: wait = 180s
+        {
+            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+        }
+        let s1 = read_backoff_state(&user).unwrap();
+        assert_eq!(s1.failure_count, 1);
+        assert_eq!(s1.next_allowed_ns, 180 * 1_000_000_000);
+
+        // Failure 2: wait = 360s
+        {
+            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+        }
+        let s2 = read_backoff_state(&user).unwrap();
+        assert_eq!(s2.failure_count, 2);
+        assert_eq!(s2.next_allowed_ns, 360 * 1_000_000_000);
+
+        // Failure 3: wait = 720s
+        {
+            let _g = BackoffGuard::new(&svc, user, t0).unwrap();
+        }
+        let s3 = read_backoff_state(&user).unwrap();
+        assert_eq!(s3.failure_count, 3);
+        assert_eq!(s3.next_allowed_ns, 720 * 1_000_000_000);
     }
 }

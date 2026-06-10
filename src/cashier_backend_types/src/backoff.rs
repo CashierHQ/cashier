@@ -27,3 +27,12 @@ impl Default for BackoffConfig {
         }
     }
 }
+
+/// Per-user exponential backoff state. Stored on the heap — resets on canister upgrade.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct BackoffState {
+    /// Number of consecutive failed gate attempts.
+    pub failure_count: u32,
+    /// IC timestamp (nanoseconds) before which the next attempt is blocked.
+    pub next_allowed_ns: u64,
+}
