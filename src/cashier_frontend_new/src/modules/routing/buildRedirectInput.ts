@@ -2,7 +2,6 @@ import type { RouteContext } from "$modules/routing/routeContext.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { buildE2ERedirectInput } from "./e2eRedirectInput";
 import { parseRoute } from "./routeScreen";
 import type { LinkLike, RedirectInput, StatefulStore } from "./types";
 
@@ -120,9 +119,6 @@ export function buildRedirectInput(
   context: RouteContext,
   location: string | URL,
 ): RedirectInput {
-  const e2eInput = buildE2ERedirectInput(location);
-  if (e2eInput) return e2eInput;
-
   const pathname = typeof location === "string" ? location : location.pathname;
   const route = parseRoute(pathname);
   const linkState = getOwnerLinkState(context);

@@ -11,8 +11,6 @@
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
   import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
-  import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
-  import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";
   import { paths } from "$modules/routing/paths";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
   import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
@@ -24,7 +22,6 @@
 
   const input = $derived(buildAuthRedirectInput(page.url));
   const decision = $derived(resolveRedirect(input));
-  const showE2EMarker = $derived(isE2ERedirectEnabled(page.url));
 
   useRedirectNavigation(() => decision);
 
@@ -52,9 +49,7 @@
   }
 </script>
 
-{#if decision.kind === "allow" && showE2EMarker}
-  <E2ERedirectScreen screen={decision.screen ?? "linkList"} />
-{:else if decision.kind === "allow"}
+{#if decision.kind === "allow"}
   <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
     <AppHeader />
 

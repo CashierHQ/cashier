@@ -2,18 +2,20 @@
 
 Tracking tables for redirect scenarios from the sheets and manual review. Each row should stay brief: scenario ID, expected behavior, and current status.
 
+Redirect matrix rows are covered by unit tests. Browser smoke tests live in
+`tests/redirects.e2e.ts` and only verify real app pages without test-only route
+fixtures.
+
 Run a whole scenario by grepping its ID prefix:
 
 ```bash
 npm run test:unit -- --run -t "LO-"
-npm run test:e2e -- -g "LO-"
 ```
 
 Run one row by its ID:
 
 ```bash
 npm run test:unit -- --run -t "LO-03"
-npm run test:e2e -- -g "LO-03"
 ```
 
 ## Redirect Terms
@@ -41,7 +43,6 @@ npm run test:e2e -- -g "LO-03"
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario    | Expected        | Status |
 | ----- | ----------- | --------------- | ------ |
@@ -57,7 +58,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: old UI protects `/link/[id]/use` with auth and redirects logged-out users to `/link/[id]`.
 
@@ -74,7 +74,6 @@ Note: old UI protects `/link/[id]/use` with auth and redirects logged-out users 
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: owner-flow invalid links redirect to `/links`; public user-flow invalid links redirect to `/404`.
 
@@ -88,7 +87,6 @@ Note: owner-flow invalid links redirect to `/links`; public user-flow invalid li
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario         | Expected        | Status |
 | ----- | ---------------- | --------------- | ------ |
@@ -103,7 +101,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 - UI: `src/modules/home/components/Header.svelte.spec.ts`
 
 | ID    | Scenario           | Expected                   | Status |
@@ -119,7 +116,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario         | Expected                 | Status |
 | ----- | ---------------- | ------------------------ | ------ |
@@ -134,7 +130,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID     | Scenario         | Expected                 | Status |
 | ------ | ---------------- | ------------------------ | ------ |
@@ -149,7 +144,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario         | Expected                     | Status |
 | ----- | ---------------- | ---------------------------- | ------ |
@@ -164,7 +158,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID     | Scenario         | Expected                   | Status |
 | ------ | ---------------- | -------------------------- | ------ |
@@ -179,7 +172,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario         | Expected         | Status |
 | ----- | ---------------- | ---------------- | ------ |
@@ -194,7 +186,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 | ID    | Scenario         | Expected              | Status |
 | ----- | ---------------- | --------------------- | ------ |
@@ -209,7 +200,6 @@ Tests:
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -227,7 +217,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -249,7 +238,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -271,7 +259,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -293,7 +280,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: old UI allows `Created` on both create and detail routes.
 
@@ -315,7 +301,6 @@ Note: old UI allows `Created` on both create and detail routes.
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -337,7 +322,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -359,7 +343,6 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 Tests:
 
 - Unit: `src/modules/routing/resolveRedirect.spec.ts`
-- E2E: `tests/redirects.e2e.ts`
 
 Note: this maps to local `Ended`; create-flow pages share `/link/create/[id]`.
 

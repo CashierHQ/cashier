@@ -6,12 +6,9 @@
   import ProtectedIP from "$modules/routing/components/ProtectedIP.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { refreshAmplitudeUserIdFromAuth } from "$modules/analytics/amplitudeStore";
-  import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";
-  import { page } from "$app/state";
   import "../app.css";
 
   let { children } = $props();
-  const skipIpProtection = $derived(isE2ERedirectEnabled(page.url));
 
   // Initialize i18n on mount
   initLocale();
@@ -27,12 +24,8 @@
   <link rel="icon" href={favicon} />
 </svelte:head>
 
-{#if skipIpProtection}
+<ProtectedIP>
   {@render children?.()}
-{:else}
-  <ProtectedIP>
-    {@render children?.()}
-  </ProtectedIP>
-{/if}
+</ProtectedIP>
 
 <Toaster />

@@ -1,6 +1,5 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
-import { withE2ERedirectSearch } from "./e2eRedirectInput";
 import type { RedirectDecision } from "./types";
 
 /**
@@ -21,8 +20,7 @@ export function useRedirectNavigation(getDecision: () => RedirectDecision) {
 
     if (decision.kind !== "redirect") return;
 
-    const resolvedUrl = resolve(decision.to);
-    const nextUrl = withE2ERedirectSearch(resolvedUrl);
+    const nextUrl = resolve(decision.to);
 
     if (scheduledRedirect === nextUrl) return;
 
@@ -30,12 +28,7 @@ export function useRedirectNavigation(getDecision: () => RedirectDecision) {
 
     // Defer navigation so Svelte finishes the current reactive update first.
     setTimeout(() => {
-      if (nextUrl !== resolvedUrl) {
-        window.location.replace(nextUrl);
-        return;
-      }
-
-      void goto(resolve(decision.to), { replaceState: true }).catch(() => {
+      void goto(nextUrl, { replaceState: true }).catch(() => {
         window.location.replace(nextUrl);
       });
     }, 0);

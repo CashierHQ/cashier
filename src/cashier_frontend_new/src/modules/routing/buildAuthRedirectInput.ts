@@ -1,6 +1,5 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { userProfile } from "$modules/shared/services/userProfile.svelte";
-import { buildE2ERedirectInput } from "./e2eRedirectInput";
 import { parseRoute } from "./routeScreen";
 import type { RedirectInput } from "./types";
 
@@ -14,9 +13,6 @@ import type { RedirectInput } from "./types";
  * @returns normalized input containing auth-only redirect data
  */
 export function buildAuthRedirectInput(location: string | URL): RedirectInput {
-  const e2eInput = buildE2ERedirectInput(location);
-  if (e2eInput) return e2eInput;
-
   const pathname = typeof location === "string" ? location : location.pathname;
   const route = parseRoute(pathname);
   const isLoggedIn = userProfile.isLoggedIn();
