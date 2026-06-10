@@ -1,18 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::link_reservation::{LinkReservation, LinkReservationCodec};
+use cashier_backend_types::repository::link_reservation::LinkReservation;
 use ic_mple_log::service::Storage;
-use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
-use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
+use std::collections::BTreeMap;
 
 /// Per-link list of in-flight reservations, keyed by `link_id`.
-pub type LinkReservationRepositoryStorage = VersionedBTreeMap<
-    String,
-    Vec<LinkReservation>,
-    LinkReservationCodec,
-    VirtualMemory<DefaultMemoryImpl>,
->;
+pub type LinkReservationRepositoryStorage = BTreeMap<String, Vec<LinkReservation>>;
 
 pub struct LinkReservationRepository<S: Storage<LinkReservationRepositoryStorage>> {
     storage: S,
@@ -26,7 +20,7 @@ impl<S: Storage<LinkReservationRepositoryStorage>> LinkReservationRepository<S> 
     /// Returns the current reservations for a link (empty vec if none).
     pub fn get(&self, link_id: &str) -> Vec<LinkReservation> {
         self.storage
-            .with_borrow(|store| store.get(&link_id.to_string()))
+            .with_borrow(|store| store.get(link_id).cloned())
             .unwrap_or_default()
     }
 
@@ -43,7 +37,7 @@ impl<S: Storage<LinkReservationRepositoryStorage>> LinkReservationRepository<S> 
     /// Removes all reservations for a link (used when the list becomes empty).
     pub fn remove(&mut self, link_id: &str) {
         self.storage.with_borrow_mut(|store| {
-            store.remove(&link_id.to_string());
+            store.remove(link_id);
         });
     }
 }

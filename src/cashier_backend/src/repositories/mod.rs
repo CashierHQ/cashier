@@ -19,10 +19,8 @@ use cashier_backend_types::repository::link::{
     v3::{LinkCodecV3, LinkV3},
 };
 use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
-use cashier_backend_types::repository::link_reservation::{LinkReservation, LinkReservationCodec};
 use cashier_backend_types::repository::link_gate::LinkGateCodec;
 use cashier_backend_types::repository::link_gate_user_status::LinkGateUserStatusCodec;
-use cashier_backend_types::repository::request_lock::RequestLockCodec;
 use cashier_backend_types::repository::transaction::v1::TransactionCodec;
 use cashier_backend_types::repository::user_action::v1::UserActionCodec;
 use cashier_backend_types::repository::user_link::v1::UserLinkCodec;
@@ -36,8 +34,8 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
-    link_action::v1::LinkAction, request_lock::RequestLock, transaction::v1::Transaction,
-    user_action::v1::UserAction, user_link::v1::UserLink,
+    link_action::v1::LinkAction, transaction::v1::Transaction, user_action::v1::UserAction,
+    user_link::v1::UserLink,
 };
 
 use crate::repositories::action::{
@@ -58,12 +56,12 @@ use crate::repositories::link::{
     v3::{LinkV3Repository, LinkV3RepositoryStorage},
 };
 use crate::repositories::link_action::{LinkActionRepository, LinkActionRepositoryStorage};
-use crate::repositories::link_reservation::{
-    LinkReservationRepository, LinkReservationRepositoryStorage,
-};
 use crate::repositories::link_gate::{LinkGateRepository, LinkGateRepositoryStorage};
 use crate::repositories::link_gate_user_status::{
     LinkGateUserStatusRepository, LinkGateUserStatusRepositoryStorage,
+};
+use crate::repositories::link_reservation::{
+    LinkReservationRepository, LinkReservationRepositoryStorage,
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
@@ -87,9 +85,9 @@ pub mod intent;
 pub mod intent_transaction;
 pub mod link;
 pub mod link_action;
-pub mod link_reservation;
 pub mod link_gate;
 pub mod link_gate_user_status;
+pub mod link_reservation;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
@@ -108,7 +106,7 @@ const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
 const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
 const ACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
-const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(10);
+// MemoryId 10 retired (request_lock moved to volatile heap storage) - do not reuse.
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(13);
@@ -118,7 +116,7 @@ const ACTION_V3_MEMORY_ID: MemoryId = MemoryId::new(16);
 const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
 const LINK_GATE_MEMORY_ID: MemoryId = MemoryId::new(18);
 const LINK_GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(19);
-const LINK_RESERVATION_MEMORY_ID: MemoryId = MemoryId::new(20);
+// MemoryId 20 retired (link_reservation moved to volatile heap storage) - do not reuse.
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -404,23 +402,14 @@ thread_local! {
         )
     );
 
-    static REQUEST_LOCK_STORE: RefCell<VersionedBTreeMap<
-        RequestLockKey,
-        RequestLock,
-        RequestLockCodec,
-        Memory
-    >> = RefCell::new(
-        VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
-    );
+    /// Request locks - volatile BTreeMap (not persisted to stable memory):
+    /// per-message anti-spam state, wiped on canister upgrade by design
+    static REQUEST_LOCK_STORE: RefCell<RequestLockRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 
-    static LINK_RESERVATION_STORE: RefCell<VersionedBTreeMap<
-        String,
-        Vec<LinkReservation>,
-        LinkReservationCodec,
-        Memory
-    >> = RefCell::new(
-        VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(LINK_RESERVATION_MEMORY_ID))),
-    );
+    /// Link reservations - volatile BTreeMap (not persisted to stable memory):
+    static LINK_RESERVATION_STORE: RefCell<LinkReservationRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 
     static SETTINGS_STORE: RefCell<VersionedStableCell<
         Settings,
@@ -553,12 +542,8 @@ pub mod tests {
                 link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
                 ))),
-                link_reservation: Rc::new(RefCell::new(VersionedBTreeMap::init(
-                    mm.get(LINK_RESERVATION_MEMORY_ID),
-                ))),
-                request_lock: Rc::new(RefCell::new(VersionedBTreeMap::init(
-                    mm.get(REQUEST_LOCK_MEMORY_ID),
-                ))),
+                link_reservation: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
+                request_lock: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
                 settings: Rc::new(RefCell::new(VersionedStableCell::init(
                     mm.get(SETTINGS_MEMORY_ID),
                     Default::default(),

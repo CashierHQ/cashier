@@ -2,6 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
+use crate::{
+    apps::{link_reservation::LinkReservationGuard, request_lock::RequestLockGuard},
+    repositories::ThreadlocalRepositories,
+};
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
@@ -38,7 +42,6 @@ async fn user_create_link_v3(
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
@@ -54,7 +57,7 @@ async fn user_create_link_v3(
     };
     let gate_keys = input.gate_keys.clone();
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    let lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
     let res = link_v3_service
         .create_link(
             input,
@@ -68,7 +71,9 @@ async fn user_create_link_v3(
             gate_service,
         )
         .await;
-    let _ = request_lock_service.drop(&key);
+    // Release before the gate-add await below (current behavior); Drop also runs via
+    // ic0.call_on_cleanup if create_link's callback traps, so the lock cannot leak.
+    drop(lock_guard);
 
     let mut link_response = res?;
 
@@ -97,7 +102,6 @@ async fn user_create_action_v3(
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
@@ -114,9 +118,10 @@ async fn user_create_action_v3(
         action_type: input.action.action_type.clone().to_string(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    // Released by Drop on every exit path, including a trap in the awaited callback.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
 
-    let res = link_v3_service
+    link_v3_service
         .create_action(
             &input.link_id,
             input.action,
@@ -130,10 +135,7 @@ async fn user_create_action_v3(
             gate_service,
             0,
         )
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Processes a created action V3.
@@ -149,8 +151,6 @@ async fn user_process_action_v3(
     info!("[user_process_action_v3]");
     debug!("[user_process_action_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
-    let mut reservation_service = get_state().link_reservation_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let validator_service = get_state().validator_service;
@@ -178,9 +178,13 @@ async fn user_process_action_v3(
     };
 
     // 1) Anti-spam: reject a concurrent duplicate of THIS request (binary lock).
-    let _ = request_lock_service.create(&key, now)?;
-    // 2) Capacity: reserve one of the link's uses; release the lock if there is none free.
-    if let Err(e) = reservation_service.reserve(
+    //    Declared first -> drops last, so the lock releases after the reservation.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, now)?;
+    // 2) Capacity: reserve one of the link's uses. On Err the `?` unwinds and the lock
+    //    guard drops. Both guards release on every exit path - success, error, or a
+    //    callback trap (ic0.call_on_cleanup) - with the TTL as the final backstop.
+    let _reservation_guard = LinkReservationGuard::reserve(
+        &ThreadlocalRepositories,
         &link_id,
         &input.action_id,
         action_type,
@@ -188,12 +192,9 @@ async fn user_process_action_v3(
         link.use_count,
         now,
         RESERVATION_TTL_NS,
-    ) {
-        let _ = request_lock_service.drop(&key);
-        return Err(e);
-    }
+    )?;
 
-    let res = link_v3_service
+    link_v3_service
         .process_action(
             caller,
             canister_id,
@@ -202,13 +203,7 @@ async fn user_process_action_v3(
             validator_service,
             executor_service,
         )
-        .await;
-
-    // Release on every path (success OR error); drop the lock last. TTL backstops a rare trap.
-    reservation_service.release(&link_id, &input.action_id);
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Retrieves a paginated list of links for the caller.

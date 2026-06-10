@@ -22,7 +22,6 @@ use cashier_backend_types::{
 };
 use cashier_shared::types::Action as ActionShared;
 use log::error;
-use std::collections::HashMap;
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 

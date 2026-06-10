@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_macros::storable;
-use ic_mple_structures::Codec;
 
 use crate::repository::action::v1::ActionType;
 
@@ -23,23 +22,6 @@ pub struct LinkReservation {
     pub id: String,
     pub action_type: ActionType,
     pub timestamp: u64,
-}
-
-#[storable]
-pub enum LinkReservationCodec {
-    V1(Vec<LinkReservation>),
-}
-
-impl Codec<Vec<LinkReservation>> for LinkReservationCodec {
-    fn decode(source: Self) -> Vec<LinkReservation> {
-        match source {
-            LinkReservationCodec::V1(reservations) => reservations,
-        }
-    }
-
-    fn encode(dest: Vec<LinkReservation>) -> Self {
-        LinkReservationCodec::V1(dest)
-    }
 }
 
 impl LinkReservation {
