@@ -36,7 +36,7 @@ describe("ProtectedLinkState", () => {
   });
 
   it("renders loading when link store query is loading", () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: true },
       state: { step: LinkStep.CREATED },
     } as any;
@@ -51,7 +51,7 @@ describe("ProtectedLinkState", () => {
   });
 
   it("redirects to /404 when state is not allowed", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       state: { step: LinkStep.ENDED },
     } as any;
@@ -66,7 +66,7 @@ describe("ProtectedLinkState", () => {
   });
 
   it("renders children when state is allowed", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       state: { step: LinkStep.ACTIVE },
     } as any;
@@ -82,8 +82,8 @@ describe("ProtectedLinkState", () => {
     expect(goto).not.toHaveBeenCalled();
   });
 
-  it("redirects for temp link (linkCreationStore) when step is invalid", async () => {
-    mockContext.linkCreationStore = {
+  it("redirects for draft link (linkCreationStoreV3) when step is invalid", async () => {
+    mockContext.linkCreationStoreV3 = {
       state: { step: LinkStep.ENDED },
     } as any;
 
@@ -97,7 +97,7 @@ describe("ProtectedLinkState", () => {
   });
 
   it("keeps rendering children during background loading after a valid state was rendered", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       state: { step: LinkStep.ACTIVE },
     } as any;
@@ -109,7 +109,7 @@ describe("ProtectedLinkState", () => {
     await tick();
     expect(screen.getByTestId("child")).toBeInTheDocument();
 
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: true },
       state: { step: LinkStep.ACTIVE },
     } as any;

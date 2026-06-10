@@ -127,6 +127,7 @@ pub enum AddressTypeV3 {
     User,
     Treasury,
     Link,
+    Gate,
 }
 
 impl From<AddressTypeShared> for AddressTypeV3 {
@@ -136,6 +137,7 @@ impl From<AddressTypeShared> for AddressTypeV3 {
             AddressTypeShared::User => AddressTypeV3::User,
             AddressTypeShared::Treasury => AddressTypeV3::Treasury,
             AddressTypeShared::Link => AddressTypeV3::Link,
+            AddressTypeShared::Gate => AddressTypeV3::Gate,
         }
     }
 }
@@ -147,6 +149,7 @@ impl AddressTypeV3 {
             AddressTypeV3::User => AddressTypeShared::User,
             AddressTypeV3::Treasury => AddressTypeShared::Treasury,
             AddressTypeV3::Link => AddressTypeShared::Link,
+            AddressTypeV3::Gate => AddressTypeShared::Gate,
         }
     }
 }

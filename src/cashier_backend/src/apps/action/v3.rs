@@ -21,7 +21,7 @@ use cashier_backend_types::{
     service::action::v3::ActionDataV3,
 };
 use cashier_shared::types::Action as ActionShared;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 
 use crate::repositories::{self, Repositories};
@@ -103,6 +103,7 @@ impl<R: Repositories> ActionServiceV3<R> {
 
         let mut intent_transactions: Vec<IntentTransaction> = vec![];
         let mut transactions: Vec<Transaction> = vec![];
+        let mut transaction_ids = HashSet::<String>::new();
 
         for (intent_id, txs) in intent_txs_map {
             for tx in txs {
@@ -111,7 +112,9 @@ impl<R: Repositories> ActionServiceV3<R> {
                     transaction_id: tx.id.clone(),
                 };
                 intent_transactions.push(intent_transaction);
-                transactions.push(tx);
+                if transaction_ids.insert(tx.id.clone()) {
+                    transactions.push(tx);
+                }
             }
         }
 

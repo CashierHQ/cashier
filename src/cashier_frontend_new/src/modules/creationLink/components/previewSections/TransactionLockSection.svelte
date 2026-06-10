@@ -1,12 +1,16 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
+  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import { Lock, LockOpen } from "lucide-svelte";
 
   type Props = {
-    transactionLockStatus: string;
+    gatingStore?: GatingStore;
+    hasLocks?: boolean;
     isEnded?: boolean;
   };
 
-  let { transactionLockStatus, isEnded = false }: Props = $props();
+  let { gatingStore, hasLocks, isEnded = false }: Props = $props();
+  const showLocked = $derived(gatingStore?.hasLocks ?? hasLocks ?? false);
 </script>
 
 <div
@@ -15,5 +19,21 @@
   <p class="font-medium text-sm">
     {locale.t("links.linkForm.preview.transactionLock")}
   </p>
-  <p class="text-sm" class:text-red-600={isEnded}>{transactionLockStatus}</p>
+  <div
+    class="flex items-center gap-1 text-sm text-green"
+    class:text-red-600={isEnded}
+  >
+    <span
+      >{showLocked
+        ? locale.t("links.linkForm.preview.transactionLockStatus.locked")
+        : locale.t(
+            "links.linkForm.preview.transactionLockStatus.unlocked",
+          )}</span
+    >
+    {#if showLocked}
+      <Lock class="h-4 w-4" aria-hidden="true" />
+    {:else}
+      <LockOpen class="h-4 w-4" aria-hidden="true" />
+    {/if}
+  </div>
 </div>

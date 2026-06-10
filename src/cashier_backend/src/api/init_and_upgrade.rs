@@ -39,6 +39,12 @@ fn init(init_data: CashierBackendInitData) {
     );
     state.set_token_storage_canister_id(init_data.token_storage_canister_id);
 
+    info!(
+        "[init] Set gate service canister id to {}",
+        init_data.gate_service_canister_id
+    );
+    state.set_gate_service_canister_id(init_data.gate_service_canister_id);
+
     state.token_standard_service.init(
         init_data
             .token_standard_cache_ttl_ns
@@ -75,6 +81,12 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
         upgrade_data.token_storage_canister_id
     );
     get_state().set_token_storage_canister_id(upgrade_data.token_storage_canister_id);
+
+    info!(
+        "[post_upgrade] Set gate service canister id to {}",
+        upgrade_data.gate_service_canister_id
+    );
+    get_state().set_gate_service_canister_id(upgrade_data.gate_service_canister_id);
 
     // Re-initialize token standard cache TTL
     get_state().token_standard_service.init(

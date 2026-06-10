@@ -29,7 +29,9 @@ export function buildPreviewFeesBreakdown(
       name:
         item.fee.feeType === FeeType.CREATE_LINK_FEE
           ? "Link creation fee"
-          : "Network fee",
+          : item.fee.feeType === FeeType.GATE_FEE
+            ? "Gate fee"
+            : "Network fee",
       amount: item.fee.amount,
       tokenAddress: item.asset.address,
       tokenSymbol: item.asset.symbol,

@@ -28,7 +28,8 @@ export type ActionType_1 = { 'Withdraw' : null } |
   { 'Send' : null } |
   { 'CreateLink' : null } |
   { 'Receive' : null };
-export type AddressType = { 'Link' : null } |
+export type AddressType = { 'Gate' : null } |
+  { 'Link' : null } |
   { 'User' : null } |
   { 'Treasury' : null } |
   { 'Creator' : null };
@@ -92,6 +93,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
+  'gate_service_canister_id' : Principal,
   'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
   'token_standard_cache_ttl_ns' : [] | [bigint],
@@ -118,17 +120,48 @@ export interface CreateLinkInputV3 {
   'title' : string,
   'action' : Action,
   'link_type' : LinkType_1,
+  'gate_keys' : [] | [Array<GateKey>],
   'max_use' : bigint,
 }
 export interface CreateLinkResponseV3 {
   'action' : Action,
   'link' : Link,
+  'gates' : Array<Gate>,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export interface DisableLinkResponseV3 { 'link' : Link }
 export type FromCallType = { 'Canister' : null } |
   { 'Wallet' : null };
-export interface GetLinkOptions { 'action_type' : ActionType }
+export interface Gate {
+  'id' : string,
+  'key' : GateKey,
+  'creator' : Principal,
+  'subject_id' : string,
+}
+export interface GateForUser {
+  'gate_user_status' : [] | [GateUserStatus],
+  'gate' : Gate,
+}
+export type GateKey = { 'Password' : string } |
+  { 'XFollowing' : string } |
+  { 'DiscordServer' : string } |
+  { 'PasswordRedacted' : null } |
+  { 'TelegramGroup' : string };
+export type GateStatus = { 'Open' : null } |
+  { 'Closed' : null };
+export interface GateUserStatus {
+  'status' : GateStatus,
+  'user_id' : Principal,
+  'gate_id' : string,
+}
+export interface GetLinkDetailsResponseV3 {
+  'action' : [] | [Action],
+  'link_user_state' : [] | [LinkUserState],
+  'link' : Link,
+  'gates' : Array<GateForUser>,
+  'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
+}
+export interface GetLinkOptions { 'action_type' : ActionType_1 }
 export interface GetLinkResp {
   'action' : [] | [ActionDto],
   'link_user_state' : LinkUserStateDto,
@@ -229,6 +262,7 @@ export interface Intent {
   'asset' : Asset_1,
   'dest_address_type' : AddressType,
   'dest_address' : Principal,
+  'label' : string,
   'source_address' : Principal,
   'intent_state' : IntentState_1,
   'source_address_type' : AddressType,
@@ -317,6 +351,10 @@ export interface LogServiceSettings {
   'enable_console' : [] | [boolean],
   'max_record_length' : [] | [bigint],
 }
+export interface OpenGateSuccessResult {
+  'gate_user_status' : GateUserStatus,
+  'gate' : Gate,
+}
 export interface PaginateInput { 'offset' : bigint, 'limit' : bigint }
 export interface PaginateResult {
   'metadata' : PaginateResultMetadata,
@@ -355,13 +393,17 @@ export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
 export type Result_10 = { 'Ok' : DisableLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_11 = { 'Ok' : PaginateResult } |
+export type Result_11 = { 'Ok' : GetLinkDetailsResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_12 = { 'Ok' : PaginateResult_1 } |
+export type Result_12 = { 'Ok' : PaginateResult } |
   { 'Err' : CanisterError };
-export type Result_13 = { 'Ok' : ProcessActionDto } |
+export type Result_13 = { 'Ok' : PaginateResult_1 } |
   { 'Err' : CanisterError };
-export type Result_14 = { 'Ok' : ProcessActionResponseV3 } |
+export type Result_14 = { 'Ok' : OpenGateSuccessResult } |
+  { 'Err' : CanisterError };
+export type Result_15 = { 'Ok' : ProcessActionDto } |
+  { 'Err' : CanisterError };
+export type Result_16 = { 'Ok' : ProcessActionResponseV3 } |
   { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
@@ -562,11 +604,11 @@ export interface _SERVICE {
    */
   'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_7>,
   /**
-   * Creates a new link V3
+   * Creates a new link V3, optionally with one or more gates.
    * # Arguments
-   * * `input` - Link creation data
+   * * `input` - Link creation data, including optional `gate_keys`
    * # Returns
-   * * `Ok(CreateLinkResponseV3)` - The created link data
+   * * `Ok(CreateLinkResponseV3)` - The created link data and any registered gates
    * * `Err(CanisterError)` - If link creation fails or validation errors occur
    */
   'user_create_link_v3' : ActorMethod<[CreateLinkInputV3], Result_8>,
@@ -589,6 +631,19 @@ export interface _SERVICE {
    */
   'user_disable_link_v3' : ActorMethod<[string], Result_10>,
   /**
+   * Returns link details together with gate metadata and the caller's gate status.
+   * # Arguments
+   * * `link_id` - The unique identifier of the link
+   * * `options` - Optional parameters including action type to include in response
+   * # Returns
+   * * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+   * * `Err(CanisterError)` - If link not found or access denied
+   */
+  'user_get_link_details_v3' : ActorMethod<
+    [string, [] | [GetLinkOptions]],
+    Result_11
+  >,
+  /**
    * Retrieves a paginated list of links created by the authenticated caller.
    * 
    * This endpoint requires the caller to be authenticated (non-anonymous) and returns
@@ -601,7 +656,7 @@ export interface _SERVICE {
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(CanisterError)` - Error message if retrieval fails
    */
-  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_11>,
+  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_12>,
   /**
    * Retrieves a paginated list of links for the caller.
    * # Arguments
@@ -610,7 +665,21 @@ export interface _SERVICE {
    * * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
    * * `Err(CanisterError)` - If retrieval fails or validation errors occur
    */
-  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_12>,
+  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_13>,
+  /**
+   * Opens a gate for the caller on the specified link.
+   * The caller must provide the gate ID (obtained from `user_get_link_details_v3`) and the
+   * correct gate key. On success the open status is cached locally so subsequent
+   * `user_create_action_v3` calls do not need an additional inter-canister round-trip.
+   * # Arguments
+   * * `link_id` - The unique identifier of the link
+   * * `gate_id` - The unique identifier of the gate to open
+   * * `gate_key` - The key to open the gate (e.g. the password)
+   * # Returns
+   * * `Ok(OpenGateSuccessResult)` - Gate and updated user status
+   * * `Err(CanisterError)` - If the key is wrong or the gate is not found
+   */
+  'user_open_link_gate' : ActorMethod<[string, string, GateKey], Result_14>,
   /**
    * Processes a created action V2.
    * # Arguments
@@ -619,7 +688,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionDto)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_13>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_15>,
   /**
    * Processes a created action V3.
    * # Arguments
@@ -628,7 +697,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionResponseV3)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_14>,
+  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_16>,
   /**
    * Syncs the asset balance cache for a link by querying actual token balances.
    * Only the link creator can trigger this.

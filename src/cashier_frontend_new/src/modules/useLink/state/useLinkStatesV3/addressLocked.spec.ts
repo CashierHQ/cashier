@@ -3,6 +3,7 @@ import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AddressLockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressLocked";
+import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
 import { GateStateV3 } from "$modules/useLink/state/useLinkStatesV3/gate";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 
@@ -16,6 +17,7 @@ describe("AddressLockedStateV3", () => {
       action: null,
       linkDetail: {
         id: "test-link-id",
+        gates: [],
       },
     } as unknown as UserLinkStoreV3;
 
@@ -29,9 +31,28 @@ describe("AddressLockedStateV3", () => {
   });
 
   describe("goNext", () => {
-    it("it_should_succeed_do_transition_to_gate_state", async () => {
+    it("it_should_succeed_do_transition_to_address_unlocked_state_when_no_gates", async () => {
       await state.goNext();
-      expect(mockStore.state).toBeInstanceOf(GateStateV3);
+      expect(mockStore.state).toBeInstanceOf(AddressUnlockedStateV3);
+    });
+
+    it("it_should_succeed_do_transition_to_gate_state_when_gates_closed", async () => {
+      const storeWithGates = {
+        state: null,
+        action: null,
+        linkDetail: {
+          id: "test-link-id",
+          gates: [
+            {
+              gate: { id: "gate-1" },
+              gate_user_status: [{ status: { Closed: null } }],
+            },
+          ],
+        },
+      } as unknown as UserLinkStoreV3;
+      const stateWithGates = new AddressLockedStateV3(storeWithGates);
+      await stateWithGates.goNext();
+      expect(storeWithGates.state).toBeInstanceOf(GateStateV3);
     });
   });
 

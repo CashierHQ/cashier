@@ -1,14 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": ["scripts/**"],
   "rules": {
     "exports": "off",
     "types": "off"
   },
   "ignoreExportsUsedInFile": true,
   "workspaces": {
-    ".": {
-      "entry": ["scripts/**/*.{js,mjs,ts}"]
-    },
     "src/cashier_frontend_new": {
       "project": ["src/**"],
       "ignore": [

@@ -12,8 +12,9 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     service::link::PaginateInput,
@@ -25,6 +26,7 @@ use cashier_shared::types::{
     IntentState as IntentStateShared, IntentType as IntentTypeShared,
     TokenStandard as TokenStandardShared,
 };
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
@@ -207,6 +209,48 @@ impl LinkTestFixtureV3 {
             .unwrap()
     }
 
+    /// Opens a gate for the caller on the specified link.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `gate_id` - The gate ID (obtained from `get_link_details_v3_extended`)
+    /// * `gate_key` - The key to open the gate
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)` - Gate and updated user status on success
+    /// * `Err(CanisterError)` - If the key is wrong or gate not found
+    pub async fn open_link_gate(
+        &self,
+        link_id: &str,
+        gate_id: &str,
+        gate_key: GateKey,
+    ) -> Result<OpenGateSuccessResult, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_open_link_gate(link_id, gate_id, gate_key)
+            .await
+            .unwrap()
+    }
+
+    /// Returns link details with gate metadata and the caller's gate open status.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `options` - Optional action type to include in response
+    /// # Returns
+    /// * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+    /// * `Err(CanisterError)` - If link not found
+    pub async fn get_link_details_v3_extended(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkDetailsResponseV3, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_get_link_details_v3(link_id, options)
+            .await
+            .unwrap()
+    }
+
     /// This function is used to airdrop ICP to the user.
     /// # Arguments
     /// * `amount` - The amount of ICP to airdrop
@@ -298,6 +342,7 @@ impl LinkTestFixtureV3 {
             dependencies: None,
             action_id: None,
             intent_state: IntentStateShared::Created,
+            label: String::new(),
         };
 
         let asset_intents: Vec<IntentShared> = tokens
@@ -328,6 +373,7 @@ impl LinkTestFixtureV3 {
                     dependencies: None,
                     action_id: None,
                     intent_state: IntentStateShared::Created,
+                    label: String::new(),
                 }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
                     Some(token_principal) => Ok(IntentShared {
@@ -353,6 +399,7 @@ impl LinkTestFixtureV3 {
                         dependencies: None,
                         action_id: None,
                         intent_state: IntentStateShared::Created,
+                        label: String::new(),
                     }),
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
                 },

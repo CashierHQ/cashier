@@ -131,9 +131,11 @@ export class CreationStoreV3ViewModelAdapter
   }
 
   get action() {
-    if (!this.linkStore.backendAction) return undefined;
+    const sourceAction =
+      this.linkStore.backendAction ?? this.linkStore.draftAction;
+    if (!sourceAction) return undefined;
     return ActionMapper.fromSharedAction(
-      this.linkStore.backendAction,
+      sourceAction,
       this.linkStore.icrc112Requests,
     );
   }

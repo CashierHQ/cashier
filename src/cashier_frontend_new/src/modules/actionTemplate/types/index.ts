@@ -1,5 +1,5 @@
 import type { Principal } from "@icp-sdk/core/principal";
-import type { Action, Intent, LinkType } from "$shared";
+import type { Action, AssetInfo, Intent, LinkType } from "$shared";
 
 type TemplateJsonValue<T> = T extends bigint
   ? string
@@ -11,7 +11,10 @@ type TemplateJsonValue<T> = T extends bigint
         ? { [K in keyof T]: TemplateJsonValue<T[K]> }
         : T;
 
-type IntentTemplateJson = Omit<TemplateJsonValue<Intent>, "network_fee"> & {
+export type IntentTemplateJson = Omit<
+  TemplateJsonValue<Intent>,
+  "network_fee"
+> & {
   total_network_fee?: string;
 };
 
@@ -23,3 +26,14 @@ export type ActionTemplateJson = Omit<TemplateJsonValue<Action>, "intents"> & {
   link_type?: LinkType;
   intents: IntentTemplateJson[];
 };
+
+export interface GateFeeIntentOptions {
+  gateCount: number;
+  maxUse: number;
+}
+
+export interface CreateActionTemplateOptions {
+  assetInfo?: AssetInfo[];
+  gateCount?: number;
+  maxUse?: number;
+}

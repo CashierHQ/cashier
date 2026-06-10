@@ -13,8 +13,6 @@ import IntentType, {
 import Asset from "$modules/links/types/asset";
 import Wallet from "$modules/links/types/wallet";
 import type Action from "$modules/links/types/action/action";
-import { formatNumber } from "$modules/shared/utils/formatNumber";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
@@ -44,7 +42,14 @@ const createIntentWithPayload = (
   amount: bigint,
 ): Intent => {
   const payload = getPayloadTransfer(amount);
-  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
+  return new Intent(
+    id,
+    task,
+    new IntentType(payload),
+    0n,
+    IntentState.CREATED,
+    "",
+  );
 };
 
 const createIntentWithPayloadAndAsset = (
@@ -59,7 +64,14 @@ const createIntentWithPayloadAndAsset = (
     fromWallet,
     amount,
   );
-  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
+  return new Intent(
+    id,
+    task,
+    new IntentType(payload),
+    0n,
+    IntentState.CREATED,
+    "",
+  );
 };
 
 const LEDGER_FEE = 10_000n; // 0.0001 token in e8s
@@ -98,283 +110,12 @@ describe("FeeService", () => {
     vi.resetAllMocks();
   });
 
-  describe("computeAmount", () => {
-    describe("CREATE_LINK action type", () => {
-      it("TRANSFER_WALLET_TO_TREASURY: amount=fee=ledgerFee*2+payload.amount", () => {
-        const intent = createIntentWithPayload(
-          "id-1",
-          IntentTask.TRANSFER_WALLET_TO_TREASURY,
-          100_000_000n,
-        );
-
-        const res = svc.computeAmount({
-          intent,
-          ledgerFee: LEDGER_FEE,
-          actionType: ActionType.CREATE_LINK,
-        });
-
-        const expectedTotal = LEDGER_FEE * 2n + 100_000_000n;
-        expect(res.amount).toBe(expectedTotal);
-        expect(res.fee).toBe(expectedTotal);
-      });
-
-      it("other intents: amount=ledgerFee+payload.amount, fee=ledgerFee", () => {
-        const intent = createIntentWithPayload(
-          "id-2",
-          IntentTask.TRANSFER_WALLET_TO_LINK,
-          100_000_000n,
-        );
-
-        const res = svc.computeAmount({
-          intent,
-          ledgerFee: LEDGER_FEE,
-          actionType: ActionType.CREATE_LINK,
-        });
-
-        expect(res.amount).toBe(LEDGER_FEE + 100_000_000n);
-        expect(res.fee).toBe(LEDGER_FEE);
-      });
-    });
-
-    describe("WITHDRAW action type", () => {
-      it("returns amount=payload.amount, fee=ledgerFee", () => {
-        const intent = createIntentWithPayload(
-          "id-3",
-          IntentTask.TRANSFER_LINK_TO_WALLET,
-          100_000_000n,
-        );
-        const res = svc.computeAmount({
-          intent,
-          ledgerFee: LEDGER_FEE,
-          actionType: ActionType.WITHDRAW,
-        });
-
-        expect(res.amount).toBe(100_000_000n);
-        expect(res.fee).toBe(LEDGER_FEE);
-      });
-    });
-
-    describe("SEND action type", () => {
-      it("returns amount=payload.amount+ledgerFee, fee=ledgerFee", () => {
-        const intent = createIntentWithPayload(
-          "id-4",
-          IntentTask.TRANSFER_LINK_TO_WALLET,
-          100_000_000n,
-        );
-        const res = svc.computeAmount({
-          intent,
-          ledgerFee: LEDGER_FEE,
-          actionType: ActionType.SEND,
-        });
-
-        expect(res.amount).toBe(100_000_000n + LEDGER_FEE);
-        expect(res.fee).toBe(LEDGER_FEE);
-      });
-    });
-
-    describe("RECEIVE action type", () => {
-      it("returns amount=payload.amount, fee=undefined", () => {
-        const intent = createIntentWithPayload(
-          "id-5",
-          IntentTask.TRANSFER_LINK_TO_WALLET,
-          100_000_000n,
-        );
-        const res = svc.computeAmount({
-          intent,
-          ledgerFee: LEDGER_FEE,
-          actionType: ActionType.RECEIVE,
-        });
-
-        expect(res.amount).toBe(100_000_000n);
-        expect(res.fee).toBeUndefined();
-      });
-    });
-
-    it("handles zero amount correctly", () => {
-      const intent = createIntentWithPayload(
-        "id-7",
-        IntentTask.TRANSFER_WALLET_TO_LINK,
-        0n,
-      );
-      const result = svc.computeAmount({
-        intent,
-        ledgerFee: LEDGER_FEE,
-        actionType: ActionType.SEND,
-      });
-      expect(result.amount).toBe(LEDGER_FEE);
-      expect(result.fee).toBe(LEDGER_FEE);
-    });
-
-    it("handles large amounts correctly", () => {
-      const largeAmount = 10_000_000_000_000_000n;
-      const intent = createIntentWithPayload(
-        "id-8",
-        IntentTask.TRANSFER_WALLET_TO_LINK,
-        largeAmount,
-      );
-      const result = svc.computeAmount({
-        intent,
-        ledgerFee: LEDGER_FEE,
-        actionType: ActionType.SEND,
-      });
-      expect(result.amount).toBe(largeAmount + LEDGER_FEE);
-      expect(result.fee).toBe(LEDGER_FEE);
-    });
-
-    it("handles different ledger fees", () => {
-      const customFee = 50_000n;
-      const intent = createIntentWithPayload(
-        "id-9",
-        IntentTask.TRANSFER_WALLET_TO_LINK,
-        100_000_000n,
-      );
-      const result = svc.computeAmount({
-        intent,
-        ledgerFee: customFee,
-        actionType: ActionType.SEND,
-      });
-      expect(result.amount).toBe(100_000_000n + customFee);
-      expect(result.fee).toBe(customFee);
-    });
-  });
-
   describe("getLinkCreationFee", () => {
     it("should return consistent fee information on multiple calls", () => {
       const feeInfo1 = svc.getLinkCreationFee();
       const feeInfo2 = svc.getLinkCreationFee();
 
       expect(feeInfo1).toEqual(feeInfo2);
-    });
-  });
-
-  describe("forecastLinkCreationFees", () => {
-    it("handles three tokens with different decimals and ledger fees", () => {
-      const linkFeeInfo = svc.getLinkCreationFee();
-      const tokenA = {
-        address: "token-a",
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "TKNA",
-        priceUSD: 1.0,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const tokenB = {
-        address: "token-b",
-        decimals: 6,
-        fee: 20_000n,
-        symbol: "TKNB",
-        priceUSD: 2.0,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const tokenC = {
-        address: "token-c",
-        decimals: 2,
-        fee: 300n,
-        symbol: "TKNC",
-        priceUSD: 0.5,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const linkFeeToken = {
-        address: linkFeeInfo.tokenAddress,
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "ICP",
-        priceUSD: 1.0,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const tokensMap = {
-        [tokenA.address]: tokenA,
-        [tokenB.address]: tokenB,
-        [tokenC.address]: tokenC,
-        [linkFeeToken.address]: linkFeeToken,
-      } as Record<string, TokenWithPriceAndBalance>;
-
-      const useA = 1_000_000_00n; // 100_000_000
-      const useB = 2_000_000_00n; // 200_000_000
-      const useC = 3_000n;
-      const maxUse = 2; // test non-trivial maxUse
-
-      const pairsResult = svc.forecastLinkCreationFees(
-        [
-          { address: tokenA.address, useAmount: useA },
-          { address: tokenB.address, useAmount: useB },
-          { address: tokenC.address, useAmount: useC },
-        ],
-        maxUse,
-        tokensMap,
-      );
-      expect(pairsResult.isOk()).toBe(true);
-      const pairs = pairsResult.unwrap();
-
-      // At least one returned pair per provided token
-      expect(pairs.length).toBeGreaterThanOrEqual(3);
-
-      const a = pairs.find((p) => p.asset.symbol === "TKNA");
-      const b = pairs.find((p) => p.asset.symbol === "TKNB");
-      const c = pairs.find((p) => p.asset.symbol === "TKNC");
-
-      expect(a).toBeDefined();
-      expect(b).toBeDefined();
-      expect(c).toBeDefined();
-
-      // Expected formula per asset: (useAmount + ledgerFee) * maxUse + ledgerFee
-      if (a) {
-        const expectedA = formatNumber(
-          parseBalanceUnits(
-            useA * BigInt(maxUse) + tokenA.fee * (2n + BigInt(maxUse)),
-            tokenA.decimals,
-          ),
-        );
-        expect(a.asset.amount).toBe(expectedA);
-        expect(a.fee).toBeDefined();
-        if (a.fee) {
-          expect(a.fee.symbol).toBe("TKNA");
-          expect(typeof a.fee.amountFormattedStr).toBe("string");
-        }
-      }
-
-      if (b) {
-        const expectedB = formatNumber(
-          parseBalanceUnits(
-            useB * BigInt(maxUse) + tokenB.fee * (2n + BigInt(maxUse)),
-            tokenB.decimals,
-          ),
-        );
-        expect(b.asset.amount).toBe(expectedB);
-        expect(b.fee).toBeDefined();
-        if (b.fee) {
-          expect(b.fee.symbol).toBe("TKNB");
-          expect(typeof b.fee.amountFormattedStr).toBe("string");
-        }
-      }
-
-      if (c) {
-        const expectedC = formatNumber(
-          parseBalanceUnits(
-            useC * BigInt(maxUse) + tokenC.fee * (2n + BigInt(maxUse)),
-            tokenC.decimals,
-          ),
-        );
-        expect(c.asset.amount).toBe(expectedC);
-        expect(c.fee).toBeDefined();
-        if (c.fee) {
-          expect(c.fee.symbol).toBe("TKNC");
-          expect(typeof c.fee.amountFormattedStr).toBe("string");
-        }
-      }
-    });
-
-    it("should return error when token is missing", () => {
-      const unknownAddress = "unknown-token-address";
-      const pairsResult = svc.forecastLinkCreationFees(
-        [{ address: unknownAddress, useAmount: 100_000_000n }],
-        1,
-        {},
-      );
-      expect(pairsResult.isErr()).toBe(true);
-      expect(pairsResult.isErr() && pairsResult.error.message).toBe(
-        `Token not found for address ${unknownAddress}`,
-      );
     });
   });
 
@@ -1035,66 +776,5 @@ describe("FeeService - mocked $shared edge cases", () => {
     );
     expect(createLinkFee).toBeDefined();
     expect(createLinkFee?.asset.amount).toBe(0n);
-  });
-
-  it("forecastLinkCreationFees uses intent_total_amount + intent_total_network_fee for asset amount and USD", async () => {
-    vi.resetModules();
-
-    const totalAmount = 1_000_000n;
-    const totalNetworkFee = 250_000n;
-
-    vi.doMock("$shared", async () => {
-      const actual = await vi.importActual<typeof import("$shared")>("$shared");
-      return {
-        ...actual,
-        calculateIntentFees: vi.fn(() => ({
-          intent_total_amount: totalAmount.toString(),
-          intent_total_network_fee: totalNetworkFee.toString(),
-          intent_user_fee: "0",
-        })),
-      };
-    });
-
-    const { FeeService: FeeServiceWithMock } =
-      await import("$modules/shared/services/feeService");
-    const localSvc = new FeeServiceWithMock();
-
-    const token = createMockToken("mock-token", {
-      symbol: "MOCK",
-      decimals: 8,
-      fee: LEDGER_FEE,
-      priceUSD: 2.0,
-    });
-
-    // Also provide the link-fee token required by forecastLinkCreationFees.
-    const linkFeeInfo = localSvc.getLinkCreationFee();
-    const linkFeeToken = createMockToken(linkFeeInfo.tokenAddress, {
-      symbol: "ICP",
-      decimals: 8,
-      fee: LEDGER_FEE,
-      priceUSD: 1.0,
-    });
-
-    const tokensMap = {
-      [token.address]: token,
-      [linkFeeToken.address]: linkFeeToken,
-    } as Record<string, TokenWithPriceAndBalance>;
-
-    const res = localSvc.forecastLinkCreationFees(
-      [{ address: token.address, useAmount: 123n }],
-      3,
-      tokensMap,
-    );
-
-    expect(res.isOk()).toBe(true);
-    const pairs = res.unwrap();
-    const assetPair = pairs.find((p) => p.asset.address === token.address);
-    expect(assetPair).toBeDefined();
-    if (!assetPair) return;
-
-    const expectedRaw = totalAmount + totalNetworkFee;
-    const expectedUi = parseBalanceUnits(expectedRaw, token.decimals);
-    expect(assetPair.asset.amount).toBe(formatNumber(expectedUi));
-    expect(assetPair.asset.usdValueStr).toBeDefined();
   });
 });

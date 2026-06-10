@@ -34,6 +34,7 @@ pub enum AddressType {
     User,
     Treasury,
     Link,
+    Gate,
 }
 
 impl std::fmt::Display for AddressType {
@@ -43,6 +44,7 @@ impl std::fmt::Display for AddressType {
             AddressType::User => write!(f, "User"),
             AddressType::Treasury => write!(f, "Treasury"),
             AddressType::Link => write!(f, "Link"),
+            AddressType::Gate => write!(f, "Gate"),
         }
     }
 }
@@ -88,6 +90,7 @@ impl std::fmt::Display for IntentState {
 pub enum IntentParticipants {
     CreatorToTreasury,
     CreatorToLink,
+    CreatorToGate,
     UserToLink,
     LinkToUser,
     LinkToCreator,
@@ -98,6 +101,7 @@ impl std::fmt::Display for IntentParticipants {
         match self {
             IntentParticipants::CreatorToTreasury => write!(f, "CreatorToTreasury"),
             IntentParticipants::CreatorToLink => write!(f, "CreatorToLink"),
+            IntentParticipants::CreatorToGate => write!(f, "CreatorToGate"),
             IntentParticipants::UserToLink => write!(f, "UserToLink"),
             IntentParticipants::LinkToUser => write!(f, "LinkToUser"),
             IntentParticipants::LinkToCreator => write!(f, "LinkToCreator"),
@@ -243,6 +247,8 @@ pub struct Intent {
     /// ID of the action this intent belongs to
     pub action_id: Option<String>,
     pub intent_state: IntentState,
+    /// Human-readable label for the intent
+    pub label: String,
 }
 
 /// Input parameters for fee calculation
@@ -256,6 +262,12 @@ pub struct FeeCalculationInput {
     pub max_use: Option<i64>,
     /// Fee for creating the link
     pub link_creation_fee: Option<Nat>,
+    /// Fee for creating one gate
+    pub gate_create_fee: Option<Nat>,
+    /// Fee for opening one gate once
+    pub gate_open_fee: Option<Nat>,
+    /// Number of gates attached to the link
+    pub gate_count: Option<i64>,
     /// Network fee for the asset
     pub asset_network_fee: Nat,
     /// Maximum asset amount in the link (for withdrawals)

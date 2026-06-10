@@ -2,6 +2,7 @@
 export enum LinkStep {
   CHOOSE_TYPE,
   ADD_ASSET,
+  LOCK,
   PREVIEW,
   CREATED,
   ACTIVE,

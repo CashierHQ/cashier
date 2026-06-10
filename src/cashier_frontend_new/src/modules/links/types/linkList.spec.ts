@@ -1,14 +1,14 @@
-import {
-  CreateLinkAsset,
-  CreateLinkData,
-} from "$modules/creationLink/types/createLinkData";
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, it } from "vitest";
 import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
-import { TempLink } from "$modules/links/types/tempLink";
+import {
+  LinkState as SharedLinkState,
+  LinkType as SharedLinkType,
+  type Link as SharedLink,
+} from "$shared";
 
 describe("UnifiedLinkItemMapper", () => {
   it("maps from real Link instance", () => {
@@ -36,56 +36,26 @@ describe("UnifiedLinkItemMapper", () => {
     });
   });
 
-  it("maps from real TempLink instance with title", () => {
-    const createData = new CreateLinkData({
-      title: "Temp Title",
-      linkType: LinkType.TIP,
-      assets: [] as CreateLinkAsset[],
-      maxUse: 1,
-    });
+  it("maps from shared draft link", () => {
+    const draftLink: SharedLink = {
+      id: "draft-1",
+      title: "Draft Title",
+      link_type: SharedLinkType.SendTip,
+      link_state: SharedLinkState.Preview,
+      creator: Principal.fromText("aaaaa-aa"),
+      asset_info: [],
+      max_use: 1n,
+      use_count: 0n,
+      created_at: 2n,
+    };
 
-    const tempLink = new TempLink(
-      "t-1",
-      BigInt(1),
-      LinkState.CREATE_LINK,
-      createData,
-    );
-
-    const mapped = UnifiedLinkItemMapper.fromTempLink(tempLink);
+    const mapped = UnifiedLinkItemMapper.fromDraftLink(draftLink);
 
     expect(mapped).toEqual({
-      id: "t-1",
-      title: "Temp Title",
-      linkCreateAt: BigInt(1),
-      state: LinkState.CREATE_LINK,
-      linkType: LinkType.TIP,
-      isCreated: false,
-    });
-  });
-
-  it("maps from real TempLink instance without title uses fallback", () => {
-    // CreateLinkData requires a title string; use an empty string to trigger the fallback in the mapper
-    const createData = new CreateLinkData({
-      title: "",
-      linkType: LinkType.TIP,
-      assets: [] as CreateLinkAsset[],
-      maxUse: 1,
-    });
-
-    const tempLink = new TempLink(
-      "t-2",
-      BigInt(2),
-      LinkState.CREATE_LINK,
-      createData,
-    );
-
-    const mapped = UnifiedLinkItemMapper.fromTempLink(tempLink);
-
-    expect(mapped).toEqual({
-      id: "t-2",
-      title: "No title",
+      id: "draft-1",
+      title: "Draft Title",
       linkCreateAt: BigInt(2),
-      state: LinkState.CREATE_LINK,
+      state: LinkState.PREVIEW,
       linkType: LinkType.TIP,
       isCreated: false,
     });
