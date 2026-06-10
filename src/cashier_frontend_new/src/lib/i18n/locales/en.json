@@ -546,16 +546,16 @@
         "warning2": "BTC is auto converted to ckBTC on arrival.",
         "warning3": "0.000001 BTC import fee.",
         "warning4": "Transfer time ~1 hour. Track progress below.",
-        "runeWarning1": "Receive {{name}} from compatible Bitcoin wallet or exchange.",
-        "runeWarning2": "{{name}} is auto converted to {{symbol}} on arrival.",
+        "runeWarning1": "Receive from compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "Auto-converted to {{symbol}} on arrival.",
         "runeWarning3": "Transfer time ~1 hour. Track progress below."
       },
       "icpAddress": {
         "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant.",
-        "runeWarning1": "Receive {{symbol}} from compatible ICP wallet or exchange.",
-        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
+        "runeWarning1": "Receive from compatible ICP wallet or exchange.",
+        "runeWarning2": "1:1 Bitcoin-backed token on ICP network."
       },
       "noIncomingBalance": "No incoming BTC balance found.",
       "refreshSuccess": "Balance refreshed successfully.",
@@ -576,8 +576,8 @@
         "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant.",
-        "runeWarning1": "Send {{symbol}} to compatible ICP wallet or exchange.",
-        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
+        "runeWarning1": "Send to compatible ICP wallet or exchange.",
+        "runeWarning2": "1:1 Bitcoin-backed token on ICP network."
       },
       "btcAddress": {
         "warning1": "Send BTC to Coinbase, Xverse, Ledger, etc.",
@@ -585,8 +585,8 @@
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
         "warning5": "Transfer time ~1 hour. Track the progress below.",
-        "runeWarning1": "Send {{name}} to compatible Bitcoin wallet or exchange.",
-        "runeWarning2": "Your {{name}} is auto converted to {{symbol}}.",
+        "runeWarning1": "Send to compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "Auto-converted to {{name}} on arrival.",
         "runeWarning3": "~1.05 ICP export fee plus Bitcoin network fee."
       },
       "refreshSuccess": "Export history refreshed.",
