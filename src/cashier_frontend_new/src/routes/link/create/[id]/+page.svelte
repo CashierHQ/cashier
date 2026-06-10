@@ -6,7 +6,7 @@
   } from "$modules/analytics/amplitudeStore";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
-  import { createLinkRouteContext } from "$modules/routing/createLinkRouteContext.svelte";
+  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
 
   const id = page.params.id!;

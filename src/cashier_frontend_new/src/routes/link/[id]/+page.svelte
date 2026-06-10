@@ -7,7 +7,7 @@
   import Ended from "$modules/useLink/components/Ended.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
-  import { createLinkRouteContext } from "$modules/routing/createLinkRouteContext.svelte";
+  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
   import {
     trackEvent,
     AnalyticsEvent,

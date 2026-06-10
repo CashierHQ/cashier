@@ -4,7 +4,7 @@
   import Ended from "$modules/useLink/components/Ended.svelte";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
-  import { createLinkRouteContext } from "$modules/routing/createLinkRouteContext.svelte";
+  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
 
   const id = page.params.id!;
   createLinkRouteContext({ linkId: id, storeType: "userLink" });
