@@ -57,4 +57,4 @@ jobs:
 
           just build dev
           # pass log filters to just dfx_deploy so canisters pick the appropriate level
-          just dfx_deploy "$owner" "--network=dev" "--mode=upgrade" "$backend_log_filter" "$token_storage_log_filter"
+          just dfx_deploy "$owner" "--network=dev" "$backend_log_filter" "$token_storage_log_filter"
