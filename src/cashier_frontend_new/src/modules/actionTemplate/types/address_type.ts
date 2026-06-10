@@ -6,7 +6,8 @@ export type SharedAddressTypeValue =
   | typeof SharedAddressType.Creator
   | typeof SharedAddressType.User
   | typeof SharedAddressType.Link
-  | typeof SharedAddressType.Treasury;
+  | typeof SharedAddressType.Treasury
+  | typeof SharedAddressType.Gate;
 
 /**
  * Mapper for converting between frontend SharedAddressType and backend AddressType
@@ -29,6 +30,8 @@ export class SharedAddressTypeMapper {
         return { Link: null };
       case SharedAddressType.Treasury:
         return { Treasury: null };
+      case SharedAddressType.Gate:
+        return { Gate: null };
       default:
         return assertUnreachable(addressType);
     }
@@ -45,6 +48,7 @@ export class SharedAddressTypeMapper {
       User: () => SharedAddressType.User,
       Link: () => SharedAddressType.Link,
       Treasury: () => SharedAddressType.Treasury,
+      Gate: () => SharedAddressType.Gate,
     });
   }
 }

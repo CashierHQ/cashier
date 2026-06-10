@@ -13,13 +13,15 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An CashierBackend canister client.
@@ -345,6 +347,45 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     ) -> CanisterClientResult<Result<SyncAssetBalanceCacheResponseV3, CanisterError>> {
         self.client
             .update("user_sync_asset_balance_cache", (link_id,))
+            .await
+    }
+
+    /// Opens a gate for the caller on the specified link.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `gate_id` - The gate ID (from `user_get_link_details_v3`)
+    /// * `gate_key` - The key to open the gate
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)` - Gate and updated user status
+    /// * `Err(CanisterError)` - If key is wrong or gate not found
+    pub async fn user_open_link_gate(
+        &self,
+        link_id: &str,
+        gate_id: &str,
+        gate_key: GateKey,
+    ) -> CanisterClientResult<Result<OpenGateSuccessResult, CanisterError>> {
+        self.client
+            .update(
+                "user_open_link_gate",
+                (link_id.to_string(), gate_id.to_string(), gate_key),
+            )
+            .await
+    }
+
+    /// Returns link details with gate metadata and the caller's gate open status.
+    /// # Arguments
+    /// * `link_id` - The link ID
+    /// * `options` - Optional action type to include
+    /// # Returns
+    /// * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+    /// * `Err(CanisterError)` - If link not found
+    pub async fn user_get_link_details_v3(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> CanisterClientResult<Result<GetLinkDetailsResponseV3, CanisterError>> {
+        self.client
+            .query("user_get_link_details_v3", (link_id.to_string(), options))
             .await
     }
 

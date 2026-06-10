@@ -7,18 +7,23 @@
   const {
     linkTitle,
     linkStep,
+    showLockStep = false,
     onBack,
   }: {
     linkTitle?: string;
     linkStep: LinkStep;
+    showLockStep?: boolean;
     onBack: () => Promise<void>;
   } = $props();
+
+  const segmentCount = $derived(showLockStep ? 4 : 3);
 
   const progress = $derived.by(() => {
     if (linkStep === LinkStep.CHOOSE_TYPE) return 1;
     if (linkStep === LinkStep.ADD_ASSET) return 2;
+    if (linkStep === LinkStep.LOCK) return showLockStep ? 3 : 0;
     if (linkStep === LinkStep.PREVIEW || linkStep === LinkStep.CREATED)
-      return 3;
+      return showLockStep ? 4 : 3;
     return 0;
   });
 
@@ -26,6 +31,11 @@
     if (linkStep === LinkStep.ADD_ASSET) {
       return locale.t("links.linkForm.header.addAssets");
     }
+
+    if (linkStep === LinkStep.LOCK) {
+      return locale.t("links.linkForm.lock.title");
+    }
+
     if (linkStep === LinkStep.PREVIEW) {
       return locale.t("links.linkForm.header.createLink");
     }
@@ -52,5 +62,5 @@
       <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
     </button>
   </div>
-  <LinkCreationProgressBar filledCount={progress} />
+  <LinkCreationProgressBar filledCount={progress} {segmentCount} />
 </div>

@@ -39,9 +39,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("renders children when mustBeOwner=true and user is owner", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "owner-principal-123" },
+      link: { creator: { toString: () => "owner-principal-123" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, { props: { mustBeOwner: true } });
@@ -53,9 +53,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("redirects when mustBeOwner=true and user is not owner", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "different-principal-456" },
+      link: { creator: { toString: () => "different-principal-456" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, {
@@ -69,9 +69,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("redirects when mustBeOwner=false and user is owner", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "owner-principal-123" },
+      link: { creator: { toString: () => "owner-principal-123" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, {
@@ -85,9 +85,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("renders children when mustBeOwner=false and user is not owner", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "different-principal-456" },
+      link: { creator: { toString: () => "different-principal-456" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, { props: { mustBeOwner: false } });
@@ -98,10 +98,10 @@ describe("ProtectedLinkOwner", () => {
     expect(goto).not.toHaveBeenCalled();
   });
 
-  it("renders children for temp links (linkCreationStore)", async () => {
-    mockContext.linkCreationStore = {
+  it("renders children for draft links (linkCreationStoreV3)", async () => {
+    mockContext.linkCreationStoreV3 = {
       state: { step: 0 },
-      link: { creator: null },
+      draftLink: { creator: null },
     } as any;
 
     render(ProtectedLinkOwnerTestHost);
@@ -113,9 +113,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("redirects to custom redirectTo when not owner", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "different-principal-456" },
+      link: { creator: { toString: () => "different-principal-456" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, {
@@ -128,9 +128,9 @@ describe("ProtectedLinkOwner", () => {
   });
 
   it("keeps rendering children during background loading after an allowed state was rendered", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
-      link: { creator: "owner-principal-123" },
+      link: { creator: { toString: () => "owner-principal-123" } },
     } as any;
 
     render(ProtectedLinkOwnerTestHost, { props: { mustBeOwner: true } });
@@ -138,9 +138,9 @@ describe("ProtectedLinkOwner", () => {
     await tick();
     expect(screen.getByTestId("child")).toBeInTheDocument();
 
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: true },
-      link: { creator: "owner-principal-123" },
+      link: { creator: { toString: () => "owner-principal-123" } },
     } as any;
 
     await tick();

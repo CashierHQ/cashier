@@ -1,10 +1,4 @@
-import type {
-  ActionDto,
-  Icrc112Request as BackendIcrc112Request,
-} from "$lib/generated/cashier_backend/cashier_backend.did";
-import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
-import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
 import type { Action as SharedAction } from "$shared";
 import type { Principal } from "@icp-sdk/core/principal";
 import type { ActionState } from "$modules/links/types/action/actionState";
@@ -29,33 +23,6 @@ class Action {
 }
 
 export class ActionMapper {
-  /**
-   * Create an Action instance from backend ActionDto
-   * @param action : ActionDto from backend
-   * @returns  Action instance
-   */
-  static fromBackendType(action: ActionDto): Action {
-    const type = ActionTypeMapper.fromBackendType(action.type);
-
-    const state = ActionStateMapper.fromBackendType(action.state);
-
-    const intents = action.intents.map((intentDto) =>
-      IntentMapper.fromBackendType(intentDto),
-    );
-
-    let icrc: Icrc112Request[][] | undefined = undefined;
-    if (action.icrc_112_requests && action.icrc_112_requests.length === 1) {
-      const outer = action.icrc_112_requests[0];
-      icrc = outer.map((innerArr) =>
-        innerArr.map((r: BackendIcrc112Request) =>
-          Icrc112RequestMapper.fromBackendType(r),
-        ),
-      );
-    }
-
-    return new Action(action.id, action.creator, type, state, intents, icrc);
-  }
-
   static fromSharedAction(
     action: SharedAction,
     icrc112Requests: Icrc112Request[][] | undefined,
@@ -73,25 +40,6 @@ export class ActionMapper {
       intents,
       icrc112Requests,
     );
-  }
-}
-
-export type ProcessActionResult = {
-  action: Action;
-  isSuccess: boolean;
-  errors: string[];
-};
-
-export class ProcessActionResultMapper {
-  static fromBackendType(
-    result: cashierBackend.ProcessActionDto,
-  ): ProcessActionResult {
-    const action = ActionMapper.fromBackendType(result.action);
-    return {
-      action,
-      isSuccess: result.is_success,
-      errors: result.errors,
-    };
   }
 }
 

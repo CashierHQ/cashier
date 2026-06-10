@@ -6,26 +6,32 @@
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import { type AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     getLinkTypeText,
     isPaymentLinkType,
     isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import { feeService } from "$modules/shared/services/feeService";
-  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import type {
+    AssetAndFeeList,
+    ForecastAssetAndFee,
+  } from "$modules/shared/types/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { toast } from "svelte-sonner";
+  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
 
   const {
     link,
     errorMessage,
     successMessage,
+    gatingStore,
   }: {
     link: GenericCreationLinkStoreVM & AddAssetVM;
     errorMessage: string | null;
     successMessage: string | null;
+    gatingStore?: GatingStore;
   } = $props();
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
@@ -60,57 +66,66 @@
     );
   });
 
-  // Forecast link creation fees for preview
-  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
-    if (!link.assets || link.assets.length === 0) return [];
+  function assetAndFeeListToForecastShape(
+    list: AssetAndFeeList,
+  ): ForecastAssetAndFee[] {
+    return list.map((item) => ({
+      asset: {
+        label: item.asset.label,
+        symbol: item.asset.symbol,
+        address: item.asset.address,
+        amount: item.asset.amountFormattedStr,
+        usdValueStr: item.asset.usdValueStr,
+        icon: item.asset.icon,
+      },
+      fee: item.fee,
+    }));
+  }
+
+  const assetAndFeeList: AssetAndFeeList = $derived.by(() => {
+    const action = link.action;
+    const walletPrincipal = authState.account?.owner;
+    if (!action || !walletPrincipal) return [];
 
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    const forecastResult = feeService.forecastLinkCreationFees(
-      link.assets,
+    return feeService.buildFromAction(
+      action,
       link.maxUse,
       tokens,
+      walletPrincipal,
     );
-
-    if (forecastResult.isErr()) {
-      console.error(
-        "Error forecasting link creation fees:",
-        forecastResult.unwrapErr(),
-      );
-      return [];
-    }
-
-    return forecastResult.unwrap();
   });
+
+  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived(
+    assetAndFeeListToForecastShape(assetAndFeeList),
+  );
 
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return forecastLinkCreationFees.reduce(
-      (total, item) => total + (item.fee?.usdValue || 0),
+    return assetAndFeeList.reduce(
+      (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
   });
 
-  // Transaction lock status (currently always "Unlock" for preview links)
-  const transactionLockStatus = $derived.by(() => {
-    // For now, always return "Unlock" as transaction lock is not yet implemented in backend
-    // In the future, this could check link.link for lock status if added to backend
-    return "Unlock";
+  const feesBreakdown = $derived.by(() => {
+    return feeService.buildBreakdown(
+      assetAndFeeList,
+      walletStore.query.data ?? [],
+    );
   });
 
-  const feesBreakdown = $derived.by(() => {
-    return buildPreviewFeesBreakdown(
-      forecastLinkCreationFees,
-      walletStore.findTokenByAddress.bind(walletStore),
-    );
+  const lockFees = $derived.by(() => {
+    return [];
   });
 
   let showFeeInfoDrawer = $state(false);
 
   function handleFeeBreakdownClick() {
-    if (feesBreakdown.length === 0) return;
+    if (feesBreakdown.length === 0 && lockFees.length === 0) return;
     showFeeInfoDrawer = true;
   }
 
@@ -153,7 +168,7 @@
   />
 
   <!-- Block 2: Transaction Lock -->
-  <TransactionLockSection {transactionLockStatus} />
+  <TransactionLockSection {gatingStore} />
 
   <!-- Block 3: You Send -->
   {#if isSendLink}
@@ -169,10 +184,10 @@
   <!-- Block 4: Fees Breakdown -->
   <FeesBreakdownSection
     {totalFeesUsd}
-    onBreakdownClick={feesBreakdown.length > 0
+    onBreakdownClick={feesBreakdown.length > 0 || lockFees.length > 0
       ? handleFeeBreakdownClick
       : undefined}
   />
 </div>
 
-<FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} />
+<FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} {lockFees} />

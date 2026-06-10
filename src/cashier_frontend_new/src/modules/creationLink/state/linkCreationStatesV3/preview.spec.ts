@@ -1,5 +1,5 @@
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
-import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { CreateLinkResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
@@ -40,12 +40,10 @@ vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
   draftLinkRepository: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
 }));
 
-vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
-  tempLinkRepository: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
-}));
-
 vi.mock("$modules/links/services/cashierBackend", () => ({
-  cashierBackendService: { createLinkV3: vi.fn() },
+  cashierBackendService: {
+    createLinkV3: vi.fn(),
+  },
 }));
 
 const VALID_PRINCIPAL = Principal.fromText("aaaaa-aa");
@@ -79,6 +77,7 @@ const MOCK_BACKEND_LINK: SharedLink = {
 const MOCK_CREATE_RESPONSE: CreateLinkResponseV3 = {
   link: MOCK_BACKEND_LINK,
   action: MOCK_ACTION,
+  gates: [],
 };
 
 function makeStore(options?: {
@@ -105,6 +104,7 @@ function makeStore(options?: {
     state: undefined,
     backendLink: undefined,
     backendAction: undefined,
+    pendingGateDraft: null,
     initializeCreateLinkActionFromTemplate: vi.fn(() => {
       if (initActionResult === "err") {
         return Err(new Error("template init failed"));
@@ -134,6 +134,22 @@ describe("PreviewStateV3", () => {
     });
   });
 
+  describe("constructor", () => {
+    it("it_should_initialize_draft_action_on_construction", () => {
+      const store = makeStore();
+      new PreviewStateV3(store);
+      expect(
+        store.initializeCreateLinkActionFromTemplate,
+      ).toHaveBeenCalledTimes(1);
+      expect(store.draftAction).toEqual(MOCK_ACTION);
+    });
+
+    it("it_should_succeed_construction_when_init_action_fails", () => {
+      const store = makeStore({ initActionResult: "err" });
+      expect(() => new PreviewStateV3(store)).not.toThrow();
+    });
+  });
+
   describe("goNext", () => {
     it("it_should_fail_go_next_due_to_undefined_draft_link", async () => {
       const store = makeStore({ draftLinkUndefined: true });
@@ -144,7 +160,11 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_fail_go_next_due_to_initialize_action_failure", async () => {
-      const store = makeStore({ initActionResult: "err" });
+      // initActionResult: "err" means every call fails (constructor + goNext)
+      const store = makeStore({
+        initActionResult: "err",
+        setDraftActionOnInit: false,
+      });
       const state = new PreviewStateV3(store);
       await expect(state.goNext()).rejects.toThrow(
         "Failed to initialize action from template: template init failed",
@@ -212,19 +232,13 @@ describe("PreviewStateV3", () => {
       expect(store.id).toBe(MOCK_BACKEND_LINK.id);
     });
 
-    it("it_should_succeed_go_next_delete_draft_and_temp_link_from_storage", async () => {
+    it("it_should_succeed_go_next_delete_draft_link_from_storage", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
-      const { tempLinkRepository } =
-        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: "test-store-id" });
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(draftLinkRepository.delete).toHaveBeenCalledWith(
-        "test-store-id",
-        "test-owner-principal",
-      );
-      expect(tempLinkRepository.delete).toHaveBeenCalledWith(
         "test-store-id",
         "test-owner-principal",
       );
@@ -233,13 +247,10 @@ describe("PreviewStateV3", () => {
     it("it_should_succeed_go_next_not_delete_from_storage_when_no_link_backend_id", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
-      const { tempLinkRepository } =
-        await import("$modules/creationLink/repositories/tempLinkRepository");
       const store = makeStore({ storeId: null });
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(draftLinkRepository.delete).not.toHaveBeenCalled();
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -248,28 +259,28 @@ describe("PreviewStateV3", () => {
       const store = makeStore({ linkType: LinkType.SendTip });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_airdrop_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendAirdrop });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_token_basket_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendTokenBasket });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(AddAssetStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
     it("it_should_succeed_go_back_transition_to_add_asset_step", async () => {
       const store = makeStore();
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect((store.state as AddAssetStateV3).step).toBe(LinkStep.ADD_ASSET);
+      expect((store.state as LockStateV3).step).toBe(LinkStep.LOCK);
     });
   });
 });

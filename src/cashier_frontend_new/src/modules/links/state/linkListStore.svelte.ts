@@ -1,7 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
-import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import { ONBOARDING_DISMISSED_KEY } from "$modules/links/constants";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { Link, LinkMapper } from "$modules/links/types/link/link";
@@ -11,8 +10,7 @@ import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 
 /**
  * Store managing the list of links.
- * Fetches from both V2 API (standard links) and V3 API (TIP_SHARED_TEST etc.)
- * to show all user links in a unified list.
+ * Fetches persisted links from the V3 API and merges local V3 drafts.
  * Persisted in localStorage, auto-refetched every 15 seconds.
  */
 export class LinkListStore {
@@ -31,21 +29,14 @@ export class LinkListStore {
           return [];
         }
 
-        const [v2Res, v3Res] = await Promise.all([
-          cashierBackendService.getLinks(),
-          cashierBackendService.getLinksV3(),
-        ]);
-
-        const v2Links: Link[] = v2Res.isOk()
-          ? v2Res.unwrap().map((b) => LinkMapper.fromBackendType(b))
-          : [];
+        const v3Res = await cashierBackendService.getLinksV3();
 
         const v3Links: Link[] =
           v3Res.isOk() && v3Res.unwrap().data
             ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
             : [];
 
-        return [...v2Links, ...v3Links];
+        return v3Links;
       },
       watch: [() => authState.account],
       refetchInterval: 15 * 1000, // 15 seconds
@@ -93,23 +84,19 @@ export class LinkListStore {
   }
 
   /**
-   * Get all links including both persisted links and temporary links as a unified array
-   * @returns UnifiedLinkList of Link and TempLink objects
+   * Get all persisted links and local draft links as a unified array.
+   * @returns UnifiedLinkList of persisted and draft link objects.
    */
   getLinks(): UnifiedLinkList {
     const owner = authState.account?.owner;
-    const tempLinks = owner ? tempLinkRepository.get(owner) : [];
     const draftLinks = owner ? draftLinkRepository.get(owner) : [];
     const persisted = (this.query.data ?? []).map((l) =>
       UnifiedLinkItemMapper.fromLink(l),
     );
-    const temps = (tempLinks || []).map((t) =>
-      UnifiedLinkItemMapper.fromTempLink(t),
-    );
     const drafts = (draftLinks || []).map((d) =>
       UnifiedLinkItemMapper.fromDraftLink(d),
     );
-    return [...persisted, ...drafts, ...temps];
+    return [...persisted, ...drafts];
   }
 }
 

@@ -1,0 +1,20 @@
+{
+  "id": "link_creation_fee_intent_id",
+  "intent_type": "Send",
+  "asset": {
+    "address": "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    "network_fee": "10000",
+    "token_standard": "ICRC2"
+  },
+  "amount": "0",
+  "total_network_fee": "0",
+  "user_fee": "0",
+  "total_amount": "0",
+  "source_address": "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae",
+  "source_address_type": "Creator",
+  "dest_address": "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae",
+  "dest_address_type": "Treasury",
+  "dependencies": [],
+  "intent_state": "Created",
+  "label": "LINK_CREATION_FEE"
+}

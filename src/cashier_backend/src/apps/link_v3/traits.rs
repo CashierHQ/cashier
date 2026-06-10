@@ -22,6 +22,19 @@ use crate::apps::{
     token_standard::traits::TokenStandardCache,
 };
 
+/// Validates that all gates for a link are open for a given user.
+/// Implementations read from a local cache (no inter-canister call).
+pub trait GateValidator {
+    /// Returns `Ok(())` if all gates are open for `user`, or if `user` is the link's creator.
+    /// Returns `Err(Unauthorized)` if any gate is not yet open.
+    fn check_all_gates_open(
+        &self,
+        link_id: &str,
+        user: Principal,
+        link_creator: Principal,
+    ) -> Result<(), CanisterError>;
+}
+
 pub trait LinkV3Instance {
     /// Create an action associated with the link
     /// # Arguments
@@ -41,6 +54,7 @@ pub trait LinkV3Instance {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_count: u64,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -94,6 +108,7 @@ pub trait LinkV3State {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_count: u64,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,

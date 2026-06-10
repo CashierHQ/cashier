@@ -36,7 +36,7 @@ describe("ProtectedValidLink", () => {
   });
 
   it("renders loading when isLoading=true and no link exists", () => {
-    mockContext.hasTempLinkLoadAttempted = false;
+    mockContext.hasDraftLinkLoadAttempted = false;
 
     render(ProtectedValidLinkTestHost);
 
@@ -45,7 +45,7 @@ describe("ProtectedValidLink", () => {
   });
 
   it("redirects to /404 when ready to check and no link", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       link: null,
     } as any;
@@ -57,14 +57,11 @@ describe("ProtectedValidLink", () => {
     expect(goto).toHaveBeenCalledWith("/404");
   });
 
-  it("redirects when auth is ready, temp link load attempted, and linkStore is null", async () => {
+  it("redirects when auth is ready, draft link load attempted, and linkStore is null", async () => {
     mockContext.authState = { isReady: true } as any;
-    mockContext.hasTempLinkLoadAttempted = true;
-    mockContext.linkDetailStore = null;
+    mockContext.hasDraftLinkLoadAttempted = true;
     mockContext.linkDetailStoreV3 = null;
-    mockContext.userLinkStore = null;
     mockContext.userLinkStoreV3 = null;
-    mockContext.linkCreationStore = null;
     mockContext.linkCreationStoreV3 = null;
 
     render(ProtectedValidLinkTestHost);
@@ -75,7 +72,7 @@ describe("ProtectedValidLink", () => {
   });
 
   it("keeps rendering children during background loading after a valid link was rendered", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       link: { id: "1" },
     } as any;
@@ -85,7 +82,7 @@ describe("ProtectedValidLink", () => {
     await tick();
     expect(screen.getByTestId("child")).toBeInTheDocument();
 
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: true },
       link: { id: "1" },
     } as any;
@@ -97,7 +94,7 @@ describe("ProtectedValidLink", () => {
   });
 
   it("redirects to custom redirectTo when shouldRedirect is true", async () => {
-    mockContext.linkDetailStore = {
+    mockContext.linkDetailStoreV3 = {
       query: { isLoading: false },
       link: null,
     } as any;

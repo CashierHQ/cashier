@@ -36,7 +36,7 @@ describe("ProtectedUserState", () => {
   });
 
   it("renders loading when isLoading=true and currentStep is null", () => {
-    mockContext.userLinkStore = { isLoading: true } as any;
+    mockContext.userLinkStoreV3 = { isLoading: true } as any;
 
     render(ProtectedUserStateTestHost, {
       props: { allowedStates: [UserLinkStep.LANDING] },
@@ -47,7 +47,7 @@ describe("ProtectedUserState", () => {
   });
 
   it("redirects to /404 when store exists, not loading, and step is not allowed", async () => {
-    mockContext.userLinkStore = {
+    mockContext.userLinkStoreV3 = {
       step: UserLinkStep.GATE,
       isLoading: false,
     } as any;
@@ -62,7 +62,7 @@ describe("ProtectedUserState", () => {
   });
 
   it("renders children when step is valid", async () => {
-    mockContext.userLinkStore = {
+    mockContext.userLinkStoreV3 = {
       step: UserLinkStep.LANDING,
       isLoading: false,
     } as any;
@@ -79,7 +79,7 @@ describe("ProtectedUserState", () => {
   });
 
   it("keeps rendering children during background loading after a valid state was rendered", async () => {
-    mockContext.userLinkStore = {
+    mockContext.userLinkStoreV3 = {
       step: UserLinkStep.LANDING,
       isLoading: false,
     } as any;
@@ -91,7 +91,7 @@ describe("ProtectedUserState", () => {
     await tick();
     expect(screen.getByTestId("child")).toBeInTheDocument();
 
-    mockContext.userLinkStore = {
+    mockContext.userLinkStoreV3 = {
       step: UserLinkStep.LANDING,
       isLoading: true,
     } as any;
@@ -103,11 +103,7 @@ describe("ProtectedUserState", () => {
     expect(goto).not.toHaveBeenCalled();
   });
 
-  it("prefers userLinkStoreV3 over userLinkStore", async () => {
-    mockContext.userLinkStore = {
-      step: UserLinkStep.GATE,
-      isLoading: false,
-    } as any;
+  it("uses userLinkStoreV3", async () => {
     mockContext.userLinkStoreV3 = {
       step: UserLinkStep.LANDING,
       isLoading: false,

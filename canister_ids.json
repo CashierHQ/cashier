@@ -1,13 +1,16 @@
 {
   "cashier_backend": {
-    "dev": "edrez-4iaaa-aaaam-aekta-cai"  
-  },
-  "token_storage": {
-    "dev": "hmrnm-pqaaa-aaaam-aenea-cai"  
+    "dev": "edrez-4iaaa-aaaam-aekta-cai"
   },
   "cashier_frontend_new": {
     "dev": "bepcz-nyaaa-aaaam-aekoa-cai",
     "production": "jg57n-xyaaa-aaaam-admqq-cai",
     "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
+  },
+  "gate_service": {
+    "dev": "gk64c-dqaaa-aaaam-ajdha-cai"
+  },
+  "token_storage": {
+    "dev": "hmrnm-pqaaa-aaaam-aenea-cai"
   }
 }
