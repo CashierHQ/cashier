@@ -99,6 +99,31 @@ export type RedirectDecision =
   | { kind: "redirect"; to: AppPath };
 
 /**
+ * Normalized IP protection context used by global route protection.
+ *
+ * @property isLoading whether the IP location query is still loading
+ * @property countryCode the resolved country code for the current user
+ * @property isBlacklisted whether the resolved country should be blocked
+ */
+export type IpProtectionInput = {
+  isLoading: boolean;
+  countryCode: string | null;
+  isBlacklisted: boolean;
+};
+
+/**
+ * Result returned by IP protection policy.
+ *
+ * `pending` means route rendering should wait for IP lookup.
+ * `allow` means the current route can render.
+ * `block` means the app should show the region-blocked screen.
+ */
+export type IpProtectionDecision =
+  | { kind: "pending" }
+  | { kind: "allow" }
+  | { kind: "block" };
+
+/**
  * Normalized page context passed into redirect policy.
  *
  * Route pages and route context stores can expose very different data shapes.
