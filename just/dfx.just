@@ -39,14 +39,14 @@ dfx_local_stop:
 # backend_log_filter: log filter string for the backend canister
 # token_storage_log_filter: log filter string for the token_storage canister
 [group('dfx')]
-dfx_deploy owner network="" mode="" backend_log_filter="" token_storage_log_filter="": 
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="" mode="": 
   #!/usr/bin/env bash
   set -e
   just dfx_deploy_token_storage {{owner}} {{network}} {{mode}} {{token_storage_log_filter}}
   just dfx_deploy_gate {{owner}} {{network}} {{mode}} {{backend_log_filter}}
   just dfx_deploy_backend {{owner}} {{network}} {{mode}} {{backend_log_filter}}
 
-  dfx deploy cashier_frontend_new {{network}} {{mode}} --upgrade-unchanged
+  dfx deploy cashier_frontend_new {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Starts the local dfx server and deploys the canisters
 # params bitcoin: "true" to enable bitcoin node (for ckBTC flows), defaults to "false"
