@@ -41,7 +41,7 @@
     calculateLinkInfoAssetsWithTokenInfo,
     calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
-  import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";

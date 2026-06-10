@@ -8,7 +8,7 @@
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { paths } from "$modules/routing/paths";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";

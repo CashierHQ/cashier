@@ -10,7 +10,7 @@
   import WalletButton from "$modules/shared/components/WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { paths } from "$modules/routing/paths";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";

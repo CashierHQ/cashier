@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import { buildRedirectInput } from "$modules/routing/buildRedirectInput";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";

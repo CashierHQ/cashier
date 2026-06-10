@@ -1,4 +1,4 @@
-import type { RouteContext } from "$modules/routing/routeContext.svelte";
+import type { RouteContext } from "$modules/routing/state/routeContext.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";

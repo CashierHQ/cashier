@@ -6,7 +6,7 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import {
   RouteContext,
   setRouteContext,
-} from "$modules/routing/routeContext.svelte";
+} from "$modules/routing/state/routeContext.svelte";
 import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 import type { LinkRouteContextOptions } from "./types";
 

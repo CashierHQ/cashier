@@ -16,7 +16,7 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getRouteContext } from "$modules/routing/routeContext.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { paths } from "$modules/routing/paths";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";

@@ -3,7 +3,7 @@ import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkStat
 import { LinkStep } from "$modules/links/types/linkStep";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { buildRedirectInput } from "./buildRedirectInput";
-import type { RouteContext } from "./routeContext.svelte";
+import type { RouteContext } from "./state/routeContext.svelte";
 
 const ownerId = "owner-principal";
 const otherUserId = "other-principal";
