@@ -4,7 +4,7 @@
   import { resolveRedirect } from "$modules/routing/resolvers/resolveRedirect";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import type { RedirectDecision } from "$modules/routing/types";
-  import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
+  import { createRedirectNavigation } from "$modules/routing/state/createRedirectNavigation.svelte";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import type { Snippet } from "svelte";
 

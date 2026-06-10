@@ -4,7 +4,7 @@ import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import {
   resolveUserLinkRedirect,
   validatePublicLink,
-} from "$modules/routing/userLinkRedirects";
+} from "$modules/routing/resolvers/userLinkRedirects";
 import type { RedirectInput } from "$modules/routing/types";
 
 const userId = "user-principal";

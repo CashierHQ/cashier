@@ -13,7 +13,7 @@
   import { buildAuthRedirectInput } from "$modules/routing/inputs/buildAuthRedirectInput";
   import { paths } from "$modules/routing/paths";
   import { resolveRedirect } from "$modules/routing/resolvers/resolveRedirect";
-  import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
+  import { createRedirectNavigation } from "$modules/routing/state/createRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import { Principal } from "@icp-sdk/core/principal";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
