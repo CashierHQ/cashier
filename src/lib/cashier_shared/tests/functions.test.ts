@@ -37,6 +37,9 @@ describe("calculateIntentTotalAmount", () => {
         maxUse: number;
         linkCreationFee: string;
         linkMaxAssetAmount: string;
+        gateCount?: number;
+        gateCreateFee?: string;
+        gateOpenFee?: string;
       };
       expected: string;
     }) => {
@@ -48,7 +51,10 @@ describe("calculateIntentTotalAmount", () => {
           BigInt(tc.input.userInputAmount),
           tc.input.maxUse,
           BigInt(tc.input.linkCreationFee),
-          BigInt(tc.input.linkMaxAssetAmount)
+          BigInt(tc.input.linkMaxAssetAmount),
+          tc.input.gateCount ?? 0,
+          BigInt(tc.input.gateCreateFee ?? "100000"),
+          BigInt(tc.input.gateOpenFee ?? "100000")
         );
         expect(result.toString()).toBe(tc.expected);
       });
@@ -126,6 +132,9 @@ describe("calculateIntentFees (end-to-end)", () => {
         user_input_amount: string;
         max_use: number;
         link_creation_fee: string;
+        gate_create_fee?: string;
+        gate_open_fee?: string;
+        gate_count?: number;
         asset_network_fee: string;
         link_max_asset_amount: string;
       };
@@ -148,6 +157,9 @@ describe("calculateIntentFees (end-to-end)", () => {
           user_input_amount: tc.input.user_input_amount,
           max_use: tc.input.max_use,
           link_creation_fee: tc.input.link_creation_fee,
+          gate_create_fee: tc.input.gate_create_fee,
+          gate_open_fee: tc.input.gate_open_fee,
+          gate_count: tc.input.gate_count,
           asset_network_fee: tc.input.asset_network_fee,
           link_max_asset_amount: tc.input.link_max_asset_amount,
         });

@@ -64,13 +64,16 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
         self.client.update("add_gate", (new_gate,)).await
     }
 
-    /// Opens a gate.
+    /// Opens a gate for the given user.
     pub async fn open_gate(
         &self,
         gate_id: String,
         gate_key: GateKey,
+        user: Principal,
     ) -> CanisterClientResult<Result<OpenGateSuccessResult, GateServiceError>> {
-        self.client.update("open_gate", (gate_id, gate_key)).await
+        self.client
+            .update("open_gate", (gate_id, gate_key, user))
+            .await
     }
 
     /// Gets a gate by its subject ID.

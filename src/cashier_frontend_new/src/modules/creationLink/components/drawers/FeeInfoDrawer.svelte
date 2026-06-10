@@ -23,6 +23,12 @@
     usdAmount: number;
   };
 
+  type LockFeeItem = {
+    label: string;
+    amount: string;
+    usdAmount: string;
+  };
+
   type Props = {
     open?: boolean;
     onClose?: () => void;
@@ -30,6 +36,7 @@
     onOpenChange?: (open: boolean) => void;
     feesBreakdown: FeeBreakdownItem[];
     prioritizeNetworkFees?: boolean;
+    lockFees?: LockFeeItem[];
   };
 
   let {
@@ -39,6 +46,7 @@
     onOpenChange,
     feesBreakdown,
     prioritizeNetworkFees = true,
+    lockFees = [],
   }: Props = $props();
 
   function handleClose() {
@@ -83,6 +91,8 @@
   const linkCreationFeeView = $derived.by(() =>
     formatLinkCreationFeeView(linkCreationFee),
   );
+
+  const hasLockFees = $derived(lockFees.length > 0);
 </script>
 
 <Drawer bind:open {onOpenChange}>
@@ -112,7 +122,6 @@
         </DrawerClose>
       </div>
     </DrawerHeader>
-
     <div
       class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex flex-col gap-4"
     >
@@ -160,6 +169,20 @@
         </div>
       {/if}
 
+      {#each lockFees as lockFee (lockFee.label)}
+        <div>
+          <div class="flex justify-between items-center">
+            <span class="text-[14px] font-medium">{lockFee.label}</span>
+            <span class="text-[14px] font-normal">{lockFee.amount}</span>
+          </div>
+          <div class="flex justify-end">
+            <p class="text-[10px] font-normal text-[#b6b6b6]">
+              {lockFee.usdAmount}
+            </p>
+          </div>
+        </div>
+      {/each}
+
       {#each feesBreakdown as fee (fee.name + "_" + fee.tokenAddress)}
         {#if fee.name !== "Network fees" && fee.name !== "Network fee" && fee.name !== "Link creation fee"}
           {@const feeView = formatFeeBreakdownItem(fee)}
@@ -204,6 +227,24 @@
         {/each}
       {/if}
     </div>
+
+    {#if hasLockFees}
+      <div
+        class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex justify-between items-start"
+      >
+        <span class="text-[14px] font-medium">
+          {locale.t("links.linkForm.lock.fees.total")}
+        </span>
+
+        <div class="text-right">
+          <p class="text-[14px] font-normal">
+            {locale.t("links.linkForm.lock.fees.multipleTokens")}
+          </p>
+          <!-- TODO(gating): Compute total lock fee USD from fee data once we have data from backend -->
+          <p class="text-[10px] font-normal text-[#b6b6b6]">~$0.2</p>
+        </div>
+      </div>
+    {/if}
 
     <Button
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"

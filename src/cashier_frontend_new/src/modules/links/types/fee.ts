@@ -1,12 +1,10 @@
-import type { ActionTypeValue } from "$modules/links/types/action/actionType";
-import type Intent from "$modules/links/types/action/intent";
-
 /**
  * Enumeration of fee types
  */
 export class FeeType {
   static readonly NETWORK_FEE = "NETWORK_FEE";
   static readonly CREATE_LINK_FEE = "CREATE_LINK_FEE";
+  static readonly GATE_FEE = "GATE_FEE";
 }
 
 /**
@@ -27,19 +25,3 @@ export interface FeeItem {
   /** number usd value */
   usdValue?: number;
 }
-
-/**
- * Input type for computeAmountAndFee function in FeeService
- */
-export type ComputeAmountAndFeeInput = {
-  intent: Intent;
-  ledgerFee: bigint;
-  actionType: ActionTypeValue;
-};
-/**
- * Output type for computeAmountAndFee function in FeeService
- */
-export type ComputeAmountAndFeeOutput = {
-  amount: bigint;
-  fee?: bigint;
-};

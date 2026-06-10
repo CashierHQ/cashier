@@ -14,6 +14,7 @@ export class GateStateV3 implements UserLinkStateV3 {
   }
 
   async goNext(): Promise<void> {
+    await this.#store.refreshAsync();
     this.#store.state = new AddressUnlockedStateV3(this.#store);
   }
 

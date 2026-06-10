@@ -97,6 +97,7 @@ impl BasketLinkV3Fixture {
             link_type: LinkTypeShared::SendTokenBasket,
             max_use: 1,
             action: create_action,
+            gate_keys: None,
         })
     }
 

@@ -34,6 +34,7 @@ export class SharedIntentMapper {
       action_id: intent.action_id ? [intent.action_id] : [],
       dependencies: intent.dependencies ? [intent.dependencies] : [],
       intent_state: SharedIntentStateMapper.toBackendType(intent.intent_state),
+      label: intent.label,
     };
   }
 
@@ -62,6 +63,7 @@ export class SharedIntentMapper {
       action_id: intent.action_id ? intent.action_id[0] : undefined,
       dependencies: intent.dependencies ? intent.dependencies[0] : undefined,
       intent_state: SharedIntentStateMapper.toLocalType(intent.intent_state),
+      label: intent.label,
     };
   }
 }

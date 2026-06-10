@@ -26,6 +26,7 @@ export const AddressType = {
   User: 'User',
   Treasury: 'Treasury',
   Link: 'Link',
+  Gate: 'Gate',
 } as const;
 
 export type AddressType = typeof AddressType[keyof typeof AddressType];
@@ -58,6 +59,7 @@ export type IntentState = typeof IntentState[keyof typeof IntentState];
 export const IntentParticipants = {
   CreatorToTreasury: 'CreatorToTreasury',
   CreatorToLink: 'CreatorToLink',
+  CreatorToGate: 'CreatorToGate',
   UserToLink: 'UserToLink',
   LinkToUser: 'LinkToUser',
   LinkToCreator: 'LinkToCreator',
@@ -171,6 +173,8 @@ export interface Intent {
   /** ID of the action this intent belongs to */
   action_id?: string;
   intent_state: IntentState;
+  /** Human-readable label for the intent */
+  label: string;
 }
 
 /**
@@ -185,6 +189,12 @@ export interface FeeCalculationInput {
   max_use?: number;
   /** Fee for creating the link */
   link_creation_fee?: bigint;
+  /** Fee for creating one gate */
+  gate_create_fee?: bigint;
+  /** Fee for opening one gate once */
+  gate_open_fee?: bigint;
+  /** Number of gates attached to the link */
+  gate_count?: number;
   /** Network fee for the asset */
   asset_network_fee: bigint;
   /** Maximum asset amount in the link (for withdrawals) */

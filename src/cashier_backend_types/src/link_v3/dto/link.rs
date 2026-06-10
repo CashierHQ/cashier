@@ -5,6 +5,7 @@ use candid::CandidType;
 use cashier_shared::types::{
     Action as ActionShared, Link as LinkShared, LinkType as LinkTypeShared,
 };
+use gate_service_types::{Gate, GateForUser, GateKey};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -18,6 +19,7 @@ pub struct CreateLinkInputV3 {
     pub link_type: LinkTypeShared,
     pub max_use: u64,
     pub action: ActionShared,
+    pub gate_keys: Option<Vec<GateKey>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -25,6 +27,7 @@ pub struct CreateLinkResponseV3 {
     pub link: LinkShared,
     pub action: ActionShared,
     pub icrc112_requests: Option<Icrc112Requests>,
+    pub gates: Vec<Gate>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -45,4 +48,15 @@ pub struct GetLinkResponseV3 {
     pub action: Option<ActionShared>,
     pub icrc112_requests: Option<Icrc112Requests>,
     pub link_user_state: Option<LinkUserState>,
+}
+
+/// Extended link details response that includes gate information.
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct GetLinkDetailsResponseV3 {
+    pub link: LinkShared,
+    pub action: Option<ActionShared>,
+    pub icrc112_requests: Option<Icrc112Requests>,
+    pub link_user_state: Option<LinkUserState>,
+    /// Gate metadata and per-user open status for each gate on the link.
+    pub gates: Vec<GateForUser>,
 }

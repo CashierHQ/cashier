@@ -43,6 +43,17 @@ use transaction_manager::{
     v3::traits::TransactionManagerV3,
 };
 
+use crate::{
+    apps::{
+        action::v3::ActionServiceV3,
+        link_v3::{factory::LinkFactoryV3, traits::GateValidator, utils::link_v3_asset_principals},
+        token_balance::traits::TokenBalanceFetcher,
+        token_fee::traits::TokenFeeCache,
+        token_standard::traits::TokenStandardCache,
+    },
+    repositories::{self, Repositories},
+};
+
 pub struct LinkV3Service<R: Repositories> {
     pub link_v3_repository: repositories::link::v3::LinkV3Repository<R::LinkV3>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
@@ -72,7 +83,7 @@ impl<R: Repositories> LinkV3Service<R> {
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_link<M, F, S, B>(
+    pub async fn create_link<M, F, S, B, V>(
         &mut self,
         input: CreateLinkInputV3,
         creator_id: Principal,
@@ -82,12 +93,14 @@ impl<R: Repositories> LinkV3Service<R> {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_validator: V,
     ) -> Result<CreateLinkResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
+        V: GateValidator,
     {
         if input.action.action_type != SharedActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
@@ -95,12 +108,17 @@ impl<R: Repositories> LinkV3Service<R> {
             ));
         }
 
+        let gate_count = input.gate_keys.as_ref().map_or(0, |v| v.len() as u64);
+
         let link_type: LinkType = input.link_type.into();
         let asset_info: Vec<AssetInfoV3> = input
             .action
             .intents
             .iter()
-            .filter(|i| i.dest_address_type != SharedAddressType::Treasury)
+            .filter(|i| {
+                i.dest_address_type != SharedAddressType::Treasury
+                    && i.dest_address_type != SharedAddressType::Gate
+            })
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
@@ -123,7 +141,6 @@ impl<R: Repositories> LinkV3Service<R> {
         };
         self.user_link_repository.create(new_user_link);
 
-        // create action
         let action_result = self
             .create_action(
                 link_model.id.as_str(),
@@ -135,6 +152,8 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                gate_validator,
+                gate_count,
             )
             .await?;
 
@@ -142,6 +161,7 @@ impl<R: Repositories> LinkV3Service<R> {
             link: action_result.link,
             action: action_result.action,
             icrc112_requests: action_result.icrc112_requests,
+            gates: vec![],
         })
     }
 
@@ -151,11 +171,12 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `canister_id` - The canister ID of the token contract
     /// * `link_id` - The ID of the link for which the action is created
     /// * `action_type` - The type of action to be created
+    /// * `gate_validator` - Validator that checks whether all gates are open for the caller
     /// # Returns
     /// * `Ok(SharedAction)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_action<M, F, S, B>(
+    pub async fn create_action<M, F, S, B, V>(
         &mut self,
         link_id: &str,
         action: SharedAction,
@@ -166,17 +187,22 @@ impl<R: Repositories> LinkV3Service<R> {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_validator: V,
+        gate_count: u64,
     ) -> Result<CreateActionResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
+        V: GateValidator,
     {
         let link_model = self
             .link_v3_repository
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        gate_validator.check_all_gates_open(link_id, creator, link_model.creator)?;
 
         let action_model = self.action_service.create_action_from_shared_data(
             action.clone(),
@@ -194,6 +220,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                gate_count,
             )
             .await?;
 
@@ -557,6 +584,7 @@ impl<R: Repositories> LinkV3Service<R> {
 mod tests {
     use super::*;
     use crate::apps::{
+        gate_service::service::{GateAppService, tests::MockGateServiceClient},
         shared::test_utils::tests::{
             MockExecutionService, MockTransactionManagerV3, MockValidationService,
         },
@@ -587,8 +615,15 @@ mod tests {
         IntentState as SharedIntentState, IntentType as SharedIntentType,
         LinkType as SharedLinkType, TokenStandard as SharedTokenStandard,
     };
+    use gate_service_types::{Gate, GateKey};
     use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
+
+    fn make_gate_validator(
+        repo: &TestRepositories,
+    ) -> GateAppService<TestRepositories, MockGateServiceClient> {
+        GateAppService::new(repo, MockGateServiceClient::new())
+    }
 
     fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
         AssetInfoV3 {
@@ -644,6 +679,7 @@ mod tests {
             dependencies: Some(vec![]),
             action_id: None,
             intent_state: SharedIntentState::Created,
+            label: String::new(),
         }
     }
 
@@ -676,6 +712,7 @@ mod tests {
             link_type: SharedLinkType::SendTip,
             max_use: 3,
             action: fixture_of_shared_action(action_type, creator, canister_id, ledger_id),
+            gate_keys: None,
         }
     }
 
@@ -720,6 +757,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await;
 
@@ -757,11 +795,144 @@ mod tests {
                 create_mock_token_fee_service(1_000_000),
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
         // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_gate_closed_for_non_creator() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let caller = random_principal_id(); // different from creator
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+        let gate_id = format!("gate_{}", random_id_string());
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "gated-link".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Active,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        // register a gate for the link — caller has NOT opened it
+        repositories.link_gate().add_gate(
+            &link_id,
+            Gate {
+                id: gate_id,
+                creator,
+                subject_id: link_id.clone(),
+                key: GateKey::PasswordRedacted,
+            },
+        );
+
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(SharedActionType::Receive, caller, canister_id, ledger_id),
+                caller,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                create_mock_token_fee_service(created_at),
+                token_standard_service,
+                MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
+            )
+            .await;
+
+        // Assert — caller has not opened the gate, so action must be denied
+        assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_for_creator_even_when_gate_is_closed() {
+        // Arrange — same setup as above but caller IS the creator
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+        let gate_id = format!("gate_{}", random_id_string());
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "gated-link".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Created,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        // gate exists and creator has NOT opened it
+        repositories.link_gate().add_gate(
+            &link_id,
+            Gate {
+                id: gate_id,
+                creator,
+                subject_id: link_id.clone(),
+                key: GateKey::PasswordRedacted,
+            },
+        );
+
+        let token_fee_service = create_mock_token_fee_service(created_at);
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act — creator calls create_action on their own link
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
+            )
+            .await;
+
+        // Assert — creator bypasses the gate check
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
@@ -898,6 +1069,8 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -961,6 +1134,8 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -1015,6 +1190,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1062,6 +1238,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1118,6 +1295,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1164,6 +1342,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");

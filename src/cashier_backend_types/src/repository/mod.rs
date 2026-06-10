@@ -12,6 +12,8 @@ pub mod keys;
 pub mod link;
 pub mod link_action;
 pub mod link_reservation;
+pub mod link_gate;
+pub mod link_gate_user_status;
 pub mod processing_transaction;
 pub mod request_lock;
 pub mod token_fee;

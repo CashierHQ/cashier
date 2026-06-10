@@ -38,12 +38,18 @@
   // Separate assets and link creation fee for display
   const assetsToDisplay = $derived.by(() => {
     return assets.filter(
-      (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
+      (item) =>
+        item.fee?.feeType !== FeeType.CREATE_LINK_FEE &&
+        item.fee?.feeType !== FeeType.GATE_FEE,
     );
   });
 
   const linkCreationFeeItem = $derived.by(() => {
     return assets.find((item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE);
+  });
+
+  const gateFeeItem = $derived.by(() => {
+    return assets.find((item) => item.fee?.feeType === FeeType.GATE_FEE);
   });
 
   // Derive hasFees from assets
@@ -157,6 +163,54 @@
                 ~${formatUsdAmount(
                   parseFloat(linkCreationFeeItem.asset.usdValueStr),
                 )}
+              </p>
+            {/if}
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Gate Fee -->
+    {#if gateFeeItem && gateFeeItem.fee}
+      <div class="flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-1.5">
+            {#if gateFeeItem.asset.state === AssetProcessState.FAILED}
+              <X size={16} class="text-red-600" stroke-width={2.5} />
+            {:else if gateFeeItem.asset.state === AssetProcessState.PROCESSING}
+              <div
+                class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
+              ></div>
+            {:else if gateFeeItem.asset.state === AssetProcessState.SIGNED_PENDING}
+              <Check size={16} class="text-green-600/50" stroke-width={2.5} />
+            {:else if gateFeeItem.asset.state === AssetProcessState.SUCCEED}
+              <Check size={16} class="text-green-600" stroke-width={2.5} />
+            {/if}
+            <TokenIcon
+              address={gateFeeItem.asset.address}
+              symbol={gateFeeItem.asset.symbol}
+              logo={gateFeeItem.asset.icon ??
+                getTokenLogo(gateFeeItem.asset.address)}
+              size="sm"
+              {failedImageLoads}
+              {onImageError}
+            />
+            <p class="text-[14px] font-medium">
+              {gateFeeItem.asset.symbol}
+            </p>
+            <p class="text-[12px] font-normal text-[#b6b6b6] pt-0.5">
+              Gate fee
+            </p>
+          </div>
+          <div class="flex flex-col items-end">
+            <div class="flex items-center gap-1">
+              <p class="text-[14px] font-normal">
+                {gateFeeItem.asset.amountFormattedStr}
+              </p>
+            </div>
+            {#if gateFeeItem.asset.usdValueStr}
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${formatUsdAmount(parseFloat(gateFeeItem.asset.usdValueStr))}
               </p>
             {/if}
           </div>

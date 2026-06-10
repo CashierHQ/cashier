@@ -18,7 +18,7 @@
   const linkStore = $derived.by(() => context.getLinkStore());
 
   const isLoading = $derived.by(() =>
-    context.isLoading({ checkTempLinkLoad: true }),
+    context.isLoading({ checkDraftLinkLoad: true }),
   );
 
   const hasLink = $derived.by(() => context.hasLink());
@@ -30,7 +30,7 @@
   const shouldRedirect = $derived(
     (isReadyToCheck && !hasLink) ||
       (context.authState.isReady &&
-        context.hasTempLinkLoadAttempted &&
+        context.hasDraftLinkLoadAttempted &&
         !linkStore),
   );
 

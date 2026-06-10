@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "fees": {
+    "link_creation": {
+      "token": "ICP",
+      "amount_e8s": "10000"
+    },
+    "gate_create": {
+      "token": "ICP",
+      "amount_e8s": "100000"
+    },
+    "gate_open": {
+      "token": "ICP",
+      "amount_e8s": "100000"
+    }
+  }
+}

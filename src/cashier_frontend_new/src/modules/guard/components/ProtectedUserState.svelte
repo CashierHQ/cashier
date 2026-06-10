@@ -24,9 +24,7 @@
 
   const context = getGuardContext();
 
-  const userLinkStore = $derived(
-    context.userLinkStoreV3 || context.userLinkStore,
-  );
+  const userLinkStore = $derived(context.userLinkStoreV3);
 
   const currentStep = $derived(
     userLinkStore && "step" in userLinkStore ? userLinkStore.step : null,

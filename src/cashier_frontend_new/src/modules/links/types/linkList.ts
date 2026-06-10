@@ -7,7 +7,6 @@ import {
   type LinkTypeValue,
   LinkTypeMapper,
 } from "$modules/links/types/link/linkType";
-import type { TempLink } from "$modules/links/types/tempLink";
 import type { Link as SharedLink } from "$shared";
 
 export type GroupedLink = {
@@ -34,17 +33,6 @@ export class UnifiedLinkItemMapper {
       linkType: link.link_type,
       linkCreateAt: link.create_at,
       isCreated: true,
-    };
-  }
-
-  static fromTempLink(tempLink: TempLink): UnifiedLinkItem {
-    return {
-      id: tempLink.id,
-      title: tempLink.createLinkData.title || "No title",
-      state: tempLink.state,
-      linkType: tempLink.createLinkData.linkType,
-      linkCreateAt: tempLink.create_at,
-      isCreated: false,
     };
   }
 

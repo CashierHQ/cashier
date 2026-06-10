@@ -1,10 +1,11 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
-import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
-import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
+import type { GateKey } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { GateType } from "$modules/gating/types/gate";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 
@@ -15,6 +16,7 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
   constructor(linkStore: LinkCreationStoreV3) {
     this.#linkStore = linkStore;
+    this.#linkStore.initializeCreateLinkActionFromTemplate();
   }
 
   // Create the link using the backend service and move to the created state
@@ -36,10 +38,17 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       throw new Error("Action must be initialized to create link");
     }
 
-    // call backend API to create the link
+    // call backend API to create the link (with gates if configured)
+    const gateDraft = this.#linkStore.pendingGateDraft;
+    const gateKeys: GateKey[] = [];
+    if (gateDraft?.type === GateType.PASSWORD) {
+      gateKeys.push({ Password: gateDraft.password });
+    }
+
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,
       this.#linkStore.draftAction,
+      gateKeys,
     );
 
     if (result.isErr()) {
@@ -54,11 +63,6 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
         this.#linkStore.id,
         authState.account?.owner ?? "anon",
       );
-
-      tempLinkRepository.delete(
-        this.#linkStore.id,
-        authState.account?.owner ?? "anon",
-      );
     }
 
     this.#linkStore.id = createLinkResponse.link.id;
@@ -69,6 +73,6 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
   // Go back to the add asset state
   async goBack(): Promise<void> {
-    this.#linkStore.state = new AddAssetStateV3(this.#linkStore);
+    this.#linkStore.state = new LockStateV3(this.#linkStore);
   }
 }
