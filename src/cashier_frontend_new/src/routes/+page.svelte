@@ -4,7 +4,7 @@
   import Footer from "$modules/home/components/Footer.svelte";
   import HomePage from "$modules/home/pages/HomePage.svelte";
   import LoginModal from "$modules/home/components/LoginModal.svelte";
-  import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
+  import { buildAuthRedirectInput } from "$modules/routing/inputs/buildAuthRedirectInput";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
   import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
   import { page } from "$app/state";

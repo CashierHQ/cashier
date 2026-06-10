@@ -10,7 +10,7 @@
   import { draftLinkService } from "$modules/creationLink/services/draftLink";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
-  import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
+  import { buildAuthRedirectInput } from "$modules/routing/inputs/buildAuthRedirectInput";
   import { paths } from "$modules/routing/paths";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
   import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
