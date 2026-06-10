@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ProtectedIP from "$modules/guard/components/ProtectedIP.svelte";
+  import ProtectedIP from "$modules/routing/components/ProtectedIP.svelte";
 </script>
 
 <ProtectedIP>

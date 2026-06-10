@@ -1,6 +1,13 @@
 import type { LinkStep } from "$modules/links/types/linkStep";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
 
+// TODO: Union of all country codes?
+export type CountryCode = string;
+
+export type Country = {
+  isoCode: CountryCode;
+};
+
 /**
  * Internal app paths that can be used for redirects.
  */

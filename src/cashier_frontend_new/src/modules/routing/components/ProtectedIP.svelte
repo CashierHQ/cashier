@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
-  import RegionBlocked from "$modules/guard/components/RegionBlocked.svelte";
-  import { userIPStore } from "$modules/guard/state/userIPStore.svelte";
+  import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
+  import RegionBlocked from "$modules/routing/components/RegionBlocked.svelte";
+  import { userIPStore } from "$modules/routing/state/userIPStore.svelte";
   import { resolveIpProtection } from "$modules/routing/ipProtection";
   import { type Snippet } from "svelte";
 

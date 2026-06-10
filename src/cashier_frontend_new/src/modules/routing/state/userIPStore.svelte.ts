@@ -1,7 +1,7 @@
 import { managedState } from "$lib/managedState";
-import { PROTECTED_IP_BLOCKING_ENABLE } from "$modules/guard/constants";
-import countryBlacklist from "$modules/guard/data/blacklist.json";
-import { queryUserCountryLocation } from "$modules/guard/services/ip_resolver";
+import { PROTECTED_IP_BLOCKING_ENABLE } from "$modules/routing/constants";
+import countryBlacklist from "$modules/routing/data/blacklist.json";
+import { queryUserCountryLocation } from "$modules/routing/services/ip_resolver";
 
 /**
  * Store to manage user's IP location and blacklist status.

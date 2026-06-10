@@ -3,7 +3,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import ProtectedIPTestHost from "$modules/guard/components/ProtectedIPTestHost.svelte";
+import ProtectedIPTestHost from "$modules/routing/components/ProtectedIPTestHost.svelte";
 
 vi.mock("$lib/i18n", () => ({
   locale: {
@@ -11,7 +11,7 @@ vi.mock("$lib/i18n", () => ({
   },
 }));
 
-vi.mock("$modules/guard/state/userIPStore.svelte", () => ({
+vi.mock("$modules/routing/state/userIPStore.svelte", () => ({
   userIPStore: {
     countryCode: null,
     isBlacklisted: vi.fn(() => false),
@@ -32,7 +32,7 @@ describe("ProtectedIP", () => {
     vi.clearAllMocks();
 
     const { userIPStore } =
-      await import("$modules/guard/state/userIPStore.svelte");
+      await import("$modules/routing/state/userIPStore.svelte");
     mockStore = userIPStore as any;
   });
 

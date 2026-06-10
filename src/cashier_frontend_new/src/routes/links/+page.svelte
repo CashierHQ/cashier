@@ -18,7 +18,7 @@
   import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import { Principal } from "@icp-sdk/core/principal";
-  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
+  import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import { page } from "$app/state";
   import { toast } from "svelte-sonner";
 

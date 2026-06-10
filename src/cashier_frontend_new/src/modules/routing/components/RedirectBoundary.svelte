@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { getRouteContext } from "$modules/routing/routeContext.svelte";
-  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
+  import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import { buildRedirectInput } from "$modules/routing/buildRedirectInput";
   import E2ERedirectScreen from "$modules/routing/components/E2ERedirectScreen.svelte";
   import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";

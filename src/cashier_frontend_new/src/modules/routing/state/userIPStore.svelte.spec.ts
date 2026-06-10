@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as ipResolver from "$modules/guard/services/ip_resolver";
+import * as ipResolver from "$modules/routing/services/ip_resolver";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { UserIPStore } from "$modules/guard/state/userIPStore.svelte";
+import { UserIPStore } from "$modules/routing/state/userIPStore.svelte";
 
 // Mock the dependencies
-vi.mock("$modules/guard/services/ip_resolver");
-vi.mock("$modules/guard/data/blacklist.json", () => ({
+vi.mock("$modules/routing/services/ip_resolver");
+vi.mock("$modules/routing/data/blacklist.json", () => ({
   default: {
     country_codes: ["US", "CU", "IR", "KP", "SY"],
   },
 }));
-vi.mock("$modules/guard/constants", () => ({
+vi.mock("$modules/routing/constants", () => ({
   PROTECTED_IP_BLOCKING_ENABLE: true,
 }));
 

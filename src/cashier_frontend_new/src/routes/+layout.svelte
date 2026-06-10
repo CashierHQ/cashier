@@ -3,7 +3,7 @@
   import favicon from "$lib/assets/favicon.svg";
   import { initLocale } from "$lib/i18n";
   import { Toaster } from "$lib/shadcn/components/ui/sonner";
-  import ProtectedIP from "$modules/guard/components/ProtectedIP.svelte";
+  import ProtectedIP from "$modules/routing/components/ProtectedIP.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { refreshAmplitudeUserIdFromAuth } from "$modules/analytics/amplitudeStore";
   import { isE2ERedirectEnabled } from "$modules/routing/e2eRedirectInput";

@@ -1,4 +1,4 @@
-import type { CountryCode } from "$modules/guard/types";
+import type { CountryCode } from "$modules/routing/types";
 
 // https://api.iplocation.net/
 const getLocationFromIpLocation = async (): Promise<CountryCode> => {
