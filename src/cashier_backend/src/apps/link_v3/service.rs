@@ -83,7 +83,6 @@ impl<R: Repositories> LinkV3Service<R> {
         token_standard_service: S,
         token_balance_service: B,
         gate_validator: V,
-        gate_count: u64,
     ) -> Result<CreateLinkResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -97,6 +96,8 @@ impl<R: Repositories> LinkV3Service<R> {
                 "Only CREATE action can be created when creating a link".to_string(),
             ));
         }
+
+        let gate_count = input.gate_keys.as_ref().map_or(0, |v| v.len() as u64);
 
         let link_type: LinkType = input.link_type.into();
         let asset_info: Vec<AssetInfoV3> = input
@@ -149,6 +150,7 @@ impl<R: Repositories> LinkV3Service<R> {
             link: action_result.link,
             action: action_result.action,
             icrc112_requests: action_result.icrc112_requests,
+            gates: vec![],
         })
     }
 
@@ -634,6 +636,7 @@ mod tests {
             link_type: SharedLinkType::SendTip,
             max_use: 3,
             action: fixture_of_shared_action(action_type, creator, canister_id, ledger_id),
+            gate_keys: None,
         }
     }
 
@@ -679,7 +682,6 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
-                0,
             )
             .await;
 
@@ -1113,7 +1115,6 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
-                0,
             )
             .await
             .expect("create link should succeed");
@@ -1162,7 +1163,6 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
-                0,
             )
             .await
             .expect("create link should succeed");
@@ -1220,7 +1220,6 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
-                0,
             )
             .await
             .expect("create link should succeed");
@@ -1268,7 +1267,6 @@ mod tests {
                 token_standard_service,
                 token_balance_service,
                 make_gate_validator(&repositories),
-                0,
             )
             .await
             .expect("create link should succeed");

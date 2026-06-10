@@ -12,8 +12,8 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, CreateLinkWithGateResponseV3,
-            DisableLinkResponseV3, GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
             SyncAssetBalanceCacheResponseV3,
         },
     },
@@ -205,30 +205,6 @@ impl LinkTestFixtureV3 {
             .as_ref()
             .unwrap()
             .get_link_details_v3(link_id, options)
-            .await
-            .unwrap()
-    }
-
-    /// Creates a new link V3 with zero or more gates applied simultaneously.
-    /// # Arguments
-    /// * `input` - Link creation data
-    /// * `gate_keys` - Gate keys to attach (empty = ungated link)
-    /// # Returns
-    /// * `CreateLinkWithGateResponseV3` - Created link, action, icrc112 requests, and gates
-    pub async fn create_link_v3_with_gates(
-        &self,
-        input: CreateLinkInputV3,
-        gate_keys: Vec<GateKey>,
-    ) -> Result<CreateLinkWithGateResponseV3, CanisterError> {
-        let keys = if gate_keys.is_empty() {
-            None
-        } else {
-            Some(gate_keys)
-        };
-        self.cashier_backend_client
-            .as_ref()
-            .unwrap()
-            .user_create_link_v3_with_gates(input, keys)
             .await
             .unwrap()
     }

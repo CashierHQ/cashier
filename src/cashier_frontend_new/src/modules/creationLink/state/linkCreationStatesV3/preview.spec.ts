@@ -2,7 +2,7 @@ import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
-import type { CreateLinkWithGateResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
+import type { CreateLinkResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import {
@@ -43,7 +43,6 @@ vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
 vi.mock("$modules/links/services/cashierBackend", () => ({
   cashierBackendService: {
     createLinkV3: vi.fn(),
-    createLinkV3WithGates: vi.fn(),
   },
 }));
 
@@ -75,7 +74,7 @@ const MOCK_BACKEND_LINK: SharedLink = {
   link_state: LinkState.Active,
 };
 
-const MOCK_CREATE_RESPONSE: CreateLinkWithGateResponseV3 = {
+const MOCK_CREATE_RESPONSE: CreateLinkResponseV3 = {
   link: MOCK_BACKEND_LINK,
   action: MOCK_ACTION,
   gates: [],
@@ -122,7 +121,7 @@ function makeStore(options?: {
 describe("PreviewStateV3", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(cashierBackendService.createLinkV3WithGates).mockResolvedValue(
+    vi.mocked(cashierBackendService.createLinkV3).mockResolvedValue(
       Ok(MOCK_CREATE_RESPONSE),
     );
   });
@@ -181,7 +180,7 @@ describe("PreviewStateV3", () => {
     });
 
     it("it_should_fail_go_next_due_to_backend_create_link_failure", async () => {
-      vi.mocked(cashierBackendService.createLinkV3WithGates).mockResolvedValue(
+      vi.mocked(cashierBackendService.createLinkV3).mockResolvedValue(
         Err(new Error("backend error")),
       );
       const store = makeStore();

@@ -45,7 +45,7 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       gateKeys.push({ Password: gateDraft.password });
     }
 
-    const result = await cashierBackendService.createLinkV3WithGates(
+    const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,
       this.#linkStore.draftAction,
       gateKeys,
