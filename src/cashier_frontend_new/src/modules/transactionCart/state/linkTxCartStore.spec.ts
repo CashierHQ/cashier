@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@icp-sdk/core/principal";
-import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
-import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
+import type Action from "$modules/links/types/action/action";
+import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import {
   AssetProcessState,
   TxProgressPhase,
 } from "$modules/transactionCart/types/txCart";
+import { Principal } from "@icp-sdk/core/principal";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock constants
 const CASHIER_BACKEND_CANISTER_ID = "aaaaa-aa";
