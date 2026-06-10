@@ -1,5 +1,5 @@
 import { paths } from "$modules/routing/paths";
-import { resolveCreationRedirect } from "$modules/routing/linkCreationRedirects";
+import { resolveCreationRedirect } from "$modules/routing/resolvers/linkCreationRedirects";
 import { resolveUserLinkRedirect } from "$modules/routing/userLinkRedirects";
 import { parseRoute } from "$modules/routing/routeScreen";
 import type { RedirectDecision, RedirectInput } from "$modules/routing/types";

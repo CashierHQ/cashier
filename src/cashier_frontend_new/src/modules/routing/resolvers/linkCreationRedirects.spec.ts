@@ -3,7 +3,7 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import {
   resolveCreationRedirect,
   validateOwnerAccess,
-} from "$modules/routing/linkCreationRedirects";
+} from "$modules/routing/resolvers/linkCreationRedirects";
 import type { RedirectInput } from "$modules/routing/types";
 
 const ownerId = "owner-principal";

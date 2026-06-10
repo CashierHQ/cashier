@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveIpProtection } from "$modules/routing/ipProtection";
+import { resolveIpProtection } from "$modules/routing/resolvers/ipProtection";
 
 describe("ipProtection", () => {
   it("waits while IP location is loading", () => {
