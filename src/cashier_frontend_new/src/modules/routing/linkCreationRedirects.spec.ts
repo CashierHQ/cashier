@@ -46,12 +46,12 @@ describe("linkCreationRedirects", () => {
     });
 
     it("redirects to link list when the user is logged out", () => {
-      expect(validateOwnerAccess({ ...baseInput, currentUserId: null })).toEqual(
-        {
-          kind: "redirect",
-          to: "/links",
-        },
-      );
+      expect(
+        validateOwnerAccess({ ...baseInput, currentUserId: null }),
+      ).toEqual({
+        kind: "redirect",
+        to: "/links",
+      });
     });
 
     it("redirects to link list when the user is not the owner", () => {
