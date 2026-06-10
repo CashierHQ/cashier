@@ -11,7 +11,7 @@ import type { RedirectDecision } from "$modules/routing/types";
  *
  * @param getDecision returns the latest redirect decision from the route page
  */
-export function useRedirectNavigation(getDecision: () => RedirectDecision) {
+export function createRedirectNavigation(getDecision: () => RedirectDecision) {
   // Prevent repeated effects from scheduling the same redirect more than once.
   let scheduledRedirect: string | null = null;
 

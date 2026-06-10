@@ -13,7 +13,7 @@
   import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
   import { paths } from "$modules/routing/paths";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
-  import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
+  import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import { Principal } from "@icp-sdk/core/principal";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
@@ -23,7 +23,7 @@
   const input = $derived(buildAuthRedirectInput(page.url));
   const decision = $derived(resolveRedirect(input));
 
-  useRedirectNavigation(() => decision);
+  createRedirectNavigation(() => decision);
 
   /**
    * Handle the creation of a new link

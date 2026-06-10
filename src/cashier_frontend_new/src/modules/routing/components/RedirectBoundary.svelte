@@ -4,7 +4,7 @@
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import type { RedirectDecision } from "$modules/routing/types";
-  import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
+  import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import type { Snippet } from "svelte";
 
@@ -19,7 +19,7 @@
   const input = $derived(buildRedirectInput(context, page.url));
   const decision = $derived(resolveRedirect(input));
 
-  useRedirectNavigation(() => decision);
+  createRedirectNavigation(() => decision);
 </script>
 
 {#if decision.kind === "pending"}

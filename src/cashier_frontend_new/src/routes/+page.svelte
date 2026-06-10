@@ -6,7 +6,7 @@
   import LoginModal from "$modules/home/components/LoginModal.svelte";
   import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
-  import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
+  import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
   import { page } from "$app/state";
 
   let isLoginModalOpen = $state(false);
@@ -19,7 +19,7 @@
   const decision = $derived(resolveRedirect(input));
   const isLoggedIn = $derived(!!input.currentUserId);
 
-  useRedirectNavigation(() => decision);
+  createRedirectNavigation(() => decision);
 </script>
 
 <main class="flex flex-col h-screen">
