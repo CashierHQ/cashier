@@ -31,7 +31,7 @@ function getCurrentUserId(context: RouteContext): string | null {
  * @returns owner id, or null when it cannot be resolved
  */
 function getLinkOwnerId(context: RouteContext): string | null {
-  if (context.linkCreationStore || context.linkCreationStoreV3) {
+  if (context.linkCreationStoreV3) {
     return getCurrentUserId(context);
   }
 
@@ -47,11 +47,7 @@ function getLinkOwnerId(context: RouteContext): string | null {
  * @returns owner-flow link step, or null when no owner store/state is available
  */
 function getOwnerLinkState(context: RouteContext): LinkStep | null {
-  const store =
-    context.linkDetailStoreV3 ??
-    context.linkDetailStore ??
-    context.linkCreationStoreV3 ??
-    context.linkCreationStore;
+  const store = context.linkDetailStoreV3 ?? context.linkCreationStoreV3;
 
   if (!store) return null;
 
@@ -69,7 +65,7 @@ function getOwnerLinkState(context: RouteContext): LinkStep | null {
  * @returns user-flow step, or null when unavailable
  */
 function getUserState(context: RouteContext): UserLinkStep | null {
-  const store = context.userLinkStoreV3 ?? context.userLinkStore;
+  const store = context.userLinkStoreV3;
   return store?.step ?? null;
 }
 
@@ -80,7 +76,7 @@ function getUserState(context: RouteContext): UserLinkStep | null {
  * @returns true while redirect policy should wait for route data
  */
 function getIsLoading(context: RouteContext): boolean {
-  return context.isLoading({ checkTempLinkLoad: true });
+  return context.isLoading({ checkDraftLinkLoad: true });
 }
 
 /**

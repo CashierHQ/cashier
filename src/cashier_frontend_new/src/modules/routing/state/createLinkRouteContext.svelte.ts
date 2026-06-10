@@ -1,5 +1,4 @@
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
-import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -46,24 +45,14 @@ export function createLinkRouteContext({
         const store = new LinkCreationStoreV3(draftLink);
         context.setLinkCreationStoreV3(store);
       } else {
-        const tempLinkResult = LinkCreationStore.getTempLink(draftLinkId);
-
-        if (tempLinkResult.isOk()) {
-          context.setLinkCreationStore(
-            new LinkCreationStore(tempLinkResult.value),
-          );
-        } else {
-          clearMissingDraftStores(context);
-        }
+        clearMissingDraftStores(context);
       }
 
       context.setHasDraftLinkLoadAttempted(true);
-      context.setHasTempLinkLoadAttempted(true);
       return;
     }
 
     if (!draftLinkId) {
-      context.setHasTempLinkLoadAttempted(true);
       context.setHasDraftLinkLoadAttempted(true);
     }
   });
@@ -89,15 +78,5 @@ function clearMissingDraftStores(context: RouteContext) {
 
   if (!isInCreatedStateV3) {
     context.linkCreationStoreV3 = null;
-  }
-
-  const existing = context.linkCreationStore;
-  const isInCreatedState =
-    existing &&
-    "state" in existing &&
-    existing.state?.step === LinkStep.CREATED;
-
-  if (!isInCreatedState) {
-    context.linkCreationStore = null;
   }
 }

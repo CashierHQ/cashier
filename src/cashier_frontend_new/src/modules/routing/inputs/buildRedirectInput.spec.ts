@@ -16,11 +16,8 @@ type ContextOptions = {
   linkExists?: boolean;
   link?: unknown;
   linkCreationStoreV3?: unknown;
-  linkCreationStore?: unknown;
   linkDetailStoreV3?: unknown;
-  linkDetailStore?: unknown;
   userLinkStoreV3?: unknown;
-  userLinkStore?: unknown;
 };
 
 function createContext({
@@ -31,11 +28,8 @@ function createContext({
   linkExists = false,
   link = null,
   linkCreationStoreV3 = null,
-  linkCreationStore = null,
   linkDetailStoreV3 = null,
-  linkDetailStore = null,
   userLinkStoreV3 = null,
-  userLinkStore = null,
 }: ContextOptions = {}): RouteContext {
   return {
     authState: {
@@ -46,11 +40,8 @@ function createContext({
       isLoggedIn: () => isLoggedIn,
     },
     linkCreationStoreV3,
-    linkCreationStore,
     linkDetailStoreV3,
-    linkDetailStore,
     userLinkStoreV3,
-    userLinkStore,
     isLoading: () => isLoading,
     hasLink: () => linkExists,
     getLink: () => link,
