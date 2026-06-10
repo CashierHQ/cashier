@@ -42,7 +42,7 @@ npm run test:unit -- --run -t "LO-03"
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario    | Expected        | Status |
 | ----- | ----------- | --------------- | ------ |
@@ -57,7 +57,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: old UI protects `/link/[id]/use` with auth and redirects logged-out users to `/link/[id]`.
 
@@ -73,7 +73,7 @@ Note: old UI protects `/link/[id]/use` with auth and redirects logged-out users 
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: owner-flow invalid links redirect to `/links`; public user-flow invalid links redirect to `/404`.
 
@@ -86,7 +86,7 @@ Note: owner-flow invalid links redirect to `/links`; public user-flow invalid li
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario         | Expected        | Status |
 | ----- | ---------------- | --------------- | ------ |
@@ -100,7 +100,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 - UI: `src/modules/home/components/Header.svelte.spec.ts`
 
 | ID    | Scenario           | Expected                   | Status |
@@ -115,7 +115,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario         | Expected                 | Status |
 | ----- | ---------------- | ------------------------ | ------ |
@@ -129,7 +129,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID     | Scenario         | Expected                 | Status |
 | ------ | ---------------- | ------------------------ | ------ |
@@ -143,7 +143,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario         | Expected                     | Status |
 | ----- | ---------------- | ---------------------------- | ------ |
@@ -157,7 +157,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID     | Scenario         | Expected                   | Status |
 | ------ | ---------------- | -------------------------- | ------ |
@@ -171,7 +171,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario         | Expected         | Status |
 | ----- | ---------------- | ---------------- | ------ |
@@ -185,7 +185,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 | ID    | Scenario         | Expected              | Status |
 | ----- | ---------------- | --------------------- | ------ |
@@ -199,7 +199,7 @@ Tests:
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -216,7 +216,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -237,7 +237,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -258,7 +258,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -279,7 +279,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: old UI allows `Created` on both create and detail routes.
 
@@ -300,7 +300,7 @@ Note: old UI allows `Created` on both create and detail routes.
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -321,7 +321,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
 
@@ -342,7 +342,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 
 Tests:
 
-- Unit: `src/modules/routing/resolveRedirect.spec.ts`
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
 
 Note: this maps to local `Ended`; create-flow pages share `/link/create/[id]`.
 

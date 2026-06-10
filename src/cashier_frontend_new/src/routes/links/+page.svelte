@@ -12,7 +12,7 @@
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
   import { buildAuthRedirectInput } from "$modules/routing/inputs/buildAuthRedirectInput";
   import { paths } from "$modules/routing/paths";
-  import { resolveRedirect } from "$modules/routing/resolveRedirect";
+  import { resolveRedirect } from "$modules/routing/resolvers/resolveRedirect";
   import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import { Principal } from "@icp-sdk/core/principal";

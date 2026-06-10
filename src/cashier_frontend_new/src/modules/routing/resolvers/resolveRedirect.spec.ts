@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { getRouteArea, parseRoute } from "$modules/routing/routeScreen";
-import { resolveRedirect } from "$modules/routing/resolveRedirect";
+import { resolveRedirect } from "$modules/routing/resolvers/resolveRedirect";
 import type {
   RedirectDecision,
   RedirectInput,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { buildRedirectInput } from "$modules/routing/inputs/buildRedirectInput";
-  import { resolveRedirect } from "$modules/routing/resolveRedirect";
+  import { resolveRedirect } from "$modules/routing/resolvers/resolveRedirect";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import type { RedirectDecision } from "$modules/routing/types";
   import { createRedirectNavigation } from "$modules/routing/createRedirectNavigation.svelte";
