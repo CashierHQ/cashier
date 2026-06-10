@@ -1,6 +1,10 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { paths } from "./paths";
-import type { RedirectDecision, RedirectInput, UserRouteArea } from "./types";
+import { paths } from "$modules/routing/paths";
+import type {
+  RedirectDecision,
+  RedirectInput,
+  UserRouteArea,
+} from "$modules/routing/types";
 
 /**
  * Validates that a public link is loaded and exists.

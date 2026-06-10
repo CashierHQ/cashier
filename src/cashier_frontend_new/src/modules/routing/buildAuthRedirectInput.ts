@@ -1,7 +1,7 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { userProfile } from "$modules/shared/services/userProfile.svelte";
-import { parseRoute } from "./routeScreen";
-import type { RedirectInput } from "./types";
+import { parseRoute } from "$modules/routing/routeScreen";
+import type { RedirectInput } from "$modules/routing/types";
 
 /**
  * Builds redirect input for routes that only depend on auth state.

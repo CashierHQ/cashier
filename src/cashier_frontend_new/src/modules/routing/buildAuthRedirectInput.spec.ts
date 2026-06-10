@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildAuthRedirectInput } from "./buildAuthRedirectInput";
+import { buildAuthRedirectInput } from "$modules/routing/buildAuthRedirectInput";
 
 const { mockAuthState, mockUserProfile } = vi.hoisted(() => ({
   mockAuthState: {

@@ -1,4 +1,4 @@
-import type { RouteArea, RouteMatch } from "./types";
+import type { RouteArea, RouteMatch } from "$modules/routing/types";
 
 function getPathParts(pathname: string): string[] {
   return pathname.split("/").filter(Boolean);

@@ -1,6 +1,6 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
-import type { RedirectDecision } from "./types";
+import type { RedirectDecision } from "$modules/routing/types";
 
 /**
  * Performs client-side navigation when redirect policy returns a redirect decision.

@@ -1,9 +1,13 @@
-import type { RouteContext } from "$modules/routing/state/routeContext.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { parseRoute } from "./routeScreen";
-import type { LinkLike, RedirectInput, StatefulStore } from "./types";
+import { parseRoute } from "$modules/routing/routeScreen";
+import type { RouteContext } from "$modules/routing/state/routeContext.svelte";
+import type {
+  LinkLike,
+  RedirectInput,
+  StatefulStore,
+} from "$modules/routing/types";
 
 /**
  * Reads the current authenticated principal from the route context.

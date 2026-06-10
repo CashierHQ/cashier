@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRouteArea, parseRoute } from "./routeScreen";
+import { getRouteArea, parseRoute } from "$modules/routing/routeScreen";
 
 describe("routeScreen", () => {
   describe("parseRoute", () => {

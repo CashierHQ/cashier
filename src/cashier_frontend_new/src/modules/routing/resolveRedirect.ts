@@ -1,8 +1,8 @@
-import { paths } from "./paths";
-import { resolveCreationRedirect } from "./linkCreationRedirects";
-import { resolveUserLinkRedirect } from "./userLinkRedirects";
-import { parseRoute } from "./routeScreen";
-import type { RedirectDecision, RedirectInput } from "./types";
+import { paths } from "$modules/routing/paths";
+import { resolveCreationRedirect } from "$modules/routing/linkCreationRedirects";
+import { resolveUserLinkRedirect } from "$modules/routing/userLinkRedirects";
+import { parseRoute } from "$modules/routing/routeScreen";
+import type { RedirectDecision, RedirectInput } from "$modules/routing/types";
 
 /**
  * Resolves the redirect decision for a given route, user, and link state.

@@ -3,8 +3,8 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import {
   resolveCreationRedirect,
   validateOwnerAccess,
-} from "./linkCreationRedirects";
-import type { RedirectInput } from "./types";
+} from "$modules/routing/linkCreationRedirects";
+import type { RedirectInput } from "$modules/routing/types";
 
 const ownerId = "owner-principal";
 const otherUserId = "other-principal";

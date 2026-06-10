@@ -1,4 +1,7 @@
-import type { IpProtectionDecision, IpProtectionInput } from "./types";
+import type {
+  IpProtectionDecision,
+  IpProtectionInput,
+} from "$modules/routing/types";
 
 /**
  * Resolves whether global IP protection should allow rendering, wait, or block.

@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { getRouteArea, parseRoute } from "./routeScreen";
-import { resolveRedirect } from "./resolveRedirect";
-import type { RedirectDecision, RedirectInput, RouteScreen } from "./types";
+import { getRouteArea, parseRoute } from "$modules/routing/routeScreen";
+import { resolveRedirect } from "$modules/routing/resolveRedirect";
+import type {
+  RedirectDecision,
+  RedirectInput,
+  RouteScreen,
+} from "$modules/routing/types";
 
 const ownerId = "owner-1";
 const otherUserId = "user-2";

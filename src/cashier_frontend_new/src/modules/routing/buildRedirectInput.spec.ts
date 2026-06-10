@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { buildRedirectInput } from "./buildRedirectInput";
-import type { RouteContext } from "./state/routeContext.svelte";
+import { buildRedirectInput } from "$modules/routing/buildRedirectInput";
+import type { RouteContext } from "$modules/routing/state/routeContext.svelte";
 
 const ownerId = "owner-principal";
 const otherUserId = "other-principal";

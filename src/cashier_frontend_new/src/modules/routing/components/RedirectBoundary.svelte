@@ -1,11 +1,11 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
-  import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import { buildRedirectInput } from "$modules/routing/buildRedirectInput";
   import { resolveRedirect } from "$modules/routing/resolveRedirect";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import type { RedirectDecision } from "$modules/routing/types";
   import { useRedirectNavigation } from "$modules/routing/useRedirectNavigation.svelte";
+  import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import type { Snippet } from "svelte";
 
   let {

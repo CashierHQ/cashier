@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as ipResolver from "$modules/routing/services/ip_resolver";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as ipResolver from "$modules/routing/services/ip_resolver";
 import { UserIPStore } from "$modules/routing/state/userIPStore.svelte";
 
 // Mock the dependencies

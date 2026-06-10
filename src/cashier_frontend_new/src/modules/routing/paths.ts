@@ -1,4 +1,4 @@
-import type { AppPath } from "./types";
+import type { AppPath } from "$modules/routing/types";
 
 /**
  * Path builders used by redirect policy.

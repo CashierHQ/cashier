@@ -1,8 +1,8 @@
 <script lang="ts">
+  import { resolveIpProtection } from "$modules/routing/ipProtection";
+  import { userIPStore } from "$modules/routing/state/userIPStore.svelte";
   import ProtectionProcessingState from "$modules/routing/components/ProtectionProcessingState.svelte";
   import RegionBlocked from "$modules/routing/components/RegionBlocked.svelte";
-  import { userIPStore } from "$modules/routing/state/userIPStore.svelte";
-  import { resolveIpProtection } from "$modules/routing/ipProtection";
   import { type Snippet } from "svelte";
 
   let {

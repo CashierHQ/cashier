@@ -1,6 +1,10 @@
 import { LinkStep } from "$modules/links/types/linkStep";
-import { paths } from "./paths";
-import type { OwnerRouteArea, RedirectDecision, RedirectInput } from "./types";
+import { paths } from "$modules/routing/paths";
+import type {
+  OwnerRouteArea,
+  RedirectDecision,
+  RedirectInput,
+} from "$modules/routing/types";
 
 /**
  * Applies owner-flow validation before state-specific redirects.
