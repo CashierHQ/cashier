@@ -42,8 +42,10 @@
     }
   });
 
-  // Get userLinkStore from context if available
-  const userLinkStore = $derived.by(() => routeContext?.userLinkStore ?? null);
+  // Get userLinkStoreV3 from context if available
+  const userLinkStore = $derived.by(
+    () => routeContext?.userLinkStoreV3 ?? null,
+  );
 
   // Get current user link step
   const userLinkStep = $derived(userLinkStore?.step ?? null);

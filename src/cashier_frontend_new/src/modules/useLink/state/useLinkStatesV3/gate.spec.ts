@@ -1,7 +1,7 @@
 import type Action from "$modules/links/types/action/action";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AddressLockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressLocked";
 import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
 import { GateStateV3 } from "$modules/useLink/state/useLinkStatesV3/gate";
@@ -18,6 +18,7 @@ describe("GateStateV3", () => {
       linkDetail: {
         id: "test-link-id",
       },
+      refreshAsync: vi.fn().mockResolvedValue(undefined),
     } as unknown as UserLinkStoreV3;
 
     state = new GateStateV3(mockStore);

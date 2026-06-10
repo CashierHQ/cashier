@@ -8,13 +8,16 @@
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { onMount } from "svelte";
 
   const {
     link,
+    gatingStore,
   }: {
     link: GenericCreationLinkStoreVM & AddAssetVM;
+    gatingStore: GatingStore;
   } = $props();
 
   let errorMessage: string | null = $state(null);
@@ -60,7 +63,7 @@
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  <LinkDetails {link} {errorMessage} {successMessage} {gatingStore} />
 
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"

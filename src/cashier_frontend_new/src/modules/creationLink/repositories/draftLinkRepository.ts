@@ -11,7 +11,7 @@ import * as devalue from "devalue";
 export type DraftLink = SharedLink;
 
 /**
- * Repository for managing temporary links in localStorage
+ * Repository for managing draft links in localStorage.
  */
 export class DraftLinkRepository {
   /**
@@ -24,7 +24,7 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Load temporary links from localStorage for the given owner
+   * Load draft links from localStorage for the given owner.
    * @param owner owner identifier for loading
    * @returns array of SharedLink objects
    */
@@ -47,7 +47,7 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Save temporary links to localStorage for the given owner
+   * Save draft links to localStorage for the given owner.
    * @param links array of SharedLink objects to save
    * @param owner owner identifier for saving
    */
@@ -84,9 +84,9 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Update an existing temporary link in localStorage
-   * @param id local identifier for the temp link
-   * @param updateTempLink object containing state and/or createLinkData to update
+   * Update an existing draft link in localStorage.
+   * @param id local identifier for the draft link
+   * @param updateDraftLink object containing state and/or link data to update
    * @param owner owner identifier for updating
    */
   update({
@@ -127,8 +127,8 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Remove a temporary link by id from localStorage
-   * @param id local identifier for the temp link to remove
+   * Remove a draft link by id from localStorage.
+   * @param id local identifier for the draft link to remove
    * @param owner owner identifier for removing
    */
   delete(id: string, owner: string) {
@@ -140,7 +140,7 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Retrieve all temporary links for the given owner from localStorage
+   * Retrieve all draft links for the given owner from localStorage.
    * @param owner owner identifier for retrieving
    * @returns array of SharedLink objects
    */
@@ -151,15 +151,15 @@ export class DraftLinkRepository {
   }
 
   /**
-   * Retrieve a single temporary link by id for the given owner from localStorage
+   * Retrieve a single draft link by id for the given owner from localStorage.
    * @param owner owner identifier for retrieving
-   * @param tempLinkId local identifier for the temp link to retrieve
+   * @param draftLinkId local identifier for the draft link to retrieve
    * @returns the SharedLink object or undefined if not found
    */
-  getOne(owner: string, tempLinkId: string): DraftLink | undefined {
+  getOne(owner: string, draftLinkId: string): DraftLink | undefined {
     const links = this.load(owner);
     if (!links.length) return undefined;
-    return links.find((x) => String(x.id) === tempLinkId);
+    return links.find((x) => String(x.id) === draftLinkId);
   }
 }
 

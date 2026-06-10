@@ -26,16 +26,13 @@
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
-  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
   import type {
     AddAssetItem,
     GenericCreationLinkStoreVM,
   } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-  import { buildPreviewFeesBreakdown } from "$modules/creationLink/utils/buildPreviewFeesBreakdown";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
-  import { DetailStoreViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreViewModelAdapter";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import {
     calculateLinkInfoAssetsWithTokenInfo,
@@ -70,14 +67,11 @@
   } = $props();
 
   const context = getRouteContext();
+  const gatingStore = $derived.by(() => context.gatingStore);
   const linkStore = $derived.by(() => {
     const storeV3 = context.linkDetailStoreV3;
     if (storeV3) {
       return new DetailStoreV3ViewModelAdapter(storeV3);
-    }
-    const store = context.linkDetailStore;
-    if (store) {
-      return new DetailStoreViewModelAdapter(store);
     }
     return null;
   });
@@ -200,53 +194,9 @@
     return [];
   });
 
-  // Fallback: when action is missing (e.g. anonymous user), use forecast from link.asset_info.
-  const createLinkForecastAssetAndFee = $derived.by(() => {
-    if (
-      !linkStore ||
-      !linkStore.link ||
-      linkStore.link.state !== LinkState.CREATE_LINK ||
-      linkStore.action
-    ) {
-      return [];
-    }
-
-    const tokens = Object.fromEntries(
-      (walletStore.query.data ?? []).map((t) => [t.address, t]),
-    );
-    const maxUse = Number(linkStore.link.link_use_action_max_count);
-
-    if (!linkStore.link.asset_info || linkStore.link.asset_info.length === 0) {
-      return [];
-    }
-
-    const linkAssets: CreateLinkAsset[] = linkStore.link.asset_info
-      .map((ai) => {
-        const address = ai.asset.address?.toString();
-        if (!address) return null;
-        return new CreateLinkAsset(address, ai.amount_per_link_use_action);
-      })
-      .filter((a): a is CreateLinkAsset => a !== null);
-
-    const result = feeService.forecastLinkCreationFees(
-      linkAssets,
-      maxUse,
-      tokens,
-    );
-    if (result.isErr()) {
-      return [];
-    }
-    return result.unwrap();
-  });
-
   // Total fees in USD from backend action (CREATE_LINK state)
   const totalFeesUsd = $derived.by(() => {
-    const feesSource =
-      createLinkActionAssetAndFee.length > 0
-        ? createLinkActionAssetAndFee
-        : createLinkForecastAssetAndFee;
-
-    return feesSource.reduce(
+    return createLinkActionAssetAndFee.reduce(
       (total, item) => total + (item.fee?.usdValue ?? 0),
       0,
     );
@@ -261,16 +211,9 @@
       return [];
     }
 
-    if (createLinkActionAssetAndFee.length > 0) {
-      return feeService.buildBreakdown(
-        createLinkActionAssetAndFee,
-        walletStore.query.data ?? [],
-      );
-    }
-
-    return buildPreviewFeesBreakdown(
-      createLinkForecastAssetAndFee,
-      walletStore.findTokenByAddress.bind(walletStore),
+    return feeService.buildBreakdown(
+      createLinkActionAssetAndFee,
+      walletStore.query.data ?? [],
     );
   });
 
@@ -294,10 +237,7 @@
       ) {
         return [];
       }
-      if (createLinkActionAssetAndFee.length > 0) {
-        return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
-      }
-      return createLinkForecastAssetAndFee;
+      return assetAndFeeListToForecastShape(createLinkActionAssetAndFee);
     },
   );
 
@@ -366,31 +306,11 @@
     }
   });
 
-  // Transaction lock status based on link state
-  // ACTIVE -> Unlock (can end link, copy link)
-  // INACTIVE -> Lock (can withdraw)
-  // CREATE_LINK -> Unlock (can create)
-  const transactionLockStatus = $derived.by(() => {
-    if (!linkStore || !linkStore.link)
-      return locale.t("links.linkForm.preview.transactionLockUnlock");
-
-    switch (linkStore.link.state) {
-      case LinkState.ACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      case LinkState.INACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockLock");
-      case LinkState.INACTIVE_ENDED:
-        return locale.t("links.linkForm.preview.transactionLockEnded");
-      case LinkState.CREATE_LINK:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      default:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-    }
-  });
-
   const isTransactionLockEnded = $derived.by(() => {
     return linkStore?.link?.state === LinkState.INACTIVE_ENDED;
   });
+
+  const linkHasGates = $derived.by(() => (linkStore?.gates?.length ?? 0) > 0);
 
   const link = $derived(
     `${window.location.origin}/link/${linkStore?.link?.id}`,
@@ -650,7 +570,8 @@
 
       <!-- Block 2: Transaction Lock -->
       <TransactionLockSection
-        {transactionLockStatus}
+        gatingStore={gatingStore ?? undefined}
+        hasLocks={linkHasGates}
         isEnded={isTransactionLockEnded}
       />
 

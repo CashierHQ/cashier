@@ -15,6 +15,7 @@
     GenericDetailStoreVM,
     ProcessActionResult,
   } from "$modules/detailLink/types/genericDetailStoreVM";
+  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
@@ -23,9 +24,11 @@
   const {
     link,
     detailStore,
+    gatingStore,
   }: {
     link: GenericCreationLinkStoreVM & AddAssetVM;
     detailStore: GenericDetailStoreVM;
+    gatingStore?: GatingStore;
   } = $props();
 
   let errorMessage: string | null = $state(null);
@@ -72,7 +75,7 @@
 </script>
 
 <div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  <LinkDetails {link} {errorMessage} {successMessage} {gatingStore} />
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >

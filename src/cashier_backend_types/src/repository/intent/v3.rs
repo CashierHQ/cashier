@@ -153,6 +153,7 @@ impl IntentV3 {
             dependencies: Some(self.dependencies.clone()),
             action_id: Some(self.action_id.clone()),
             intent_state: self.state.to_shared(),
+            label: self.label.clone(),
         }
     }
 
@@ -230,6 +231,7 @@ pub struct CreateWalletToTreasuryIntentArgs {
     pub sender_id: Principal,
     pub spender_account: Account,
     pub receiver_id: Principal,
+    pub dest_address_type: AddressTypeV3,
     pub created_at_ts: u64,
 }
 

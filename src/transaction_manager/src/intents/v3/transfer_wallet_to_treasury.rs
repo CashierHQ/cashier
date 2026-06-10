@@ -51,7 +51,7 @@ impl TransferWalletToTreasuryIntent {
             source_address_type: AddressTypeV3::Creator,
             dest_address: input.receiver_id,
             dest_account: None,
-            dest_address_type: AddressTypeV3::Treasury,
+            dest_address_type: input.dest_address_type,
             state: IntentState::Created,
             intent_tx_data: None,
             dependencies: vec![],
@@ -117,6 +117,7 @@ mod tests {
             sender_id,
             spender_account,
             receiver_id,
+            dest_address_type: AddressTypeV3::Treasury,
             created_at_ts,
         };
 

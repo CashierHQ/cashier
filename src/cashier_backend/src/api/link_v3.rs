@@ -11,22 +11,24 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
-/// Creates a new link V3
+/// Creates a new link V3, optionally with one or more gates.
 /// # Arguments
-/// * `input` - Link creation data
+/// * `input` - Link creation data, including optional `gate_keys`
 /// # Returns
-/// * `Ok(CreateLinkResponseV3)` - The created link data
+/// * `Ok(CreateLinkResponseV3)` - The created link data and any registered gates
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_create_link_v3(
@@ -41,6 +43,7 @@ async fn user_create_link_v3(
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
@@ -48,6 +51,7 @@ async fn user_create_link_v3(
     let key = RequestLockKey::CreateLink {
         user_principal: caller,
     };
+    let gate_keys = input.gate_keys.clone();
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
@@ -60,11 +64,23 @@ async fn user_create_link_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
         )
         .await;
     let _ = request_lock_service.drop(&key);
 
-    res
+    let mut link_response = res?;
+
+    link_response.gates = if let Some(keys) = gate_keys.filter(|v| !v.is_empty()) {
+        let mut gate_service = get_state().gate_service;
+        gate_service
+            .add_gates_for_link(&link_response.link.id, keys)
+            .await?
+    } else {
+        vec![]
+    };
+
+    Ok(link_response)
 }
 
 /// Creates a new action V3.
@@ -86,6 +102,7 @@ async fn user_create_action_v3(
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -97,6 +114,7 @@ async fn user_create_action_v3(
     };
 
     let _ = request_lock_service.create(&key, get_state().env.time())?;
+
     let res = link_v3_service
         .create_action(
             &input.link_id,
@@ -108,6 +126,8 @@ async fn user_create_action_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
+            0,
         )
         .await;
     let _ = request_lock_service.drop(&key);
@@ -233,4 +253,66 @@ fn user_disable_link_v3(link_id: &str) -> Result<DisableLinkResponseV3, Canister
 
     let mut link_v3_service = get_state().link_v3_service;
     link_v3_service.disable_link(msg_caller(), link_id)
+}
+
+/// Opens a gate for the caller on the specified link.
+/// The caller must provide the gate ID (obtained from `user_get_link_details_v3`) and the
+/// correct gate key. On success the open status is cached locally so subsequent
+/// `user_create_action_v3` calls do not need an additional inter-canister round-trip.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link
+/// * `gate_id` - The unique identifier of the gate to open
+/// * `gate_key` - The key to open the gate (e.g. the password)
+/// # Returns
+/// * `Ok(OpenGateSuccessResult)` - Gate and updated user status
+/// * `Err(CanisterError)` - If the key is wrong or the gate is not found
+#[update(guard = "is_not_anonymous")]
+async fn user_open_link_gate(
+    link_id: String,
+    gate_id: String,
+    gate_key: GateKey,
+) -> Result<OpenGateSuccessResult, CanisterError> {
+    info!("[user_open_link_gate]");
+    debug!("[user_open_link_gate] link_id: {link_id}, gate_id: {gate_id}");
+
+    let caller = msg_caller();
+    let mut gate_service = get_state().gate_service;
+    gate_service
+        .open_link_gate(&link_id, &gate_id, caller, gate_key)
+        .await
+}
+
+/// Returns link details together with gate metadata and the caller's gate status.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link
+/// * `options` - Optional parameters including action type to include in response
+/// # Returns
+/// * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+/// * `Err(CanisterError)` - If link not found or access denied
+#[query(guard = "is_not_anonymous")]
+async fn user_get_link_details_v3(
+    link_id: String,
+    options: Option<GetLinkOptions>,
+) -> Result<GetLinkDetailsResponseV3, CanisterError> {
+    info!("[user_get_link_details_v3]");
+    debug!("[user_get_link_details_v3] link_id: {link_id}");
+
+    let caller = msg_caller();
+    let link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+    let gate_service = get_state().gate_service;
+
+    let base = link_v3_service
+        .get_link_details(caller, &link_id, options, transaction_manager_v3)
+        .await?;
+
+    let gates = gate_service.get_gates_for_link(&link_id, caller)?;
+
+    Ok(GetLinkDetailsResponseV3 {
+        link: base.link,
+        action: base.action,
+        icrc112_requests: base.icrc112_requests,
+        link_user_state: base.link_user_state,
+        gates,
+    })
 }

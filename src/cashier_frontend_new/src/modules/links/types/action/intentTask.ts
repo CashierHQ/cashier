@@ -30,7 +30,10 @@ export class IntentTaskMapper {
     if (s.source_address_type === SharedAddressType.Creator) {
       if (s.dest_address_type === SharedAddressType.Link) {
         return IntentTask.TRANSFER_WALLET_TO_LINK;
-      } else if (s.dest_address_type === SharedAddressType.Treasury) {
+      } else if (
+        s.dest_address_type === SharedAddressType.Treasury ||
+        s.dest_address_type === SharedAddressType.Gate
+      ) {
         return IntentTask.TRANSFER_WALLET_TO_TREASURY;
       }
     } else if (s.source_address_type === SharedAddressType.Link) {

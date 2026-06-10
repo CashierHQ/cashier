@@ -59,6 +59,20 @@
 					"linkMaxAssetAmount": "150000"
 				},
 				"expected": "150000"
+			},
+			{
+				"name": "CreatorToGate scales by gate count and max use",
+				"input": {
+					"participants": "CreatorToGate",
+					"userInputAmount": "0",
+					"maxUse": 3,
+					"linkCreationFee": "0",
+					"linkMaxAssetAmount": "0",
+					"gateCount": 2,
+					"gateCreateFee": "100000",
+					"gateOpenFee": "100000"
+				},
+				"expected": "800000"
 			}
 		],
 
@@ -80,6 +94,16 @@
 					"tokenStandard": "ICRC2",
 					"assetNetworkFee": "10000",
 					"maxUse": 1
+				},
+				"expected": "20000"
+			},
+			{
+				"name": "CreatorToGate ICRC2 - 2x inbound only",
+				"input": {
+					"participants": "CreatorToGate",
+					"tokenStandard": "ICRC2",
+					"assetNetworkFee": "10000",
+					"maxUse": 3
 				},
 				"expected": "20000"
 			},
@@ -165,6 +189,15 @@
 					"totalNetworkFee": "50000"
 				},
 				"expected": "50000"
+			},
+			{
+				"name": "CreatorToGate - pays amount + network fee",
+				"input": {
+					"participants": "CreatorToGate",
+					"totalAmount": "800000",
+					"totalNetworkFee": "20000"
+				},
+				"expected": "820000"
 			},
 			{
 				"name": "UserToLink - pays only network fee",
@@ -265,6 +298,27 @@
 					"intent_total_amount": "100000000",
 					"intent_total_network_fee": "30000",
 					"intent_user_fee": "30000"
+				}
+			},
+			{
+				"name": "Gated Link - CreatorToGate intent (ICRC2)",
+				"description": "Two gates, max_use=3, create/open fee=0.001 ICP",
+				"input": {
+					"intent_participants": "CreatorToGate",
+					"token_standard": "ICRC2",
+					"user_input_amount": "0",
+					"max_use": 3,
+					"link_creation_fee": "0",
+					"gate_create_fee": "100000",
+					"gate_open_fee": "100000",
+					"gate_count": 2,
+					"asset_network_fee": "10000",
+					"link_max_asset_amount": "0"
+				},
+				"expected": {
+					"intent_total_amount": "800000",
+					"intent_total_network_fee": "20000",
+					"intent_user_fee": "820000"
 				}
 			}
 		]

@@ -15,6 +15,7 @@ export declare const AddressType: {
     readonly User: "User";
     readonly Treasury: "Treasury";
     readonly Link: "Link";
+    readonly Gate: "Gate";
 };
 export type AddressType = typeof AddressType[keyof typeof AddressType];
 /**
@@ -41,6 +42,7 @@ export type IntentState = typeof IntentState[keyof typeof IntentState];
 export declare const IntentParticipants: {
     readonly CreatorToTreasury: "CreatorToTreasury";
     readonly CreatorToLink: "CreatorToLink";
+    readonly CreatorToGate: "CreatorToGate";
     readonly UserToLink: "UserToLink";
     readonly LinkToUser: "LinkToUser";
     readonly LinkToCreator: "LinkToCreator";
@@ -151,6 +153,12 @@ export interface FeeCalculationInput {
     max_use?: number;
     /** Fee for creating the link */
     link_creation_fee?: bigint;
+    /** Fee for creating one gate */
+    gate_create_fee?: bigint;
+    /** Fee for opening one gate once */
+    gate_open_fee?: bigint;
+    /** Number of gates attached to the link */
+    gate_count?: number;
     /** Network fee for the asset */
     asset_network_fee: bigint;
     /** Maximum asset amount in the link (for withdrawals) */

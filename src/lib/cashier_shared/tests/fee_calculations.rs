@@ -6,9 +6,29 @@
 
 use candid::Nat;
 use cashier_shared::{
-    IntentParticipants, TokenStandard, calculate_intent_total_amount,
-    calculate_intent_total_network_fee, calculate_intent_user_fee,
+    IntentParticipants, TokenStandard, calculate_gate_fee_amount, calculate_intent_total_amount,
+    calculate_intent_total_network_fee, calculate_intent_user_fee, get_gate_create_fee_amount,
+    get_gate_open_fee_amount,
 };
+
+fn total_amount(
+    participants: IntentParticipants,
+    user_input_amount: &Nat,
+    max_use: u64,
+    link_creation_fee: &Nat,
+    link_max_asset_amount: &Nat,
+) -> Nat {
+    calculate_intent_total_amount(
+        participants,
+        user_input_amount,
+        max_use,
+        link_creation_fee,
+        link_max_asset_amount,
+        0,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
+    )
+}
 
 // ---------------------------------------------------------------------------
 // calculate_intent_total_amount
@@ -16,7 +36,7 @@ use cashier_shared::{
 
 #[test]
 fn total_amount_creator_to_treasury_returns_link_creation_fee() {
-    let result = calculate_intent_total_amount(
+    let result = total_amount(
         IntentParticipants::CreatorToTreasury,
         &Nat::from(0u64),
         1,
@@ -28,7 +48,7 @@ fn total_amount_creator_to_treasury_returns_link_creation_fee() {
 
 #[test]
 fn total_amount_creator_to_link_multiplies_by_max_use() {
-    let result = calculate_intent_total_amount(
+    let result = total_amount(
         IntentParticipants::CreatorToLink,
         &Nat::from(20_000u64),
         3,
@@ -40,7 +60,7 @@ fn total_amount_creator_to_link_multiplies_by_max_use() {
 
 #[test]
 fn total_amount_user_to_link_returns_user_input() {
-    let result = calculate_intent_total_amount(
+    let result = total_amount(
         IntentParticipants::UserToLink,
         &Nat::from(100_000_000u64),
         1,
@@ -52,7 +72,7 @@ fn total_amount_user_to_link_returns_user_input() {
 
 #[test]
 fn total_amount_link_to_user_returns_user_input() {
-    let result = calculate_intent_total_amount(
+    let result = total_amount(
         IntentParticipants::LinkToUser,
         &Nat::from(20_000u64),
         1,
@@ -64,7 +84,7 @@ fn total_amount_link_to_user_returns_user_input() {
 
 #[test]
 fn total_amount_link_to_creator_returns_link_max_asset() {
-    let result = calculate_intent_total_amount(
+    let result = total_amount(
         IntentParticipants::LinkToCreator,
         &Nat::from(0u64),
         1,
@@ -72,6 +92,32 @@ fn total_amount_link_to_creator_returns_link_max_asset() {
         &Nat::from(150_000u64),
     );
     assert_eq!(result, Nat::from(150_000u64));
+}
+
+#[test]
+fn total_amount_creator_to_gate_scales_by_gate_count_and_max_use() {
+    let result = calculate_intent_total_amount(
+        IntentParticipants::CreatorToGate,
+        &Nat::from(0u64),
+        3,
+        &Nat::from(0u64),
+        &Nat::from(0u64),
+        2,
+        &Nat::from(100_000u64),
+        &Nat::from(100_000u64),
+    );
+    assert_eq!(result, Nat::from(800_000u64));
+}
+
+#[test]
+fn gate_fee_amount_uses_shared_fee_table_defaults() {
+    let result = calculate_gate_fee_amount(
+        2,
+        3,
+        &get_gate_create_fee_amount(),
+        &get_gate_open_fee_amount(),
+    );
+    assert_eq!(result, Nat::from(800_000u64));
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +142,17 @@ fn network_fee_creator_to_treasury_icrc2() {
         TokenStandard::ICRC2,
         &Nat::from(10_000u64),
         1,
+    );
+    assert_eq!(result, Nat::from(20_000u64));
+}
+
+#[test]
+fn network_fee_creator_to_gate_icrc2() {
+    let result = calculate_intent_total_network_fee(
+        IntentParticipants::CreatorToGate,
+        TokenStandard::ICRC2,
+        &Nat::from(10_000u64),
+        3,
     );
     assert_eq!(result, Nat::from(20_000u64));
 }
@@ -193,6 +250,16 @@ fn user_fee_creator_to_link_pays_network_only() {
 }
 
 #[test]
+fn user_fee_creator_to_gate_pays_amount_plus_network() {
+    let result = calculate_intent_user_fee(
+        IntentParticipants::CreatorToGate,
+        &Nat::from(800_000u64),
+        &Nat::from(20_000u64),
+    );
+    assert_eq!(result, Nat::from(820_000u64));
+}
+
+#[test]
 fn user_fee_user_to_link_pays_network_only() {
     let result = calculate_intent_user_fee(
         IntentParticipants::UserToLink,
@@ -229,7 +296,7 @@ fn user_fee_link_to_creator_pays_network() {
 #[test]
 fn e2e_airdrop_creator_to_treasury_icrc2() {
     let participants = IntentParticipants::CreatorToTreasury;
-    let amount = calculate_intent_total_amount(
+    let amount = total_amount(
         participants.clone(),
         &Nat::from(0u64),
         3,
@@ -252,7 +319,7 @@ fn e2e_airdrop_creator_to_treasury_icrc2() {
 #[test]
 fn e2e_airdrop_creator_to_link_icrc2() {
     let participants = IntentParticipants::CreatorToLink;
-    let amount = calculate_intent_total_amount(
+    let amount = total_amount(
         participants.clone(),
         &Nat::from(20_000u64),
         3,
@@ -275,7 +342,7 @@ fn e2e_airdrop_creator_to_link_icrc2() {
 #[test]
 fn e2e_airdrop_link_to_user_claim() {
     let participants = IntentParticipants::LinkToUser;
-    let amount = calculate_intent_total_amount(
+    let amount = total_amount(
         participants.clone(),
         &Nat::from(20_000u64),
         1,
@@ -298,7 +365,7 @@ fn e2e_airdrop_link_to_user_claim() {
 #[test]
 fn e2e_payment_user_to_link_icrc2() {
     let participants = IntentParticipants::UserToLink;
-    let amount = calculate_intent_total_amount(
+    let amount = total_amount(
         participants.clone(),
         &Nat::from(100_000_000u64),
         1,

@@ -159,6 +159,7 @@ impl LinkV3State for InactiveState {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        _gate_count: u64,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -332,6 +333,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -380,6 +382,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -425,6 +428,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -513,6 +517,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");
@@ -582,6 +587,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");
@@ -655,6 +661,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -711,6 +718,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");

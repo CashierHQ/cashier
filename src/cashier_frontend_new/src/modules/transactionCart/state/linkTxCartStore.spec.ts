@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 
 // Mock constants

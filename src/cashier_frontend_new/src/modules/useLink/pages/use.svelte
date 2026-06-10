@@ -17,8 +17,10 @@
   import Completed from "$modules/useLink/components/Completed.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
+  import AssetList from "$modules/useLink/components/AssetList.svelte";
+  import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
+  import { Lock } from "lucide-svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
-  import { UserLinkStoreViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreViewModelAdapter";
   import {
     shouldRedirectErrorTo404,
     shouldRedirectTo404,
@@ -40,10 +42,6 @@
     if (storeV3) {
       return new UserLinkStoreV3ViewModelAdapter(storeV3);
     }
-    const store = context.userLinkStore;
-    if (store) {
-      return new UserLinkStoreViewModelAdapter(store);
-    }
     return null;
   });
 
@@ -52,11 +50,10 @@
   let isCreatingAction = $state(false);
   let useLandingLoggedInTracked = $state(false);
   let useWalletLockedTracked = $state(false);
-  let useGatePageTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
   let isTxCartOpen = $state(false);
-  let showTxCart: boolean = $derived.by(() => {
+  let showTxCart = $derived.by(() => {
     return (
       isTxCartOpen &&
       !!(userStore?.action && userStore.action.state !== ActionState.SUCCESS)
@@ -198,10 +195,6 @@
       useWalletLockedTracked = true;
       trackEvent(AnalyticsEvent.USE_WALLET_PAGE_LOCKED, payload);
     }
-    if (step === UserLinkStep.GATE && payload && !useGatePageTracked) {
-      useGatePageTracked = true;
-      trackEvent(AnalyticsEvent.USE_GATE_PAGE, payload);
-    }
     if (
       step === UserLinkStep.ADDRESS_UNLOCKED &&
       payload &&
@@ -216,7 +209,10 @@
   $effect(() => {
     if (userStore && onIsLinkChange) {
       const step = userStore.state?.step ?? userStore.step;
-      const isLink = step !== UserLinkStep.ADDRESS_UNLOCKED;
+      const isLink =
+        step !== UserLinkStep.ADDRESS_UNLOCKED &&
+        step !== UserLinkStep.ADDRESS_LOCKED &&
+        step !== UserLinkStep.GATE;
       onIsLinkChange(isLink);
     }
   });
@@ -304,25 +300,33 @@
       <div class="py-4">
         <Landing userLink={userStore} />
       </div>
-    {:else if userStore && userStore.state.step === UserLinkStep.ADDRESS_LOCKED}
-      <div class="py-4 flex flex-col gap-4 grow-1">
-        <p class="text-sm text-muted-foreground">
-          {locale.t("links.linkForm.useLink.walletLocked") ??
-            "Connect wallet to continue"}
-        </p>
-        <Button class="rounded-full mt-auto" onclick={handleWalletUnlockLocked}>
-          {locale.t("links.linkForm.useLink.continueButton")}
-        </Button>
+    {:else if userStore && userStore.state.step === UserLinkStep.ADDRESS_LOCKED && userStore.link}
+      <div class="w-full grow-1 flex flex-col justify-between">
+        <AssetList assetInfo={userStore.link.asset_info} />
+        <div
+          class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto flex flex-col gap-3"
+        >
+          <div
+            class="flex items-center justify-center gap-2 text-sm text-red-500 bg-red-50 rounded-full px-4 py-2 border border-red-200"
+          >
+            <Lock class="h-4 w-4 shrink-0" />
+            {locale.t("links.linkForm.useLink.transactionLocked") ??
+              "This transaction is locked!"}
+          </div>
+          <Button
+            onclick={handleWalletUnlockLocked}
+            class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full"
+          >
+            {locale.t("links.linkForm.useLink.unlockButton") ?? "Unlock"}
+          </Button>
+        </div>
       </div>
     {:else if userStore && userStore.state.step === UserLinkStep.GATE}
-      <div class="py-4 flex flex-col gap-4 grow-1">
-        <p class="text-sm text-muted-foreground">
-          {locale.t("links.linkForm.useLink.gate") ?? "Continue to claim"}
-        </p>
-        <Button class="rounded-full mt-auto" onclick={handleGateContinue}>
-          {locale.t("links.linkForm.useLink.continueButton")}
-        </Button>
-      </div>
+      <PasswordUnlockForm
+        linkId={userStore.link?.id ?? ""}
+        gates={context.userLinkStoreV3?.linkDetail?.gates ?? []}
+        onUnlocked={handleGateContinue}
+      />
     {:else if userStore && userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED && userStore.link}
       <div class="w-full grow-1 flex flex-col">
         <Unlocked

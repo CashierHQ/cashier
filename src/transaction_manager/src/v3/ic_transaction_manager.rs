@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Nat;
 use cashier_backend_types::{
     error::CanisterError,
     link_v3::action_result::{
@@ -20,6 +21,129 @@ use crate::{
     },
     v3::traits::TransactionManagerV3,
 };
+
+fn fee_merge_group_key(intent: &IntentV3, txs: &[Transaction]) -> Option<String> {
+    use cashier_backend_types::repository::{
+        common::AddressTypeV3,
+        transaction::v1::{IcTransaction, Protocol},
+    };
+
+    if intent.source_address_type != AddressTypeV3::Creator
+        || !matches!(
+            intent.dest_address_type,
+            AddressTypeV3::Treasury | AddressTypeV3::Gate
+        )
+        || txs.len() != 2
+    {
+        return None;
+    }
+
+    let approve = match &txs[0].protocol {
+        Protocol::IC(IcTransaction::Icrc2Approve(approve)) => approve,
+        _ => return None,
+    };
+    let transfer_from = match &txs[1].protocol {
+        Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from)) => transfer_from,
+        _ => return None,
+    };
+
+    Some(format!(
+        "{}:{}:{}:{}:{}",
+        approve.asset, approve.from, approve.spender, transfer_from.from, transfer_from.to
+    ))
+}
+
+fn merge_fee_transactions_by_group(
+    intents: &[IntentV3],
+    intent_txs_map: &mut HashMap<String, Vec<Transaction>>,
+) {
+    use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+
+    let mut grouped_intent_ids = HashMap::<String, Vec<String>>::new();
+
+    for intent in intents {
+        if let Some(txs) = intent_txs_map.get(&intent.id)
+            && let Some(key) = fee_merge_group_key(intent, txs)
+        {
+            grouped_intent_ids
+                .entry(key)
+                .or_default()
+                .push(intent.id.clone());
+        }
+    }
+
+    for intent_ids in grouped_intent_ids.values() {
+        if intent_ids.len() < 2 {
+            continue;
+        }
+
+        let Some(first_id) = intent_ids.first() else {
+            continue;
+        };
+        let Some(mut merged_txs) = intent_txs_map.get(first_id).cloned() else {
+            continue;
+        };
+        let mut total_approve_extra = None;
+
+        for intent_id in intent_ids.iter().skip(1) {
+            if let Some(txs) = intent_txs_map.get(intent_id) {
+                for (index, tx) in txs.iter().enumerate() {
+                    if let Some(merged_tx) = merged_txs.get_mut(index) {
+                        merged_tx.merge_with(tx);
+                    }
+                }
+            }
+        }
+
+        if let [
+            Transaction {
+                protocol: Protocol::IC(IcTransaction::Icrc2Approve(approve)),
+                ..
+            },
+            Transaction {
+                protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from)),
+                ..
+            },
+        ] = merged_txs.as_slice()
+        {
+            total_approve_extra = Some(approve.amount.clone() - transfer_from.amount.clone());
+        }
+
+        if let Some(approve_extra) = total_approve_extra {
+            let per_intent_extra = approve_extra / Nat::from(intent_ids.len() as u64);
+            if let [
+                Transaction {
+                    protocol: Protocol::IC(IcTransaction::Icrc2Approve(approve)),
+                    ..
+                },
+                Transaction {
+                    protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from)),
+                    ..
+                },
+            ] = merged_txs.as_mut_slice()
+            {
+                approve.amount = transfer_from.amount.clone() + per_intent_extra;
+            }
+        }
+
+        for intent_id in intent_ids {
+            intent_txs_map.insert(intent_id.clone(), merged_txs.clone());
+        }
+    }
+}
+
+fn dedupe_transactions_by_id(transactions: Vec<Transaction>) -> Vec<Transaction> {
+    let mut seen = HashSet::<String>::new();
+    let mut deduped = Vec::<Transaction>::new();
+
+    for tx in transactions {
+        if seen.insert(tx.id.clone()) {
+            deduped.push(tx);
+        }
+    }
+
+    deduped
+}
 
 pub struct IcTransactionManager<E: IcEnvironment> {
     pub ic_env: E,
@@ -69,10 +193,13 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
             intent_txs_map
         };
 
+        merge_fee_transactions_by_group(&intents, &mut intent_txs_map);
+
         // transaction with dependencies filled
         let mut transactions = self
             .dependency_analyzer
             .analyze_and_fill_transaction_dependencies_v3(&intents, &intent_txs_map)?;
+        transactions = dedupe_transactions_by_id(transactions);
 
         // update intent_txs_map with updated transactions
         for intent in intents.iter() {
@@ -133,6 +260,7 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
                     transactions.extend(intent_transactions.clone());
                 }
             }
+            transactions = dedupe_transactions_by_id(transactions);
 
             // verify and execute transactions
             let canister_id = self.ic_env.id();
@@ -230,10 +358,12 @@ mod tests {
                 v3::{IntentTypeV3, IntentV3},
             },
             transaction::v1::{
-                FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
+                FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom,
+                Protocol, Transaction, TransactionState,
             },
         },
     };
+    use icrc_ledger_types::icrc1::account::Account;
     use icrc_ledger_types::icrc1::transfer::Memo;
     use std::{cell::RefCell, collections::HashMap, future::Future, pin::Pin, rc::Rc};
 
@@ -382,6 +512,56 @@ mod tests {
         }
     }
 
+    fn fixture_of_icrc2_approve_transaction(tx_id: &str, amount: u64) -> Transaction {
+        Transaction {
+            id: tx_id.to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 1,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: Wallet::default(),
+                spender: Wallet::from(Account {
+                    owner: candid::Principal::anonymous(),
+                    subaccount: None,
+                }),
+                asset: Asset::default(),
+                amount: Nat::from(amount),
+                memo: Some(Memo::default()),
+                ts: Some(1_600_000_000_000_000_000),
+            })),
+            start_ts: None,
+        }
+    }
+
+    fn fixture_of_icrc2_transfer_from_transaction(tx_id: &str, amount: u64) -> Transaction {
+        Transaction {
+            id: tx_id.to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 2,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: Wallet::default(),
+                to: Wallet::from(Account {
+                    owner: candid::Principal::anonymous(),
+                    subaccount: None,
+                }),
+                spender: Wallet::from(Account {
+                    owner: candid::Principal::anonymous(),
+                    subaccount: None,
+                }),
+                asset: Asset::default(),
+                amount: Nat::from(amount),
+                memo: Some(Memo::default()),
+                ts: Some(1_600_000_000_000_000_000),
+            })),
+            start_ts: None,
+        }
+    }
+
     fn fixture_of_intent_txs_map(
         intent_id: &str,
         txs: Vec<Transaction>,
@@ -413,6 +593,58 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_merge_link_creation_and_gate_fee_transactions() {
+        // Arrange
+        let mut link_fee_intent = fixture_of_intent_v3("link_fee_intent");
+        link_fee_intent.dest_address_type = AddressTypeV3::Treasury;
+        let mut gate_fee_intent = fixture_of_intent_v3("gate_fee_intent");
+        gate_fee_intent.dest_address_type = AddressTypeV3::Gate;
+
+        let mut intent_txs_map = HashMap::from([
+            (
+                link_fee_intent.id.clone(),
+                vec![
+                    fixture_of_icrc2_approve_transaction("link_approve", 20_000),
+                    fixture_of_icrc2_transfer_from_transaction("link_transfer", 10_000),
+                ],
+            ),
+            (
+                gate_fee_intent.id.clone(),
+                vec![
+                    fixture_of_icrc2_approve_transaction("gate_approve", 810_000),
+                    fixture_of_icrc2_transfer_from_transaction("gate_transfer", 800_000),
+                ],
+            ),
+        ]);
+
+        // Act
+        merge_fee_transactions_by_group(
+            &[link_fee_intent.clone(), gate_fee_intent.clone()],
+            &mut intent_txs_map,
+        );
+
+        // Assert
+        let link_txs = intent_txs_map.get(&link_fee_intent.id).unwrap();
+        let gate_txs = intent_txs_map.get(&gate_fee_intent.id).unwrap();
+        assert_eq!(link_txs[0].id, gate_txs[0].id);
+        assert_eq!(link_txs[1].id, gate_txs[1].id);
+
+        match &link_txs[0].protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(approve)) => {
+                assert_eq!(approve.amount, Nat::from(820_000u64));
+            }
+            _ => panic!("expected merged approve transaction"),
+        }
+
+        match &link_txs[1].protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from)) => {
+                assert_eq!(transfer_from.amount, Nat::from(810_000u64));
+            }
+            _ => panic!("expected merged transfer-from transaction"),
+        }
     }
 
     #[tokio::test]

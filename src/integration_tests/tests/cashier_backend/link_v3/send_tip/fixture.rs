@@ -97,6 +97,7 @@ impl TipLinkV3Fixture {
             link_type: LinkTypeShared::SendTip,
             max_use: 1,
             action: create_action,
+            gate_keys: None,
         })
     }
 

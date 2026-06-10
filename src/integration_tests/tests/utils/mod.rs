@@ -125,11 +125,13 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     std::fs::create_dir_all(template_dir).unwrap();
 
     // Build PocketIC with state_dir to persist canister state to disk
-    let client = get_pocket_ic_client()
-        .await
-        .with_state_dir(template_dir.to_path_buf())
-        .build_async()
-        .await;
+    let client = Arc::new(
+        get_pocket_ic_client()
+            .await
+            .with_state_dir(template_dir.to_path_buf())
+            .build_async()
+            .await,
+    );
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
@@ -239,34 +241,46 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
-    let cashier_backend_principal = deploy_canister(
-        &client,
-        None,
-        get_cashier_backend_canister_bytecode(),
-        &(CashierBackendInitData {
-            log_settings: Some(log.clone()),
-            owner: TestUser::CashierBackendAdmin.get_principal(),
-            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
-            token_storage_canister_id: token_storage_principal,
-            token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
-        }),
-    )
-    .await;
-
     let gate_service_principal = deploy_canister(
         &client,
         None,
         get_gate_service_canister_bytecode(),
         &(GateServiceInitData {
-            log_settings: Some(log),
+            log_settings: Some(log.clone()),
             owner: TestUser::GateServiceAdmin.get_principal(),
-            permissions: Some(HashMap::from([(
-                cashier_backend_principal,
-                vec![gate_service_types::auth::Permission::GateCreate],
-            )])),
+            permissions: None,
         }),
     )
     .await;
+
+    let cashier_backend_principal = deploy_canister(
+        &client,
+        None,
+        get_cashier_backend_canister_bytecode(),
+        &(CashierBackendInitData {
+            log_settings: Some(log),
+            owner: TestUser::CashierBackendAdmin.get_principal(),
+            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
+            token_storage_canister_id: token_storage_principal,
+            token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
+            gate_service_canister_id: gate_service_principal,
+        }),
+    )
+    .await;
+
+    // Grant cashier_backend permission to create gates on gate_service.
+    GateServiceBackendClient::new(PocketIcClient::from_client(
+        client.clone(),
+        gate_service_principal,
+        TestUser::GateServiceAdmin.get_principal(),
+    ))
+    .admin_permissions_add(
+        cashier_backend_principal,
+        vec![gate_service_types::auth::Permission::GateCreate],
+    )
+    .await
+    .expect("admin_permissions_add call failed")
+    .expect("admin_permissions_add returned error");
 
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
 
@@ -338,7 +352,9 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     .await;
 
     // Drop PocketIC instance - state is persisted in template_dir
-    client.drop().await;
+    if let Ok(c) = Arc::try_unwrap(client) {
+        c.drop().await;
+    }
 
     SharedPrincipals {
         token_storage: token_storage_principal,
