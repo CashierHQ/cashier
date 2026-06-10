@@ -1,10 +1,19 @@
 import type { LinkStep } from "$modules/links/types/linkStep";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
 
-// TODO: Union of all country codes?
+/**
+ * ISO country code returned by the IP location resolver.
+ *
+ * This is currently a string because the resolver can return any valid
+ * country code; it can be narrowed to a finite union if needed later.
+ */
 export type CountryCode = string;
 
+/**
+ * Country descriptor used by IP protection data.
+ */
 export type Country = {
+  /** ISO country code, for example `US` or `CA`. */
   isoCode: CountryCode;
 };
 
@@ -25,8 +34,11 @@ export type AppPath =
  * Options used when creating route-scoped link context.
  */
 export type LinkRouteContextOptions = {
+  /** Public or backend link id parsed from the current route. */
   linkId?: string;
+  /** Temporary draft link id used by the creation flow before backend creation. */
   draftLinkId?: string;
+  /** Route context store type to initialize for the current page. */
   storeType?: "userLink" | "linkDetail";
 };
 
@@ -67,7 +79,9 @@ export type RouteArea =
  * @property linkId the link id parsed from the pathname, if any
  */
 export type RouteMatch = {
+  /** High-level route area the pathname belongs to. */
   area: RouteArea;
+  /** Link id parsed from the pathname, or null when the route has no link id. */
   linkId: string | null;
 };
 
@@ -113,8 +127,11 @@ export type RedirectDecision =
  * @property isBlacklisted whether the resolved country should be blocked
  */
 export type IpProtectionInput = {
+  /** Whether the IP location query is still loading. */
   isLoading: boolean;
+  /** Resolved visitor country code, or null when no country could be resolved. */
   countryCode: string | null;
+  /** Whether the resolved visitor country is blocked by policy. */
   isBlacklisted: boolean;
 };
 
@@ -149,15 +166,25 @@ export type IpProtectionDecision =
  * @property linkEnded whether the link has ended
  */
 export type RedirectInput = {
+  /** Current browser pathname, for example `/link/create/<link-id>`. */
   pathname: string;
+  /** Whether auth initialization has completed. */
   isAuthReady: boolean;
+  /** Whether route-specific link data is still loading. */
   isLoading: boolean;
+  /** Current logged-in user id, or null when logged out. */
   currentUserId: string | null;
+  /** Link id parsed from the URL, or null if not present. */
   linkId: string | null;
+  /** Whether the parsed link id points to an existing link. */
   linkExists: boolean;
+  /** Owner id of the link, or null if not available. */
   linkOwnerId: string | null;
+  /** Owner-flow state for the link. */
   linkState: LinkStep | null;
+  /** Recipient/user-flow state for the public use flow. */
   userState: UserLinkStep | null;
+  /** Whether the link has ended. */
   linkEnded: boolean;
 };
 
@@ -168,11 +195,17 @@ export type RedirectInput = {
  * stores, so the adapter reads only the fields needed for redirect decisions.
  */
 export type LinkLike = {
+  /** Link creator principal or principal-like value. */
   creator?: { toString(): string } | string;
+  /** Raw link state read from draft/detail/legacy stores. */
   state?: string;
+  /** Legacy use counter value. */
   link_use_action_counter?: bigint | number;
+  /** Legacy max-use value. */
   link_use_action_max_count?: bigint | number;
+  /** Current use counter value. */
   use_count?: bigint | number;
+  /** Max-use value. */
   max_use?: bigint | number;
 };
 
@@ -180,6 +213,7 @@ export type LinkLike = {
  * Generic state wrapper used by owner-flow stores.
  */
 export type StepState<TStep> = {
+  /** Current step for the owning state machine. */
   step: TStep;
 };
 
@@ -187,5 +221,6 @@ export type StepState<TStep> = {
  * Minimal store shape for reading the active route step.
  */
 export type StatefulStore<TStep> = {
+  /** Store state wrapper that exposes the current step. */
   state: StepState<TStep>;
 };
