@@ -41,7 +41,6 @@ export function formatActionError(errors: string[], t: Translate): string {
     const err = parseCanisterError(raw);
     // Candid variants serialise as a single-key object, so the first key is the variant name.
     const variant = err ? Object.keys(err)[0] : undefined;
-    console.log("Processing error variant:", variant, "raw:", raw);
 
     switch (variant) {
       // Simultaneous-claim race / link fully claimed — dedicated typed variant.
@@ -55,7 +54,9 @@ export function formatActionError(errors: string[], t: Translate): string {
       // ValidationErrors is a generic text bucket with no dedicated variant; the
       // sub-cases below have no own code, so a narrow message check is unavoidable.
       case "ValidationErrors": {
-        const msg = String((err as { ValidationErrors?: unknown }).ValidationErrors ?? "");
+        const msg = String(
+          (err as { ValidationErrors?: unknown }).ValidationErrors ?? "",
+        );
         if (
           /unsupported link state|already exists for this link|Action of type Receive already exists/i.test(
             msg,

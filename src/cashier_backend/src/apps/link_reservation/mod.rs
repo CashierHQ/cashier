@@ -258,7 +258,10 @@ mod tests {
         let _g1 = reserve(&repos, &link, "a1", ActionType::Receive, 2, 0, NOW).expect("first");
         let _g2 = reserve(&repos, &link, "a2", ActionType::Receive, 2, 0, NOW).expect("second");
         let third = reserve(&repos, &link, "a3", ActionType::Receive, 2, 0, NOW);
-        assert!(matches!(third, Err(CanisterError::LinkNoUseAvailable { .. })));
+        assert!(matches!(
+            third,
+            Err(CanisterError::LinkNoUseAvailable { .. })
+        ));
     }
 
     #[test]
