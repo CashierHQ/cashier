@@ -24,12 +24,21 @@ import {
 const ROOT_DIR = path.resolve(import.meta.dirname, "..");
 const SCHEMAS_DIR = path.join(ROOT_DIR, "schemas");
 const LOGIC_DIR = path.join(ROOT_DIR, "logic");
+const TEMPLATES_DIR = path.join(ROOT_DIR, "templates");
 const GENERATED_TS_DIR = path.join(ROOT_DIR, "generated", "ts");
 const GENERATED_RUST_DIR = path.join(ROOT_DIR, "generated", "rust");
 
 interface GeneratorOptions {
   typesOnly: boolean;
   functionsOnly: boolean;
+}
+
+interface FeeTable {
+  fees: {
+    link_creation: { amount_e8s: string };
+    gate_create: { amount_e8s: string };
+    gate_open: { amount_e8s: string };
+  };
 }
 
 function parseArgs(): GeneratorOptions {
@@ -58,6 +67,66 @@ function writeFile(filePath: string, content: string): void {
   console.log(`  ✓ Generated: ${path.relative(ROOT_DIR, filePath)}`);
 }
 
+function validateFeeTable(feeTable: FeeTable): void {
+  const replacements: Array<[string, string]> = [
+    ["getLinkCreationFeeAmount", feeTable.fees.link_creation.amount_e8s],
+    ["getGateCreateFeeAmount", feeTable.fees.gate_create.amount_e8s],
+    ["getGateOpenFeeAmount", feeTable.fees.gate_open.amount_e8s],
+  ];
+
+  for (const [functionName, amount] of replacements) {
+    if (!/^\d+$/.test(amount)) {
+      throw new Error(`Invalid fee amount for ${functionName}: ${amount}`);
+    }
+  }
+}
+
+function generateTypeScriptFeeTable(feeTable: FeeTable): string {
+  validateFeeTable(feeTable);
+  return [
+    "// AUTO-GENERATED FILE - DO NOT EDIT",
+    "// Generated from: templates/fees.json",
+    "",
+    "export function getLinkCreationFeeTableAmount(): bigint {",
+    `  return ${feeTable.fees.link_creation.amount_e8s}n;`,
+    "}",
+    "",
+    "export function getGateCreateFeeTableAmount(): bigint {",
+    `  return ${feeTable.fees.gate_create.amount_e8s}n;`,
+    "}",
+    "",
+    "export function getGateOpenFeeTableAmount(): bigint {",
+    `  return ${feeTable.fees.gate_open.amount_e8s}n;`,
+    "}",
+    "",
+  ].join("\n");
+}
+
+function generateRustFeeTable(feeTable: FeeTable): string {
+  validateFeeTable(feeTable);
+  return [
+    "// AUTO-GENERATED FILE - DO NOT EDIT",
+    "// Generated from: templates/fees.json",
+    "",
+    "#![allow(dead_code)]",
+    "",
+    "use candid::Nat;",
+    "",
+    "pub fn get_link_creation_fee_table_amount() -> Nat {",
+    `    Nat::from(${feeTable.fees.link_creation.amount_e8s}u64)`,
+    "}",
+    "",
+    "pub fn get_gate_create_fee_table_amount() -> Nat {",
+    `    Nat::from(${feeTable.fees.gate_create.amount_e8s}u64)`,
+    "}",
+    "",
+    "pub fn get_gate_open_fee_table_amount() -> Nat {",
+    `    Nat::from(${feeTable.fees.gate_open.amount_e8s}u64)`,
+    "}",
+    "",
+  ].join("\n");
+}
+
 async function main(): Promise<void> {
   const options = parseArgs();
 
@@ -71,6 +140,9 @@ async function main(): Promise<void> {
   // Load schemas
   const typesSchema = loadJsonFile<Record<string, unknown>>(
     path.join(SCHEMAS_DIR, "types.schema.json")
+  );
+  const feeTable = loadJsonFile<FeeTable>(
+    path.join(TEMPLATES_DIR, "fees.json")
   );
 
   const shouldGenerateTypes = !options.functionsOnly;
@@ -86,10 +158,19 @@ async function main(): Promise<void> {
     writeFile(path.join(GENERATED_TS_DIR, "types.ts"), tsTypes);
   }
 
+  writeFile(
+    path.join(GENERATED_TS_DIR, "fee-table.ts"),
+    generateTypeScriptFeeTable(feeTable)
+  );
+
   if (shouldGenerateFunctions) {
     // Use the new transpiler - copy TS logic with proper imports
     const logicSourceFile = path.join(LOGIC_DIR, "fee-calculations.ts");
-    const tsFunctions = generateTypeScriptFunctions(logicSourceFile);
+    const logicSource = fs.readFileSync(logicSourceFile, "utf-8");
+    const tsFunctions = generateTypeScriptFunctions(
+      logicSourceFile,
+      logicSource
+    );
     writeFile(path.join(GENERATED_TS_DIR, "functions.ts"), tsFunctions);
   }
 
@@ -98,7 +179,14 @@ async function main(): Promise<void> {
   const hasTsFunctions = fs.existsSync(
     path.join(GENERATED_TS_DIR, "functions.ts")
   );
-  const tsIndex = generateTypeScript.index(hasTsTypes, hasTsFunctions);
+  const hasTsFeeTable = fs.existsSync(
+    path.join(GENERATED_TS_DIR, "fee-table.ts")
+  );
+  const tsIndex = generateTypeScript.index(
+    hasTsTypes,
+    hasTsFunctions,
+    hasTsFeeTable
+  );
   writeFile(path.join(GENERATED_TS_DIR, "index.ts"), tsIndex);
 
   // =========================================================================
@@ -111,10 +199,16 @@ async function main(): Promise<void> {
     writeFile(path.join(GENERATED_RUST_DIR, "types.rs"), rustTypes);
   }
 
+  writeFile(
+    path.join(GENERATED_RUST_DIR, "fee_table.rs"),
+    generateRustFeeTable(feeTable)
+  );
+
   if (shouldGenerateFunctions) {
     // Use the new transpiler - transpile TS logic to Rust
     const logicSourceFile = path.join(LOGIC_DIR, "fee-calculations.ts");
-    const rustFunctions = transpileToRust(logicSourceFile);
+    const logicSource = fs.readFileSync(logicSourceFile, "utf-8");
+    const rustFunctions = transpileToRust(logicSourceFile, logicSource);
     writeFile(path.join(GENERATED_RUST_DIR, "functions.rs"), rustFunctions);
   }
 
@@ -123,12 +217,20 @@ async function main(): Promise<void> {
   const hasRustFunctions = fs.existsSync(
     path.join(GENERATED_RUST_DIR, "functions.rs")
   );
-  const rustMod = generateRust.mod(hasRustTypes, hasRustFunctions);
+  const hasRustFeeTable = fs.existsSync(
+    path.join(GENERATED_RUST_DIR, "fee_table.rs")
+  );
+  const rustMod = generateRust.mod(
+    hasRustTypes,
+    hasRustFunctions,
+    hasRustFeeTable
+  );
   writeFile(path.join(GENERATED_RUST_DIR, "mod.rs"), rustMod);
 
   console.log("\n━".repeat(50));
   console.log("✅ Code generation complete!\n");
-  console.log("📝 To modify fee logic, edit: logic/fee-calculations.ts");
+  console.log("📝 To modify fee formulas, edit: logic/fee-calculations.ts");
+  console.log("   To modify static fee amounts, edit: templates/fees.json");
   console.log("   Then run: pnpm run generate\n");
 }
 

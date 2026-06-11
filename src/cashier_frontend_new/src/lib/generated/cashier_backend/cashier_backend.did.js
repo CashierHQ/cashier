@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'gate_service_canister_id' : IDL.Principal,
     'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
@@ -26,6 +27,7 @@ export const idlFactory = ({ IDL }) => {
       'InvalidInput' : IDL.Text,
       'HandleLogicError' : IDL.Text,
       'ParsePrincipalError' : IDL.Text,
+      'LinkNoUseAvailable' : IDL.Record({ 'link_id' : IDL.Text }),
       'CandidDecodeFailed' : IDL.Text,
       'UnknownError' : IDL.Text,
       'InsufficientBalance' : IDL.Record({
@@ -67,13 +69,13 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
-  const ActionType = IDL.Variant({
+  const ActionType_1 = IDL.Variant({
     'Withdraw' : IDL.Null,
     'Send' : IDL.Null,
     'CreateLink' : IDL.Null,
     'Receive' : IDL.Null,
   });
-  const GetLinkOptions = IDL.Record({ 'action_type' : ActionType });
+  const GetLinkOptions = IDL.Record({ 'action_type' : ActionType_1 });
   const Icrc112Request = IDL.Record({
     'arg' : IDL.Vec(IDL.Nat8),
     'method' : IDL.Text,
@@ -173,12 +175,6 @@ export const idlFactory = ({ IDL }) => {
     'state' : IntentState_1,
     'transactions' : IDL.Vec(TransactionDto),
   });
-  const ActionType_1 = IDL.Variant({
-    'Withdraw' : IDL.Null,
-    'Send' : IDL.Null,
-    'CreateLink' : IDL.Null,
-    'Receive' : IDL.Null,
-  });
   const ActionDto = IDL.Record({
     'id' : IDL.Text,
     'icrc_112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
@@ -239,6 +235,7 @@ export const idlFactory = ({ IDL }) => {
     'network_fee' : IDL.Opt(IDL.Nat),
   });
   const AddressType = IDL.Variant({
+    'Gate' : IDL.Null,
     'Link' : IDL.Null,
     'User' : IDL.Null,
     'Treasury' : IDL.Null,
@@ -253,6 +250,7 @@ export const idlFactory = ({ IDL }) => {
     'asset' : Asset_1,
     'dest_address_type' : AddressType,
     'dest_address' : IDL.Principal,
+    'label' : IDL.Text,
     'source_address' : IDL.Principal,
     'intent_state' : IntentState_1,
     'source_address_type' : AddressType,
@@ -392,15 +390,30 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateLinkDto = IDL.Record({ 'action' : ActionDto, 'link' : LinkDto });
   const Result_7 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
+  const GateKey = IDL.Variant({
+    'Password' : IDL.Text,
+    'XFollowing' : IDL.Text,
+    'DiscordServer' : IDL.Text,
+    'PasswordRedacted' : IDL.Null,
+    'TelegramGroup' : IDL.Text,
+  });
   const CreateLinkInputV3 = IDL.Record({
     'title' : IDL.Text,
     'action' : Action,
     'link_type' : LinkType_1,
+    'gate_keys' : IDL.Opt(IDL.Vec(GateKey)),
     'max_use' : IDL.Nat64,
+  });
+  const Gate = IDL.Record({
+    'id' : IDL.Text,
+    'key' : GateKey,
+    'creator' : IDL.Principal,
+    'subject_id' : IDL.Text,
   });
   const CreateLinkResponseV3 = IDL.Record({
     'action' : Action,
     'link' : Link,
+    'gates' : IDL.Vec(Gate),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
   const Result_8 = IDL.Variant({
@@ -411,6 +424,27 @@ export const idlFactory = ({ IDL }) => {
   const DisableLinkResponseV3 = IDL.Record({ 'link' : Link });
   const Result_10 = IDL.Variant({
     'Ok' : DisableLinkResponseV3,
+    'Err' : CanisterError,
+  });
+  const GateStatus = IDL.Variant({ 'Open' : IDL.Null, 'Closed' : IDL.Null });
+  const GateUserStatus = IDL.Record({
+    'status' : GateStatus,
+    'user_id' : IDL.Principal,
+    'gate_id' : IDL.Text,
+  });
+  const GateForUser = IDL.Record({
+    'gate_user_status' : IDL.Opt(GateUserStatus),
+    'gate' : Gate,
+  });
+  const GetLinkDetailsResponseV3 = IDL.Record({
+    'action' : IDL.Opt(Action),
+    'link_user_state' : IDL.Opt(LinkUserState),
+    'link' : Link,
+    'gates' : IDL.Vec(GateForUser),
+    'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
+  });
+  const Result_11 = IDL.Variant({
+    'Ok' : GetLinkDetailsResponseV3,
     'Err' : CanisterError,
   });
   const PaginateInput = IDL.Record({
@@ -428,7 +462,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(LinkDto),
   });
-  const Result_11 = IDL.Variant({
+  const Result_12 = IDL.Variant({
     'Ok' : PaginateResult,
     'Err' : CanisterError,
   });
@@ -436,8 +470,16 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(Link),
   });
-  const Result_12 = IDL.Variant({
+  const Result_13 = IDL.Variant({
     'Ok' : PaginateResult_1,
+    'Err' : CanisterError,
+  });
+  const OpenGateSuccessResult = IDL.Record({
+    'gate_user_status' : GateUserStatus,
+    'gate' : Gate,
+  });
+  const Result_14 = IDL.Variant({
+    'Ok' : OpenGateSuccessResult,
     'Err' : CanisterError,
   });
   const ProcessActionV2Input = IDL.Record({ 'action_id' : IDL.Text });
@@ -447,7 +489,7 @@ export const idlFactory = ({ IDL }) => {
     'errors' : IDL.Vec(IDL.Text),
     'is_success' : IDL.Bool,
   });
-  const Result_13 = IDL.Variant({
+  const Result_15 = IDL.Variant({
     'Ok' : ProcessActionDto,
     'Err' : CanisterError,
   });
@@ -458,7 +500,7 @@ export const idlFactory = ({ IDL }) => {
     'is_success' : IDL.Bool,
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_14 = IDL.Variant({
+  const Result_16 = IDL.Variant({
     'Ok' : ProcessActionResponseV3,
     'Err' : CanisterError,
   });
@@ -512,24 +554,34 @@ export const idlFactory = ({ IDL }) => {
     'user_create_link_v3' : IDL.Func([CreateLinkInputV3], [Result_8], []),
     'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_9], []),
     'user_disable_link_v3' : IDL.Func([IDL.Text], [Result_10], []),
-    'user_get_links_v2' : IDL.Func(
-        [IDL.Opt(PaginateInput)],
+    'user_get_link_details_v3' : IDL.Func(
+        [IDL.Text, IDL.Opt(GetLinkOptions)],
         [Result_11],
         ['query'],
       ),
-    'user_get_links_v3' : IDL.Func(
+    'user_get_links_v2' : IDL.Func(
         [IDL.Opt(PaginateInput)],
         [Result_12],
         ['query'],
       ),
+    'user_get_links_v3' : IDL.Func(
+        [IDL.Opt(PaginateInput)],
+        [Result_13],
+        ['query'],
+      ),
+    'user_open_link_gate' : IDL.Func(
+        [IDL.Text, IDL.Text, GateKey],
+        [Result_14],
+        [],
+      ),
     'user_process_action_v2' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_13],
+        [Result_15],
         [],
       ),
     'user_process_action_v3' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_14],
+        [Result_16],
         [],
       ),
     'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),
@@ -545,6 +597,7 @@ export const init = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
+    'gate_service_canister_id' : IDL.Principal,
     'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),

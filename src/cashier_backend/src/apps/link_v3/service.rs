@@ -6,17 +6,24 @@ use cashier_backend_types::link_v3::dto::link::GetLinkResponseV3;
 use cashier_backend_types::{
     dto::{action::Icrc112Requests, link::GetLinkOptions},
     error::CanisterError,
-    link_v3::dto::{
-        action::{CreateActionResponseV3, ProcessActionResponseV3},
-        link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
-            SyncAssetBalanceCacheResponseV3,
+    link_v3::{
+        dto::{
+            action::{CreateActionResponseV3, ProcessActionResponseV3},
+            link::{
+                CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinksResponseV3,
+                SyncAssetBalanceCacheResponseV3,
+            },
         },
+        link_result::LinkProcessActionResult,
     },
     repository::{
+        action::v1::{ActionState, ActionType},
         asset_info::v3::AssetInfoV3,
         intent::v3::IntentV3,
-        link::{v1::LinkType, v3::LinkState},
+        link::{
+            v1::LinkType,
+            v3::{LinkState, LinkV3},
+        },
         link_action::v1::LinkAction,
         user_link::v1::UserLink,
     },
@@ -34,9 +41,11 @@ use transaction_manager::{
 
 use crate::{
     apps::{
-        action::v3::ActionServiceV3, link_v3::factory::LinkFactoryV3,
-        link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
-        token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
+        action::v3::ActionServiceV3,
+        link_v3::{factory::LinkFactoryV3, traits::GateValidator, utils::link_v3_asset_principals},
+        token_balance::traits::TokenBalanceFetcher,
+        token_fee::traits::TokenFeeCache,
+        token_standard::traits::TokenStandardCache,
     },
     repositories::{self, Repositories},
 };
@@ -70,7 +79,7 @@ impl<R: Repositories> LinkV3Service<R> {
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_link<M, F, S, B>(
+    pub async fn create_link<M, F, S, B, V>(
         &mut self,
         input: CreateLinkInputV3,
         creator_id: Principal,
@@ -80,12 +89,14 @@ impl<R: Repositories> LinkV3Service<R> {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_validator: V,
     ) -> Result<CreateLinkResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
+        V: GateValidator,
     {
         if input.action.action_type != SharedActionType::CreateLink {
             return Err(CanisterError::InvalidInput(
@@ -93,12 +104,17 @@ impl<R: Repositories> LinkV3Service<R> {
             ));
         }
 
+        let gate_count = input.gate_keys.as_ref().map_or(0, |v| v.len() as u64);
+
         let link_type: LinkType = input.link_type.into();
         let asset_info: Vec<AssetInfoV3> = input
             .action
             .intents
             .iter()
-            .filter(|i| i.dest_address_type != SharedAddressType::Treasury)
+            .filter(|i| {
+                i.dest_address_type != SharedAddressType::Treasury
+                    && i.dest_address_type != SharedAddressType::Gate
+            })
             .map(|i| AssetInfoV3::from(IntentV3::from(i.clone())))
             .collect();
 
@@ -121,7 +137,6 @@ impl<R: Repositories> LinkV3Service<R> {
         };
         self.user_link_repository.create(new_user_link);
 
-        // create action
         let action_result = self
             .create_action(
                 link_model.id.as_str(),
@@ -133,6 +148,8 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                gate_validator,
+                gate_count,
             )
             .await?;
 
@@ -140,6 +157,7 @@ impl<R: Repositories> LinkV3Service<R> {
             link: action_result.link,
             action: action_result.action,
             icrc112_requests: action_result.icrc112_requests,
+            gates: vec![],
         })
     }
 
@@ -149,11 +167,12 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `canister_id` - The canister ID of the token contract
     /// * `link_id` - The ID of the link for which the action is created
     /// * `action_type` - The type of action to be created
+    /// * `gate_validator` - Validator that checks whether all gates are open for the caller
     /// # Returns
     /// * `Ok(SharedAction)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_action<M, F, S, B>(
+    pub async fn create_action<M, F, S, B, V>(
         &mut self,
         link_id: &str,
         action: SharedAction,
@@ -164,17 +183,22 @@ impl<R: Repositories> LinkV3Service<R> {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_validator: V,
+        gate_count: u64,
     ) -> Result<CreateActionResponseV3, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
         F: TokenFeeCache + 'static,
         S: TokenStandardCache + 'static,
         B: TokenBalanceFetcher + 'static,
+        V: GateValidator,
     {
         let link_model = self
             .link_v3_repository
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        gate_validator.check_all_gates_open(link_id, creator, link_model.creator)?;
 
         let action_model = self.action_service.create_action_from_shared_data(
             action.clone(),
@@ -192,6 +216,7 @@ impl<R: Repositories> LinkV3Service<R> {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                gate_count,
             )
             .await?;
 
@@ -255,6 +280,11 @@ impl<R: Repositories> LinkV3Service<R> {
             .get_action_data(action_id)
             .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
+        // Retry guard: re-processing an already-Success action re-reports
+        // is_success=true without moving tokens (executor skips Success txs),
+        // so it must NOT commit the link again (phantom use_count/amount drain).
+        let was_already_success = action_data.action.state == ActionState::Success;
+
         let link_model = self
             .link_v3_repository
             .get(&action_data.action.link_id)
@@ -273,17 +303,26 @@ impl<R: Repositories> LinkV3Service<R> {
             )
             .await?;
 
-        // save data to DB
-        self.link_v3_repository.update(result.link.clone());
+        // Persist action data FIRST: it reflects what actually happened on the
+        // ledger regardless of whether the link commit below succeeds.
         self.action_service.update_action_data(
             result.process_action_result.action.clone(),
             result.process_action_result.intents.clone(),
             &result.process_action_result.intent_txs_map,
         )?;
+
+        // Commit the link on a fresh repository read (result.link is a pre-await
+        // snapshot). A failed result never updates the link; a retry of an
+        // already-Success action is idempotent (no second commit).
+        let updated_link = if result.process_action_result.is_success && !was_already_success {
+            self.update_link_with_process_action_result(&result)?
+        } else {
+            result.link.clone()
+        };
         self.action_service.update_link_user_state(&result);
 
         // format response
-        let link_shared = result.link.to_shared();
+        let link_shared = updated_link.to_shared();
         let action_shared = result
             .process_action_result
             .action
@@ -296,6 +335,43 @@ impl<R: Repositories> LinkV3Service<R> {
             is_success: result.process_action_result.is_success,
             errors: result.process_action_result.errors,
         })
+    }
+
+    /// Commit a SUCCESSFUL process_action outcome to the stored link.
+    ///
+    /// The link inside `result` is a pre-action snapshot and may be STALE
+    /// (other claims can commit while this action awaited the ledger), so the
+    /// update is computed on a fresh repository read plus the successful
+    /// action's intents only. A failed process_action result is rejected from
+    /// updating the link data.
+    fn update_link_with_process_action_result(
+        &mut self,
+        result: &LinkProcessActionResult,
+    ) -> Result<LinkV3, CanisterError> {
+        let action_result = &result.process_action_result;
+        if !action_result.is_success {
+            return Err(CanisterError::ValidationErrors(
+                "Cannot update link from a failed process_action result".to_string(),
+            ));
+        }
+
+        let mut link = self
+            .link_v3_repository
+            .get(&result.link.id)
+            .ok_or_else(|| CanisterError::NotFound(format!("Link {} not found", result.link.id)))?;
+
+        match action_result.action.action_type {
+            ActionType::CreateLink => link.apply_create_action_success(&action_result.intents)?,
+            // Send and Receive are both user claims (link -> user transfer),
+            // so both consume a use and deduct from the link's available pool.
+            ActionType::Receive | ActionType::Send => {
+                link.apply_receive_action_success(&action_result.intents)?
+            }
+            ActionType::Withdraw => link.apply_withdraw_action_success(&action_result.intents)?,
+        }
+
+        self.link_v3_repository.update(link.clone());
+        Ok(link)
     }
 
     /// Retrieves a list of links for the caller with pagination support.
@@ -490,6 +566,7 @@ impl<R: Repositories> LinkV3Service<R> {
 mod tests {
     use super::*;
     use crate::apps::{
+        gate_service::service::{GateAppService, tests::MockGateServiceClient},
         shared::test_utils::tests::{
             MockExecutionService, MockTransactionManagerV3, MockValidationService,
         },
@@ -520,8 +597,15 @@ mod tests {
         IntentState as SharedIntentState, IntentType as SharedIntentType,
         LinkType as SharedLinkType, TokenStandard as SharedTokenStandard,
     };
+    use gate_service_types::{Gate, GateKey};
     use token_storage_types::token::IcrcStandard;
     use uuid::Uuid;
+
+    fn make_gate_validator(
+        repo: &TestRepositories,
+    ) -> GateAppService<TestRepositories, MockGateServiceClient> {
+        GateAppService::new(repo, MockGateServiceClient::new())
+    }
 
     fn fixture_of_asset_info_v3(address: Principal, amount: Nat) -> AssetInfoV3 {
         AssetInfoV3 {
@@ -577,6 +661,7 @@ mod tests {
             dependencies: Some(vec![]),
             action_id: None,
             intent_state: SharedIntentState::Created,
+            label: String::new(),
         }
     }
 
@@ -609,6 +694,7 @@ mod tests {
             link_type: SharedLinkType::SendTip,
             max_use: 3,
             action: fixture_of_shared_action(action_type, creator, canister_id, ledger_id),
+            gate_keys: None,
         }
     }
 
@@ -653,6 +739,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await;
 
@@ -690,11 +777,144 @@ mod tests {
                 create_mock_token_fee_service(1_000_000),
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
         // Assert
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_create_action_due_to_gate_closed_for_non_creator() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let caller = random_principal_id(); // different from creator
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+        let gate_id = format!("gate_{}", random_id_string());
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "gated-link".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Active,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        // register a gate for the link — caller has NOT opened it
+        repositories.link_gate().add_gate(
+            &link_id,
+            Gate {
+                id: gate_id,
+                creator,
+                subject_id: link_id.clone(),
+                key: GateKey::PasswordRedacted,
+            },
+        );
+
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(SharedActionType::Receive, caller, canister_id, ledger_id),
+                caller,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                create_mock_token_fee_service(created_at),
+                token_standard_service,
+                MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
+            )
+            .await;
+
+        // Assert — caller has not opened the gate, so action must be denied
+        assert!(matches!(result, Err(CanisterError::Unauthorized(_))));
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_create_action_for_creator_even_when_gate_is_closed() {
+        // Arrange — same setup as above but caller IS the creator
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = Uuid::new_v4().to_string();
+        let gate_id = format!("gate_{}", random_id_string());
+
+        let link = LinkV3 {
+            id: link_id.clone(),
+            title: "gated-link".to_string(),
+            link_type: LinkType::SendTip,
+            asset_info: vec![fixture_of_asset_info_v3(ledger_id, Nat::from(1_000u64))],
+            max_use: 3,
+            use_count: 0,
+            creator,
+            state: LinkState::Created,
+            created_at,
+        };
+        service.link_v3_repository.create(link);
+
+        // gate exists and creator has NOT opened it
+        repositories.link_gate().add_gate(
+            &link_id,
+            Gate {
+                id: gate_id,
+                creator,
+                subject_id: link_id.clone(),
+                key: GateKey::PasswordRedacted,
+            },
+        );
+
+        let token_fee_service = create_mock_token_fee_service(created_at);
+        let mut token_standard_service = create_mock_token_standard_service(created_at);
+        token_standard_service
+            .token_storage_client
+            .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+        // Act — creator calls create_action on their own link
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(
+                    SharedActionType::CreateLink,
+                    creator,
+                    canister_id,
+                    ledger_id,
+                ),
+                creator,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
+            )
+            .await;
+
+        // Assert — creator bypasses the gate check
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
@@ -831,6 +1051,8 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -894,6 +1116,8 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 MockTokenBalanceService::new(),
+                make_gate_validator(&repositories),
+                0,
             )
             .await;
 
@@ -948,6 +1172,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -995,6 +1220,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1018,6 +1244,130 @@ mod tests {
             processed.link.link_state,
             cashier_shared::types::LinkState::Active
         );
+    }
+
+    #[tokio::test]
+    async fn it_should_not_double_commit_link_when_processing_an_already_success_action() {
+        // Arrange — an Active link that has ALREADY consumed one use, and a
+        // RECEIVE action stored in `Success` state (i.e. it was processed once
+        // before). Re-processing it (lost-response retry / re-call) must NOT
+        // commit the link a second time, even though the tx manager re-reports
+        // is_success=true without moving any tokens.
+        use cashier_backend_types::repository::{
+            action::v1::ActionState,
+            action::v3::ActionV3,
+            common::{AddressTypeV3, Wallet},
+            intent::v1::{IntentState, TransferData},
+            intent::v3::{IntentTransactionDataV3, IntentTypeV3, IntentV3},
+        };
+
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let receiver = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let link_id = random_id_string();
+        let action_id = random_id_string();
+
+        // Link already has one claim committed: use_count = 1, balance deducted once.
+        let link = LinkV3 {
+            asset_info: vec![AssetInfoV3 {
+                available_amount: Some(Nat::from(5_800u64)),
+                ..fixture_of_asset_info_v3(ledger_id, Nat::from(10_000u64))
+            }],
+            use_count: 1,
+            ..fixture_of_link_v3(&link_id, creator, LinkState::Active)
+        };
+        service.link_v3_repository.create(link);
+
+        // The receive action is already in Success state (processed before).
+        let receive_intent = IntentV3 {
+            id: random_id_string(),
+            label: "intent".to_string(),
+            intent_type: IntentTypeV3::Send,
+            asset: AssetV3 {
+                address: ledger_id,
+                network_fee: Some(Nat::from(200u64)),
+                token_standard: TokenStandardV3::ICRC1,
+            },
+            amount: Nat::from(4_000u64),
+            total_amount: None,
+            network_fee: None,
+            user_fee: None,
+            source_address: canister_id,
+            source_account: None,
+            source_address_type: AddressTypeV3::Link,
+            dest_address: receiver,
+            dest_account: None,
+            dest_address_type: AddressTypeV3::User,
+            intent_tx_data: Some(IntentTransactionDataV3::Transfer(TransferData {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: cashier_backend_types::repository::asset::v1::Asset::default(),
+                amount: Nat::from(4_000u64),
+            })),
+            dependencies: vec![],
+            action_id: action_id.clone(),
+            state: IntentState::Success,
+            created_at: 1_000_000,
+        };
+        let action = ActionV3 {
+            id: action_id.clone(),
+            action_type: ActionType::Receive,
+            link_id: link_id.clone(),
+            creator: receiver,
+            creator_address_type: AddressTypeV3::User,
+            state: ActionState::Success,
+            intent_ids: vec![receive_intent.id.clone()],
+        };
+        let link_action = LinkAction {
+            link_id: link_id.clone(),
+            action_type: ActionType::Receive,
+            action_id: action_id.clone(),
+            user_id: receiver,
+            link_user_state: None,
+        };
+        service
+            .action_service
+            .store_action_data(
+                link_action,
+                action,
+                vec![receive_intent],
+                std::collections::HashMap::new(),
+                receiver,
+            )
+            .expect("store action data should succeed");
+
+        // Act — re-process the already-Success action.
+        let processed = service
+            .process_action(
+                receiver,
+                canister_id,
+                &action_id,
+                MockTransactionManagerV3::default(),
+                MockValidationService,
+                MockExecutionService,
+            )
+            .await
+            .expect("re-processing should be an idempotent Ok, not an error");
+
+        // Assert — response is a friendly success, but the link was NOT committed again.
+        assert!(processed.is_success);
+        let stored = service
+            .link_v3_repository
+            .get(&link_id)
+            .expect("link should exist");
+        assert_eq!(
+            stored.use_count, 1,
+            "retry of a processed action must not consume a second use"
+        );
+        assert_eq!(
+            stored.asset_info[0].available_amount,
+            Some(Nat::from(5_800u64)),
+            "retry must not deduct available_amount a second time"
+        );
+        assert_eq!(stored.state, LinkState::Active);
     }
 
     #[tokio::test]
@@ -1051,6 +1401,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1097,6 +1448,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                make_gate_validator(&repositories),
             )
             .await
             .expect("create link should succeed");
@@ -1318,5 +1670,259 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
+    }
+
+    mod update_link_with_process_action_result {
+        use super::*;
+        use cashier_backend_types::{
+            link_v3::action_result::ProcessActionResult,
+            repository::{
+                action::v1::ActionState,
+                action::v3::ActionV3,
+                asset::v1::Asset,
+                common::{AddressTypeV3, Wallet},
+                intent::v1::{IntentState, TransferData},
+                intent::v3::{IntentTransactionDataV3, IntentTypeV3, IntentV3},
+            },
+        };
+        use std::collections::HashMap;
+
+        fn fixture_of_receive_intent(asset_address: Principal, amount: u64) -> IntentV3 {
+            IntentV3 {
+                id: random_id_string(),
+                label: "intent".to_string(),
+                intent_type: IntentTypeV3::Send,
+                asset: AssetV3 {
+                    address: asset_address,
+                    network_fee: Some(Nat::from(200u64)),
+                    token_standard: TokenStandardV3::ICRC2,
+                },
+                amount: Nat::from(amount),
+                total_amount: None,
+                network_fee: None,
+                user_fee: None,
+                source_address: random_principal_id(),
+                source_account: None,
+                source_address_type: AddressTypeV3::Link,
+                dest_address: random_principal_id(),
+                dest_account: None,
+                dest_address_type: AddressTypeV3::User,
+                intent_tx_data: Some(IntentTransactionDataV3::Transfer(TransferData {
+                    from: Wallet::default(),
+                    to: Wallet::default(),
+                    asset: Asset::default(),
+                    amount: Nat::from(amount),
+                })),
+                dependencies: vec![],
+                action_id: random_id_string(),
+                state: IntentState::Success,
+                created_at: 0,
+            }
+        }
+
+        fn fixture_of_result(
+            link: &LinkV3,
+            action_type: ActionType,
+            intents: Vec<IntentV3>,
+            is_success: bool,
+        ) -> LinkProcessActionResult {
+            LinkProcessActionResult {
+                link: link.clone(),
+                process_action_result: ProcessActionResult {
+                    action: ActionV3 {
+                        id: random_id_string(),
+                        action_type,
+                        link_id: link.id.clone(),
+                        creator: random_principal_id(),
+                        creator_address_type: AddressTypeV3::User,
+                        state: ActionState::Success,
+                        intent_ids: vec![],
+                    },
+                    intents,
+                    intent_txs_map: HashMap::new(),
+                    icrc112_requests: None,
+                    is_success,
+                    errors: vec![],
+                },
+            }
+        }
+
+        fn fixture_of_claim_link(id: &str, asset: Principal, max_use: u64) -> LinkV3 {
+            LinkV3 {
+                asset_info: vec![AssetInfoV3 {
+                    available_amount: Some(Nat::from(10_000u64)),
+                    ..fixture_of_asset_info_v3(asset, Nat::from(10_000u64))
+                }],
+                max_use,
+                ..fixture_of_link_v3(id, random_principal_id(), LinkState::Active)
+            }
+        }
+
+        #[test]
+        fn it_should_reject_failed_process_action_result_and_keep_stored_link() {
+            // Arrange
+            let repositories = TestRepositories::new();
+            let mut service = LinkV3Service::new(&repositories);
+            let asset = random_principal_id();
+            let link_id = random_id_string();
+            let link = fixture_of_claim_link(&link_id, asset, 3);
+            service.link_v3_repository.create(link.clone());
+            let result = fixture_of_result(
+                &link,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                false,
+            );
+
+            // Act
+            let outcome = service.update_link_with_process_action_result(&result);
+
+            // Assert
+            assert!(matches!(outcome, Err(CanisterError::ValidationErrors(_))));
+            let stored = service
+                .link_v3_repository
+                .get(&link_id)
+                .expect("link should exist");
+            assert_eq!(stored.use_count, 0);
+            assert_eq!(
+                stored.asset_info[0].available_amount,
+                Some(Nat::from(10_000u64))
+            );
+        }
+
+        #[test]
+        fn it_should_fail_due_to_missing_link() {
+            // Arrange
+            let repositories = TestRepositories::new();
+            let mut service = LinkV3Service::new(&repositories);
+            let asset = random_principal_id();
+            let link = fixture_of_claim_link(&random_id_string(), asset, 3);
+            // link NOT created in repo
+            let result = fixture_of_result(
+                &link,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                true,
+            );
+
+            // Act
+            let outcome = service.update_link_with_process_action_result(&result);
+
+            // Assert
+            assert!(matches!(outcome, Err(CanisterError::NotFound(_))));
+        }
+
+        #[test]
+        fn it_should_apply_receive_on_fresh_link_and_persist() {
+            // Arrange
+            let repositories = TestRepositories::new();
+            let mut service = LinkV3Service::new(&repositories);
+            let asset = random_principal_id();
+            let link_id = random_id_string();
+            let link = fixture_of_claim_link(&link_id, asset, 3);
+            service.link_v3_repository.create(link.clone());
+            let result = fixture_of_result(
+                &link,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                true,
+            );
+
+            // Act
+            let updated = service
+                .update_link_with_process_action_result(&result)
+                .expect("update should succeed");
+
+            // Assert — returned link matches stored link
+            let stored = service
+                .link_v3_repository
+                .get(&link_id)
+                .expect("link should exist");
+            assert_eq!(stored.use_count, 1);
+            assert_eq!(stored.state, LinkState::Active);
+            assert_eq!(
+                stored.asset_info[0].available_amount,
+                Some(Nat::from(5_800u64)) // 10_000 - 4_000 - 200 fee
+            );
+            assert_eq!(updated.use_count, stored.use_count);
+            assert_eq!(updated.asset_info, stored.asset_info);
+        }
+
+        #[test]
+        fn it_should_not_lose_concurrent_claim_updates_despite_stale_snapshots() {
+            // Arrange — both results carry the SAME stale pre-action snapshot,
+            // simulating two claims that read the link before either committed.
+            let repositories = TestRepositories::new();
+            let mut service = LinkV3Service::new(&repositories);
+            let asset = random_principal_id();
+            let link_id = random_id_string();
+            let stale_snapshot = fixture_of_claim_link(&link_id, asset, 2);
+            service.link_v3_repository.create(stale_snapshot.clone());
+            let claim_1 = fixture_of_result(
+                &stale_snapshot,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                true,
+            );
+            let claim_2 = fixture_of_result(
+                &stale_snapshot,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                true,
+            );
+
+            // Act
+            service
+                .update_link_with_process_action_result(&claim_1)
+                .expect("claim 1 commit should succeed");
+            service
+                .update_link_with_process_action_result(&claim_2)
+                .expect("claim 2 commit should succeed");
+
+            // Assert — no lost update: both uses counted, both amounts deducted
+            let stored = service
+                .link_v3_repository
+                .get(&link_id)
+                .expect("link should exist");
+            assert_eq!(stored.use_count, 2);
+            assert_eq!(stored.state, LinkState::Ended); // max_use reached
+            assert_eq!(
+                stored.asset_info[0].available_amount,
+                Some(Nat::from(1_600u64)) // 10_000 - 2 * (4_000 + 200)
+            );
+        }
+
+        #[test]
+        fn it_should_fail_apply_and_keep_stored_link_when_deduction_exceeds_available() {
+            // Arrange
+            let repositories = TestRepositories::new();
+            let mut service = LinkV3Service::new(&repositories);
+            let asset = random_principal_id();
+            let link_id = random_id_string();
+            let mut link = fixture_of_claim_link(&link_id, asset, 3);
+            link.asset_info[0].available_amount = Some(Nat::from(3_000u64));
+            service.link_v3_repository.create(link.clone());
+            let result = fixture_of_result(
+                &link,
+                ActionType::Receive,
+                vec![fixture_of_receive_intent(asset, 4_000)],
+                true,
+            );
+
+            // Act
+            let outcome = service.update_link_with_process_action_result(&result);
+
+            // Assert — apply error never reaches storage
+            assert!(matches!(outcome, Err(CanisterError::InvalidDataError(_))));
+            let stored = service
+                .link_v3_repository
+                .get(&link_id)
+                .expect("link should exist");
+            assert_eq!(stored.use_count, 0);
+            assert_eq!(
+                stored.asset_info[0].available_amount,
+                Some(Nat::from(3_000u64))
+            );
+        }
     }
 }

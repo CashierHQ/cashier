@@ -6,9 +6,11 @@ import { LinkType } from "$modules/links/types/link/linkType";
 import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
 import { Principal } from "@icp-sdk/core/principal";
 import { managedState } from "$lib/managedState";
-import { TempLink } from "$modules/links/types/tempLink";
-import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
-import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
+import {
+  LinkState as SharedLinkState,
+  LinkType as SharedLinkType,
+} from "$shared";
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -36,8 +38,8 @@ vi.mock("$lib/managedState", () => ({
   managedState: vi.fn(),
 }));
 
-vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
-  tempLinkRepository: {
+vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
+  draftLinkRepository: {
     get: vi.fn(() => []),
   },
 }));
@@ -84,14 +86,14 @@ describe("LinkListStore.getLinks", () => {
 
   it("should return empty array when no data", () => {
     mockQuery.data = undefined;
-    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
+    vi.mocked(draftLinkRepository.get).mockReturnValue([]);
 
     const result = store.getLinks();
 
     expect(result).toEqual([]);
   });
 
-  it("should return only persisted links when no temp links", () => {
+  it("should return only persisted links when no draft links", () => {
     const mockLink = new Link(
       "link-1",
       "Persisted Link",
@@ -105,7 +107,7 @@ describe("LinkListStore.getLinks", () => {
     );
 
     mockQuery.data = [mockLink];
-    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
+    vi.mocked(draftLinkRepository.get).mockReturnValue([]);
 
     const result = store.getLinks();
 
@@ -113,29 +115,31 @@ describe("LinkListStore.getLinks", () => {
     expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
   });
 
-  it("should return only temp links when no persisted links", () => {
-    const mockTempLink = new TempLink(
-      "temp-1",
-      BigInt(Date.now()),
-      LinkState.CHOOSING_TYPE,
-      new CreateLinkData({
-        title: "Draft",
-        linkType: LinkType.TIP,
-        assets: [],
-        maxUse: 1,
-      }),
-    );
+  it("should return only draft links when no persisted links", () => {
+    const mockDraftLink = {
+      id: "draft-1",
+      title: "Draft",
+      link_type: SharedLinkType.SendTip,
+      link_state: SharedLinkState.ChooseType,
+      creator: Principal.fromText("aaaaa-aa"),
+      asset_info: [],
+      max_use: 1n,
+      use_count: 0n,
+      created_at: BigInt(Date.now()),
+    };
 
     mockQuery.data = undefined;
-    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
+    vi.mocked(draftLinkRepository.get).mockReturnValue([mockDraftLink]);
 
     const result = store.getLinks();
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
+    expect(result[0]).toEqual(
+      UnifiedLinkItemMapper.fromDraftLink(mockDraftLink),
+    );
   });
 
-  it("should return unified array of both persisted links and temp links", () => {
+  it("should return unified array of both persisted links and draft links", () => {
     const mockLink = new Link(
       "link-1",
       "Persisted Link",
@@ -148,26 +152,28 @@ describe("LinkListStore.getLinks", () => {
       BigInt(0),
     );
 
-    const mockTempLink = new TempLink(
-      "temp-1",
-      BigInt(Date.now()),
-      LinkState.PREVIEW,
-      new CreateLinkData({
-        title: "Draft Link",
-        linkType: LinkType.TIP,
-        assets: [],
-        maxUse: 1,
-      }),
-    );
+    const mockDraftLink = {
+      id: "draft-1",
+      title: "Draft Link",
+      link_type: SharedLinkType.SendTip,
+      link_state: SharedLinkState.Preview,
+      creator: Principal.fromText("aaaaa-aa"),
+      asset_info: [],
+      max_use: 1n,
+      use_count: 0n,
+      created_at: BigInt(Date.now()),
+    };
 
     mockQuery.data = [mockLink];
-    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
+    vi.mocked(draftLinkRepository.get).mockReturnValue([mockDraftLink]);
 
     const result = store.getLinks();
 
     expect(result).toHaveLength(2);
     expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
-    expect(result[1]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
+    expect(result[1]).toEqual(
+      UnifiedLinkItemMapper.fromDraftLink(mockDraftLink),
+    );
   });
 });
 

@@ -251,7 +251,13 @@
             "retryButton": "Retry",
             "processingButton": "Processing...",
             "successMessage": "Process action completed successfully.",
-            "errorMessagePrefix": "Process action failed:"
+            "errorMessagePrefix": "Process action failed:",
+            "errors": {
+              "alreadyClaimed": "This link has no claim available right now — it may be fully claimed or another claim is in progress.",
+              "linkUnavailable": "This link is no longer available.",
+              "insufficientFunds": "Insufficient balance to complete this transaction.",
+              "generic": "Something went wrong while processing the transaction. Please try again."
+            }
           },
           "wallet": {
             "title": "Confirm transaction",

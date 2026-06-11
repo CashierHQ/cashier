@@ -1,5 +1,6 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
+import type { GateDraft } from "$modules/gating/types/gate";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
@@ -9,20 +10,10 @@ import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStat
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
-import {
-  CASHIER_BACKEND_CANISTER_ID,
-  FEE_TREASURY_PRINCIPAL,
-  LINK_CREATION_FEE,
-} from "$modules/shared/constants";
-import {
-  ICP_LEDGER_CANISTER_ID,
-  ICP_LEDGER_FEE,
-} from "$modules/token/constants";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
 import {
   ActionType as SharedActionType,
-  AddressType as SharedAddressType,
   LinkState as SharedLinkState,
   LinkType as SharedLinkType,
   TokenStandard as SharedTokenStandard,
@@ -56,6 +47,7 @@ export class LinkCreationStoreV3 {
   #backendAction = $state<SharedAction | undefined>();
   #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
+  #pendingGateDraft = $state<GateDraft | null>(null);
 
   constructor(draftLink: SharedLink) {
     this.#id = draftLink.id;
@@ -129,6 +121,14 @@ export class LinkCreationStoreV3 {
     this.#icrc112Requests = requests;
   }
 
+  get pendingGateDraft(): GateDraft | null {
+    return this.#pendingGateDraft;
+  }
+
+  set pendingGateDraft(draft: GateDraft | null) {
+    this.#pendingGateDraft = draft;
+  }
+
   get linkType(): SharedLinkType {
     return this.#draftLink.link_type;
   }
@@ -193,6 +193,7 @@ export class LinkCreationStoreV3 {
       case LinkStep.ADD_ASSET:
         linkState = SharedLinkState.AddAsset;
         break;
+      case LinkStep.LOCK:
       case LinkStep.PREVIEW:
         linkState = SharedLinkState.Preview;
         break;
@@ -270,10 +271,16 @@ export class LinkCreationStoreV3 {
     }
 
     const creator = Principal.fromText(authState.account.owner);
+    const gateCount = this.#pendingGateDraft ? 1 : 0;
     const loadedActionResult = actionTemplateLoader.createActionFromTemplate(
       this.linkType,
       SharedActionType.CreateLink,
       creator,
+      {
+        assetInfo: this.#draftLink.asset_info,
+        gateCount,
+        maxUse: Number(this.#draftLink.max_use),
+      },
     );
     if (loadedActionResult.isErr()) {
       return Err(new Error("Failed to load action from template"));
@@ -281,90 +288,6 @@ export class LinkCreationStoreV3 {
     const loadedAction = loadedActionResult.unwrap();
     this.#draftAction = loadedAction;
 
-    // populate the asset intents with the asset info from the draft link
-    try {
-      this.populateAssetIntent();
-      this.populateFeeIntent();
-    } catch (error) {
-      return Err(
-        error instanceof Error
-          ? error
-          : new Error("Unknown error populating asset intent"),
-      );
-    }
-
     return Ok(true);
-  }
-
-  /**
-   * Populate the asset intents with the asset info from the draft link
-   * @returns
-   */
-  populateAssetIntent(): void {
-    if (!this.#draftAction || this.#draftAction.intents.length === 0) {
-      throw new Error("Asset intent not found in action intents");
-    }
-
-    const intents = this.#draftAction.intents.filter(
-      (i) =>
-        i.source_address_type === SharedAddressType.Creator &&
-        i.dest_address_type === SharedAddressType.Link,
-    );
-    if (intents.length === 0) {
-      throw new Error("Asset intent not found in action intents");
-    }
-
-    const assetInfo = this.#draftLink?.asset_info ?? [];
-    if (assetInfo.length === 0) return;
-
-    const action = this.#draftAction;
-    const linkAddress = Principal.fromText(CASHIER_BACKEND_CANISTER_ID);
-
-    for (let i = 0; i < intents.length && i < assetInfo.length; i++) {
-      const linkAssetInfo = assetInfo[i];
-      const intent = intents[i];
-      intent.asset = {
-        address: linkAssetInfo.asset.address,
-        network_fee: linkAssetInfo.asset.network_fee,
-        token_standard: linkAssetInfo.asset.token_standard,
-      };
-      intent.amount = linkAssetInfo.amount;
-      intent.source_address = action.creator;
-      intent.source_address_type = action.creator_address_type;
-      intent.dest_address = linkAddress;
-      intent.dest_address_type = SharedAddressType.Link;
-    }
-  }
-
-  /**
-   * Populate the fee intent with the fee information for link creation (10_000 ICP to fee treasury)
-   * @returns
-   */
-  populateFeeIntent(): void {
-    if (!this.#draftAction || this.#draftAction.intents.length < 2) {
-      throw new Error("Fee intent not found in action intents");
-    }
-
-    const icpPrincipal = Principal.fromText(ICP_LEDGER_CANISTER_ID);
-
-    const intent = this.#draftAction.intents.filter(
-      (i) =>
-        i.source_address_type === SharedAddressType.Creator &&
-        i.dest_address_type === SharedAddressType.Treasury,
-    )[0];
-    if (!intent) {
-      throw new Error("Fee intent not found in action intents");
-    }
-
-    intent.asset = {
-      address: icpPrincipal,
-      network_fee: ICP_LEDGER_FEE,
-      token_standard: SharedTokenStandard.ICRC2,
-    };
-    intent.amount = LINK_CREATION_FEE;
-    intent.source_address = this.#draftAction.creator;
-    intent.source_address_type = this.#draftAction.creator_address_type;
-    intent.dest_address = Principal.fromText(FEE_TREASURY_PRINCIPAL);
-    intent.dest_address_type = SharedAddressType.Treasury;
   }
 }

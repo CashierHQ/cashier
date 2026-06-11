@@ -1,4 +1,6 @@
 import {
+  type GateForUser,
+  type GetLinkDetailsResponseV3 as BackendGetLinkDetailsResponseV3,
   type GetLinkResponseV3 as BackendGetLinkResponseV3,
   type Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
@@ -18,17 +20,20 @@ export class LinkActionV3 {
   action?: SharedAction | undefined;
   icrc112_requests?: Icrc112Request[][];
   link_user_state?: LinkUserStateValue;
+  gates?: GateForUser[];
 
   constructor(
     link: SharedLink,
     action?: SharedAction | undefined,
     icrc112_requests?: Icrc112Request[][],
     link_user_state?: LinkUserStateValue,
+    gates?: GateForUser[],
   ) {
     this.link = link;
     this.action = action;
     this.icrc112_requests = icrc112_requests;
     this.link_user_state = link_user_state;
+    this.gates = gates;
   }
 }
 
@@ -64,5 +69,14 @@ export class LinkActionV3Mapper {
       icrc112_requests,
       link_user_state: linkUserState,
     };
+  }
+
+  static fromBackendGetLinkDetailsResponseV3(
+    response: BackendGetLinkDetailsResponseV3,
+  ): LinkActionV3 {
+    const base = LinkActionV3Mapper.fromBackendResponse(
+      response as BackendGetLinkResponseV3,
+    );
+    return { ...base, gates: response.gates };
   }
 }

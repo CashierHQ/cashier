@@ -1,6 +1,7 @@
 import type {
   CreateLinkInputV3 as BackendCreateLinkInputV3,
   CreateLinkResponseV3 as BackendCreateLinkResponseV3,
+  GateKey,
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { SharedActionMapper } from "$modules/actionTemplate/types/action";
@@ -13,6 +14,7 @@ import {
 } from "$modules/icrc112/types/icrc112Request";
 import type { LinkType as SharedLinkType } from "$shared";
 import { type Action as SharedAction, type Link as SharedLink } from "$shared";
+import type { Gate } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 /**
  * FE representation of CreateLinkInputV3 expected by the backend.
@@ -31,21 +33,24 @@ export type CreateLinkResponseV3 = {
   link: SharedLink;
   action: SharedAction;
   icrc112_requests?: Icrc112Requests | null;
+  gates: Gate[];
 };
 
 /**
- * Mapper for converting CreateLinkData and SharedAction to CreateLinkInputV3 argument for BE API calls.
+ * Mapper for converting a shared action to CreateLinkInputV3 argument for BE API calls.
  */
 export class CreateLinkInputV3Mapper {
   /**
-   * Convert CreateLinkData and SharedAction to CreateLinkInputV3 argument for backend API calls
+   * Convert SharedAction to CreateLinkInputV3 argument for backend API calls.
    * @param link - the SharedLink containing link details
    * @param action - the SharedAction containing action details
+   * @param gateKeys - optional gate keys to attach to the link
    * @returns Result containing CreateLinkInputV3 or an Error if conversion fails
    */
   static toBackendCreateLinkInputArgV3(
     link: SharedLink,
     action: SharedAction,
+    gateKeys: GateKey[] = [],
   ): BackendCreateLinkInputV3 {
     const beLinkType = SharedLinkTypeMapper.toBackendType(link.link_type);
     const beAction = SharedActionMapper.toBackendType(action);
@@ -55,6 +60,7 @@ export class CreateLinkInputV3Mapper {
       link_type: beLinkType,
       max_use: BigInt(link.max_use ?? 1),
       action: beAction,
+      gate_keys: gateKeys.length > 0 ? [gateKeys] : [],
     };
 
     return inputDto;
@@ -86,6 +92,7 @@ export class CreateLinkResponseV3Mapper {
       link,
       action,
       icrc112_requests,
+      gates: response.gates,
     };
   }
 }

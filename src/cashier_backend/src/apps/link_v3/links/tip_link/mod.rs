@@ -87,6 +87,7 @@ impl LinkV3Instance for TipLink {
         token_fee_service: F,
         token_standard_service: S,
         token_balance_service: B,
+        gate_count: u64,
     ) -> Result<LinkCreateActionResult, CanisterError>
     where
         M: TransactionManagerV3 + 'static,
@@ -109,6 +110,7 @@ impl LinkV3Instance for TipLink {
                         token_fee_service,
                         token_standard_service,
                         token_balance_service,
+                        gate_count,
                     )
                     .await
             }
@@ -123,6 +125,7 @@ impl LinkV3Instance for TipLink {
                         token_fee_service,
                         token_standard_service,
                         token_balance_service,
+                        gate_count,
                     )
                     .await
             }
@@ -137,6 +140,7 @@ impl LinkV3Instance for TipLink {
                         token_fee_service,
                         token_standard_service,
                         token_balance_service,
+                        gate_count,
                     )
                     .await
             }
@@ -325,6 +329,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -441,6 +446,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await;
 
@@ -485,6 +491,7 @@ mod tests {
                 token_fee_service,
                 token_standard_service,
                 token_balance_service,
+                0,
             )
             .await
             .expect("create action should succeed");
@@ -502,9 +509,10 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.state, LinkState::Active);
+        assert!(processed.process_action_result.is_success);
+        assert_eq!(processed.link.state, LinkState::Created);
     }
 }

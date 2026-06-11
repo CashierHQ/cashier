@@ -10,6 +10,7 @@
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
+  import { formatActionError } from "$modules/transactionCart/utils/formatActionError";
   import {
     FlowDirection,
     type ActionSource,
@@ -135,10 +136,10 @@
         source.onSuccess?.(result);
         onCloseDrawer?.();
       } else {
-        errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${result.errors.join(", ")}`;
+        errorMessage = formatActionError(result.errors, locale.t);
       }
     } catch (e) {
-      errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${(e as Error).message}`;
+      errorMessage = formatActionError([(e as Error).message], locale.t);
     }
   }
 

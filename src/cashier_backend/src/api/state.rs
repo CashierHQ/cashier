@@ -17,9 +17,9 @@ use transaction_manager::{
 use crate::{
     apps::{
         auth::AuthService,
+        gate_service::service::{GateAppService, GateServiceWrapper},
         link_v2::service::LinkV2Service,
         link_v3::service::LinkV3Service,
-        request_lock::RequestLockService,
         settings::SettingsService,
         token_balance::service::TokenBalanceService,
         token_fee::{fetcher::IcrcTokenFetcher, service::TokenFeeService},
@@ -34,6 +34,9 @@ use crate::{
 thread_local! {
     static TOKEN_STORAGE_CANISTER_ID: RefCell<Principal> =
         const { RefCell::new(Principal::anonymous()) };
+
+    static GATE_SERVICE_CANISTER_ID: RefCell<Principal> =
+        const { RefCell::new(Principal::anonymous()) };
 }
 
 /// The state of the canister
@@ -42,7 +45,6 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub link_v3_service: LinkV3Service<ThreadlocalRepositories>,
     pub link_v2_service: LinkV2Service<ThreadlocalRepositories>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
-    pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
     pub transaction_manager_v2: IcTransactionManagerV2<E>,
     pub transaction_manager_v3: IcTransactionManagerV3<E>,
@@ -50,6 +52,7 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub token_standard_service:
         TokenStandardService<ThreadlocalRepositories, TokenStorageService, E>,
     pub token_balance_service: TokenBalanceService,
+    pub gate_service: GateAppService<ThreadlocalRepositories, GateServiceWrapper>,
     pub validator_service: IcValidatorService<IcTransactionValidator>,
     pub executor_service: IcExecutorService<IcTransactionExecutor>,
     pub env: E,
@@ -77,18 +80,22 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let validator_service = IcValidatorService::new(IcTransactionValidator);
         let executor_service = IcExecutorService::new(IcTransactionExecutor);
 
+        let gate_service_canister_id = GATE_SERVICE_CANISTER_ID.with(|id| *id.borrow());
+        let gate_service =
+            GateAppService::new(&*repo, GateServiceWrapper::new(gate_service_canister_id));
+
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             link_v2_service,
             link_v3_service,
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
-            request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
             transaction_manager_v2,
             transaction_manager_v3,
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
             validator_service,
             executor_service,
             env,
@@ -105,6 +112,17 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
         self.token_standard_service
             .set_token_storage_canister_id(canister_id);
+    }
+
+    /// Sets the gate service canister ID
+    /// # Arguments
+    /// * `canister_id` - The principal ID of the gate service canister
+    pub fn set_gate_service_canister_id(&mut self, canister_id: Principal) {
+        GATE_SERVICE_CANISTER_ID.with(|id| {
+            *id.borrow_mut() = canister_id;
+        });
+
+        self.gate_service.set_canister_id(canister_id);
     }
 }
 

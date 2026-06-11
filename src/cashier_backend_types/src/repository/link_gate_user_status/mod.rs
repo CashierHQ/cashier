@@ -1,0 +1,46 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use candid::Principal;
+use cashier_macros::storable;
+use gate_service_types::GateStatus;
+use ic_mple_structures::Codec;
+
+/// Cached record of whether a specific user has opened a specific gate for a link.
+/// Key: "LINK#{link_id}#USER#{user_id}#GATE#{gate_id}"
+#[derive(Debug, Clone)]
+#[storable]
+pub struct LinkGateUserStatus {
+    pub link_id: String,
+    pub user_id: Principal,
+    pub gate_id: String,
+    pub status: GateStatus,
+}
+
+#[storable]
+pub enum LinkGateUserStatusCodec {
+    V1(LinkGateUserStatus),
+}
+
+impl Codec<LinkGateUserStatus> for LinkGateUserStatusCodec {
+    fn decode(source: Self) -> LinkGateUserStatus {
+        match source {
+            LinkGateUserStatusCodec::V1(v) => v,
+        }
+    }
+
+    fn encode(dest: LinkGateUserStatus) -> Self {
+        LinkGateUserStatusCodec::V1(dest)
+    }
+}
+
+/// Build the composite storage key for a (link, user, gate) triplet.
+/// # Arguments
+/// * `link_id` - The ID of the link.
+/// * `user_id` - The Principal of the user.
+/// * `gate_id` - The ID of the gate.
+/// # Returns
+/// A string key in the format "LINK#{link_id}#USER#{user_id}#GATE#{gate_id}".
+pub fn link_gate_user_status_key(link_id: &str, user_id: Principal, gate_id: &str) -> String {
+    format!("LINK#{link_id}#USER#{user_id}#GATE#{gate_id}")
+}

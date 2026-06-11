@@ -18,7 +18,7 @@ dfx_local_start bitcoin="false": dfx_prepare_env dfx_local_stop
   fi
 
   # Start the local dfx server
-  dfx start $BITCOIN_FLAGS --background --clean --host 127.0.0.1:8000 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
+  dfx start $BITCOIN_FLAGS --background --clean --host 127.0.0.1:8000 --artificial-delay 2000 2> "{{DFX_LOGFILE}}"
 
   # Add cycles to the wallet
   wallet_principal=$(dfx identity get-wallet) && dfx ledger fabricate-cycles --t 10000000 --canister $wallet_principal
@@ -39,16 +39,14 @@ dfx_local_stop:
 # backend_log_filter: log filter string for the backend canister
 # token_storage_log_filter: log filter string for the token_storage canister
 [group('dfx')]
-dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="" mode="": 
   #!/usr/bin/env bash
   set -e
-  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
+  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}} {{mode}}
+  just dfx_deploy_gate {{owner}} {{network}} {{backend_log_filter}} {{mode}}
+  just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}} {{mode}}
 
-  export TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
-
-  just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
-
-  dfx deploy cashier_frontend_new {{network}} --upgrade-unchanged
+  dfx deploy cashier_frontend_new {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Starts the local dfx server and deploys the canisters
 # params bitcoin: "true" to enable bitcoin node (for ckBTC flows), defaults to "false"
@@ -59,12 +57,11 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
+  just dfx_local_create_canisters
+
   just dfx_deploy "${OWNER}"
 
-  cashier_backend_id=$(dfx canister id cashier_backend)
-  just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
-
-  dfx deploy internet_identity
+  just dfx_local_deploy_internet_identity
 
   # Deploy token ledgers
   just dfx_local_deploy_icp_ledger
@@ -83,6 +80,43 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
 
   # Deploy ckBTC canisters
   just dfx_local_deploy_ckbtc_canisters "${OWNER}" "{{CKBTC_LEDGER_ID}}" "{{CKBTC_MINTER_ID}}" "{{CKBTC_KYT_ID}}"
+
+
+# Creates the canisters locally, without deploying code or init args.
+[private]
+dfx_local_create_canisters:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx canister create token_storage
+  dfx canister create gate_service
+  dfx canister create cashier_backend
+
+
+# Deploy Internet Identity canisters locally, with dev-friendly init args and settings (fetch_root_key, dev_csp, etc).
+[private]
+dfx_local_deploy_internet_identity:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx canister create internet_identity
+  dfx canister create internet_identity_frontend
+
+  # Backend: auth logic only (backend-only dev wasm). No init arg required locally.
+  dfx deploy internet_identity --upgrade-unchanged
+
+  port=$(dfx info webserver-port)
+  ii_backend=$(dfx canister id internet_identity)
+  ii_frontend=$(dfx canister id internet_identity_frontend)
+
+  # Frontend: login UI, wired to the backend. fetch_root_key + dev_csp required for local HTTP.
+  dfx deploy internet_identity_frontend --argument "(record {
+      backend_canister_id = principal \"${ii_backend}\";
+      backend_origin = \"http://${ii_backend}.localhost:${port}\";
+      related_origins = opt vec { \"http://${ii_frontend}.localhost:${port}\" };
+      fetch_root_key = opt true;
+      dev_csp = opt true;
+  })" --upgrade-unchanged
 
 
 # Deploy ICRC token to local networks
@@ -114,6 +148,7 @@ dfx_local_info:
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
+  internet_identity_frontend_id=$(dfx canister id internet_identity_frontend 2>/dev/null || echo "not deployed")
   gate_service_id=$(dfx canister id gate_service)
 
   # Index canister IDs (may not be deployed yet)
@@ -133,7 +168,8 @@ dfx_local_info:
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
-  echo "internet_identity id: $internet_identity_id"
+  echo "internet_identity (backend) id: $internet_identity_id"
+  echo "internet_identity_frontend id: $internet_identity_frontend_id"
   echo "gate_service_id: $gate_service_id"
 
   echo "icp_index id: $icp_index_id"
@@ -147,7 +183,8 @@ dfx_local_info:
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
-  echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
+  # II login UI is served by the FRONTEND canister (certified domain, not .raw) — this is the identity provider URL.
+  echo "internet_identity LOGIN url: http://$internet_identity_frontend_id.localhost:$dfx_webserver_port"
   echo "gate_service url: http://$gate_service_id.raw.localhost:$dfx_webserver_port"
 
 # Airdrop tokens to the target principal
@@ -199,26 +236,33 @@ create_canisters network cycles:
 
 
 # Deploys the backend canister
-# params owner: principal id of the owner
+# params 
+# owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
+# mode: install, reinstall or upgrade
 # log_filter: log filter string (default for local and dev)
-[private]
-dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
+[group('dfx')]
+dfx_deploy_backend owner network="" log_filter="global,cashier=debug" mode="":
   #!/usr/bin/env bash
   set -e
+
+  TOKEN_STORAGE_CANISTER_ID=$(dfx canister id token_storage {{network}})
+  GATE_SERVICE_CANISTER_ID=$(dfx canister id gate_service {{network}})
 
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
-  })" {{network}} --upgrade-unchanged
+      gate_service_canister_id=principal \"${GATE_SERVICE_CANISTER_ID}\";
+  })" {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Deploys the token_storage canister
 # params 
 # owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
+# mode: install, reinstall or upgrade
 # log_filter: log filter string (default for local and dev)
-[private]
+[group('dfx')]
 dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug" mode="":
   #!/usr/bin/env bash
   set -e
@@ -234,17 +278,21 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
 # Deploy Gate canister
 # params:
 # owner: principal id of owner
-# cashier_backend_id: canister id of cashier BE
-[private]
-dfx_deploy_gate owner cashier_backend_id:
+# network: dfx network flag, e.g. --network=dev
+# mode: install, reinstall or upgrade
+# log_filter: log filter string (default for local and dev)
+[group('dfx')]
+dfx_deploy_gate owner network="" log_filter="global,cashier=debug" mode="":
   #!/usr/bin/env bash
   set -e
 
+  CASHIER_BACKEND_CANISTER_ID=$(dfx canister id cashier_backend {{network}})
+
   dfx deploy gate_service --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
-      permissions=opt (vec { record { principal \"{{cashier_backend_id}}\"; vec { variant { GateCreate } } } });
-  })"
+      permissions=opt (vec { record { principal \"${CASHIER_BACKEND_CANISTER_ID}\"; vec { variant { GateCreate } } } });
+  })" {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Deploy ICRC1 token ledger
 # params minter: principal ID of the ledger minter

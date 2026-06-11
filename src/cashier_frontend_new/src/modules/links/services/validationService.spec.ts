@@ -10,10 +10,8 @@ import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { validationService } from "$modules/links/services/validationService";
-import {
-  CreateLinkAsset,
-  CreateLinkData,
-} from "$modules/creationLink/types/createLinkData";
+import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+import type { CreateLinkData } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
 describe("validateRequiredAmount", () => {
   beforeEach(() => {
@@ -22,12 +20,12 @@ describe("validateRequiredAmount", () => {
 
   it("should return an error if no assets are provided", () => {
     const mockWalletTokens: TokenWithPriceAndBalance[] = [];
-    const createLinkData: CreateLinkData = new CreateLinkData({
+    const createLinkData: CreateLinkData = {
       title: "testLink",
       linkType: LinkType.TIP,
       assets: [],
       maxUse: 2,
-    });
+    };
 
     const result = validationService.validateRequiredAmount(
       createLinkData,
@@ -41,12 +39,12 @@ describe("validateRequiredAmount", () => {
 
   it("should return an error if wallet tokens data is not available", () => {
     const mockWalletTokens: TokenWithPriceAndBalance[] = [];
-    const createLinkData: CreateLinkData = new CreateLinkData({
+    const createLinkData: CreateLinkData = {
       title: "testLink",
       linkType: LinkType.TIP,
       assets: [new CreateLinkAsset("0xtoken1", 1000n)],
       maxUse: 2,
-    });
+    };
 
     const result = validationService.validateRequiredAmount(
       createLinkData,
@@ -74,12 +72,12 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    const createLinkData: CreateLinkData = new CreateLinkData({
+    const createLinkData: CreateLinkData = {
       title: "testLink",
       linkType: LinkType.TIP,
       assets: [new CreateLinkAsset("0xtoken2", 1_000_000n)],
       maxUse: 2,
-    });
+    };
 
     const result = validationService.validateRequiredAmount(
       createLinkData,
@@ -120,12 +118,12 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    const createLinkData: CreateLinkData = new CreateLinkData({
+    const createLinkData: CreateLinkData = {
       title: "testLink",
       linkType: LinkType.TIP,
       assets: [new CreateLinkAsset("0xtoken1", 1_000_000n)],
       maxUse: 2,
-    });
+    };
 
     const result = validationService.validateRequiredAmount(
       createLinkData,
@@ -166,12 +164,12 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    const createLinkData: CreateLinkData = new CreateLinkData({
+    const createLinkData: CreateLinkData = {
       title: "testLink",
       linkType: LinkType.TIP,
       assets: [new CreateLinkAsset("0xtoken1", 1_000_000n)],
       maxUse: 2,
-    });
+    };
 
     const result = validationService.validateRequiredAmount(
       createLinkData,

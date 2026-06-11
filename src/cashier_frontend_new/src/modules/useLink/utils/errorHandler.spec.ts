@@ -11,7 +11,7 @@ import {
   shouldRedirectTo404,
   shouldRedirectErrorTo404,
 } from "$modules/useLink/utils/errorHandler";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
 import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import { ActionState } from "$modules/links/types/action/actionState";

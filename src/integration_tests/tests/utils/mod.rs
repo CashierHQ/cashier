@@ -125,11 +125,13 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     std::fs::create_dir_all(template_dir).unwrap();
 
     // Build PocketIC with state_dir to persist canister state to disk
-    let client = get_pocket_ic_client()
-        .await
-        .with_state_dir(template_dir.to_path_buf())
-        .build_async()
-        .await;
+    let client = Arc::new(
+        get_pocket_ic_client()
+            .await
+            .with_state_dir(template_dir.to_path_buf())
+            .build_async()
+            .await,
+    );
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
@@ -146,6 +148,112 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     )
     .await;
 
+    // Deploy extra generic ICRC2 ledgers (dynamic principals) so token-basket tests can use
+    // baskets with many distinct assets. They are registered in token_storage below and added
+    // to `icrc_token_map` so the fixtures can resolve them by symbol.
+    let mut extra_basket_tokens: Vec<(String, Principal)> = Vec::new();
+    for symbol in constant::EXTRA_BASKET_TOKENS {
+        let pid = token_icrc::deploy_single_icrc_ledger_canister(
+            &client,
+            format!("Basket Token {symbol}"),
+            symbol.to_string(),
+            8,
+            10_000,
+            None,
+        )
+        .await;
+        extra_basket_tokens.push((symbol.to_string(), pid));
+    }
+
+    let mut registry_tokens = vec![
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::ICP_TOKEN.to_string(),
+            name: "Internet Computer".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap()),
+                fee: Nat::from(10u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKBTC_ICRC_TOKEN.to_string(),
+            name: "Chain Key Bitcoin".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_ETH_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap()),
+                fee: Nat::from(2_000_000_000_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKETH_ICRC_TOKEN.to_string(),
+            name: "Chain Key Ethereum".to_string(),
+            decimals: 18,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(CK_USDC_PRINCIPAL).unwrap(),
+                index_id: Some(Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap()),
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
+            name: "Chain Key USD Coin".to_string(),
+            decimals: 6,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+        RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: Principal::from_text(TESTICP_PRINCIPAL).unwrap(),
+                index_id: None,
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1],
+            },
+            symbol: constant::TESTICP_ICRC_TOKEN.to_string(),
+            name: "Test Internet Computer".to_string(),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        },
+    ];
+    for (symbol, pid) in extra_basket_tokens.iter() {
+        registry_tokens.push(RegistryToken {
+            details: ChainTokenDetails::IC {
+                ledger_id: *pid,
+                index_id: None,
+                fee: Nat::from(10_000u64),
+                supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
+            },
+            symbol: symbol.clone(),
+            name: format!("Basket Token {symbol}"),
+            decimals: 8,
+            enabled_by_default: true,
+            is_rune: None,
+            rune_info: None,
+        });
+    }
+
     let token_storage_principal = deploy_canister(
         &client,
         None,
@@ -153,102 +261,9 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
         &(TokenStorageInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::TokenStorageAdmin.get_principal(),
-            tokens: Some(vec![
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(ICP_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::ICP_TOKEN.to_string(),
-                    name: "Internet Computer".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_BTC_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKBTC_ICRC_TOKEN.to_string(),
-                    name: "Chain Key Bitcoin".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_ETH_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap(),
-                        ),
-                        fee: Nat::from(2_000_000_000_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKETH_ICRC_TOKEN.to_string(),
-                    name: "Chain Key Ethereum".to_string(),
-                    decimals: 18,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(CK_USDC_PRINCIPAL).unwrap(),
-                        index_id: Some(
-                            Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
-                        ),
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1, IcrcStandard::ICRC2],
-                    },
-                    symbol: constant::CKUSDC_ICRC_TOKEN.to_string(),
-                    name: "Chain Key USD Coin".to_string(),
-                    decimals: 6,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-                RegistryToken {
-                    details: ChainTokenDetails::IC {
-                        ledger_id: Principal::from_text(TESTICP_PRINCIPAL).unwrap(),
-                        index_id: None,
-                        fee: Nat::from(10_000u64),
-                        supported_standards: vec![IcrcStandard::ICRC1],
-                    },
-                    symbol: constant::TESTICP_ICRC_TOKEN.to_string(),
-                    name: "Test Internet Computer".to_string(),
-                    decimals: 8,
-                    enabled_by_default: true,
-                    is_rune: None,
-                    rune_info: None,
-                },
-            ]),
+            tokens: Some(registry_tokens),
             ckbtc_minter_id: ckbtc_minter_principal,
             omnity_bitcoin_id: Principal::management_canister(),
-        }),
-    )
-    .await;
-
-    let cashier_backend_principal = deploy_canister(
-        &client,
-        None,
-        get_cashier_backend_canister_bytecode(),
-        &(CashierBackendInitData {
-            log_settings: Some(log.clone()),
-            owner: TestUser::CashierBackendAdmin.get_principal(),
-            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
-            token_storage_canister_id: token_storage_principal,
-            token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
         }),
     )
     .await;
@@ -258,15 +273,41 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
         None,
         get_gate_service_canister_bytecode(),
         &(GateServiceInitData {
-            log_settings: Some(log),
+            log_settings: Some(log.clone()),
             owner: TestUser::GateServiceAdmin.get_principal(),
-            permissions: Some(HashMap::from([(
-                cashier_backend_principal,
-                vec![gate_service_types::auth::Permission::GateCreate],
-            )])),
+            permissions: None,
         }),
     )
     .await;
+
+    let cashier_backend_principal = deploy_canister(
+        &client,
+        None,
+        get_cashier_backend_canister_bytecode(),
+        &(CashierBackendInitData {
+            log_settings: Some(log),
+            owner: TestUser::CashierBackendAdmin.get_principal(),
+            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
+            token_storage_canister_id: token_storage_principal,
+            token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
+            gate_service_canister_id: gate_service_principal,
+        }),
+    )
+    .await;
+
+    // Grant cashier_backend permission to create gates on gate_service.
+    GateServiceBackendClient::new(PocketIcClient::from_client(
+        client.clone(),
+        gate_service_principal,
+        TestUser::GateServiceAdmin.get_principal(),
+    ))
+    .admin_permissions_add(
+        cashier_backend_principal,
+        vec![gate_service_types::auth::Permission::GateCreate],
+    )
+    .await
+    .expect("admin_permissions_add call failed")
+    .expect("admin_permissions_add returned error");
 
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
 
@@ -327,6 +368,9 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     icrc_token_map.insert(constant::CKUSDC_ICRC_TOKEN.to_string(), ck_usdc_principal);
     icrc_token_map.insert(constant::TESTICP_ICRC_TOKEN.to_string(), test_icp_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
+    for (symbol, pid) in extra_basket_tokens.iter() {
+        icrc_token_map.insert(symbol.clone(), *pid);
+    }
 
     let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
         &client,
@@ -338,7 +382,9 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     .await;
 
     // Drop PocketIC instance - state is persisted in template_dir
-    client.drop().await;
+    if let Ok(c) = Arc::try_unwrap(client) {
+        c.drop().await;
+    }
 
     SharedPrincipals {
         token_storage: token_storage_principal,

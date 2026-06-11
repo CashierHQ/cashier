@@ -2,6 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
+use crate::{
+    apps::{link_reservation::LinkReservationGuard, request_lock::RequestLockGuard},
+    repositories::ThreadlocalRepositories,
+};
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
@@ -11,22 +15,25 @@ use cashier_backend_types::{
             ProcessActionResponseV3,
         },
         link::{
-            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3, GetLinkResponseV3,
-            GetLinksResponseV3, SyncAssetBalanceCacheResponseV3,
+            CreateLinkInputV3, CreateLinkResponseV3, DisableLinkResponseV3,
+            GetLinkDetailsResponseV3, GetLinkResponseV3, GetLinksResponseV3,
+            SyncAssetBalanceCacheResponseV3,
         },
     },
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
 };
+use cashier_common::constant::RESERVATION_TTL_NS;
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
-/// Creates a new link V3
+/// Creates a new link V3, optionally with one or more gates.
 /// # Arguments
-/// * `input` - Link creation data
+/// * `input` - Link creation data, including optional `gate_keys`
 /// # Returns
-/// * `Ok(CreateLinkResponseV3)` - The created link data
+/// * `Ok(CreateLinkResponseV3)` - The created link data and any registered gates
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn user_create_link_v3(
@@ -35,12 +42,12 @@ async fn user_create_link_v3(
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
@@ -48,8 +55,9 @@ async fn user_create_link_v3(
     let key = RequestLockKey::CreateLink {
         user_principal: caller,
     };
+    let gate_keys = input.gate_keys.clone();
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    let lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
     let res = link_v3_service
         .create_link(
             input,
@@ -60,11 +68,25 @@ async fn user_create_link_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
         )
         .await;
-    let _ = request_lock_service.drop(&key);
+    // Release before the gate-add await below (current behavior); Drop also runs via
+    // ic0.call_on_cleanup if create_link's callback traps, so the lock cannot leak.
+    drop(lock_guard);
 
-    res
+    let mut link_response = res?;
+
+    link_response.gates = if let Some(keys) = gate_keys.filter(|v| !v.is_empty()) {
+        let mut gate_service = get_state().gate_service;
+        gate_service
+            .add_gates_for_link(&link_response.link.id, keys)
+            .await?
+    } else {
+        vec![]
+    };
+
+    Ok(link_response)
 }
 
 /// Creates a new action V3.
@@ -80,12 +102,12 @@ async fn user_create_action_v3(
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
     let token_standard_service = get_state().token_standard_service;
     let token_balance_service = get_state().token_balance_service;
+    let gate_service = get_state().gate_service;
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
@@ -96,8 +118,10 @@ async fn user_create_action_v3(
         action_type: input.action.action_type.clone().to_string(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
-    let res = link_v3_service
+    // Released by Drop on every exit path, including a trap in the awaited callback.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
+
+    link_v3_service
         .create_action(
             &input.link_id,
             input.action,
@@ -108,11 +132,10 @@ async fn user_create_action_v3(
             token_fee_service,
             token_standard_service,
             token_balance_service,
+            gate_service,
+            0,
         )
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Processes a created action V3.
@@ -128,7 +151,6 @@ async fn user_process_action_v3(
     info!("[user_process_action_v3]");
     debug!("[user_process_action_v3] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let validator_service = get_state().validator_service;
@@ -136,25 +158,52 @@ async fn user_process_action_v3(
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
+    let now = get_state().env.time();
+
+    // Resolve the link context for the reservation (sync, read-only).
+    let action_data = link_v3_service
+        .action_service
+        .get_action_data(&input.action_id)
+        .map_err(|_| CanisterError::NotFound("Action not found".to_string()))?;
+    let link = link_v3_service
+        .link_v3_repository
+        .get(&action_data.action.link_id)
+        .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+    let link_id = link.id.clone();
+    let action_type = action_data.action.action_type.clone();
+
     let key = RequestLockKey::ProcessAction {
         user_principal: caller,
         action_id: input.action_id.clone(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
-    let res = link_v3_service
+    // 1) Anti-spam: reject a concurrent duplicate of THIS request (binary lock).
+    //    Declared first -> drops last, so the lock releases after the reservation.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, now)?;
+    // 2) Capacity: reserve one of the link's uses. On Err the `?` unwinds and the lock
+    //    guard drops. Both guards release on every exit path - success, error, or a
+    //    callback trap (ic0.call_on_cleanup) - with the TTL as the final backstop.
+    let _reservation_guard = LinkReservationGuard::reserve(
+        &ThreadlocalRepositories,
+        &link_id,
+        &input.action_id,
+        action_type,
+        link.max_use,
+        link.use_count,
+        now,
+        RESERVATION_TTL_NS,
+    )?;
+
+    link_v3_service
         .process_action(
-            msg_caller(),
+            caller,
             canister_id,
             &input.action_id,
             transaction_manager_v3,
             validator_service,
             executor_service,
         )
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Retrieves a paginated list of links for the caller.
@@ -233,4 +282,66 @@ fn user_disable_link_v3(link_id: &str) -> Result<DisableLinkResponseV3, Canister
 
     let mut link_v3_service = get_state().link_v3_service;
     link_v3_service.disable_link(msg_caller(), link_id)
+}
+
+/// Opens a gate for the caller on the specified link.
+/// The caller must provide the gate ID (obtained from `user_get_link_details_v3`) and the
+/// correct gate key. On success the open status is cached locally so subsequent
+/// `user_create_action_v3` calls do not need an additional inter-canister round-trip.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link
+/// * `gate_id` - The unique identifier of the gate to open
+/// * `gate_key` - The key to open the gate (e.g. the password)
+/// # Returns
+/// * `Ok(OpenGateSuccessResult)` - Gate and updated user status
+/// * `Err(CanisterError)` - If the key is wrong or the gate is not found
+#[update(guard = "is_not_anonymous")]
+async fn user_open_link_gate(
+    link_id: String,
+    gate_id: String,
+    gate_key: GateKey,
+) -> Result<OpenGateSuccessResult, CanisterError> {
+    info!("[user_open_link_gate]");
+    debug!("[user_open_link_gate] link_id: {link_id}, gate_id: {gate_id}");
+
+    let caller = msg_caller();
+    let mut gate_service = get_state().gate_service;
+    gate_service
+        .open_link_gate(&link_id, &gate_id, caller, gate_key)
+        .await
+}
+
+/// Returns link details together with gate metadata and the caller's gate status.
+/// # Arguments
+/// * `link_id` - The unique identifier of the link
+/// * `options` - Optional parameters including action type to include in response
+/// # Returns
+/// * `Ok(GetLinkDetailsResponseV3)` - Link data with gate info
+/// * `Err(CanisterError)` - If link not found or access denied
+#[query(guard = "is_not_anonymous")]
+async fn user_get_link_details_v3(
+    link_id: String,
+    options: Option<GetLinkOptions>,
+) -> Result<GetLinkDetailsResponseV3, CanisterError> {
+    info!("[user_get_link_details_v3]");
+    debug!("[user_get_link_details_v3] link_id: {link_id}");
+
+    let caller = msg_caller();
+    let link_v3_service = get_state().link_v3_service;
+    let transaction_manager_v3 = get_state().transaction_manager_v3;
+    let gate_service = get_state().gate_service;
+
+    let base = link_v3_service
+        .get_link_details(caller, &link_id, options, transaction_manager_v3)
+        .await?;
+
+    let gates = gate_service.get_gates_for_link(&link_id, caller)?;
+
+    Ok(GetLinkDetailsResponseV3 {
+        link: base.link,
+        action: base.action,
+        icrc112_requests: base.icrc112_requests,
+        link_user_state: base.link_user_state,
+        gates,
+    })
 }

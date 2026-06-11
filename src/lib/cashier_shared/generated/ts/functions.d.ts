@@ -13,21 +13,41 @@
  *
  * To add/modify fee logic:
  * 1. Edit THIS file only
- * 2. Run `npm run generate`
+ * 2. Run `pnpm run generate`
  * 3. Both TS and Rust code will be updated
  */
 import { IntentParticipants, TokenStandard } from './types.js';
+/**
+ * Link creation fee in ICP e8s.
+ */
+export declare function getLinkCreationFeeAmount(): bigint;
+/**
+ * Gate creation fee in ICP e8s.
+ */
+export declare function getGateCreateFeeAmount(): bigint;
+/**
+ * Gate open fee in ICP e8s.
+ */
+export declare function getGateOpenFeeAmount(): bigint;
+/**
+ * Calculate the total gate fee for all gates on a link.
+ *
+ * Formula:
+ * gate_count * (gate_create_fee + max_use * gate_open_fee)
+ */
+export declare function calculateGateFeeAmount(gateCount?: number, maxUse?: number, gateCreateFee?: bigint, gateOpenFee?: bigint): bigint;
 /**
  * Calculate the total amount for an intent based on participants.
  *
  * Formula by participant type:
  * - CreatorToTreasury: link_creation_fee (fee to create the link)
  * - CreatorToLink: user_input_amount * max_use (funding the link)
+ * - CreatorToGate: gate_count * (gate_create_fee + max_use * gate_open_fee)
  * - UserToLink: user_input_amount (user sending to link)
  * - LinkToUser: user_input_amount (user receiving from link)
  * - LinkToCreator: link_max_asset_amount (withdrawal/refund)
  */
-export declare function calculateIntentTotalAmount(participants: IntentParticipants, userInputAmount?: bigint, maxUse?: number, linkCreationFee?: bigint, linkMaxAssetAmount?: bigint): bigint;
+export declare function calculateIntentTotalAmount(participants: IntentParticipants, userInputAmount?: bigint, maxUse?: number, linkCreationFee?: bigint, linkMaxAssetAmount?: bigint, gateCount?: number, gateCreateFee?: bigint, gateOpenFee?: bigint): bigint;
 /**
  * Calculate the total network fee for an intent.
  *
@@ -39,6 +59,7 @@ export declare function calculateIntentTotalAmount(participants: IntentParticipa
  * Formula by participant type:
  * - CreatorToTreasury: inbound only (1x or 2x), no outbound
  * - CreatorToLink: inbound (1x or 2x) + outbound per use
+ * - CreatorToGate: inbound only (1x or 2x), no outbound
  * - UserToLink: inbound (1x or 2x) + 1x outbound
  * - LinkToUser: no inbound + 1x outbound
  * - LinkToCreator: no inbound + 1x outbound
@@ -69,6 +90,7 @@ export declare function calculateIntentOutboundNetworkFee(participants: IntentPa
  * Formula by participant type:
  * - CreatorToTreasury: total_amount + network_fee (pays everything)
  * - CreatorToLink: network_fee only (amount goes to link)
+ * - CreatorToGate: total_amount + network_fee (pays everything)
  * - UserToLink: network_fee only
  * - LinkToUser: 0 (free to receive)
  * - LinkToCreator: network_fee (pays withdrawal fee)
@@ -83,6 +105,9 @@ export interface FeeInput {
     user_input_amount?: bigint | string;
     max_use?: number;
     link_creation_fee?: bigint | string;
+    gate_create_fee?: bigint | string;
+    gate_open_fee?: bigint | string;
+    gate_count?: number;
     asset_network_fee: bigint | string;
     link_max_asset_amount?: bigint | string;
 }
@@ -108,6 +133,7 @@ export interface MaxAssetAmountInput {
     ledger_fee: bigint;
     max_use: number;
     link_creation_fee?: bigint;
+    gate_fee?: bigint;
     fee_token_standard?: TokenStandard;
     is_fee_token?: boolean;
 }

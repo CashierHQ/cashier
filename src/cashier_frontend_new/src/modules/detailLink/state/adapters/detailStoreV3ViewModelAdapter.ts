@@ -1,5 +1,6 @@
 import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
 import { type GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
+import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { ActionMapper } from "$modules/links/types/action/action";
 import {
   ActionTypeMapper,
@@ -82,6 +83,10 @@ export class DetailStoreV3ViewModelAdapter implements GenericDetailStoreVM {
 
   async syncAssetBalanceCache() {
     await this.detailStore.syncAssetBalanceCache();
+  }
+
+  get gates(): GateForUser[] {
+    return this.detailStore.gates;
   }
 
   async refreshAsync() {

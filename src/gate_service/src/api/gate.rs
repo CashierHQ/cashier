@@ -94,19 +94,34 @@ fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, Ga
 }
 
 #[update(guard = "is_not_anonymous")]
-/// Opens a gate for the caller.
-/// The caller (opener) provides the key to open the gate.
-/// If the key is valid, the gate will be opened, and an `OpenGateSuccessResult` will be returned.
+/// Opens a gate for a user.
+/// The caller provides the key to open the gate.
+/// Callers with `GateCreate` permission may open a gate on behalf of an explicit `user`
+/// principal; otherwise the caller itself is treated as the user.
 /// # Arguments
 /// * `gate_id`: The ID of the gate to be opened.
 /// * `key`: The key provided by the caller to open the gate.
+/// * `user`: The principal of the user for whom the gate is being opened.
 /// # Returns
 /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
-/// * `Err(String)`: If there is an error during gate opening.
+/// * `Err(GateServiceError)`: If there is an error during gate opening.
 async fn open_gate(
     gate_id: String,
     key: GateKey,
+    user: Principal,
 ) -> Result<OpenGateSuccessResult, GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    // Only principals with GateCreate permission may open gates on behalf of others.
+    let effective_user = if state
+        .auth_service
+        .check_has_permission(&caller, Permission::GateCreate)
+        .is_ok()
+    {
+        user
+    } else {
+        caller
+    };
     let mut gate_service = get_state().gate_service;
-    gate_service.open_gate(&gate_id, key, msg_caller()).await
+    gate_service.open_gate(&gate_id, key, effective_user).await
 }

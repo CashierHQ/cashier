@@ -76,7 +76,7 @@ export class SharedLinkMapper {
   }
 
   /**
-   * (De)serialization functions for TempLink
+   * (De)serialization functions for link templates
    */
   static serde: DevalueSerde = {
     serialize: {
