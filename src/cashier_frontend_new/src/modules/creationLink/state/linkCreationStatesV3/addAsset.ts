@@ -1,7 +1,7 @@
 import { locale } from "$lib/i18n";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
-import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -105,7 +105,7 @@ export class AddAssetStateV3 implements LinkCreationStateV3 {
       throw new Error(`Validation failed: ${errorMessage}`);
     }
 
-    this.#linkStore.state = new LockStateV3(this.#linkStore);
+    this.#linkStore.state = new PreviewStateV3(this.#linkStore);
   }
 
   // Go back to the link type selection state

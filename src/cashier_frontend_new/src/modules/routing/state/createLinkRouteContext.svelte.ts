@@ -39,16 +39,22 @@ export function createLinkRouteContext({
 
   $effect(() => {
     if (draftLinkId && context.authState.isReady) {
-      const draftLink = draftLinkService.getDraftLink(draftLinkId);
+      try {
+        const draftLink = draftLinkService.getDraftLink(draftLinkId);
 
-      if (draftLink) {
-        const store = new LinkCreationStoreV3(draftLink);
-        context.setLinkCreationStoreV3(store);
-      } else {
+        if (draftLink) {
+          const store = new LinkCreationStoreV3(draftLink);
+          context.setLinkCreationStoreV3(store);
+        } else {
+          clearMissingDraftStores(context);
+        }
+      } catch (error) {
+        console.error("Failed to load draft link:", error);
         clearMissingDraftStores(context);
+      } finally {
+        context.setHasDraftLinkLoadAttempted(true);
       }
 
-      context.setHasDraftLinkLoadAttempted(true);
       return;
     }
 

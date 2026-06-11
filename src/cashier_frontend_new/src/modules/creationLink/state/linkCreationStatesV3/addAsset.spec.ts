@@ -1,6 +1,6 @@
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
-import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -70,6 +70,7 @@ function makeStore(
           use_count: 0n,
         },
     state: undefined as unknown,
+    initializeCreateLinkActionFromTemplate: vi.fn(() => Ok(true)),
   };
   return store as unknown as LinkCreationStoreV3;
 }
@@ -256,14 +257,14 @@ describe("AddAssetStateV3", () => {
       const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendTip);
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_go_next_for_send_airdrop_link_type", async () => {
       const store = makeStore(VALID_ASSET_INFO, false, LinkType.SendAirdrop);
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_go_next_for_send_airdrop_when_max_use_greater_than_one", async () => {
@@ -275,7 +276,7 @@ describe("AddAssetStateV3", () => {
       );
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_go_next_for_send_token_basket_with_single_asset", async () => {
@@ -286,7 +287,7 @@ describe("AddAssetStateV3", () => {
       );
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_go_next_for_send_token_basket_with_multiple_assets", async () => {
@@ -297,14 +298,14 @@ describe("AddAssetStateV3", () => {
       );
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
     it("it_should_succeed_go_next_transition_to_preview_step", async () => {
       const store = makeStore(VALID_ASSET_INFO);
       const state = new AddAssetStateV3(store);
       await state.goNext();
-      expect((store.state as LockStateV3).step).toBe(LinkStep.LOCK);
+      expect((store.state as PreviewStateV3).step).toBe(LinkStep.PREVIEW);
     });
   });
 

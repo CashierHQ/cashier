@@ -13,9 +13,7 @@
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
-  import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-  import { GateType } from "$modules/gating/types/gate";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { paths } from "$modules/routing/paths";
@@ -29,12 +27,7 @@
   $effect(() => {
     const storeV3 = context.linkCreationStoreV3;
     if (!storeV3) return;
-    const drafts = gatingStore.gateDrafts;
-    if (drafts.length > 0 && drafts[0].type === GateType.PASSWORD) {
-      storeV3.pendingGateDraft = drafts[0];
-    } else {
-      storeV3.pendingGateDraft = null;
-    }
+    storeV3.pendingGateDraft = null;
   });
 
   let cachedCreationStore:
@@ -100,18 +93,11 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader
-      {linkStep}
-      {linkTitle}
-      showLockStep={true}
-      onBack={handleBack}
-    />
+    <CreateLinkHeader {linkStep} {linkTitle} onBack={handleBack} />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}
       <AddAsset link={linkStore} />
-    {:else if linkStore.step === LinkStep.LOCK}
-      <LockTransaction link={linkStore} store={gatingStore} />
     {:else if linkStore.step === LinkStep.PREVIEW}
       <Preview link={linkStore} {gatingStore} />
     {:else if linkStore.step === LinkStep.CREATED && linkStore.id && detailStore}

@@ -122,6 +122,46 @@ describe("LinkCreationStoreV3", () => {
       expect(store.state).toBeInstanceOf(PreviewStateV3);
     });
 
+    it("it_should_succeed_initialize_preview_action_from_restored_draft_link", () => {
+      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
+        Ok(makeMockActionFull()),
+      );
+      const assetPrincipal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+      const assetInfo = [
+        {
+          asset: {
+            address: assetPrincipal,
+            network_fee: 500n,
+            token_standard: SharedTokenStandard.ICRC1,
+          },
+          amount: 999n,
+          label: "test",
+        },
+      ];
+
+      new LinkCreationStoreV3(
+        makeDraftLink({
+          asset_info: assetInfo,
+          link_state: LinkState.Preview,
+          link_type: LinkType.SendTokenBasket,
+          max_use: 3n,
+        }),
+      );
+
+      expect(
+        actionTemplateLoader.createActionFromTemplate,
+      ).toHaveBeenCalledWith(
+        LinkType.SendTokenBasket,
+        ActionType.CreateLink,
+        expect.any(Principal),
+        {
+          assetInfo,
+          gateCount: 0,
+          maxUse: 3,
+        },
+      );
+    });
+
     it("it_should_succeed_initialize_with_created_state_for_created_link_state", () => {
       const store = new LinkCreationStoreV3(
         makeDraftLink({ link_state: LinkState.Created }),

@@ -52,9 +52,8 @@ export class LinkCreationStoreV3 {
 
   constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
-    this.#state = this.getStateHandler(draftLink);
-
     this.#draftLink = draftLink;
+    this.#state = this.getStateHandler(draftLink);
 
     $effect(() => {
       // Access reactive state to track changes
