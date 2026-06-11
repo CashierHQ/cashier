@@ -105,9 +105,9 @@ impl<R: Repositories> LinkReservationGuard<R> {
             } else {
                 repository.put(link_id, live);
             }
-            return Err(CanisterError::ValidationErrors(format!(
-                "No free use available for link {link_id} (max_use reached or other claims in flight)"
-            )));
+            return Err(CanisterError::LinkNoUseAvailable {
+                link_id: link_id.to_string(),
+            });
         }
 
         live.push(LinkReservation::new(
@@ -258,7 +258,7 @@ mod tests {
         let _g1 = reserve(&repos, &link, "a1", ActionType::Receive, 2, 0, NOW).expect("first");
         let _g2 = reserve(&repos, &link, "a2", ActionType::Receive, 2, 0, NOW).expect("second");
         let third = reserve(&repos, &link, "a3", ActionType::Receive, 2, 0, NOW);
-        assert!(matches!(third, Err(CanisterError::ValidationErrors(_))));
+        assert!(matches!(third, Err(CanisterError::LinkNoUseAvailable { .. })));
     }
 
     #[test]
@@ -281,7 +281,7 @@ mod tests {
 
         // use_count already == max_use (link fully claimed) → reject.
         let res = reserve(&repos, &link, "a1", ActionType::Receive, 1, 1, NOW);
-        assert!(matches!(res, Err(CanisterError::ValidationErrors(_))));
+        assert!(matches!(res, Err(CanisterError::LinkNoUseAvailable { .. })));
     }
 
     #[test]
@@ -291,7 +291,7 @@ mod tests {
         let link = random_id_string();
 
         let res = reserve(&repos, &link, "a1", ActionType::Receive, 0, 0, NOW);
-        assert!(matches!(res, Err(CanisterError::ValidationErrors(_))));
+        assert!(matches!(res, Err(CanisterError::LinkNoUseAvailable { .. })));
         // A second attempt still rejects (no stale state corrupting admission).
         assert!(reserve(&repos, &link, "a2", ActionType::Receive, 0, 0, NOW).is_err());
     }

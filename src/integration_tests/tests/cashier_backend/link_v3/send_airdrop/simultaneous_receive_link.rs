@@ -500,3 +500,98 @@ async fn it_should_cap_at_max_use_when_oversubscribed() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+async fn it_should_not_double_commit_link_when_claimer_retries_processed_action() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: an activated ICP airdrop link with 3 uses; one receiver claims once.
+        let token = ICP_TOKEN;
+        let airdrop_amount = Nat::from(1_000_000u64);
+        let max_use_count = 3;
+        let icp_ledger_client = ctx.new_icp_ledger_client(TestUser::User1.get_principal());
+        let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+        let (creator_fixture, activate_link_result) = activate_airdrop_link_v3_fixture(
+            ctx,
+            token,
+            airdrop_amount.clone(),
+            max_use_count,
+            icp_fee.clone(),
+            icp_fee.clone(),
+        )
+        .await;
+        let link_id = activate_link_result.link.id.clone();
+        let initial_available_amount = activate_link_result.link.asset_info[0]
+            .available_amount
+            .clone();
+
+        let receiver = TestUser::User2.get_principal();
+        let receiver_fixture =
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee.clone()).await;
+        let action = receiver_fixture
+            .create_action_v3(CreateActionInputV3 {
+                link_id: link_id.clone(),
+                action: receiver_fixture.receive_action(link_id.clone(), receiver),
+            })
+            .await
+            .expect("receiver create RECEIVE action should succeed");
+
+        let first: Result<ProcessActionResponseV3, CanisterError> = receiver_fixture
+            .process_action_v3(ProcessActionInputV3 {
+                action_id: action.action.id.clone(),
+            })
+            .await;
+        assert!(
+            matches!(&first, Ok(resp) if resp.is_success),
+            "first claim should succeed, got {first:?}"
+        );
+
+        // Act: the SAME action is processed again (lost-response retry / re-call).
+        // Executor skips already-Success transactions, so no tokens move — the
+        // link must not be committed a second time.
+        let retry: Result<ProcessActionResponseV3, CanisterError> = receiver_fixture
+            .process_action_v3(ProcessActionInputV3 {
+                action_id: action.action.id.clone(),
+            })
+            .await;
+
+        // Assert: retry is an idempotent Ok, not a second commit.
+        assert!(
+            matches!(&retry, Ok(resp) if resp.is_success),
+            "retry of a processed action should be an idempotent Ok, got {retry:?}"
+        );
+
+        let link = receiver_fixture
+            .get_link_details_v3(&link_id, None)
+            .await
+            .unwrap()
+            .link;
+        assert_eq!(
+            link.use_count, 1,
+            "retry must not consume a second use (phantom claim)"
+        );
+        assert_eq!(link.link_state, LinkStateShared::Active);
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            initial_available_amount
+                .map(|available| available - (airdrop_amount.clone() + icp_fee.clone())),
+            "retry must not deduct available_amount a second time"
+        );
+
+        // Receiver got paid exactly once.
+        let balance = icp_ledger_client
+            .balance_of(&Account {
+                owner: receiver,
+                subaccount: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            balance, airdrop_amount,
+            "receiver must be paid exactly once"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

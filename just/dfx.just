@@ -57,10 +57,9 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_deploy "${OWNER}"
+  just dfx_local_create_canisters
 
-  cashier_backend_id=$(dfx canister id cashier_backend)
-  just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
+  just dfx_deploy "${OWNER}"
 
   just dfx_local_deploy_internet_identity
 
@@ -83,21 +82,32 @@ dfx_local_deploy bitcoin="false": (dfx_local_start bitcoin) && dfx_local_info
   just dfx_local_deploy_ckbtc_canisters "${OWNER}" "{{CKBTC_LEDGER_ID}}" "{{CKBTC_MINTER_ID}}" "{{CKBTC_KYT_ID}}"
 
 
-# Deploy the two Internet Identity canisters locally (backend rdmx6 + frontend uqzsh).
-# The frontend serves the login UI and MUST be wired to the backend via init args.
-# IMPORTANT: origins use the live webserver port (this project runs on :8000); a port
-# mismatch makes II reject the auth flow. Login URL = the FRONTEND canister, not rdmx6.
+# Creates the canisters locally, without deploying code or init args.
+[private]
+dfx_local_create_canisters:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx canister create token_storage
+  dfx canister create gate_service
+  dfx canister create cashier_backend
+
+
+# Deploy Internet Identity canisters locally, with dev-friendly init args and settings (fetch_root_key, dev_csp, etc).
 [private]
 dfx_local_deploy_internet_identity:
   #!/usr/bin/env bash
   set -e
+
+  dfx canister create internet_identity
+  dfx canister create internet_identity_frontend
 
   # Backend: auth logic only (backend-only dev wasm). No init arg required locally.
   dfx deploy internet_identity --upgrade-unchanged
 
   port=$(dfx info webserver-port)
   ii_backend=$(dfx canister id internet_identity)
-  ii_frontend="uqzsh-gqaaa-aaaaq-qaada-cai"
+  ii_frontend=$(dfx canister id internet_identity_frontend)
 
   # Frontend: login UI, wired to the backend. fetch_root_key + dev_csp required for local HTTP.
   dfx deploy internet_identity_frontend --argument "(record {
