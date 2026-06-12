@@ -1,24 +1,26 @@
-import { MOCK_NFT_COLLECTIONS } from "$modules/wallet/mock/mockNfts";
 import type {
   EnrichedNFT,
   NftCollectionSummary,
 } from "$modules/wallet/types/nft";
 
+/**
+ * Builds collection summaries from the NFT records currently available in the wallet.
+ * @param nfts enriched NFT records from the wallet store
+ * @returns alphabetically sorted collection summaries
+ */
 export function getNftCollectionSummaries(
   nfts: EnrichedNFT[],
 ): NftCollectionSummary[] {
   const collectionMap = new Map<string, NftCollectionSummary>();
 
   for (const nft of nfts) {
-    const knownCollection = MOCK_NFT_COLLECTIONS.find(
-      (collection) => collection.collectionId === nft.collectionId,
-    );
     const existingCollection = collectionMap.get(nft.collectionId);
 
     if (existingCollection) {
       collectionMap.set(nft.collectionId, {
         ...existingCollection,
-        imageUrl: existingCollection.imageUrl || nft.imageUrl,
+        imageUrl:
+          existingCollection.imageUrl || nft.collectionImageUrl || nft.imageUrl,
         itemCount: existingCollection.itemCount + 1,
       });
       continue;
@@ -26,15 +28,15 @@ export function getNftCollectionSummaries(
 
     collectionMap.set(nft.collectionId, {
       collectionId: nft.collectionId,
-      name: knownCollection?.name || nft.collectionName || nft.name,
-      description: knownCollection?.description || nft.description,
-      imageUrl: knownCollection?.imageUrl || nft.imageUrl,
+      name: nft.collectionName || nft.name,
+      description: nft.collectionDescription || nft.description,
+      imageUrl: nft.collectionImageUrl || nft.imageUrl,
       itemCount: 1,
-      supply: knownCollection?.supply,
-      floor: knownCollection?.floor,
-      type: knownCollection?.type,
-      standard: knownCollection?.standard,
-      symbol: knownCollection?.symbol,
+      supply: nft.supply,
+      floor: nft.floor,
+      type: nft.type,
+      standard: nft.standard,
+      symbol: nft.collectionSymbol || nft.symbol,
     });
   }
 
@@ -43,6 +45,12 @@ export function getNftCollectionSummaries(
   );
 }
 
+/**
+ * Filters wallet NFTs to one collection.
+ * @param nfts enriched NFT records from the wallet store
+ * @param collectionId collection canister id
+ * @returns NFTs that belong to the requested collection
+ */
 export function getNftsForCollection(
   nfts: EnrichedNFT[],
   collectionId: string,

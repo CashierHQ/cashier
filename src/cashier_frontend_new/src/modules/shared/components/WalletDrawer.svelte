@@ -24,11 +24,13 @@
 
   let currentView = $state<WalletView>({ type: WalletViewType.MAIN });
   let currentMainTab = $state<WalletTab>(WalletTab.TOKENS);
+  let mainViewHasNestedPage = $state(false);
   let isToggling = $state(false);
 
   function handleClose() {
     open = false;
     currentView = { type: WalletViewType.MAIN };
+    mainViewHasNestedPage = false;
   }
 
   function handleOverlayClick(event: MouseEvent) {
@@ -39,53 +41,68 @@
 
   function handleSwitchMainTab(tab: WalletTab) {
     currentMainTab = tab;
+    mainViewHasNestedPage = false;
   }
 
   function navigateToToken(token: string) {
     currentView = { type: WalletViewType.TOKEN, token };
+    mainViewHasNestedPage = false;
   }
 
-  function navigateToSwap(token?: string) {
-    // TODO: implement
-    console.warn("navigateToSwap", token);
+  function navigateToSwap(_token?: string) {
+    currentView = { type: WalletViewType.MAIN };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToReceive(token?: string) {
     currentView = { type: WalletViewType.RECEIVE, token };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToNftReceive(collectionId?: string) {
     currentView = { type: WalletViewType.NFT_RECEIVE, collectionId };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToSend(token?: string) {
     currentView = { type: WalletViewType.SEND, token };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToImport() {
     currentView = { type: WalletViewType.IMPORT };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToManage() {
     currentView = { type: WalletViewType.MANAGE };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToMain() {
     currentView = { type: WalletViewType.MAIN };
     currentMainTab = WalletTab.TOKENS;
+    mainViewHasNestedPage = false;
   }
 
   function navigateToAddNft() {
     currentView = { type: WalletViewType.ADD_NFT };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToManageCollections() {
     currentView = { type: WalletViewType.MANAGE_COLLECTIONS };
+    mainViewHasNestedPage = false;
   }
 
   function navigateToMainNft() {
     currentView = { type: WalletViewType.MAIN };
     currentMainTab = WalletTab.NFTS;
+    mainViewHasNestedPage = false;
+  }
+
+  function handleMainNestedViewChange(isNested: boolean) {
+    mainViewHasNestedPage = isNested;
   }
 </script>
 
@@ -104,21 +121,26 @@
     class="fixed z-[40] gap-4 bg-white shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm w-full flex flex-col h-full"
     tabindex="-1"
   >
-    <div class="flex items-center justify-between px-4 py-4">
-      <img
-        alt={locale.t("wallet.drawer.logoAlt")}
-        class="max-w-[130px]"
-        src="/logo.svg"
-      />
-      <button
-        type="button"
-        onclick={handleClose}
-        class="cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        <X size={28} class="text-black transition-colors hover:text-gray-700" />
-        <span class="sr-only">{locale.t("wallet.drawer.close")}</span>
-      </button>
-    </div>
+    {#if currentView.type === WalletViewType.MAIN && !mainViewHasNestedPage}
+      <div class="flex items-center justify-between px-4 py-4">
+        <img
+          alt={locale.t("wallet.drawer.logoAlt")}
+          class="max-w-[130px]"
+          src="/logo.svg"
+        />
+        <button
+          type="button"
+          onclick={handleClose}
+          class="cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <X
+            size={28}
+            class="text-black transition-colors hover:text-gray-700"
+          />
+          <span class="sr-only">{locale.t("wallet.drawer.close")}</span>
+        </button>
+      </div>
+    {/if}
 
     <!-- Loading overlay for entire wallet -->
     {#if isToggling}
@@ -133,7 +155,7 @@
 
     <div
       class="flex-1 flex flex-col overflow-y-auto p-4 {currentView.type ===
-      'main'
+      WalletViewType.MAIN
         ? 'pt-0'
         : ''}"
     >
@@ -148,6 +170,7 @@
           onNavigateToSwap={navigateToSwap}
           onNavigateToManageNfts={navigateToManageCollections}
           onTabChange={handleSwitchMainTab}
+          onNestedViewChange={handleMainNestedViewChange}
         />
       {:else if currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage

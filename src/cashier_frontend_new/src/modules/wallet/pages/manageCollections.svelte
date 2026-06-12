@@ -1,6 +1,7 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import NavBar from "$modules/token/components/navBar.svelte";
+  import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import type { NftCollectionSummary } from "$modules/wallet/types/nft";
   import { getNftCollectionSummaries } from "$modules/wallet/utils/nftCollections";
@@ -109,21 +110,14 @@
               <div
                 class="bg-walletlightpurple flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl"
               >
-                {#if collection.imageUrl && !failedImageLoads.has(collection.collectionId)}
-                  <img
-                    src={collection.imageUrl}
-                    alt={collection.name}
-                    class="h-full w-full object-cover"
-                    onerror={() => handleImageError(collection.collectionId)}
-                  />
-                {:else}
-                  <img
-                    src="/favicon/favicon.svg"
-                    alt=""
-                    class="h-7 w-7 opacity-60"
-                    aria-hidden="true"
-                  />
-                {/if}
+                <img
+                  src={failedImageLoads.has(collection.collectionId)
+                    ? NFT_FALLBACK_IMAGE_URL
+                    : collection.imageUrl || NFT_FALLBACK_IMAGE_URL}
+                  alt={collection.name}
+                  class="h-full w-full object-contain p-2"
+                  onerror={() => handleImageError(collection.collectionId)}
+                />
               </div>
               <div class="min-w-0 flex-1">
                 <div class="truncate text-[15px] font-medium text-gray-900">

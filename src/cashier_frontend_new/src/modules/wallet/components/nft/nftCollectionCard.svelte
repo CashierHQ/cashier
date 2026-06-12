@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { NftCollectionSummary } from "$modules/wallet/types/nft";
-  import { Image } from "lucide-svelte";
+  import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
@@ -22,19 +22,17 @@
   onclick={() => onSelect(collection.collectionId)}
 >
   <div class="flex aspect-square items-center justify-center overflow-hidden">
-    {#if collection.imageUrl && !failedImageLoads.has(collection.collectionId)}
-      <img
-        src={collection.imageUrl}
-        alt={collection.name}
-        class="h-full w-full object-cover"
-        onerror={() => handleImageError(collection.collectionId)}
-      />
-    {:else}
-      <Image class="text-walletpurple" size={48} />
-    {/if}
+    <img
+      src={failedImageLoads.has(collection.collectionId)
+        ? NFT_FALLBACK_IMAGE_URL
+        : collection.imageUrl || NFT_FALLBACK_IMAGE_URL}
+      alt={collection.name}
+      class="h-full w-full object-contain p-6"
+      onerror={() => handleImageError(collection.collectionId)}
+    />
   </div>
   <div class="flex items-center justify-between gap-2 px-2 py-1.5">
-    <p class="text-walletpurple truncate text-xs font-medium">
+    <p class="text-walletpurple truncate text-[10px] font-medium">
       {collection.name}
     </p>
     <span class="text-[10px] text-grey">{collection.itemCount}</span>

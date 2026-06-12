@@ -24,6 +24,7 @@
     onNavigateToSwap: () => void;
     onNavigateToManageNfts: () => void;
     onTabChange: (tab: WalletTab) => void;
+    onNestedViewChange?: (isNested: boolean) => void;
   };
 
   let {
@@ -36,6 +37,7 @@
     onNavigateToSwap,
     onNavigateToManageNfts,
     onTabChange,
+    onNestedViewChange,
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
@@ -86,6 +88,10 @@
     if (activeTab !== WalletTab.NFTS) {
       selectedCollectionId = null;
     }
+  });
+
+  $effect(() => {
+    onNestedViewChange?.(activeTab === WalletTab.NFTS && selectedCollectionId !== null);
   });
 
   function handleToggle() {

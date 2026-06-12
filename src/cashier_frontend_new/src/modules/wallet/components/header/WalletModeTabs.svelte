@@ -17,7 +17,7 @@
   <button
     type="button"
     onclick={() => onTabChange(WalletTab.TOKENS)}
-    class="flex items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
+    class="flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
     class:bg-lightgreen={activeTab === WalletTab.TOKENS}
     class:text-green={activeTab === WalletTab.TOKENS}
     class:text-grey={activeTab !== WalletTab.TOKENS}
@@ -32,7 +32,7 @@
   <button
     type="button"
     onclick={() => onTabChange(WalletTab.NFTS)}
-    class="flex items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
+    class="flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
     class:bg-walletlightpurple={activeTab === WalletTab.NFTS}
     class:text-walletpurple={activeTab === WalletTab.NFTS}
     class:text-grey={activeTab !== WalletTab.NFTS}

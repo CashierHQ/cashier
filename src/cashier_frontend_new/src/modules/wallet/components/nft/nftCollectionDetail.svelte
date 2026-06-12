@@ -1,11 +1,11 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import NavBar from "$modules/token/components/navBar.svelte";
+  import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import type {
     EnrichedNFT,
     NftCollectionSummary,
   } from "$modules/wallet/types/nft";
-  import { ArrowDown, Image, RefreshCw } from "lucide-svelte";
+  import { ArrowDown, ChevronLeft, RefreshCw } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
@@ -24,17 +24,25 @@
 </script>
 
 <div>
-  <div class="flex items-start gap-2">
-    <div class="flex-1">
-      <NavBar
-        mode="back-only"
-        title={collection.name}
-        onBack={onNavigateBack}
-      />
-    </div>
+  <div
+    class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center px-4 pb-4 pt-4"
+  >
     <button
       type="button"
-      class="text-green mt-1 rounded-full p-2 transition-colors hover:bg-lightgreen"
+      onclick={onNavigateBack}
+      class="-ml-2 flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+      aria-label={locale.t("wallet.navBar.back")}
+    >
+      <ChevronLeft size={24} />
+    </button>
+
+    <h1 class="truncate text-center text-xl font-bold text-gray-950">
+      {collection.name}
+    </h1>
+
+    <button
+      type="button"
+      class="text-green flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-lightgreen"
       aria-label={locale.t("wallet.nfts.detail.refreshAria")}
     >
       <RefreshCw size={22} />
@@ -42,33 +50,31 @@
   </div>
 
   <div class="px-4">
-    <section class="rounded-lg border border-[#E5EAE8] p-3">
+    <section class="rounded-lg border border-lightgreen p-3">
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="flex min-w-0 gap-3">
           <div
             class="bg-walletlightpurple flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded"
           >
-            {#if collection.imageUrl && !failedImageLoads.has(collection.collectionId)}
-              <img
-                src={collection.imageUrl}
-                alt={collection.name}
-                class="h-full w-full object-cover"
-                onerror={() => handleImageError(collection.collectionId)}
-              />
-            {:else}
-              <Image class="text-walletpurple" size={28} />
-            {/if}
+            <img
+              src={failedImageLoads.has(collection.collectionId)
+                ? NFT_FALLBACK_IMAGE_URL
+                : collection.imageUrl || NFT_FALLBACK_IMAGE_URL}
+              alt={collection.name}
+              class="h-full w-full object-contain p-2"
+              onerror={() => handleImageError(collection.collectionId)}
+            />
           </div>
           <div class="min-w-0">
             <h2 class="truncate text-sm font-medium text-gray-900">
               {collection.name}
             </h2>
-            <p class="text-xs text-gray-900">
+            <p class="text-xs font-light text-gray-900">
               {locale.t("wallet.nfts.detail.supply")}
-              {collection.supply ?? "-"}
+              <span class="font-medium">{collection.supply ?? "-"}</span>
               <span class="mx-1 text-gray-400">|</span>
               {locale.t("wallet.nfts.detail.floor")}
-              {collection.floor ?? "-"}
+              <span class="font-medium">{collection.floor ?? "-"}</span>
             </p>
           </div>
         </div>
@@ -78,29 +84,33 @@
         {collection.description}
       </p>
 
-      <dl class="space-y-2 text-sm">
+      <dl class="space-y-3 text-sm">
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-700">{locale.t("wallet.nfts.detail.type")}</dt>
+          <dt class="text-gray-700 font-medium">
+            {locale.t("wallet.nfts.detail.type")}
+          </dt>
           <dd class="text-right text-gray-900">{collection.type ?? "-"}</dd>
         </div>
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-700">
+          <dt class="text-gray-700 font-medium">
             {locale.t("wallet.nfts.detail.standard")}
           </dt>
           <dd class="text-right text-gray-900">{collection.standard ?? "-"}</dd>
         </div>
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-700">{locale.t("wallet.nfts.detail.symbol")}</dt>
+          <dt class="text-gray-700 font-medium">
+            {locale.t("wallet.nfts.detail.symbol")}
+          </dt>
           <dd class="text-right text-gray-900">{collection.symbol ?? "-"}</dd>
         </div>
       </dl>
     </section>
 
-    <div class="mt-4 grid grid-cols-2 gap-2">
+    <div class="mt-4 grid grid-cols-2 gap-2 cursor-pointer">
       <button
         type="button"
         onclick={() => onReceive(collection.collectionId)}
-        class="border-walletpurple/20 flex aspect-square flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-walletpurple"
+        class="receive-nft-tile relative flex h-full flex-col items-center justify-center gap-3 rounded-lg text-walletpurple"
       >
         <span
           class="border-walletpurple/10 flex h-11 w-11 items-center justify-center rounded-lg border bg-white text-xl"
@@ -113,25 +123,23 @@
       </button>
 
       {#each nfts as nft (nft.collectionId + nft.tokenId.toString())}
-        <div class="bg-walletlightpurple overflow-hidden rounded-lg">
+        <div
+          class="bg-walletlightpurple overflow-hidden rounded-lg cursor-pointer"
+        >
           <div class="aspect-square overflow-hidden">
-            {#if nft.imageUrl && !failedImageLoads.has(`${nft.collectionId}-${nft.tokenId.toString()}`)}
-              <img
-                src={nft.imageUrl}
-                alt={nft.name}
-                class="h-full w-full object-cover"
-                onerror={() =>
-                  handleImageError(
-                    `${nft.collectionId}-${nft.tokenId.toString()}`,
-                  )}
-              />
-            {:else}
-              <div
-                class="flex h-full w-full items-center justify-center bg-walletlightpurple"
-              >
-                <Image class="text-walletpurple" size={42} />
-              </div>
-            {/if}
+            <img
+              src={failedImageLoads.has(
+                `${nft.collectionId}-${nft.tokenId.toString()}`,
+              )
+                ? NFT_FALLBACK_IMAGE_URL
+                : nft.imageUrl || NFT_FALLBACK_IMAGE_URL}
+              alt={nft.name}
+              class="h-full w-full object-contain p-6"
+              onerror={() =>
+                handleImageError(
+                  `${nft.collectionId}-${nft.tokenId.toString()}`,
+                )}
+            />
           </div>
           <div class="flex items-center justify-between gap-2 px-2 py-1.5">
             <span class="text-walletpurple truncate text-xs">
@@ -149,3 +157,33 @@
     </div>
   </div>
 </div>
+
+<style>
+  .receive-nft-tile {
+    background:
+      repeating-linear-gradient(
+          90deg,
+          rgb(139 92 246 / 0.2) 0 12px,
+          transparent 12px 22px
+        )
+        top left / 100% 2px no-repeat,
+      repeating-linear-gradient(
+          90deg,
+          rgb(139 92 246 / 0.2) 0 12px,
+          transparent 12px 22px
+        )
+        bottom left / 100% 2px no-repeat,
+      repeating-linear-gradient(
+          180deg,
+          rgb(139 92 246 / 0.2) 0 12px,
+          transparent 12px 22px
+        )
+        top left / 2px 100% no-repeat,
+      repeating-linear-gradient(
+          180deg,
+          rgb(139 92 246 / 0.2) 0 12px,
+          transparent 12px 22px
+        )
+        top right / 2px 100% no-repeat;
+  }
+</style>

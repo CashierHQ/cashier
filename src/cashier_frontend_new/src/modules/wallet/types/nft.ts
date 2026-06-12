@@ -35,7 +35,15 @@ export type EnrichedNFT = NFT & {
   readonly description: string;
   readonly imageUrl: string;
   readonly collectionName: string;
+  readonly collectionDescription?: string;
+  readonly collectionImageUrl?: string;
+  readonly collectionSymbol?: string;
   readonly rarity?: string;
+  readonly supply?: string;
+  readonly floor?: string;
+  readonly type?: string;
+  readonly standard?: string;
+  readonly symbol?: string;
 };
 
 /**

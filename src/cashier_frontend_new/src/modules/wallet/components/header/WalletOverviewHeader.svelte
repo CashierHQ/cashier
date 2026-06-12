@@ -47,6 +47,15 @@
   }
 
   let totalBalance = $derived.by(() => calculateTotalBalance());
+  let collectionSummary = $derived(
+    locale
+      .t(
+        collectionCount === 1
+          ? "wallet.nfts.collectionsSummarySingular"
+          : "wallet.nfts.collectionsSummaryPlural",
+      )
+      .replace("{{count}}", collectionCount.toString()),
+  );
 </script>
 
 <header class="border-b border-[#E5EAE8] pb-4">
@@ -58,10 +67,8 @@
         {nftCount}
         {locale.t("wallet.nfts.summaryTitle")}
       </h2>
-      <p class="mt-1 text-lg leading-none text-grey">
-        {locale.t("wallet.nfts.collectionsPrefix")}
-        {collectionCount}
-        {locale.t("wallet.nfts.collectionsSuffix")}
+      <p class="mt-1 text-lg font-light leading-none text-grey">
+        {collectionSummary}
       </p>
     {:else}
       <div class="relative mx-auto w-fit">

@@ -2,11 +2,11 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { NFT_PAGE_SIZE } from "$modules/wallet/constants";
-import {
-  MOCK_DISABLED_COLLECTION_IDS,
-  MOCK_NFTS,
-} from "$modules/wallet/mock/mockNfts";
 import { Icrc7Service } from "$modules/wallet/services/icrc7Service";
+import {
+  getDemoDisabledCollectionIds,
+  getDemoNfts,
+} from "$modules/wallet/services/nftDemoData";
 import type {
   CollectionMetadata,
   EnrichedNFT,
@@ -23,7 +23,9 @@ class WalletNftStore {
   collectionMetadataCache: Map<string, CollectionMetadata> = new Map();
   #currentPage: number = 0;
   #allNfts: EnrichedNFT[] = [];
-  #disabledCollectionIds = new SvelteSet<string>(MOCK_DISABLED_COLLECTION_IDS);
+  #disabledCollectionIds = new SvelteSet<string>(
+    getDemoDisabledCollectionIds(),
+  );
   hasMore = $state<boolean>(true);
 
   constructor() {
@@ -37,7 +39,7 @@ class WalletNftStore {
         } catch (error) {
           if (import.meta.env.DEV) {
             this.hasMore = false;
-            this.#allNfts = MOCK_NFTS;
+            this.#allNfts = getDemoNfts();
             return this.#allNfts;
           }
 
@@ -46,7 +48,7 @@ class WalletNftStore {
 
         if (import.meta.env.DEV && nfts.length === 0) {
           this.hasMore = false;
-          this.#allNfts = MOCK_NFTS;
+          this.#allNfts = getDemoNfts();
           return this.#allNfts;
         }
 
@@ -156,12 +158,12 @@ class WalletNftStore {
   }
 
   /**
-   * Reset local collection visibility to the mock UI defaults.
+   * Reset local collection visibility to the local demo defaults.
    */
   private resetCollectionVisibility(): void {
     this.#disabledCollectionIds.clear();
 
-    for (const collectionId of MOCK_DISABLED_COLLECTION_IDS) {
+    for (const collectionId of getDemoDisabledCollectionIds()) {
       this.#disabledCollectionIds.add(collectionId);
     }
   }

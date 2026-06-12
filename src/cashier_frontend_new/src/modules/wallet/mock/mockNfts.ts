@@ -2,12 +2,7 @@ import type {
   EnrichedNFT,
   NftCollectionSummary,
 } from "$modules/wallet/types/nft";
-
-function svgDataUri(background: string, foreground: string, label: string) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="${background}"/><circle cx="200" cy="155" r="82" fill="${foreground}" opacity=".92"/><rect x="110" y="235" width="180" height="92" rx="34" fill="${foreground}" opacity=".78"/><text x="200" y="214" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="62" font-weight="700" fill="#fff">${label}</text></svg>`;
-
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
+import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
 
 export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
   {
@@ -15,7 +10,7 @@ export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
     name: "Bored Ape Collection",
     description:
       "BAYC is a collection of 10,000 unique Bored Ape NFTs, digital collectibles living on the Internet Computer blockchain.",
-    imageUrl: svgDataUri("#18d9ad", "#8b6a4d", "BA"),
+    imageUrl: NFT_FALLBACK_IMAGE_URL,
     itemCount: 6,
     supply: "10 000",
     floor: "12.4 ICP",
@@ -28,7 +23,7 @@ export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
     name: "CryptoPunks",
     description:
       "A compact set of pixel-style collectible characters for wallet UI testing.",
-    imageUrl: svgDataUri("#94a3b8", "#1f2937", "CP"),
+    imageUrl: NFT_FALLBACK_IMAGE_URL,
     itemCount: 3,
     supply: "10 000",
     floor: "8.1 ICP",
@@ -40,7 +35,7 @@ export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
     collectionId: "mock-azuki",
     name: "Azuki",
     description: "Anime-inspired collection placeholder for disabled state UI.",
-    imageUrl: "",
+    imageUrl: NFT_FALLBACK_IMAGE_URL,
     itemCount: 3,
     supply: "10 000",
     floor: "4.2 ICP",
@@ -52,7 +47,7 @@ export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
     collectionId: "mock-pudgy-penguins",
     name: "Pudgy Penguins",
     description: "Penguin collection placeholder for collection-card layouts.",
-    imageUrl: svgDataUri("#e0f2fe", "#38bdf8", "PP"),
+    imageUrl: NFT_FALLBACK_IMAGE_URL,
     itemCount: 1,
     supply: "8 888",
     floor: "5.7 ICP",
@@ -64,7 +59,7 @@ export const MOCK_NFT_COLLECTIONS: NftCollectionSummary[] = [
     collectionId: "mock-baby-bears",
     name: "Baby Bears",
     description: "Lightweight collection used for disabled toggle examples.",
-    imageUrl: svgDataUri("#dcfce7", "#166534", "BB"),
+    imageUrl: NFT_FALLBACK_IMAGE_URL,
     itemCount: 11,
     supply: "12 000",
     floor: "1.2 ICP",
@@ -78,26 +73,54 @@ export const MOCK_DISABLED_COLLECTION_IDS = ["mock-baby-bears"];
 
 const mockNftImages = {
   boredApe: [
-    svgDataUri("#e6e7a4", "#8b6a4d", "3429"),
-    svgDataUri("#d7c39d", "#8b6a4d", "1590"),
-    svgDataUri("#1bd9ae", "#8b6a4d", "8834"),
-    svgDataUri("#f59e0b", "#8b6a4d", "204"),
-    svgDataUri("#22d3ee", "#8b6a4d", "6612"),
-    svgDataUri("#c4b5fd", "#8b6a4d", "7781"),
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
   ],
   cryptopunks: [
-    svgDataUri("#cbd5e1", "#111827", "101"),
-    svgDataUri("#94a3b8", "#334155", "202"),
-    svgDataUri("#e2e8f0", "#475569", "303"),
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
   ],
   azuki: [
-    svgDataUri("#f5f0ff", "#8b5cf6", "AZ1"),
-    svgDataUri("#f5f0ff", "#8b5cf6", "AZ2"),
-    svgDataUri("#f5f0ff", "#8b5cf6", "AZ3"),
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
+    NFT_FALLBACK_IMAGE_URL,
   ],
-  pudgy: [svgDataUri("#dbeafe", "#0ea5e9", "PP1")],
-  bears: [svgDataUri("#dcfce7", "#15803d", "BB1")],
+  pudgy: [NFT_FALLBACK_IMAGE_URL],
+  bears: [NFT_FALLBACK_IMAGE_URL],
 };
+
+const collectionById = new Map(
+  MOCK_NFT_COLLECTIONS.map((collection) => [
+    collection.collectionId,
+    collection,
+  ]),
+);
+
+function addCollectionDetails(nft: EnrichedNFT): EnrichedNFT {
+  const collection = collectionById.get(nft.collectionId);
+
+  if (!collection) {
+    return nft;
+  }
+
+  return {
+    ...nft,
+    collectionName: collection.name,
+    collectionDescription: collection.description,
+    collectionImageUrl: collection.imageUrl,
+    collectionSymbol: collection.symbol,
+    supply: collection.supply,
+    floor: collection.floor,
+    type: collection.type,
+    standard: collection.standard,
+    symbol: collection.symbol,
+  };
+}
 
 export const MOCK_NFTS: EnrichedNFT[] = [
   ...mockNftImages.boredApe.map((imageUrl, index) => ({
@@ -145,4 +168,4 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     collectionName: "Baby Bears",
     rarity: `${index + 1}.0%`,
   })),
-];
+].map(addCollectionDetails);

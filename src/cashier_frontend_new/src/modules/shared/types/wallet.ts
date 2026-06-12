@@ -1,3 +1,6 @@
+/**
+ * Drawer-level wallet screens.
+ */
 export enum WalletViewType {
   MAIN = "main",
   TOKEN = "token",
@@ -10,6 +13,12 @@ export enum WalletViewType {
   MANAGE_COLLECTIONS = "manage_collections",
 }
 
+/**
+ * Navigation state for the wallet drawer.
+ *
+ * Each union member describes the active wallet screen and any screen-specific
+ * context needed to render it.
+ */
 export type WalletView =
   | { type: WalletViewType.MAIN }
   | { type: WalletViewType.TOKEN; token: string }

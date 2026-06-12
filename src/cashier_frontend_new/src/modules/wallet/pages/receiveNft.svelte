@@ -4,6 +4,7 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
+  import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import type { NftCollectionSummary } from "$modules/wallet/types/nft";
   import { getNftCollectionSummaries } from "$modules/wallet/utils/nftCollections";
@@ -111,17 +112,15 @@
             <div
               class="bg-walletlightpurple flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded"
             >
-              {#if selectedCollection.imageUrl && !failedImageLoads.has(selectedCollection.collectionId)}
-                <img
-                  src={selectedCollection.imageUrl}
-                  alt={selectedCollection.name}
-                  class="h-full w-full object-cover"
-                  onerror={() =>
-                    handleImageError(selectedCollection.collectionId)}
-                />
-              {:else}
-                <Image class="text-walletpurple" size={26} />
-              {/if}
+              <img
+                src={failedImageLoads.has(selectedCollection.collectionId)
+                  ? NFT_FALLBACK_IMAGE_URL
+                  : selectedCollection.imageUrl || NFT_FALLBACK_IMAGE_URL}
+                alt={selectedCollection.name}
+                class="h-full w-full object-contain p-2"
+                onerror={() =>
+                  handleImageError(selectedCollection.collectionId)}
+              />
             </div>
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-gray-900">
@@ -223,16 +222,14 @@
                 <div
                   class="bg-walletlightpurple flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl"
                 >
-                  {#if collection.imageUrl && !failedImageLoads.has(collection.collectionId)}
-                    <img
-                      src={collection.imageUrl}
-                      alt={collection.name}
-                      class="h-full w-full object-cover"
-                      onerror={() => handleImageError(collection.collectionId)}
-                    />
-                  {:else}
-                    <Image class="text-walletpurple" size={28} />
-                  {/if}
+                  <img
+                    src={failedImageLoads.has(collection.collectionId)
+                      ? NFT_FALLBACK_IMAGE_URL
+                      : collection.imageUrl || NFT_FALLBACK_IMAGE_URL}
+                    alt={collection.name}
+                    class="h-full w-full object-contain p-2"
+                    onerror={() => handleImageError(collection.collectionId)}
+                  />
                 </div>
                 <div class="min-w-0">
                   <p class="truncate text-sm font-medium text-gray-900">

@@ -366,6 +366,7 @@
       "close": "Close wallet"
     },
     "navBar": {
+      "back": "Back",
       "sendBtn": "Send",
       "receiveBtn": "Receive",
       "swapBtn": "Swap",
@@ -376,8 +377,8 @@
     },
     "nfts": {
       "summaryTitle": "NFTs",
-      "collectionsPrefix": "in",
-      "collectionsSuffix": "collections",
+      "collectionsSummarySingular": "in {{count}} collection",
+      "collectionsSummaryPlural": "in {{count}} collections",
       "noCollections": "No NFT Collections",
       "manageCta": "+ Manage",
       "manage": {
