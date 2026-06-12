@@ -13,6 +13,7 @@
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.svelte";
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
+  import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
@@ -23,12 +24,7 @@
   const context = getRouteContext();
   const gatingStore = new GatingStore();
   context.setGatingStore(gatingStore);
-
-  $effect(() => {
-    const storeV3 = context.linkCreationStoreV3;
-    if (!storeV3) return;
-    storeV3.pendingGateDraft = null;
-  });
+  let hydratedGateDraftForId: string | null = null;
 
   let cachedCreationStore:
     | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
@@ -48,6 +44,20 @@
 
   const linkStep = $derived.by(() => linkStore?.step ?? LinkStep.CHOOSE_TYPE);
   const linkTitle = $derived.by(() => linkStore?.createLinkData.title ?? "");
+
+  $effect(() => {
+    const storeV3 = context.linkCreationStoreV3;
+    if (!storeV3?.id || hydratedGateDraftForId === storeV3.id) return;
+
+    gatingStore.loadGateDraft(storeV3.pendingGateDraft);
+    hydratedGateDraftForId = storeV3.id;
+  });
+
+  $effect(() => {
+    if (!linkStore) return;
+
+    linkStore.setPendingGateDraft(gatingStore.gateDrafts[0] ?? null);
+  });
 
   let cachedDetailStoreKey: string | null = null;
   let cachedDetailStore: GenericDetailStoreVM | null = null;
@@ -93,11 +103,13 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader {linkStep} {linkTitle} onBack={handleBack} />
+    <CreateLinkHeader {linkStep} {linkTitle} showLockStep onBack={handleBack} />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}
       <AddAsset link={linkStore} />
+    {:else if linkStore.step === LinkStep.LOCK}
+      <LockTransaction link={linkStore} store={gatingStore} />
     {:else if linkStore.step === LinkStep.PREVIEW}
       <Preview link={linkStore} {gatingStore} />
     {:else if linkStore.step === LinkStep.CREATED && linkStore.id && detailStore}

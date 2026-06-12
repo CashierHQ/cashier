@@ -68,6 +68,11 @@ export function resolveCreationRedirect(
           kind: "allow",
           screen: "createAddAsset",
         };
+      case LinkStep.LOCK:
+        return {
+          kind: "allow",
+          screen: "createLock",
+        };
       case LinkStep.PREVIEW:
         return {
           kind: "allow",
@@ -92,6 +97,7 @@ export function resolveCreationRedirect(
     switch (input.linkState) {
       case LinkStep.CHOOSE_TYPE:
       case LinkStep.ADD_ASSET:
+      case LinkStep.LOCK:
       case LinkStep.PREVIEW:
         return {
           kind: "redirect",

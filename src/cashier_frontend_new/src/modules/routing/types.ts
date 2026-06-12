@@ -97,6 +97,7 @@ export type RouteScreen =
   | "linkList"
   | "createChooseType"
   | "createAddAsset"
+  | "createLock"
   | "createPreview"
   | "createCreated"
   | "linkDetail"

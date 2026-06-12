@@ -1,5 +1,6 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
+import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
@@ -59,10 +60,9 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
     // delete draft link from local storage
     if (this.#linkStore.id) {
-      draftLinkRepository.delete(
-        this.#linkStore.id,
-        authState.account?.owner ?? "anon",
-      );
+      const owner = authState.account?.owner ?? "anon";
+      draftLinkRepository.delete(this.#linkStore.id, owner);
+      draftGateRepository.delete(owner, this.#linkStore.id);
     }
 
     this.#linkStore.id = createLinkResponse.link.id;

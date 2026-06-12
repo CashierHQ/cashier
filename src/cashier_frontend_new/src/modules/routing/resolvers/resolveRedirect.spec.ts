@@ -140,6 +140,7 @@ describe("routing policy", () => {
     it.each([
       ["LO-03", "choose type", createPath, LinkStep.CHOOSE_TYPE],
       ["LO-04", "add asset", createPath, LinkStep.ADD_ASSET],
+      ["LO-05", "lock", createPath, LinkStep.LOCK],
       ["LO-06", "preview", createPath, LinkStep.PREVIEW],
       ["LO-07", "link detail", detailPath, LinkStep.ACTIVE],
     ] as const)(
@@ -204,6 +205,7 @@ describe("routing policy", () => {
     it.each([
       ["NS-03", "choose type"],
       ["NS-04", "add asset"],
+      ["NS-05", "lock"],
       ["NS-06", "preview"],
     ] as const)(
       "[%s] redirects no-state link from %s route to link list",
@@ -242,6 +244,10 @@ describe("routing policy", () => {
       ["AA-03", "choose type", LinkStep.ADD_ASSET, "createAddAsset"],
       ["AA-04", "add asset", LinkStep.ADD_ASSET, "createAddAsset"],
       ["AA-06", "preview", LinkStep.ADD_ASSET, "createAddAsset"],
+      ["LK-03", "choose type", LinkStep.LOCK, "createLock"],
+      ["LK-04", "add asset", LinkStep.LOCK, "createLock"],
+      ["LK-05", "lock", LinkStep.LOCK, "createLock"],
+      ["LK-06", "preview", LinkStep.LOCK, "createLock"],
       ["PV-03", "choose type", LinkStep.PREVIEW, "createPreview"],
       ["PV-04", "add asset", LinkStep.PREVIEW, "createPreview"],
       ["PV-06", "preview", LinkStep.PREVIEW, "createPreview"],
@@ -267,6 +273,7 @@ describe("routing policy", () => {
     it.each([
       ["CT-07", LinkStep.CHOOSE_TYPE],
       ["AA-07", LinkStep.ADD_ASSET],
+      ["LK-07", LinkStep.LOCK],
       ["PV-07", LinkStep.PREVIEW],
     ] as const)(
       "[%s] redirects owner with %s link from detail to create route",
@@ -355,6 +362,11 @@ describe("routing policy", () => {
       ["AA-09", "add asset", createPath, LinkStep.ADD_ASSET],
       ["AA-11", "preview", createPath, LinkStep.ADD_ASSET],
       ["AA-12", "link detail", detailPath, LinkStep.ADD_ASSET],
+      ["LK-08", "choose type", createPath, LinkStep.LOCK],
+      ["LK-09", "add asset", createPath, LinkStep.LOCK],
+      ["LK-10", "lock", createPath, LinkStep.LOCK],
+      ["LK-11", "preview", createPath, LinkStep.LOCK],
+      ["LK-12", "link detail", detailPath, LinkStep.LOCK],
       ["PV-08", "choose type", createPath, LinkStep.PREVIEW],
       ["PV-09", "add asset", createPath, LinkStep.PREVIEW],
       ["PV-11", "preview", createPath, LinkStep.PREVIEW],

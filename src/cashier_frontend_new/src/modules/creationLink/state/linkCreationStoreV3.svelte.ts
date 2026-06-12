@@ -4,10 +4,12 @@ import type { GateDraft } from "$modules/gating/types/gate";
 import { authState } from "$modules/auth/state/auth.svelte";
 import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
+import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -52,6 +54,10 @@ export class LinkCreationStoreV3 {
 
   constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
+    this.#pendingGateDraft =
+      authState.account && this.#id
+        ? draftGateRepository.get(authState.account.owner, this.#id)
+        : null;
     this.#draftLink = draftLink;
     this.#state = this.getStateHandler(draftLink);
 
@@ -127,6 +133,14 @@ export class LinkCreationStoreV3 {
 
   set pendingGateDraft(draft: GateDraft | null) {
     this.#pendingGateDraft = draft;
+
+    if (!this.#id || !authState.account) return;
+
+    if (draft) {
+      draftGateRepository.save(authState.account.owner, this.#id, draft);
+    } else {
+      draftGateRepository.delete(authState.account.owner, this.#id);
+    }
   }
 
   get linkType(): SharedLinkType {
@@ -159,7 +173,7 @@ export class LinkCreationStoreV3 {
         initialState = new AddAssetStateV3(this);
         break;
       case SharedLinkState.Preview:
-        initialState = new PreviewStateV3(this);
+        initialState = new LockStateV3(this);
         break;
       case SharedLinkState.Created:
         initialState = new LinkCreatedStateV3();

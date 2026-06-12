@@ -26,6 +26,7 @@ npm run test:unit -- --run -t "LO-03"
 | Link list        | `/links`                                    | Owner's list of links                                         |
 | Choose type      | `ChooseType`                                | Owner selects link type                                       |
 | Add asset        | `AddAsset`                                  | Owner adds asset details                                      |
+| Lock             | `Lock`                                      | Owner configures access gates before preview                  |
 | Preview          | `Preview`                                   | Owner reviews link before creation                            |
 | Created          | `Created`                                   | Owner sees creation success screen; detail is also accessible |
 | Link detail      | `Created` / `Active` / `Inactive` / `Ended` | Owner views created link                                      |
@@ -50,6 +51,7 @@ Tests:
 | LO-02 | Link list   | Redirect to `/` | Pass   |
 | LO-03 | Choose type | Redirect to `/` | Pass   |
 | LO-04 | Add asset   | Redirect to `/` | Pass   |
+| LO-05 | Lock        | Redirect to `/` | Pass   |
 | LO-06 | Preview     | Redirect to `/` | Pass   |
 | LO-07 | Link detail | Redirect to `/` | Pass   |
 
@@ -209,6 +211,7 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | NS-02 | Link list   | Not possible         | N/A    |
 | NS-03 | Choose type | Redirect to `/links` | Pass   |
 | NS-04 | Add asset   | Redirect to `/links` | Pass   |
+| NS-05 | Lock        | Redirect to `/links` | Pass   |
 | NS-06 | Preview     | Redirect to `/links` | Pass   |
 | NS-07 | Link detail | Redirect to `/links` | Pass   |
 
@@ -226,10 +229,12 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | CT-02 | Owner      | Link list   | Not possible            | N/A    |
 | CT-03 | Owner      | Choose type | No redirect             | Pass   |
 | CT-04 | Owner      | Add asset   | Show choose type        | Pass   |
+| CT-05 | Owner      | Lock        | Show choose type        | Pass   |
 | CT-06 | Owner      | Preview     | Show choose type        | Pass   |
 | CT-07 | Owner      | Link detail | Redirect to choose type | Pass   |
 | CT-08 | Other user | Choose type | Redirect to `/links`    | Pass   |
 | CT-09 | Other user | Add asset   | Redirect to `/links`    | Pass   |
+| CT-10 | Other user | Lock        | Redirect to `/links`    | Pass   |
 | CT-11 | Other user | Preview     | Redirect to `/links`    | Pass   |
 | CT-12 | Other user | Link detail | Redirect to `/links`    | Pass   |
 
@@ -247,12 +252,37 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | AA-02 | Owner      | Link list   | Not possible          | N/A    |
 | AA-03 | Owner      | Choose type | Show add asset        | Pass   |
 | AA-04 | Owner      | Add asset   | No redirect           | Pass   |
+| AA-05 | Owner      | Lock        | Show add asset        | Pass   |
 | AA-06 | Owner      | Preview     | Show add asset        | Pass   |
 | AA-07 | Owner      | Link detail | Redirect to add asset | Pass   |
 | AA-08 | Other user | Choose type | Redirect to `/links`  | Pass   |
 | AA-09 | Other user | Add asset   | Redirect to `/links`  | Pass   |
+| AA-10 | Other user | Lock        | Redirect to `/links`  | Pass   |
 | AA-11 | Other user | Preview     | Redirect to `/links`  | Pass   |
 | AA-12 | Other user | Link detail | Redirect to `/links`  | Pass   |
+
+## Lock State
+
+Tests:
+
+- Unit: `src/modules/routing/resolvers/resolveRedirect.spec.ts`
+
+Note: create-flow pages share `/link/create/[id]`; separate rows mirror the sheet.
+
+| ID    | User       | Scenario    | Expected             | Status |
+| ----- | ---------- | ----------- | -------------------- | ------ |
+| LK-01 | Owner      | Landing     | Not possible         | N/A    |
+| LK-02 | Owner      | Link list   | Not possible         | N/A    |
+| LK-03 | Owner      | Choose type | Show lock            | Pass   |
+| LK-04 | Owner      | Add asset   | Show lock            | Pass   |
+| LK-05 | Owner      | Lock        | No redirect          | Pass   |
+| LK-06 | Owner      | Preview     | Show lock            | Pass   |
+| LK-07 | Owner      | Link detail | Redirect to lock     | Pass   |
+| LK-08 | Other user | Choose type | Redirect to `/links` | Pass   |
+| LK-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| LK-10 | Other user | Lock        | Redirect to `/links` | Pass   |
+| LK-11 | Other user | Preview     | Redirect to `/links` | Pass   |
+| LK-12 | Other user | Link detail | Redirect to `/links` | Pass   |
 
 ## Preview State
 
@@ -268,10 +298,12 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | PV-02 | Owner      | Link list   | Not possible         | N/A    |
 | PV-03 | Owner      | Choose type | Show preview         | Pass   |
 | PV-04 | Owner      | Add asset   | Show preview         | Pass   |
+| PV-05 | Owner      | Lock        | Show preview         | Pass   |
 | PV-06 | Owner      | Preview     | No redirect          | Pass   |
 | PV-07 | Owner      | Link detail | Redirect to preview  | Pass   |
 | PV-08 | Other user | Choose type | Redirect to `/links` | Pass   |
 | PV-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| PV-10 | Other user | Lock        | Redirect to `/links` | Pass   |
 | PV-11 | Other user | Preview     | Redirect to `/links` | Pass   |
 | PV-12 | Other user | Link detail | Redirect to `/links` | Pass   |
 
@@ -289,10 +321,12 @@ Note: old UI allows `Created` on both create and detail routes.
 | CR-02 | Owner      | Link list   | Not possible         | N/A    |
 | CR-03 | Owner      | Choose type | Show created         | Pass   |
 | CR-04 | Owner      | Add asset   | Show created         | Pass   |
+| CR-05 | Owner      | Lock        | Show created         | Pass   |
 | CR-06 | Owner      | Preview     | Show created         | Pass   |
 | CR-07 | Owner      | Link detail | No redirect          | Pass   |
 | CR-08 | Other user | Choose type | Redirect to `/links` | Pass   |
 | CR-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| CR-10 | Other user | Lock        | Redirect to `/links` | Pass   |
 | CR-11 | Other user | Preview     | Redirect to `/links` | Pass   |
 | CR-12 | Other user | Link detail | Redirect to `/links` | Pass   |
 
@@ -310,10 +344,12 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | AC-02 | Owner      | Link list   | Not possible         | N/A    |
 | AC-03 | Owner      | Choose type | Redirect to detail   | Pass   |
 | AC-04 | Owner      | Add asset   | Redirect to detail   | Pass   |
+| AC-05 | Owner      | Lock        | Redirect to detail   | Pass   |
 | AC-06 | Owner      | Preview     | Redirect to detail   | Pass   |
 | AC-07 | Owner      | Link detail | No redirect          | Pass   |
 | AC-08 | Other user | Choose type | Redirect to `/links` | Pass   |
 | AC-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| AC-10 | Other user | Lock        | Redirect to `/links` | Pass   |
 | AC-11 | Other user | Preview     | Redirect to `/links` | Pass   |
 | AC-12 | Other user | Link detail | Redirect to `/links` | Pass   |
 
@@ -331,10 +367,12 @@ Note: create-flow pages share `/link/create/[id]`; separate rows mirror the shee
 | IN-02 | Owner      | Link list   | Not possible         | N/A    |
 | IN-03 | Owner      | Choose type | Redirect to detail   | Pass   |
 | IN-04 | Owner      | Add asset   | Redirect to detail   | Pass   |
+| IN-05 | Owner      | Lock        | Redirect to detail   | Pass   |
 | IN-06 | Owner      | Preview     | Redirect to detail   | Pass   |
 | IN-07 | Owner      | Link detail | No redirect          | Pass   |
 | IN-08 | Other user | Choose type | Redirect to `/links` | Pass   |
 | IN-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| IN-10 | Other user | Lock        | Redirect to `/links` | Pass   |
 | IN-11 | Other user | Preview     | Redirect to `/links` | Pass   |
 | IN-12 | Other user | Link detail | Redirect to `/links` | Pass   |
 
@@ -352,9 +390,11 @@ Note: this maps to local `Ended`; create-flow pages share `/link/create/[id]`.
 | IE-02 | Owner      | Link list   | Not possible         | N/A    |
 | IE-03 | Owner      | Choose type | Redirect to detail   | Pass   |
 | IE-04 | Owner      | Add asset   | Redirect to detail   | Pass   |
+| IE-05 | Owner      | Lock        | Redirect to detail   | Pass   |
 | IE-06 | Owner      | Preview     | Redirect to detail   | Pass   |
 | IE-07 | Owner      | Link detail | No redirect          | Pass   |
 | IE-08 | Other user | Choose type | Redirect to `/links` | Pass   |
 | IE-09 | Other user | Add asset   | Redirect to `/links` | Pass   |
+| IE-10 | Other user | Lock        | Redirect to `/links` | Pass   |
 | IE-11 | Other user | Preview     | Redirect to `/links` | Pass   |
 | IE-12 | Other user | Link detail | Redirect to `/links` | Pass   |

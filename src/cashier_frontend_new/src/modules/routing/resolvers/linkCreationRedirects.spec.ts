@@ -79,6 +79,7 @@ describe("linkCreationRedirects", () => {
     it.each([
       [LinkStep.CHOOSE_TYPE, "createChooseType"],
       [LinkStep.ADD_ASSET, "createAddAsset"],
+      [LinkStep.LOCK, "createLock"],
       [LinkStep.PREVIEW, "createPreview"],
       [LinkStep.CREATED, "createCreated"],
     ] as const)(
@@ -105,24 +106,26 @@ describe("linkCreationRedirects", () => {
       },
     );
 
-    it.each([LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET, LinkStep.PREVIEW])(
-      "redirects detail route with %s state to create",
-      (linkState) => {
-        expect(
-          resolveCreationRedirect(
-            {
-              ...baseInput,
-              pathname: `/link/detail/${linkId}`,
-              linkState,
-            },
-            "detail",
-          ),
-        ).toEqual({
-          kind: "redirect",
-          to: `/link/create/${linkId}`,
-        });
-      },
-    );
+    it.each([
+      LinkStep.CHOOSE_TYPE,
+      LinkStep.ADD_ASSET,
+      LinkStep.LOCK,
+      LinkStep.PREVIEW,
+    ])("redirects detail route with %s state to create", (linkState) => {
+      expect(
+        resolveCreationRedirect(
+          {
+            ...baseInput,
+            pathname: `/link/detail/${linkId}`,
+            linkState,
+          },
+          "detail",
+        ),
+      ).toEqual({
+        kind: "redirect",
+        to: `/link/create/${linkId}`,
+      });
+    });
 
     it.each([
       LinkStep.CREATED,
