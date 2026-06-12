@@ -10,7 +10,6 @@ import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
-import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
