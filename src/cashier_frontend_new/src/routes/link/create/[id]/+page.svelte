@@ -10,7 +10,11 @@
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
 
   const id = page.params.id!;
-  createLinkRouteContext({ draftLinkId: id });
+  createLinkRouteContext({
+    linkId: id,
+    draftLinkId: id,
+    storeType: "linkDetail",
+  });
 
   // Track Link creation landing (page load of landing page)
   trackEvent(AnalyticsEvent.LINK_CREATION_LANDING);

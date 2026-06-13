@@ -121,6 +121,31 @@ describe("buildRedirectInput", () => {
     });
   });
 
+  it("prefers draft create state when both draft and detail stores are present", () => {
+    const input = buildRedirectInput(
+      createContext({
+        linkExists: true,
+        link: {
+          creator: { toString: () => ownerId },
+        },
+        linkCreationStoreV3: {
+          state: { step: LinkStep.PREVIEW },
+        },
+        linkDetailStoreV3: {
+          state: { step: LinkStep.ACTIVE },
+        },
+      }),
+      "/link/detail/draft-link-1",
+    );
+
+    expect(input).toMatchObject({
+      pathname: "/link/detail/draft-link-1",
+      linkId: "draft-link-1",
+      linkOwnerId: ownerId,
+      linkState: LinkStep.PREVIEW,
+    });
+  });
+
   it("reads user state from a public user route store", () => {
     const input = buildRedirectInput(
       createContext({

@@ -66,9 +66,9 @@ export class RouteContext {
    */
   getLinkStore() {
     return (
+      this.linkCreationStoreV3 ||
       this.linkDetailStoreV3 ||
       this.userLinkStoreV3 ||
-      this.linkCreationStoreV3 ||
       null
     );
   }
@@ -78,14 +78,14 @@ export class RouteContext {
    * @returns Link | undefined
    */
   getLink() {
+    if (this.linkCreationStoreV3) {
+      return this.linkCreationStoreV3.draftLink;
+    }
     if (this.linkDetailStoreV3) {
       return this.linkDetailStoreV3.link;
     }
     if (this.userLinkStoreV3) {
       return this.userLinkStoreV3.link;
-    }
-    if (this.linkCreationStoreV3) {
-      return this.linkCreationStoreV3.draftLink;
     }
     return undefined;
   }
@@ -99,6 +99,10 @@ export class RouteContext {
   isLoading(options?: { checkDraftLinkLoad?: boolean }) {
     const checkDraftLinkLoad = options?.checkDraftLinkLoad ?? true;
 
+    if (this.linkCreationStoreV3) {
+      return false;
+    }
+
     if (this.linkDetailStoreV3) {
       return this.linkDetailStoreV3.query.isLoading;
     }
@@ -106,7 +110,6 @@ export class RouteContext {
     if (this.userLinkStoreV3) {
       return this.userLinkStoreV3.isLoading;
     }
-
     // No store exists
     return checkDraftLinkLoad ? !this.hasDraftLinkLoadAttempted : false;
   }

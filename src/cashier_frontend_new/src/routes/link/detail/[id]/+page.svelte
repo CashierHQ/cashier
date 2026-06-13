@@ -11,7 +11,11 @@
   import { onMount } from "svelte";
 
   const id = page.params.id!;
-  createLinkRouteContext({ linkId: id, storeType: "linkDetail" });
+  createLinkRouteContext({
+    linkId: id,
+    draftLinkId: id,
+    storeType: "linkDetail",
+  });
 
   const handleBack = async () => {
     goto(resolve(paths.links()));

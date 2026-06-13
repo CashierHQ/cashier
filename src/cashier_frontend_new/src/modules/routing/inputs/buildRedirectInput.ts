@@ -47,7 +47,7 @@ function getLinkOwnerId(context: RouteContext): string | null {
  * @returns owner-flow link step, or null when no owner store/state is available
  */
 function getOwnerLinkState(context: RouteContext): LinkStep | null {
-  const store = context.linkDetailStoreV3 ?? context.linkCreationStoreV3;
+  const store = context.linkCreationStoreV3 ?? context.linkDetailStoreV3;
 
   if (!store) return null;
 

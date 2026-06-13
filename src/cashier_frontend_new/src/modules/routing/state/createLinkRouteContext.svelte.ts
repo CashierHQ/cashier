@@ -33,7 +33,7 @@ export function createLinkRouteContext({
     context.setUserLinkStoreV3(new UserLinkStoreV3({ id: linkId }));
   }
 
-  if (linkId && storeType === "linkDetail") {
+  if (linkId && storeType === "linkDetail" && !draftLinkId) {
     context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
   }
 
@@ -45,12 +45,29 @@ export function createLinkRouteContext({
         if (draftLink) {
           const store = new LinkCreationStoreV3(draftLink);
           context.setLinkCreationStoreV3(store);
+          context.linkDetailStoreV3 = null;
         } else {
           clearMissingDraftStores(context);
+
+          if (
+            linkId &&
+            storeType === "linkDetail" &&
+            !context.linkDetailStoreV3
+          ) {
+            context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
+          }
         }
       } catch (error) {
         console.error("Failed to load draft link:", error);
         clearMissingDraftStores(context);
+
+        if (
+          linkId &&
+          storeType === "linkDetail" &&
+          !context.linkDetailStoreV3
+        ) {
+          context.setLinkDetailStoreV3(new LinkDetailStoreV3({ id: linkId }));
+        }
       } finally {
         context.setHasDraftLinkLoadAttempted(true);
       }
