@@ -189,7 +189,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder={locale.t("wallet.nfts.manage.searchPlaceholder")}
-          class="focus:border-walletpurple w-full rounded-xl border border-gray-200 py-3.5 pl-12 pr-4 text-gray-900 placeholder-gray-300 focus:outline-none"
+          class="focus:border-walletpurple w-full rounded-lg border border-gray-200 py-2 pl-12 pr-4 text-gray-900 placeholder-gray-300 focus:outline-none"
         />
       </div>
 
