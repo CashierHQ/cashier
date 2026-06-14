@@ -173,15 +173,15 @@
       </Button>
     </div>
   {:else}
-    <div class="space-y-5">
+    <div>
       <div class="flex items-start gap-1.5">
-        <Info class="text-walletpurple mt-0.5 h-4 w-4 flex-shrink-0" />
+        <Info class="text-walletpurple mt-2 h-4 w-4 flex-shrink-0" />
         <p class="text-walletpurple text-xs leading-tight">
           {locale.t("wallet.nfts.receive.selectionWarning")}
         </p>
       </div>
 
-      <div class="relative">
+      <div class="relative my-6">
         <Search
           class="text-walletpurple absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2"
         />

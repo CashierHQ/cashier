@@ -100,12 +100,12 @@
         </p>
       </div>
     {:else}
-      <div class="space-y-1">
+      <div>
         {#each filteredCollections as collection (collection.collectionId)}
           {@const isEnabled = walletNftStore.isCollectionEnabled(
             collection.collectionId,
           )}
-          <div class="flex items-center justify-between py-3">
+          <div class="flex items-center justify-between py-2">
             <div class="flex min-w-0 flex-1 items-center gap-3">
               <div
                 class="bg-walletlightpurple flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl"
@@ -120,10 +120,10 @@
                 />
               </div>
               <div class="min-w-0 flex-1">
-                <div class="truncate text-[15px] font-medium text-gray-900">
+                <div class="truncate text-[14px] font-normal text-gray-900">
                   {collection.name}
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm text-gray-400">
                   {getCollectionCountLabel(collection.itemCount)}
                 </div>
               </div>
