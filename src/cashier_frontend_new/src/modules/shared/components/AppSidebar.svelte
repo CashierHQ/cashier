@@ -14,6 +14,7 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
+  import { paths } from "$modules/routing/paths";
   import { resolve } from "$app/paths";
   import SidebarMenuItem from "$modules/shared/components/SidebarMenuItem.svelte";
   import { locale } from "$lib/i18n";
@@ -94,7 +95,7 @@
     <!-- Header -->
     <div class="flex flex-col space-y-2 text-center sm:text-left">
       <div class="mb-2">
-        <CashierLogo href={resolve("/links")} />
+        <CashierLogo href={resolve(paths.links())} />
       </div>
 
       <!-- Menu items -->
