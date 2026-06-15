@@ -134,8 +134,8 @@
   <div class="flex flex-col items-center gap-2">
     <p class="text-sm text-foreground">
       {allOpen
-        ? (locale.t("links.linkForm.lock.linkUnlocked") ?? "Link unlocked")
-        : (locale.t("links.linkForm.lock.linkLocked") ?? "Link locked")}
+        ? locale.t("links.linkForm.lock.linkUnlocked")
+        : locale.t("links.linkForm.lock.linkLocked")}
     </p>
 
     {#if allOpen}

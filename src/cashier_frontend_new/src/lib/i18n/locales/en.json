@@ -208,6 +208,7 @@
         "openButton": "Open",
         "processing": "Processing",
         "linkLocked": "Link locked",
+        "linkUnlocked": "Link unlocked",
         "unlockAllRequired": "To use the transaction, unlock all locks.",
         "fees": {
           "password": "Lock fee - password",
