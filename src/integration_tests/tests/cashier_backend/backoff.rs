@@ -269,8 +269,7 @@ async fn it_should_throttle_on_two_separate_links_with_wrong_key() {
 
         let (creator_fixture1, link_id1, gate1) =
             activated_password_gate_link_fixture(ctx, "secret1").await;
-        let (_, link_id2, gate2) =
-            activated_password_gate_link_fixture(ctx, "secret2").await;
+        let (_, link_id2, gate2) = activated_password_gate_link_fixture(ctx, "secret2").await;
 
         let receiver = TestUser::User2.get_principal();
         let icp_fee = creator_fixture1.icp_ledger_fee.clone();
