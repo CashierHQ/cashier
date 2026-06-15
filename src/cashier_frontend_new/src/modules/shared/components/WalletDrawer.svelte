@@ -66,8 +66,8 @@
     mainViewHasNestedPage = false;
   }
 
-  function navigateToNftSend(collectionId?: string) {
-    currentView = { type: WalletViewType.NFT_SEND, collectionId };
+  function navigateToNftSend(collectionId?: string, tokenId?: bigint) {
+    currentView = { type: WalletViewType.NFT_SEND, collectionId, tokenId };
     mainViewHasNestedPage = false;
   }
 
@@ -196,6 +196,7 @@
       {:else if currentView.type === WalletViewType.NFT_SEND}
         <SendNftPage
           initialCollectionId={currentView.collectionId}
+          initialTokenId={currentView.tokenId}
           onNavigateBack={navigateToMainNft}
         />
       {:else if currentView.type === WalletViewType.SEND}

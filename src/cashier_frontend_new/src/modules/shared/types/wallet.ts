@@ -26,7 +26,7 @@ export type WalletView =
   | { type: WalletViewType.RECEIVE; token?: string }
   | { type: WalletViewType.SEND; token?: string }
   | { type: WalletViewType.NFT_RECEIVE; collectionId?: string }
-  | { type: WalletViewType.NFT_SEND; collectionId?: string }
+  | { type: WalletViewType.NFT_SEND; collectionId?: string; tokenId?: bigint }
   | { type: WalletViewType.IMPORT }
   | { type: WalletViewType.MANAGE }
   | { type: WalletViewType.ADD_NFT }

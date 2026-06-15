@@ -34,6 +34,9 @@ export type EnrichedNFT = NFT & {
   readonly name: string;
   readonly description: string;
   readonly imageUrl: string;
+  readonly owner?: string;
+  readonly mintedAt?: string;
+  readonly lastTransferAt?: string;
   readonly collectionName: string;
   readonly collectionDescription?: string;
   readonly collectionImageUrl?: string;
@@ -44,6 +47,16 @@ export type EnrichedNFT = NFT & {
   readonly type?: string;
   readonly standard?: string;
   readonly symbol?: string;
+  readonly attributes?: NftAttribute[];
+};
+
+/**
+ * NFT trait display model used by detail cards.
+ */
+export type NftAttribute = {
+  readonly traitType: string;
+  readonly value: string;
+  readonly rarity?: string;
 };
 
 /**

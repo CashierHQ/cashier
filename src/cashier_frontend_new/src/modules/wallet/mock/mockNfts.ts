@@ -131,6 +131,14 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     imageUrl,
     collectionName: "Bored Ape Collection",
     rarity: ["2.1%", "0.3%", "5.4%", "0.05%", "1.7%", "3.2%"][index],
+    mintedAt: "2024-03-15",
+    lastTransferAt: "2024-11-02",
+    attributes: [
+      { traitType: "Background", value: "Aquamarine", rarity: "12.4%" },
+      { traitType: "Fur", value: "Zombie", rarity: "3.0%" },
+      { traitType: "Eyes", value: "Laser Eyes", rarity: "0.69%" },
+      { traitType: "Mouth", value: "Bored Cigarette", rarity: "7.1%" },
+    ],
   })),
   ...mockNftImages.cryptopunks.map((imageUrl, index) => ({
     collectionId: "mock-cryptopunks",
@@ -140,6 +148,12 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     imageUrl,
     collectionName: "CryptoPunks",
     rarity: ["1.4%", "2.8%", "4.1%"][index],
+    mintedAt: "2024-04-08",
+    lastTransferAt: "2024-10-18",
+    attributes: [
+      { traitType: "Type", value: "Pixel", rarity: "18.0%" },
+      { traitType: "Accessory", value: "Glasses", rarity: "6.2%" },
+    ],
   })),
   ...mockNftImages.azuki.map((imageUrl, index) => ({
     collectionId: "mock-azuki",
@@ -149,6 +163,13 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     imageUrl,
     collectionName: "Azuki",
     rarity: ["6.1%", "3.7%", "9.2%"][index],
+    mintedAt: "2024-06-21",
+    lastTransferAt: "2024-12-04",
+    attributes: [
+      { traitType: "Background", value: "Sakura", rarity: "8.8%" },
+      { traitType: "Hair", value: "Indigo", rarity: "5.1%" },
+      { traitType: "Clothing", value: "Kimono", rarity: "3.4%" },
+    ],
   })),
   {
     collectionId: "mock-pudgy-penguins",
@@ -158,6 +179,12 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     imageUrl: mockNftImages.pudgy[0],
     collectionName: "Pudgy Penguins",
     rarity: "4.3%",
+    mintedAt: "2024-05-11",
+    lastTransferAt: "2024-09-29",
+    attributes: [
+      { traitType: "Body", value: "Blue", rarity: "10.2%" },
+      { traitType: "Face", value: "Happy", rarity: "7.6%" },
+    ],
   },
   ...Array.from({ length: 11 }, (_, index) => ({
     collectionId: "mock-baby-bears",
@@ -167,5 +194,11 @@ export const MOCK_NFTS: EnrichedNFT[] = [
     imageUrl: mockNftImages.bears[0],
     collectionName: "Baby Bears",
     rarity: `${index + 1}.0%`,
+    mintedAt: "2024-02-10",
+    lastTransferAt: "2024-08-14",
+    attributes: [
+      { traitType: "Mood", value: "Calm", rarity: "11.0%" },
+      { traitType: "Color", value: "Honey", rarity: "9.5%" },
+    ],
   })),
 ].map(addCollectionDetails);

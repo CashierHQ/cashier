@@ -25,10 +25,11 @@
 
   type Props = {
     initialCollectionId?: string;
+    initialTokenId?: bigint;
     onNavigateBack: () => void;
   };
 
-  let { initialCollectionId, onNavigateBack }: Props = $props();
+  let { initialCollectionId, initialTokenId, onNavigateBack }: Props = $props();
 
   let selectedCollectionId = $state<string | null>(null);
   let selectedTokenId = $state<bigint | null>(null);
@@ -37,6 +38,7 @@
   let sendAddress = $state("");
   let showConfirmDrawer = $state(false);
   let failedImageLoads = new SvelteSet<string>();
+  let initialSelectionApplied = $state(false);
 
   const enabledNfts = $derived.by(() =>
     (walletNftStore.query.data ?? []).filter((nft) =>
@@ -57,7 +59,7 @@
       : [],
   );
   const selectedNft = $derived(
-    selectedTokenId
+    selectedTokenId !== null
       ? (selectedCollectionNfts.find(
           (nft) => nft.tokenId === selectedTokenId,
         ) ?? null)
@@ -92,9 +94,33 @@
   );
 
   $effect(() => {
-    if (initialCollectionId && selectedCollectionId === null) {
+    if (!initialCollectionId || initialSelectionApplied) {
+      return;
+    }
+
+    if (selectedCollectionId === null) {
       selectedCollectionId = initialCollectionId;
     }
+
+    if (initialTokenId === undefined) {
+      initialSelectionApplied = true;
+      return;
+    }
+
+    if (selectedCollectionId !== initialCollectionId) {
+      return;
+    }
+
+    const initialNft = selectedCollectionNfts.find(
+      (nft) => nft.tokenId === initialTokenId,
+    );
+
+    if (!initialNft) {
+      return;
+    }
+
+    selectedTokenId = initialNft.tokenId;
+    initialSelectionApplied = true;
   });
 
   function getCollectionImage(collection: NftCollectionSummary) {

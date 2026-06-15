@@ -19,7 +19,7 @@
     onNavigateToToken: (token: string) => void;
     onNavigateToManage: () => void;
     onNavigateToSend: () => void;
-    onNavigateToNftSend: (collectionId?: string) => void;
+    onNavigateToNftSend: (collectionId?: string, tokenId?: bigint) => void;
     onNavigateToReceive: () => void;
     onNavigateToNftReceive: (collectionId?: string) => void;
     onNavigateToSwap: () => void;
@@ -152,6 +152,10 @@
     onNavigateToNftReceive(collectionId);
   }
 
+  function handleSendNft(collectionId: string, tokenId: bigint) {
+    onNavigateToNftSend(collectionId, tokenId);
+  }
+
   function handleLoadMoreNfts() {
     walletNftStore.loadMore();
   }
@@ -163,6 +167,7 @@
     nfts={selectedCollectionNfts}
     onNavigateBack={handleCollectionBack}
     onReceive={handleReceiveCollection}
+    onSend={handleSendNft}
   />
 {:else}
   <WalletOverviewHeader
