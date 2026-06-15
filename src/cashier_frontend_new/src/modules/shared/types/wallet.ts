@@ -1,3 +1,5 @@
+import type { WalletTab } from "$modules/wallet/types";
+
 /**
  * Drawer-level wallet screens.
  */
@@ -21,7 +23,12 @@ export enum WalletViewType {
  * context needed to render it.
  */
 export type WalletView =
-  | { type: WalletViewType.MAIN }
+  | {
+      type: WalletViewType.MAIN;
+      tab?: WalletTab;
+      selectedCollectionId?: string;
+      selectedTokenId?: bigint;
+    }
   | { type: WalletViewType.TOKEN; token: string }
   | { type: WalletViewType.RECEIVE; token?: string }
   | { type: WalletViewType.SEND; token?: string }

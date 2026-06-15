@@ -12,14 +12,23 @@
   type Props = {
     collection: NftCollectionSummary;
     nfts: EnrichedNFT[];
+    initialTokenId?: bigint;
     onNavigateBack: () => void;
     onReceive: (collectionId: string) => void;
     onSend: (collectionId: string, tokenId: bigint) => void;
   };
 
-  let { collection, nfts, onNavigateBack, onReceive, onSend }: Props = $props();
+  let {
+    collection,
+    nfts,
+    initialTokenId,
+    onNavigateBack,
+    onReceive,
+    onSend,
+  }: Props = $props();
   let failedImageLoads = new SvelteSet<string>();
   let selectedTokenId = $state<bigint | null>(null);
+  let initialTokenApplied = $state(false);
 
   const selectedNft = $derived(
     selectedTokenId !== null
@@ -30,6 +39,15 @@
   function handleImageError(id: string) {
     failedImageLoads.add(id);
   }
+
+  $effect(() => {
+    if (initialTokenApplied || initialTokenId === undefined) {
+      return;
+    }
+
+    selectedTokenId = initialTokenId;
+    initialTokenApplied = true;
+  });
 
   function handleBack() {
     if (selectedTokenId !== null) {

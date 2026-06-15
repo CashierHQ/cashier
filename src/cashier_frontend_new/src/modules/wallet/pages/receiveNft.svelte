@@ -29,6 +29,7 @@
   let selectedCollectionId = $state<string | null>(null);
   let searchQuery = $state("");
   let failedImageLoads = new SvelteSet<string>();
+  let initialSelectionApplied = $state(false);
 
   const enabledNfts = $derived.by(() =>
     (walletNftStore.query.data ?? []).filter((nft) =>
@@ -60,7 +61,37 @@
   });
 
   $effect(() => {
-    if (initialCollectionId && selectedCollectionId === null) {
+    if (
+      initialSelectionApplied ||
+      !initialCollectionId ||
+      selectedCollectionId !== null
+    ) {
+      return;
+    }
+
+    selectedCollectionId = initialCollectionId;
+    initialSelectionApplied = true;
+  });
+
+  function handleBack() {
+    if (selectedCollectionId !== null && !initialCollectionId) {
+      selectedCollectionId = null;
+      return;
+    }
+
+    onNavigateBack();
+  }
+
+  function handleClose() {
+    onNavigateBack();
+  }
+
+  $effect(() => {
+    if (!initialCollectionId) {
+      return;
+    }
+
+    if (selectedCollectionId === null) {
       selectedCollectionId = initialCollectionId;
     }
   });
@@ -86,7 +117,7 @@
 <NavBar
   mode="back-only"
   title={locale.t("wallet.nfts.receive.header")}
-  onBack={onNavigateBack}
+  onBack={handleBack}
 />
 
 <div class="flex flex-1 flex-col px-4">
@@ -165,7 +196,7 @@
 
     <div class="mt-auto pb-4 pt-8">
       <Button
-        onclick={onNavigateBack}
+        onclick={handleClose}
         class="bg-walletpurple hover:bg-walletpurple/90 inline-flex h-[44px] w-full cursor-pointer items-center justify-center rounded-full px-4 font-medium text-primary-foreground shadow"
         type="button"
       >

@@ -16,6 +16,8 @@
 
   type Props = {
     activeTab?: WalletTab;
+    initialSelectedCollectionId?: string;
+    initialSelectedTokenId?: bigint;
     onNavigateToToken: (token: string) => void;
     onNavigateToManage: () => void;
     onNavigateToSend: () => void;
@@ -30,6 +32,8 @@
 
   let {
     activeTab = WalletTab.TOKENS,
+    initialSelectedCollectionId,
+    initialSelectedTokenId,
     onNavigateToToken,
     onNavigateToManage,
     onNavigateToSend,
@@ -44,6 +48,7 @@
 
   let failedImageLoads = new SvelteSet<string>();
   let selectedCollectionId = $state<string | null>(null);
+  let initialSelectionApplied = $state(false);
 
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(
@@ -87,8 +92,21 @@
   });
 
   $effect(() => {
+    if (initialSelectionApplied || activeTab !== WalletTab.NFTS) {
+      return;
+    }
+
+    if (initialSelectedCollectionId) {
+      selectedCollectionId = initialSelectedCollectionId;
+    }
+
+    initialSelectionApplied = true;
+  });
+
+  $effect(() => {
     if (activeTab !== WalletTab.NFTS) {
       selectedCollectionId = null;
+      initialSelectionApplied = false;
     }
   });
 
@@ -165,6 +183,7 @@
   <NftCollectionDetail
     collection={selectedCollection}
     nfts={selectedCollectionNfts}
+    initialTokenId={initialSelectedTokenId}
     onNavigateBack={handleCollectionBack}
     onReceive={handleReceiveCollection}
     onSend={handleSendNft}

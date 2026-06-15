@@ -167,9 +167,19 @@
       return;
     }
 
+    if (selectedTokenId !== null && initialTokenId !== undefined) {
+      onNavigateBack();
+      return;
+    }
+
     if (selectedTokenId !== null) {
       selectedTokenId = null;
       sendAddress = "";
+      return;
+    }
+
+    if (selectedCollectionId !== null && initialCollectionId) {
+      onNavigateBack();
       return;
     }
 
