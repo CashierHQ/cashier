@@ -64,6 +64,7 @@ class CanisterBackendService {
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
+
     const response = await actor.user_get_links_v3(
       toNullable({
         offset: BigInt(params.offset),

@@ -52,6 +52,12 @@
     "contactEmail": "Contact Email",
     "copiedToClipboard": "Copied to clipboard"
   },
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or is no longer available.",
+    "homeButton": "Go Home"
+  },
   "links": {
     "page": {
       "title": "Cashier links",
@@ -87,7 +93,7 @@
       "draft": "Draft",
       "active": "Active",
       "inactive": "Inactive",
-      "ended": "Ended"
+      "ended": "Inactive (Empty)"
     },
     "linkForm": {
       "header": {
@@ -230,7 +236,7 @@
         "transactionLock": "Transaction lock",
         "transactionLockUnlock": "Unlocked",
         "transactionLockLock": "Lock",
-        "transactionLockEnded": "Ended",
+        "transactionLockEnded": "Inactive (Empty)",
         "youSend": "You send",
         "youReceive": "You receive",
         "includingNetworkFees": "Including network fees",
@@ -280,7 +286,7 @@
       },
       "detail": {
         "loading": "Loading...",
-        "endLink": "End link",
+        "endLink": "Deactivate Link",
         "copyLink": "Copy link",
         "copied": "Copied successfully",
         "copyFailed": "Failed to copy link",
@@ -303,13 +309,13 @@
           "balanceSyncSuccess": "Balance synced successfully."
         },
         "endLinkConfirm": {
-          "title": "End link",
+          "title": "Deactivate Link",
           "firstStep": {
-            "text": "Ending the link will deactivate the link page, and you will need not be able to retrieve the remaining assets.",
+            "text": "Deactivating the link will make the link page unavailable. You will still be able to retrieve the remaining assets.",
             "confirmButton": "Confirm"
           },
           "secondStep": {
-            "text": "Are you sure you want to end the link? This action cannot be undone.",
+            "text": "Are you sure you want to deactivate the link? This action cannot be undone.",
             "deleteButton": "Delete"
           }
         },
@@ -340,6 +346,11 @@
           "tokenBasketMessage": "Congratulations, you received a token basket!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
+        },
+        "ended": {
+          "title": "This link has ended",
+          "description": "This link is no longer available, so it cannot be claimed or used.",
+          "backButton": "Go to Cashier home"
         },
         "errors": {
           "linkDetailMissing": "Link detail is missing",
