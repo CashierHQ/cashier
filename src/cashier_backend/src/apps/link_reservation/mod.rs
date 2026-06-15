@@ -49,7 +49,10 @@ impl<R: Repositories> LinkReservationGuard<R> {
     ) -> Result<Self, CanisterError> {
         let mut repository = repo.link_reservation();
 
-        let action_data = link_service.action_service.get_action_data(action_id)?;
+        let action_data = link_service
+            .action_service
+            .get_action_data(action_id)
+            .map_err(|_| CanisterError::NotFound("Action not found".to_string()))?;
         let link_id = &action_data.action.link_id;
         let link = link_service.get_link(link_id)?;
 
@@ -370,8 +373,8 @@ mod tests {
         let result =
             LinkReservationGuard::reserve(&repos, "missing-action", NOW, TTL, &link_service);
 
-        // Assert: the missing action propagates as an error; nothing is reserved.
-        assert!(result.is_err(), "unknown action must fail to reserve");
+        // Assert: the missing action is reported as NotFound; nothing is reserved.
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
     }
 
     #[test]
