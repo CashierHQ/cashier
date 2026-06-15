@@ -237,6 +237,99 @@ async fn it_should_allow_open_gate_after_admin_resets_user() {
 }
 
 #[tokio::test]
+async fn it_should_block_all_requests_when_max_requests_is_zero() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange — max_requests=0 means estimated (0.0) >= 0.0 is true on every call
+        let admin = TestUser::CashierBackendAdmin.get_principal();
+        let admin_client = ctx.new_cashier_backend_client(admin);
+
+        admin_client
+            .admin_gate_rate_limit_update(RateLimitConfig {
+                enabled: true,
+                max_requests: 0,
+                window_secs: 60,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        let (creator_fixture, link_id, gate) =
+            activated_password_gate_link_fixture(ctx, "secret").await;
+
+        let receiver = TestUser::User2.get_principal();
+        let icp_fee = creator_fixture.icp_ledger_fee.clone();
+        let receiver_fixture =
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee).await;
+
+        // Act — even the very first request is rejected
+        let result = receiver_fixture
+            .open_link_gate(
+                &link_id,
+                &gate.id,
+                gate_service_types::GateKey::Password("secret".to_string()),
+            )
+            .await;
+
+        // Assert
+        assert!(
+            matches!(result, Err(CanisterError::RateLimited(_))),
+            "expected RateLimited when max_requests=0, got {result:?}"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_bypass_rate_limit_when_window_secs_is_zero() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange — window_secs=0 makes every request start a fresh window with
+        // prev_count=0 and current_count=0, so estimated=0.0 < max_requests → always passes
+        let admin = TestUser::CashierBackendAdmin.get_principal();
+        let admin_client = ctx.new_cashier_backend_client(admin);
+
+        admin_client
+            .admin_gate_rate_limit_update(RateLimitConfig {
+                enabled: true,
+                max_requests: 1,
+                window_secs: 0,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        let (creator_fixture, link_id, gate) =
+            activated_password_gate_link_fixture(ctx, "secret").await;
+
+        let receiver = TestUser::User2.get_principal();
+        let icp_fee = creator_fixture.icp_ledger_fee.clone();
+        let receiver_fixture =
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee).await;
+
+        // Act — 5 rapid correct-password calls; none should be rate-limited
+        for i in 0..5u32 {
+            let result = receiver_fixture
+                .open_link_gate(
+                    &link_id,
+                    &gate.id,
+                    gate_service_types::GateKey::Password("secret".to_string()),
+                )
+                .await;
+            assert!(
+                result.is_ok(),
+                "call {i} should succeed when window_secs=0, got {result:?}"
+            );
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_fail_admin_update_due_to_unauthorized() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
