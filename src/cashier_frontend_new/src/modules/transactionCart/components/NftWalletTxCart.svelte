@@ -2,11 +2,26 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
+  import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import type { EnrichedNFT } from "$modules/wallet/types/nft";
   import { X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
+
+  const MOCK_NFT_FEE_USD = 0.0502;
+  const MOCK_NFT_FEE_BREAKDOWN: FeeBreakdownItem[] = [
+    {
+      name: "Network fee",
+      amount: 2_008_000n,
+      tokenAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+      tokenSymbol: "ICP",
+      tokenDecimals: 8,
+      usdAmount: MOCK_NFT_FEE_USD,
+    },
+  ];
 
   type Props = {
     nft: EnrichedNFT;
@@ -27,6 +42,7 @@
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
+  let showFeeInfoDrawer = $state(false);
 
   const shortenedSendAddress = $derived(
     transformShortAddress(sendAddress.trim()),
@@ -58,8 +74,21 @@
   function handleOpenChange(open: boolean) {
     isOpen = open;
 
-    if (!open) {
+    if (!open && !showFeeInfoDrawer) {
       onCloseDrawer();
+    }
+  }
+
+  function handleFeeBreakdownClick() {
+    isOpen = false;
+    showFeeInfoDrawer = true;
+  }
+
+  function handleFeeInfoDrawerBack(viaClose?: boolean) {
+    showFeeInfoDrawer = false;
+
+    if (!viaClose) {
+      isOpen = true;
     }
   }
 </script>
@@ -139,14 +168,11 @@
         {locale.t("wallet.nfts.send.terms")}
       </p>
 
-      <p class="mb-2 text-sm font-medium text-gray-900">
-        {locale.t("wallet.nfts.send.feesBreakdown")}
-      </p>
-      <div
-        class="mb-6 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm"
-      >
-        <span>{locale.t("wallet.nfts.send.totalFees")}</span>
-        <span>{locale.t("wallet.nfts.send.mockFee")}</span>
+      <div class="mb-6">
+        <FeesBreakdownSection
+          totalFeesUsd={MOCK_NFT_FEE_USD}
+          onBreakdownClick={handleFeeBreakdownClick}
+        />
       </div>
     </div>
 
@@ -161,3 +187,9 @@
     </div>
   </Drawer.Content>
 </Drawer.Root>
+
+<FeeInfoDrawer
+  bind:open={showFeeInfoDrawer}
+  feesBreakdown={MOCK_NFT_FEE_BREAKDOWN}
+  onBack={handleFeeInfoDrawerBack}
+/>
