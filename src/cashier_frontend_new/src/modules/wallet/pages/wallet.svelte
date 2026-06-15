@@ -19,6 +19,7 @@
     onNavigateToToken: (token: string) => void;
     onNavigateToManage: () => void;
     onNavigateToSend: () => void;
+    onNavigateToNftSend: (collectionId?: string) => void;
     onNavigateToReceive: () => void;
     onNavigateToNftReceive: (collectionId?: string) => void;
     onNavigateToSwap: () => void;
@@ -32,6 +33,7 @@
     onNavigateToToken,
     onNavigateToManage,
     onNavigateToSend,
+    onNavigateToNftSend,
     onNavigateToReceive,
     onNavigateToNftReceive,
     onNavigateToSwap,
@@ -91,7 +93,9 @@
   });
 
   $effect(() => {
-    onNestedViewChange?.(activeTab === WalletTab.NFTS && selectedCollectionId !== null);
+    onNestedViewChange?.(
+      activeTab === WalletTab.NFTS && selectedCollectionId !== null,
+    );
   });
 
   function handleToggle() {
@@ -135,6 +139,15 @@
     onNavigateToReceive();
   }
 
+  function handleSend() {
+    if (activeTab === WalletTab.NFTS) {
+      onNavigateToNftSend();
+      return;
+    }
+
+    onNavigateToSend();
+  }
+
   function handleReceiveCollection(collectionId: string) {
     onNavigateToNftReceive(collectionId);
   }
@@ -158,7 +171,7 @@
     nftCount={visibleNfts.length}
     {collectionCount}
     onToggleBalance={handleToggle}
-    onSend={onNavigateToSend}
+    onSend={handleSend}
     onReceive={handleReceive}
     onSwap={onNavigateToSwap}
     onManageNfts={handleManageNfts}

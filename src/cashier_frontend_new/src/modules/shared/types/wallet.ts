@@ -7,6 +7,7 @@ export enum WalletViewType {
   RECEIVE = "receive",
   SEND = "send",
   NFT_RECEIVE = "nft_receive",
+  NFT_SEND = "nft_send",
   IMPORT = "import",
   MANAGE = "manage",
   ADD_NFT = "add_nft",
@@ -25,6 +26,7 @@ export type WalletView =
   | { type: WalletViewType.RECEIVE; token?: string }
   | { type: WalletViewType.SEND; token?: string }
   | { type: WalletViewType.NFT_RECEIVE; collectionId?: string }
+  | { type: WalletViewType.NFT_SEND; collectionId?: string }
   | { type: WalletViewType.IMPORT }
   | { type: WalletViewType.MANAGE }
   | { type: WalletViewType.ADD_NFT }

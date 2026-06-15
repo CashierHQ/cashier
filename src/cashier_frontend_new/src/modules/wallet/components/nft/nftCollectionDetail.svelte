@@ -24,9 +24,7 @@
 </script>
 
 <div>
-  <div
-    class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center px-4 pb-4 pt-4"
-  >
+  <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center px-4 pb-4 pt-4">
     <button
       type="button"
       onclick={onNavigateBack}

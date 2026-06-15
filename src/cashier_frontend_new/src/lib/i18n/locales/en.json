@@ -408,6 +408,32 @@
         "collectionLabel": "Receive NFT Collection",
         "addressLabel": "Receive ICP Address",
         "standardFallback": "ICRC-7"
+      },
+      "send": {
+        "header": "Send NFT",
+        "selectionWarning": "Cashier can only display NFTs from collections you have enabled. Select the collection, then choose the NFT you want to send.",
+        "searchCollectionPlaceholder": "Search a collection",
+        "searchNftPlaceholder": "Search a NFT",
+        "enabledCollections": "Your enabled collections",
+        "collectionNfts": "{{collection}} collection",
+        "assetLabel": "Asset",
+        "addressLabel": "Send address",
+        "addressPlaceholder": "Enter Address",
+        "addressExample": "e.g. vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
+        "continueButton": "Continue",
+        "confirmTitle": "Confirm transaction",
+        "youSend": "You send",
+        "to": "To",
+        "network": "Network",
+        "standard": "Standard",
+        "terms": "By confirming, you agree to execute the transaction above and agree to the terms of service.",
+        "feesBreakdown": "Fees breakdown",
+        "totalFees": "Total fees",
+        "mockFee": "~$0.0502",
+        "confirmButton": "Confirm",
+        "confirmSuccess": "NFT send confirmed. No transaction was submitted.",
+        "standardFallback": "ICRC-7",
+        "emptyNfts": "No NFTs found"
       }
     },
     "tokenInfo": {

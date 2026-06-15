@@ -10,6 +10,7 @@
   import ManagePage from "$modules/wallet/pages/manage.svelte";
   import ReceiveNftPage from "$modules/wallet/pages/receiveNft.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
+  import SendNftPage from "$modules/wallet/pages/sendNft.svelte";
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
@@ -49,7 +50,8 @@
     mainViewHasNestedPage = false;
   }
 
-  function navigateToSwap(_token?: string) {
+  function navigateToSwap(token?: string) {
+    void token;
     currentView = { type: WalletViewType.MAIN };
     mainViewHasNestedPage = false;
   }
@@ -61,6 +63,11 @@
 
   function navigateToNftReceive(collectionId?: string) {
     currentView = { type: WalletViewType.NFT_RECEIVE, collectionId };
+    mainViewHasNestedPage = false;
+  }
+
+  function navigateToNftSend(collectionId?: string) {
+    currentView = { type: WalletViewType.NFT_SEND, collectionId };
     mainViewHasNestedPage = false;
   }
 
@@ -82,11 +89,6 @@
   function navigateToMain() {
     currentView = { type: WalletViewType.MAIN };
     currentMainTab = WalletTab.TOKENS;
-    mainViewHasNestedPage = false;
-  }
-
-  function navigateToAddNft() {
-    currentView = { type: WalletViewType.ADD_NFT };
     mainViewHasNestedPage = false;
   }
 
@@ -165,6 +167,7 @@
           onNavigateToToken={navigateToToken}
           onNavigateToManage={navigateToManage}
           onNavigateToSend={navigateToSend}
+          onNavigateToNftSend={navigateToNftSend}
           onNavigateToReceive={navigateToReceive}
           onNavigateToNftReceive={navigateToNftReceive}
           onNavigateToSwap={navigateToSwap}
@@ -187,6 +190,11 @@
         />
       {:else if currentView.type === WalletViewType.NFT_RECEIVE}
         <ReceiveNftPage
+          initialCollectionId={currentView.collectionId}
+          onNavigateBack={navigateToMainNft}
+        />
+      {:else if currentView.type === WalletViewType.NFT_SEND}
+        <SendNftPage
           initialCollectionId={currentView.collectionId}
           onNavigateBack={navigateToMainNft}
         />
