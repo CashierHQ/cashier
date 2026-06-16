@@ -309,6 +309,45 @@ describe("createActionFromTemplate", () => {
     );
   });
 
+  it("it_should_remove_unused_token_basket_asset_placeholders", () => {
+    const assetPrincipal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const result = loader.createActionFromTemplate(
+      LinkType.SendTokenBasket,
+      ActionType.CreateLink,
+      CREATOR,
+      {
+        assetInfo: [
+          {
+            asset: {
+              address: assetPrincipal,
+              network_fee: 10_000n,
+              token_standard: TokenStandard.ICRC2,
+            },
+            amount: 100_000_000n,
+            label: "ICP",
+          },
+        ],
+      },
+    );
+    expect(result.isOk()).toBe(true);
+
+    const action = result.unwrap();
+    const assetIntents = action.intents.filter(
+      (intent) => intent.dest_address_type === AddressType.Link,
+    );
+
+    expect(assetIntents).toHaveLength(1);
+    expect(assetIntents[0].asset.address.toText()).toBe(
+      assetPrincipal.toText(),
+    );
+    expect(
+      action.intents.some(
+        (intent) =>
+          intent.asset.address.toText() === "useor-pyaaa-aaaad-ac2ya-cai",
+      ),
+    ).toBe(false);
+  });
+
   it("it_should_preserve_asset_template_placeholders_when_no_asset_info_is_supplied", () => {
     const result = loader.createActionFromTemplate(
       LinkType.SendTip,

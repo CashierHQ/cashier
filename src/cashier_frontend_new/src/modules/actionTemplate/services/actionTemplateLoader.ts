@@ -238,6 +238,8 @@ export class ActionTemplateLoader {
     const linkCanisterId =
       CASHIER_BACKEND_CANISTER_ID || intents[0].dest_address.toText();
     const linkAddress = Principal.fromText(linkCanisterId);
+    const populatedIntents = new Set<Intent>();
+
     for (let i = 0; i < intents.length && i < assetInfo.length; i++) {
       const linkAssetInfo = assetInfo[i];
       const intent = intents[i];
@@ -252,7 +254,12 @@ export class ActionTemplateLoader {
       intent.dest_address = linkAddress;
       intent.dest_address_type = SharedAddressType.Link;
       intent.label = `${intent.label}_${linkAssetInfo.asset.address.toText()}`;
+      populatedIntents.add(intent);
     }
+
+    action.intents = action.intents.filter(
+      (intent) => !intents.includes(intent) || populatedIntents.has(intent),
+    );
 
     return Ok(undefined);
   }
