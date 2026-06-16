@@ -554,10 +554,14 @@ async fn it_should_not_double_commit_link_when_claimer_retries_processed_action(
             })
             .await;
 
-        // Assert: retry is an idempotent Ok, not a second commit.
+        // Assert: retry is rejected as already-processed, not a second commit.
         assert!(
-            matches!(&retry, Ok(resp) if resp.is_success),
-            "retry of a processed action should be an idempotent Ok, got {retry:?}"
+            matches!(
+                &retry,
+                Err(CanisterError::ValidationErrors(msg))
+                    if msg == "Action has already been successfully processed"
+            ),
+            "retry of an already-Success action must be rejected, got {retry:?}"
         );
 
         let link = receiver_fixture

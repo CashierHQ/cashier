@@ -260,7 +260,8 @@ impl<R: Repositories> LinkV3Service<R> {
     /// * `action_id` - The ID of the action to be processed
     /// # Returns
     /// * `Ok(ProcessActionResponseV3)` - The processed action data
-    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
+    /// * `Err(CanisterError::NotFound)` - If the action or link is not found
+    /// * `Err(CanisterError::ValidationErrors)` - If the action has already been successfully processed or validation errors occur
     pub async fn process_action<M, V, X>(
         &mut self,
         caller: Principal,
@@ -280,10 +281,11 @@ impl<R: Repositories> LinkV3Service<R> {
             .get_action_data(action_id)
             .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
-        // Retry guard: re-processing an already-Success action re-reports
-        // is_success=true without moving tokens (executor skips Success txs),
-        // so it must NOT commit the link again (phantom use_count/amount drain).
-        let was_already_success = action_data.action.state == ActionState::Success;
+        if action_data.action.state == ActionState::Success {
+            return Err(CanisterError::ValidationErrors(
+                "Action has already been successfully processed".to_string(),
+            ));
+        }
 
         let link_model = self
             .link_v3_repository
@@ -314,7 +316,7 @@ impl<R: Repositories> LinkV3Service<R> {
         // Commit the link on a fresh repository read (result.link is a pre-await
         // snapshot). A failed result never updates the link; a retry of an
         // already-Success action is idempotent (no second commit).
-        let updated_link = if result.process_action_result.is_success && !was_already_success {
+        let updated_link = if result.process_action_result.is_success {
             self.update_link_with_process_action_result(&result)?
         } else {
             result.link.clone()
@@ -337,13 +339,17 @@ impl<R: Repositories> LinkV3Service<R> {
         })
     }
 
-    /// Commit a SUCCESSFUL process_action outcome to the stored link.
+    /// Commit a successful process_action outcome to the stored link.
     ///
-    /// The link inside `result` is a pre-action snapshot and may be STALE
+    /// The link inside `result` is a pre-action snapshot and may be stale
     /// (other claims can commit while this action awaited the ledger), so the
     /// update is computed on a fresh repository read plus the successful
-    /// action's intents only. A failed process_action result is rejected from
-    /// updating the link data.
+    /// action's intents only.
+    /// # Arguments
+    /// * `result` - The process_action outcome to commit; must be successful
+    /// # Returns
+    /// * `Ok(LinkV3)` - The updated link after applying the action's intents
+    /// * `Err(CanisterError)` - If the result is a failed action or the link is not found
     fn update_link_with_process_action_result(
         &mut self,
         result: &LinkProcessActionResult,
@@ -560,6 +566,21 @@ impl<R: Repositories> LinkV3Service<R> {
 
         Ok(DisableLinkResponseV3 { link: link_shared })
     }
+
+    /// Get a link by its ID.
+    /// # Arguments
+    /// * `link_id` - The unique identifier of the link to retrieve
+    /// # Returns
+    /// * `Ok(LinkV3)` - The link data
+    /// * `Err(CanisterError)` - If link not found
+    pub fn get_link(&self, link_id: &str) -> Result<LinkV3, CanisterError> {
+        let link = self
+            .link_v3_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        Ok(link)
+    }
 }
 
 #[cfg(test)]
@@ -581,11 +602,18 @@ mod tests {
     use crate::repositories::tests::TestRepositories;
     use candid::Nat;
     use cashier_backend_types::repository::{
-        action::v1::ActionType,
+        action::{v1::ActionType, v3::ActionV3},
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,
-        link::v1::LinkType,
-        link::v3::{LinkState, LinkV3},
+        common::{AddressTypeV3, Wallet},
+        intent::{
+            v1::{IntentState, TransferData},
+            v3::{IntentTransactionDataV3, IntentTypeV3},
+        },
+        link::{
+            v1::LinkType,
+            v3::{LinkState, LinkV3},
+        },
     };
     use cashier_common::{
         constant::ICP_CANISTER_PRINCIPAL,
@@ -1247,20 +1275,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_not_double_commit_link_when_processing_an_already_success_action() {
-        // Arrange — an Active link that has ALREADY consumed one use, and a
-        // RECEIVE action stored in `Success` state (i.e. it was processed once
-        // before). Re-processing it (lost-response retry / re-call) must NOT
-        // commit the link a second time, even though the tx manager re-reports
-        // is_success=true without moving any tokens.
-        use cashier_backend_types::repository::{
-            action::v1::ActionState,
-            action::v3::ActionV3,
-            common::{AddressTypeV3, Wallet},
-            intent::v1::{IntentState, TransferData},
-            intent::v3::{IntentTransactionDataV3, IntentTypeV3, IntentV3},
-        };
-
+    async fn it_should_reject_processing_an_already_success_action() {
+        // Arrange — an Active link that has ALREADY consumed one use, and a RECEIVE
+        // action stored in `Success` state (i.e. processed once before). Re-processing
+        // it (lost-response retry / re-call) must be rejected with a validation error
+        // and must NOT commit the link a second time (no phantom use_count/amount drain).
         let repositories = TestRepositories::new();
         let mut service = LinkV3Service::new(&repositories);
         let creator = random_principal_id();
@@ -1340,7 +1359,7 @@ mod tests {
             .expect("store action data should succeed");
 
         // Act — re-process the already-Success action.
-        let processed = service
+        let result = service
             .process_action(
                 receiver,
                 canister_id,
@@ -1349,23 +1368,27 @@ mod tests {
                 MockValidationService,
                 MockExecutionService,
             )
-            .await
-            .expect("re-processing should be an idempotent Ok, not an error");
+            .await;
 
-        // Assert — response is a friendly success, but the link was NOT committed again.
-        assert!(processed.is_success);
+        // Assert — re-processing is rejected with a validation error...
+        assert!(
+            matches!(result, Err(CanisterError::ValidationErrors(_))),
+            "re-processing an already-Success action must be rejected, got {result:?}"
+        );
+
+        // ...and the link was NOT committed again (no second use, no second deduction).
         let stored = service
             .link_v3_repository
             .get(&link_id)
             .expect("link should exist");
         assert_eq!(
             stored.use_count, 1,
-            "retry of a processed action must not consume a second use"
+            "rejected retry must not consume a second use"
         );
         assert_eq!(
             stored.asset_info[0].available_amount,
             Some(Nat::from(5_800u64)),
-            "retry must not deduct available_amount a second time"
+            "rejected retry must not deduct available_amount a second time"
         );
         assert_eq!(stored.state, LinkState::Active);
     }

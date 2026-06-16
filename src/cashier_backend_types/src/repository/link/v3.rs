@@ -86,13 +86,12 @@ impl LinkV3 {
         }
     }
 
-    // --- Link state transitions applied from a SUCCESSFUL process_action result ---
-    // The apply_* methods mutate the link in memory only; callers (service layer)
-    // persist the link solely when the whole apply returns `Ok`, so a mid-loop
-    // error never reaches storage.
-
-    /// CreateLink action succeeded: fund amounts confirmed on-ledger -> link goes Active.
-    /// Available amount per asset comes from the Creator->Link transfer intent.
+    /// # Update action info if create action success
+    /// ## Arguments
+    /// * `intents` - The list of intents to find the transfer intent for each asset and update the available amount accordingly.
+    /// ## Returns
+    /// * Ok(()) if the operation is successful
+    /// * Err(CanisterError) if there is an error during the update process, such as missing intent or transfer amount for any asset.
     pub fn apply_create_action_success(
         &mut self,
         intents: &[IntentV3],
@@ -124,9 +123,12 @@ impl LinkV3 {
         Ok(())
     }
 
-    /// Receive/Send (claim) action succeeded: deduct (transfer amount + network fee)
-    /// per asset from the Link->User transfer intent, consume one use, and end the
-    /// link when the last use is consumed.
+    /// # Update action info if receive action success
+    /// ## Arguments
+    /// * `intents` - The list of intents to find the transfer intent for each asset and update the available amount, use count, and link state accordingly.
+    /// ## Returns
+    /// * Ok(()) if the operation is successful
+    /// * Err(CanisterError) if there is an error during the update process such as missing intent, transfer amount, or network fee for any asset, or if the deducted amount plus network fee exceeds the current available amount.
     pub fn apply_receive_action_success(
         &mut self,
         intents: &[IntentV3],
@@ -186,11 +188,12 @@ impl LinkV3 {
         Ok(())
     }
 
-    /// Withdraw action succeeded: creator drained the link -> link ends.
-    /// The withdraw intent is built from the actual ledger balance, so a stale
-    /// `available_amount` value (e.g. external deposits) must not fail the apply;
-    /// the amount is conservatively reset to zero instead of exact-matched.
-    /// A `None` available_amount is still an error (link was never funded).
+    /// # Update action info if withdraw action success
+    /// ## Arguments
+    /// * `intents` - The list of intents to find the transfer intent for each asset and update the available amount accordingly.
+    /// ## Returns
+    /// * Ok(()) if the operation is successful
+    /// * Err(CanisterError) if there is an error during the update process, such as missing intent or transfer amount for any asset.
     pub fn apply_withdraw_action_success(
         &mut self,
         intents: &[IntentV3],
@@ -403,8 +406,23 @@ mod tests {
         })
     }
 
+    /// A `TransferFrom` tx_data variant used to exercise branches that require a plain
+    /// `Transfer` and must reject any other variant.
+    fn transfer_from_data(amount: u64) -> IntentTransactionDataV3 {
+        IntentTransactionDataV3::TransferFrom(TransferFromData {
+            from: Wallet::default(),
+            to: Wallet::default(),
+            spender: Wallet::default(),
+            asset: Asset::default(),
+            amount: Nat::from(amount),
+            actual_amount: None,
+            approve_amount: None,
+        })
+    }
+
     #[test]
     fn it_should_fail_apply_create_due_to_missing_intent_and_keep_link_state() {
+        // Arrange: a Created link with no Creator->Link intent to match.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Created,
@@ -414,8 +432,10 @@ mod tests {
         );
         let intents = vec![]; // no matching intent
 
+        // Act: apply the create success.
         let result = link.apply_create_action_success(&intents);
 
+        // Assert: rejected as not found; link stays Created with no available amount.
         assert!(matches!(result, Err(CanisterError::NotFound(_))));
         assert_eq!(link.state, LinkState::Created);
         assert_eq!(link.asset_info[0].available_amount, None);
@@ -423,6 +443,7 @@ mod tests {
 
     #[test]
     fn it_should_apply_create_with_transfer_and_activate_link() {
+        // Arrange: a Created link with a Creator->Link Transfer intent of 9_900.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Created,
@@ -438,9 +459,11 @@ mod tests {
             None,
         )];
 
+        // Act: apply the create success.
         link.apply_create_action_success(&intents)
             .expect("apply create should succeed");
 
+        // Assert: link goes Active and available amount is set from the transfer.
         assert_eq!(link.state, LinkState::Active);
         assert_eq!(
             link.asset_info[0].available_amount,
@@ -450,6 +473,8 @@ mod tests {
 
     #[test]
     fn it_should_apply_create_with_transfer_from_using_actual_amount() {
+        // Arrange: a Created link with a Creator->Link TransferFrom intent whose
+        // actual_amount (9_800) differs from the requested amount (10_000).
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Created,
@@ -473,9 +498,11 @@ mod tests {
             None,
         )];
 
+        // Act: apply the create success.
         link.apply_create_action_success(&intents)
             .expect("apply create should succeed");
 
+        // Assert: link goes Active and available amount uses the actual_amount.
         assert_eq!(link.state, LinkState::Active);
         assert_eq!(
             link.asset_info[0].available_amount,
@@ -485,6 +512,8 @@ mod tests {
 
     #[test]
     fn it_should_apply_receive_and_consume_one_use_keeping_link_active() {
+        // Arrange: an Active link (max_use 3, use_count 0) with 9_800 available and a
+        // Link->User Transfer intent of 4_000 + 200 fee.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Active,
@@ -500,9 +529,11 @@ mod tests {
             Some(200),
         )];
 
+        // Act: apply the receive success.
         link.apply_receive_action_success(&intents)
             .expect("apply receive should succeed");
 
+        // Assert: one use consumed, link still Active, available reduced by amount + fee.
         assert_eq!(link.use_count, 1);
         assert_eq!(link.state, LinkState::Active);
         assert_eq!(
@@ -513,6 +544,8 @@ mod tests {
 
     #[test]
     fn it_should_apply_receive_and_end_link_on_last_use() {
+        // Arrange: an Active link on its last use (max_use 2, use_count 1) with exactly
+        // enough available (4_200 == 4_000 amount + 200 fee).
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Active,
@@ -528,9 +561,11 @@ mod tests {
             Some(200),
         )];
 
+        // Act: apply the receive success.
         link.apply_receive_action_success(&intents)
             .expect("apply receive should succeed");
 
+        // Assert: last use consumed -> link Ended, available drained to zero.
         assert_eq!(link.use_count, 2);
         assert_eq!(link.state, LinkState::Ended);
         assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
@@ -538,6 +573,8 @@ mod tests {
 
     #[test]
     fn it_should_fail_apply_receive_when_deduction_exceeds_available_and_keep_use_count() {
+        // Arrange: an Active link with only 4_100 available, less than the 4_000 amount
+        // + 200 fee the Link->User intent would deduct.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Active,
@@ -553,8 +590,10 @@ mod tests {
             Some(200),
         )];
 
+        // Act: apply the receive success.
         let result = link.apply_receive_action_success(&intents);
 
+        // Assert: rejected as invalid data; use_count, state and funds unchanged.
         assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
         assert_eq!(link.use_count, 0);
         assert_eq!(link.state, LinkState::Active);
@@ -566,6 +605,8 @@ mod tests {
 
     #[test]
     fn it_should_fail_apply_receive_due_to_missing_available_amount() {
+        // Arrange: an Active link whose asset has no available amount recorded, despite
+        // a valid Link->User intent.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Active,
@@ -581,14 +622,17 @@ mod tests {
             Some(200),
         )];
 
+        // Act: apply the receive success.
         let result = link.apply_receive_action_success(&intents);
 
+        // Assert: rejected as invalid data; use_count unchanged.
         assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
         assert_eq!(link.use_count, 0);
     }
 
     #[test]
     fn it_should_fail_apply_receive_due_to_missing_network_fee() {
+        // Arrange: an Active link with funds, whose Link->User intent has no network fee.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Active,
@@ -604,14 +648,18 @@ mod tests {
             None,
         )];
 
+        // Act: apply the receive success.
         let result = link.apply_receive_action_success(&intents);
 
+        // Assert: rejected as invalid data; use_count unchanged.
         assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
         assert_eq!(link.use_count, 0);
     }
 
     #[test]
     fn it_should_apply_withdraw_zero_amounts_and_end_link() {
+        // Arrange: an Inactive link with two funded assets and a Link->Creator Transfer
+        // intent (with fee) for each.
         let asset_1 = random_principal_id();
         let asset_2 = random_principal_id();
         let mut link = fixture_of_link(
@@ -640,9 +688,11 @@ mod tests {
             ),
         ];
 
+        // Act: apply the withdraw success.
         link.apply_withdraw_action_success(&intents)
             .expect("apply withdraw should succeed");
 
+        // Assert: link Ended and every asset's available amount reset to zero.
         assert_eq!(link.state, LinkState::Ended);
         assert_eq!(link.asset_info[0].available_amount, Some(Nat::from(0u64)));
         assert_eq!(link.asset_info[1].available_amount, Some(Nat::from(0u64)));
@@ -650,6 +700,8 @@ mod tests {
 
     #[test]
     fn it_should_fail_apply_withdraw_due_to_missing_network_fee_and_keep_state() {
+        // Arrange: an Inactive link with funds, whose Link->Creator intent has no
+        // network fee.
         let asset = random_principal_id();
         let mut link = fixture_of_link(
             LinkState::Inactive,
@@ -665,8 +717,177 @@ mod tests {
             None,
         )];
 
+        // Act: apply the withdraw success.
         let result = link.apply_withdraw_action_success(&intents);
 
+        // Assert: rejected as invalid data; link stays Inactive with funds intact.
+        assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
+        assert_eq!(link.state, LinkState::Inactive);
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            Some(Nat::from(9_800u64))
+        );
+    }
+
+    #[test]
+    fn it_should_fail_apply_create_due_to_missing_transfer_amount_and_keep_link_state() {
+        // Arrange: a Created link whose Creator->Link intent is present but carries no
+        // transfer amount (intent_tx_data is None).
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Created,
+            1,
+            0,
+            vec![fixture_of_asset_info(asset, None)],
+        );
+        let intents = vec![fixture_of_intent(
+            asset,
+            AddressTypeV3::Creator,
+            AddressTypeV3::Link,
+            None, // no tx_data => transfer amount cannot be resolved
+            None,
+        )];
+
+        // Act: apply the create success.
+        let result = link.apply_create_action_success(&intents);
+
+        // Assert: rejected as invalid data; link stays Created with no available amount.
+        assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
+        assert_eq!(link.state, LinkState::Created);
+        assert_eq!(link.asset_info[0].available_amount, None);
+    }
+
+    #[test]
+    fn it_should_fail_apply_receive_due_to_missing_intent_and_keep_use_count() {
+        // Arrange: an Active link with funds available, but no Link->User intent to match.
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Active,
+            2,
+            0,
+            vec![fixture_of_asset_info(asset, Some(9_800))],
+        );
+        let intents = vec![]; // no matching transfer intent
+
+        // Act: apply the receive success.
+        let result = link.apply_receive_action_success(&intents);
+
+        // Assert: rejected as not found; use_count, state and funds unchanged.
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+        assert_eq!(link.use_count, 0);
+        assert_eq!(link.state, LinkState::Active);
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            Some(Nat::from(9_800u64))
+        );
+    }
+
+    #[test]
+    fn it_should_fail_apply_receive_due_to_missing_transfer_amount_and_keep_use_count() {
+        // Arrange: an Active link with funds, whose Link->User intent uses a non-Transfer
+        // tx_data variant, so the deducted amount cannot be resolved.
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Active,
+            2,
+            0,
+            vec![fixture_of_asset_info(asset, Some(9_800))],
+        );
+        let intents = vec![fixture_of_intent(
+            asset,
+            AddressTypeV3::Link,
+            AddressTypeV3::User,
+            Some(transfer_from_data(4_000)), // not a Transfer => amount unresolved
+            Some(200),
+        )];
+
+        // Act: apply the receive success.
+        let result = link.apply_receive_action_success(&intents);
+
+        // Assert: rejected as invalid data; use_count and funds unchanged.
+        assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
+        assert_eq!(link.use_count, 0);
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            Some(Nat::from(9_800u64))
+        );
+    }
+
+    #[test]
+    fn it_should_fail_apply_withdraw_due_to_missing_available_amount_and_keep_state() {
+        // Arrange: an Inactive link whose asset has no available amount recorded, even
+        // though a valid Link->Creator intent exists.
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Inactive,
+            1,
+            0,
+            vec![fixture_of_asset_info(asset, None)],
+        );
+        let intents = vec![fixture_of_intent(
+            asset,
+            AddressTypeV3::Link,
+            AddressTypeV3::Creator,
+            Some(transfer_data(9_600)),
+            Some(200),
+        )];
+
+        // Act: apply the withdraw success.
+        let result = link.apply_withdraw_action_success(&intents);
+
+        // Assert: rejected as invalid data; link stays Inactive with no available amount.
+        assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
+        assert_eq!(link.state, LinkState::Inactive);
+        assert_eq!(link.asset_info[0].available_amount, None);
+    }
+
+    #[test]
+    fn it_should_fail_apply_withdraw_due_to_missing_intent_and_keep_state() {
+        // Arrange: an Inactive link with funds, but no Link->Creator intent to match.
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Inactive,
+            1,
+            0,
+            vec![fixture_of_asset_info(asset, Some(9_800))],
+        );
+        let intents = vec![]; // no matching withdraw intent
+
+        // Act: apply the withdraw success.
+        let result = link.apply_withdraw_action_success(&intents);
+
+        // Assert: rejected as not found; link stays Inactive with funds intact.
+        assert!(matches!(result, Err(CanisterError::NotFound(_))));
+        assert_eq!(link.state, LinkState::Inactive);
+        assert_eq!(
+            link.asset_info[0].available_amount,
+            Some(Nat::from(9_800u64))
+        );
+    }
+
+    #[test]
+    fn it_should_fail_apply_withdraw_due_to_invalid_tx_data_and_keep_state() {
+        // Arrange: an Inactive link with funds, whose Link->Creator intent uses a
+        // non-Transfer tx_data variant.
+        let asset = random_principal_id();
+        let mut link = fixture_of_link(
+            LinkState::Inactive,
+            1,
+            0,
+            vec![fixture_of_asset_info(asset, Some(9_800))],
+        );
+        let intents = vec![fixture_of_intent(
+            asset,
+            AddressTypeV3::Link,
+            AddressTypeV3::Creator,
+            Some(transfer_from_data(9_600)), // not a Transfer => invalid withdraw tx_data
+            Some(200),
+        )];
+
+        // Act: apply the withdraw success.
+        let result = link.apply_withdraw_action_success(&intents);
+
+        // Assert: rejected as invalid data; link stays Inactive with funds intact.
         assert!(matches!(result, Err(CanisterError::InvalidDataError(_))));
         assert_eq!(link.state, LinkState::Inactive);
         assert_eq!(

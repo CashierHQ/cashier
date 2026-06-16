@@ -160,18 +160,6 @@ async fn user_process_action_v3(
     let caller = msg_caller();
     let now = get_state().env.time();
 
-    // Resolve the link context for the reservation (sync, read-only).
-    let action_data = link_v3_service
-        .action_service
-        .get_action_data(&input.action_id)
-        .map_err(|_| CanisterError::NotFound("Action not found".to_string()))?;
-    let link = link_v3_service
-        .link_v3_repository
-        .get(&action_data.action.link_id)
-        .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
-    let link_id = link.id.clone();
-    let action_type = action_data.action.action_type.clone();
-
     let key = RequestLockKey::ProcessAction {
         user_principal: caller,
         action_id: input.action_id.clone(),
@@ -185,13 +173,10 @@ async fn user_process_action_v3(
     //    callback trap (ic0.call_on_cleanup) - with the TTL as the final backstop.
     let _reservation_guard = LinkReservationGuard::reserve(
         &ThreadlocalRepositories,
-        &link_id,
         &input.action_id,
-        action_type,
-        link.max_use,
-        link.use_count,
         now,
         RESERVATION_TTL_NS,
+        &link_v3_service,
     )?;
 
     link_v3_service

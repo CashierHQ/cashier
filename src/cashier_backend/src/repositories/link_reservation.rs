@@ -18,23 +18,31 @@ impl<S: Storage<LinkReservationRepositoryStorage>> LinkReservationRepository<S> 
     }
 
     /// Returns the current reservations for a link (empty vec if none).
+    /// # Arguments
+    /// * `link_id` - The ID of the link to get reservations for.
+    /// # Returns
+    /// A vector of `LinkReservation` objects associated with the specified link ID. If there are no reservations for the given link ID, an empty vector is returned.
     pub fn get(&self, link_id: &str) -> Vec<LinkReservation> {
         self.storage
             .with_borrow(|store| store.get(link_id).cloned())
             .unwrap_or_default()
     }
 
-    /// Replaces the reservations for a link.
-    ///
-    /// Callers must call [`remove`](Self::remove) (not `put(vec![])`) when the list becomes
-    /// empty — storing an empty vec leaves a stale key in the map.
+    /// Sets the reservations for a link, overwriting any existing ones.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to set reservations for.
+    /// * `reservations` - A vector of `LinkReservation` objects to associate with the specified link.
     pub fn put(&mut self, link_id: &str, reservations: Vec<LinkReservation>) {
         self.storage.with_borrow_mut(|store| {
             store.insert(link_id.to_string(), reservations);
         });
     }
 
-    /// Removes all reservations for a link (used when the list becomes empty).
+    /// Removes all reservations for a link.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to remove reservations for.
+    /// # Returns
+    /// This function does not return a value. It removes all reservations associated with the specified link ID from the storage.
     pub fn remove(&mut self, link_id: &str) {
         self.storage.with_borrow_mut(|store| {
             store.remove(link_id);

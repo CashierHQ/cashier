@@ -25,7 +25,13 @@ pub struct LinkReservation {
 }
 
 impl LinkReservation {
-    /// Create a new reservation for `action_id` of `action_type` at `timestamp` (ns).
+    /// # Creates a new `LinkReservation` instance with the provided `id`, `action_type`, and `timestamp`.
+    /// ## Arguments
+    /// * `id` - A string representing the unique identifier for the link reservation.
+    /// * `action_type` - An `ActionType` enum value indicating the type of action associated with the reservation.
+    /// * `timestamp` - A 64-bit unsigned integer representing the timestamp when the reservation was created.
+    /// ## Returns
+    /// A new instance of `LinkReservation` initialized with the provided `id`, `action_type`, and `timestamp`.
     pub fn new(id: String, action_type: ActionType, timestamp: u64) -> Self {
         Self {
             id,
