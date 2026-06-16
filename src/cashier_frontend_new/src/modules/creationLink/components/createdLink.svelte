@@ -7,6 +7,7 @@
     AnalyticsEvent,
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
+  import { paths } from "$modules/routing/paths";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
@@ -57,7 +58,7 @@
         link_type: link.createLinkData.linkType,
         BE_link_id: link.backendId ?? "",
       });
-      goto(resolve(`/link/detail/${link.backendId}?created=true`));
+      goto(resolve(paths.createdDetail(link.backendId)));
     }
   });
 

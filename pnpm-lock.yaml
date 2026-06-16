@@ -67,7 +67,7 @@ importers:
         version: 4.2.2
       '@windoge98/plug-n-play':
         specifier: github:CashierHQ/plug-n-play#main
-        version: https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/ecb10366066c0a890fa35dfe7c4a98d7d8d80795(@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0))
+        version: https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/876ce8c81631a33085ebfc33569792243acba992(@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0))
       axios:
         specifier: ^1.16.0
         version: 1.16.1
@@ -96,6 +96,9 @@ importers:
       '@eslint/compat':
         specifier: ^2.1.0
         version: 2.1.0(eslint@10.4.0(jiti@2.7.0))
+      '@playwright/test':
+        specifier: ^1.60.0
+        version: 1.60.0
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
         version: 3.0.10(@sveltejs/kit@2.60.1(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.7(@typescript-eslint/types@8.59.3))(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)))(svelte@5.55.7(@typescript-eslint/types@8.59.3))(typescript@5.9.3)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)))
@@ -128,7 +131,7 @@ importers:
         version: 1.5.6
       '@vitest/browser':
         specifier: ^3.2.4
-        version: 3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
+        version: 3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
       '@vitest/coverage-v8':
         specifier: ^3.2.4
         version: 3.2.4(@vitest/browser@3.2.4)(vitest@3.2.4)
@@ -156,6 +159,9 @@ importers:
       knip:
         specifier: ^6.13.1
         version: 6.14.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+      playwright:
+        specifier: ^1.60.0
+        version: 1.60.0
       prettier:
         specifier: ^3.8.3
         version: 3.8.3
@@ -933,6 +939,11 @@ packages:
     peerDependencies:
       '@icp-sdk/core': ^5
 
+  '@icp-sdk/signer@5.4.0':
+    resolution: {integrity: sha512-l7HKJ02ZszAWvBV0dSW7uNVNVwsVAlWp9zMirHk/wrtQpglMDSxh1kcXiha5R5YkIooy/d5Pt8QKHDPG4Orj6A==}
+    peerDependencies:
+      '@icp-sdk/core': ^5
+
   '@internationalized/date@3.12.1':
     resolution: {integrity: sha512-6IedsVWXyq4P9Tj+TxuU8WGWM70hYLl12nbYU8jkikVpa6WXapFazPUcHUMDMoWftIDE2ILDkFFte6W2nFCkRQ==}
 
@@ -1297,6 +1308,11 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
+  '@playwright/test@1.60.0':
+    resolution: {integrity: sha512-O71yZIbAh/PxDMNGns37GHBIfrVkEVyn+AXyIa5dOTfb4/xNvRWV+Vv/NMbNCtODB/pO7vLlF2OTmMVLhmr7Ag==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
@@ -1443,32 +1459,8 @@ packages:
   '@sinonjs/fake-timers@15.4.0':
     resolution: {integrity: sha512-DsG+8/LscQIQg68J6Ef3dv10u6nVyetYn923s3/sus5eaGfTo1of5WMZSLf0UJc9KDuKPilPH0UDJCjvNbDNCA==}
 
-  '@slide-computer/signer-agent@4.2.2':
-    resolution: {integrity: sha512-WKAnkW59EwpJRV2kBJA20Lpgik1JB4qyJTH0fc9SGoUSukdHWgvebM54sfgrDHyTN1W3OtVHKf1jSJz2sXifsA==}
-    deprecated: This package has been replaced by @icp-sdk/signer
-    peerDependencies:
-      '@slide-computer/signer': ^4.2.2
-
-  '@slide-computer/signer-extension@4.2.2':
-    resolution: {integrity: sha512-ZjroTVFHsI5IJNPHRaYMcO3YHspmzmDGRATHA2ipWxdQY6n97HggaVGBDdtVmZNfnjN3yX3wh8ngYSK07O+NsA==}
-    deprecated: This package has been replaced by @icp-sdk/signer
-    peerDependencies:
-      '@slide-computer/signer': ^4.2.2
-
   '@slide-computer/signer-storage@4.2.2':
     resolution: {integrity: sha512-ZaFAtUZgbN0KyILO+yrQravBHsodsqvy+Z+1/Q9DKcaWpElx67MpK+nM6CnUE5r7irnPjnPspKsbpFl5d1qhQA==}
-
-  '@slide-computer/signer-transport-stoic@4.2.2':
-    resolution: {integrity: sha512-9xEFZzRXRzmOLR1T/8Kelvw4fImcjeRDhofyjC7NVzK/NBt9v4yk9T1KtqRqMW5w804mvK5gHfyBXfg5YCbJBQ==}
-    peerDependencies:
-      '@slide-computer/signer': ^4.2.2
-      '@slide-computer/signer-storage': ^4.2.2
-
-  '@slide-computer/signer-web@4.2.2':
-    resolution: {integrity: sha512-sPgj6Gabz7lXz6JbPXU5Dw2lRhmyFKFsqlx4yFLl5D7l65LOyPGMp+iNSxyhCrH4MlXiKJHoYugIkoYi6KWL3Q==}
-    deprecated: This package has been replaced by @icp-sdk/signer
-    peerDependencies:
-      '@slide-computer/signer': ^4.2.2
 
   '@slide-computer/signer@4.2.2':
     resolution: {integrity: sha512-K3gf2xZNUapCWsmNrJz3/o83ejvxHZxE812xEsaFof5olnEXHsbaOtmg0mDVOXSxezun67U3XOvHQR/CvqLqRA==}
@@ -1936,9 +1928,9 @@ packages:
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
 
-  '@windoge98/plug-n-play@https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/ecb10366066c0a890fa35dfe7c4a98d7d8d80795':
-    resolution: {tarball: https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/ecb10366066c0a890fa35dfe7c4a98d7d8d80795}
-    version: 0.1.0-beta.22
+  '@windoge98/plug-n-play@https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/876ce8c81631a33085ebfc33569792243acba992':
+    resolution: {tarball: https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/876ce8c81631a33085ebfc33569792243acba992}
+    version: 0.1.0-beta.23
     engines: {node: '>=18.0.0', npm: '>=10.0.0'}
 
   acorn-jsx@5.3.2:
@@ -2534,6 +2526,11 @@ packages:
 
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
+
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -3247,6 +3244,16 @@ packages:
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
+
+  playwright-core@1.60.0:
+    resolution: {integrity: sha512-9bW6zvX/m0lEbgTKJ6YppOKx8H3VOPBMOCFh2irXFOT4BbHgrx5hPjwJYLT40Lu+4qtD36qKc/Hn56StUW57IA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.60.0:
+    resolution: {integrity: sha512-hheHdokM8cdqCb0lcE3s+zT4t4W+vvjpGxsZlDnikarzx8tSzMebh3UiFtgqwFwnTnjYQcsyMF8ei2mCO/tpeA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   pngjs@5.0.0:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
@@ -4635,6 +4642,10 @@ snapshots:
     dependencies:
       '@icp-sdk/core': 5.4.0
 
+  '@icp-sdk/signer@5.4.0(@icp-sdk/core@5.4.0)':
+    dependencies:
+      '@icp-sdk/core': 5.4.0
+
   '@internationalized/date@3.12.1':
     dependencies:
       '@swc/helpers': 0.5.21
@@ -5013,6 +5024,10 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
+  '@playwright/test@1.60.0':
+    dependencies:
+      playwright: 1.60.0
+
   '@polka/url@1.0.0-next.29': {}
 
   '@rollup/rollup-android-arm-eabi@4.60.4':
@@ -5113,29 +5128,10 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@slide-computer/signer-agent@4.2.2(@slide-computer/signer@4.2.2)':
-    dependencies:
-      '@icp-sdk/core': 5.4.0
-      '@slide-computer/signer': 4.2.2
-
-  '@slide-computer/signer-extension@4.2.2(@slide-computer/signer@4.2.2)':
-    dependencies:
-      '@slide-computer/signer': 4.2.2
-
   '@slide-computer/signer-storage@4.2.2':
     dependencies:
       '@icp-sdk/core': 5.4.0
       idb-keyval: 6.2.2
-
-  '@slide-computer/signer-transport-stoic@4.2.2(@slide-computer/signer-storage@4.2.2)(@slide-computer/signer@4.2.2)':
-    dependencies:
-      '@icp-sdk/core': 5.4.0
-      '@slide-computer/signer': 4.2.2
-      '@slide-computer/signer-storage': 4.2.2
-
-  '@slide-computer/signer-web@4.2.2(@slide-computer/signer@4.2.2)':
-    dependencies:
-      '@slide-computer/signer': 4.2.2
 
   '@slide-computer/signer@4.2.2':
     dependencies:
@@ -5540,7 +5536,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vitest/browser@3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)':
+  '@vitest/browser@3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)':
     dependencies:
       '@testing-library/dom': 10.4.1
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.1)
@@ -5551,6 +5547,8 @@ snapshots:
       tinyrainbow: 2.0.0
       vitest: 3.2.4(@types/node@22.19.19)(@vitest/browser@3.2.4)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)
       ws: 8.20.1
+    optionalDependencies:
+      playwright: 1.60.0
     transitivePeerDependencies:
       - bufferutil
       - msw
@@ -5574,7 +5572,7 @@ snapshots:
       tinyrainbow: 2.0.0
       vitest: 3.2.4(@types/node@22.19.19)(@vitest/browser@3.2.4)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)
     optionalDependencies:
-      '@vitest/browser': 3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
+      '@vitest/browser': 3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -5620,18 +5618,14 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
-  '@windoge98/plug-n-play@https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/ecb10366066c0a890fa35dfe7c4a98d7d8d80795(@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0))':
+  '@windoge98/plug-n-play@https://codeload.github.com/CashierHQ/plug-n-play/tar.gz/876ce8c81631a33085ebfc33569792243acba992(@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0))':
     dependencies:
       '@dfinity/ledger-icp': 9.1.0(@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0))
       '@dfinity/utils': 4.2.1(@icp-sdk/core@5.4.0)
       '@icp-sdk/auth': 7.0.0(@icp-sdk/core@5.4.0)
       '@icp-sdk/core': 5.4.0
-      '@slide-computer/signer': 4.2.2
-      '@slide-computer/signer-agent': 4.2.2(@slide-computer/signer@4.2.2)
-      '@slide-computer/signer-extension': 4.2.2(@slide-computer/signer@4.2.2)
+      '@icp-sdk/signer': 5.4.0(@icp-sdk/core@5.4.0)
       '@slide-computer/signer-storage': 4.2.2
-      '@slide-computer/signer-transport-stoic': 4.2.2(@slide-computer/signer-storage@4.2.2)(@slide-computer/signer@4.2.2)
-      '@slide-computer/signer-web': 4.2.2(@slide-computer/signer@4.2.2)
     transitivePeerDependencies:
       - '@icp-sdk/canisters'
 
@@ -6275,6 +6269,9 @@ snapshots:
       fd-package-json: 2.0.0
 
   fs.realpath@1.0.0: {}
+
+  fsevents@2.3.2:
+    optional: true
 
   fsevents@2.3.3:
     optional: true
@@ -7192,6 +7189,14 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
+  playwright-core@1.60.0: {}
+
+  playwright@1.60.0:
+    dependencies:
+      playwright-core: 1.60.0
+    optionalDependencies:
+      fsevents: 2.3.2
+
   pngjs@5.0.0: {}
 
   postcss-load-config@3.1.4(postcss@8.5.14):
@@ -7745,7 +7750,7 @@ snapshots:
 
   vitest-browser-svelte@1.1.0(@vitest/browser@3.2.4)(svelte@5.55.7(@typescript-eslint/types@8.59.3))(vitest@3.2.4):
     dependencies:
-      '@vitest/browser': 3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
+      '@vitest/browser': 3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
       svelte: 5.55.7(@typescript-eslint/types@8.59.3)
       vitest: 3.2.4(@types/node@22.19.19)(@vitest/browser@3.2.4)(jiti@2.7.0)(jsdom@27.4.0(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0)
 
@@ -7776,7 +7781,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.19
-      '@vitest/browser': 3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
+      '@vitest/browser': 3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
       jsdom: 27.4.0(@noble/hashes@1.8.0)
     transitivePeerDependencies:
       - jiti
@@ -7819,7 +7824,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.19.19
-      '@vitest/browser': 3.2.4(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
+      '@vitest/browser': 3.2.4(playwright@1.60.0)(vite@7.3.3(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.1)(yaml@2.9.0))(vitest@3.2.4)
       jsdom: 27.4.0(@noble/hashes@2.2.0)
     transitivePeerDependencies:
       - jiti
