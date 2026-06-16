@@ -8,10 +8,11 @@ use cashier_backend_types::{
     repository::{
         action::{v1::ActionType, v3::ActionV3},
         intent::v3::IntentV3,
-        link::v3::{LinkState, LinkV3},
+        link::v3::LinkV3,
         transaction::v1::Transaction,
     },
 };
+use log::error;
 use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
@@ -19,10 +20,7 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{
-        links::shared::send_link::actions::withdraw::WithdrawActionV3, traits::LinkV3State,
-        utils::update_link_available_amount_after_withdraw,
-    },
+    link_v3::{links::shared::send_link::actions::withdraw::WithdrawActionV3, traits::LinkV3State},
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -125,8 +123,6 @@ impl InactiveState {
             ));
         }
 
-        let mut link = link.clone();
-
         let process_action_result = transaction_manager
             .process_action(
                 action,
@@ -137,9 +133,14 @@ impl InactiveState {
             )
             .await?;
 
-        if process_action_result.is_success {
-            link.state = LinkState::Ended;
-            update_link_available_amount_after_withdraw(&mut link, &process_action_result.intents)?;
+        // Link state transition (Ended + zeroed available amounts) is
+        // committed by the service layer on a fresh repository read; the
+        // handler only processes the action and returns the pre-action link.
+        if !process_action_result.is_success {
+            error!(
+                "Failed to process WITHDRAW action for link {}, action {}, errors: {:?}",
+                link.id, process_action_result.action.id, process_action_result.errors
+            );
         }
 
         Ok(LinkProcessActionResult {
@@ -246,6 +247,7 @@ mod tests {
         },
     };
     use candid::Nat;
+    use cashier_backend_types::repository::link::v3::LinkState;
     use cashier_backend_types::repository::{
         action::v1::ActionState,
         asset::v1::Asset,
@@ -685,7 +687,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_succeed_process_action_and_end_link_for_inactive_state() {
+    async fn it_should_succeed_process_action_and_return_unmutated_link_for_inactive_state() {
         // Arrange
         let creator = random_principal_id();
         let canister_id = random_principal_id();
@@ -753,13 +755,16 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
+        // commits Ended + zeroed amounts on a fresh repository read.
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.state, LinkState::Ended);
+        assert!(processed.process_action_result.is_success);
+        // the link state should not be mutated by the handler
+        assert_eq!(processed.link.state, LinkState::Inactive);
         assert_eq!(
             processed.link.asset_info[0].available_amount,
-            Some(Nat::from(0u64))
+            Some(Nat::from(1900u64))
         );
     }
 }
