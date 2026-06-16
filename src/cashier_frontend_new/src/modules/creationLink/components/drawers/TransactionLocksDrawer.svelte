@@ -9,6 +9,7 @@
   } from "$lib/shadcn/components/ui/drawer";
   import type { GateDraft } from "$modules/gating/types/gate";
   import { GateType } from "$modules/gating/types/gate";
+  import { SvelteSet } from "svelte/reactivity";
   import {
     ChevronLeft,
     Eye,
@@ -35,7 +36,7 @@
     onOpenChange,
   }: Props = $props();
 
-  let visiblePasswordIndexes = $state<Set<number>>(new Set());
+  let visiblePasswordIndexes = new SvelteSet<number>();
 
   function handleClose() {
     open = false;
@@ -67,15 +68,11 @@
   }
 
   function togglePasswordVisibility(index: number) {
-    const nextVisiblePasswordIndexes = new Set(visiblePasswordIndexes);
-
-    if (nextVisiblePasswordIndexes.has(index)) {
-      nextVisiblePasswordIndexes.delete(index);
+    if (visiblePasswordIndexes.has(index)) {
+      visiblePasswordIndexes.delete(index);
     } else {
-      nextVisiblePasswordIndexes.add(index);
+      visiblePasswordIndexes.add(index);
     }
-
-    visiblePasswordIndexes = nextVisiblePasswordIndexes;
   }
 
   function getLockValue(lock: PreviewGateDraft, revealSensitiveValue = false) {
