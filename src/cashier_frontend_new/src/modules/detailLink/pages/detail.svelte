@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import { paths } from "$modules/routing/paths";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
@@ -37,7 +38,7 @@
     calculateLinkInfoAssetsWithTokenInfo,
     calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
@@ -65,7 +66,7 @@
     onBack: () => Promise<void>;
   } = $props();
 
-  const context = getGuardContext();
+  const context = getRouteContext();
   const gatingStore = $derived.by(() => context.gatingStore);
   const linkStore = $derived.by(() => {
     const storeV3 = context.linkDetailStoreV3;
@@ -124,7 +125,7 @@
       // Remove the query parameter from URL without reload
       const newUrl = new URL(page.url);
       newUrl.searchParams.delete("created");
-      goto(resolve(`/link/detail/${id}`), {
+      goto(resolve(paths.detail(id)), {
         replaceState: true,
         noScroll: true,
       });
@@ -275,6 +276,7 @@
         },
         action: linkStore.action,
         setLinkType: () => {},
+        setPendingGateDraft: () => {},
         goNext: async () => {},
         goBack: async () => {},
       };
@@ -482,7 +484,7 @@
   }
 
   function goToLinks() {
-    goto(resolve("/links"));
+    goto(resolve(paths.links()));
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {

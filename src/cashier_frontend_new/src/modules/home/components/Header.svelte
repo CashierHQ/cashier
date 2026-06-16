@@ -2,12 +2,14 @@
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
+  import { paths } from "$modules/routing/paths";
 
   type Props = {
     onLoginClick?: () => void;
+    showLogin?: boolean;
   };
 
-  let { onLoginClick }: Props = $props();
+  let { onLoginClick, showLogin = true }: Props = $props();
 
   function handleLoginClick(): void {
     onLoginClick?.();
@@ -18,14 +20,16 @@
   <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <div class="flex justify-between items-center">
       <!-- Logo -->
-      <CashierLogo href={resolve("/")} />
-      <button
-        id="connect"
-        onclick={handleLoginClick}
-        class="h-[45px] font-medium bg-transparent border border-[#e5e5e5] cursor-pointer text-primary !font-bold hover:bg-primary/90 hover:text-primary-foreground hover:border-primary hover:shadow-md transition-all duration-300 rounded-lg px-[15px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        {locale.t("home.header.login")}
-      </button>
+      <CashierLogo href={resolve(paths.home())} />
+      {#if showLogin}
+        <button
+          id="connect"
+          onclick={handleLoginClick}
+          class="h-[45px] font-medium bg-transparent border border-[#e5e5e5] cursor-pointer text-primary !font-bold hover:bg-primary/90 hover:text-primary-foreground hover:border-primary hover:shadow-md transition-all duration-300 rounded-lg px-[15px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {locale.t("home.header.login")}
+        </button>
+      {/if}
     </div>
   </div>
 </header>

@@ -5,40 +5,25 @@
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
-  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
-  import ProtectedLinkOwner from "$modules/guard/components/ProtectedLinkOwner.svelte";
-  import ProtectedLinkState from "$modules/guard/components/ProtectedLinkState.svelte";
-  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
-  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
-  import { LinkStep } from "$modules/links/types/linkStep";
+  import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
+  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
 
   const id = page.params.id!;
+  createLinkRouteContext({
+    linkId: id,
+    draftLinkId: id,
+    storeType: "linkDetail",
+  });
 
   // Track Link creation landing (page load of landing page)
   trackEvent(AnalyticsEvent.LINK_CREATION_LANDING);
 </script>
 
-<RouteGuard draftLinkId={id}>
-  <ProtectedAuth>
-    <ProtectedValidLink redirectTo="/links">
-      <ProtectedLinkOwner>
-        <ProtectedLinkState
-          allowedStates={[
-            LinkStep.CHOOSE_TYPE,
-            LinkStep.ADD_ASSET,
-            LinkStep.LOCK,
-            LinkStep.PREVIEW,
-            LinkStep.CREATED,
-          ]}
-        >
-          <PageLayout isLinkFormPage={true}>
-            <div class="w-full grow-1 flex flex-col">
-              <CreateLink />
-            </div>
-          </PageLayout>
-        </ProtectedLinkState>
-      </ProtectedLinkOwner>
-    </ProtectedValidLink>
-  </ProtectedAuth>
-</RouteGuard>
+<RedirectBoundary>
+  <PageLayout isLinkFormPage={true}>
+    <div class="w-full grow-1 flex flex-col">
+      <CreateLink />
+    </div>
+  </PageLayout>
+</RedirectBoundary>

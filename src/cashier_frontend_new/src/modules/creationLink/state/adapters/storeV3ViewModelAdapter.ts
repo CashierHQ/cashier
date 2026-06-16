@@ -6,6 +6,7 @@ import {
   AddAssetItemMapper,
   type AddAssetItem,
 } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import type { GateDraft } from "$modules/gating/types/gate";
 import { ActionMapper } from "$modules/links/types/action/action";
 import {
   LinkTypeMapper,
@@ -138,6 +139,10 @@ export class CreationStoreV3ViewModelAdapter
       sourceAction,
       this.linkStore.icrc112Requests,
     );
+  }
+
+  setPendingGateDraft(draft: GateDraft | null) {
+    this.linkStore.pendingGateDraft = draft;
   }
 
   goNext: () => Promise<void> = async () => {

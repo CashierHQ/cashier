@@ -1,4 +1,5 @@
 import Action from "$modules/links/types/action/action";
+import type { GateDraft } from "$modules/gating/types/gate";
 import { type LinkTypeValue } from "$modules/links/types/link/linkType";
 import type { LinkStep } from "$modules/links/types/linkStep";
 import type {
@@ -30,6 +31,7 @@ export type GenericCreationLinkStoreVM = {
   createLinkData: CreateLinkData;
   action: Action | undefined;
   setLinkType: (type: LinkTypeValue) => void;
+  setPendingGateDraft: (draft: GateDraft | null) => void;
   goNext: () => Promise<void>;
   goBack: () => Promise<void>;
 };

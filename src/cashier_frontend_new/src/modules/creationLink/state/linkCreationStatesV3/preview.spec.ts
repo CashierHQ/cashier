@@ -1,5 +1,5 @@
+import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
-import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { CreateLinkResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
@@ -38,6 +38,10 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
 
 vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
   draftLinkRepository: { delete: vi.fn(), create: vi.fn(), update: vi.fn() },
+}));
+
+vi.mock("$modules/creationLink/repositories/draftGateRepository", () => ({
+  draftGateRepository: { delete: vi.fn() },
 }));
 
 vi.mock("$modules/links/services/cashierBackend", () => ({
@@ -235,6 +239,8 @@ describe("PreviewStateV3", () => {
     it("it_should_succeed_go_next_delete_draft_link_from_storage", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
+      const { draftGateRepository } =
+        await import("$modules/creationLink/repositories/draftGateRepository");
       const store = makeStore({ storeId: "test-store-id" });
       const state = new PreviewStateV3(store);
       await state.goNext();
@@ -242,15 +248,22 @@ describe("PreviewStateV3", () => {
         "test-store-id",
         "test-owner-principal",
       );
+      expect(draftGateRepository.delete).toHaveBeenCalledWith(
+        "test-owner-principal",
+        "test-store-id",
+      );
     });
 
     it("it_should_succeed_go_next_not_delete_from_storage_when_no_link_backend_id", async () => {
       const { draftLinkRepository } =
         await import("$modules/creationLink/repositories/draftLinkRepository");
+      const { draftGateRepository } =
+        await import("$modules/creationLink/repositories/draftGateRepository");
       const store = makeStore({ storeId: null });
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(draftLinkRepository.delete).not.toHaveBeenCalled();
+      expect(draftGateRepository.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -259,28 +272,28 @@ describe("PreviewStateV3", () => {
       const store = makeStore({ linkType: LinkType.SendTip });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_airdrop_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendAirdrop });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
     it("it_should_succeed_go_back_for_send_token_basket_link_type", async () => {
       const store = makeStore({ linkType: LinkType.SendTokenBasket });
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect(store.state).toBeInstanceOf(LockStateV3);
+      expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
     it("it_should_succeed_go_back_transition_to_add_asset_step", async () => {
       const store = makeStore();
       const state = new PreviewStateV3(store);
       await state.goBack();
-      expect((store.state as LockStateV3).step).toBe(LinkStep.LOCK);
+      expect((store.state as AddAssetStateV3).step).toBe(LinkStep.ADD_ASSET);
     });
   });
 });
