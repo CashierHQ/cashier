@@ -509,9 +509,10 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.state, LinkState::Active);
+        assert!(processed.process_action_result.is_success);
+        assert_eq!(processed.link.state, LinkState::Created);
     }
 }

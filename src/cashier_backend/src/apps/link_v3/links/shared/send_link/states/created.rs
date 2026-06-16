@@ -8,10 +8,11 @@ use cashier_backend_types::{
     repository::{
         action::{v1::ActionType, v3::ActionV3},
         intent::v3::IntentV3,
-        link::v3::{LinkState, LinkV3},
+        link::v3::LinkV3,
         transaction::v1::Transaction,
     },
 };
+use log::error;
 use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
@@ -19,10 +20,7 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{
-        links::shared::send_link::actions::create::CreateActionV3, traits::LinkV3State,
-        utils::update_link_available_amount_after_create,
-    },
+    link_v3::{links::shared::send_link::actions::create::CreateActionV3, traits::LinkV3State},
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -125,8 +123,6 @@ impl CreatedState {
             ));
         }
 
-        let mut link = link.clone();
-
         let process_action_result = transaction_manager
             .process_action(
                 action,
@@ -137,10 +133,14 @@ impl CreatedState {
             )
             .await?;
 
-        // if process action succeeds, activate the link
-        if process_action_result.is_success {
-            link.state = LinkState::Active;
-            update_link_available_amount_after_create(&mut link, &process_action_result.intents)?;
+        // Link state transition (Created -> Active + available amounts) is
+        // committed by the service layer on a fresh repository read; the
+        // handler only processes the action and returns the pre-action link.
+        if !process_action_result.is_success {
+            error!(
+                "Failed to process CREATE/ACTIVATE action for link {}, action {}, errors: {:?}",
+                link.id, process_action_result.action.id, process_action_result.errors
+            );
         }
 
         Ok(LinkProcessActionResult {
@@ -247,12 +247,12 @@ mod tests {
         },
     };
     use candid::Nat;
+    use cashier_backend_types::repository::link::v3::LinkState;
     use cashier_backend_types::repository::{
         action::v1::ActionState,
         asset::v3::{AssetV3, TokenStandardV3},
         asset_info::v3::AssetInfoV3,
         common::AddressTypeV3,
-        intent::v3::IntentTransactionDataV3,
         link::v1::LinkType,
     };
     use cashier_common::test_utils::random_principal_id;
@@ -643,7 +643,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_succeed_process_action_and_activate_link_for_created_state() {
+    async fn it_should_succeed_process_action_and_return_unmutated_link_for_created_state() {
         // Arrange
         let creator = random_principal_id();
         let canister_id = random_principal_id();
@@ -677,21 +677,6 @@ mod tests {
             )
             .await
             .expect("create action should succeed");
-        let expected_available_amount = create_result
-            .create_action_result
-            .intents
-            .iter()
-            .find(|intent| {
-                intent.source_address_type == AddressTypeV3::Creator
-                    && intent.dest_address_type == AddressTypeV3::Link
-            })
-            .and_then(|intent| match &intent.intent_tx_data {
-                Some(IntentTransactionDataV3::Transfer(data)) => Some(data.amount.clone()),
-                Some(IntentTransactionDataV3::TransferFrom(data)) => data.actual_amount.clone(),
-                None => None,
-            })
-            .expect("create action should include a link transfer amount");
-
         // Act
         let result = state_handler
             .process_action(
@@ -705,13 +690,13 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
+        // commits Created -> Active + available amounts on a fresh repository read.
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.state, LinkState::Active);
-        assert_eq!(
-            processed.link.asset_info[0].available_amount,
-            Some(expected_available_amount)
-        );
+        assert!(processed.process_action_result.is_success);
+        // the link state should not be mutated by the handler
+        assert_eq!(processed.link.state, LinkState::Created);
+        assert_eq!(processed.link.asset_info[0].available_amount, None);
     }
 }
