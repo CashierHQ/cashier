@@ -1,4 +1,5 @@
 use cashier_macros::storable;
+use ic_mple_structures::Codec;
 
 use crate::repository::keys::RequestLockKey;
 
@@ -7,6 +8,23 @@ use crate::repository::keys::RequestLockKey;
 pub struct RequestLock {
     pub key: RequestLockKey,
     pub timestamp: u64,
+}
+
+#[storable]
+pub enum RequestLockCodec {
+    V1(RequestLock),
+}
+
+impl Codec<RequestLock> for RequestLockCodec {
+    fn decode(source: Self) -> RequestLock {
+        match source {
+            RequestLockCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: RequestLock) -> Self {
+        RequestLockCodec::V1(dest)
+    }
 }
 
 impl RequestLock {
@@ -28,38 +46,32 @@ mod tests {
     use crate::repository::keys::RequestLockKey;
 
     #[test]
-    fn it_should_format_each_request_lock_key_variant_to_string() {
-        // Arrange: one key per variant, all sharing the same user principal.
+    fn test_request_lock_key_to_string() {
         let user = Principal::anonymous();
-        let create_action = RequestLockKey::CreateAction {
+        let key1 = RequestLockKey::CreateAction {
             user_principal: user,
             link_id: "link456".to_string(),
             action_type: "action789".to_string(),
         };
-        let create_link = RequestLockKey::CreateLink {
-            user_principal: user,
-        };
-        let process_action = RequestLockKey::ProcessAction {
-            user_principal: user,
-            action_id: "action789".to_string(),
-        };
-
-        // Act: render each key to its string form.
-        let create_action_str = create_action.to_string();
-        let create_link_str = create_link.to_string();
-        let process_action_str = process_action.to_string();
-
-        // Assert: every variant maps to its expected delimited format.
         assert_eq!(
-            create_action_str,
+            key1.to_string(),
             format!(
                 "CREATE_ACTION#USER#{}#LINK#link456#ACTION_TYPE#action789",
                 user
             )
         );
-        assert_eq!(create_link_str, format!("CREATE_LINK#USER#{}", user));
+
+        let key2 = RequestLockKey::CreateLink {
+            user_principal: user,
+        };
+        assert_eq!(key2.to_string(), format!("CREATE_LINK#USER#{}", user));
+
+        let key3 = RequestLockKey::ProcessAction {
+            user_principal: user,
+            action_id: "action789".to_string(),
+        };
         assert_eq!(
-            process_action_str,
+            key3.to_string(),
             format!("PROCESS_ACTION#USER#{}#ACTION#action789", user)
         );
     }

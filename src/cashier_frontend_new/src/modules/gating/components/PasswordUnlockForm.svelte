@@ -12,6 +12,8 @@
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import XUnlockForm from "$modules/gating/components/XUnlockForm.svelte";
+  import xIcon from "$lib/assets/x-icon.svg";
   import {
     Eye,
     EyeOff,
@@ -54,7 +56,31 @@
     if ("PasswordRedacted" in key || "Password" in key) {
       return locale.t("links.linkForm.lock.password") ?? "Password";
     }
+    if ("XFollowing" in key) {
+      return locale.t("links.linkForm.lock.xHandle") ?? "X Follow";
+    }
+    if ("XOwnedAccount" in key) {
+      return locale.t("links.linkForm.lock.keyOwnedAccount");
+    }
+    if ("XLikedPost" in key) {
+      return locale.t("links.linkForm.lock.key2LikePost") ?? "X Like post";
+    }
+    if ("XRetweetedPost" in key) {
+      return (
+        locale.t("links.linkForm.lock.key3RetweetPost") ?? "X Retweet post"
+      );
+    }
     return "Unknown";
+  }
+
+  function isXGate(gate: GateForUser): boolean {
+    const key = gate.gate.key;
+    return (
+      "XFollowing" in key ||
+      "XOwnedAccount" in key ||
+      "XLikedPost" in key ||
+      "XRetweetedPost" in key
+    );
   }
 
   function openDrawer(gate: GateForUser) {
@@ -133,9 +159,12 @@
 <div class="flex grow flex-col gap-6 py-2">
   <div class="flex flex-col items-center gap-2">
     <p class="text-sm text-foreground">
-      {allOpen
-        ? locale.t("links.linkForm.lock.linkUnlocked")
-        : locale.t("links.linkForm.lock.linkLocked")}
+      {locale.t("links.linkForm.lock.transactionIs")}
+      <span class="font-medium text-green">
+        {allOpen
+          ? locale.t("links.linkForm.lock.notLocked")
+          : locale.t("links.linkForm.lock.locked")}
+      </span>
     </p>
 
     {#if allOpen}
@@ -154,6 +183,9 @@
   </div>
 
   <div class="space-y-2">
+    <p class="text-sm font-medium text-foreground">
+      {locale.t("links.linkForm.lock.openLocks")}
+    </p>
     {#each gates as gate (gate.gate.id)}
       <button
         type="button"
@@ -164,16 +196,25 @@
           ? 'border-green'
           : 'border-border'}"
       >
-        <RectangleEllipsis
-          class="h-6 w-6 flex-none text-green"
-          aria-hidden="true"
-        />
+        {#if isXGate(gate)}
+          <img
+            src={xIcon}
+            alt=""
+            class="h-6 w-6 flex-none"
+            aria-hidden="true"
+          />
+        {:else}
+          <RectangleEllipsis
+            class="h-6 w-6 flex-none text-green"
+            aria-hidden="true"
+          />
+        {/if}
         <span class="text-sm text-foreground">{gateLabel(gate)}</span>
         {#if isGateOpen(gate)}
           <LockOpen class="ml-auto h-5 w-5 text-green" aria-hidden="true" />
         {:else}
           <Lock
-            class="ml-auto h-5 w-5 text-muted-foreground"
+            class="ml-auto h-5 w-5 text-red-500"
             aria-hidden="true"
           />
         {/if}
@@ -184,8 +225,7 @@
   <div class="flex items-center gap-2 text-sm text-green">
     <Info class="h-4 w-4 flex-none" aria-hidden="true" />
     <p>
-      {locale.t("links.linkForm.lock.unlockAllRequired") ??
-        "To use the transaction, unlock all locks."}
+      {locale.t("links.linkForm.lock.unlockAllRequired")}
     </p>
   </div>
 
@@ -217,57 +257,69 @@
       </div>
     </DrawerHeader>
 
-    <div class="space-y-5">
-      <div class="space-y-2">
-        <label
-          for="unlock-password"
-          class="text-sm font-medium text-foreground"
-        >
-          {locale.t("links.linkForm.lock.keyPassword")}
-        </label>
-
-        <div class="relative">
-          <input
-            id="unlock-password"
-            type={showPassword ? "text" : "password"}
-            bind:value={password}
-            placeholder={locale.t("links.linkForm.lock.enterPassword")}
-            class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green"
-          />
-
-          <button
-            type="button"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            onclick={() => (showPassword = !showPassword)}
+    {#if selectedGate && isXGate(selectedGate)}
+      <XUnlockForm
+        {linkId}
+        gate={selectedGate}
+        onUnlocked={() => {
+          if (selectedGate) localOpenGates[selectedGate.gate.id] = true;
+          localOpenGates = { ...localOpenGates };
+        }}
+        onClose={() => (drawerOpen = false)}
+      />
+    {:else}
+      <div class="space-y-5">
+        <div class="space-y-2">
+          <label
+            for="unlock-password"
+            class="text-sm font-medium text-foreground"
           >
-            {#if showPassword}
-              <EyeOff class="h-5 w-5" />
-            {:else}
-              <Eye class="h-5 w-5" />
-            {/if}
-          </button>
+            {locale.t("links.linkForm.lock.keyPassword")}
+          </label>
+
+          <div class="relative">
+            <input
+              id="unlock-password"
+              type={showPassword ? "text" : "password"}
+              bind:value={password}
+              placeholder={locale.t("links.linkForm.lock.enterPassword")}
+              class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green"
+            />
+
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              onclick={() => (showPassword = !showPassword)}
+            >
+              {#if showPassword}
+                <EyeOff class="h-5 w-5" />
+              {:else}
+                <Eye class="h-5 w-5" />
+              {/if}
+            </button>
+          </div>
+
+          {#if error}
+            <p class="text-xs text-[#D26060]">{error}</p>
+          {/if}
         </div>
 
-        {#if error}
-          <p class="text-xs text-[#D26060]">{error}</p>
-        {/if}
+        <Button
+          type="button"
+          disabled={isSubmitting || !password}
+          onclick={handleOpen}
+          class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+        >
+          {#if isSubmitting}
+            <div
+              class="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"
+            ></div>
+            {locale.t("links.linkForm.lock.processing") ?? "Processing"}
+          {:else}
+            {locale.t("links.linkForm.lock.openButton") ?? "Open"}
+          {/if}
+        </Button>
       </div>
-
-      <Button
-        type="button"
-        disabled={isSubmitting || !password}
-        onclick={handleOpen}
-        class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
-      >
-        {#if isSubmitting}
-          <div
-            class="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"
-          ></div>
-          {locale.t("links.linkForm.lock.processing") ?? "Processing"}
-        {:else}
-          {locale.t("links.linkForm.lock.openButton") ?? "Open"}
-        {/if}
-      </Button>
-    </div>
+    {/if}
   </DrawerContent>
 </Drawer>

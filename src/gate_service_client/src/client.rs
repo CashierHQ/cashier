@@ -1,7 +1,7 @@
 use candid::Principal;
 use gate_service_types::{
-    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
-    error::GateServiceError,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, PasswordHashingAlgorithm, XProfile,
+    auth::Permission, error::GateServiceError,
 };
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
@@ -100,5 +100,32 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
         self.client
             .query("get_gate_for_user", (gate_id, user))
             .await
+    }
+
+    /// Returns the current password hashing algorithm.
+    pub async fn admin_get_password_hashing_algorithm(
+        &self,
+    ) -> CanisterClientResult<PasswordHashingAlgorithm> {
+        self.client
+            .query("admin_get_password_hashing_algorithm", ())
+            .await
+    }
+
+    /// Sets the password hashing algorithm for future password gate creations.
+    pub async fn admin_set_password_hashing_algorithm(
+        &self,
+        mode: PasswordHashingAlgorithm,
+    ) -> CanisterClientResult<Result<(), GateServiceError>> {
+        self.client
+            .update("admin_set_password_hashing_algorithm", (mode,))
+            .await
+    }
+
+    /// Exchanges an X OAuth 2.0 authorization code for the caller's X profile.
+    pub async fn exchange_x_token(
+        &self,
+        code: String,
+    ) -> CanisterClientResult<Result<XProfile, GateServiceError>> {
+        self.client.update("exchange_x_token", (code,)).await
     }
 }

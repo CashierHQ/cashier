@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
-import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
-import { LinkState, LinkType } from "$shared";
+import { type Link as SharedLink, LinkState, LinkType } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { beforeEach, describe, expect, it } from "vitest";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
@@ -10,7 +9,7 @@ const fixture_of_owner = "owner-1";
 const fixture_of_another_owner = "owner-2";
 const fixture_of_creator = Principal.fromText("aaaaa-aa");
 
-function fixture_of_draft_link(overrides?: Partial<DraftLink>): DraftLink {
+function fixture_of_draft_link(overrides?: Partial<SharedLink>): SharedLink {
   return {
     id: "draft-1",
     title: "Draft Link",

@@ -146,7 +146,7 @@ async fn it_should_fail_activate_icp_token_basket_link_v3_if_caller_not_creator(
 }
 
 #[tokio::test]
-async fn it_should_fail_activate_icp_token_basket_link_v3_if_action_not_exists() {
+async fn it_should_fail_activate_icp_token_basket_link_v3_if_link_not_exists() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();

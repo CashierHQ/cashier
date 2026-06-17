@@ -5,7 +5,6 @@ pub mod action;
 pub mod auth;
 pub mod backoff;
 pub mod gate_service;
-pub mod link_reservation;
 pub mod link_v2;
 pub mod link_v3;
 pub mod rate_limit;

@@ -1,14 +1,18 @@
 pub mod gate;
+pub mod secrets;
+
+pub use secrets::get_decrypted_secret;
 
 use crate::{
     repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage},
     services::auth::AuthServiceStorage,
 };
+use gate_service_types::{PasswordHashingAlgorithm, SecretStorageMode};
 use ic_mple_log::{
     LogSettings,
     service::{LoggerServiceStorage, Storage},
 };
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use std::cell::RefCell;
 use std::thread::LocalKey;
@@ -37,6 +41,24 @@ const GATE_MEMORY_ID: MemoryId = MemoryId::new(0);
 const GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(1);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(3);
+const SECRETS_MEMORY_ID: MemoryId = MemoryId::new(4);
+const PLAIN_SECRETS_MEMORY_ID: MemoryId = MemoryId::new(5);
+const SECRET_STORAGE_MODE_MEMORY_ID: MemoryId = MemoryId::new(6);
+const PASSWORD_HASHING_ALGORITHM_MEMORY_ID: MemoryId = MemoryId::new(7);
+
+/// Stores AES-256-GCM encrypted secrets as `nonce || ciphertext` byte blobs.
+/// Secrets are encrypted client-side using the canister's vetKD public key.
+pub type SecretsStorage = StableBTreeMap<String, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Stores plain-text secrets as raw UTF-8 strings (used in PlainText storage mode).
+pub type PlainSecretsStorage = StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Persists the active secret storage mode across upgrades.
+pub type SecretStorageModeStorage = StableCell<SecretStorageMode, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Persists the active password hashing algorithm across upgrades.
+pub type PasswordHashingAlgorithmStorage =
+    StableCell<PasswordHashingAlgorithm, VirtualMemory<DefaultMemoryImpl>>;
 
 thread_local! {
     // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -69,6 +91,37 @@ thread_local! {
     static GATE_USER_STATUS_STORAGE: RefCell<GateUserStatusStorage> = RefCell::new(StableBTreeMap::init(
         MEMORY_MANAGER.with_borrow(|m| m.get(GATE_USER_STATUS_MEMORY_ID)),
     ));
+
+    /// Store for named secrets (API keys, OAuth credentials). Write-only from outside the canister.
+    pub static SECRETS_STORE: RefCell<SecretsStorage> = RefCell::new(StableBTreeMap::init(
+        MEMORY_MANAGER.with_borrow(|m| m.get(SECRETS_MEMORY_ID)),
+    ));
+
+    /// Store for plain-text secrets. Used when the storage mode is PlainText.
+    pub static PLAIN_SECRETS_STORE: RefCell<PlainSecretsStorage> = RefCell::new(StableBTreeMap::init(
+        MEMORY_MANAGER.with_borrow(|m| m.get(PLAIN_SECRETS_MEMORY_ID)),
+    ));
+
+    /// Persists the active secret storage mode. Defaults to PlainText on fresh deploys.
+    pub static SECRET_STORAGE_MODE: RefCell<SecretStorageModeStorage> = RefCell::new(
+        StableCell::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(SECRET_STORAGE_MODE_MEMORY_ID)),
+            SecretStorageMode::PlainText,
+        )
+    );
+
+    /// Persists the active password hashing algorithm. Defaults to Argon2id on fresh deploys.
+    pub static PASSWORD_HASHING_ALGORITHM: RefCell<PasswordHashingAlgorithmStorage> = RefCell::new(
+        StableCell::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(PASSWORD_HASHING_ALGORITHM_MEMORY_ID)),
+            PasswordHashingAlgorithm::Argon2id,
+        )
+    );
+}
+
+/// Returns the currently configured password hashing algorithm.
+pub fn get_password_hashing_algorithm() -> PasswordHashingAlgorithm {
+    PASSWORD_HASHING_ALGORITHM.with_borrow(|cell| cell.get().clone())
 }
 
 #[cfg(test)]

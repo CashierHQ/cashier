@@ -1,9 +1,10 @@
 use crate::api::state::get_state;
+use crate::gates::x::exchange_x_token as x_exchange_token;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
-    error::GateServiceError,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, XTokenExchangeResult,
+    auth::Permission, error::GateServiceError,
 };
 use ic_cdk::{api::msg_caller, query, update};
 
@@ -124,4 +125,20 @@ async fn open_gate(
     };
     let mut gate_service = get_state().gate_service;
     gate_service.open_gate(&gate_id, key, effective_user).await
+}
+
+#[update(guard = "is_not_anonymous")]
+/// Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
+///
+/// The backend performs the token exchange via a non-replicated HTTP outcall so
+/// that the single-use authorization code is consumed exactly once.
+/// # Arguments
+/// * `code`: The authorization code received from the X OAuth callback.
+/// # Returns
+/// * `Ok(XTokenExchangeResult)`: The authenticated user's X profile and OAuth access token.
+/// * `Err(GateServiceError)`: If the token exchange or profile fetch fails.
+async fn exchange_x_token(code: String) -> Result<XTokenExchangeResult, GateServiceError> {
+    x_exchange_token(code)
+        .await
+        .map_err(|e| GateServiceError::KeyVerificationFailed(e.to_string()))
 }

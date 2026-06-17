@@ -43,4 +43,3 @@ export const USD_DISPLAY_DECIMALS = 6;
 export const II_SIGNER_WALLET_ID = "iiSigner";
 
 export const DRAFT_LINKS_STORAGE_KEY_PREFIX = "draftLinks";
-export const DRAFT_LINK_GATES_STORAGE_KEY_PREFIX = "draftLinkGates";

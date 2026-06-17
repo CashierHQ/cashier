@@ -1,21 +1,22 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import Header from "$modules/home/components/Header.svelte";
   import Footer from "$modules/home/components/Footer.svelte";
   import LoginModal from "$modules/home/components/LoginModal.svelte";
   import Landing from "$modules/useLink/pages/landing.svelte";
-  import Ended from "$modules/useLink/components/Ended.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
+  import ProtectedUserState from "$modules/guard/components/ProtectedUserState.svelte";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
-  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
   import {
     trackEvent,
     AnalyticsEvent,
   } from "$modules/analytics/amplitudeStore";
 
   const id = page.params.id!;
-  createLinkRouteContext({ linkId: id, storeType: "userLink" });
-  const showLogin = $derived(authState.isReady && !authState.isLoggedIn);
 
   let isLoginModalOpen = $state(false);
   let loginPayload = $state<{ link_type: string; BE_link_id: string } | null>(
@@ -33,23 +34,24 @@
       loginPayload = null;
     }
   }
+
+  // Redirect logged in users to /link/[id]/use
+  $effect(() => {
+    if (authState.isReady && authState.isLoggedIn) {
+      goto(resolve(`/link/${id}/use`));
+    }
+  });
 </script>
 
 <main class="flex flex-col h-screen">
-  <RedirectBoundary>
-    {#snippet children(decision)}
-      <Header
-        onLoginClick={openLoginModal}
-        showLogin={showLogin &&
-          !(decision.kind === "allow" && decision.screen === "linkEnded")}
-      />
-      {#if decision.kind === "allow" && decision.screen === "linkEnded"}
-        <Ended />
-      {:else}
+  <RouteGuard linkId={id} storeType="userLink">
+    <ProtectedValidLink>
+      <ProtectedUserState allowedStates={[UserLinkStep.LANDING]}>
+        <Header onLoginClick={openLoginModal} />
         <Landing {openLoginModal} />
-      {/if}
-    {/snippet}
-  </RedirectBoundary>
+      </ProtectedUserState>
+    </ProtectedValidLink>
+  </RouteGuard>
   <Footer />
 </main>
 

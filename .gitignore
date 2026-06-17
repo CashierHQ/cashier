@@ -31,6 +31,7 @@ dist/
 /.env
 /.env.local
 # .env.*
+scripts/.env
 artifacts
 
 # AI

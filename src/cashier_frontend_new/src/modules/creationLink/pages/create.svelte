@@ -15,16 +15,24 @@
   import type { GenericDetailStoreVM } from "$modules/detailLink/types/genericDetailStoreVM";
   import LockTransaction from "$modules/gating/components/LockTransaction.svelte";
   import { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { paths } from "$modules/routing/paths";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
 
-  const context = getRouteContext();
+  const context = getGuardContext();
   const gatingStore = new GatingStore();
-  context.setGatingStore(gatingStore);
-  let hydratedGateDraftForId: string | null = null;
+
+  $effect(() => {
+    const storeV3 = context.linkCreationStoreV3;
+    if (!storeV3) return;
+    const drafts = gatingStore.gateDrafts;
+    if (drafts.length > 0) {
+      storeV3.pendingGateDraft = drafts[0];
+    } else {
+      storeV3.pendingGateDraft = null;
+    }
+  });
 
   let cachedCreationStore:
     | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
@@ -44,20 +52,6 @@
 
   const linkStep = $derived.by(() => linkStore?.step ?? LinkStep.CHOOSE_TYPE);
   const linkTitle = $derived.by(() => linkStore?.createLinkData.title ?? "");
-
-  $effect(() => {
-    const storeV3 = context.linkCreationStoreV3;
-    if (!storeV3?.id || hydratedGateDraftForId === storeV3.id) return;
-
-    gatingStore.loadGateDraft(storeV3.pendingGateDraft);
-    hydratedGateDraftForId = storeV3.id;
-  });
-
-  $effect(() => {
-    if (!linkStore) return;
-
-    linkStore.setPendingGateDraft(gatingStore.gateDrafts[0] ?? null);
-  });
 
   let cachedDetailStoreKey: string | null = null;
   let cachedDetailStore: GenericDetailStoreVM | null = null;
@@ -82,7 +76,7 @@
       linkStore.step === LinkStep.CHOOSE_TYPE ||
       linkStore.step === LinkStep.CREATED
     ) {
-      goto(resolve(paths.links()));
+      goto(resolve("/links"));
     } else {
       try {
         await linkStore.goBack();
@@ -103,7 +97,12 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader {linkStep} {linkTitle} showLockStep onBack={handleBack} />
+    <CreateLinkHeader
+      {linkStep}
+      {linkTitle}
+      showLockStep={true}
+      onBack={handleBack}
+    />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}

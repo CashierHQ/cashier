@@ -1,8 +1,10 @@
 pub mod password;
+pub mod x;
 
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use password::PasswordGateVerifier;
 use std::{fmt::Debug, future::Future, pin::Pin};
+use x::{XGateVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
 
 pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's key.
@@ -37,6 +39,13 @@ impl GateFactory {
                 let gate = PasswordGateVerifier::new(password_hash);
                 Ok(Box::new(gate))
             }
+            GateKey::XFollowing(target_handle) => {
+                let gate = XGateVerifier::new(target_handle);
+                Ok(Box::new(gate))
+            }
+            GateKey::XOwnedAccount(handle) => Ok(Box::new(XOwnedAccountVerifier::new(handle))),
+            GateKey::XLikedPost(url) => Ok(Box::new(XLikedPostVerifier::new(url))),
+            GateKey::XRetweetedPost(url) => Ok(Box::new(XRetweetedPostVerifier::new(url))),
             _ => Err(GateServiceError::UnsupportedGateKey(format!(
                 "{:?}",
                 gate_key
@@ -53,7 +62,7 @@ mod tests {
     fn it_should_error_get_gate_verifier_due_to_unsupported_gate_type() {
         // Arrange
         let factory = GateFactory {};
-        let gate_key = GateKey::XFollowing("elon_musk".to_string());
+        let gate_key = GateKey::TelegramGroup("some_group".to_string());
 
         // Act
         let result = factory.get_gate_verifier(gate_key);
@@ -61,7 +70,7 @@ mod tests {
         // Assert
         assert!(result.is_err());
         if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
-            assert!(e.contains("XFollowing"));
+            assert!(e.contains("TelegramGroup"));
         } else {
             panic!("Expected error but got success");
         }
@@ -72,6 +81,19 @@ mod tests {
         // Arrange
         let factory = GateFactory {};
         let gate_key = GateKey::Password("0xabc".to_string());
+
+        // Act
+        let result = factory.get_gate_verifier(gate_key);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_success_get_gate_verifier_xfollowing() {
+        // Arrange
+        let factory = GateFactory {};
+        let gate_key = GateKey::XFollowing("cashierapp".to_string());
 
         // Act
         let result = factory.get_gate_verifier(gate_key);

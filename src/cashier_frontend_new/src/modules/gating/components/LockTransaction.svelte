@@ -11,6 +11,7 @@
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import GateOptionList from "$modules/gating/components/GateOptionList.svelte";
   import PasswordLockForm from "$modules/gating/components/PasswordLockForm.svelte";
+  import XLockForm from "$modules/gating/components/XLockForm.svelte";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { Info, X } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -28,13 +29,13 @@
   let errorMessage: string | null = $state(null);
   let isContinuing = $state(false);
   let passwordDrawerOpen = $state(false);
+  let xDrawerOpen = $state(false);
 
   const handleContinue = async () => {
     errorMessage = null;
 
     try {
       isContinuing = true;
-      link.setPendingGateDraft(store.gateDrafts[0] ?? null);
       await link.goNext();
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
@@ -45,6 +46,11 @@
 
   const handlePasswordLock = () => {
     passwordDrawerOpen = false;
+    toast.success(locale.t("links.linkForm.lock.lockAdded"));
+  };
+
+  const handleXLock = () => {
+    xDrawerOpen = false;
     toast.success(locale.t("links.linkForm.lock.lockAdded"));
   };
 </script>
@@ -75,7 +81,11 @@
     {/if}
   </div>
 
-  <GateOptionList {store} onPasswordClick={() => (passwordDrawerOpen = true)} />
+  <GateOptionList
+    {store}
+    onPasswordClick={() => (passwordDrawerOpen = true)}
+    onXClick={() => (xDrawerOpen = true)}
+  />
 
   {#if errorMessage}
     <p class="text-sm text-red-500">{errorMessage}</p>
@@ -118,5 +128,28 @@
     </DrawerHeader>
 
     <PasswordLockForm {store} onLock={handlePasswordLock} />
+  </DrawerContent>
+</Drawer>
+
+<Drawer bind:open={xDrawerOpen}>
+  <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
+    <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
+      <div class="relative flex items-center justify-center">
+        <DrawerTitle class="text-base font-semibold">
+          {locale.t("links.linkForm.lock.setXLockKeys")}
+        </DrawerTitle>
+        <DrawerClose>
+          <button
+            type="button"
+            class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
+            aria-label={locale.t("links.linkForm.lock.closeXLockDrawer")}
+          >
+            <X class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </DrawerClose>
+      </div>
+    </DrawerHeader>
+
+    <XLockForm {store} onLock={handleXLock} />
   </DrawerContent>
 </Drawer>

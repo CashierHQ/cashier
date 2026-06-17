@@ -75,7 +75,6 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'InvalidInput' : string } |
   { 'HandleLogicError' : string } |
   { 'ParsePrincipalError' : string } |
-  { 'LinkNoUseAvailable' : { 'link_id' : string } } |
   { 'CandidDecodeFailed' : string } |
   { 'UnknownError' : string } |
   { 'InsufficientBalance' : { 'available' : bigint, 'required' : bigint } } |
@@ -152,7 +151,12 @@ export interface GateForUser {
 export type GateKey = { 'Password' : string } |
   { 'XFollowing' : string } |
   { 'DiscordServer' : string } |
+  { 'XLikedPost' : string } |
   { 'PasswordRedacted' : null } |
+  { 'XRetweetedPost' : string } |
+  { 'XRetweetedPostCredential' : { 'user_id' : string } } |
+  { 'XOwnedAccount' : string } |
+  { 'XLikedPostCredential' : { 'user_id' : string, 'access_token' : string } } |
   { 'TelegramGroup' : string };
 export type GateStatus = { 'Open' : null } |
   { 'Closed' : null };
@@ -405,17 +409,19 @@ export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
 export type Result_10 = { 'Ok' : DisableLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_11 = { 'Ok' : GetLinkDetailsResponseV3 } |
+export type Result_11 = { 'Ok' : XTokenExchangeResult } |
   { 'Err' : CanisterError };
-export type Result_12 = { 'Ok' : PaginateResult } |
+export type Result_12 = { 'Ok' : GetLinkDetailsResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_13 = { 'Ok' : PaginateResult_1 } |
+export type Result_13 = { 'Ok' : PaginateResult } |
   { 'Err' : CanisterError };
-export type Result_14 = { 'Ok' : OpenGateSuccessResult } |
+export type Result_14 = { 'Ok' : PaginateResult_1 } |
   { 'Err' : CanisterError };
-export type Result_15 = { 'Ok' : ProcessActionDto } |
+export type Result_15 = { 'Ok' : OpenGateSuccessResult } |
   { 'Err' : CanisterError };
-export type Result_16 = { 'Ok' : ProcessActionResponseV3 } |
+export type Result_16 = { 'Ok' : ProcessActionDto } |
+  { 'Err' : CanisterError };
+export type Result_17 = { 'Ok' : ProcessActionResponseV3 } |
   { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
@@ -465,6 +471,16 @@ export type Wallet = {
       'address' : Principal,
     }
   };
+export interface XProfile {
+  'id' : string,
+  'username' : string,
+  'name' : string,
+  'profile_image_url' : string,
+}
+export interface XTokenExchangeResult {
+  'access_token' : string,
+  'profile' : XProfile,
+}
 export interface _SERVICE {
   /**
    * Clears all cached token fees from the service.
@@ -697,6 +713,16 @@ export interface _SERVICE {
    */
   'user_disable_link_v3' : ActorMethod<[string], Result_10>,
   /**
+   * Exchanges an X OAuth 2.0 authorization code for the caller's X profile.
+   * Proxies the call to gate_service which performs the actual token exchange via HTTP outcall.
+   * # Arguments
+   * * `code` - The authorization code received from the X OAuth callback
+   * # Returns
+   * * `Ok(XTokenExchangeResult)` - The authenticated user's X profile and access token
+   * * `Err(CanisterError)` - If the token exchange fails
+   */
+  'user_exchange_x_token' : ActorMethod<[string], Result_11>,
+  /**
    * Returns link details together with gate metadata and the caller's gate status.
    * # Arguments
    * * `link_id` - The unique identifier of the link
@@ -707,7 +733,7 @@ export interface _SERVICE {
    */
   'user_get_link_details_v3' : ActorMethod<
     [string, [] | [GetLinkOptions]],
-    Result_11
+    Result_12
   >,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
@@ -722,7 +748,7 @@ export interface _SERVICE {
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(CanisterError)` - Error message if retrieval fails
    */
-  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_12>,
+  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_13>,
   /**
    * Retrieves a paginated list of links for the caller.
    * # Arguments
@@ -731,7 +757,7 @@ export interface _SERVICE {
    * * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
    * * `Err(CanisterError)` - If retrieval fails or validation errors occur
    */
-  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_13>,
+  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_14>,
   /**
    * Opens a gate for the caller on the specified link.
    * The caller must provide the gate ID (obtained from `user_get_link_details_v3`) and the
@@ -745,7 +771,7 @@ export interface _SERVICE {
    * * `Ok(OpenGateSuccessResult)` - Gate and updated user status
    * * `Err(CanisterError)` - If the key is wrong or the gate is not found
    */
-  'user_open_link_gate' : ActorMethod<[string, string, GateKey], Result_14>,
+  'user_open_link_gate' : ActorMethod<[string, string, GateKey], Result_15>,
   /**
    * Processes a created action V2.
    * # Arguments
@@ -754,7 +780,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionDto)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_15>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_16>,
   /**
    * Processes a created action V3.
    * # Arguments
@@ -763,7 +789,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionResponseV3)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_16>,
+  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_17>,
   /**
    * Syncs the asset balance cache for a link by querying actual token balances.
    * Only the link creator can trigger this.

@@ -512,11 +512,9 @@ mod tests {
             )
             .await;
 
-        // Assert — handler no longer mutates the link; the service layer
-        // commits Created -> Active on a fresh repository read.
+        // Assert
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert!(processed.process_action_result.is_success);
-        assert_eq!(processed.link.state, LinkState::Created);
+        assert_eq!(processed.link.state, LinkState::Active);
     }
 }

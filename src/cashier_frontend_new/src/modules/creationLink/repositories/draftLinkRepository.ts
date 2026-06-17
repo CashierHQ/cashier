@@ -8,8 +8,6 @@ import {
 } from "$shared";
 import * as devalue from "devalue";
 
-export type DraftLink = SharedLink;
-
 /**
  * Repository for managing draft links in localStorage.
  */
@@ -28,12 +26,12 @@ export class DraftLinkRepository {
    * @param owner owner identifier for loading
    * @returns array of SharedLink objects
    */
-  private load(owner: string): DraftLink[] {
+  private load(owner: string): SharedLink[] {
     const key = this.storeKey(owner);
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     try {
-      const list: DraftLink[] = devalue.parse(
+      const list: SharedLink[] = devalue.parse(
         raw,
         SharedLinkMapper.serde.deserialize,
       );
@@ -51,7 +49,7 @@ export class DraftLinkRepository {
    * @param links array of SharedLink objects to save
    * @param owner owner identifier for saving
    */
-  save(links: DraftLink[], owner: string): void {
+  save(links: SharedLink[], owner: string): void {
     const key = this.storeKey(owner);
     const stringified = devalue.stringify(
       links,
@@ -73,7 +71,7 @@ export class DraftLinkRepository {
   }: {
     id: string;
     owner: string;
-    draftLink: DraftLink;
+    draftLink: SharedLink;
   }) {
     const links = this.load(owner);
     const idx = links.findIndex((x) => String(x.id) === id);
@@ -110,7 +108,7 @@ export class DraftLinkRepository {
     const draftLink = links.find((x) => String(x.id) === id);
     if (!draftLink) return;
 
-    const updated: DraftLink = {
+    const updated: SharedLink = {
       ...draftLink,
       title: updateData.title ?? draftLink.title,
       link_type: updateData.linkType ?? draftLink.link_type,
@@ -144,7 +142,7 @@ export class DraftLinkRepository {
    * @param owner owner identifier for retrieving
    * @returns array of SharedLink objects
    */
-  get(owner: string): DraftLink[] {
+  get(owner: string): SharedLink[] {
     const list = this.load(owner);
 
     return list;
@@ -156,7 +154,7 @@ export class DraftLinkRepository {
    * @param draftLinkId local identifier for the draft link to retrieve
    * @returns the SharedLink object or undefined if not found
    */
-  getOne(owner: string, draftLinkId: string): DraftLink | undefined {
+  getOne(owner: string, draftLinkId: string): SharedLink | undefined {
     const links = this.load(owner);
     if (!links.length) return undefined;
     return links.find((x) => String(x.id) === draftLinkId);

@@ -1,6 +1,5 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
-import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
@@ -44,6 +43,14 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     const gateKeys: GateKey[] = [];
     if (gateDraft?.type === GateType.PASSWORD) {
       gateKeys.push({ Password: gateDraft.password });
+    } else if (gateDraft?.type === GateType.X_FOLLOWING) {
+      gateKeys.push({ XFollowing: gateDraft.targetHandle });
+    } else if (gateDraft?.type === GateType.X_OWNED_ACCOUNT) {
+      gateKeys.push({ XOwnedAccount: gateDraft.targetHandle });
+    } else if (gateDraft?.type === GateType.X_LIKED_POST) {
+      gateKeys.push({ XLikedPost: gateDraft.tweetUrl });
+    } else if (gateDraft?.type === GateType.X_RETWEETED_POST) {
+      gateKeys.push({ XRetweetedPost: gateDraft.tweetUrl });
     }
 
     const result = await cashierBackendService.createLinkV3(
@@ -60,9 +67,10 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
     // delete draft link from local storage
     if (this.#linkStore.id) {
-      const owner = authState.account?.owner ?? "anon";
-      draftLinkRepository.delete(this.#linkStore.id, owner);
-      draftGateRepository.delete(owner, this.#linkStore.id);
+      draftLinkRepository.delete(
+        this.#linkStore.id,
+        authState.account?.owner ?? "anon",
+      );
     }
 
     this.#linkStore.id = createLinkResponse.link.id;

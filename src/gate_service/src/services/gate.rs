@@ -1,9 +1,13 @@
 use crate::{
     gates::{GateFactory, GateVerifier},
-    repositories::{Repositories, gate::GateRepository},
-    utils::{gate::redact_password_gate, hashing::hash_password},
+    repositories::{Repositories, gate::GateRepository, get_password_hashing_algorithm},
+    utils::{
+        gate::redact_password_gate,
+        hashing::{hash_password, hash_password_sha256},
+    },
 };
 use candid::Principal;
+use gate_service_types::PasswordHashingAlgorithm;
 use gate_service_types::{
     Gate, GateForUser, GateKey, GateUserStatus, NewGate, OpenGateSuccessResult, VerificationResult,
     error::GateServiceError,
@@ -37,8 +41,14 @@ impl<R: Repositories> GateService<R> {
     ) -> Result<Gate, GateServiceError> {
         let gate_key = match &new_gate.key {
             GateKey::Password(password) => {
-                let hashed_password =
-                    hash_password(password).map_err(GateServiceError::HashingFailed)?;
+                let hashed_password = match get_password_hashing_algorithm() {
+                    PasswordHashingAlgorithm::Argon2id => {
+                        hash_password(password).map_err(GateServiceError::HashingFailed)?
+                    }
+                    PasswordHashingAlgorithm::Sha256 => {
+                        hash_password_sha256(password).map_err(GateServiceError::HashingFailed)?
+                    }
+                };
                 GateKey::Password(hashed_password)
             }
             _ => new_gate.key.clone(),
@@ -367,7 +377,7 @@ mod tests {
         let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            key: GateKey::XFollowing("x_handle".to_string()),
+            key: GateKey::TelegramGroup("some_group".to_string()),
         };
         let gate = service.add_gate(creator, new_gate).unwrap();
 
@@ -377,10 +387,28 @@ mod tests {
         // Assert
         assert!(result.is_err());
         if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
-            assert!(e.contains("XFollowing"));
+            assert!(e.contains("TelegramGroup"));
         } else {
             panic!("Expected error but got success");
         }
+    }
+
+    #[test]
+    fn it_should_get_opening_gate_xfollowing() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let creator = random_principal_id();
+        let new_gate = NewGate {
+            subject_id: "subject1".to_string(),
+            key: GateKey::XFollowing("cashierapp".to_string()),
+        };
+        let gate = service.add_gate(creator, new_gate).unwrap();
+
+        // Act
+        let result = service.get_opening_gate(&gate.id);
+
+        // Assert
+        assert!(result.is_ok());
     }
 
     #[test]

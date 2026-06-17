@@ -8,8 +8,7 @@
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
-  import { paths } from "$modules/routing/paths";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -35,8 +34,8 @@
     onShowFooterChange?: (showFooter: boolean) => void;
   } = $props();
 
-  // Get userLinkStore from route context.
-  const context = getRouteContext();
+  // Get userLinkStore from context (created by RouteGuard)
+  const context = getGuardContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {
@@ -108,7 +107,7 @@
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
         // Redirect to error page instead of showing toast
-        goto(resolve(paths.notFound()));
+        goto(resolve("/404"));
         return;
       }
 
@@ -135,7 +134,7 @@
 
       // Check if result requires redirect to 404
       if (shouldRedirectTo404(result, userStore.link ?? undefined)) {
-        goto(resolve(paths.notFound()));
+        goto(resolve("/404"));
         return result;
       }
 
@@ -150,7 +149,7 @@
     } catch (err) {
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
-        goto(resolve(paths.notFound()));
+        goto(resolve("/404"));
         // Return a result with the current action if it exists
         if (!userStore.action) {
           throw new Error(
@@ -269,12 +268,28 @@
     await appHeaderStore.triggerBack();
   };
 
+  // Register logo click handler for AppHeader on the use flow
+  const handleLogoClick = async () => {
+    if (!userStore) {
+      return;
+    }
+    try {
+      await userStore.goToLanding();
+    } catch (error) {
+      // goToLanding throws if action exists or invalid state
+      // Stay on current page - do nothing
+      console.warn("goToLanding blocked:", error);
+    }
+  };
+
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
+    appHeaderStore.setLogoClickHandler(handleLogoClick);
   });
 
   onDestroy(() => {
     appHeaderStore.clearBackHandler();
+    appHeaderStore.clearLogoClickHandler();
   });
 </script>
 

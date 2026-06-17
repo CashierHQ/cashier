@@ -91,12 +91,6 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
       throw new Error(`Failed to process action: ${result.error}`);
     }
 
-    if (!result.unwrap().isSuccess) {
-      throw new Error(
-        `Action processing failed: ${result.unwrap().errors.join(", ")}`,
-      );
-    }
-
     await this.#store.linkDetail.query.refreshAsync();
     this.#store.state = new CompletedStateV3();
     return result.unwrap();

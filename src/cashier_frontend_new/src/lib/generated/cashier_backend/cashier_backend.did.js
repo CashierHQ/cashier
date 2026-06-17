@@ -28,7 +28,6 @@ export const idlFactory = ({ IDL }) => {
       'InvalidInput' : IDL.Text,
       'HandleLogicError' : IDL.Text,
       'ParsePrincipalError' : IDL.Text,
-      'LinkNoUseAvailable' : IDL.Record({ 'link_id' : IDL.Text }),
       'CandidDecodeFailed' : IDL.Text,
       'UnknownError' : IDL.Text,
       'InsufficientBalance' : IDL.Record({
@@ -405,7 +404,15 @@ export const idlFactory = ({ IDL }) => {
     'Password' : IDL.Text,
     'XFollowing' : IDL.Text,
     'DiscordServer' : IDL.Text,
+    'XLikedPost' : IDL.Text,
     'PasswordRedacted' : IDL.Null,
+    'XRetweetedPost' : IDL.Text,
+    'XRetweetedPostCredential' : IDL.Record({ 'user_id' : IDL.Text }),
+    'XOwnedAccount' : IDL.Text,
+    'XLikedPostCredential' : IDL.Record({
+      'user_id' : IDL.Text,
+      'access_token' : IDL.Text,
+    }),
     'TelegramGroup' : IDL.Text,
   });
   const CreateLinkInputV3 = IDL.Record({
@@ -437,6 +444,20 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : DisableLinkResponseV3,
     'Err' : CanisterError,
   });
+  const XProfile = IDL.Record({
+    'id' : IDL.Text,
+    'username' : IDL.Text,
+    'name' : IDL.Text,
+    'profile_image_url' : IDL.Text,
+  });
+  const XTokenExchangeResult = IDL.Record({
+    'access_token' : IDL.Text,
+    'profile' : XProfile,
+  });
+  const Result_11 = IDL.Variant({
+    'Ok' : XTokenExchangeResult,
+    'Err' : CanisterError,
+  });
   const GateStatus = IDL.Variant({ 'Open' : IDL.Null, 'Closed' : IDL.Null });
   const GateUserStatus = IDL.Record({
     'status' : GateStatus,
@@ -454,7 +475,7 @@ export const idlFactory = ({ IDL }) => {
     'gates' : IDL.Vec(GateForUser),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_11 = IDL.Variant({
+  const Result_12 = IDL.Variant({
     'Ok' : GetLinkDetailsResponseV3,
     'Err' : CanisterError,
   });
@@ -473,7 +494,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(LinkDto),
   });
-  const Result_12 = IDL.Variant({
+  const Result_13 = IDL.Variant({
     'Ok' : PaginateResult,
     'Err' : CanisterError,
   });
@@ -481,7 +502,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(Link),
   });
-  const Result_13 = IDL.Variant({
+  const Result_14 = IDL.Variant({
     'Ok' : PaginateResult_1,
     'Err' : CanisterError,
   });
@@ -489,7 +510,7 @@ export const idlFactory = ({ IDL }) => {
     'gate_user_status' : GateUserStatus,
     'gate' : Gate,
   });
-  const Result_14 = IDL.Variant({
+  const Result_15 = IDL.Variant({
     'Ok' : OpenGateSuccessResult,
     'Err' : CanisterError,
   });
@@ -500,7 +521,7 @@ export const idlFactory = ({ IDL }) => {
     'errors' : IDL.Vec(IDL.Text),
     'is_success' : IDL.Bool,
   });
-  const Result_15 = IDL.Variant({
+  const Result_16 = IDL.Variant({
     'Ok' : ProcessActionDto,
     'Err' : CanisterError,
   });
@@ -511,7 +532,7 @@ export const idlFactory = ({ IDL }) => {
     'is_success' : IDL.Bool,
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
-  const Result_16 = IDL.Variant({
+  const Result_17 = IDL.Variant({
     'Ok' : ProcessActionResponseV3,
     'Err' : CanisterError,
   });
@@ -575,34 +596,35 @@ export const idlFactory = ({ IDL }) => {
     'user_create_link_v3' : IDL.Func([CreateLinkInputV3], [Result_8], []),
     'user_disable_link_v2' : IDL.Func([IDL.Text], [Result_9], []),
     'user_disable_link_v3' : IDL.Func([IDL.Text], [Result_10], []),
+    'user_exchange_x_token' : IDL.Func([IDL.Text], [Result_11], []),
     'user_get_link_details_v3' : IDL.Func(
         [IDL.Text, IDL.Opt(GetLinkOptions)],
-        [Result_11],
+        [Result_12],
         ['query'],
       ),
     'user_get_links_v2' : IDL.Func(
         [IDL.Opt(PaginateInput)],
-        [Result_12],
+        [Result_13],
         ['query'],
       ),
     'user_get_links_v3' : IDL.Func(
         [IDL.Opt(PaginateInput)],
-        [Result_13],
+        [Result_14],
         ['query'],
       ),
     'user_open_link_gate' : IDL.Func(
         [IDL.Text, IDL.Text, GateKey],
-        [Result_14],
+        [Result_15],
         [],
       ),
     'user_process_action_v2' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_15],
+        [Result_16],
         [],
       ),
     'user_process_action_v3' : IDL.Func(
         [ProcessActionV2Input],
-        [Result_16],
+        [Result_17],
         [],
       ),
     'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),

@@ -68,32 +68,6 @@ describe("UserLinkStoreV3", () => {
     });
   });
 
-  describe("restore persisted state", () => {
-    it("it_should_succeed_restore_landing_step_from_persisted_zero_value", () => {
-      mocks.getOne.mockReturnValue({
-        linkId: "link-1",
-        step: UserLinkStep.LANDING,
-        updatedAt: 1,
-      });
-
-      const store = new UserLinkStoreV3({ id: "link-1" });
-
-      expect(store.step).toBe(UserLinkStep.LANDING);
-    });
-
-    it("it_should_succeed_restore_address_unlocked_step_from_persisted_state", () => {
-      mocks.getOne.mockReturnValue({
-        linkId: "link-1",
-        step: UserLinkStep.ADDRESS_UNLOCKED,
-        updatedAt: 1,
-      });
-
-      const store = new UserLinkStoreV3({ id: "link-1" });
-
-      expect(store.step).toBe(UserLinkStep.ADDRESS_UNLOCKED);
-    });
-  });
-
   describe("syncUserLink", () => {
     it("it_should_fail_do_skip_sync_due_to_missing_owner", () => {
       authStateMock.account = null;

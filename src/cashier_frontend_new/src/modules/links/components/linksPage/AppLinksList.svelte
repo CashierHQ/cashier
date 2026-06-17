@@ -6,7 +6,6 @@
     GroupedLink,
     UnifiedLinkItem,
   } from "$modules/links/types/linkList";
-  import { paths } from "$modules/routing/paths";
   import { formatDate } from "$modules/shared/utils/formatDate";
 
   const {
@@ -17,9 +16,9 @@
 
   function handleLinkClick(link: UnifiedLinkItem) {
     if (link.isCreated) {
-      goto(resolve(paths.detail(link.id)));
+      goto(resolve(`/link/detail/${link.id}`));
     } else {
-      goto(resolve(paths.create(link.id)));
+      goto(resolve(`/link/create/${link.id}`));
     }
   }
 </script>

@@ -52,12 +52,6 @@
     "contactEmail": "Contact Email",
     "copiedToClipboard": "Copied to clipboard"
   },
-  "notFound": {
-    "code": "404",
-    "title": "Page not found",
-    "description": "The page you are looking for does not exist or is no longer available.",
-    "homeButton": "Go Home"
-  },
   "links": {
     "page": {
       "title": "Cashier links",
@@ -93,7 +87,7 @@
       "draft": "Draft",
       "active": "Active",
       "inactive": "Inactive",
-      "ended": "Inactive (Empty)"
+      "ended": "Ended"
     },
     "linkForm": {
       "header": {
@@ -215,17 +209,46 @@
         "processing": "Processing",
         "linkLocked": "Link locked",
         "linkUnlocked": "Link unlocked",
+        "transactionLocked": "locked",
+        "transactionNotLocked": "not locked",
+        "openLocks": "Open locks",
         "unlockAllRequired": "To use the transaction, unlock all locks.",
+        "connectedAccount": "Connected account",
+        "connectAccount": "Connect account",
+        "key2FollowAccount": "Key 2: Follow account",
+        "xRequirementsNotMet": "Requirements on X not met.",
+        "rateLimited": "Too many requests. Please try again later.",
+        "provideKeysToUnlock": "Provide keys to unlock",
         "fees": {
           "password": "Lock fee - password",
           "xFollow": "Lock fee - X follow",
           "total": "Total lock fees",
           "multipleTokens": "Multiple tokens"
         },
+        "setXLockKeys": "Set lock keys",
+        "closeXLockDrawer": "Close lock keys drawer",
+        "rewardAccount": "Reward account",
+        "key1FollowAccount": "Follow account",
+        "keyOwnedAccount": "Owned account",
+        "key2LikePost": "Like post",
+        "key3RetweetPost": "Retweet post",
+        "key4Hashtag": "Key 4: Hashtag",
+        "enterUrlPost": "Enter URL post",
+        "hashtagPlaceholder": "hashtag",
+        "xAllKeysRequired": "User must provide all keys to unlock",
+        "followAccount": "Account to follow",
+        "xHandlePlaceholder": "username",
+        "connectXAccount": "Connect X account",
+        "connecting": "Connecting…",
+        "yourXAccount": "Your X account",
+        "clickToDisconnect": "Click to disconnect",
+        "xNotFollowing": "Not following the required account. Follow and try again.",
+        "verify": "Verify",
         "errors": {
           "passwordRequired": "Password is required",
           "confirmPasswordRequired": "Confirm password is required",
-          "passwordsDifferent": "The passwords are different."
+          "passwordsDifferent": "The passwords are different.",
+          "xHandleRequired": "X handle is required"
         }
       },
       "preview": {
@@ -239,7 +262,7 @@
         "transactionLock": "Transaction lock",
         "transactionLockUnlock": "Unlocked",
         "transactionLockLock": "Lock",
-        "transactionLockEnded": "Inactive (Empty)",
+        "transactionLockEnded": "Ended",
         "youSend": "You send",
         "youReceive": "You receive",
         "includingNetworkFees": "Including network fees",
@@ -266,13 +289,7 @@
             "phase2Label": "Phase 2",
             "phase2Description": "Confirming the transactions",
             "phase3Label": "Transaction confirmed",
-            "phase3Description": "All steps completed",
-            "errors": {
-              "alreadyClaimed": "This link has no claim available right now — it may be fully claimed or another claim is in progress.",
-              "linkUnavailable": "This link is no longer available.",
-              "insufficientFunds": "Insufficient balance to complete this transaction.",
-              "generic": "Something went wrong while processing the transaction. Please try again."
-            }
+            "phase3Description": "All steps completed"
           },
           "wallet": {
             "title": "Confirm transaction",
@@ -301,7 +318,7 @@
       },
       "detail": {
         "loading": "Loading...",
-        "endLink": "Deactivate Link",
+        "endLink": "End link",
         "copyLink": "Copy link",
         "copied": "Copied successfully",
         "copyFailed": "Failed to copy link",
@@ -324,13 +341,13 @@
           "balanceSyncSuccess": "Balance synced successfully."
         },
         "endLinkConfirm": {
-          "title": "Deactivate Link",
+          "title": "End link",
           "firstStep": {
-            "text": "Deactivating the link will make the link page unavailable. You will still be able to retrieve the remaining assets.",
+            "text": "Ending the link will deactivate the link page, and you will need not be able to retrieve the remaining assets.",
             "confirmButton": "Confirm"
           },
           "secondStep": {
-            "text": "Are you sure you want to deactivate the link? This action cannot be undone.",
+            "text": "Are you sure you want to end the link? This action cannot be undone.",
             "deleteButton": "Delete"
           }
         },
@@ -361,11 +378,6 @@
           "tokenBasketMessage": "Congratulations, you received a token basket!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
-        },
-        "ended": {
-          "title": "This link has ended",
-          "description": "This link is no longer available, so it cannot be claimed or used.",
-          "backButton": "Go to Cashier home"
         },
         "errors": {
           "linkDetailMissing": "Link detail is missing",

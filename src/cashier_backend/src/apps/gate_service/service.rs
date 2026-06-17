@@ -5,7 +5,7 @@ use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 use gate_service_types::{
     Gate, GateForUser, GateKey, GateStatus, GateUserStatus, NewGate, OpenGateSuccessResult,
-    error::GateServiceError,
+    XTokenExchangeResult, error::GateServiceError,
 };
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
@@ -89,6 +89,25 @@ impl GateServiceClient for GateServiceWrapper {
         })
     }
 
+    /// Exchanges an X OAuth authorization code for the user's X profile and access token.
+    /// # Arguments
+    /// * `code` - The authorization code received from the X OAuth callback.
+    /// # Returns
+    /// * `Ok(XTokenExchangeResult)` with the user's X profile and access token on success.
+    /// * `Err(CanisterError)` if the token exchange or profile fetch fails.
+    async fn exchange_x_token(&self, code: String) -> Result<XTokenExchangeResult, CanisterError> {
+        let result = Call::bounded_wait(self.canister_id, "exchange_x_token")
+            .with_arg(&code)
+            .await
+            .map_err(CanisterError::from)?;
+
+        let parsed: Result<Result<XTokenExchangeResult, GateServiceError>, CandidDecodeFailed> =
+            result.candid();
+        parsed
+            .map_err(CanisterError::from)?
+            .map_err(|e| CanisterError::HandleLogicError(format!("{e:?}")))
+    }
+
     /// Updates the canister ID used for all GateService calls.
     /// # Arguments
     /// * `canister_id` - The new Principal of the GateService canister to call
@@ -122,6 +141,20 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
     /// * `canister_id` - The new Principal of the GateService canister to call.
     pub fn set_canister_id(&mut self, canister_id: Principal) {
         self.gate_client.set_canister_id(canister_id);
+    }
+
+    /// Exchanges an X OAuth authorization code for the user's X profile and access token.
+    /// Delegates to the gate_client (GateService canister).
+    /// # Arguments
+    /// * `code` - The authorization code from the X OAuth callback.
+    /// # Returns
+    /// * `Ok(XTokenExchangeResult)` - The authenticated user's X profile and access token.
+    /// * `Err(CanisterError)` - If the token exchange fails.
+    pub async fn exchange_x_token(
+        &self,
+        code: String,
+    ) -> Result<XTokenExchangeResult, CanisterError> {
+        self.gate_client.exchange_x_token(code).await
     }
 
     /// Creates gates in GateService for a link for each supplied key, caching each locally.
@@ -353,6 +386,15 @@ pub mod tests {
             self.open_gate_result
                 .clone()
                 .unwrap_or_else(|| Err(CanisterError::HandleLogicError("not set".to_string())))
+        }
+
+        async fn exchange_x_token(
+            &self,
+            _code: String,
+        ) -> Result<XTokenExchangeResult, CanisterError> {
+            Err(CanisterError::HandleLogicError(
+                "not implemented in mock".to_string(),
+            ))
         }
 
         fn set_canister_id(&mut self, _canister_id: Principal) {}

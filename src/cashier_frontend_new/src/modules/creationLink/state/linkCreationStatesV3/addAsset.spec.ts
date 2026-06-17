@@ -70,7 +70,6 @@ function makeStore(
           use_count: 0n,
         },
     state: undefined as unknown,
-    initializeCreateLinkActionFromTemplate: vi.fn(() => Ok(true)),
   };
   return store as unknown as LinkCreationStoreV3;
 }

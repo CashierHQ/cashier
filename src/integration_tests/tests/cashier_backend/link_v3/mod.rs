@@ -6,3 +6,4 @@ pub mod password_gate;
 pub mod send_airdrop;
 pub mod send_basket;
 pub mod send_tip;
+pub mod x_gate;

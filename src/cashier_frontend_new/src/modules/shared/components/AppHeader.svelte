@@ -10,8 +10,7 @@
   import WalletButton from "$modules/shared/components/WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
-  import { paths } from "$modules/routing/paths";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
 
@@ -32,19 +31,19 @@
   // Get current path to determine if it's create or edit
   const currentPath = $derived.by(() => page.url.pathname);
 
-  // Try to get route context (it only exists on link routes).
-  const routeContext = $derived.by(() => {
+  // Try to get guard context (may not exist if not wrapped in RouteGuard)
+  const guardContext = $derived.by(() => {
     try {
-      return getRouteContext();
+      return getGuardContext();
     } catch {
-      // Context does not exist on routes that do not initialize link data.
+      // Context doesn't exist, which is fine for pages without RouteGuard
       return null;
     }
   });
 
   // Get userLinkStoreV3 from context if available
   const userLinkStore = $derived.by(
-    () => routeContext?.userLinkStoreV3 ?? null,
+    () => guardContext?.userLinkStoreV3 ?? null,
   );
 
   // Get current user link step
@@ -90,9 +89,14 @@
     await appHeaderStore.triggerBack();
   }
 
-  // Handle logo click - always returns to the public home page.
+  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
   async function handleLogoClick() {
-    await goto(resolve(paths.home()));
+    if (appHeaderStore.hasLogoClickHandler()) {
+      await appHeaderStore.triggerLogoClick();
+      return;
+    }
+    // No handler set = navigate to /links
+    goto(resolve("/links"));
   }
 </script>
 
@@ -137,7 +141,7 @@
       <MenuButton />
     </div>
   {:else if isWalletPage}
-    <button onclick={() => goto(resolve(paths.links()))}>
+    <button onclick={() => goto(resolve("/links"))}>
       <X class="h-6 w-6" />
     </button>
   {/if}

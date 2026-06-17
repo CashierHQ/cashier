@@ -1,6 +1,9 @@
 pub mod auth;
 pub mod error;
 pub mod init;
+pub mod secret;
+
+pub use secret::{PasswordHashingAlgorithm, SecretStorageMode};
 
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
@@ -81,6 +84,21 @@ pub enum GateKey {
     XFollowing(String),
     TelegramGroup(String),
     DiscordServer(String),
+    /// Gate config: target X handle. Credential: the user's X handle (from OAuth profile).
+    XOwnedAccount(String),
+    /// Gate config: tweet URL. Credential: use XLikedPostCredential.
+    XLikedPost(String),
+    /// Gate config: tweet URL. Credential: use XRetweetedPostCredential.
+    XRetweetedPost(String),
+    /// User credential for opening an XLikedPost gate.
+    XLikedPostCredential {
+        user_id: String,
+        access_token: String,
+    },
+    /// User credential for opening an XRetweetedPost gate.
+    XRetweetedPostCredential {
+        user_id: String,
+    },
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -98,4 +116,28 @@ pub enum VerificationResult {
 pub struct OpenGateSuccessResult {
     pub gate: Gate,
     pub gate_user_status: GateUserStatus,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+/// The public profile of an X (Twitter) user returned after OAuth token exchange.
+/// Fields:
+/// * `id`: The X user ID.
+/// * `name`: The display name.
+/// * `username`: The @handle (without the @ prefix).
+/// * `profile_image_url`: URL of the user's avatar image.
+pub struct XProfile {
+    pub id: String,
+    pub name: String,
+    pub username: String,
+    pub profile_image_url: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+/// Result of the X OAuth token exchange.
+/// Fields:
+/// * `profile`: The authenticated user's public X profile.
+/// * `access_token`: The OAuth 2.0 access token for making X API calls on behalf of the user.
+pub struct XTokenExchangeResult {
+    pub profile: XProfile,
+    pub access_token: String,
 }

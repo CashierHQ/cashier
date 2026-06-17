@@ -11,7 +11,6 @@
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
-  import { formatActionError } from "$modules/transactionCart/utils/formatActionError";
   import {
     FlowDirection,
     type ActionSource,
@@ -138,10 +137,10 @@
         // The parent's $effect handles redirect when the link becomes ACTIVE.
         source.onSuccess?.(result);
       } else {
-        errorMessage = formatActionError(result.errors, locale.t);
+        errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${result.errors.join(", ")}`;
       }
     } catch (e) {
-      errorMessage = formatActionError([(e as Error).message], locale.t);
+      errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${(e as Error).message}`;
     }
   }
 

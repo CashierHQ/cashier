@@ -2,13 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
-use crate::{
-    apps::{
-        backoff::BackoffGuard, link_reservation::LinkReservationGuard, rate_limit::RateLimitGuard,
-        request_lock::RequestLockGuard,
-    },
-    repositories::ThreadlocalRepositories,
-};
+use crate::apps::{backoff::BackoffGuard, rate_limit::RateLimitGuard};
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
@@ -26,9 +20,8 @@ use cashier_backend_types::{
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
 };
-use cashier_common::constant::RESERVATION_TTL_NS;
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
-use gate_service_types::{GateKey, OpenGateSuccessResult};
+use gate_service_types::{GateKey, OpenGateSuccessResult, XTokenExchangeResult};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
@@ -45,6 +38,7 @@ async fn user_create_link_v3(
     info!("[user_create_link_v3]");
     debug!("[user_create_link_v3] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
@@ -60,7 +54,7 @@ async fn user_create_link_v3(
     };
     let gate_keys = input.gate_keys.clone();
 
-    let lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v3_service
         .create_link(
             input,
@@ -74,9 +68,7 @@ async fn user_create_link_v3(
             gate_service,
         )
         .await;
-    // Release before the gate-add await below (current behavior); Drop also runs via
-    // ic0.call_on_cleanup if create_link's callback traps, so the lock cannot leak.
-    drop(lock_guard);
+    let _ = request_lock_service.drop(&key);
 
     let mut link_response = res?;
 
@@ -105,6 +97,7 @@ async fn user_create_action_v3(
     info!("[create_action_v3]");
     debug!("[create_action_v3] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let token_fee_service = get_state().token_fee_service;
@@ -121,10 +114,9 @@ async fn user_create_action_v3(
         action_type: input.action.action_type.clone().to_string(),
     };
 
-    // Released by Drop on every exit path, including a trap in the awaited callback.
-    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
 
-    link_v3_service
+    let res = link_v3_service
         .create_action(
             &input.link_id,
             input.action,
@@ -138,7 +130,10 @@ async fn user_create_action_v3(
             gate_service,
             0,
         )
-        .await
+        .await;
+    let _ = request_lock_service.drop(&key);
+
+    res
 }
 
 /// Processes a created action V3.
@@ -154,6 +149,7 @@ async fn user_process_action_v3(
     info!("[user_process_action_v3]");
     debug!("[user_process_action_v3] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v3_service = get_state().link_v3_service;
     let transaction_manager_v3 = get_state().transaction_manager_v3;
     let validator_service = get_state().validator_service;
@@ -161,37 +157,25 @@ async fn user_process_action_v3(
 
     let canister_id = get_state().env.id();
     let caller = msg_caller();
-    let now = get_state().env.time();
-
     let key = RequestLockKey::ProcessAction {
         user_principal: caller,
         action_id: input.action_id.clone(),
     };
 
-    // 1) Anti-spam: reject a concurrent duplicate of THIS request (binary lock).
-    //    Declared first -> drops last, so the lock releases after the reservation.
-    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, now)?;
-    // 2) Capacity: reserve one of the link's uses. On Err the `?` unwinds and the lock
-    //    guard drops. Both guards release on every exit path - success, error, or a
-    //    callback trap (ic0.call_on_cleanup) - with the TTL as the final backstop.
-    let _reservation_guard = LinkReservationGuard::reserve(
-        &ThreadlocalRepositories,
-        &input.action_id,
-        now,
-        RESERVATION_TTL_NS,
-        &link_v3_service,
-    )?;
-
-    link_v3_service
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
+    let res = link_v3_service
         .process_action(
-            caller,
+            msg_caller(),
             canister_id,
             &input.action_id,
             transaction_manager_v3,
             validator_service,
             executor_service,
         )
-        .await
+        .await;
+    let _ = request_lock_service.drop(&key);
+
+    res
 }
 
 /// Retrieves a paginated list of links for the caller.
@@ -313,6 +297,21 @@ async fn user_open_link_gate(
     }
 
     result
+}
+
+/// Exchanges an X OAuth 2.0 authorization code for the caller's X profile.
+/// Proxies the call to gate_service which performs the actual token exchange via HTTP outcall.
+/// # Arguments
+/// * `code` - The authorization code received from the X OAuth callback
+/// # Returns
+/// * `Ok(XTokenExchangeResult)` - The authenticated user's X profile and access token
+/// * `Err(CanisterError)` - If the token exchange fails
+#[update(guard = "is_not_anonymous")]
+async fn user_exchange_x_token(code: String) -> Result<XTokenExchangeResult, CanisterError> {
+    info!("[user_exchange_x_token]");
+
+    let gate_service = get_state().gate_service;
+    gate_service.exchange_x_token(code).await
 }
 
 /// Returns link details together with gate metadata and the caller's gate status.

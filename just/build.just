@@ -63,14 +63,8 @@ download_artifacts: pre_build
   just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icp.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-07-04/ledger-canister_notify-method.wasm.gz"
   just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icrc.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ledger.did"
   just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz"
-  # Internet Identity is now split into two canisters (backend rdmx6 + frontend uqzsh). Pin both to the SAME release.
-  # backend: internet_identity_dev.wasm.gz (dev features: insecure root key, captcha off) — serves auth logic only, no UI.
-  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.did "https://github.com/dfinity/internet-identity/releases/download/release-2026-06-02/internet_identity.did"
-  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.wasm.gz "https://github.com/dfinity/internet-identity/releases/download/release-2026-06-02/internet_identity_dev.wasm.gz"
-  # frontend: serves the login UI; takes init args wiring it to the backend (see dfx_local_deploy_internet_identity).
-  # .did is not a release asset (extracted via `ic-wasm metadata candid:service`), so it is committed under src/lib.
-  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity_frontend.wasm.gz "https://github.com/dfinity/internet-identity/releases/download/release-2026-06-02/internet_identity_frontend.wasm.gz"
-  just copy_local_source {{LIB_DIR}}/internet_identity/internet_identity_frontend.did {{ARTIFACTS_DIR}}/internet_identity_frontend.did
+  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.did "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.wasm.gz "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
   # Index canisters
   just download_if_not_exists {{ARTIFACTS_DIR}}/icp_index.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/index.did"
   just download_if_not_exists {{ARTIFACTS_DIR}}/icp_index.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/ic-icp-index-canister.wasm.gz"

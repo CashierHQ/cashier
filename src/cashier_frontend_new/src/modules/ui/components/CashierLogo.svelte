@@ -1,13 +1,12 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { paths } from "$modules/routing/paths";
 
   type Props = {
     href?: string;
     onclick?: () => void;
   };
 
-  let { href = resolve(paths.links()), onclick }: Props = $props();
+  let { href = resolve("/links"), onclick }: Props = $props();
 </script>
 
 {#if onclick}

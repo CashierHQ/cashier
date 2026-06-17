@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use cashier_backend_types::error::CanisterError;
-use gate_service_types::{Gate, GateKey, NewGate, OpenGateSuccessResult};
+use gate_service_types::{Gate, GateKey, NewGate, OpenGateSuccessResult, XTokenExchangeResult};
 
 /// Abstracts inter-canister calls to the GateService canister for testability.
 pub trait GateServiceClient {
@@ -17,6 +17,9 @@ pub trait GateServiceClient {
         key: GateKey,
         user: Principal,
     ) -> Result<OpenGateSuccessResult, CanisterError>;
+
+    /// Exchanges an X OAuth authorization code for the user's X profile and access token.
+    async fn exchange_x_token(&self, code: String) -> Result<XTokenExchangeResult, CanisterError>;
 
     /// Updates the canister ID used for subsequent calls.
     fn set_canister_id(&mut self, canister_id: Principal);

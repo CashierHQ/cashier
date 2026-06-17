@@ -3,7 +3,7 @@
     AnalyticsEvent,
     trackEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import Ended from "$modules/useLink/components/Ended.svelte";
@@ -19,7 +19,7 @@
     }) => void;
   } = $props();
 
-  const context = getRouteContext();
+  const context = getGuardContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {

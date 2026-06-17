@@ -11,9 +11,11 @@
   const {
     store,
     onPasswordClick,
+    onXClick,
   }: {
     store: GatingStore;
     onPasswordClick: () => void;
+    onXClick: () => void;
   } = $props();
 
   const options = [
@@ -24,8 +26,9 @@
       iconComponent: RectangleEllipsis,
     },
     {
+      type: GateType.X_FOLLOWING,
       label: locale.t("links.linkForm.lock.xHandle"),
-      enabled: false,
+      enabled: true,
       iconSrc: xIcon,
     },
     {
@@ -70,6 +73,8 @@
         onclick={() => {
           if (option.type === GateType.PASSWORD) {
             onPasswordClick();
+          } else if (option.type === GateType.X_FOLLOWING) {
+            onXClick();
           }
         }}
         class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&
@@ -94,6 +99,8 @@
           {option.label}
         </span>
         {#if option.type === GateType.PASSWORD && store.hasConfiguredPassword}
+          <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
+        {:else if option.type === GateType.X_FOLLOWING && store.hasConfiguredXFollowing}
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">

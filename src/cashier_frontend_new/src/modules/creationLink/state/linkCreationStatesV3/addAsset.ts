@@ -19,7 +19,7 @@ export class AddAssetStateV3 implements LinkCreationStateV3 {
     this.#linkStore = linkStore;
   }
 
-  // Validate the asset details and move to the lock state
+  // Validate the asset details and move to the preview state
   async goNext(): Promise<void> {
     if (
       !this.#linkStore.draftLink ||

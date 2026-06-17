@@ -1,13 +1,14 @@
 <script lang="ts">
   import { page } from "$app/state";
   import UseLink from "$modules/useLink/pages/use.svelte";
-  import Ended from "$modules/useLink/components/Ended.svelte";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
-  import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
-  import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
+  import ProtectedUserState from "$modules/guard/components/ProtectedUserState.svelte";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
 
   const id = page.params.id!;
-  createLinkRouteContext({ linkId: id, storeType: "userLink" });
 
   // Track isLink state - false for ADDRESS_UNLOCKED step
   let isLink = $state(true);
@@ -22,17 +23,25 @@
   };
 </script>
 
-<RedirectBoundary>
-  {#snippet children(decision)}
-    <PageLayout isLinkFormPage={true} {isLink} {showFooter}>
-      {#if decision.kind === "allow" && decision.screen === "linkEnded"}
-        <Ended />
-      {:else}
-        <UseLink
-          onIsLinkChange={handleIsLinkChange}
-          onShowFooterChange={handleShowFooterChange}
-        />
-      {/if}
-    </PageLayout>
-  {/snippet}
-</RedirectBoundary>
+<RouteGuard linkId={id} storeType="userLink">
+  <ProtectedAuth redirectTo={`/link/${id}`}>
+    <ProtectedValidLink>
+      <ProtectedUserState
+        allowedStates={[
+          UserLinkStep.LANDING,
+          UserLinkStep.ADDRESS_UNLOCKED,
+          UserLinkStep.ADDRESS_LOCKED,
+          UserLinkStep.GATE,
+          UserLinkStep.COMPLETED,
+        ]}
+      >
+        <PageLayout isLinkFormPage={true} {isLink} {showFooter}>
+          <UseLink
+            onIsLinkChange={handleIsLinkChange}
+            onShowFooterChange={handleShowFooterChange}
+          />
+        </PageLayout>
+      </ProtectedUserState>
+    </ProtectedValidLink>
+  </ProtectedAuth>
+</RouteGuard>
