@@ -3,9 +3,9 @@
 
 use crate::gates::GateVerifier;
 use crate::services::{http::HttpOutcallService, secret::SecretService};
-use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use gate_service_types::constant::{SECRET_TWITTER_API_KEY, TWITTER_API_URL};
 use gate_service_types::x_response::XFollowingResponse;
+use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
 use std::fmt::Debug;
 
@@ -77,12 +77,20 @@ impl Debug for XFollowingVerifier {
 }
 
 impl XFollowingVerifier {
-    /// Creates a new XFollowingVerifier for the given target handle.
+    /// Creates a new verifier for the given target X handle.
+    /// # Arguments
+    /// * `target_handle`: The X username that the user must be following (e.g. `"cashierapp"`).
     pub fn new(target_handle: String) -> Self {
         Self { target_handle }
     }
 }
 
+/// Parses and validates a TwitterAPI.io following response.
+/// # Arguments
+/// * `http_result`: Raw HTTP response from the TwitterAPI.io endpoint.
+/// # Returns
+/// * `Ok(XFollowingResponse)`: Parsed response with `data.following` flag.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Malformed body or non-UTF-8 bytes.
 fn decode_follow_response(
     http_result: HttpRequestResult,
 ) -> Result<XFollowingResponse, GateServiceError> {
@@ -130,7 +138,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::Password("somepassword".to_string()), &http, &secrets)
+            .verify(
+                GateKey::Password("somepassword".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert
@@ -194,7 +206,10 @@ mod tests {
             .await;
 
         // Assert
-        assert!(matches!(result, Err(GateServiceError::KeyVerificationFailed(_))));
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
     }
 
     // ── decode_follow_response ────────────────────────────────────────────────

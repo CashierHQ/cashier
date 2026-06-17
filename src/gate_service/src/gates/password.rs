@@ -48,6 +48,9 @@ impl Debug for PasswordGateVerifier {
 }
 
 impl PasswordGateVerifier {
+    /// Creates a new verifier with a pre-computed password hash.
+    /// # Arguments
+    /// * `password_hash`: PHC-format Argon2 hash, or `sha256$<salt>$<hash>` for SHA-256 mode.
     pub fn new(password_hash: String) -> Self {
         Self { password_hash }
     }
@@ -102,7 +105,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::XFollowing("cashierapp".to_string()), &http, &secrets)
+            .verify(
+                GateKey::XFollowing("cashierapp".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert

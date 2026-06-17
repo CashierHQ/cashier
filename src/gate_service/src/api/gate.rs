@@ -130,7 +130,13 @@ async fn open_gate(
     };
     let mut gate_service = get_state().gate_service;
     gate_service
-        .open_gate(&gate_id, key, effective_user, &IcHttpOutcallService, &IcSecretService)
+        .open_gate(
+            &gate_id,
+            key,
+            effective_user,
+            &IcHttpOutcallService,
+            &IcSecretService,
+        )
         .await
 }
 

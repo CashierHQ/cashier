@@ -3,8 +3,8 @@
 
 use crate::gates::GateVerifier;
 use crate::services::{http::HttpOutcallService, secret::SecretService};
-use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use gate_service_types::constant::X_LIKED_TWEETS_URL;
+use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs};
 use std::fmt::Debug;
 
@@ -80,7 +80,10 @@ impl Debug for XLikedPostVerifier {
 }
 
 impl XLikedPostVerifier {
-    /// Creates a new XLikedPostVerifier for the given tweet URL.
+    /// Creates a new verifier for the given tweet URL.
+    /// # Arguments
+    /// * `tweet_url`: Full URL of the tweet that the user must have liked
+    ///   (e.g. `"https://x.com/cashierapp/status/1234567890"`).
     pub fn new(tweet_url: String) -> Self {
         Self { tweet_url }
     }
@@ -119,7 +122,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::XFollowing("cashierapp".to_string()), &http, &secrets)
+            .verify(
+                GateKey::XFollowing("cashierapp".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert
@@ -192,7 +199,8 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_verify_when_api_returns_error_status() {
         // Arrange
-        let http = MockHttpOutcallService::with_json_response(429, r#"{"title":"Too Many Requests"}"#);
+        let http =
+            MockHttpOutcallService::with_json_response(429, r#"{"title":"Too Many Requests"}"#);
         let secrets = fixture_of_no_secrets();
         let verifier = XLikedPostVerifier::new(TWEET_URL.to_string());
         let key = GateKey::XLikedPostCredential {
@@ -204,7 +212,9 @@ mod tests {
         let result = verifier.verify(key, &http, &secrets).await;
 
         // Assert
-        assert!(matches!(result, Err(GateServiceError::KeyVerificationFailed(_))));
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
     }
-
 }

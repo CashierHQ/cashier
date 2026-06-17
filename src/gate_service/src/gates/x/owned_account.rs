@@ -47,7 +47,9 @@ impl Debug for XOwnedAccountVerifier {
 }
 
 impl XOwnedAccountVerifier {
-    /// Creates a new XOwnedAccountVerifier for the given target handle.
+    /// Creates a new verifier for the given target X handle.
+    /// # Arguments
+    /// * `target_handle`: The X username the caller must own (comparison is case-insensitive).
     pub fn new(target_handle: String) -> Self {
         Self { target_handle }
     }
@@ -75,7 +77,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::XOwnedAccount("cashierapp".to_string()), &http, &secrets)
+            .verify(
+                GateKey::XOwnedAccount("cashierapp".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert
@@ -90,7 +96,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::XOwnedAccount("someone_else".to_string()), &http, &secrets)
+            .verify(
+                GateKey::XOwnedAccount("someone_else".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert
@@ -105,7 +115,11 @@ mod tests {
 
         // Act
         let result = verifier
-            .verify(GateKey::XFollowing("cashierapp".to_string()), &http, &secrets)
+            .verify(
+                GateKey::XFollowing("cashierapp".to_string()),
+                &http,
+                &secrets,
+            )
             .await;
 
         // Assert

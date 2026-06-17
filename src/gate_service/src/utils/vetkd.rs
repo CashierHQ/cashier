@@ -29,6 +29,9 @@ fn vetkey_id() -> VetKDKeyId {
 /// Returns the canister's derived VetKD public key (G2 point, 96 bytes).
 /// This is the public key for (this_canister, VETKEY_CONTEXT) — already fully derived by IC.
 /// The admin script uses this as the `derived_public_key_bytes` for decryption.
+/// # Returns
+/// * `Ok(Vec<u8>)`: 96-byte BLS12-381 G2 derived public key.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: IC management canister call failed.
 pub async fn fetch_derived_public_key() -> Result<Vec<u8>, GateServiceError> {
     ic_cdk::management_canister::vetkd_public_key(&VetKDPublicKeyArgs {
         canister_id: None,
@@ -42,6 +45,12 @@ pub async fn fetch_derived_public_key() -> Result<Vec<u8>, GateServiceError> {
 
 /// Calls vetkd_derive_key with the given transport public key and returns
 /// the encrypted VetKey bytes. The caller decrypts using their transport secret key.
+/// # Arguments
+/// * `transport_public_key`: Caller's ephemeral transport public key used by the IC to
+///   encrypt the returned VetKey so only the caller can decrypt it.
+/// # Returns
+/// * `Ok(Vec<u8>)`: Encrypted VetKey bytes.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: IC management canister call failed.
 pub async fn derive_encrypted_vetkey(
     transport_public_key: Vec<u8>,
 ) -> Result<Vec<u8>, GateServiceError> {
@@ -61,6 +70,10 @@ pub async fn derive_encrypted_vetkey(
 /// Generates an ephemeral transport keypair, calls vetkd_derive_key,
 /// decrypts the result, and uses HKDF to produce the AES key.
 /// Both the transport key and the raw VetKey bytes are dropped after derivation.
+/// # Returns
+/// * `Ok([u8; 32])`: 32-byte AES-256 key ready for use with `aes_decrypt`.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Transport key generation, IC call,
+///   VetKey decryption, or HKDF output failed.
 pub async fn derive_aes_key() -> Result<[u8; 32], GateServiceError> {
     // Ephemeral transport key — exists only for this call
     let seed: [u8; 32] = rand::thread_rng().r#gen();

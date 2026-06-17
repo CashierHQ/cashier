@@ -18,6 +18,10 @@ pub struct GateRepository<G: Storage<GateStorage>, U: Storage<GateUserStatusStor
 }
 
 impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<G, U> {
+    /// Creates a new `GateRepository` backed by the provided stable-memory stores.
+    /// # Arguments
+    /// * `gate_map`: Stable store mapping gate IDs to `Gate` values.
+    /// * `gate_user_map`: Stable store mapping `(gate_id, user)` pairs to `GateUserStatus`.
     pub fn new(gate_map: G, gate_user_map: U) -> Self {
         Self {
             gate_map,

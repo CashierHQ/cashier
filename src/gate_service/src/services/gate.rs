@@ -95,7 +95,6 @@ impl<R: Repositories> GateService<R> {
             .map(redact_password_gate)
     }
 
-
     /// Retrieves the user status of a gate for a specific user.
     /// # Arguments
     /// * `gate_id`: The ID of the gate to be checked.
@@ -368,7 +367,9 @@ mod tests {
         let user = random_principal_id();
 
         // Act
-        let result = service.open_gate(&gate.id, gate_key, user, &http, &secrets).await;
+        let result = service
+            .open_gate(&gate.id, gate_key, user, &http, &secrets)
+            .await;
 
         // Assert
         assert!(result.is_ok());
@@ -404,7 +405,9 @@ mod tests {
         let gate_key = GateKey::Password("password123".to_string());
         let user = random_principal_id();
         let (http, secrets) = fixture_of_services();
-        let _ = service.open_gate(&gate.id, gate_key, user, &http, &secrets).await;
+        let _ = service
+            .open_gate(&gate.id, gate_key, user, &http, &secrets)
+            .await;
 
         // Act
         let result = service.get_gate_for_user(&gate.id, user);

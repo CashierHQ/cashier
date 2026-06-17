@@ -9,6 +9,13 @@ use gate_service_types::error::GateServiceError;
 
 /// Decrypts a blob produced by the admin script (`nonce || ciphertext+tag`).
 /// The nonce is the first 12 bytes; the rest is AES-256-GCM ciphertext with auth tag.
+/// # Arguments
+/// * `data`: Encrypted blob: 12-byte nonce followed by AES-256-GCM ciphertext+auth-tag.
+/// * `key`: 32-byte AES-256 key derived from vetKD.
+/// # Returns
+/// * `Ok(Vec<u8>)`: Decrypted plaintext bytes.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Data too short, cipher init failed, or
+///   authentication tag mismatch.
 #[allow(deprecated)]
 pub fn aes_decrypt(data: &[u8], key: &[u8; 32]) -> Result<Vec<u8>, GateServiceError> {
     if data.len() < 12 {

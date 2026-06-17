@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::repositories::get_decrypted_secret;
-use gate_service_types::{XProfile, XTokenExchangeResult, error::GateServiceError};
 use gate_service_types::constant::{
     SECRET_X_OAUTH_BASIC_AUTH, SECRET_X_REDIRECT_URI, X_PROFILE_URL, X_TOKEN_URL,
 };
 use gate_service_types::x_response::{OAuthTokenResponse, XProfileResponse};
+use gate_service_types::{XProfile, XTokenExchangeResult, error::GateServiceError};
 use ic_cdk::management_canister::http_request as canister_http_outcall;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
 
@@ -15,6 +15,12 @@ use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpR
 ///
 /// Uses non-replicated HTTP outcalls (`is_replicated: Some(false)`) so that
 /// single-use authorization codes are consumed exactly once.
+/// # Arguments
+/// * `code`: The one-time OAuth 2.0 authorization code received from the X callback.
+/// # Returns
+/// * `Ok(XTokenExchangeResult)`: The user's profile and their bearer access token.
+/// * `Err(GateServiceError)`: Token exchange failed, profile fetch failed, or a required
+///   secret (`x_oauth_basic_auth`, `x_redirect_uri`) is missing.
 pub async fn exchange_x_token(code: String) -> Result<XTokenExchangeResult, GateServiceError> {
     let redirect_uri = get_decrypted_secret(SECRET_X_REDIRECT_URI).await?;
     let basic_auth = get_decrypted_secret(SECRET_X_OAUTH_BASIC_AUTH).await?;
@@ -76,6 +82,11 @@ pub async fn exchange_x_token(code: String) -> Result<XTokenExchangeResult, Gate
     })
 }
 
+/// Percent-encodes a string for use in `application/x-www-form-urlencoded` bodies.
+/// # Arguments
+/// * `input`: The raw string to encode.
+/// # Returns
+/// The percent-encoded string; unreserved characters (`A-Z a-z 0-9 - _ . ~`) are passed through.
 fn url_encode(input: &str) -> String {
     input
         .chars()
@@ -86,6 +97,12 @@ fn url_encode(input: &str) -> String {
         .collect()
 }
 
+/// Extracts the `access_token` field from an X OAuth token response.
+/// # Arguments
+/// * `http_result`: Raw HTTP response from the X token endpoint.
+/// # Returns
+/// * `Ok(String)`: The bearer access token string.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Non-UTF-8 body, or JSON parse failure.
 fn decode_token_response(http_result: HttpRequestResult) -> Result<String, GateServiceError> {
     let body = String::from_utf8(http_result.body).map_err(|e| {
         GateServiceError::KeyVerificationFailed(format!("Failed to decode token UTF-8: {}", e))
@@ -101,6 +118,12 @@ fn decode_token_response(http_result: HttpRequestResult) -> Result<String, GateS
     Ok(token.access_token)
 }
 
+/// Parses an X profile response into an `XProfile` value.
+/// # Arguments
+/// * `http_result`: Raw HTTP response from the X user-info endpoint.
+/// # Returns
+/// * `Ok(XProfile)`: Profile with `id`, `name`, `username`, and `profile_image_url`.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Non-UTF-8 body, or JSON parse failure.
 fn decode_profile_response(http_result: HttpRequestResult) -> Result<XProfile, GateServiceError> {
     let body = String::from_utf8(http_result.body).map_err(|e| {
         GateServiceError::KeyVerificationFailed(format!("Failed to decode profile UTF-8: {}", e))

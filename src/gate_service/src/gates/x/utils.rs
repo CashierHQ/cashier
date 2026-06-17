@@ -5,7 +5,12 @@ use gate_service_types::error::GateServiceError;
 use gate_service_types::x_response::XTweetsResponse;
 use ic_cdk::management_canister::HttpRequestResult;
 
-/// Extracts the tweet ID from a URL like `https://x.com/user/status/1234567890`.
+/// Extracts the numeric tweet ID from a URL like `https://x.com/user/status/1234567890`.
+/// # Arguments
+/// * `tweet_url`: Full X tweet URL ending in `/status/<id>`.
+/// # Returns
+/// * `Ok(String)`: The tweet ID extracted as the last path segment.
+/// * `Err(GateServiceError::InvalidKeyType)`: The URL is empty or ends with a trailing slash.
 pub fn parse_tweet_id(tweet_url: &str) -> Result<String, GateServiceError> {
     tweet_url
         .rsplit('/')
@@ -15,6 +20,12 @@ pub fn parse_tweet_id(tweet_url: &str) -> Result<String, GateServiceError> {
         .ok_or_else(|| GateServiceError::InvalidKeyType(format!("invalid tweet URL: {tweet_url}")))
 }
 
+/// Parses an X tweets list response (liked tweets or user timeline).
+/// # Arguments
+/// * `http_result`: Raw HTTP response from an X API v2 tweets endpoint.
+/// # Returns
+/// * `Ok(XTweetsResponse)`: Parsed list of tweets with optional `referenced_tweets`.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Non-200 status, non-UTF-8 body, or JSON parse failure.
 pub fn decode_tweets_response(
     http_result: HttpRequestResult,
 ) -> Result<XTweetsResponse, GateServiceError> {

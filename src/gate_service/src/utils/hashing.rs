@@ -47,6 +47,11 @@ const SHA256_PREFIX: &str = "sha256$";
 
 /// Hashes a password using SHA256 with a random 32-byte salt.
 /// Returns a prefixed string: `sha256$<hex_salt>$<hex_hash>` for storage.
+/// # Arguments
+/// * `password`: The plaintext password to hash.
+/// # Returns
+/// * `Ok(String)`: Encoded hash in `sha256$<hex_salt>$<hex_hash>` format.
+/// * `Err(String)`: Hash construction failed (should not occur in practice).
 pub fn hash_password_sha256(password: &str) -> Result<String, String> {
     let mut salt = [0u8; 32];
     OsRng.fill_bytes(&mut salt);
@@ -66,6 +71,12 @@ pub fn hash_password_sha256(password: &str) -> Result<String, String> {
 
 /// Verifies a plaintext password against a stored SHA256 hash string produced by
 /// `hash_password_sha256`.
+/// # Arguments
+/// * `password`: The plaintext password to check.
+/// * `stored`: The stored hash string in `sha256$<hex_salt>$<hex_hash>` format.
+/// # Returns
+/// * `Ok(())`: The password matches the stored hash.
+/// * `Err(String)`: The password is incorrect, or `stored` has an unexpected format.
 pub fn verify_password_sha256(password: &str, stored: &str) -> Result<(), String> {
     let inner = stored
         .strip_prefix(SHA256_PREFIX)

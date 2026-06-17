@@ -13,6 +13,14 @@ use x::{XFollowingVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweete
 
 pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's configured key.
+    /// # Arguments
+    /// * `key`: The credential supplied by the caller (e.g. `XFollowing("alice")`).
+    /// * `http`: HTTP outcall service for verifiers that call external APIs.
+    /// * `secrets`: Secret service for verifiers that need stored credentials.
+    /// # Returns
+    /// * `Ok(VerificationResult::Success)`: The credential satisfies the gate.
+    /// * `Ok(VerificationResult::Failure(_))`: The credential is valid but does not satisfy the gate.
+    /// * `Err(GateServiceError)`: An error occurred during verification.
     async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
         key: GateKey,
@@ -22,9 +30,15 @@ pub trait GateVerifier: Debug {
 }
 
 /// Dispatches verification to the correct verifier based on the gate's stored key type.
-///
-/// `gate_config_key` is the key read from storage (e.g. `XFollowing("cashierapp")`).
-/// `user_key` is the credential supplied by the caller at open time.
+/// # Arguments
+/// * `gate_config_key`: The key stored for the gate (e.g. `XFollowing("cashierapp")`).
+/// * `user_key`: The credential supplied by the caller at open time.
+/// * `http`: HTTP outcall service passed through to the chosen verifier.
+/// * `secrets`: Secret service passed through to the chosen verifier.
+/// # Returns
+/// * `Ok(VerificationResult)`: Verification completed (may be Success or Failure).
+/// * `Err(GateServiceError::UnsupportedGateKey)`: The gate type has no registered verifier.
+/// * `Err(GateServiceError)`: A verifier-level error occurred.
 pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
     gate_config_key: GateKey,
     user_key: GateKey,
@@ -88,7 +102,10 @@ mod tests {
         let result = verify_gate(gate_key, GateKey::Password("x".into()), &http, &secrets).await;
 
         // Assert
-        assert!(matches!(result, Err(GateServiceError::UnsupportedGateKey(_))));
+        assert!(matches!(
+            result,
+            Err(GateServiceError::UnsupportedGateKey(_))
+        ));
         if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
             assert!(e.contains("TelegramGroup"));
         }

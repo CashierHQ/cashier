@@ -13,8 +13,7 @@ pub const X_PROFILE_URL: &str =
     "https://api.x.com/2/users/me?user.fields=id,name,username,profile_image_url";
 
 /// X API endpoint for a user's liked tweets (placeholder `{}` = user ID).
-pub const X_LIKED_TWEETS_URL: &str =
-    "https://api.x.com/2/users/{}/liked_tweets?max_results=100";
+pub const X_LIKED_TWEETS_URL: &str = "https://api.x.com/2/users/{}/liked_tweets?max_results=100";
 
 /// X API endpoint for a user's own tweets (placeholder `{}` = user ID).
 pub const X_USER_TWEETS_URL: &str =
