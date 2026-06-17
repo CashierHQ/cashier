@@ -69,6 +69,8 @@ test_unit_i686 test_name="":
 [group('test')]
 test_frontend: install_frontend_deps
   pnpm --filter cashier_frontend_new test
+  pnpm --filter gate_frontend test
+  pnpm --filter @cashier/gate-sdk test
 
 
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.

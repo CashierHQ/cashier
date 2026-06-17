@@ -8,6 +8,8 @@ import "./just/orbit.just"
 
 export RUST_BACKTRACE := "full"
 FRONTEND_DIR_NEW := "./src/cashier_frontend_new"
+GATE_FRONTEND_DIR := "./src/gate_frontend"
+GATE_SDK_DIR := "./src/gate_sdk"
 ARTIFACTS_DIR := env("ARTIFACTS_DIR", "./target/artifacts")
 LIB_DIR := "./src/lib"
 

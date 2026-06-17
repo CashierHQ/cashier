@@ -59,6 +59,7 @@
     "vitest-browser-svelte": "^1.1.0"
   },
   "dependencies": {
+    "@cashier/gate-sdk": "workspace:*",
     "@amplitude/analytics-browser": "^2.42.2",
     "@dfinity/ledger-icp": "^9.1.0",
     "@dfinity/ledger-icrc": "^7.1.0",

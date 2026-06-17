@@ -127,11 +127,13 @@ async fn open_gate(
     gate_service.open_gate(&gate_id, key, effective_user).await
 }
 
-#[update(guard = "is_not_anonymous")]
+#[update]
 /// Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
 ///
 /// The backend performs the token exchange via a non-replicated HTTP outcall so
-/// that the single-use authorization code is consumed exactly once.
+/// that the single-use authorization code is consumed exactly once. Anonymous
+/// callers are permitted because the X authorization code is single-use and
+/// PKCE-protected; there is no session data at risk.
 /// # Arguments
 /// * `code`: The authorization code received from the X OAuth callback.
 /// # Returns

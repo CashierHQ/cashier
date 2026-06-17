@@ -213,10 +213,7 @@
         {#if isGateOpen(gate)}
           <LockOpen class="ml-auto h-5 w-5 text-green" aria-hidden="true" />
         {:else}
-          <Lock
-            class="ml-auto h-5 w-5 text-red-500"
-            aria-hidden="true"
-          />
+          <Lock class="ml-auto h-5 w-5 text-red-500" aria-hidden="true" />
         {/if}
       </button>
     {/each}

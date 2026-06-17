@@ -5,10 +5,10 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { Check, CircleAlert, CircleX, RefreshCw } from "lucide-svelte";
+  import { GateSDK } from "@cashier/gate-sdk";
+  import { PUBLIC_GATE_ORIGIN } from "$env/static/public";
 
-  const X_CLIENT_ID = "UHh3LVVWSzZVSFdWVDdaSW5MNlk6MTpjaQ";
-  //const REDIRECT_URI = "http://localhost:3000/auth";
-  const REDIRECT_URI = "https://gdvtu-diaaa-aaaao-bbbpq-cai.icp0.io/auth";
+  const gateSDK = new GateSDK({ gateOrigin: PUBLIC_GATE_ORIGIN });
 
   const {
     linkId,
@@ -69,72 +69,23 @@
   let connectedProfile = $state<XProfile | null>(null);
   let accessToken = $state<string | null>(null);
   let isConnecting = $state(false);
-  let isExchanging = $state(false);
   let isVerifying = $state(false);
   let error = $state<string | null>(null);
   let verified = $state(false);
 
-  function connectX() {
+  async function connectX() {
     isConnecting = true;
     error = null;
-    let codeReceived = false;
-
-    const state = Math.random().toString(36).slice(2);
-    const authUrl =
-      `https://x.com/i/oauth2/authorize` +
-      `?client_id=${X_CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-      `&response_type=code` +
-      `&scope=users.read+tweet.read+like.read+offline.access+follows.read` +
-      `&code_challenge=challenge` +
-      `&code_challenge_method=plain` +
-      `&state=${state}`;
-
-    const popup = window.open(authUrl, "x_auth", "popup,width=600,height=700");
-
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data?.type === "x_auth_code") {
-        codeReceived = true;
-        window.removeEventListener("message", handleMessage);
-        isConnecting = false;
-        isExchanging = true;
-        try {
-          const result = await cashierBackendService.exchangeXToken(
-            event.data.code,
-          );
-          if (result.isErr()) throw new Error(result.unwrapErr().message);
-          const tokenResult = result.unwrap();
-          connectedProfile = {
-            id: tokenResult.profile.id,
-            username: tokenResult.profile.username,
-            name: tokenResult.profile.name,
-            profile_image_url: tokenResult.profile.profile_image_url,
-          };
-          accessToken = tokenResult.access_token;
-        } catch (err) {
-          error =
-            err instanceof Error ? err.message : "Failed to connect X account";
-        } finally {
-          isExchanging = false;
-        }
-      } else if (event.data?.type === "x_auth_error") {
-        error = event.data.error ?? "Failed to connect X account";
-        isConnecting = false;
-        window.removeEventListener("message", handleMessage);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    const pollTimer = setInterval(() => {
-      if (popup?.closed) {
-        clearInterval(pollTimer);
-        if (!codeReceived) {
-          isConnecting = false;
-          window.removeEventListener("message", handleMessage);
-        }
-      }
-    }, 500);
+    try {
+      const result = await gateSDK.connectX();
+      connectedProfile = result.profile;
+      accessToken = result.accessToken;
+    } catch (err) {
+      error =
+        err instanceof Error ? err.message : "Failed to connect X account";
+    } finally {
+      isConnecting = false;
+    }
   }
 
   function disconnectX() {
@@ -257,11 +208,11 @@
     {:else}
       <button
         type="button"
-        disabled={isConnecting || isExchanging}
+        disabled={isConnecting}
         onclick={connectX}
         class="flex h-10 w-full items-center gap-2 rounded-lg border border-[#ebebeb] px-3 py-2 text-left text-sm transition-colors hover:bg-muted disabled:opacity-50"
       >
-        {#if isExchanging}
+        {#if isConnecting}
           <div
             class="h-5 w-5 flex-none animate-spin rounded-full border-2 border-muted-foreground border-t-transparent"
           ></div>
@@ -275,8 +226,6 @@
         {/if}
         <span class="text-foreground">
           {#if isConnecting}
-            {locale.t("links.linkForm.lock.connecting")}
-          {:else if isExchanging}
             {locale.t("links.linkForm.lock.connecting")}
           {:else}
             {locale.t("links.linkForm.lock.connectAccount")}

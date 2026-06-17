@@ -30,6 +30,11 @@ build_canisters: pre_build
 build_frontend mode="local_dev": install_frontend_deps
   pnpm --filter cashier_frontend_new build:{{mode}}
 
+# Builds the gate frontend canister
+[group('build')]
+build_gate_frontend mode="local_dev": install_frontend_deps
+  pnpm --filter gate_frontend build:{{mode}}
+
 # Generates the ts files for the canister services 
 [group('build')]
 generate_frontend_ts:

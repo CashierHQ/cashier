@@ -48,6 +48,8 @@ export default defineConfig([
       "**/generated/**",
       "**/coverage/**",
       "src/cashier_frontend_new/**",
+      "src/gate_frontend/**",
+      "src/gate_sdk/**",
       "target/**",
       ".dfx/**",
     ],

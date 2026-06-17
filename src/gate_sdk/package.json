@@ -1,0 +1,46 @@
+{
+	"name": "@cashier/gate-sdk",
+	"version": "0.1.0",
+	"description": "Framework-agnostic Gate SDK for X OAuth integration",
+	"keywords": [
+		"gate",
+		"sdk",
+		"oauth",
+		"x",
+		"twitter",
+		"internet-computer",
+		"icp",
+		"postmessage"
+	],
+	"license": "MIT",
+	"type": "module",
+	"main": "dist/index.cjs",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"prepublishOnly": "pnpm run build"
+	},
+	"devDependencies": {
+		"jsdom": "^25.0.1",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.2",
+		"vitest": "^3.2.4"
+	}
+}
