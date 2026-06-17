@@ -18,6 +18,9 @@ pub const CREATE_LINK_FEE: u64 = 10_000;
 /// Default TTL in nanoseconds (168 hours = 7 days)
 pub const DEFAULT_TOKEN_FEE_TTL_NS: u64 = 168 * 60 * 60 * 1_000_000_000;
 
+/// Default time-to-live for a link-use reservation (60s, in nanoseconds).
+pub const RESERVATION_TTL_NS: u64 = 60 * 1_000_000_000;
+
 #[cfg(test)]
 pub mod dfd {
     use super::*;

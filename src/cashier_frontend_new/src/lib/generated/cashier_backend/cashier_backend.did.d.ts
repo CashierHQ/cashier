@@ -75,6 +75,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'InvalidInput' : string } |
   { 'HandleLogicError' : string } |
   { 'ParsePrincipalError' : string } |
+  { 'LinkNoUseAvailable' : { 'link_id' : string } } |
   { 'CandidDecodeFailed' : string } |
   { 'UnknownError' : string } |
   { 'InsufficientBalance' : { 'available' : bigint, 'required' : bigint } } |

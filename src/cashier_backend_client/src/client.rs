@@ -504,5 +504,15 @@ mod pic {
                 .submit_call("user_process_action_v2", (args,))
                 .await
         }
+
+        /// Submit a process_action_v3 call and return the message ID (PocketIC only).
+        pub async fn submit_process_action_v3(
+            &self,
+            args: ProcessActionInputV3,
+        ) -> CanisterClientResult<RawMessageId> {
+            self.client
+                .submit_call("user_process_action_v3", (args,))
+                .await
+        }
     }
 }

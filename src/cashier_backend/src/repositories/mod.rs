@@ -21,7 +21,6 @@ use cashier_backend_types::repository::link::{
 use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
 use cashier_backend_types::repository::link_gate::LinkGateCodec;
 use cashier_backend_types::repository::link_gate_user_status::LinkGateUserStatusCodec;
-use cashier_backend_types::repository::request_lock::RequestLockCodec;
 use cashier_backend_types::repository::transaction::v1::TransactionCodec;
 use cashier_backend_types::repository::user_action::v1::UserActionCodec;
 use cashier_backend_types::repository::user_link::v1::UserLinkCodec;
@@ -35,8 +34,8 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
-    link_action::v1::LinkAction, request_lock::RequestLock, transaction::v1::Transaction,
-    user_action::v1::UserAction, user_link::v1::UserLink,
+    link_action::v1::LinkAction, transaction::v1::Transaction, user_action::v1::UserAction,
+    user_link::v1::UserLink,
 };
 
 use crate::repositories::action::{
@@ -64,6 +63,9 @@ use crate::repositories::link_action::{LinkActionRepository, LinkActionRepositor
 use crate::repositories::link_gate::{LinkGateRepository, LinkGateRepositoryStorage};
 use crate::repositories::link_gate_user_status::{
     LinkGateUserStatusRepository, LinkGateUserStatusRepositoryStorage,
+};
+use crate::repositories::link_reservation::{
+    LinkReservationRepository, LinkReservationRepositoryStorage,
 };
 use crate::repositories::rate_limit_config::{
     RateLimitConfigRepository, RateLimitConfigRepositoryStorage,
@@ -97,6 +99,7 @@ pub mod link;
 pub mod link_action;
 pub mod link_gate;
 pub mod link_gate_user_status;
+pub mod link_reservation;
 pub mod rate_limit_config;
 pub mod rate_limit_state;
 pub mod request_lock;
@@ -117,7 +120,6 @@ const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
 const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
 const ACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
-const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(10);
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(13);
@@ -140,6 +142,7 @@ pub trait Repositories {
     type IntentTransaction: Storage<IntentTransactionRepositoryStorage>;
     type Link: Storage<LinkRepositoryStorage>;
     type LinkAction: Storage<LinkActionRepositoryStorage>;
+    type LinkReservation: Storage<LinkReservationRepositoryStorage>;
     type RequestLock: Storage<RequestLockRepositoryStorage>;
     type Settings: Storage<SettingsRepositoryStorage>;
     type TokenFee: Storage<TokenFeeRepositoryStorage>;
@@ -164,6 +167,7 @@ pub trait Repositories {
     fn intent_transaction(&self) -> IntentTransactionRepository<Self::IntentTransaction>;
     fn link(&self) -> LinkRepository<Self::Link>;
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction>;
+    fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
     fn settings(&self) -> SettingsRepository<Self::Settings>;
     fn token_fee(&self) -> TokenFeeRepository<Self::TokenFee>;
@@ -193,6 +197,7 @@ impl Repositories for ThreadlocalRepositories {
     type IntentTransaction = &'static LocalKey<RefCell<IntentTransactionRepositoryStorage>>;
     type Link = &'static LocalKey<RefCell<LinkRepositoryStorage>>;
     type LinkAction = &'static LocalKey<RefCell<LinkActionRepositoryStorage>>;
+    type LinkReservation = &'static LocalKey<RefCell<LinkReservationRepositoryStorage>>;
     type RequestLock = &'static LocalKey<RefCell<RequestLockRepositoryStorage>>;
     type Settings = &'static LocalKey<RefCell<SettingsRepositoryStorage>>;
     type TokenFee = &'static LocalKey<RefCell<TokenFeeRepositoryStorage>>;
@@ -233,6 +238,10 @@ impl Repositories for ThreadlocalRepositories {
 
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
         LinkActionRepository::new(&LINK_ACTION_STORE)
+    }
+
+    fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation> {
+        LinkReservationRepository::new(&LINK_RESERVATION_STORE)
     }
 
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
@@ -435,14 +444,14 @@ thread_local! {
         )
     );
 
-    static REQUEST_LOCK_STORE: RefCell<VersionedBTreeMap<
-        RequestLockKey,
-        RequestLock,
-        RequestLockCodec,
-        Memory
-    >> = RefCell::new(
-        VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
-    );
+    /// Request locks - volatile BTreeMap (not persisted to stable memory):
+    /// per-message anti-spam state, wiped on canister upgrade by design
+    static REQUEST_LOCK_STORE: RefCell<RequestLockRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
+
+    /// Link reservations - volatile BTreeMap (not persisted to stable memory):
+    static LINK_RESERVATION_STORE: RefCell<LinkReservationRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 
     static SETTINGS_STORE: RefCell<VersionedStableCell<
         Settings,
@@ -557,6 +566,7 @@ pub mod tests {
         intent_transaction: Rc<RefCell<IntentTransactionRepositoryStorage>>,
         link: Rc<RefCell<LinkRepositoryStorage>>,
         link_action: Rc<RefCell<LinkActionRepositoryStorage>>,
+        link_reservation: Rc<RefCell<LinkReservationRepositoryStorage>>,
         request_lock: Rc<RefCell<RequestLockRepositoryStorage>>,
         settings: Rc<RefCell<SettingsRepositoryStorage>>,
         token_fee: Rc<RefCell<TokenFeeRepositoryStorage>>,
@@ -603,9 +613,8 @@ pub mod tests {
                 link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
                 ))),
-                request_lock: Rc::new(RefCell::new(VersionedBTreeMap::init(
-                    mm.get(REQUEST_LOCK_MEMORY_ID),
-                ))),
+                link_reservation: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
+                request_lock: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
                 settings: Rc::new(RefCell::new(VersionedStableCell::init(
                     mm.get(SETTINGS_MEMORY_ID),
                     Default::default(),
@@ -660,6 +669,7 @@ pub mod tests {
         type IntentTransaction = Rc<RefCell<IntentTransactionRepositoryStorage>>;
         type Link = Rc<RefCell<LinkRepositoryStorage>>;
         type LinkAction = Rc<RefCell<LinkActionRepositoryStorage>>;
+        type LinkReservation = Rc<RefCell<LinkReservationRepositoryStorage>>;
         type RequestLock = Rc<RefCell<RequestLockRepositoryStorage>>;
         type Settings = Rc<RefCell<SettingsRepositoryStorage>>;
         type TokenFee = Rc<RefCell<TokenFeeRepositoryStorage>>;
@@ -700,6 +710,10 @@ pub mod tests {
 
         fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
             LinkActionRepository::new(self.link_action.clone())
+        }
+
+        fn link_reservation(&self) -> LinkReservationRepository<Self::LinkReservation> {
+            LinkReservationRepository::new(self.link_reservation.clone())
         }
 
         fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {

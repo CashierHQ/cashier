@@ -182,7 +182,11 @@ describe("AddressUnlockedStateV3", () => {
       const stateWithReceiveAction = new AddressUnlockedStateV3(
         storeWithReceiveAction,
       );
-      const backendResponse = { action: { id: "action-1" }, is_success: true };
+      const backendResponse = {
+        action: { id: "action-1" },
+        isSuccess: true,
+        errors: [],
+      };
       mocks.processActionV3.mockResolvedValueOnce(Ok(backendResponse));
 
       const result = await stateWithReceiveAction.processAction();
@@ -191,6 +195,28 @@ describe("AddressUnlockedStateV3", () => {
       expect(mocks.refreshAsync).toHaveBeenCalled();
       expect(storeWithReceiveAction.state).toBeInstanceOf(CompletedStateV3);
       expect(result).toBe(backendResponse);
+    });
+
+    it("it_should_fail_do_process_action_when_not_success", async () => {
+      const storeWithReceiveAction = {
+        ...mockStore,
+        action: { id: "action-1", type: ActionType.RECEIVE } as Action,
+      } as UserLinkStoreV3;
+      const stateWithReceiveAction = new AddressUnlockedStateV3(
+        storeWithReceiveAction,
+      );
+      // Backend returns Ok but the claim itself failed (isSuccess=false) — must NOT complete.
+      const backendResponse = {
+        action: { id: "action-1" },
+        isSuccess: false,
+        errors: ["InsufficientFunds"],
+      };
+      mocks.processActionV3.mockResolvedValueOnce(Ok(backendResponse));
+
+      await expect(stateWithReceiveAction.processAction()).rejects.toThrow(
+        "Action processing failed: InsufficientFunds",
+      );
+      expect(storeWithReceiveAction.state).not.toBeInstanceOf(CompletedStateV3);
     });
   });
 });
