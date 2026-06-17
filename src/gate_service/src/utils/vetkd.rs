@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use gate_service_types::error::GateServiceError;
 use ic_cdk::management_canister::{VetKDCurve, VetKDDeriveKeyArgs, VetKDKeyId, VetKDPublicKeyArgs};
 use ic_vetkeys::{DerivedPublicKey, EncryptedVetKey, TransportSecretKey};

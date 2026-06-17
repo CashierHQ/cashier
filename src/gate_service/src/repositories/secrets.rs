@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{
     repositories::{PLAIN_SECRETS_STORE, SECRET_STORAGE_MODE, SECRETS_STORE},
     utils::{crypto::aes_decrypt, vetkd::derive_aes_key},

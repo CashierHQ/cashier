@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::utils::gate::generate_gate_id;
 use candid::Principal;
 use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};

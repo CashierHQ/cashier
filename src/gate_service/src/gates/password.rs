@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{
     gates::GateVerifier,
     utils::hashing::{verify_password, verify_password_sha256},

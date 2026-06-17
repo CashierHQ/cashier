@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::api::state::get_state;
 use crate::gates::x::exchange_x_token as x_exchange_token;
 use candid::Principal;

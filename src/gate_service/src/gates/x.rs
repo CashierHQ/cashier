@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::gates::GateVerifier;
 use crate::repositories::get_decrypted_secret;
 use gate_service_types::{
