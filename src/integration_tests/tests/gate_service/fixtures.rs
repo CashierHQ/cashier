@@ -140,3 +140,107 @@ pub async fn add_xfollowing_gate_fixture(
 
     user_client.add_gate(new_gate).await.unwrap().unwrap()
 }
+
+/// Adds an X-owned-account gate fixture for testing purposes.
+/// # Arguments
+/// * `ctx` - The test context.
+/// * `creator` - The principal ID of the gate creator.
+/// * `subject_id` - The subject ID for the gate.
+/// * `target_handle` - The X handle that the user must own to unlock the gate.
+/// # Returns
+/// The created X-owned-account gate.
+pub async fn add_xowned_account_gate_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    subject_id: &str,
+    target_handle: &str,
+) -> Gate {
+    let admin = TestUser::GateServiceAdmin.get_principal();
+    let admin_client = ctx.new_gate_service_client(admin);
+    let _user_permissions_add = admin_client
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
+        .await
+        .unwrap()
+        .unwrap();
+
+    let user_client = ctx.new_gate_service_client(creator);
+    let new_gate = NewGate {
+        subject_id: subject_id.to_string(),
+        key: GateKey::XOwnedAccount(target_handle.to_string()),
+    };
+
+    user_client.add_gate(new_gate).await.unwrap().unwrap()
+}
+
+/// Adds an X-liked-post gate fixture for testing purposes.
+/// # Arguments
+/// * `ctx` - The test context.
+/// * `creator` - The principal ID of the gate creator.
+/// * `subject_id` - The subject ID for the gate.
+/// * `tweet_url` - The X tweet URL that must be liked to unlock the gate.
+/// # Returns
+/// The created X-liked-post gate.
+pub async fn add_xlikedpost_gate_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    subject_id: &str,
+    tweet_url: &str,
+) -> Gate {
+    let admin = TestUser::GateServiceAdmin.get_principal();
+    let admin_client = ctx.new_gate_service_client(admin);
+    let _user_permissions_add = admin_client
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
+        .await
+        .unwrap()
+        .unwrap();
+
+    let user_client = ctx.new_gate_service_client(creator);
+    let new_gate = NewGate {
+        subject_id: subject_id.to_string(),
+        key: GateKey::XLikedPost(tweet_url.to_string()),
+    };
+
+    user_client.add_gate(new_gate).await.unwrap().unwrap()
+}
+
+/// Adds an X-retweeted-post gate fixture for testing purposes.
+/// Seeds the `x_bearer_token` secret required by the retweeted-post verifier.
+/// # Arguments
+/// * `ctx` - The test context.
+/// * `creator` - The principal ID of the gate creator.
+/// * `subject_id` - The subject ID for the gate.
+/// * `tweet_url` - The X tweet URL that must be retweeted to unlock the gate.
+/// # Returns
+/// The created X-retweeted-post gate.
+pub async fn add_xretweetedpost_gate_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    subject_id: &str,
+    tweet_url: &str,
+) -> Gate {
+    let admin = TestUser::GateServiceAdmin.get_principal();
+    let admin_client = ctx.new_gate_service_client(admin);
+    let _user_permissions_add = admin_client
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Seed the bearer token so XRetweetedPostVerifier can reach the HTTP outcall.
+    admin_client
+        .admin_plain_secret_set(
+            "x_bearer_token".to_string(),
+            "test_x_bearer_token".to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
+
+    let user_client = ctx.new_gate_service_client(creator);
+    let new_gate = NewGate {
+        subject_id: subject_id.to_string(),
+        key: GateKey::XRetweetedPost(tweet_url.to_string()),
+    };
+
+    user_client.add_gate(new_gate).await.unwrap().unwrap()
+}
