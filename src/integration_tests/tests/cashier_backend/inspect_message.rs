@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
 #[tokio::test]

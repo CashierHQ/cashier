@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use candid::CandidType;
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;

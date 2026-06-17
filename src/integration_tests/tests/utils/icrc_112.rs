@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use candid::{Decode, Nat, Principal};
 use cashier_backend_types::{
     constant::TRIGGER_TRANSACTION_METHOD_NAME, dto::action::Icrc112Request,

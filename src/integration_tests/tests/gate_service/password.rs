@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{
     gate_service::fixtures::{add_password_gate_fixture, add_password_gate_sha256_fixture},
     utils::{principal::TestUser, with_pocket_ic_context},
