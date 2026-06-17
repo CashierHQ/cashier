@@ -52,16 +52,10 @@
   let useWalletLockedTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
-  let isTxCartOpen = $state(false);
-  let showTxCart = $derived.by(() => {
-    return (
-      isTxCartOpen &&
-      !!(userStore?.action && userStore.action.state !== ActionState.SUCCESS)
-    );
-  });
+  let isCartOpen = $state(true);
 
   const onCloseDrawer = () => {
-    isTxCartOpen = false;
+    isCartOpen = false;
   };
 
   const handleCreateUseAction = async () => {
@@ -87,9 +81,10 @@
           locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
         );
       }
-      if (userStore.action) {
-        isTxCartOpen = true;
-      } else {
+      // (Re)open the cart for this claim attempt.
+      isCartOpen = true;
+
+      if (!userStore.action) {
         isCreatingAction = true;
         const actionType = userStore.findUseActionType();
 
@@ -100,9 +95,6 @@
         }
 
         await userStore.createAction(actionType);
-
-        await userStore.refreshAsync();
-        isTxCartOpen = true;
       }
     } catch (err) {
       // Check if error requires redirect to 404
@@ -335,9 +327,9 @@
           {isCreatingAction}
           hasAction={!!userStore.action}
         />
-        {#if showTxCart && userStore?.link && userStore?.action}
+        {#if userStore?.link && userStore?.action && userStore.action.state !== ActionState.SUCCESS}
           <LinkTxCart
-            isOpen={showTxCart}
+            isOpen={isCartOpen}
             source={{
               action: userStore.action,
               handleProcessAction,
