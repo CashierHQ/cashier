@@ -3,7 +3,10 @@
 
 use crate::api::state::get_state;
 use crate::{
-    apps::{link_reservation::LinkReservationGuard, request_lock::RequestLockGuard},
+    apps::{
+        backoff::BackoffGuard, link_reservation::LinkReservationGuard, rate_limit::RateLimitGuard,
+        request_lock::RequestLockGuard,
+    },
     repositories::ThreadlocalRepositories,
 };
 use cashier_backend_types::{
@@ -290,10 +293,26 @@ async fn user_open_link_gate(
     debug!("[user_open_link_gate] link_id: {link_id}, gate_id: {gate_id}");
 
     let caller = msg_caller();
+    let now_ns = get_state().env.time();
+
+    let backoff_service = get_state().backoff_service;
+    let mut backoff_guard = BackoffGuard::new(&backoff_service, caller, now_ns)?;
+
+    let mut rate_service = get_state().rate_limit_service;
+    let _rate_guard = RateLimitGuard::new(&mut rate_service, caller, now_ns)?;
+
+    backoff_guard.mark_attempted();
+
     let mut gate_service = get_state().gate_service;
-    gate_service
+    let result = gate_service
         .open_link_gate(&link_id, &gate_id, caller, gate_key)
-        .await
+        .await;
+
+    if result.is_ok() {
+        backoff_guard.on_success();
+    }
+
+    result
 }
 
 /// Returns link details together with gate metadata and the caller's gate status.

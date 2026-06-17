@@ -88,6 +88,12 @@ pub enum CanisterError {
 
     #[error("Auth error: {0}")]
     AuthError(String),
+
+    #[error("Rate limited: {0}")]
+    RateLimited(String),
+
+    #[error("Backoff throttled: {0}")]
+    BackoffThrottled(String),
 }
 
 impl CanisterError {

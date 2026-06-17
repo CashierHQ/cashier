@@ -14,6 +14,7 @@ import type { ActionSource } from "$modules/transactionCart/types/transactionSou
 import {
   AssetProcessState,
   AssetProcessStateMapper,
+  TxProgressPhase,
 } from "$modules/transactionCart/types/txCart";
 import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import type { Signer } from "@slide-computer/signer";
@@ -26,6 +27,7 @@ export class LinkTxCartStore implements TxCartStore {
   #source: ActionSource;
   #icrc112Service: Icrc112Service<IITransport> | null = null;
   #assetAndFeeList = $state<AssetAndFee[]>([]);
+  #phase = $state<TxProgressPhase>(TxProgressPhase.IDLE);
 
   constructor(source: ActionSource) {
     this.#source = source;
@@ -42,6 +44,11 @@ export class LinkTxCartStore implements TxCartStore {
   /** Reactive asset and fee list for UI */
   get assetAndFeeList(): AssetAndFee[] {
     return this.#assetAndFeeList;
+  }
+
+  /** Current execution phase for progress indication */
+  get phase(): TxProgressPhase {
+    return this.#phase;
   }
 
   /** Initialize ICRC-112 service */
@@ -168,7 +175,8 @@ export class LinkTxCartStore implements TxCartStore {
       throw new Error("ICRC-112 Service is not initialized.");
     }
 
-    // Transition to PROCESSING before execution
+    // FE phase: executing ICRC-112 batch request
+    this.#phase = TxProgressPhase.FE_PHASE;
     this.setSourceState(IntentState.PROCESSING);
 
     const { action, handleProcessAction } = this.#source;
@@ -181,16 +189,21 @@ export class LinkTxCartStore implements TxCartStore {
           CASHIER_BACKEND_CANISTER_ID,
         );
         if (!icrcResult.isSuccess) {
+          this.#phase = TxProgressPhase.IDLE;
           this.setSourceState(IntentState.FAIL);
           throw new Error(
             icrcResult.errors?.join(", ") ?? "ICRC-112 execution failed",
           );
         }
-        // TODO: Show semi-transparent green checkmarks (ICRC-112 signed successfully)
-        //this.setStatesToSignedPending();
+        // BE phase: ICRC-112 signed, BE is now processing the action
+        this.#phase = TxProgressPhase.BE_PHASE;
+        this.setStatesToSignedPending();
       }
 
       const result = await handleProcessAction();
+
+      // Completed: all transactions done
+      this.#phase = TxProgressPhase.COMPLETED;
 
       // When backend reports is_success: true, show full green checkmarks
       if (result.isSuccess) {
@@ -204,6 +217,7 @@ export class LinkTxCartStore implements TxCartStore {
 
       return result;
     } catch (e) {
+      this.#phase = TxProgressPhase.IDLE;
       this.setSourceState(IntentState.FAIL);
       throw e;
     }
