@@ -2,8 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    gates::{GateFactory, GateVerifier},
+    gates,
     repositories::{Repositories, gate::GateRepository, get_password_hashing_algorithm},
+    services::{http::HttpOutcallService, secret::SecretService},
     utils::{
         gate::redact_password_gate,
         hashing::{hash_password, hash_password_sha256},
@@ -19,14 +20,12 @@ use std::rc::Rc;
 
 pub struct GateService<R: Repositories> {
     repository: GateRepository<R::Gate, R::GateUserStatus>,
-    gate_factory: GateFactory,
 }
 
 impl<R: Repositories> GateService<R> {
     pub fn new(repositories: Rc<R>) -> Self {
         Self {
             repository: repositories.gate(),
-            gate_factory: GateFactory {},
         }
     }
 
@@ -96,25 +95,6 @@ impl<R: Repositories> GateService<R> {
             .map(redact_password_gate)
     }
 
-    /// Retrieves a gate that is currently being opened.
-    /// # Arguments
-    /// * `gate_id`: The ID of the gate to be checked.
-    /// # Returns
-    /// * `Ok(Box<dyn GateVerifier>)`: A gate instance of `GateVerifier` trait if gate has been found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_opening_gate(
-        &self,
-        gate_id: &str,
-    ) -> Result<Box<dyn GateVerifier>, GateServiceError> {
-        let gate_info = self
-            .repository
-            .get_gate(gate_id)
-            .ok_or(GateServiceError::NotFound)?;
-
-        let gate = self.gate_factory.get_gate_verifier(gate_info.key.clone())?;
-
-        Ok(gate)
-    }
 
     /// Retrieves the user status of a gate for a specific user.
     /// # Arguments
@@ -153,25 +133,32 @@ impl<R: Repositories> GateService<R> {
     /// * `gate_id`: The ID of the gate to be opened.
     /// * `key`: The key to be used for opening the gate.
     /// * `user`: The user who is opening the gate.
+    /// * `http`: HTTP outcall service used by verifiers that make external API calls.
+    /// * `secrets`: Secret service used by verifiers that need stored credentials.
     /// # Returns
     /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
-    /// * `Err(String)`: If there is an error during gate opening.
-    pub async fn open_gate(
+    /// * `Err(GateServiceError)`: If there is an error during gate opening.
+    pub async fn open_gate<H: HttpOutcallService, S: SecretService>(
         &mut self,
         gate_id: &str,
         key: GateKey,
         user: Principal,
+        http: &H,
+        secrets: &S,
     ) -> Result<OpenGateSuccessResult, GateServiceError> {
-        let gate = self.get_gate(gate_id);
-        let gate = gate.ok_or(GateServiceError::NotFound)?;
+        let gate = self
+            .repository
+            .get_gate(gate_id)
+            .ok_or(GateServiceError::NotFound)?;
 
-        let opening_gate = self.get_opening_gate(gate_id)?;
+        let gate_config_key = gate.key.clone();
 
-        match opening_gate.verify(key).await {
-            Ok(VerificationResult::Success) => {
+        match gates::verify_gate(gate_config_key, key, http, secrets).await? {
+            VerificationResult::Success => {
+                let redacted = redact_password_gate(gate);
                 let (gate, gate_user_status) = self
                     .repository
-                    .open_gate(gate, user)
+                    .open_gate(redacted, user)
                     .map_err(GateServiceError::RepositoryError)?;
 
                 Ok(OpenGateSuccessResult {
@@ -179,8 +166,7 @@ impl<R: Repositories> GateService<R> {
                     gate_user_status,
                 })
             }
-            Ok(VerificationResult::Failure(e)) => Err(GateServiceError::KeyVerificationFailed(e)),
-            Err(e) => Err(e),
+            VerificationResult::Failure(e) => Err(GateServiceError::KeyVerificationFailed(e)),
         }
     }
 }
@@ -189,8 +175,18 @@ impl<R: Repositories> GateService<R> {
 mod tests {
     use super::*;
     use crate::repositories::tests::TestRepositories;
+    use crate::services::http::test_utils::MockHttpOutcallService;
+    use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_service_types::GateStatus;
+    use std::collections::HashMap;
+
+    fn fixture_of_services() -> (MockHttpOutcallService, MockSecretService) {
+        (
+            MockHttpOutcallService::new(vec![]),
+            MockSecretService::new(HashMap::new()),
+        )
+    }
 
     /// Generate a fixture for the gate service using a stable gate repository.
     fn gate_service_fixture() -> GateService<TestRepositories> {
@@ -357,85 +353,11 @@ mod tests {
         assert_eq!(gate.key, GateKey::XFollowing("x_handle".to_string()));
     }
 
-    #[test]
-    fn it_should_error_get_opening_gate_due_to_non_existent_gate() {
-        // Arrange
-        let service = gate_service_fixture();
-
-        // Act
-        let result = service.get_opening_gate("non_existent_gate_id");
-
-        // Assert
-        assert!(result.is_err());
-        if let Err(GateServiceError::NotFound) = result {
-        } else {
-            panic!("Expected error but got success");
-        }
-    }
-
-    #[test]
-    fn it_should_error_get_opening_gate_due_to_unsupported_gate_type() {
-        // Arrange
-        let mut service = gate_service_fixture();
-        let creator = random_principal_id();
-        let new_gate = NewGate {
-            subject_id: "subject1".to_string(),
-            key: GateKey::TelegramGroup("some_group".to_string()),
-        };
-        let gate = service.add_gate(creator, new_gate).unwrap();
-
-        // Act
-        let result = service.get_opening_gate(&gate.id);
-
-        // Assert
-        assert!(result.is_err());
-        if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
-            assert!(e.contains("TelegramGroup"));
-        } else {
-            panic!("Expected error but got success");
-        }
-    }
-
-    #[test]
-    fn it_should_get_opening_gate_xfollowing() {
-        // Arrange
-        let mut service = gate_service_fixture();
-        let creator = random_principal_id();
-        let new_gate = NewGate {
-            subject_id: "subject1".to_string(),
-            key: GateKey::XFollowing("cashierapp".to_string()),
-        };
-        let gate = service.add_gate(creator, new_gate).unwrap();
-
-        // Act
-        let result = service.get_opening_gate(&gate.id);
-
-        // Assert
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn it_should_get_opening_gate_password() {
-        // Arrange
-        let mut service = gate_service_fixture();
-        let creator = random_principal_id();
-        let new_gate = NewGate {
-            subject_id: "subject1".to_string(),
-            key: GateKey::Password("password123".to_string()),
-        };
-        let gate = service.add_gate(creator, new_gate).unwrap();
-
-        // Act
-        let result = service.get_opening_gate(&gate.id);
-
-        // Assert
-        assert!(result.is_ok());
-    }
-
     #[tokio::test]
     async fn it_should_open_password_gate() {
         // Arrange
         let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
@@ -446,7 +368,7 @@ mod tests {
         let user = random_principal_id();
 
         // Act
-        let result = service.open_gate(&gate.id, gate_key, user).await;
+        let result = service.open_gate(&gate.id, gate_key, user, &http, &secrets).await;
 
         // Assert
         assert!(result.is_ok());
@@ -481,7 +403,8 @@ mod tests {
         let gate = service.add_gate(creator, new_gate).unwrap();
         let gate_key = GateKey::Password("password123".to_string());
         let user = random_principal_id();
-        let _ = service.open_gate(&gate.id, gate_key, user).await;
+        let (http, secrets) = fixture_of_services();
+        let _ = service.open_gate(&gate.id, gate_key, user, &http, &secrets).await;
 
         // Act
         let result = service.get_gate_for_user(&gate.id, user);

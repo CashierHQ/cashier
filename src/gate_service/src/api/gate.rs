@@ -3,6 +3,8 @@
 
 use crate::api::state::get_state;
 use crate::gates::x::exchange_x_token as x_exchange_token;
+use crate::services::http::IcHttpOutcallService;
+use crate::services::secret::IcSecretService;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
@@ -127,7 +129,9 @@ async fn open_gate(
         caller
     };
     let mut gate_service = get_state().gate_service;
-    gate_service.open_gate(&gate_id, key, effective_user).await
+    gate_service
+        .open_gate(&gate_id, key, effective_user, &IcHttpOutcallService, &IcSecretService)
+        .await
 }
 
 #[update]
