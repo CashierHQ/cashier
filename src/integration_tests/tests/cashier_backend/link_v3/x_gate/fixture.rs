@@ -93,7 +93,7 @@ pub async fn activated_xgate_link_fixture(
     let icp_ledger_client = ctx.new_icp_ledger_client(creator);
     let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
 
-    // Seed the Twitter API key so XGateVerifier can proceed to the HTTP outcall.
+    // Seed the Twitter API key so XFollowingVerifier can proceed to the HTTP outcall.
     let gate_admin = TestUser::GateServiceAdmin.get_principal();
     ctx.new_gate_service_client(gate_admin)
         .admin_plain_secret_set(

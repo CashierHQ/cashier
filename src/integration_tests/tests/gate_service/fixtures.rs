@@ -122,7 +122,7 @@ pub async fn add_xfollowing_gate_fixture(
         .unwrap()
         .unwrap();
 
-    // Seed a dummy Twitter API key so XGateVerifier can reach the HTTP outcall.
+    // Seed a dummy Twitter API key so XFollowingVerifier can reach the HTTP outcall.
     admin_client
         .admin_plain_secret_set(
             "twitter_api_key".to_string(),

@@ -30,16 +30,16 @@ fn parse_tweet_id(tweet_url: &str) -> Result<String, GateServiceError> {
         .ok_or_else(|| GateServiceError::InvalidKeyType(format!("invalid tweet URL: {tweet_url}")))
 }
 
-// ── XGateVerifier (follow) ────────────────────────────────────────────────────
+// ── XFollowingVerifier (follow) ────────────────────────────────────────────────────
 
 /// Verifier for the X-following gate.
 /// Checks whether a given source account follows the configured target account
 /// by querying the TwitterAPI.io service.
-pub struct XGateVerifier {
+pub struct XFollowingVerifier {
     target_handle: String,
 }
 
-impl GateVerifier for XGateVerifier {
+impl GateVerifier for XFollowingVerifier {
     fn verify(
         &self,
         key: GateKey,
@@ -50,7 +50,7 @@ impl GateVerifier for XGateVerifier {
                 GateKey::XFollowing(handle) => handle,
                 _ => {
                     return Err(GateServiceError::InvalidKeyType(
-                        "XGateVerifier".to_string(),
+                        "XFollowingVerifier".to_string(),
                     ));
                 }
             };
@@ -95,14 +95,14 @@ impl GateVerifier for XGateVerifier {
     }
 }
 
-impl Debug for XGateVerifier {
+impl Debug for XFollowingVerifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "XGateVerifier(target={})", self.target_handle)
+        write!(f, "XFollowingVerifier(target={})", self.target_handle)
     }
 }
 
-impl XGateVerifier {
-    /// Creates a new XGateVerifier for the given target handle.
+impl XFollowingVerifier {
+    /// Creates a new XFollowingVerifier for the given target handle.
     pub fn new(target_handle: String) -> Self {
         Self { target_handle }
     }
@@ -482,7 +482,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_error_verify_due_to_invalid_gate_key() {
         // Arrange
-        let verifier = XGateVerifier::new("cashierapp".to_string());
+        let verifier = XFollowingVerifier::new("cashierapp".to_string());
 
         // Act
         let result = verifier
@@ -492,7 +492,7 @@ mod tests {
         // Assert
         assert!(result.is_err());
         if let Err(GateServiceError::InvalidKeyType(e)) = result {
-            assert!(e.contains("XGateVerifier"));
+            assert!(e.contains("XFollowingVerifier"));
         } else {
             panic!("Expected InvalidKeyType error but got {:?}", result);
         }

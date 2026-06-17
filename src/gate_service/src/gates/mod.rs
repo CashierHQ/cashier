@@ -7,7 +7,7 @@ pub mod x;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use password::PasswordGateVerifier;
 use std::{fmt::Debug, future::Future, pin::Pin};
-use x::{XGateVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
+use x::{XFollowingVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
 
 pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's key.
@@ -43,7 +43,7 @@ impl GateFactory {
                 Ok(Box::new(gate))
             }
             GateKey::XFollowing(target_handle) => {
-                let gate = XGateVerifier::new(target_handle);
+                let gate = XFollowingVerifier::new(target_handle);
                 Ok(Box::new(gate))
             }
             GateKey::XOwnedAccount(handle) => Ok(Box::new(XOwnedAccountVerifier::new(handle))),
