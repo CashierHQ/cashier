@@ -22,7 +22,6 @@ use crate::{
         link_v2::service::LinkV2Service,
         link_v3::service::LinkV3Service,
         rate_limit::RateLimitService,
-        request_lock::RequestLockService,
         settings::SettingsService,
         token_balance::service::TokenBalanceService,
         token_fee::{fetcher::IcrcTokenFetcher, service::TokenFeeService},
