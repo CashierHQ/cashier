@@ -4,9 +4,8 @@
 use crate::gates::GateVerifier;
 use crate::services::{http::HttpOutcallService, secret::SecretService};
 use gate_service_types::constant::{SECRET_TWITTER_API_KEY, TWITTER_API_URL};
-use gate_service_types::x_response::XFollowingResponse;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
-use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
+use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs};
 use std::fmt::Debug;
 
 /// Verifier for the X-following gate.
@@ -57,7 +56,7 @@ impl GateVerifier for XFollowingVerifier {
             .await
             .map_err(|e| GateServiceError::KeyVerificationFailed(e.to_string()))?;
 
-        let response = decode_follow_response(http_response)?;
+        let response = super::decode_follow_response(http_response)?;
 
         if response.data.following {
             Ok(VerificationResult::Success)
@@ -85,39 +84,12 @@ impl XFollowingVerifier {
     }
 }
 
-/// Parses and validates a TwitterAPI.io following response.
-/// # Arguments
-/// * `http_result`: Raw HTTP response from the TwitterAPI.io endpoint.
-/// # Returns
-/// * `Ok(XFollowingResponse)`: Parsed response with `data.following` flag.
-/// * `Err(GateServiceError::KeyVerificationFailed)`: Malformed body or non-UTF-8 bytes.
-fn decode_follow_response(
-    http_result: HttpRequestResult,
-) -> Result<XFollowingResponse, GateServiceError> {
-    let body = String::from_utf8(http_result.body).map_err(|e| {
-        GateServiceError::KeyVerificationFailed(format!("Failed to decode UTF-8: {}", e))
-    })?;
-
-    serde_json::from_str::<XFollowingResponse>(&body).map_err(|e| {
-        GateServiceError::KeyVerificationFailed(format!("Failed to parse JSON: {}", e))
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
-    use candid::Nat;
     use gate_service_types::constant::SECRET_TWITTER_API_KEY;
-
-    fn fixture_of_http_result(status: u32, body: &str) -> HttpRequestResult {
-        HttpRequestResult {
-            status: Nat::from(status),
-            headers: vec![],
-            body: body.as_bytes().to_vec(),
-        }
-    }
 
     fn fixture_of_follow_body(following: bool) -> &'static str {
         if following {
@@ -204,55 +176,6 @@ mod tests {
         let result = verifier
             .verify(GateKey::XFollowing("alice".to_string()), &http, &secrets)
             .await;
-
-        // Assert
-        assert!(matches!(
-            result,
-            Err(GateServiceError::KeyVerificationFailed(_))
-        ));
-    }
-
-    // ── decode_follow_response ────────────────────────────────────────────────
-
-    #[test]
-    fn it_should_decode_follow_response_with_following_true() {
-        // Arrange
-        let http_result = fixture_of_http_result(
-            200,
-            r#"{"status":"success","message":"ok","data":{"following":true,"followed_by":false}}"#,
-        );
-
-        // Act
-        let result = decode_follow_response(http_result);
-
-        // Assert
-        assert!(result.is_ok());
-        assert!(result.unwrap().data.following);
-    }
-
-    #[test]
-    fn it_should_decode_follow_response_with_following_false() {
-        // Arrange
-        let http_result = fixture_of_http_result(
-            200,
-            r#"{"status":"success","message":"ok","data":{"following":false,"followed_by":false}}"#,
-        );
-
-        // Act
-        let result = decode_follow_response(http_result);
-
-        // Assert
-        assert!(result.is_ok());
-        assert!(!result.unwrap().data.following);
-    }
-
-    #[test]
-    fn it_should_fail_decode_follow_response_due_to_invalid_json() {
-        // Arrange
-        let http_result = fixture_of_http_result(200, "not json");
-
-        // Act
-        let result = decode_follow_response(http_result);
 
         // Assert
         assert!(matches!(

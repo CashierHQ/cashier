@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use gate_service_types::error::GateServiceError;
-use gate_service_types::x_response::XTweetsResponse;
+use gate_service_types::x_response::{XFollowingResponse, XTweetsResponse};
 use ic_cdk::management_canister::HttpRequestResult;
 
 /// Extracts the numeric tweet ID from a URL like `https://x.com/user/status/1234567890`.
@@ -18,6 +18,24 @@ pub fn parse_tweet_id(tweet_url: &str) -> Result<String, GateServiceError> {
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
         .ok_or_else(|| GateServiceError::InvalidKeyType(format!("invalid tweet URL: {tweet_url}")))
+}
+
+/// Parses a TwitterAPI.io following-check response.
+/// # Arguments
+/// * `http_result`: Raw HTTP response from the TwitterAPI.io following endpoint.
+/// # Returns
+/// * `Ok(XFollowingResponse)`: Parsed response with `data.following` and `data.followed_by` flags.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Non-UTF-8 body, or JSON parse failure.
+pub fn decode_follow_response(
+    http_result: HttpRequestResult,
+) -> Result<XFollowingResponse, GateServiceError> {
+    let body = String::from_utf8(http_result.body).map_err(|e| {
+        GateServiceError::KeyVerificationFailed(format!("Failed to decode UTF-8: {}", e))
+    })?;
+
+    serde_json::from_str::<XFollowingResponse>(&body).map_err(|e| {
+        GateServiceError::KeyVerificationFailed(format!("Failed to parse JSON: {}", e))
+    })
 }
 
 /// Parses an X tweets list response (liked tweets or user timeline).
@@ -59,6 +77,55 @@ mod tests {
             headers: vec![],
             body: body.as_bytes().to_vec(),
         }
+    }
+
+    // ── decode_follow_response ────────────────────────────────────────────────
+
+    #[test]
+    fn it_should_fail_decode_follow_response_due_to_invalid_json() {
+        // Arrange
+        let http_result = fixture_of_http_result(200, "not json");
+
+        // Act
+        let result = decode_follow_response(http_result);
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[test]
+    fn it_should_decode_follow_response_with_following_true() {
+        // Arrange
+        let http_result = fixture_of_http_result(
+            200,
+            r#"{"status":"success","message":"ok","data":{"following":true,"followed_by":false}}"#,
+        );
+
+        // Act
+        let result = decode_follow_response(http_result);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(result.unwrap().data.following);
+    }
+
+    #[test]
+    fn it_should_decode_follow_response_with_following_false() {
+        // Arrange
+        let http_result = fixture_of_http_result(
+            200,
+            r#"{"status":"success","message":"ok","data":{"following":false,"followed_by":false}}"#,
+        );
+
+        // Act
+        let result = decode_follow_response(http_result);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(!result.unwrap().data.following);
     }
 
     // ── parse_tweet_id ────────────────────────────────────────────────────────

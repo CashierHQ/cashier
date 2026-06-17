@@ -111,8 +111,6 @@ mod tests {
         format!(r#"{{"data":[{}]}}"#, ids_json.join(","))
     }
 
-    // ── verify (key type guard) ───────────────────────────────────────────────
-
     #[tokio::test]
     async fn it_should_fail_verify_due_to_invalid_gate_key() {
         // Arrange
@@ -151,8 +149,6 @@ mod tests {
         // Assert
         assert!(matches!(result, Err(GateServiceError::InvalidKeyType(_))));
     }
-
-    // ── verify (full path) ────────────────────────────────────────────────────
 
     #[tokio::test]
     async fn it_should_return_success_when_api_confirms_liked() {

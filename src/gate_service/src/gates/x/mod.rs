@@ -13,4 +13,4 @@ pub use like_post::XLikedPostVerifier;
 pub use oauth::exchange_x_token;
 pub use owned_account::XOwnedAccountVerifier;
 pub use retweet_post::XRetweetedPostVerifier;
-pub(super) use utils::{decode_tweets_response, parse_tweet_id};
+pub(super) use utils::{decode_follow_response, decode_tweets_response, parse_tweet_id};

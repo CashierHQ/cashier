@@ -143,3 +143,139 @@ fn decode_profile_response(http_result: HttpRequestResult) -> Result<XProfile, G
         profile_image_url: response.data.profile_image_url.unwrap_or_default(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Nat;
+
+    fn fixture_of_http_result(body: &str) -> HttpRequestResult {
+        HttpRequestResult {
+            status: Nat::from(200u32),
+            headers: vec![],
+            body: body.as_bytes().to_vec(),
+        }
+    }
+
+    #[test]
+    fn it_should_fail_url_encode_due_to_special_chars() {
+        assert_eq!(url_encode(" "), "%20");
+        assert_eq!(url_encode("a=b&c=d"), "a%3Db%26c%3Dd");
+        assert_eq!(url_encode("/path?q=1"), "%2Fpath%3Fq%3D1");
+    }
+
+    #[test]
+    fn it_should_url_encode_pass_through_unreserved_chars() {
+        assert_eq!(url_encode("abcXYZ123-_.~"), "abcXYZ123-_.~");
+    }
+
+    #[test]
+    fn it_should_fail_decode_token_response_due_to_invalid_json() {
+        // Arrange
+        let http_result = fixture_of_http_result("not json");
+
+        // Act
+        let result = decode_token_response(http_result);
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_decode_token_response_due_to_missing_required_field() {
+        // Arrange
+        let http_result = fixture_of_http_result(r#"{"token_type":"bearer"}"#);
+
+        // Act
+        let result = decode_token_response(http_result);
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[test]
+    fn it_should_decode_token_response() {
+        // Arrange
+        let http_result =
+            fixture_of_http_result(r#"{"access_token":"tok_abc123","token_type":"bearer"}"#);
+
+        // Act
+        let result = decode_token_response(http_result);
+
+        // Assert
+        assert_eq!(result.unwrap(), "tok_abc123");
+    }
+
+    #[test]
+    fn it_should_fail_decode_profile_response_due_to_invalid_json() {
+        // Arrange
+        let http_result = fixture_of_http_result("not json");
+
+        // Act
+        let result = decode_profile_response(http_result);
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[test]
+    fn it_should_fail_decode_profile_response_due_to_missing_data_field() {
+        // Arrange
+        let http_result = fixture_of_http_result(r#"{"error":"Forbidden"}"#);
+
+        // Act
+        let result = decode_profile_response(http_result);
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[test]
+    fn it_should_decode_profile_response() {
+        // Arrange
+        let http_result = fixture_of_http_result(
+            r#"{"data":{"id":"123456","name":"Cashier App","username":"cashierapp","profile_image_url":"https://pbs.twimg.com/profile/photo.jpg"}}"#,
+        );
+
+        // Act
+        let result = decode_profile_response(http_result);
+
+        // Assert
+        let profile = result.unwrap();
+        assert_eq!(profile.id, "123456");
+        assert_eq!(profile.name, "Cashier App");
+        assert_eq!(profile.username, "cashierapp");
+        assert_eq!(
+            profile.profile_image_url,
+            "https://pbs.twimg.com/profile/photo.jpg"
+        );
+    }
+
+    #[test]
+    fn it_should_decode_profile_response_with_absent_profile_image_url() {
+        // Arrange
+        let http_result = fixture_of_http_result(
+            r#"{"data":{"id":"789","name":"Test User","username":"testuser"}}"#,
+        );
+
+        // Act
+        let result = decode_profile_response(http_result);
+
+        // Assert
+        let profile = result.unwrap();
+        assert_eq!(profile.id, "789");
+        assert_eq!(profile.profile_image_url, "");
+    }
+}
