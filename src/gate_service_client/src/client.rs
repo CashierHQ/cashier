@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use candid::Principal;
 use gate_service_types::{
     Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, PasswordHashingAlgorithm, XProfile,
