@@ -1,4 +1,7 @@
 <script lang="ts">
+  import lockedLock from "$lib/assets/gating/locked-lock.svg";
+  import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
+  import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
@@ -8,7 +11,6 @@
     DrawerHeader,
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
-  import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import {
     Eye,
@@ -19,8 +21,6 @@
     RectangleEllipsis,
     X,
   } from "lucide-svelte";
-  import lockedLock from "$lib/assets/gating/locked-lock.svg";
-  import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
   import { onMount } from "svelte";
 
   const {
@@ -80,9 +80,43 @@
         localOpenGates = { ...localOpenGates };
         drawerOpen = false;
       } else {
-        error =
-          locale.t("links.linkForm.lock.incorrectPassword") ??
-          "Incorrect password.";
+        const message = result.unwrapErr().message;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(message);
+        } catch {
+          parsed = null;
+        }
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          "BackoffThrottled" in parsed
+        ) {
+          const backoffMsg = (parsed as { BackoffThrottled: string })
+            .BackoffThrottled;
+          const match = backoffMsg.match(/Try again in (\d+)s/);
+          const remainingSecs = match ? parseInt(match[1], 10) : 0;
+          const timeStr =
+            remainingSecs >= 60
+              ? `${Math.ceil(remainingSecs / 60)} minutes`
+              : `${remainingSecs} seconds`;
+          const template =
+            locale.t("links.linkForm.lock.tooManyFailedAttempts") ??
+            "Too many failed attempts. Please wait {{time}} before retrying.";
+          error = template.replace("{{time}}", timeStr);
+        } else if (
+          parsed &&
+          typeof parsed === "object" &&
+          "RateLimited" in parsed
+        ) {
+          error =
+            locale.t("links.linkForm.lock.tooManyRequests") ??
+            "Too many requests. Please wait before retrying.";
+        } else {
+          error =
+            locale.t("links.linkForm.lock.incorrectPassword") ??
+            "Incorrect password.";
+        }
       }
     } finally {
       isSubmitting = false;
@@ -100,8 +134,8 @@
   <div class="flex flex-col items-center gap-2">
     <p class="text-sm text-foreground">
       {allOpen
-        ? (locale.t("links.linkForm.lock.linkUnlocked") ?? "Link unlocked")
-        : (locale.t("links.linkForm.lock.linkLocked") ?? "Link locked")}
+        ? locale.t("links.linkForm.lock.linkUnlocked")
+        : locale.t("links.linkForm.lock.linkLocked")}
     </p>
 
     {#if allOpen}

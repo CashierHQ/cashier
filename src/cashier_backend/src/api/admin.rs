@@ -4,6 +4,9 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
+use cashier_backend_types::backoff::BackoffConfig;
+use cashier_backend_types::rate_limit::RateLimitConfig;
+
 use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
 
 /// Returns the build data of the canister.
@@ -170,6 +173,122 @@ pub async fn admin_flush_token_standard_cache() -> Result<(), CanisterError> {
         .must_have_permission(&caller, Permission::Admin);
 
     state.token_standard_service.flush_cache();
+
+    Ok(())
+}
+
+/// Updates the gate API rate limit configuration.
+///
+/// Changes take effect immediately on the next `user_open_link_gate` call.
+/// Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[update]
+pub fn admin_gate_rate_limit_update(config: RateLimitConfig) -> Result<(), CanisterError> {
+    debug!("[admin_gate_rate_limit_update] config: {config:?}");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.rate_limit_service.update_config(config);
+
+    Ok(())
+}
+
+/// Returns the current gate API rate limit configuration.
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[query]
+pub fn admin_gate_rate_limit_get() -> RateLimitConfig {
+    debug!("[admin_gate_rate_limit_get]");
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.rate_limit_service.get_config()
+}
+
+/// Clears the rate limit state for a specific user, allowing them to make requests immediately.
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[update]
+pub fn admin_gate_rate_limit_reset_user(user: Principal) -> Result<(), CanisterError> {
+    debug!("[admin_gate_rate_limit_reset_user] user: {user}");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.rate_limit_service.reset_user(&user);
+
+    Ok(())
+}
+
+/// Updates the gate API exponential backoff configuration.
+///
+/// Changes take effect immediately on the next `user_open_link_gate` call.
+/// Set `enabled: false` to disable backoff entirely (e.g. for emergency access).
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[update]
+pub fn admin_gate_backoff_update(config: BackoffConfig) -> Result<(), CanisterError> {
+    debug!("[admin_gate_backoff_update] config: {config:?}");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.backoff_service.update_config(config);
+
+    Ok(())
+}
+
+/// Returns the current gate API exponential backoff configuration.
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[query]
+pub fn admin_gate_backoff_get() -> BackoffConfig {
+    debug!("[admin_gate_backoff_get]");
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.backoff_service.get_config()
+}
+
+/// Clears the backoff state for a specific user, allowing them to retry immediately.
+///
+/// # Authorization
+///
+/// Requires `Permission::Admin`.
+#[update]
+pub fn admin_gate_backoff_reset_user(user: Principal) -> Result<(), CanisterError> {
+    debug!("[admin_gate_backoff_reset_user] user: {user}");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.backoff_service.reset_user(&user);
 
     Ok(())
 }

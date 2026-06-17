@@ -705,6 +705,7 @@
         ? Number(linkStore.link.link_use_action_max_count)
         : undefined,
     }}
+    showProgressBanner={linkStore.link?.state === LinkState.CREATE_LINK}
     {onCloseDrawer}
   />
 {/if}

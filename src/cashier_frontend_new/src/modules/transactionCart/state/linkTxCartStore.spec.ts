@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Principal } from "@icp-sdk/core/principal";
-import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
-import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+import type Action from "$modules/links/types/action/action";
+import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
+import {
+  AssetProcessState,
+  TxProgressPhase,
+} from "$modules/transactionCart/types/txCart";
+import { Principal } from "@icp-sdk/core/principal";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock constants
 const CASHIER_BACKEND_CANISTER_ID = "aaaaa-aa";
@@ -288,6 +291,137 @@ describe("LinkTxCartStore", () => {
       await expect(store.execute()).rejects.toThrow(
         "User is not authenticated.",
       );
+    });
+  });
+
+  describe("phase tracking", () => {
+    it("should_be_idle_initially", () => {
+      const source = createActionSource();
+      const store = new LinkTxCartStore(source);
+      expect(store.phase).toBe(TxProgressPhase.IDLE);
+    });
+
+    it("should_set_phase1_during_icrc112_execution", async () => {
+      let resolveIcrc: (v: { isSuccess: boolean }) => void;
+      const icrcPromise = new Promise<{ isSuccess: boolean }>((resolve) => {
+        resolveIcrc = resolve;
+      });
+      mockSendBatchRequest.mockReturnValueOnce(icrcPromise);
+
+      const source = createActionSource(true);
+      const store = new LinkTxCartStore(source);
+      mockMapActionToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-1",
+            symbol: "ICP",
+          },
+          fee: null,
+        },
+      ]);
+      store.initializeAssets({});
+      store.initialize();
+
+      const executePromise = store.execute();
+      // Phase 1 should be set immediately (before ICRC-112 resolves)
+      expect(store.phase).toBe(TxProgressPhase.FE_PHASE);
+
+      resolveIcrc!({ isSuccess: true });
+      await executePromise;
+    });
+
+    it("should_set_phase2_and_signed_pending_after_icrc112_succeeds", async () => {
+      // Pause processAction so we can observe the intermediate phase
+      let resolveProcess: (v: ProcessActionResult) => void;
+      const processPromise = new Promise<ProcessActionResult>((resolve) => {
+        resolveProcess = resolve;
+      });
+
+      const source = createActionSource(true);
+      vi.mocked(source.handleProcessAction).mockReturnValueOnce(processPromise);
+
+      const store = new LinkTxCartStore(source);
+      mockMapActionToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-1",
+            symbol: "ICP",
+          },
+          fee: null,
+        },
+      ]);
+      store.initializeAssets({});
+      store.initialize();
+
+      const executePromise = store.execute();
+      // Wait until ICRC-112 completes and phase transitions to PHASE2
+      await vi.waitFor(() => store.phase === TxProgressPhase.BE_PHASE);
+
+      expect(store.phase).toBe(TxProgressPhase.BE_PHASE);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+
+      resolveProcess!({
+        action: createMockAction(),
+        isSuccess: true,
+        errors: [],
+      });
+      await executePromise;
+    });
+
+    it("should_set_phase3_on_success", async () => {
+      const source = createActionSource(true);
+      const store = new LinkTxCartStore(source);
+      mockMapActionToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-1",
+            symbol: "ICP",
+          },
+          fee: null,
+        },
+      ]);
+      store.initializeAssets({});
+      store.initialize();
+
+      await store.execute();
+
+      expect(store.phase).toBe(TxProgressPhase.COMPLETED);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SUCCEED,
+      );
+    });
+
+    it("should_reset_phase_to_idle_on_icrc112_failure", async () => {
+      mockSendBatchRequest.mockResolvedValueOnce({
+        isSuccess: false,
+        errors: ["batch failed"],
+      });
+
+      const source = createActionSource(true);
+      const store = new LinkTxCartStore(source);
+      store.initialize();
+
+      await expect(store.execute()).rejects.toThrow("batch failed");
+
+      expect(store.phase).toBe(TxProgressPhase.IDLE);
+    });
+
+    it("should_reset_phase_to_idle_on_process_action_failure", async () => {
+      const source = createActionSource(false);
+      vi.mocked(source.handleProcessAction).mockRejectedValueOnce(
+        new Error("backend error"),
+      );
+      const store = new LinkTxCartStore(source);
+      store.initialize();
+
+      await expect(store.execute()).rejects.toThrow("backend error");
+
+      expect(store.phase).toBe(TxProgressPhase.IDLE);
     });
   });
 

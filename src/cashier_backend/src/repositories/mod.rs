@@ -44,6 +44,10 @@ use crate::repositories::action::{
 };
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
 use crate::repositories::auth::AuthServiceStorage;
+use crate::repositories::backoff_config::{
+    BackoffConfigRepository, BackoffConfigRepositoryStorage,
+};
+use crate::repositories::backoff_state::{BackoffStateRepository, BackoffStateRepositoryStorage};
 use crate::repositories::intent::{
     v1::{IntentRepository, IntentRepositoryStorage},
     v3::{IntentV3Repository, IntentV3RepositoryStorage},
@@ -63,6 +67,12 @@ use crate::repositories::link_gate_user_status::{
 use crate::repositories::link_reservation::{
     LinkReservationRepository, LinkReservationRepositoryStorage,
 };
+use crate::repositories::rate_limit_config::{
+    RateLimitConfigRepository, RateLimitConfigRepositoryStorage,
+};
+use crate::repositories::rate_limit_state::{
+    RateLimitStateRepository, RateLimitStateRepositoryStorage,
+};
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
@@ -81,6 +91,8 @@ use crate::repositories::user_link_action::{
 pub mod action;
 pub mod action_intent;
 pub mod auth;
+pub mod backoff_config;
+pub mod backoff_state;
 pub mod intent;
 pub mod intent_transaction;
 pub mod link;
@@ -88,6 +100,8 @@ pub mod link_action;
 pub mod link_gate;
 pub mod link_gate_user_status;
 pub mod link_reservation;
+pub mod rate_limit_config;
+pub mod rate_limit_state;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;
@@ -106,7 +120,6 @@ const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
 const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
 const ACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
-// MemoryId 10 retired (request_lock moved to volatile heap storage) - do not reuse.
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(13);
@@ -116,7 +129,8 @@ const ACTION_V3_MEMORY_ID: MemoryId = MemoryId::new(16);
 const INTENT_V3_MEMORY_ID: MemoryId = MemoryId::new(17);
 const LINK_GATE_MEMORY_ID: MemoryId = MemoryId::new(18);
 const LINK_GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(19);
-// MemoryId 20 retired (link_reservation moved to volatile heap storage) - do not reuse.
+const RATE_LIMIT_CONFIG_MEMORY_ID: MemoryId = MemoryId::new(20);
+const BACKOFF_CONFIG_MEMORY_ID: MemoryId = MemoryId::new(21);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -142,6 +156,10 @@ pub trait Repositories {
     type TokenStandard: Storage<TokenStandardRepositoryStorage>;
     type LinkGate: Storage<LinkGateRepositoryStorage>;
     type LinkGateUserStatus: Storage<LinkGateUserStatusRepositoryStorage>;
+    type RateLimitConfig: Storage<RateLimitConfigRepositoryStorage>;
+    type RateLimitState: Storage<RateLimitStateRepositoryStorage>;
+    type BackoffConfig: Storage<BackoffConfigRepositoryStorage>;
+    type BackoffState: Storage<BackoffStateRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -163,6 +181,10 @@ pub trait Repositories {
     fn token_standard(&self) -> TokenStandardRepository<Self::TokenStandard>;
     fn link_gate(&self) -> LinkGateRepository<Self::LinkGate>;
     fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus>;
+    fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig>;
+    fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState>;
+    fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig>;
+    fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -189,6 +211,10 @@ impl Repositories for ThreadlocalRepositories {
     type TokenStandard = &'static LocalKey<RefCell<TokenStandardRepositoryStorage>>;
     type LinkGate = &'static LocalKey<RefCell<LinkGateRepositoryStorage>>;
     type LinkGateUserStatus = &'static LocalKey<RefCell<LinkGateUserStatusRepositoryStorage>>;
+    type RateLimitConfig = &'static LocalKey<RefCell<RateLimitConfigRepositoryStorage>>;
+    type RateLimitState = &'static LocalKey<RefCell<RateLimitStateRepositoryStorage>>;
+    type BackoffConfig = &'static LocalKey<RefCell<BackoffConfigRepositoryStorage>>;
+    type BackoffState = &'static LocalKey<RefCell<BackoffStateRepositoryStorage>>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -268,6 +294,22 @@ impl Repositories for ThreadlocalRepositories {
 
     fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus> {
         LinkGateUserStatusRepository::new(&LINK_GATE_USER_STATUS_STORE)
+    }
+
+    fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig> {
+        RateLimitConfigRepository::new(&RATE_LIMIT_CONFIG_STORE)
+    }
+
+    fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
+        RateLimitStateRepository::new(&RATE_LIMIT_STATE_STORE)
+    }
+
+    fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig> {
+        BackoffConfigRepository::new(&BACKOFF_CONFIG_STORE)
+    }
+
+    fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState> {
+        BackoffStateRepository::new(&BACKOFF_STATE_STORE)
     }
 }
 
@@ -483,6 +525,31 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(LINK_GATE_USER_STATUS_MEMORY_ID)),
         )
     );
+
+    static RATE_LIMIT_CONFIG_STORE: RefCell<RateLimitConfigRepositoryStorage> =
+        RefCell::new(
+            VersionedStableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(RATE_LIMIT_CONFIG_MEMORY_ID)),
+                Default::default(),
+            )
+        );
+
+    static BACKOFF_CONFIG_STORE: RefCell<BackoffConfigRepositoryStorage> =
+        RefCell::new(
+            VersionedStableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(BACKOFF_CONFIG_MEMORY_ID)),
+                Default::default(),
+            )
+        );
+}
+
+thread_local! {
+    // Heap-based stores — intentionally volatile, reset on canister upgrade.
+    pub(crate) static RATE_LIMIT_STATE_STORE: RefCell<RateLimitStateRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
+
+    pub(crate) static BACKOFF_STATE_STORE: RefCell<BackoffStateRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
 #[cfg(test)]
@@ -513,6 +580,10 @@ pub mod tests {
         token_standard: Rc<RefCell<TokenStandardRepositoryStorage>>,
         link_gate: Rc<RefCell<LinkGateRepositoryStorage>>,
         link_gate_user_status: Rc<RefCell<LinkGateUserStatusRepositoryStorage>>,
+        rate_limit_config: Rc<RefCell<RateLimitConfigRepositoryStorage>>,
+        rate_limit_state: Rc<RefCell<RateLimitStateRepositoryStorage>>,
+        backoff_config: Rc<RefCell<BackoffConfigRepositoryStorage>>,
+        backoff_state: Rc<RefCell<BackoffStateRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -577,6 +648,16 @@ pub mod tests {
                 link_gate_user_status: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_GATE_USER_STATUS_MEMORY_ID),
                 ))),
+                rate_limit_config: Rc::new(RefCell::new(VersionedStableCell::init(
+                    mm.get(RATE_LIMIT_CONFIG_MEMORY_ID),
+                    Default::default(),
+                ))),
+                rate_limit_state: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
+                backoff_config: Rc::new(RefCell::new(VersionedStableCell::init(
+                    mm.get(BACKOFF_CONFIG_MEMORY_ID),
+                    Default::default(),
+                ))),
+                backoff_state: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
             }
         }
     }
@@ -602,6 +683,10 @@ pub mod tests {
         type TokenStandard = Rc<RefCell<TokenStandardRepositoryStorage>>;
         type LinkGate = Rc<RefCell<LinkGateRepositoryStorage>>;
         type LinkGateUserStatus = Rc<RefCell<LinkGateUserStatusRepositoryStorage>>;
+        type RateLimitConfig = Rc<RefCell<RateLimitConfigRepositoryStorage>>;
+        type RateLimitState = Rc<RefCell<RateLimitStateRepositoryStorage>>;
+        type BackoffConfig = Rc<RefCell<BackoffConfigRepositoryStorage>>;
+        type BackoffState = Rc<RefCell<BackoffStateRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -681,6 +766,22 @@ pub mod tests {
 
         fn link_gate_user_status(&self) -> LinkGateUserStatusRepository<Self::LinkGateUserStatus> {
             LinkGateUserStatusRepository::new(self.link_gate_user_status.clone())
+        }
+
+        fn rate_limit_config(&self) -> RateLimitConfigRepository<Self::RateLimitConfig> {
+            RateLimitConfigRepository::new(self.rate_limit_config.clone())
+        }
+
+        fn rate_limit_state(&self) -> RateLimitStateRepository<Self::RateLimitState> {
+            RateLimitStateRepository::new(self.rate_limit_state.clone())
+        }
+
+        fn backoff_config(&self) -> BackoffConfigRepository<Self::BackoffConfig> {
+            BackoffConfigRepository::new(self.backoff_config.clone())
+        }
+
+        fn backoff_state(&self) -> BackoffStateRepository<Self::BackoffState> {
+            BackoffStateRepository::new(self.backoff_state.clone())
         }
     }
 }
