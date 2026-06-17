@@ -6,78 +6,17 @@ use crate::repositories::get_decrypted_secret;
 use gate_service_types::{
     GateKey, VerificationResult, XProfile, XTokenExchangeResult, error::GateServiceError,
 };
+use gate_service_types::constant::{
+    SECRET_TWITTER_API_KEY, SECRET_X_BEARER_TOKEN, SECRET_X_OAUTH_BASIC_AUTH,
+    SECRET_X_REDIRECT_URI, TWITTER_API_URL, X_LIKED_TWEETS_URL, X_PROFILE_URL, X_TOKEN_URL,
+    X_USER_TWEETS_URL,
+};
+use gate_service_types::x_response::{
+    OAuthTokenResponse, XFollowingResponse, XProfileResponse, XTweetsResponse,
+};
 use ic_cdk::management_canister::http_request as canister_http_outcall;
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult};
-use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, future::Future, pin::Pin};
-
-const TWITTER_API_URL: &str = "https://api.twitterapi.io/twitter/user/check_follow_relationship";
-const X_TOKEN_URL: &str = "https://api.x.com/2/oauth2/token";
-const X_PROFILE_URL: &str =
-    "https://api.x.com/2/users/me?user.fields=id,name,username,profile_image_url";
-const X_LIKED_TWEETS_URL: &str = "https://api.x.com/2/users/{}/liked_tweets?max_results=100";
-const X_USER_TWEETS_URL: &str =
-    "https://api.x.com/2/users/{}/tweets?max_results=100&tweet.fields=referenced_tweets";
-
-/// Secret key names — set via admin_secret_set / admin_plain_secret_set canister endpoints.
-const SECRET_TWITTER_API_KEY: &str = "twitter_api_key";
-const SECRET_X_OAUTH_BASIC_AUTH: &str = "x_oauth_basic_auth";
-const SECRET_X_REDIRECT_URI: &str = "x_redirect_uri";
-const SECRET_X_BEARER_TOKEN: &str = "x_bearer_token";
-
-// ── Response structs ──────────────────────────────────────────────────────────
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XFollowingResponse {
-    status: String,
-    message: String,
-    data: FollowStatus,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct FollowStatus {
-    following: bool,
-    followed_by: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct OAuthTokenResponse {
-    access_token: String,
-    refresh_token: Option<String>,
-    token_type: String,
-    expires_in: Option<u64>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XProfileResponse {
-    data: XProfileData,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XProfileData {
-    id: String,
-    name: String,
-    username: String,
-    profile_image_url: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XTweetsResponse {
-    data: Option<Vec<XTweetItem>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XTweetItem {
-    id: String,
-    referenced_tweets: Option<Vec<XReferencedTweet>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct XReferencedTweet {
-    #[serde(rename = "type")]
-    kind: String,
-    id: String,
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
