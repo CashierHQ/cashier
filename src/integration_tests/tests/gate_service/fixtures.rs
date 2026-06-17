@@ -122,6 +122,16 @@ pub async fn add_xfollowing_gate_fixture(
         .unwrap()
         .unwrap();
 
+    // Seed a dummy Twitter API key so XGateVerifier can reach the HTTP outcall.
+    admin_client
+        .admin_plain_secret_set(
+            "twitter_api_key".to_string(),
+            "test_twitter_api_key".to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
+
     let user_client = ctx.new_gate_service_client(creator);
     let new_gate = NewGate {
         subject_id: subject_id.to_string(),

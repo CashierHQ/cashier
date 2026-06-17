@@ -13,6 +13,8 @@ use crate::{
     utils::{PocketIcTestContext, principal::TestUser},
 };
 
+const DUMMY_TWITTER_API_KEY: &str = "test_twitter_api_key";
+
 pub struct XGateLinkFixture {
     pub creator: Principal,
     pub token: String,
@@ -90,6 +92,17 @@ pub async fn activated_xgate_link_fixture(
     let creator = TestUser::User1.get_principal();
     let icp_ledger_client = ctx.new_icp_ledger_client(creator);
     let icp_fee = icp_ledger_client.fee().await.unwrap_or_default();
+
+    // Seed the Twitter API key so XGateVerifier can proceed to the HTTP outcall.
+    let gate_admin = TestUser::GateServiceAdmin.get_principal();
+    ctx.new_gate_service_client(gate_admin)
+        .admin_plain_secret_set(
+            "twitter_api_key".to_string(),
+            DUMMY_TWITTER_API_KEY.to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
 
     let mut fixture = XGateLinkFixture::new(
         Arc::new(ctx.clone()),

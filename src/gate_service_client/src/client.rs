@@ -128,4 +128,15 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
     ) -> CanisterClientResult<Result<XProfile, GateServiceError>> {
         self.client.update("exchange_x_token", (code,)).await
     }
+
+    /// Stores a plain-text secret. Requires Admin permission.
+    pub async fn admin_plain_secret_set(
+        &self,
+        key: String,
+        value: String,
+    ) -> CanisterClientResult<Result<(), GateServiceError>> {
+        self.client
+            .update("admin_plain_secret_set", (key, value))
+            .await
+    }
 }
