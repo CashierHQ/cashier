@@ -101,6 +101,8 @@
     } else if (!currentAddress) {
       previousTokenAddress = undefined;
       previousUseAmount = undefined;
+      localTokenAmount = "";
+      localUsdAmount = "";
     }
 
     if (selectedToken && link.assets.length > 0 && asset) {
