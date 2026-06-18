@@ -178,30 +178,6 @@ class CanisterBackendService {
   }
 
   /**
-   * Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
-   * The backend (gate_service) performs the actual token exchange via HTTP outcall.
-   * @param code The authorization code from the X OAuth callback URL.
-   * @returns A Result containing XTokenExchangeResult or an Error.
-   */
-  async exchangeXToken(
-    code: string,
-  ): Promise<Result<cashierBackend.XTokenExchangeResult, Error>> {
-    const actor = this.#getActor({ anonymous: false });
-    if (!actor) {
-      return Err(new Error("User not logged in"));
-    }
-
-    const response = await actor.user_exchange_x_token(code);
-
-    return responseToResult<
-      cashierBackend.XTokenExchangeResult,
-      cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
-  }
-
-  /**
    * Process an action using the V3 API.
    * @param input V3 process action payload
    * @returns A Result containing ProcessActionResultV3 or an Error.

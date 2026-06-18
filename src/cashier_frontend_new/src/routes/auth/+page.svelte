@@ -25,8 +25,7 @@
       return;
     }
 
-    // Send the code to the parent window — the parent (authenticated) will
-    // call exchangeXToken on the ICP backend.
+    // Send the code to the parent window so the GateSDK can forward it to gate_frontend.
     if (window.opener) {
       window.opener.postMessage({ type: "x_auth_code", code }, "*");
     }

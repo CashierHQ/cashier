@@ -21,7 +21,7 @@ use cashier_backend_types::{
     service::link::PaginateInput,
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
-use gate_service_types::{GateKey, OpenGateSuccessResult, XTokenExchangeResult};
+use gate_service_types::{GateKey, OpenGateSuccessResult};
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
@@ -297,21 +297,6 @@ async fn user_open_link_gate(
     }
 
     result
-}
-
-/// Exchanges an X OAuth 2.0 authorization code for the caller's X profile.
-/// Proxies the call to gate_service which performs the actual token exchange via HTTP outcall.
-/// # Arguments
-/// * `code` - The authorization code received from the X OAuth callback
-/// # Returns
-/// * `Ok(XTokenExchangeResult)` - The authenticated user's X profile and access token
-/// * `Err(CanisterError)` - If the token exchange fails
-#[update(guard = "is_not_anonymous")]
-async fn user_exchange_x_token(code: String) -> Result<XTokenExchangeResult, CanisterError> {
-    info!("[user_exchange_x_token]");
-
-    let gate_service = get_state().gate_service;
-    gate_service.exchange_x_token(code).await
 }
 
 /// Returns link details together with gate metadata and the caller's gate status.
