@@ -74,7 +74,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.PaginateResult_1,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_14).mapErr(
+    >(response as cashierBackend.Result_13).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -145,7 +145,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.GetLinkDetailsResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_12).mapErr(
+    >(response as cashierBackend.Result_11).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
@@ -172,7 +172,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.OpenGateSuccessResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_15).mapErr(
+    >(response as cashierBackend.Result_14).mapErr(
       (err) => new Error(JSON.stringify(err)),
     );
   }
