@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TransactionLocksDrawer from "$modules/creationLink/components/drawers/TransactionLocksDrawer.svelte";
 import { GateType } from "$modules/gating/types/gate";
@@ -12,6 +13,18 @@ vi.mock("$lib/i18n", () => ({
 
 describe("TransactionLocksDrawer", () => {
   let originalWarn: typeof console.warn;
+
+  function buildGateForUser(key: GateForUser["gate"]["key"]): GateForUser {
+    return {
+      gate: {
+        id: "gate-1",
+        key,
+        creator: {} as GateForUser["gate"]["creator"],
+        subject_id: "link-1",
+      },
+      gate_user_status: [],
+    };
+  }
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -88,5 +101,50 @@ describe("TransactionLocksDrawer", () => {
         name: "links.linkForm.lock.hidePassword",
       }),
     ).toBeInTheDocument();
+  });
+
+  it("it_should_do_render_redacted_backend_password_gate_without_reveal_button", () => {
+    // Arrange
+    render(TransactionLocksDrawer, {
+      props: {
+        open: true,
+        locks: [buildGateForUser({ PasswordRedacted: null })],
+      },
+    });
+
+    // Assert
+    expect(
+      screen.getByText("links.linkForm.lock.password"),
+    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue("************")).toHaveAttribute(
+      "readonly",
+    );
+    expect(
+      screen.queryByRole("button", {
+        name: "links.linkForm.lock.showPassword",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("it_should_do_reveal_backend_password_gate_when_password_value_exists", async () => {
+    // Arrange
+    render(TransactionLocksDrawer, {
+      props: {
+        open: true,
+        locks: [buildGateForUser({ Password: "backend-secret" })],
+      },
+    });
+
+    // Act
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: "links.linkForm.lock.showPassword",
+      }),
+    );
+
+    // Assert
+    expect(screen.getByDisplayValue("backend-secret")).toHaveAttribute(
+      "readonly",
+    );
   });
 });

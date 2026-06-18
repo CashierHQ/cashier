@@ -21,6 +21,7 @@
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
   import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import TransactionLocksDrawer from "$modules/creationLink/components/drawers/TransactionLocksDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
@@ -90,6 +91,7 @@
   let shouldShowCongratulations = $state(false);
   let detailsLandingTracked = $state(false);
   let showFeeInfoDrawer = $state(false);
+  let showTransactionLocksDrawer = $state(false);
 
   function assetAndFeeListToForecastShape(
     list: AssetAndFeeList,
@@ -220,6 +222,11 @@
   function handleFeeBreakdownClick() {
     if (createLinkFeesBreakdown.length === 0) return;
     showFeeInfoDrawer = true;
+  }
+
+  function handleTransactionLockClick() {
+    if (!linkHasGates) return;
+    showTransactionLocksDrawer = true;
   }
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
@@ -574,6 +581,7 @@
         gatingStore={gatingStore ?? undefined}
         hasLocks={linkHasGates}
         isEnded={isTransactionLockEnded}
+        onLockClick={linkHasGates ? handleTransactionLockClick : undefined}
       />
 
       {#if linkStore.link.state === LinkState.CREATE_LINK && isSendLink && youSendPreviewLinkVm}
@@ -691,6 +699,10 @@
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
     feesBreakdown={createLinkFeesBreakdown}
+  />
+  <TransactionLocksDrawer
+    bind:open={showTransactionLocksDrawer}
+    locks={linkStore.gates ?? []}
   />
 {/if}
 

@@ -42,7 +42,29 @@
     onClose?.();
   }
 
+  function getGateKey(lock: PreviewGateDraft) {
+    if (!("gate" in lock) || typeof lock.gate !== "object" || !lock.gate) {
+      return undefined;
+    }
+
+    return "key" in lock.gate &&
+      typeof lock.gate.key === "object" &&
+      lock.gate.key
+      ? lock.gate.key
+      : undefined;
+  }
+
   function getLockType(lock: PreviewGateDraft) {
+    const gateKey = getGateKey(lock);
+    if (gateKey) {
+      if ("Password" in gateKey || "PasswordRedacted" in gateKey) {
+        return GateType.PASSWORD;
+      }
+      if ("XFollowing" in gateKey) {
+        return "xHandle";
+      }
+    }
+
     return "type" in lock && typeof lock.type === "string" ? lock.type : "";
   }
 
@@ -68,13 +90,55 @@
     }
   }
 
+  function getSensitivePassword(lock: PreviewGateDraft) {
+    const gateKey = getGateKey(lock);
+    if (
+      gateKey &&
+      "Password" in gateKey &&
+      typeof gateKey.Password === "string"
+    ) {
+      return gateKey.Password;
+    }
+    if ("password" in lock && typeof lock.password === "string") {
+      return lock.password;
+    }
+    return undefined;
+  }
+
+  function canRevealSensitiveValue(lock: PreviewGateDraft) {
+    return (
+      getLockType(lock) === GateType.PASSWORD &&
+      getSensitivePassword(lock) !== undefined
+    );
+  }
+
   function getLockValue(lock: PreviewGateDraft, revealSensitiveValue = false) {
     const type = getLockType(lock);
 
     if (type === GateType.PASSWORD) {
-      const password = "password" in lock ? String(lock.password ?? "") : "";
+      const password = getSensitivePassword(lock);
+      if (!password) return "*".repeat(12);
       if (revealSensitiveValue) return password;
       return "*".repeat(Math.max(password.length, 12));
+    }
+
+    const gateKey = getGateKey(lock);
+    if (gateKey) {
+      if ("XFollowing" in gateKey && typeof gateKey.XFollowing === "string") {
+        return gateKey.XFollowing;
+      }
+      if (
+        "DiscordServer" in gateKey &&
+        typeof gateKey.DiscordServer === "string"
+      ) {
+        return gateKey.DiscordServer;
+      }
+      if (
+        "TelegramGroup" in gateKey &&
+        typeof gateKey.TelegramGroup === "string"
+      ) {
+        return gateKey.TelegramGroup;
+      }
     }
 
     const lockRecord = lock as Record<string, unknown>;
@@ -117,6 +181,7 @@
       {#each locks as lock, index (getLockType(lock) + index)}
         {@const lockType = getLockType(lock)}
         {@const showPassword = visiblePasswordIndexes.has(index)}
+        {@const canRevealPassword = canRevealSensitiveValue(lock)}
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -143,7 +208,7 @@
               class="h-11 w-full rounded-lg border border-border bg-[#F7F7F7] px-4 pr-11 text-sm text-foreground outline-none"
             />
 
-            {#if lockType === GateType.PASSWORD}
+            {#if lockType === GateType.PASSWORD && canRevealPassword}
               <button
                 type="button"
                 class="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-foreground"
