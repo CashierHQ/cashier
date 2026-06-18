@@ -40,25 +40,6 @@ export function syncAssetFormState(
     isUsd,
   } = params;
 
-  // If address changed, clear amounts
-  if (addressChanged) {
-    return {
-      localTokenAmount: "",
-      localUsdAmount: "",
-      shouldUpdate: true,
-    };
-  }
-
-  // If no amount or zero amount and address changed, clear
-  if (assetUseAmount === 0n && addressChanged) {
-    return {
-      localTokenAmount: "",
-      localUsdAmount: "",
-      shouldUpdate: true,
-    };
-  }
-
-  // If we have a valid amount
   if (assetUseAmount !== undefined && assetUseAmount !== 0n) {
     const tokenAmountNumber = parseBalanceUnits(assetUseAmount, decimals);
 
@@ -87,6 +68,15 @@ export function syncAssetFormState(
         };
       }
     }
+  }
+
+  // No valid amount (token just switched sets useAmount to 0n) → clear on address change
+  if (addressChanged) {
+    return {
+      localTokenAmount: "",
+      localUsdAmount: "",
+      shouldUpdate: true,
+    };
   }
 
   // No update needed
