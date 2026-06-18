@@ -10,7 +10,6 @@
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { paths } from "$modules/routing/paths";
-  import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
@@ -52,7 +51,13 @@
   let useWalletLockedTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
-  let isCartOpen = $state(true);
+  let isCartOpen = $derived.by(() => {
+    return !!(
+      userStore?.action !== null &&
+      userStore?.link !== null &&
+      userStore?.action
+    );
+  });
 
   const onCloseDrawer = () => {
     isCartOpen = false;
@@ -327,7 +332,7 @@
           {isCreatingAction}
           hasAction={!!userStore.action}
         />
-        {#if userStore?.link && userStore?.action && userStore.action.state !== ActionState.SUCCESS}
+        {#if userStore?.link && userStore?.action && isCartOpen}
           <LinkTxCart
             isOpen={isCartOpen}
             source={{
