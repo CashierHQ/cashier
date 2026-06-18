@@ -7,7 +7,10 @@
     DrawerHeader,
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
-  import type { GateDraft } from "$modules/gating/types/gate";
+  import type {
+    PreviewGateDraft,
+    TransactionLocksDrawerProps,
+  } from "$modules/creationLink/types";
   import { GateType } from "$modules/gating/types/gate";
   import { SvelteSet } from "svelte/reactivity";
   import {
@@ -18,23 +21,13 @@
     RectangleEllipsis,
   } from "lucide-svelte";
 
-  type PreviewGateDraft = GateDraft | Record<string, unknown>;
-
-  type Props = {
-    open?: boolean;
-    locks?: PreviewGateDraft[];
-    onClose?: () => void;
-    onBack?: () => void;
-    onOpenChange?: (open: boolean) => void;
-  };
-
   let {
     open = $bindable(false),
     locks = [],
     onClose,
     onBack,
     onOpenChange,
-  }: Props = $props();
+  }: TransactionLocksDrawerProps = $props();
 
   let visiblePasswordIndexes = new SvelteSet<number>();
 

@@ -5,16 +5,11 @@
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenBasketDisplayProps } from "$modules/useLink/types";
   import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
   import { SvelteSet } from "svelte/reactivity";
 
-  const {
-    assets,
-    message,
-  }: {
-    assets: AssetInfo[];
-    message?: string;
-  } = $props();
+  const { assets, message }: TokenBasketDisplayProps = $props();
 
   // Track failed image loads
   let failedImageLoads = new SvelteSet<string>();

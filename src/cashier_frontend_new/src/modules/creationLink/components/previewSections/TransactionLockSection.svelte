@@ -1,16 +1,14 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import type { TransactionLockSectionProps } from "$modules/creationLink/types";
   import { ChevronRight, Lock, LockOpen } from "lucide-svelte";
 
-  type Props = {
-    gatingStore?: GatingStore;
-    hasLocks?: boolean;
-    isEnded?: boolean;
-    onLockClick?: () => void;
-  };
-
-  let { gatingStore, hasLocks, isEnded = false, onLockClick }: Props = $props();
+  let {
+    gatingStore,
+    hasLocks,
+    isEnded = false,
+    onLockClick,
+  }: TransactionLockSectionProps = $props();
   const showLocked = $derived(gatingStore?.hasLocks ?? hasLocks ?? false);
 </script>
 
