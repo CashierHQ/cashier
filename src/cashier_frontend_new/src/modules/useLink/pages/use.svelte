@@ -25,6 +25,7 @@
     shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
   import { onDestroy, onMount } from "svelte";
+    import { ActionState } from "$shared/types";
 
   const {
     onIsLinkChange,
@@ -55,7 +56,8 @@
     return !!(
       userStore?.action !== null &&
       userStore?.link !== null &&
-      userStore?.action
+      userStore?.action && 
+      userStore.action.state != ActionState.Success
     );
   });
 
@@ -86,8 +88,6 @@
           locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
         );
       }
-      // (Re)open the cart for this claim attempt.
-      isCartOpen = true;
 
       if (!userStore.action) {
         isCreatingAction = true;
@@ -101,6 +101,8 @@
 
         await userStore.createAction(actionType);
       }
+
+      isCartOpen = true;
     } catch (err) {
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
