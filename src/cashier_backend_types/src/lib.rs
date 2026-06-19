@@ -6,6 +6,7 @@ pub mod error;
 pub mod init;
 pub mod link_v2;
 pub mod link_v3;
+pub mod rate_limit;
 pub mod repository;
 pub mod service;
 pub mod utils;

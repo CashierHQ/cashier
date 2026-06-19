@@ -64,13 +64,14 @@ use crate::repositories::link_gate::{LinkGateRepository, LinkGateRepositoryStora
 use crate::repositories::link_gate_user_status::{
     LinkGateUserStatusRepository, LinkGateUserStatusRepositoryStorage,
 };
+use crate::repositories::link_reservation::{
+    LinkReservationRepository, LinkReservationRepositoryStorage,
+};
 use crate::repositories::rate_limit_config::{
     RateLimitConfigRepository, RateLimitConfigRepositoryStorage,
 };
 use crate::repositories::rate_limit_state::{
     RateLimitStateRepository, RateLimitStateRepositoryStorage,
-use crate::repositories::link_reservation::{
-    LinkReservationRepository, LinkReservationRepositoryStorage,
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::settings::{
@@ -98,9 +99,9 @@ pub mod link;
 pub mod link_action;
 pub mod link_gate;
 pub mod link_gate_user_status;
+pub mod link_reservation;
 pub mod rate_limit_config;
 pub mod rate_limit_state;
-pub mod link_reservation;
 pub mod request_lock;
 pub mod settings;
 pub mod token_fee;

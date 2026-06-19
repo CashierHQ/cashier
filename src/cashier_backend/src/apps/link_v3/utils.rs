@@ -1,16 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
-use cashier_backend_types::{
-    error::CanisterError,
-    repository::{
-        asset::v3::AssetV3,
-        common::AddressTypeV3,
-        intent::v3::{IntentTransactionDataV3, IntentV3},
-        link::v3::LinkV3,
-    },
-};
+use candid::Principal;
+use cashier_backend_types::repository::{asset::v3::AssetV3, link::v3::LinkV3};
 
 /// Helper function to extract asset principals from a LinkV3
 /// # Arguments
