@@ -141,14 +141,6 @@
       }
     }
 
-    const lockRecord = lock as Record<string, unknown>;
-    const valueKeys = ["value", "handle", "xHandle", "username"];
-    for (const key of valueKeys) {
-      if (typeof lockRecord[key] === "string") {
-        return String(lockRecord[key]);
-      }
-    }
-
     return locale.t("links.linkForm.lock.configuredLock");
   }
 </script>

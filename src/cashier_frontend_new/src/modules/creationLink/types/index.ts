@@ -2,10 +2,7 @@ import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend
 import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
 import type { GateDraft } from "$modules/gating/types/gate";
 
-export type PreviewGateDraft =
-  | GateDraft
-  | GateForUser
-  | Record<string, unknown>;
+export type PreviewGateDraft = GateDraft | GateForUser;
 
 export type TransactionLocksDrawerProps = {
   open?: boolean;
