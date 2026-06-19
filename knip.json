@@ -28,10 +28,7 @@
     "src/gate_frontend": {
       "project": ["src/**"],
       "ignore": ["src/lib/generated/**"],
-      "ignoreDependencies": [
-        "@eslint/compat",
-        "@vitest/coverage-v8"
-      ],
+      "ignoreDependencies": ["@eslint/compat", "@vitest/coverage-v8"],
       "ignoreUnresolved": ["\\$env/.+", "\\$app/.+"]
     },
     "src/gate_sdk": {

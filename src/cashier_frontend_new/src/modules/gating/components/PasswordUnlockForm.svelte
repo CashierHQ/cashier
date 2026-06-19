@@ -1,27 +1,27 @@
 <script lang="ts">
   import lockedLock from "$lib/assets/gating/locked-lock.svg";
   import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
+  import xIcon from "$lib/assets/x-icon.svg";
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    Drawer,
-    DrawerClose,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
+      Drawer,
+      DrawerClose,
+      DrawerContent,
+      DrawerHeader,
+      DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
-  import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import XUnlockForm from "$modules/gating/components/XUnlockForm.svelte";
-  import xIcon from "$lib/assets/x-icon.svg";
+  import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import {
-    Eye,
-    EyeOff,
-    Info,
-    Lock,
-    LockOpen,
-    RectangleEllipsis,
-    X,
+      Eye,
+      EyeOff,
+      Info,
+      Lock,
+      LockOpen,
+      RectangleEllipsis,
+      X,
   } from "lucide-svelte";
   import { onMount } from "svelte";
 
@@ -213,7 +213,10 @@
         {#if isGateOpen(gate)}
           <LockOpen class="ml-auto h-5 w-5 text-green" aria-hidden="true" />
         {:else}
-          <Lock class="ml-auto h-5 w-5 text-red-500" aria-hidden="true" />
+          <Lock
+            class="ml-auto h-5 w-5 text-muted-foreground"
+            aria-hidden="true"
+          />
         {/if}
       </button>
     {/each}

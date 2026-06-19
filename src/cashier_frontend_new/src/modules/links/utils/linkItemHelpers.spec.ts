@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
-import {
-  getStatusLabel,
-  getStatusClasses,
-  getLinkDefaultAvatar,
-  getLinkTypeText,
-  isSendLinkType,
-  isPaymentLinkType,
-} from "$modules/links/utils/linkItemHelpers";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
+import {
+  getLinkDefaultAvatar,
+  getLinkTypeText,
+  getStatusClasses,
+  getStatusLabel,
+  isPaymentLinkType,
+  isSendLinkType,
+} from "$modules/links/utils/linkItemHelpers";
+import { describe, expect, it } from "vitest";
 
 describe("linkItemHelpers", () => {
   const mockT = (key: string): string => {
@@ -17,7 +17,7 @@ describe("linkItemHelpers", () => {
       "links.status.transferPending": "Transfer Pending",
       "links.status.active": "Active",
       "links.status.inactive": "Inactive",
-      "links.status.ended": "Ended",
+      "links.status.ended": "Inactive (Empty)",
     };
     return translations[key] || key;
   };
@@ -43,8 +43,10 @@ describe("linkItemHelpers", () => {
       expect(getStatusLabel(LinkState.INACTIVE, mockT)).toBe("Inactive");
     });
 
-    it("should return ended label for inactive ended state", () => {
-      expect(getStatusLabel(LinkState.INACTIVE_ENDED, mockT)).toBe("Ended");
+    it("should return inactive empty label for inactive ended state", () => {
+      expect(getStatusLabel(LinkState.INACTIVE_ENDED, mockT)).toBe(
+        "Inactive (Empty)",
+      );
     });
   });
 
@@ -76,7 +78,7 @@ describe("linkItemHelpers", () => {
 
     it("should return ended classes for inactive ended state", () => {
       expect(getStatusClasses(LinkState.INACTIVE_ENDED)).toBe(
-        "bg-red-50 text-red-700",
+        "bg-gray-200 text-gray-700",
       );
     });
   });

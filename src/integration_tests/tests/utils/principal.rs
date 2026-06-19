@@ -8,6 +8,7 @@ pub enum TestUser {
     User1,
     User2,
     User3,
+    User4,
     TokenDeployer,
     CashierBackendAdmin,
     TokenStorageAdmin,
@@ -30,6 +31,8 @@ impl TestUser {
                 "gskgi-bpzev-2tv7d-ikfmc-akbym-vqphk-k62po-gr5gn-bedmt-ahsco-lqe",
             )
             .unwrap(),
+            // Opaque principal (distinct from the admin slices); valid as a claimer/account owner.
+            TestUser::User4 => Principal::from_slice(&[4, 29]),
             TestUser::TokenDeployer => Principal::from_text(
                 "nqla3-ljk3n-sknde-kphey-dlq2i-j3hnx-a3p2b-upf4f-yhdns-f4wjr-5qe",
             )

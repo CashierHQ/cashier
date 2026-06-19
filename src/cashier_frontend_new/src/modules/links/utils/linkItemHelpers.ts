@@ -41,9 +41,8 @@ export function getStatusClasses(state: LinkStateValue): string {
     case LinkState.ACTIVE:
       return "bg-green text-white";
     case LinkState.INACTIVE:
-      return "bg-gray-200 text-gray-700";
     case LinkState.INACTIVE_ENDED:
-      return "bg-red-50 text-red-700";
+      return "bg-gray-200 text-gray-700";
     default:
       assertUnreachable(state);
   }

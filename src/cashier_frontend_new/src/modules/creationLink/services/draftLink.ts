@@ -1,5 +1,8 @@
 import { authState } from "$modules/auth/state/auth.svelte";
-import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
+import {
+  draftLinkRepository,
+  type DraftLink,
+} from "$modules/creationLink/repositories/draftLinkRepository";
 import {
   LinkState as SharedLinkState,
   LinkType as SharedLinkType,
@@ -70,7 +73,7 @@ export class DraftLinkService {
    * @param id
    * @returns
    */
-  getDraftLink(id: string): SharedLink | undefined {
+  getDraftLink(id: string): DraftLink | undefined {
     if (!authState.account) return undefined;
     const links = draftLinkRepository.get(authState.account.owner);
     return links.find((x) => String(x.id) === id);

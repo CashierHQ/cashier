@@ -1,11 +1,11 @@
 <script lang="ts">
   import {
-    AnalyticsEvent,
-    trackEvent,
+      AnalyticsEvent,
+      trackEvent,
   } from "$modules/analytics/amplitudeStore";
-  import { getGuardContext } from "$modules/guard/context.svelte";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import Ended from "$modules/useLink/components/Ended.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
@@ -19,7 +19,7 @@
     }) => void;
   } = $props();
 
-  const context = getGuardContext();
+  const context = getRouteContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {

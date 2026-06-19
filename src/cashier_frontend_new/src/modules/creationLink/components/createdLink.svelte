@@ -4,19 +4,20 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    AnalyticsEvent,
-    trackEvent,
+      AnalyticsEvent,
+      trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import type {
-    GenericDetailStoreVM,
-    ProcessActionResult,
+      GenericDetailStoreVM,
+      ProcessActionResult,
   } from "$modules/detailLink/types/genericDetailStoreVM";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
+  import { paths } from "$modules/routing/paths";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   import { onMount } from "svelte";
 
@@ -57,7 +58,7 @@
         link_type: link.createLinkData.linkType,
         BE_link_id: link.backendId ?? "",
       });
-      goto(resolve(`/link/detail/${link.backendId}?created=true`));
+      goto(resolve(paths.createdDetail(link.backendId)));
     }
   });
 

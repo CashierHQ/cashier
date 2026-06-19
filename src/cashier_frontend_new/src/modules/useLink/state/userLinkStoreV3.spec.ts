@@ -1,7 +1,7 @@
 import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   LinkDetailStoreV3: vi.fn(),
@@ -65,6 +65,32 @@ describe("UserLinkStoreV3", () => {
       expect(store.linkDetail).toBeDefined();
       expect(mocks.LinkDetailStoreV3).toHaveBeenCalledWith({ id: "link-123" });
       expect(store.step).toBe(UserLinkStep.LANDING);
+    });
+  });
+
+  describe("restore persisted state", () => {
+    it("it_should_succeed_restore_landing_step_from_persisted_zero_value", () => {
+      mocks.getOne.mockReturnValue({
+        linkId: "link-1",
+        step: UserLinkStep.LANDING,
+        updatedAt: 1,
+      });
+
+      const store = new UserLinkStoreV3({ id: "link-1" });
+
+      expect(store.step).toBe(UserLinkStep.LANDING);
+    });
+
+    it("it_should_succeed_restore_address_unlocked_step_from_persisted_state", () => {
+      mocks.getOne.mockReturnValue({
+        linkId: "link-1",
+        step: UserLinkStep.ADDRESS_UNLOCKED,
+        updatedAt: 1,
+      });
+
+      const store = new UserLinkStoreV3({ id: "link-1" });
+
+      expect(store.step).toBe(UserLinkStep.ADDRESS_UNLOCKED);
     });
   });
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
+use crate::{apps::request_lock::RequestLockGuard, repositories::ThreadlocalRepositories};
 use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput},
@@ -27,7 +28,6 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
     info!("[user_create_link_v2]");
     debug!("[user_create_link_v2] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let transaction_manager = get_state().transaction_manager_v2;
     let token_fee_service = get_state().token_fee_service;
@@ -41,8 +41,9 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
         user_principal: caller,
     };
 
-    let _ = request_lock_service.create(&key, created_at)?;
-    let res = link_v2_service
+    // Released by Drop on every exit path, including a trap in the awaited callback.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, created_at)?;
+    link_v2_service
         .create_link(
             msg_caller(),
             canister_id,
@@ -53,12 +54,7 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
             token_standard_service,
             token_balance_service,
         )
-        .await;
-    let _ = request_lock_service.drop(&RequestLockKey::CreateLink {
-        user_principal: caller,
-    });
-
-    res
+        .await
 }
 
 /// Creates a new action V2.
@@ -72,7 +68,6 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
     info!("[create_action_v2]");
     debug!("[create_action_v2] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let transaction_manager = get_state().transaction_manager_v2;
     let token_fee_service = get_state().token_fee_service;
@@ -87,8 +82,9 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
         action_type: input.action_type.clone().to_string(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
-    let res = link_v2_service
+    // Released by Drop on every exit path, including a trap in the awaited callback.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, get_state().env.time())?;
+    link_v2_service
         .create_action(
             msg_caller(),
             canister_id,
@@ -99,10 +95,7 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
             token_standard_service,
             token_balance_service,
         )
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Processes a created action V2.
@@ -118,7 +111,6 @@ async fn user_process_action_v2(
     info!("[user_process_action_v2]");
     debug!("[user_process_action_v2] input: {input:?}");
 
-    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let transaction_manager = get_state().transaction_manager_v2;
 
@@ -129,18 +121,16 @@ async fn user_process_action_v2(
         action_id: input.action_id.clone(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time())?;
-    let res = link_v2_service
+    // Released by Drop on every exit path, including a trap in the awaited callback.
+    let _lock_guard = RequestLockGuard::new(&ThreadlocalRepositories, key, get_state().env.time())?;
+    link_v2_service
         .process_action(
             msg_caller(),
             canister_id,
             &input.action_id,
             transaction_manager,
         )
-        .await;
-    let _ = request_lock_service.drop(&key);
-
-    res
+        .await
 }
 
 /// Retrieves a paginated list of links created by the authenticated caller.

@@ -28,6 +28,7 @@ export const idlFactory = ({ IDL }) => {
       'InvalidInput' : IDL.Text,
       'HandleLogicError' : IDL.Text,
       'ParsePrincipalError' : IDL.Text,
+      'LinkNoUseAvailable' : IDL.Record({ 'link_id' : IDL.Text }),
       'CandidDecodeFailed' : IDL.Text,
       'UnknownError' : IDL.Text,
       'InsufficientBalance' : IDL.Record({

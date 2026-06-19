@@ -1,6 +1,6 @@
-import type { Principal } from '@icp-sdk/core/principal';
 import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
+import type { Principal } from '@icp-sdk/core/principal';
 
 export interface Action {
   'id' : string,
@@ -75,6 +75,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'InvalidInput' : string } |
   { 'HandleLogicError' : string } |
   { 'ParsePrincipalError' : string } |
+  { 'LinkNoUseAvailable' : { 'link_id' : string } } |
   { 'CandidDecodeFailed' : string } |
   { 'UnknownError' : string } |
   { 'InsufficientBalance' : { 'available' : bigint, 'required' : bigint } } |

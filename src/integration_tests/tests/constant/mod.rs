@@ -17,6 +17,12 @@ pub const CKETH_ICRC_TOKEN: &str = "ckETH";
 pub const TESTICP_ICRC_TOKEN: &str = "tICP";
 pub const DOGE_ICRC_TOKEN: &str = "DOGE";
 
+/// Extra generic ICRC2 ledgers deployed with dynamic principals, so token-basket tests can
+/// use baskets with many distinct assets (e.g. the 10-asset simultaneous-claim test).
+pub const EXTRA_BASKET_TOKENS: [&str; 8] = [
+    "BSK1", "BSK2", "BSK3", "BSK4", "BSK5", "BSK6", "BSK7", "BSK8",
+];
+
 pub const FEE_TREASURY_PRINCIPAL: &str =
     "lx4gp-2tgox-deted-i72n3-az3f3-wjavu-kiems-ctavz-dgdxi-fhyqa-lae";
 pub const ICRC7_NFT_PRINCIPAL: &str = "cvvmr-dyaaa-aaaai-q32oq-cai";

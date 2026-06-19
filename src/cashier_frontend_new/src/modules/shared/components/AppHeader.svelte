@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { locale } from "$lib/i18n";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
-  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
-  import { ChevronLeft } from "lucide-svelte";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { paths } from "$modules/routing/paths";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import MenuButton from "$modules/shared/components/MenuButton.svelte";
   import WalletButton from "$modules/shared/components/WalletButton.svelte";
-  import { X } from "lucide-svelte";
-  import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { getGuardContext } from "$modules/guard/context.svelte";
-  import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
+  import { ChevronLeft, X } from "lucide-svelte";
 
   type Props = {
     isLinkFormPage?: boolean;
@@ -31,19 +31,19 @@
   // Get current path to determine if it's create or edit
   const currentPath = $derived.by(() => page.url.pathname);
 
-  // Try to get guard context (may not exist if not wrapped in RouteGuard)
-  const guardContext = $derived.by(() => {
+  // Try to get route context (it only exists on link routes).
+  const routeContext = $derived.by(() => {
     try {
-      return getGuardContext();
+      return getRouteContext();
     } catch {
-      // Context doesn't exist, which is fine for pages without RouteGuard
+      // Context does not exist on routes that do not initialize link data.
       return null;
     }
   });
 
   // Get userLinkStoreV3 from context if available
   const userLinkStore = $derived.by(
-    () => guardContext?.userLinkStoreV3 ?? null,
+    () => routeContext?.userLinkStoreV3 ?? null,
   );
 
   // Get current user link step
@@ -89,14 +89,9 @@
     await appHeaderStore.triggerBack();
   }
 
-  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
+  // Handle logo click - always returns to the public home page.
   async function handleLogoClick() {
-    if (appHeaderStore.hasLogoClickHandler()) {
-      await appHeaderStore.triggerLogoClick();
-      return;
-    }
-    // No handler set = navigate to /links
-    goto(resolve("/links"));
+    await goto(resolve(paths.home()));
   }
 </script>
 
@@ -141,7 +136,7 @@
       <MenuButton />
     </div>
   {:else if isWalletPage}
-    <button onclick={() => goto(resolve("/links"))}>
+    <button onclick={() => goto(resolve(paths.links()))}>
       <X class="h-6 w-6" />
     </button>
   {/if}

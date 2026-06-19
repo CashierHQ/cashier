@@ -4,26 +4,27 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    AnalyticsEvent,
-    trackEvent,
+      AnalyticsEvent,
+      trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
-  import { getGuardContext } from "$modules/guard/context.svelte";
+  import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { paths } from "$modules/routing/paths";
+  import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
+  import AssetList from "$modules/useLink/components/AssetList.svelte";
   import Completed from "$modules/useLink/components/Completed.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
-  import AssetList from "$modules/useLink/components/AssetList.svelte";
-  import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
-  import { Lock } from "lucide-svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
   import {
-    shouldRedirectErrorTo404,
-    shouldRedirectTo404,
+      shouldRedirectErrorTo404,
+      shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
+  import { Lock } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
 
   const {
@@ -34,8 +35,8 @@
     onShowFooterChange?: (showFooter: boolean) => void;
   } = $props();
 
-  // Get userLinkStore from context (created by RouteGuard)
-  const context = getGuardContext();
+  // Get userLinkStore from route context.
+  const context = getRouteContext();
   const userStore = $derived.by(() => {
     const storeV3 = context.userLinkStoreV3;
     if (storeV3) {
@@ -107,7 +108,7 @@
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
         // Redirect to error page instead of showing toast
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         return;
       }
 
@@ -134,7 +135,7 @@
 
       // Check if result requires redirect to 404
       if (shouldRedirectTo404(result, userStore.link ?? undefined)) {
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         return result;
       }
 
@@ -149,7 +150,7 @@
     } catch (err) {
       // Check if error requires redirect to 404
       if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
-        goto(resolve("/404"));
+        goto(resolve(paths.notFound()));
         // Return a result with the current action if it exists
         if (!userStore.action) {
           throw new Error(
@@ -268,28 +269,12 @@
     await appHeaderStore.triggerBack();
   };
 
-  // Register logo click handler for AppHeader on the use flow
-  const handleLogoClick = async () => {
-    if (!userStore) {
-      return;
-    }
-    try {
-      await userStore.goToLanding();
-    } catch (error) {
-      // goToLanding throws if action exists or invalid state
-      // Stay on current page - do nothing
-      console.warn("goToLanding blocked:", error);
-    }
-  };
-
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
-    appHeaderStore.setLogoClickHandler(handleLogoClick);
   });
 
   onDestroy(() => {
     appHeaderStore.clearBackHandler();
-    appHeaderStore.clearLogoClickHandler();
   });
 </script>
 

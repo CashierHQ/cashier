@@ -2,8 +2,8 @@ import { assertUnreachable } from "$lib/rsMatch";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
-import { IntentState as SharedIntentState } from "$shared";
 import type { FlowDirection } from "$modules/transactionCart/types/transactionSource";
+import { IntentState as SharedIntentState } from "$shared";
 
 /**
  * Transaction execution phase for progress indication in the TxCart UI.

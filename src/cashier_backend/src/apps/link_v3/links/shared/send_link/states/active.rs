@@ -8,10 +8,11 @@ use cashier_backend_types::{
     repository::{
         action::{v1::ActionType, v3::ActionV3},
         intent::v3::IntentV3,
-        link::v3::{LinkState, LinkV3},
+        link::v3::LinkV3,
         transaction::v1::Transaction,
     },
 };
+use log::error;
 use std::collections::HashMap;
 use transaction_manager::{
     transaction::traits::{ExecutionService, ValidationService},
@@ -19,10 +20,7 @@ use transaction_manager::{
 };
 
 use crate::apps::{
-    link_v3::{
-        links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State,
-        utils::update_link_available_amount_after_receive,
-    },
+    link_v3::{links::shared::send_link::actions::receive::ReceiveActionV3, traits::LinkV3State},
     token_balance::traits::TokenBalanceFetcher,
     token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
@@ -107,8 +105,6 @@ impl ActiveState {
         V: ValidationService + 'static,
         X: ExecutionService + 'static,
     {
-        let mut link = link.clone();
-
         let process_action_result = transaction_manager
             .process_action(
                 action,
@@ -119,16 +115,18 @@ impl ActiveState {
             )
             .await?;
 
-        if process_action_result.is_success {
-            link.use_count += 1;
-            update_link_available_amount_after_receive(&mut link, &process_action_result.intents)?;
-            if link.use_count >= link.max_use {
-                link.state = LinkState::Ended;
-            }
+        // Link state transition (use_count, available amounts, Ended) is
+        // committed by the service layer on a fresh repository read; the
+        // handler only processes the action and returns the pre-action link.
+        if !process_action_result.is_success {
+            error!(
+                "Failed to process RECEIVE action for link {}, action {:#?}, errors: {:?}",
+                link.id, process_action_result.action, process_action_result.errors
+            );
         }
 
         Ok(LinkProcessActionResult {
-            link,
+            link: link.clone(),
             process_action_result,
         })
     }
@@ -228,6 +226,7 @@ mod tests {
             MockTokenStandardService, create_mock_service as create_mock_token_standard_service,
         },
     };
+    use cashier_backend_types::repository::link::v3::LinkState;
     use cashier_backend_types::repository::{
         action::v1::ActionState,
         asset::v1::Asset,
@@ -541,8 +540,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_succeed_process_action_and_end_link_due_to_reaching_max_use_for_active_state()
-     {
+    async fn it_should_succeed_process_action_and_return_unmutated_link_at_max_use() {
         // Arrange
         let creator = random_principal_id();
         let canister_id = random_principal_id();
@@ -611,19 +609,21 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
+        // commits use_count/amount/Ended on a fresh repository read.
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.use_count, 1u64);
-        assert_eq!(processed.link.state, LinkState::Ended);
+        assert!(processed.process_action_result.is_success);
+        assert_eq!(processed.link.use_count, 0u64);
+        assert_eq!(processed.link.state, LinkState::Active);
         assert_eq!(
             processed.link.asset_info[0].available_amount,
-            Some(candid::Nat::from(0u64))
+            Some(candid::Nat::from(1000u64))
         );
     }
 
     #[tokio::test]
-    async fn it_should_succeed_process_action_and_increase_use_count_of_link_for_active_state() {
+    async fn it_should_succeed_process_action_and_return_unmutated_link_below_max_use() {
         // Arrange
         let creator = random_principal_id();
         let canister_id = random_principal_id();
@@ -692,14 +692,17 @@ mod tests {
             )
             .await;
 
-        // Assert
+        // Assert — handler no longer mutates the link; the service layer
+        // commits use_count/amount on a fresh repository read.
         assert!(result.is_ok());
         let processed = result.expect("process action should succeed");
-        assert_eq!(processed.link.use_count, 1u64);
+        assert!(processed.process_action_result.is_success);
+        assert_eq!(processed.link.use_count, 0u64);
+        // the link state should not be mutated by the handler
         assert_eq!(processed.link.state, LinkState::Active);
         assert_eq!(
             processed.link.asset_info[0].available_amount,
-            Some(candid::Nat::from(600u64))
+            Some(candid::Nat::from(1000u64))
         );
     }
 }

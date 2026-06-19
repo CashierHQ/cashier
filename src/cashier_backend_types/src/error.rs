@@ -22,6 +22,9 @@ pub enum CanisterError {
     #[error("Resource already exists: {0}")]
     AlreadyExists(String),
 
+    #[error("No free use available for link {link_id} (max_use reached or other claims in flight)")]
+    LinkNoUseAvailable { link_id: String },
+
     // Input validation errors
     #[error("Invalid input: {0}")]
     InvalidInput(String),

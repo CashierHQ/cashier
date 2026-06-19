@@ -1,22 +1,23 @@
 <script lang="ts">
-  import {
-    X,
-    Link,
-    Compass,
-    AlignLeft,
-    CircleHelp,
-    Wallet,
-    Copy,
-  } from "lucide-svelte";
-  import { getAppLinks } from "$modules/shared/constants/links";
-  import { toast } from "svelte-sonner";
-  import DisconnectModal from "$modules/shared/components/DisconnectModal.svelte";
+  import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import { paths } from "$modules/routing/paths";
+  import DisconnectModal from "$modules/shared/components/DisconnectModal.svelte";
+  import SidebarMenuItem from "$modules/shared/components/SidebarMenuItem.svelte";
+  import { getAppLinks } from "$modules/shared/constants/links";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
-  import { resolve } from "$app/paths";
-  import SidebarMenuItem from "$modules/shared/components/SidebarMenuItem.svelte";
-  import { locale } from "$lib/i18n";
+  import {
+      AlignLeft,
+      CircleHelp,
+      Compass,
+      Copy,
+      Link,
+      Wallet,
+      X,
+  } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
 
   type Props = {
     open: boolean;
@@ -94,7 +95,7 @@
     <!-- Header -->
     <div class="flex flex-col space-y-2 text-center sm:text-left">
       <div class="mb-2">
-        <CashierLogo href={resolve("/links")} />
+        <CashierLogo href={resolve(paths.links())} />
       </div>
 
       <!-- Menu items -->

@@ -1,10 +1,12 @@
-import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
-import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
-import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
-import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
-import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
+import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
+import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
+import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
+import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
+import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { GateType } from "$modules/gating/types/gate";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
@@ -16,7 +18,6 @@ import {
   LinkType,
   TokenStandard as SharedTokenStandard,
   type Action as SharedAction,
-  type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok } from "ts-results-es";
@@ -57,13 +58,21 @@ vi.mock("$modules/creationLink/repositories/draftLinkRepository", () => ({
   draftLinkRepository: { delete: vi.fn() },
 }));
 
+vi.mock("$modules/creationLink/repositories/draftGateRepository", () => ({
+  draftGateRepository: {
+    delete: vi.fn(),
+    get: vi.fn(() => null),
+    save: vi.fn(),
+  },
+}));
+
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
 const CREATOR_TEXT =
   "xybay-d2owu-tceww-zgxi4-fez55-626yd-knfze-rzeei-k2raw-6bng2-bae";
 const CREATOR = Principal.fromText(CREATOR_TEXT);
 
-function makeDraftLink(overrides?: Partial<SharedLink>): SharedLink {
+function makeDraftLink(overrides?: Partial<DraftLink>): DraftLink {
   return {
     id: "test-id",
     title: "Test Link",
@@ -95,6 +104,7 @@ describe("LinkCreationStoreV3", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.account = { owner: CREATOR_TEXT };
+    vi.mocked(draftGateRepository.get).mockReturnValue(null);
     vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
       Err(new Error("no template configured")),
     );
@@ -115,11 +125,42 @@ describe("LinkCreationStoreV3", () => {
       expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
-    it("it_should_succeed_initialize_with_preview_state_for_preview_link_state", () => {
+    it("it_should_succeed_initialize_with_lock_state_for_preview_link_state", () => {
       const store = new LinkCreationStoreV3(
         makeDraftLink({ link_state: LinkState.Preview }),
       );
-      expect(store.state).toBeInstanceOf(PreviewStateV3);
+      expect(store.state).toBeInstanceOf(LockStateV3);
+    });
+
+    it("it_should_not_initialize_preview_action_from_restored_preview_draft_link", () => {
+      vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
+        Ok(makeMockActionFull()),
+      );
+      const assetPrincipal = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+      const assetInfo = [
+        {
+          asset: {
+            address: assetPrincipal,
+            network_fee: 500n,
+            token_standard: SharedTokenStandard.ICRC1,
+          },
+          amount: 999n,
+          label: "test",
+        },
+      ];
+
+      new LinkCreationStoreV3(
+        makeDraftLink({
+          asset_info: assetInfo,
+          link_state: LinkState.Preview,
+          link_type: LinkType.SendTokenBasket,
+          max_use: 3n,
+        }),
+      );
+
+      expect(
+        actionTemplateLoader.createActionFromTemplate,
+      ).not.toHaveBeenCalled();
     });
 
     it("it_should_succeed_initialize_with_created_state_for_created_link_state", () => {
@@ -151,6 +192,55 @@ describe("LinkCreationStoreV3", () => {
     it("it_should_succeed_set_id_from_draft_link", () => {
       const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
       expect(store.id).toBe("my-id");
+    });
+
+    it("it_should_succeed_restore_pending_gate_draft_from_storage", () => {
+      vi.mocked(draftGateRepository.get).mockReturnValue({
+        type: GateType.PASSWORD,
+        password: "secret",
+      });
+
+      const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
+
+      expect(draftGateRepository.get).toHaveBeenCalledWith(
+        CREATOR_TEXT,
+        "my-id",
+      );
+      expect(store.pendingGateDraft).toEqual({
+        type: GateType.PASSWORD,
+        password: "secret",
+      });
+    });
+  });
+
+  describe("pendingGateDraft", () => {
+    it("it_should_succeed_persist_pending_gate_draft_for_current_draft_link", () => {
+      const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
+
+      store.pendingGateDraft = {
+        type: GateType.PASSWORD,
+        password: "secret",
+      };
+
+      expect(draftGateRepository.save).toHaveBeenCalledWith(
+        CREATOR_TEXT,
+        "my-id",
+        {
+          type: GateType.PASSWORD,
+          password: "secret",
+        },
+      );
+    });
+
+    it("it_should_succeed_delete_pending_gate_draft_when_cleared", () => {
+      const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
+
+      store.pendingGateDraft = null;
+
+      expect(draftGateRepository.delete).toHaveBeenCalledWith(
+        CREATOR_TEXT,
+        "my-id",
+      );
     });
   });
 

@@ -1,11 +1,11 @@
 <script lang="ts">
+  import coinTokenIcon from "$lib/assets/gating/coin-token-icon.svg";
+  import quizIcon from "$lib/assets/gating/quiz-icon.svg";
+  import telegramIcon from "$lib/assets/telegram-icon.svg";
+  import xIcon from "$lib/assets/x-icon.svg";
   import { locale } from "$lib/i18n";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { GateType } from "$modules/gating/types/gate";
-  import xIcon from "$lib/assets/x-icon.svg";
-  import telegramIcon from "$lib/assets/telegram-icon.svg";
-  import quizIcon from "$lib/assets/gating/quiz-icon.svg";
-  import coinTokenIcon from "$lib/assets/gating/coin-token-icon.svg";
   import { Lock, RectangleEllipsis } from "lucide-svelte";
 
   const {

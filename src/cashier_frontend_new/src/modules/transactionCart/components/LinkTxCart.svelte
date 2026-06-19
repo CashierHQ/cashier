@@ -4,16 +4,16 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
+  import { getAppLinks } from "$modules/shared/constants/links";
   import { feeService } from "$modules/shared/services/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import TxProgressBanner from "$modules/transactionCart/components/shared/TxProgressBanner.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
-  import { getAppLinks } from "$modules/shared/constants/links";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
   import {
-    FlowDirection,
-    type ActionSource,
+      FlowDirection,
+      type ActionSource,
   } from "$modules/transactionCart/types/transactionSource";
   import { TxProgressPhase } from "$modules/transactionCart/types/txCart";
   import { X } from "lucide-svelte";

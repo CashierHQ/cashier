@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { paths } from "$modules/routing/paths";
 
   // DEMO: component properties are type checked at compile time
   // You can make them optional if you want by make them nullable
@@ -21,7 +22,7 @@
       <p>
         Project name <code>{name}</code>, version <code>{version}</code>, is {description}.
       </p>
-      <p class="py-6"><a class="link" href={resolve("/")}>home</a></p>
+      <p class="py-6"><a class="link" href={resolve(paths.home())}>home</a></p>
     </div>
   </div>
 </div>

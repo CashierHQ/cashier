@@ -20,9 +20,8 @@
     {locale.t("links.linkForm.preview.transactionLock")}
   </p>
   <div
-    class="flex items-center gap-1 text-sm"
-    class:text-green={!showLocked && !isEnded}
-    class:text-red-500={showLocked || isEnded}
+    class="flex items-center gap-1 text-sm text-green"
+    class:text-red-600={isEnded}
   >
     <span
       >{showLocked

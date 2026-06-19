@@ -3,9 +3,10 @@
   import { resolve } from "$app/paths";
   import LinkItem from "$modules/links/components/linksPage/LinkItem.svelte";
   import type {
-    GroupedLink,
-    UnifiedLinkItem,
+      GroupedLink,
+      UnifiedLinkItem,
   } from "$modules/links/types/linkList";
+  import { paths } from "$modules/routing/paths";
   import { formatDate } from "$modules/shared/utils/formatDate";
 
   const {
@@ -16,9 +17,9 @@
 
   function handleLinkClick(link: UnifiedLinkItem) {
     if (link.isCreated) {
-      goto(resolve(`/link/detail/${link.id}`));
+      goto(resolve(paths.detail(link.id)));
     } else {
-      goto(resolve(`/link/create/${link.id}`));
+      goto(resolve(paths.create(link.id)));
     }
   }
 </script>

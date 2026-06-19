@@ -1,13 +1,16 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
-import type { GateDraft } from "$modules/gating/types/gate";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
+import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
-import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import type { GateDraft } from "$modules/gating/types/gate";
 import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
@@ -22,7 +25,6 @@ import {
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
-import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
 
 /**
  * Store for draft link state management
@@ -49,11 +51,14 @@ export class LinkCreationStoreV3 {
   #id = $state<string>();
   #pendingGateDraft = $state<GateDraft | null>(null);
 
-  constructor(draftLink: SharedLink) {
+  constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
-    this.#state = this.getStateHandler(draftLink.link_state);
-
+    this.#pendingGateDraft =
+      authState.account && this.#id
+        ? draftGateRepository.get(authState.account.owner, this.#id)
+        : null;
     this.#draftLink = draftLink;
+    this.#state = this.getStateHandler(draftLink);
 
     $effect(() => {
       // Access reactive state to track changes
@@ -127,6 +132,14 @@ export class LinkCreationStoreV3 {
 
   set pendingGateDraft(draft: GateDraft | null) {
     this.#pendingGateDraft = draft;
+
+    if (!this.#id || !authState.account) return;
+
+    if (draft) {
+      draftGateRepository.save(authState.account.owner, this.#id, draft);
+    } else {
+      draftGateRepository.delete(authState.account.owner, this.#id);
+    }
   }
 
   get linkType(): SharedLinkType {
@@ -148,10 +161,10 @@ export class LinkCreationStoreV3 {
    * @param state LinkStateValue to initialize from
    * @returns LinkCreationState corresponding to the given state
    */
-  private getStateHandler(state: SharedLinkState): LinkCreationStateV3 {
+  private getStateHandler(draftLink: DraftLink): LinkCreationStateV3 {
     let initialState: LinkCreationStateV3;
 
-    switch (state) {
+    switch (draftLink.link_state) {
       case SharedLinkState.ChooseType:
         initialState = new ChooseLinkTypeStateV3(this);
         break;
@@ -159,7 +172,7 @@ export class LinkCreationStoreV3 {
         initialState = new AddAssetStateV3(this);
         break;
       case SharedLinkState.Preview:
-        initialState = new PreviewStateV3(this);
+        initialState = new LockStateV3(this);
         break;
       case SharedLinkState.Created:
         initialState = new LinkCreatedStateV3();

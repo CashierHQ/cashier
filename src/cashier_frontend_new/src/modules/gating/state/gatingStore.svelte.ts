@@ -205,6 +205,20 @@ export class GatingStore {
     return gates;
   }
 
+
+  loadGateDraft(gateDraft: GateDraft | null): void {
+    this.resetAll();
+
+    if (!gateDraft) return;
+
+    switch (gateDraft.type) {
+      case GateType.PASSWORD:
+        this.#configuredPassword = gateDraft.password;
+        this.#selectedGateTypes = [gateDraft.type];
+        break;
+    }
+  }
+
   setPassword(password: string): void {
     this.#password = password;
   }

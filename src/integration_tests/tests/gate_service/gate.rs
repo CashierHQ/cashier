@@ -7,7 +7,8 @@ use crate::{
 };
 use candid::Principal;
 use cashier_common::test_utils::{random_id_string, random_principal_id};
-use gate_service_types::{GateKey, GateStatus, NewGate, error::GateServiceError};
+use core::panic;
+use gate_service_types::{GateKey, GateStatus, NewGate, auth::Permission, error::GateServiceError};
 
 #[tokio::test]
 async fn it_should_error_add_gate_due_to_anonymous_caller() {

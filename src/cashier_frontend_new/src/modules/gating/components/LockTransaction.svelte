@@ -1,12 +1,14 @@
 <script lang="ts">
+  import lockedLock from "$lib/assets/gating/locked-lock.svg";
+  import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    Drawer,
-    DrawerClose,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
+      Drawer,
+      DrawerClose,
+      DrawerContent,
+      DrawerHeader,
+      DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import GateOptionList from "$modules/gating/components/GateOptionList.svelte";
@@ -15,8 +17,6 @@
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { Info, X } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import lockedLock from "$lib/assets/gating/locked-lock.svg";
-  import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
 
   const {
     link,
@@ -36,6 +36,7 @@
 
     try {
       isContinuing = true;
+      link.setPendingGateDraft(store.gateDrafts[0] ?? null);
       await link.goNext();
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
