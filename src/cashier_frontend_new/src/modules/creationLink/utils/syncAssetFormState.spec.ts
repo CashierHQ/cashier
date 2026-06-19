@@ -16,14 +16,16 @@ describe("syncAssetFormState", () => {
     isUsd: false,
   };
 
-  it("should clear amounts when address changed", () => {
+  it("should repopulate amount when address changed but a valid amount exists (remount/back restore)", () => {
+    // On returning to the step, previousTokenAddress is undefined so addressChanged is
+    // true, yet the stored amount must be restored to the input rather than wiped.
     const result = syncAssetFormState({
       ...defaultParams,
       addressChanged: true,
     });
 
-    expect(result.localTokenAmount).toBe("");
-    expect(result.localUsdAmount).toBe("");
+    expect(result.localTokenAmount).toBe("1");
+    expect(result.localUsdAmount).toBe("10.5");
     expect(result.shouldUpdate).toBe(true);
   });
 

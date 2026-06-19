@@ -106,7 +106,7 @@
     const newAssets = [...link.assets];
     newAssets[index] = {
       address,
-      useAmount: newAssets[index]?.useAmount || 0n,
+      useAmount: 0n,
     };
     link.setAssets(newAssets);
     showAssetDrawer = false;

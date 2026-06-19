@@ -210,9 +210,12 @@
         "lockAdded": "You added a lock",
         "openLock": "Open lock",
         "incorrectPassword": "Incorrect password.",
+        "tooManyRequests": "Too many requests. Please wait before retrying.",
+        "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying.",
         "openButton": "Open",
         "processing": "Processing",
         "linkLocked": "Link locked",
+        "linkUnlocked": "Link unlocked",
         "unlockAllRequired": "To use the transaction, unlock all locks.",
         "fees": {
           "password": "Lock fee - password",
@@ -259,6 +262,12 @@
             "processingButton": "Processing...",
             "successMessage": "Process action completed successfully.",
             "errorMessagePrefix": "Process action failed:",
+            "phase1Label": "Phase 1",
+            "phase1Description": "Executing the transactions",
+            "phase2Label": "Phase 2",
+            "phase2Description": "Confirming the transactions",
+            "phase3Label": "Transaction confirmed",
+            "phase3Description": "All steps completed",
             "errors": {
               "alreadyClaimed": "This link has no claim available right now — it may be fully claimed or another claim is in progress.",
               "linkUnavailable": "This link is no longer available.",
@@ -562,16 +571,16 @@
         "warning2": "BTC is auto converted to ckBTC on arrival.",
         "warning3": "0.000001 BTC import fee.",
         "warning4": "Transfer time ~1 hour. Track progress below.",
-        "runeWarning1": "Receive {{name}} from compatible Bitcoin wallet or exchange.",
-        "runeWarning2": "{{name}} is auto converted to {{symbol}} on arrival.",
+        "runeWarning1": "Receive from compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "Auto-converted to {{symbol}} on arrival.",
         "runeWarning3": "Transfer time ~1 hour. Track progress below."
       },
       "icpAddress": {
         "warning1": "Receive ckBTC from Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant.",
-        "runeWarning1": "Receive {{symbol}} from compatible ICP wallet or exchange.",
-        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
+        "runeWarning1": "Receive from compatible ICP wallet or exchange.",
+        "runeWarning2": "1:1 Bitcoin-backed token on ICP network."
       },
       "noIncomingBalance": "No incoming BTC balance found.",
       "refreshSuccess": "Balance refreshed successfully.",
@@ -592,8 +601,8 @@
         "warning1": "Send ckBTC to Oisy, NFID, Plug, etc.",
         "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
         "warning3": "Transfer time almost instant.",
-        "runeWarning1": "Send {{symbol}} to compatible ICP wallet or exchange.",
-        "runeWarning2": "{{symbol}} is a 1:1 Bitcoin-backed token on ICP network."
+        "runeWarning1": "Send to compatible ICP wallet or exchange.",
+        "runeWarning2": "1:1 Bitcoin-backed token on ICP network."
       },
       "btcAddress": {
         "warning1": "Send BTC to Coinbase, Xverse, Ledger, etc.",
@@ -601,8 +610,8 @@
         "warning3": "Your ckBTC is auto converted to BTC.",
         "warning4": "0.0000045 BTC export fee plus Bitcoin network fee.",
         "warning5": "Transfer time ~1 hour. Track the progress below.",
-        "runeWarning1": "Send {{name}} to compatible Bitcoin wallet or exchange.",
-        "runeWarning2": "Your {{name}} is auto converted to {{symbol}}.",
+        "runeWarning1": "Send to compatible Bitcoin wallet or exchange.",
+        "runeWarning2": "Auto-converted to {{name}} on arrival.",
         "runeWarning3": "~1.05 ICP export fee plus Bitcoin network fee."
       },
       "refreshSuccess": "Export history refreshed.",
