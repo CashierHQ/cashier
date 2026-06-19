@@ -5,16 +5,16 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-      Dialog,
-      DialogContent,
-      DialogDescription,
-      DialogHeader,
-      DialogPortal,
-      DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogPortal,
+    DialogTitle,
   } from "$lib/shadcn/components/ui/dialog";
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
@@ -26,33 +26,33 @@
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import type {
-      AddAssetItem,
-      GenericCreationLinkStoreVM,
+    AddAssetItem,
+    GenericCreationLinkStoreVM,
   } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { DetailStoreV3ViewModelAdapter } from "$modules/detailLink/state/adapters/detailStoreV3ViewModelAdapter";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import {
-      calculateLinkInfoAssetsWithTokenInfo,
-      calculateUsageInfoAssetsWithTokenInfo,
+    calculateLinkInfoAssetsWithTokenInfo,
+    calculateUsageInfoAssetsWithTokenInfo,
   } from "$modules/detailLink/utils/usageInfo";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkStep } from "$modules/links/types/linkStep";
   import {
-      getLinkTypeText,
-      isPaymentLinkType,
-      isSendLinkType,
+    getLinkTypeText,
+    isPaymentLinkType,
+    isSendLinkType,
   } from "$modules/links/utils/linkItemHelpers";
   import { paths } from "$modules/routing/paths";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import type {
-      AssetAndFeeList,
-      ForecastAssetAndFee,
+    AssetAndFeeList,
+    ForecastAssetAndFee,
   } from "$modules/shared/types/feeService";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";

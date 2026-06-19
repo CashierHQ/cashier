@@ -9,13 +9,13 @@
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import {
-      AlignLeft,
-      CircleHelp,
-      Compass,
-      Copy,
-      Link,
-      Wallet,
-      X,
+    AlignLeft,
+    CircleHelp,
+    Compass,
+    Copy,
+    Link,
+    Wallet,
+    X,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 

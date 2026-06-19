@@ -6,22 +6,22 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-      Drawer,
-      DrawerClose,
-      DrawerContent,
-      DrawerHeader,
-      DrawerTitle,
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import XUnlockForm from "$modules/gating/components/XUnlockForm.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import {
-      Eye,
-      EyeOff,
-      Info,
-      Lock,
-      LockOpen,
-      RectangleEllipsis,
-      X,
+    Eye,
+    EyeOff,
+    Info,
+    Lock,
+    LockOpen,
+    RectangleEllipsis,
+    X,
   } from "lucide-svelte";
   import { onMount } from "svelte";
 

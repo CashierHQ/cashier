@@ -4,8 +4,8 @@
   import { page } from "$app/state";
   import { locale } from "$lib/i18n";
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { draftLinkService } from "$modules/creationLink/services/draftLink";

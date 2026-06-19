@@ -12,8 +12,8 @@
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { LinkTxCartStore } from "$modules/transactionCart/state/linkTxCartStore.svelte";
   import {
-      FlowDirection,
-      type ActionSource,
+    FlowDirection,
+    type ActionSource,
   } from "$modules/transactionCart/types/transactionSource";
   import { TxProgressPhase } from "$modules/transactionCart/types/txCart";
   import { X } from "lucide-svelte";

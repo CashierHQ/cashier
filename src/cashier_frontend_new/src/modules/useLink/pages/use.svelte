@@ -4,8 +4,8 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import type { ProcessActionResult } from "$modules/detailLink/types/genericDetailStoreVM";
   import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
@@ -21,8 +21,8 @@
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
   import {
-      shouldRedirectErrorTo404,
-      shouldRedirectTo404,
+    shouldRedirectErrorTo404,
+    shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
   import { Lock } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";

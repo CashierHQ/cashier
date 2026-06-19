@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";

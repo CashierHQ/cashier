@@ -4,11 +4,11 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-      Drawer,
-      DrawerClose,
-      DrawerContent,
-      DrawerHeader,
-      DrawerTitle,
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import GateOptionList from "$modules/gating/components/GateOptionList.svelte";

@@ -205,7 +205,6 @@ export class GatingStore {
     return gates;
   }
 
-
   loadGateDraft(gateDraft: GateDraft | null): void {
     this.resetAll();
 

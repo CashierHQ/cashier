@@ -3,8 +3,8 @@
   import { resolve } from "$app/paths";
   import LinkItem from "$modules/links/components/linksPage/LinkItem.svelte";
   import type {
-      GroupedLink,
-      UnifiedLinkItem,
+    GroupedLink,
+    UnifiedLinkItem,
   } from "$modules/links/types/linkList";
   import { paths } from "$modules/routing/paths";
   import { formatDate } from "$modules/shared/utils/formatDate";

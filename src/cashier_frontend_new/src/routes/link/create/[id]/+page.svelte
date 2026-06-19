@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";

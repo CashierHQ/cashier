@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
   import {
-      AnalyticsEvent,
-      trackEvent,
+    AnalyticsEvent,
+    trackEvent,
   } from "$modules/analytics/amplitudeStore";
   import { authState } from "$modules/auth/state/auth.svelte";
   import Footer from "$modules/home/components/Footer.svelte";
