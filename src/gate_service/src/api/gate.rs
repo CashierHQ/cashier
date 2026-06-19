@@ -140,6 +140,44 @@ async fn open_gate(
         .await
 }
 
+#[update(guard = "is_not_anonymous")]
+/// Generates an OTP code and sends it to the destination configured on the gate.
+///
+/// Principals with `GateCreate` permission (e.g. cashier_backend) may pass an explicit
+/// `user` to send the OTP on behalf of that user; all other callers are treated as
+/// the user themselves. Any previously issued code for this gate/user pair is overwritten.
+/// The generated code expires after 10 minutes.
+/// # Arguments
+/// * `gate_id`: The ID of an OTPEmail or OTPSms gate.
+/// * `user`: The principal of the user who will later verify the code. Ignored (replaced by caller) unless the caller has GateCreate permission.
+/// # Returns
+/// * `Ok(())`: Code generated and dispatched via Brevo.
+/// * `Err(GateServiceError::NotFound)`: Gate does not exist.
+/// * `Err(GateServiceError::UnsupportedGateKey)`: Gate is not an OTP type.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Brevo API call failed.
+async fn send_otp(gate_id: String, user: Principal) -> Result<(), GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    let effective_user = if state
+        .auth_service
+        .check_has_permission(&caller, Permission::GateCreate)
+        .is_ok()
+    {
+        user
+    } else {
+        caller
+    };
+    let gate_service = get_state().gate_service;
+    gate_service
+        .send_otp(
+            &gate_id,
+            effective_user,
+            &IcHttpOutcallService,
+            &IcSecretService,
+        )
+        .await
+}
+
 #[update]
 /// Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
 ///

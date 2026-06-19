@@ -31,3 +31,17 @@ pub const SECRET_X_REDIRECT_URI: &str = "x_redirect_uri";
 
 /// Secret key name for the X API Bearer token.
 pub const SECRET_X_BEARER_TOKEN: &str = "x_bearer_token";
+
+/// Brevo transactional email API endpoint.
+pub const BREVO_EMAIL_URL: &str = "https://api.brevo.com/v3/smtp/email";
+
+/// Brevo transactional SMS API endpoint.
+pub const BREVO_SMS_URL: &str = "https://api.brevo.com/v3/transactionalSMS/send";
+
+/// Secret key name for the Brevo API key.
+/// Set via `admin_secret_set` / `admin_plain_secret_set` canister endpoints.
+pub const SECRET_BREVO_API_KEY: &str = "brevo_api_key";
+
+/// Secret key name for the Brevo email sender address.
+/// Set via `admin_secret_set` / `admin_plain_secret_set` canister endpoints.
+pub const SECRET_BREVO_EMAIL_SENDER: &str = "brevo_email_sender";

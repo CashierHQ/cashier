@@ -52,6 +52,10 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
       gateKeys.push({ XLikedPost: gateDraft.tweetUrl });
     } else if (gateDraft?.type === GateType.X_RETWEETED_POST) {
       gateKeys.push({ XRetweetedPost: gateDraft.tweetUrl });
+    } else if (gateDraft?.type === GateType.OTP_EMAIL) {
+      gateKeys.push({ OTPEmail: gateDraft.email });
+    } else if (gateDraft?.type === GateType.OTP_SMS) {
+      gateKeys.push({ OTPSms: gateDraft.phone });
     }
 
     const result = await cashierBackendService.createLinkV3(

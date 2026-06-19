@@ -17,6 +17,10 @@ export class GatingStore {
   #xLikedPostDraft = $state("");
   #xRetweetedPostUrl = $state<string | null>(null);
   #xRetweetedPostDraft = $state("");
+  #otpEmail = $state<string | null>(null);
+  #otpEmailDraft = $state("");
+  #otpPhone = $state<string | null>(null);
+  #otpPhoneDraft = $state("");
 
   get selectedGateTypes(): GateType[] {
     return this.#selectedGateTypes;
@@ -86,14 +90,56 @@ export class GatingStore {
     return this.#xRetweetedPostUrl;
   }
 
+  get hasConfiguredOTPEmail(): boolean {
+    return this.#otpEmail !== null;
+  }
+
+  get hasConfiguredOTPSms(): boolean {
+    return this.#otpPhone !== null;
+  }
+
+  get otpEmail(): string | null {
+    return this.#otpEmail;
+  }
+
+  get otpPhone(): string | null {
+    return this.#otpPhone;
+  }
+
+  get otpEmailDraft(): string {
+    return this.#otpEmailDraft;
+  }
+
+  get otpPhoneDraft(): string {
+    return this.#otpPhoneDraft;
+  }
+
   get hasLocks(): boolean {
     return (
       this.hasConfiguredPassword ||
       this.hasConfiguredXFollowing ||
       this.hasConfiguredXOwnedAccount ||
       this.hasConfiguredXLikedPost ||
-      this.hasConfiguredXRetweetedPost
+      this.hasConfiguredXRetweetedPost ||
+      this.hasConfiguredOTPEmail ||
+      this.hasConfiguredOTPSms
     );
+  }
+
+  get otpEmailSetupError(): string | null {
+    const email = this.#otpEmailDraft.trim();
+    if (email.length === 0) return "Email address is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Enter a valid email address";
+    return null;
+  }
+
+  get otpPhoneSetupError(): string | null {
+    const phone = this.#otpPhoneDraft.trim();
+    if (phone.length === 0) return "Phone number is required";
+    if (!/^\+?[\d\s\-()]{7,20}$/.test(phone))
+      return "Enter a valid phone number";
+    return null;
   }
 
   get passwordSetupError(): string | null {
@@ -199,6 +245,20 @@ export class GatingStore {
       gates.push({
         type: GateType.X_RETWEETED_POST,
         tweetUrl: this.#xRetweetedPostUrl ?? "",
+      });
+    }
+
+    if (this.hasConfiguredOTPEmail) {
+      gates.push({
+        type: GateType.OTP_EMAIL,
+        email: this.#otpEmail ?? "",
+      });
+    }
+
+    if (this.hasConfiguredOTPSms) {
+      gates.push({
+        type: GateType.OTP_SMS,
+        phone: this.#otpPhone ?? "",
       });
     }
 
@@ -329,6 +389,41 @@ export class GatingStore {
     this.#xRetweetedPostDraft = "";
   }
 
+  setOTPEmailDraft(email: string): void {
+    this.#otpEmailDraft = email;
+  }
+
+  setOTPPhoneDraft(phone: string): void {
+    this.#otpPhoneDraft = phone;
+  }
+
+  saveOTPEmailLock(): void {
+    if (this.otpEmailSetupError) return;
+    this.#otpEmail = this.#otpEmailDraft.trim();
+    if (!this.#selectedGateTypes.includes(GateType.OTP_EMAIL)) {
+      this.#selectedGateTypes = [
+        ...this.#selectedGateTypes,
+        GateType.OTP_EMAIL,
+      ];
+    }
+  }
+
+  saveOTPSmsLock(): void {
+    if (this.otpPhoneSetupError) return;
+    this.#otpPhone = this.#otpPhoneDraft.trim();
+    if (!this.#selectedGateTypes.includes(GateType.OTP_SMS)) {
+      this.#selectedGateTypes = [...this.#selectedGateTypes, GateType.OTP_SMS];
+    }
+  }
+
+  clearOTPEmailDraft(): void {
+    this.#otpEmailDraft = "";
+  }
+
+  clearOTPPhoneDraft(): void {
+    this.#otpPhoneDraft = "";
+  }
+
   resetAll(): void {
     this.#selectedGateTypes = [];
     this.#password = "";
@@ -343,5 +438,9 @@ export class GatingStore {
     this.#xLikedPostDraft = "";
     this.#xRetweetedPostUrl = null;
     this.#xRetweetedPostDraft = "";
+    this.#otpEmail = null;
+    this.#otpEmailDraft = "";
+    this.#otpPhone = null;
+    this.#otpPhoneDraft = "";
   }
 }

@@ -403,6 +403,8 @@ export const idlFactory = ({ IDL }) => {
   const Result_7 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
   const GateKey = IDL.Variant({
     'Password' : IDL.Text,
+    'OTPSms' : IDL.Text,
+    'OTPEmail' : IDL.Text,
     'XFollowing' : IDL.Text,
     'DiscordServer' : IDL.Text,
     'XLikedPost' : IDL.Text,
@@ -613,6 +615,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_16],
         [],
       ),
+    'user_send_otp' : IDL.Func([IDL.Text], [Result], []),
     'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),
   });
 };

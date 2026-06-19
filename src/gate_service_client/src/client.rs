@@ -187,6 +187,25 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
             .await
     }
 
+    /// Generates an OTP code and sends it to the destination configured on the gate.
+    ///
+    /// Passes `user` explicitly so that privileged callers (e.g. cashier_backend acting
+    /// on behalf of an end-user) get the OTP stored under the correct principal.
+    /// # Arguments
+    /// * `gate_id`: The ID of an OTPEmail or OTPSms gate.
+    /// * `user`: The principal of the end-user who will later verify the code.
+    /// # Returns
+    /// * `Ok(Ok(()))`: Code generated and dispatched via Brevo.
+    /// * `Ok(Err(GateServiceError))`: Gate not found, not an OTP gate, or Brevo call failed.
+    /// * `Err(...)`: The canister call failed.
+    pub async fn send_otp(
+        &self,
+        gate_id: String,
+        user: Principal,
+    ) -> CanisterClientResult<Result<(), GateServiceError>> {
+        self.client.update("send_otp", (gate_id, user)).await
+    }
+
     /// Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
     /// # Arguments
     /// * `code`: The one-time authorization code received from the X OAuth callback.

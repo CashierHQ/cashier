@@ -6,17 +6,21 @@
   import { locale } from "$lib/i18n";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { GateType } from "$modules/gating/types/gate";
-  import { Lock, RectangleEllipsis } from "lucide-svelte";
+  import { Lock, Mail, RectangleEllipsis } from "lucide-svelte";
 
   const {
     store,
     onPasswordClick,
     onXClick,
+    onOtpClick,
   }: {
     store: GatingStore;
     onPasswordClick: () => void;
     onXClick: () => void;
+    onOtpClick: () => void;
   } = $props();
+
+  const OTP_TYPE = GateType.OTP_EMAIL;
 
   const options = [
     {
@@ -30,6 +34,12 @@
       label: locale.t("links.linkForm.lock.xHandle"),
       enabled: true,
       iconSrc: xIcon,
+    },
+    {
+      type: OTP_TYPE,
+      label: "OTP (Email / SMS)",
+      enabled: true,
+      iconComponent: Mail,
     },
     {
       label: locale.t("links.linkForm.lock.telegramGroup"),
@@ -47,6 +57,10 @@
       iconSrc: quizIcon,
     },
   ];
+
+  const isOtpConfigured = $derived(
+    store.hasConfiguredOTPEmail || store.hasConfiguredOTPSms,
+  );
 </script>
 
 <div class="space-y-2">
@@ -75,6 +89,8 @@
             onPasswordClick();
           } else if (option.type === GateType.X_FOLLOWING) {
             onXClick();
+          } else if (option.type === OTP_TYPE) {
+            onOtpClick();
           }
         }}
         class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&
@@ -101,6 +117,8 @@
         {#if option.type === GateType.PASSWORD && store.hasConfiguredPassword}
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if option.type === GateType.X_FOLLOWING && store.hasConfiguredXFollowing}
+          <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
+        {:else if option.type === OTP_TYPE && isOtpConfigured}
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">

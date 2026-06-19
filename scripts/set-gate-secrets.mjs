@@ -21,6 +21,8 @@
  *   TWITTER_API_KEY=mykey123
  *   X_OAUTH_BASIC_AUTH=base64(client_id:client_secret)   ← raw base64 only, no "Basic " prefix
  *   X_REDIRECT_URI=https://cashierapp.io/auth
+ *   BREVO_API_KEY=xkeysib-...                            ← Brevo API key (required for OTP gates)
+ *   BREVO_EMAIL_SENDER=noreply@cashierapp.io             ← From-address for OTP emails
  */
 
 import { spawnSync } from "node:child_process";
@@ -40,6 +42,8 @@ const SECRET_MAP = {
   X_OAUTH_BASIC_AUTH: "x_oauth_basic_auth",
   X_REDIRECT_URI: "x_redirect_uri",
   X_BEARER_TOKEN: "x_bearer_token",
+  BREVO_API_KEY: "brevo_api_key",
+  BREVO_EMAIL_SENDER: "brevo_email_sender",
 };
 
 // ── CLI args ──────────────────────────────────────────────────────────────────

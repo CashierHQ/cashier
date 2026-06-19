@@ -104,6 +104,10 @@ pub enum GateKey {
     XRetweetedPostCredential {
         user_id: String,
     },
+    /// Gate config: destination email address. Credential: the 6-digit OTP code the user received.
+    OTPEmail(String),
+    /// Gate config: destination phone number. Credential: the 6-digit OTP code the user received.
+    OTPSms(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -145,4 +149,17 @@ pub struct XProfile {
 pub struct XTokenExchangeResult {
     pub profile: XProfile,
     pub access_token: String,
+}
+
+#[derive(CandidType, Debug, Clone)]
+#[storable]
+/// A stored OTP code for a specific gate and user, with expiry and attempt tracking.
+/// Fields:
+/// * `code`: The 6-digit numeric code.
+/// * `expires_at`: Nanosecond timestamp after which the code is invalid.
+/// * `attempts`: Number of failed verification attempts (used for rate-limiting).
+pub struct OtpRecord {
+    pub code: String,
+    pub expires_at: u64,
+    pub attempts: u8,
 }

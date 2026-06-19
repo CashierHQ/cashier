@@ -179,6 +179,24 @@ class CanisterBackendService {
   }
 
   /**
+   * Sends an OTP code to the destination configured on the given gate.
+   * @param gateId The gate ID of an OTPEmail or OTPSms gate
+   * @returns A Result containing void or an Error.
+   */
+  async sendOtp(gateId: string): Promise<Result<null, Error>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_send_otp(gateId);
+
+    return responseToResult<null, cashierBackend.CanisterError>(
+      response as cashierBackend.Result,
+    ).mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
    * Process an action using the V3 API.
    * @param input V3 process action payload
    * @returns A Result containing ProcessActionResultV3 or an Error.

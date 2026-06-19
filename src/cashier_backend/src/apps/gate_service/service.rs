@@ -89,6 +89,28 @@ impl GateServiceClient for GateServiceWrapper {
         })
     }
 
+    /// Generates an OTP code for `user` on the gate and dispatches it via Brevo.
+    /// # Arguments
+    /// * `gate_id` - The ID of the OTPEmail or OTPSms gate.
+    /// * `user` - The principal of the end-user; stored as the OTP key in GateService.
+    /// # Returns
+    /// * `Ok(())` - Code generated and dispatched via Brevo.
+    /// * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed.
+    async fn send_otp(&self, gate_id: String, user: Principal) -> Result<(), CanisterError> {
+        use gate_service_types::error::GateServiceError;
+        use ic_cdk::call::CandidDecodeFailed;
+
+        let result = Call::bounded_wait(self.canister_id, "send_otp")
+            .with_args(&(gate_id, user))
+            .await
+            .map_err(CanisterError::from)?;
+
+        let parsed: Result<Result<(), GateServiceError>, CandidDecodeFailed> = result.candid();
+        parsed
+            .map_err(CanisterError::from)?
+            .map_err(|e| CanisterError::HandleLogicError(format!("{e:?}")))
+    }
+
     /// Updates the canister ID used for all GateService calls.
     /// # Arguments
     /// * `canister_id` - The new Principal of the GateService canister to call
@@ -209,6 +231,18 @@ impl<R: Repositories, G: GateServiceClient> GateAppService<R, G> {
             }
         }
         Ok(())
+    }
+
+    /// Generates an OTP code for `user` on the gate and dispatches it via Brevo.
+    /// The call is forwarded to GateService which handles code generation and delivery.
+    /// # Arguments
+    /// * `gate_id` - The ID of the OTPEmail or OTPSms gate.
+    /// * `user` - The principal of the end-user; stored as the OTP key in GateService.
+    /// # Returns
+    /// * `Ok(())` - Code generated and dispatched via Brevo.
+    /// * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed.
+    pub async fn send_otp(&self, gate_id: &str, user: Principal) -> Result<(), CanisterError> {
+        self.gate_client.send_otp(gate_id.to_string(), user).await
     }
 
     /// Open a gate for a user by calling to GateService, and cache the open status locally if successful.
@@ -353,6 +387,10 @@ pub mod tests {
             self.open_gate_result
                 .clone()
                 .unwrap_or_else(|| Err(CanisterError::HandleLogicError("not set".to_string())))
+        }
+
+        async fn send_otp(&self, _gate_id: String, _user: Principal) -> Result<(), CanisterError> {
+            Ok(())
         }
 
         fn set_canister_id(&mut self, _canister_id: Principal) {}

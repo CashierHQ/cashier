@@ -4,7 +4,9 @@
 use crate::utils::{PocketIcTestContext, principal::TestUser};
 use candid::Principal;
 use gate_service_types::{
-    Gate, GateKey, GateUserStatus, NewGate, PasswordHashingAlgorithm, auth::Permission,
+    Gate, GateKey, GateUserStatus, NewGate, PasswordHashingAlgorithm,
+    auth::Permission,
+    constant::{SECRET_BREVO_API_KEY, SECRET_BREVO_EMAIL_SENDER},
 };
 
 /// Adds a password gate fixture for testing purposes.
@@ -243,6 +245,95 @@ pub async fn add_xretweetedpost_gate_fixture(
     let new_gate = NewGate {
         subject_id: subject_id.to_string(),
         key: GateKey::XRetweetedPost(tweet_url.to_string()),
+    };
+
+    user_client.add_gate(new_gate).await.unwrap().unwrap()
+}
+
+/// Adds an OTP email gate fixture and seeds the required Brevo secrets.
+/// # Arguments
+/// * `ctx` - The test context.
+/// * `creator` - The principal ID of the gate creator.
+/// * `subject_id` - The subject ID for the gate.
+/// * `email` - The destination email address for the OTP.
+/// # Returns
+/// The created OTP email gate.
+pub async fn add_otp_email_gate_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    subject_id: &str,
+    email: &str,
+) -> Gate {
+    let admin = TestUser::GateServiceAdmin.get_principal();
+    let admin_client = ctx.new_gate_service_client(admin);
+    let _user_permissions_add = admin_client
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
+        .await
+        .unwrap()
+        .unwrap();
+
+    admin_client
+        .admin_plain_secret_set(
+            SECRET_BREVO_API_KEY.to_string(),
+            "test_brevo_api_key".to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
+
+    admin_client
+        .admin_plain_secret_set(
+            SECRET_BREVO_EMAIL_SENDER.to_string(),
+            "no-reply@fenixstudio.app".to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
+
+    let user_client = ctx.new_gate_service_client(creator);
+    let new_gate = NewGate {
+        subject_id: subject_id.to_string(),
+        key: GateKey::OTPEmail(email.to_string()),
+    };
+
+    user_client.add_gate(new_gate).await.unwrap().unwrap()
+}
+
+/// Adds an OTP SMS gate fixture and seeds the required Brevo API key secret.
+/// # Arguments
+/// * `ctx` - The test context.
+/// * `creator` - The principal ID of the gate creator.
+/// * `subject_id` - The subject ID for the gate.
+/// * `phone` - The destination phone number for the OTP.
+/// # Returns
+/// The created OTP SMS gate.
+pub async fn add_otp_sms_gate_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    subject_id: &str,
+    phone: &str,
+) -> Gate {
+    let admin = TestUser::GateServiceAdmin.get_principal();
+    let admin_client = ctx.new_gate_service_client(admin);
+    let _user_permissions_add = admin_client
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
+        .await
+        .unwrap()
+        .unwrap();
+
+    admin_client
+        .admin_plain_secret_set(
+            SECRET_BREVO_API_KEY.to_string(),
+            "test_brevo_api_key".to_string(),
+        )
+        .await
+        .expect("admin_plain_secret_set call failed")
+        .expect("admin_plain_secret_set returned error");
+
+    let user_client = ctx.new_gate_service_client(creator);
+    let new_gate = NewGate {
+        subject_id: subject_id.to_string(),
+        key: GateKey::OTPSms(phone.to_string()),
     };
 
     user_client.add_gate(new_gate).await.unwrap().unwrap()

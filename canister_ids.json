@@ -1,19 +1,23 @@
 {
   "cashier_backend": {
-    "dev": "edrez-4iaaa-aaaam-aekta-cai"
+    "dev": "edrez-4iaaa-aaaam-aekta-cai",
+    "ic": "pnhpm-haaaa-aaaao-a5wna-cai"
   },
   "cashier_frontend_new": {
     "dev": "bepcz-nyaaa-aaaam-aekoa-cai",
+    "ic": "gdvtu-diaaa-aaaao-bbbpq-cai",
     "production": "jg57n-xyaaa-aaaam-admqq-cai",
     "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
   },
   "gate_frontend": {
-    "dev": "change-to-gate-frontend-canister-id"
+    "ic": "vpnic-ryaaa-aaaao-bbciq-cai"
   },
   "gate_service": {
-    "dev": "gk64c-dqaaa-aaaam-ajdha-cai"
+    "dev": "gk64c-dqaaa-aaaam-ajdha-cai",
+    "ic": "upcyl-4yaaa-aaaao-ba7tq-cai"
   },
   "token_storage": {
-    "dev": "hmrnm-pqaaa-aaaam-aenea-cai"
+    "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
+    "ic": "rpfmw-oqaaa-aaaao-a5uaa-cai"
   }
 }

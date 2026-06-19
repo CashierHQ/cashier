@@ -12,6 +12,7 @@
     DrawerHeader,
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
+  import OTPUnlockForm from "$modules/gating/components/OTPUnlockForm.svelte";
   import XUnlockForm from "$modules/gating/components/XUnlockForm.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import {
@@ -20,6 +21,7 @@
     Info,
     Lock,
     LockOpen,
+    Mail,
     RectangleEllipsis,
     X,
   } from "lucide-svelte";
@@ -70,6 +72,12 @@
         locale.t("links.linkForm.lock.key3RetweetPost") ?? "X Retweet post"
       );
     }
+    if ("OTPEmail" in key) {
+      return "Email OTP";
+    }
+    if ("OTPSms" in key) {
+      return "SMS OTP";
+    }
     return "Unknown";
   }
 
@@ -81,6 +89,11 @@
       "XLikedPost" in key ||
       "XRetweetedPost" in key
     );
+  }
+
+  function isOTPGate(gate: GateForUser): boolean {
+    const key = gate.gate.key;
+    return "OTPEmail" in key || "OTPSms" in key;
   }
 
   function openDrawer(gate: GateForUser) {
@@ -203,6 +216,8 @@
             class="h-6 w-6 flex-none"
             aria-hidden="true"
           />
+        {:else if isOTPGate(gate)}
+          <Mail class="h-6 w-6 flex-none text-green" aria-hidden="true" />
         {:else}
           <RectangleEllipsis
             class="h-6 w-6 flex-none text-green"
@@ -259,6 +274,16 @@
 
     {#if selectedGate && isXGate(selectedGate)}
       <XUnlockForm
+        {linkId}
+        gate={selectedGate}
+        onUnlocked={() => {
+          if (selectedGate) localOpenGates[selectedGate.gate.id] = true;
+          localOpenGates = { ...localOpenGates };
+        }}
+        onClose={() => (drawerOpen = false)}
+      />
+    {:else if selectedGate && isOTPGate(selectedGate)}
+      <OTPUnlockForm
         {linkId}
         gate={selectedGate}
         onUnlocked={() => {

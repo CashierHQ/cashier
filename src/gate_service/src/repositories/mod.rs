@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod gate;
+pub mod otp;
 pub mod secrets;
 
 pub use secrets::get_decrypted_secret;
@@ -10,7 +11,7 @@ use crate::{
     repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage},
     services::auth::AuthServiceStorage,
 };
-use gate_service_types::{PasswordHashingAlgorithm, SecretStorageMode};
+use gate_service_types::{GateUser, OtpRecord, PasswordHashingAlgorithm, SecretStorageMode};
 use ic_mple_log::{
     LogSettings,
     service::{LoggerServiceStorage, Storage},
@@ -48,6 +49,7 @@ const SECRETS_MEMORY_ID: MemoryId = MemoryId::new(4);
 const PLAIN_SECRETS_MEMORY_ID: MemoryId = MemoryId::new(5);
 const SECRET_STORAGE_MODE_MEMORY_ID: MemoryId = MemoryId::new(6);
 const PASSWORD_HASHING_ALGORITHM_MEMORY_ID: MemoryId = MemoryId::new(7);
+const OTP_MEMORY_ID: MemoryId = MemoryId::new(8);
 
 /// Stores AES-256-GCM encrypted secrets as `nonce || ciphertext` byte blobs.
 /// Secrets are encrypted client-side using the canister's vetKD public key.
@@ -62,6 +64,9 @@ pub type SecretStorageModeStorage = StableCell<SecretStorageMode, VirtualMemory<
 /// Persists the active password hashing algorithm across upgrades.
 pub type PasswordHashingAlgorithmStorage =
     StableCell<PasswordHashingAlgorithm, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Stores pending OTP codes keyed by `(gate_id, user_principal)`.
+pub type OtpStorage = StableBTreeMap<GateUser, OtpRecord, VirtualMemory<DefaultMemoryImpl>>;
 
 thread_local! {
     // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -120,6 +125,11 @@ thread_local! {
             PasswordHashingAlgorithm::Argon2id,
         )
     );
+
+    /// Stores pending OTP codes. Records are written by `send_otp` and consumed by `open_gate`.
+    pub static OTP_STORE: RefCell<OtpStorage> = RefCell::new(StableBTreeMap::init(
+        MEMORY_MANAGER.with_borrow(|m| m.get(OTP_MEMORY_ID)),
+    ));
 }
 
 /// Returns the currently configured password hashing algorithm.
