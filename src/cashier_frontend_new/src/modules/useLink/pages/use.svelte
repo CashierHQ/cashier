@@ -25,7 +25,7 @@
     shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
   import { onDestroy, onMount } from "svelte";
-    import { ActionState } from "$shared/types";
+  import { ActionState } from "$shared/types";
 
   const {
     onIsLinkChange,
@@ -56,7 +56,7 @@
     return !!(
       userStore?.action !== null &&
       userStore?.link !== null &&
-      userStore?.action && 
+      userStore?.action &&
       userStore.action.state != ActionState.Success
     );
   });
