@@ -1,12 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+pub mod otp;
 pub mod password;
 pub mod x;
 
 use crate::services::http::HttpOutcallService;
 use crate::services::secret::SecretService;
+use candid::Principal;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
+use otp::{OTPEmailVerifier, OTPSmsVerifier};
 use password::PasswordGateVerifier;
 use std::fmt::Debug;
 use x::{XFollowingVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
@@ -33,8 +36,11 @@ pub trait GateVerifier: Debug {
 /// # Arguments
 /// * `gate_config_key`: The key stored for the gate (e.g. `XFollowing("cashierapp")`).
 /// * `user_key`: The credential supplied by the caller at open time.
+/// * `gate_id`: The ID of the gate being opened (required by OTP verifiers to look up state).
+/// * `user`: The principal of the claimer (required by OTP verifiers to look up state).
 /// * `http`: HTTP outcall service passed through to the chosen verifier.
 /// * `secrets`: Secret service passed through to the chosen verifier.
+/// * `current_time`: Current IC time in nanoseconds, forwarded to OTP verifiers for expiry checks.
 /// # Returns
 /// * `Ok(VerificationResult)`: Verification completed (may be Success or Failure).
 /// * `Err(GateServiceError::UnsupportedGateKey)`: The gate type has no registered verifier.
@@ -42,8 +48,11 @@ pub trait GateVerifier: Debug {
 pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
     gate_config_key: GateKey,
     user_key: GateKey,
+    gate_id: &str,
+    user: Principal,
     http: &H,
     secrets: &S,
+    current_time: u64,
 ) -> Result<VerificationResult, GateServiceError> {
     match gate_config_key {
         GateKey::Password(hash) => {
@@ -71,6 +80,16 @@ pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
                 .verify(user_key, http, secrets)
                 .await
         }
+        GateKey::OTPEmail(_) => {
+            OTPEmailVerifier::new(gate_id.to_string(), user)
+                .verify_with_time(user_key, http, secrets, current_time)
+                .await
+        }
+        GateKey::OTPSms(_) => {
+            OTPSmsVerifier::new(gate_id.to_string(), user)
+                .verify_with_time(user_key, http, secrets, current_time)
+                .await
+        }
         _ => Err(GateServiceError::UnsupportedGateKey(format!(
             "{:?}",
             gate_config_key
@@ -83,6 +102,7 @@ mod tests {
     use super::*;
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
+    use cashier_common::test_utils::random_principal_id;
     use std::collections::HashMap;
 
     fn fixture_of_services() -> (MockHttpOutcallService, MockSecretService) {
@@ -97,9 +117,19 @@ mod tests {
         // Arrange
         let (http, secrets) = fixture_of_services();
         let gate_key = GateKey::TelegramGroup("some_group".to_string());
+        let user = random_principal_id();
 
         // Act
-        let result = verify_gate(gate_key, GateKey::Password("x".into()), &http, &secrets).await;
+        let result = verify_gate(
+            gate_key,
+            GateKey::Password("x".into()),
+            "test_gate_id",
+            user,
+            &http,
+            &secrets,
+            0,
+        )
+        .await;
 
         // Assert
         assert!(matches!(
@@ -118,13 +148,17 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let hash = hash_password("password123").unwrap();
         let gate_config = GateKey::Password(hash);
+        let user = random_principal_id();
 
         // Act
         let result = verify_gate(
             gate_config,
             GateKey::Password("password123".into()),
+            "test_gate_id",
+            user,
             &http,
             &secrets,
+            0,
         )
         .await;
 

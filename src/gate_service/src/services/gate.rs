@@ -4,10 +4,7 @@
 use crate::{
     gates,
     repositories::{
-        Repositories,
-        gate::GateRepository,
-        get_password_hashing_algorithm,
-        otp::{delete_otp_record, get_otp_record, set_otp_record},
+        Repositories, gate::GateRepository, get_password_hashing_algorithm, otp::set_otp_record,
     },
     services::{http::HttpOutcallService, secret::SecretService},
     utils::{
@@ -24,31 +21,6 @@ use gate_service_types::{
 };
 use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs};
 use std::rc::Rc;
-
-/// Verifies a submitted OTP code against a stored record using an injected current timestamp.
-/// Accepting the time as a parameter keeps this function pure and unit-testable without IC runtime.
-/// # Arguments
-/// * `record`: The stored OTP record containing the code and expiry.
-/// * `submitted_code`: The 6-digit code provided by the claimer.
-/// * `current_time_ns`: Current time in nanoseconds (pass `ic_cdk::api::time()` in production).
-/// # Returns
-/// * `VerificationResult::Success` if the code matches and has not expired.
-/// * `VerificationResult::Failure` with a descriptive message otherwise.
-fn verify_otp_code(
-    record: &OtpRecord,
-    submitted_code: &str,
-    current_time_ns: u64,
-) -> VerificationResult {
-    if current_time_ns > record.expires_at {
-        return VerificationResult::Failure(
-            "OTP code has expired. Please request a new code.".to_string(),
-        );
-    }
-    if submitted_code != record.code {
-        return VerificationResult::Failure("Invalid OTP code.".to_string());
-    }
-    VerificationResult::Success
-}
 
 pub struct GateService<R: Repositories> {
     repository: GateRepository<R::Gate, R::GateUserStatus>,
@@ -159,15 +131,18 @@ impl<R: Repositories> GateService<R> {
         })
     }
 
-    /// Generates a 6-digit OTP code, stores it, and sends it to the configured destination via Brevo.
+    /// Stores the given OTP code and sends it to the configured destination via Brevo.
     /// Overwrites any previously issued code for this gate/user pair.
+    /// The caller is responsible for generating `code` and computing `expires_at`.
     /// # Arguments
     /// * `gate_id`: The ID of an OTPEmail or OTPSms gate.
     /// * `user`: The principal of the claimer requesting the code.
     /// * `http`: HTTP outcall service for the Brevo API request.
     /// * `secrets`: Secret service for `brevo_api_key` and (for email) `brevo_email_sender`.
+    /// * `code`: The 6-digit OTP code to store and send.
+    /// * `expires_at`: Absolute expiry timestamp in nanoseconds.
     /// # Returns
-    /// * `Ok(())`: Code generated, stored, and dispatched.
+    /// * `Ok(())`: Code stored and dispatched.
     /// * `Err(GateServiceError::NotFound)`: Gate does not exist.
     /// * `Err(GateServiceError::UnsupportedGateKey)`: Gate is not an OTP type.
     /// * `Err(GateServiceError::KeyVerificationFailed)`: Brevo API call failed.
@@ -177,6 +152,8 @@ impl<R: Repositories> GateService<R> {
         user: Principal,
         http: &H,
         secrets: &S,
+        code: &str,
+        expires_at: u64,
     ) -> Result<(), GateServiceError> {
         let gate = self
             .repository
@@ -194,21 +171,11 @@ impl<R: Repositories> GateService<R> {
             }
         };
 
-        let rand_bytes = ic_cdk::management_canister::raw_rand()
-            .await
-            .map_err(|e| GateServiceError::KeyVerificationFailed(format!("raw_rand: {e:?}")))?;
-        let rand_u32 =
-            u32::from_le_bytes([rand_bytes[0], rand_bytes[1], rand_bytes[2], rand_bytes[3]]);
-        let code = format!("{:06}", rand_u32 % 1_000_000);
-
-        const OTP_TTL_NS: u64 = 600_000_000_000; // 10 minutes in nanoseconds
-        let expires_at = ic_cdk::api::time() + OTP_TTL_NS;
-
         set_otp_record(
             gate_id,
             user,
             OtpRecord {
-                code: code.clone(),
+                code: code.to_string(),
                 expires_at,
                 attempts: 0,
             },
@@ -290,6 +257,7 @@ impl<R: Repositories> GateService<R> {
     /// * `user`: The user who is opening the gate.
     /// * `http`: HTTP outcall service used by verifiers that make external API calls.
     /// * `secrets`: Secret service used by verifiers that need stored credentials.
+    /// * `current_time`: Current IC time in nanoseconds (supplied by the caller so tests can inject a fixed value).
     /// # Returns
     /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
     /// * `Err(GateServiceError)`: If there is an error during gate opening.
@@ -300,55 +268,26 @@ impl<R: Repositories> GateService<R> {
         user: Principal,
         http: &H,
         secrets: &S,
+        current_time: u64,
     ) -> Result<OpenGateSuccessResult, GateServiceError> {
         let gate = self
             .repository
             .get_gate(gate_id)
             .ok_or(GateServiceError::NotFound)?;
 
-        // OTP gates verify against the stored OTP record instead of going through verify_gate.
-        if matches!(gate.key, GateKey::OTPEmail(_) | GateKey::OTPSms(_)) {
-            let submitted_code = match key {
-                GateKey::OTPEmail(code) | GateKey::OTPSms(code) => code,
-                _ => {
-                    return Err(GateServiceError::InvalidKeyType(
-                        "Expected OTPEmail or OTPSms credential for OTP gate".to_string(),
-                    ));
-                }
-            };
-
-            let record = get_otp_record(gate_id, user).ok_or_else(|| {
-                GateServiceError::KeyVerificationFailed(
-                    "No OTP code found. Please request a new code.".to_string(),
-                )
-            })?;
-
-            let current_time = ic_cdk::api::time();
-            match verify_otp_code(&record, &submitted_code, current_time) {
-                VerificationResult::Success => {
-                    delete_otp_record(gate_id, user);
-                    let redacted = redact_password_gate(gate);
-                    let (gate, gate_user_status) = self
-                        .repository
-                        .open_gate(redacted, user)
-                        .map_err(GateServiceError::RepositoryError)?;
-                    return Ok(OpenGateSuccessResult {
-                        gate,
-                        gate_user_status,
-                    });
-                }
-                VerificationResult::Failure(e) => {
-                    let mut updated_record = record;
-                    updated_record.attempts += 1;
-                    set_otp_record(gate_id, user, updated_record);
-                    return Err(GateServiceError::KeyVerificationFailed(e));
-                }
-            }
-        }
-
         let gate_config_key = gate.key.clone();
 
-        match gates::verify_gate(gate_config_key, key, http, secrets).await? {
+        match gates::verify_gate(
+            gate_config_key,
+            key,
+            gate_id,
+            user,
+            http,
+            secrets,
+            current_time,
+        )
+        .await?
+        {
             VerificationResult::Success => {
                 let redacted = redact_password_gate(gate);
                 let (gate, gate_user_status) = self
@@ -369,11 +308,15 @@ impl<R: Repositories> GateService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::otp::{get_otp_record, set_otp_record};
     use crate::repositories::tests::TestRepositories;
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
-    use gate_service_types::GateStatus;
+    use gate_service_types::{
+        GateStatus,
+        constant::{SECRET_TWITTER_API_KEY, SECRET_X_BEARER_TOKEN},
+    };
     use std::collections::HashMap;
 
     fn fixture_of_services() -> (MockHttpOutcallService, MockSecretService) {
@@ -572,7 +515,7 @@ mod tests {
 
         // Act
         let result = service
-            .open_gate(&gate.id, gate_key, user, &http, &secrets)
+            .open_gate(&gate.id, gate_key, user, &http, &secrets, 0)
             .await;
 
         // Assert
@@ -596,61 +539,6 @@ mod tests {
         assert!(result.is_none());
     }
 
-    // ── verify_otp_code ───────────────────────────────────────────────────────
-
-    fn fixture_of_otp_record(code: &str, expires_at: u64) -> OtpRecord {
-        OtpRecord {
-            code: code.to_string(),
-            expires_at,
-            attempts: 0,
-        }
-    }
-
-    #[test]
-    fn it_should_fail_verify_otp_code_due_to_expiry() {
-        // Arrange
-        let record = fixture_of_otp_record("123456", 500);
-        let current_time_ns = 1000; // past the expiry
-
-        // Act
-        let result = verify_otp_code(&record, "123456", current_time_ns);
-
-        // Assert
-        assert!(matches!(result, VerificationResult::Failure(_)));
-        if let VerificationResult::Failure(msg) = result {
-            assert!(msg.contains("expired"));
-        }
-    }
-
-    #[test]
-    fn it_should_fail_verify_otp_code_due_to_wrong_code() {
-        // Arrange
-        let record = fixture_of_otp_record("123456", u64::MAX);
-        let current_time_ns = 0;
-
-        // Act
-        let result = verify_otp_code(&record, "999999", current_time_ns);
-
-        // Assert
-        assert!(matches!(result, VerificationResult::Failure(_)));
-        if let VerificationResult::Failure(msg) = result {
-            assert!(msg.contains("Invalid"));
-        }
-    }
-
-    #[test]
-    fn it_should_verify_otp_code() {
-        // Arrange
-        let record = fixture_of_otp_record("123456", u64::MAX);
-        let current_time_ns = 0;
-
-        // Act
-        let result = verify_otp_code(&record, "123456", current_time_ns);
-
-        // Assert
-        assert!(matches!(result, VerificationResult::Success));
-    }
-
     #[tokio::test]
     async fn it_should_get_password_gate_for_user() {
         // Arrange
@@ -665,7 +553,7 @@ mod tests {
         let user = random_principal_id();
         let (http, secrets) = fixture_of_services();
         let _ = service
-            .open_gate(&gate.id, gate_key, user, &http, &secrets)
+            .open_gate(&gate.id, gate_key, user, &http, &secrets, 0)
             .await;
 
         // Act
@@ -680,5 +568,929 @@ mod tests {
         assert_eq!(gate_user_status.gate_id, gate.id);
         assert_eq!(gate_user_status.user_id, user);
         assert_eq!(gate_user_status.status, GateStatus::Open);
+    }
+
+    // ── send_otp failure cases ─────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_due_to_gate_not_found() {
+        // Arrange
+        let service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(
+                "nonexistent_gate",
+                user,
+                &http,
+                &secrets,
+                "123456",
+                u64::MAX,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(GateServiceError::NotFound)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_due_to_unsupported_gate_key() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::Password("pass".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::UnsupportedGateKey(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_email_due_to_missing_brevo_api_key() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::new(vec![]);
+        let secrets = MockSecretService::new(HashMap::new());
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains(SECRET_BREVO_API_KEY),
+                "Expected error containing '{}', got: {}",
+                SECRET_BREVO_API_KEY,
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_email_due_to_missing_sender_secret() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::new(vec![]);
+        let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains(SECRET_BREVO_EMAIL_SENDER),
+                "Expected error containing '{}', got: {}",
+                SECRET_BREVO_EMAIL_SENDER,
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_email_due_to_brevo_api_error() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http =
+            MockHttpOutcallService::with_json_response(400, r#"{"code":"invalid_parameter"}"#);
+        let mut secret_map = HashMap::new();
+        secret_map.insert(SECRET_BREVO_API_KEY.to_string(), "test_api_key".to_string());
+        secret_map.insert(
+            SECRET_BREVO_EMAIL_SENDER.to_string(),
+            "sender@example.com".to_string(),
+        );
+        let secrets = MockSecretService::new(secret_map);
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains("400"),
+                "Expected error containing '400', got: {}",
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_sms_due_to_missing_brevo_api_key() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::new(vec![]);
+        let secrets = MockSecretService::new(HashMap::new());
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPSms("+1234567890".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains(SECRET_BREVO_API_KEY),
+                "Expected error containing '{}', got: {}",
+                SECRET_BREVO_API_KEY,
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_send_otp_sms_due_to_brevo_api_error() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http =
+            MockHttpOutcallService::with_json_response(400, r#"{"code":"invalid_parameter"}"#);
+        let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPSms("+1234567890".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains("400"),
+                "Expected error containing '400', got: {}",
+                msg
+            );
+        }
+    }
+
+    // ── send_otp success cases ─────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn it_should_send_otp_email_successfully() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http =
+            MockHttpOutcallService::with_json_response(201, r#"{"messageId":"<abc@brevo>"}"#);
+        let mut secret_map = HashMap::new();
+        secret_map.insert(SECRET_BREVO_API_KEY.to_string(), "test_api_key".to_string());
+        secret_map.insert(
+            SECRET_BREVO_EMAIL_SENDER.to_string(),
+            "sender@example.com".to_string(),
+        );
+        let secrets = MockSecretService::new(secret_map);
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let record = get_otp_record(&gate.id, user).expect("OTP record should have been stored");
+        assert_eq!(record.code, "123456");
+        assert_eq!(record.attempts, 0);
+    }
+
+    #[tokio::test]
+    async fn it_should_send_otp_sms_successfully() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::with_json_response(200, r#"{"messageId":"sms-123"}"#);
+        let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPSms("+1234567890".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .send_otp(&gate.id, user, &http, &secrets, "123456", u64::MAX)
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let record = get_otp_record(&gate.id, user).expect("OTP record should have been stored");
+        assert_eq!(record.code, "123456");
+    }
+
+    // ── open_gate failure cases ────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn it_should_fail_open_gate_due_to_gate_not_found() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                "nonexistent",
+                GateKey::Password("x".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(result, Err(GateServiceError::NotFound)));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_gate_due_to_wrong_password() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::Password("correct_password".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::Password("wrong_password".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_gate_due_to_unsupported_gate_key() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::TelegramGroup("some_group".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::TelegramGroup("some_group".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::UnsupportedGateKey(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_otp_email_gate_due_to_no_otp_sent() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act (no OTP record seeded)
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::OTPEmail("123456".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains("No OTP code found"),
+                "Expected 'No OTP code found', got: {}",
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_otp_email_gate_due_to_wrong_code() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+        set_otp_record(
+            &gate.id,
+            user,
+            OtpRecord {
+                code: "123456".to_string(),
+                expires_at: u64::MAX,
+                attempts: 0,
+            },
+        );
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::OTPEmail("999999".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+        if let Err(GateServiceError::KeyVerificationFailed(msg)) = result {
+            assert!(
+                msg.contains("Invalid OTP code"),
+                "Expected 'Invalid OTP code', got: {}",
+                msg
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_xowned_account_gate_due_to_handle_mismatch() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XOwnedAccount("cashierapp".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XOwnedAccount("alice".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_xfollowing_gate_due_to_not_following() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"status":"success","message":"ok","data":{"following":false,"followed_by":false}}"#,
+        );
+        let secrets = MockSecretService::with_entry(SECRET_TWITTER_API_KEY, "test_twitter_key");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XFollowing("cashierapp".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XFollowing("alice".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_xliked_post_gate_due_to_tweet_not_liked() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        // HTTP returns a tweet with id "999", gate is locked to tweet "111"
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"data":[{"id":"999","referenced_tweets":null}]}"#,
+        );
+        let (_, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XLikedPost("https://x.com/user/status/111".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XLikedPostCredential {
+                    user_id: "1".to_string(),
+                    access_token: "tok".to_string(),
+                },
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn it_should_fail_open_xretweeted_post_gate_due_to_tweet_not_retweeted() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        // HTTP returns a retweet of "999", but gate requires tweet "111"
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"data":[{"id":"xyz","referenced_tweets":[{"type":"retweeted","id":"999"}]}]}"#,
+        );
+        let secrets = MockSecretService::with_entry(SECRET_X_BEARER_TOKEN, "test_bearer_token");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XRetweetedPost("https://x.com/user/status/111".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XRetweetedPostCredential {
+                    user_id: "1".to_string(),
+                },
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(matches!(
+            result,
+            Err(GateServiceError::KeyVerificationFailed(_))
+        ));
+    }
+
+    // ── open_gate success cases ────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn it_should_open_otp_email_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPEmail("test@example.com".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+        set_otp_record(
+            &gate.id,
+            user,
+            OtpRecord {
+                code: "123456".to_string(),
+                expires_at: u64::MAX,
+                attempts: 0,
+            },
+        );
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::OTPEmail("123456".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate.id, gate.id);
+        assert_eq!(result.gate_user_status.gate_id, gate.id);
+        assert_eq!(result.gate_user_status.user_id, user);
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+    }
+
+    #[tokio::test]
+    async fn it_should_open_otp_sms_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::OTPSms("+1234567890".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+        set_otp_record(
+            &gate.id,
+            user,
+            OtpRecord {
+                code: "123456".to_string(),
+                expires_at: u64::MAX,
+                attempts: 0,
+            },
+        );
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::OTPSms("123456".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+        assert_eq!(result.gate_user_status.user_id, user);
+    }
+
+    #[tokio::test]
+    async fn it_should_open_xowned_account_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let (http, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XOwnedAccount("CashierApp".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XOwnedAccount("cashierapp".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+    }
+
+    #[tokio::test]
+    async fn it_should_open_xfollowing_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"status":"success","message":"ok","data":{"following":true,"followed_by":false}}"#,
+        );
+        let secrets = MockSecretService::with_entry(SECRET_TWITTER_API_KEY, "test_twitter_key");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XFollowing("cashierapp".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XFollowing("alice".into()),
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+    }
+
+    #[tokio::test]
+    async fn it_should_open_xliked_post_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"data":[{"id":"111","referenced_tweets":null}]}"#,
+        );
+        let (_, secrets) = fixture_of_services();
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XLikedPost("https://x.com/user/status/111".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XLikedPostCredential {
+                    user_id: "1".to_string(),
+                    access_token: "tok".to_string(),
+                },
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+    }
+
+    #[tokio::test]
+    async fn it_should_open_xretweeted_post_gate() {
+        // Arrange
+        let mut service = gate_service_fixture();
+        let http = MockHttpOutcallService::with_json_response(
+            200,
+            r#"{"data":[{"id":"xyz","referenced_tweets":[{"type":"retweeted","id":"111"}]}]}"#,
+        );
+        let secrets = MockSecretService::with_entry(SECRET_X_BEARER_TOKEN, "test_bearer_token");
+        let creator = random_principal_id();
+        let gate = service
+            .add_gate(
+                creator,
+                NewGate {
+                    subject_id: random_id_string(),
+                    key: GateKey::XRetweetedPost("https://x.com/user/status/111".to_string()),
+                },
+            )
+            .unwrap();
+        let user = random_principal_id();
+
+        // Act
+        let result = service
+            .open_gate(
+                &gate.id,
+                GateKey::XRetweetedPostCredential {
+                    user_id: "1".to_string(),
+                },
+                user,
+                &http,
+                &secrets,
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
     }
 }

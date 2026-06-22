@@ -11,7 +11,7 @@ use gate_service_types::{
     Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, XTokenExchangeResult,
     auth::Permission, error::GateServiceError,
 };
-use ic_cdk::{api::msg_caller, query, update};
+use ic_cdk::{api::msg_caller, management_canister::raw_rand, query, update};
 
 #[update(guard = "is_not_anonymous")]
 /// Adds a new gate
@@ -136,6 +136,7 @@ async fn open_gate(
             effective_user,
             &IcHttpOutcallService,
             &IcSecretService,
+            ic_cdk::api::time(),
         )
         .await
 }
@@ -167,6 +168,14 @@ async fn send_otp(gate_id: String, user: Principal) -> Result<(), GateServiceErr
     } else {
         caller
     };
+    let rand_bytes = raw_rand()
+        .await
+        .map_err(|e| GateServiceError::KeyVerificationFailed(format!("raw_rand: {e:?}")))?;
+    let rand_u32 = u32::from_le_bytes([rand_bytes[0], rand_bytes[1], rand_bytes[2], rand_bytes[3]]);
+    let code = format!("{:06}", rand_u32 % 1_000_000);
+    const OTP_TTL_NS: u64 = 600_000_000_000;
+    let expires_at = ic_cdk::api::time() + OTP_TTL_NS;
+
     let gate_service = get_state().gate_service;
     gate_service
         .send_otp(
@@ -174,6 +183,8 @@ async fn send_otp(gate_id: String, user: Principal) -> Result<(), GateServiceErr
             effective_user,
             &IcHttpOutcallService,
             &IcSecretService,
+            &code,
+            expires_at,
         )
         .await
 }
