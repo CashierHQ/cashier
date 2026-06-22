@@ -92,6 +92,7 @@
   let detailsLandingTracked = $state(false);
   let showFeeInfoDrawer = $state(false);
   let showTransactionLocksDrawer = $state(false);
+  const CREATE_LINK_PROGRESS_SEGMENTS = 4;
 
   function assetAndFeeListToForecastShape(
     list: AssetAndFeeList,
@@ -554,7 +555,10 @@
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
     <DetailLinkHeader linkTitle={linkStore.link.title} {onBack} />
     {#if linkStore.link.state === LinkState.CREATE_LINK}
-      <LinkCreationProgressBar filledCount={3} />
+      <LinkCreationProgressBar
+        filledCount={CREATE_LINK_PROGRESS_SEGMENTS}
+        segmentCount={CREATE_LINK_PROGRESS_SEGMENTS}
+      />
     {/if}
     {#if errorMessage}
       <div
