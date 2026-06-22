@@ -74,24 +74,12 @@ jobs:
       - name: Setup Node + pnpm
         uses: ./.github/actions/setup-node-pnpm
 
-      - name: Create the canister id
-        env:
-          DFX_WARNING: -mainnet_plaintext_identity
-        run: |
-          dfx canister create token_storage --network ${{ needs.setup_environment.outputs.network }}
-
       - name: Verify the canister id
         id: canister_ids
         run: |
           TOKEN_STORAGE_ID=$(just get_canister_id token_storage ${{ needs.setup_environment.outputs.network }})
           echo "Token storage canister ID: $TOKEN_STORAGE_ID"
           echo "token_storage_id=$TOKEN_STORAGE_ID" >> $GITHUB_OUTPUT
-
-      - name: Set Orbit station as the controller
-        env:
-          DFX_WARNING: -mainnet_plaintext_identity
-        run: |
-          dfx canister update-settings token_storage --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Set log filter
         id: log_filter

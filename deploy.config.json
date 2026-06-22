@@ -2,17 +2,6 @@
   "deployBranches": ["main", "staging"],
   "deployTargets": [
     {
-      "name": "backend",
-      "workflow": "orbit-backend-deploy.yml",
-      "paths": [
-        "src/cashier_backend/",
-        "src/token_storage/",
-        "src/transaction_manager/",
-        "src/shared/",
-        ".github/workflows/orbit-backend-deploy.yml"
-      ]
-    },
-    {
       "name": "frontend",
       "workflow": "orbit-frontend-deploy.yml",
       "paths": [
