@@ -1,0 +1,9 @@
+(record {
+  log_settings=opt record {
+    enable_console=opt true;
+    in_memory_records=opt 10000;
+    log_filter=opt "__LOG_FILTER__";
+  };
+  owner=principal "__OWNER__";
+  permissions=opt (vec { record { principal "__BACKEND_CANISTER_ID__"; vec { variant { GateCreate } } } });
+})

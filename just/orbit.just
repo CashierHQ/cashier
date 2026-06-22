@@ -88,6 +88,29 @@ build_backend_args owner token_storage_canister_id log_filter file_name:
     scripts/args/backend_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
+# Build init and upgrade hex argument for gate_service canister
+[group('orbit')]
+build_gate_service_args_hex owner backend_canister_id log_filter output_file:
+  #!/usr/bin/env bash
+  set -e
+
+  # step 1: build argument text by injecting fields values
+  just build_gate_service_args "{{owner}}" "{{backend_canister_id}}" "{{log_filter}}" "{{output_file}}.txt"
+
+  # step 2: encode argument text to hex format using didc and candid types
+  didc encode -d ./target/artifacts/gate_service.did -t "(GateServiceInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+
+# Build the gate_service canister args and save to file
+[group('orbit')]
+build_gate_service_args owner backend_canister_id log_filter file_name:
+  #!/usr/bin/env bash
+  sed \
+    -e 's/__OWNER__/{{owner}}/g' \
+    -e 's/__BACKEND_CANISTER_ID__/{{backend_canister_id}}/g' \
+    -e 's/__LOG_FILTER__/{{log_filter}}/g' \
+    scripts/args/gate_service_args.template \
+    | tr -d '\n' | tr -s ' ' > {{file_name}}
+
 # Build init and upgrade hex argument for token storage canister
 [group('orbit')]
 build_token_storage_args_hex owner log_filter ckbtc_minter_id omnity_bitcoin_id output_file:

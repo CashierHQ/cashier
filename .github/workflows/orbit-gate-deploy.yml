@@ -1,0 +1,155 @@
+name: Orbit Gate Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - reinstall
+          - upgrade
+          - install
+      sha:
+        description: 'Exact commit SHA to deploy (passed by fast-forward trigger to avoid stale checkout race condition)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    outputs:
+      network: ${{ steps.set-env.outputs.network }}
+      mode: ${{ steps.set-mode.outputs.mode }}
+    steps:
+      - name: Set deployment network
+        id: set-env
+        run: |
+          # For pull requests, use base_ref, for pushes use ref_name
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TARGET_BRANCH="${{ github.base_ref }}"
+          else
+            TARGET_BRANCH="${{ github.ref_name }}"
+          fi
+          echo "Detected branch: $TARGET_BRANCH"
+
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            echo "network=production" >> $GITHUB_OUTPUT
+          elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+            echo "network=staging" >> $GITHUB_OUTPUT
+          else
+            # Any other branch will deploy to dev network
+            echo "network=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set deployment mode
+        id: set-mode
+        env:
+          DEFAULT_MODE: install
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+        run: |
+          echo "mode=${INPUT_MODE:-$DEFAULT_MODE}" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Prepare and Submit Orbit request (optional)
+    needs: setup_environment
+    environment: ${{ needs.setup_environment.outputs.network }}
+    env:
+      MODE: ${{ needs.setup_environment.outputs.mode }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Orbit deploy setup
+        id: setup
+        uses: ./.github/actions/orbit-deploy-setup
+        with:
+          sha: ${{ inputs.sha }}
+          deployer_secret: ${{ secrets.DEPLOYER }}
+          orbit_station_id: ${{ vars.ORBIT_STATION_ID }}
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Verify the canister id
+        id: canister_ids
+        run: |
+          GATE_SERVICE_ID=$(just get_canister_id gate_service ${{ needs.setup_environment.outputs.network }})
+          echo "Gate service canister ID: $GATE_SERVICE_ID"
+          echo "gate_service_id=$GATE_SERVICE_ID" >> $GITHUB_OUTPUT
+
+      - name: Set log filter
+        id: log_filter
+        run: |
+          if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
+            echo "filter=global,cashier=info" >> $GITHUB_OUTPUT
+          else
+            echo "filter=global,cashier=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build canisters
+        run: just build ${{ needs.setup_environment.outputs.network }}
+
+      - name: Build candid args (single run)
+        run: |
+          owner=${{ vars.ORBIT_STATION_ID }}
+          # Resolve backend id from canister_ids.json (single source of truth), not a GitHub var
+          backend_canister_id=$(just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }})
+          just build_gate_service_args_hex "$owner" "$backend_canister_id" "${{ steps.log_filter.outputs.filter }}" gate_service_args
+          echo "Gate service args:"
+          cat gate_service_args.hex
+
+      - name: Install gate_service canister
+        id: gate_service
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+
+          canister_name=gate_service
+          review_run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit=${{ github.sha }}
+
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" gate_service_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Write Job Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## 🚀 Orbit Deploy Summary
+
+          - **Network**: `${{ needs.setup_environment.outputs.network }}`
+          - **Mode**: `${{ env.MODE }}`
+          - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
+
+          ### Gate Service Canister
+          - **Canister ID**: `${{ steps.canister_ids.outputs.gate_service_id }}`
+          **Arg:**
+          ```
+          ${{ steps.gate_service.outputs.arg }}
+          ```
+          | Field | Value |
+          |-------|-------|
+          | WASM Checksum | `${{ steps.gate_service.outputs.wasm_checksum }}` |
+          | Arg Checksum | `${{ steps.gate_service.outputs.arg_checksum }}` |
+          | Request URL | ${{ steps.gate_service.outputs.request_url }} |
+
+          ---
+          EOF
+          echo "*Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> "$GITHUB_STEP_SUMMARY"
