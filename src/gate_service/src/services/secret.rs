@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::get_decrypted_secret;
+use crate::repositories::{Repositories, ThreadlocalRepositories};
 use gate_service_types::error::GateServiceError;
 
 /// Abstraction over encrypted secret retrieval, injectable for unit testing.
@@ -20,7 +20,10 @@ pub struct IcSecretService;
 
 impl SecretService for IcSecretService {
     async fn get_secret(&self, key: &str) -> Result<String, GateServiceError> {
-        get_decrypted_secret(key).await
+        ThreadlocalRepositories
+            .secrets()
+            .get_decrypted_secret(key)
+            .await
     }
 }
 

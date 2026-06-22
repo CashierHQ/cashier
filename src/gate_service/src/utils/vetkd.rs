@@ -1,23 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use gate_service_types::error::GateServiceError;
+use crate::repositories::vetkey::VetKeyRepository;
+use gate_service_types::{
+    constant::{VETKEY_CONTEXT, VETKEY_INPUT, VETKEY_NAME, VETKEY_SYMMETRIC_DOMAIN},
+    error::GateServiceError,
+};
 use ic_cdk::management_canister::{VetKDCurve, VetKDDeriveKeyArgs, VetKDKeyId, VetKDPublicKeyArgs};
 use ic_vetkeys::{DerivedPublicKey, EncryptedVetKey, TransportSecretKey};
 use rand::Rng;
-
-/// Key name used for vetKD derivation.
-/// "key_1" is available on all IC networks (local dfx uses "dfx_test_key" for local testing only).
-const VETKEY_NAME: &str = "key_1";
-
-/// Derivation context — must match what the admin script passes to vetkd_public_key.
-const VETKEY_CONTEXT: &[u8] = b"cashier-gate-secrets";
-
-/// Derivation input — the identity used for all API secret keys.
-pub const VETKEY_INPUT: &[u8] = b"cashier-gate-secrets";
-
-/// HKDF domain separator used by VetKey::derive_symmetric_key.
-pub const VETKEY_SYMMETRIC_DOMAIN: &str = "cashier-api-secrets-v1";
 
 fn vetkey_id() -> VetKDKeyId {
     VetKDKeyId {
@@ -65,16 +56,9 @@ pub async fn derive_encrypted_vetkey(
     .map_err(|e| GateServiceError::KeyVerificationFailed(format!("vetkd_derive_key: {e:?}")))
 }
 
-/// Derives a 32-byte AES key from the vetKD system.
-///
-/// Generates an ephemeral transport keypair, calls vetkd_derive_key,
-/// decrypts the result, and uses HKDF to produce the AES key.
-/// Both the transport key and the raw VetKey bytes are dropped after derivation.
-/// # Returns
-/// * `Ok([u8; 32])`: 32-byte AES-256 key ready for use with `aes_decrypt`.
-/// * `Err(GateServiceError::KeyVerificationFailed)`: Transport key generation, IC call,
-///   VetKey decryption, or HKDF output failed.
-pub async fn derive_aes_key() -> Result<[u8; 32], GateServiceError> {
+/// Fetches and derives a fresh 32-byte AES-256 key from the IC vetKD system.
+/// Makes two management canister round-trips on every call.
+async fn derive_aes_key_from_ic() -> Result<[u8; 32], GateServiceError> {
     // Ephemeral transport key — exists only for this call
     let seed: [u8; 32] = rand::thread_rng().r#gen();
     let tsk = TransportSecretKey::from_seed(seed.to_vec())
@@ -100,4 +84,44 @@ pub async fn derive_aes_key() -> Result<[u8; 32], GateServiceError> {
     key_bytes
         .try_into()
         .map_err(|_| GateServiceError::KeyVerificationFailed("key length mismatch".into()))
+}
+
+/// Derives a 32-byte AES-256 key, using the heap cache when available.
+///
+/// On first call the key is derived via two IC management canister calls and stored in heap
+/// memory for the lifetime of the canister instance (cleared on upgrade). Subsequent calls
+/// return the cached value immediately with no inter-canister round-trips.
+/// # Returns
+/// * `Ok([u8; 32])`: 32-byte AES-256 key ready for use with `aes_decrypt`.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Transport key generation, IC call,
+///   VetKey decryption, or HKDF output failed (first call only; cached calls never fail).
+pub async fn derive_aes_key() -> Result<[u8; 32], GateServiceError> {
+    let repo = VetKeyRepository::new();
+    if let Some(key) = repo.get_cached_key() {
+        return Ok(key);
+    }
+    let key = derive_aes_key_from_ic().await?;
+    repo.set_cached_key(key);
+    Ok(key)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn it_should_return_cached_key_without_ic_call() {
+        // Arrange — seed cache to bypass any IC management call
+        let expected = [42u8; 32];
+        VetKeyRepository::new().set_cached_key(expected);
+
+        // Act
+        let result = derive_aes_key().await.unwrap();
+
+        // Assert
+        assert_eq!(result, expected);
+
+        // Cleanup
+        VetKeyRepository::new().clear_cached_key();
+    }
 }

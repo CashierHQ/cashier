@@ -4,7 +4,7 @@
 use crate::{
     gates,
     repositories::{
-        Repositories, gate::GateRepository, get_password_hashing_algorithm, otp::set_otp_record,
+        Repositories, gate::GateRepository, get_password_hashing_algorithm, otp::OtpRepository,
     },
     services::{http::HttpOutcallService, secret::SecretService},
     utils::{
@@ -23,13 +23,15 @@ use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs};
 use std::rc::Rc;
 
 pub struct GateService<R: Repositories> {
-    repository: GateRepository<R::Gate, R::GateUserStatus>,
+    gate_repo: GateRepository<R::Gate, R::GateUserStatus>,
+    otp_repo: OtpRepository<R::Otp>,
 }
 
 impl<R: Repositories> GateService<R> {
     pub fn new(repositories: Rc<R>) -> Self {
         Self {
-            repository: repositories.gate(),
+            gate_repo: repositories.gate(),
+            otp_repo: repositories.otp(),
         }
     }
 
@@ -61,7 +63,7 @@ impl<R: Repositories> GateService<R> {
         };
 
         let gate = self
-            .repository
+            .gate_repo
             .create_gate(
                 creator,
                 NewGate {
@@ -82,7 +84,7 @@ impl<R: Repositories> GateService<R> {
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate(&self, gate_id: &str) -> Option<Gate> {
-        self.repository.get_gate(gate_id).map(redact_password_gate)
+        self.gate_repo.get_gate(gate_id).map(redact_password_gate)
     }
 
     /// Retrieves a gate by its subject's ID.
@@ -94,7 +96,7 @@ impl<R: Repositories> GateService<R> {
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate_by_subject(&self, creator: Principal, subject_id: &str) -> Option<Gate> {
-        self.repository
+        self.gate_repo
             .get_gate_by_subject(creator, subject_id)
             .map(redact_password_gate)
     }
@@ -108,7 +110,7 @@ impl<R: Repositories> GateService<R> {
     /// * `Ok(None)`: If no gate user status is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus> {
-        self.repository.get_gate_user_status(gate_id, user)
+        self.gate_repo.get_gate_user_status(gate_id, user)
     }
 
     /// Retrieves a gate with its status for a specific user.
@@ -147,7 +149,7 @@ impl<R: Repositories> GateService<R> {
     /// * `Err(GateServiceError::UnsupportedGateKey)`: Gate is not an OTP type.
     /// * `Err(GateServiceError::KeyVerificationFailed)`: Brevo API call failed.
     pub async fn send_otp<H: HttpOutcallService, S: SecretService>(
-        &self,
+        &mut self,
         gate_id: &str,
         user: Principal,
         http: &H,
@@ -156,7 +158,7 @@ impl<R: Repositories> GateService<R> {
         expires_at: u64,
     ) -> Result<(), GateServiceError> {
         let gate = self
-            .repository
+            .gate_repo
             .get_gate(gate_id)
             .ok_or(GateServiceError::NotFound)?;
 
@@ -171,7 +173,7 @@ impl<R: Repositories> GateService<R> {
             }
         };
 
-        set_otp_record(
+        self.otp_repo.set_otp_record(
             gate_id,
             user,
             OtpRecord {
@@ -271,7 +273,7 @@ impl<R: Repositories> GateService<R> {
         current_time: u64,
     ) -> Result<OpenGateSuccessResult, GateServiceError> {
         let gate = self
-            .repository
+            .gate_repo
             .get_gate(gate_id)
             .ok_or(GateServiceError::NotFound)?;
 
@@ -291,7 +293,7 @@ impl<R: Repositories> GateService<R> {
             VerificationResult::Success => {
                 let redacted = redact_password_gate(gate);
                 let (gate, gate_user_status) = self
-                    .repository
+                    .gate_repo
                     .open_gate(redacted, user)
                     .map_err(GateServiceError::RepositoryError)?;
 
@@ -308,7 +310,7 @@ impl<R: Repositories> GateService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::otp::{get_otp_record, set_otp_record};
+    use crate::repositories::otp::set_otp_record;
     use crate::repositories::tests::TestRepositories;
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
@@ -326,15 +328,17 @@ mod tests {
         )
     }
 
-    /// Generate a fixture for the gate service using a stable gate repository.
-    fn gate_service_fixture() -> GateService<TestRepositories> {
-        GateService::new(Rc::new(TestRepositories::new()))
+    /// Generate a fixture for the gate service and its backing repositories.
+    /// The returned `Rc<TestRepositories>` can be used to inspect repository state after service calls.
+    fn fixture_of_gate_service() -> (GateService<TestRepositories>, Rc<TestRepositories>) {
+        let repos = Rc::new(TestRepositories::new());
+        (GateService::new(repos.clone()), repos)
     }
 
     #[test]
     fn it_should_add_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let gates = vec![
             NewGate {
@@ -382,7 +386,7 @@ mod tests {
     #[test]
     fn it_should_none_get_gate() {
         // Arrange
-        let service = gate_service_fixture();
+        let (service, _repos) = fixture_of_gate_service();
 
         // Act
         let gate = service.get_gate("non_existent_gate_id");
@@ -394,7 +398,7 @@ mod tests {
     #[test]
     fn it_should_get_password_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
@@ -417,7 +421,7 @@ mod tests {
     #[test]
     fn it_should_get_xfollowing_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let subject_id = random_id_string();
         let new_gate = NewGate {
@@ -441,7 +445,7 @@ mod tests {
     #[test]
     fn it_should_none_get_gate_by_subject_id() {
         // Arrange
-        let service = gate_service_fixture();
+        let (service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
 
         // Act
@@ -454,7 +458,7 @@ mod tests {
     #[test]
     fn it_should_get_password_gate_by_subject_id() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let subject_id = random_id_string();
         let new_gate = NewGate {
@@ -478,7 +482,7 @@ mod tests {
     #[test]
     fn it_should_get_xfollowing_gate_by_subject_id() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let subject_id = random_id_string();
         let new_gate = NewGate {
@@ -502,7 +506,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_password_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let new_gate = NewGate {
@@ -529,7 +533,7 @@ mod tests {
     #[test]
     fn it_should_none_get_gate_user_status() {
         // Arrange
-        let service = gate_service_fixture();
+        let (service, _repos) = fixture_of_gate_service();
         let user = random_principal_id();
 
         // Act
@@ -542,7 +546,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_get_password_gate_for_user() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
@@ -575,7 +579,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_due_to_gate_not_found() {
         // Arrange
-        let service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let user = random_principal_id();
 
@@ -598,7 +602,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_due_to_unsupported_gate_key() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -627,7 +631,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_email_due_to_missing_brevo_api_key() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::new(vec![]);
         let secrets = MockSecretService::new(HashMap::new());
         let creator = random_principal_id();
@@ -665,7 +669,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_email_due_to_missing_sender_secret() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::new(vec![]);
         let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
         let creator = random_principal_id();
@@ -703,7 +707,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_email_due_to_brevo_api_error() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http =
             MockHttpOutcallService::with_json_response(400, r#"{"code":"invalid_parameter"}"#);
         let mut secret_map = HashMap::new();
@@ -747,7 +751,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_sms_due_to_missing_brevo_api_key() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::new(vec![]);
         let secrets = MockSecretService::new(HashMap::new());
         let creator = random_principal_id();
@@ -785,7 +789,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_send_otp_sms_due_to_brevo_api_error() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http =
             MockHttpOutcallService::with_json_response(400, r#"{"code":"invalid_parameter"}"#);
         let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
@@ -825,7 +829,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_send_otp_email_successfully() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, repos) = fixture_of_gate_service();
         let http =
             MockHttpOutcallService::with_json_response(201, r#"{"messageId":"<abc@brevo>"}"#);
         let mut secret_map = HashMap::new();
@@ -854,7 +858,10 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
-        let record = get_otp_record(&gate.id, user).expect("OTP record should have been stored");
+        let record = repos
+            .otp()
+            .get_otp_record(&gate.id, user)
+            .expect("OTP record should have been stored");
         assert_eq!(record.code, "123456");
         assert_eq!(record.attempts, 0);
     }
@@ -862,7 +869,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_send_otp_sms_successfully() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::with_json_response(200, r#"{"messageId":"sms-123"}"#);
         let secrets = MockSecretService::with_entry(SECRET_BREVO_API_KEY, "test_api_key");
         let creator = random_principal_id();
@@ -884,7 +891,10 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
-        let record = get_otp_record(&gate.id, user).expect("OTP record should have been stored");
+        let record = repos
+            .otp()
+            .get_otp_record(&gate.id, user)
+            .expect("OTP record should have been stored");
         assert_eq!(record.code, "123456");
     }
 
@@ -893,7 +903,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_gate_due_to_gate_not_found() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let user = random_principal_id();
 
@@ -916,7 +926,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_gate_due_to_wrong_password() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -952,7 +962,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_gate_due_to_unsupported_gate_key() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -988,7 +998,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_otp_email_gate_due_to_no_otp_sent() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1031,7 +1041,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_otp_email_gate_due_to_wrong_code() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1083,7 +1093,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_xowned_account_gate_due_to_handle_mismatch() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1119,7 +1129,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_xfollowing_gate_due_to_not_following() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::with_json_response(
             200,
             r#"{"status":"success","message":"ok","data":{"following":false,"followed_by":false}}"#,
@@ -1159,7 +1169,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_xliked_post_gate_due_to_tweet_not_liked() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         // HTTP returns a tweet with id "999", gate is locked to tweet "111"
         let http = MockHttpOutcallService::with_json_response(
             200,
@@ -1203,7 +1213,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_xretweeted_post_gate_due_to_tweet_not_retweeted() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         // HTTP returns a retweet of "999", but gate requires tweet "111"
         let http = MockHttpOutcallService::with_json_response(
             200,
@@ -1248,7 +1258,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_otp_email_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1295,7 +1305,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_otp_sms_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1340,7 +1350,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_xowned_account_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1375,7 +1385,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_xfollowing_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::with_json_response(
             200,
             r#"{"status":"success","message":"ok","data":{"following":true,"followed_by":false}}"#,
@@ -1414,7 +1424,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_xliked_post_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::with_json_response(
             200,
             r#"{"data":[{"id":"111","referenced_tweets":null}]}"#,
@@ -1456,7 +1466,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_xretweeted_post_gate() {
         // Arrange
-        let mut service = gate_service_fixture();
+        let (mut service, _repos) = fixture_of_gate_service();
         let http = MockHttpOutcallService::with_json_response(
             200,
             r#"{"data":[{"id":"xyz","referenced_tweets":[{"type":"retweeted","id":"111"}]}]}"#,

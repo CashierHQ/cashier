@@ -4,11 +4,17 @@
 pub mod gate;
 pub mod otp;
 pub mod secrets;
+pub mod vetkey;
 
 pub use secrets::get_decrypted_secret;
 
 use crate::{
-    repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage},
+    repositories::{
+        gate::{GateRepository, GateStorage, GateUserStatusStorage},
+        otp::OtpRepository,
+        secrets::SecretRepository,
+        vetkey::VetKeyRepository,
+    },
     services::auth::AuthServiceStorage,
 };
 use gate_service_types::{GateUser, OtpRecord, PasswordHashingAlgorithm, SecretStorageMode};
@@ -25,8 +31,18 @@ use std::thread::LocalKey;
 pub trait Repositories {
     type Gate: Storage<GateStorage>;
     type GateUserStatus: Storage<GateUserStatusStorage>;
+    type Otp: Storage<OtpStorage>;
+    type EncryptedSecrets: Storage<SecretsStorage>;
+    type PlainSecrets: Storage<PlainSecretsStorage>;
+    type SecretMode: Storage<SecretStorageModeStorage>;
 
     fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus>;
+    fn otp(&self) -> OtpRepository<Self::Otp>;
+    fn secrets(
+        &self,
+    ) -> SecretRepository<Self::EncryptedSecrets, Self::PlainSecrets, Self::SecretMode>;
+    #[allow(dead_code)]
+    fn vetkey(&self) -> VetKeyRepository;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -35,9 +51,27 @@ pub struct ThreadlocalRepositories;
 impl Repositories for ThreadlocalRepositories {
     type Gate = &'static LocalKey<RefCell<GateStorage>>;
     type GateUserStatus = &'static LocalKey<RefCell<GateUserStatusStorage>>;
+    type Otp = &'static LocalKey<RefCell<OtpStorage>>;
+    type EncryptedSecrets = &'static LocalKey<RefCell<SecretsStorage>>;
+    type PlainSecrets = &'static LocalKey<RefCell<PlainSecretsStorage>>;
+    type SecretMode = &'static LocalKey<RefCell<SecretStorageModeStorage>>;
 
     fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
         GateRepository::new(&GATE_STORAGE, &GATE_USER_STATUS_STORAGE)
+    }
+
+    fn otp(&self) -> OtpRepository<Self::Otp> {
+        OtpRepository::new(&OTP_STORE)
+    }
+
+    fn secrets(
+        &self,
+    ) -> SecretRepository<Self::EncryptedSecrets, Self::PlainSecrets, Self::SecretMode> {
+        SecretRepository::new(&SECRETS_STORE, &PLAIN_SECRETS_STORE, &SECRET_STORAGE_MODE)
+    }
+
+    fn vetkey(&self) -> VetKeyRepository {
+        VetKeyRepository::new()
     }
 }
 
@@ -146,6 +180,10 @@ pub mod tests {
     pub struct TestRepositories {
         gate: Rc<RefCell<GateStorage>>,
         gate_user_status: Rc<RefCell<GateUserStatusStorage>>,
+        otp: Rc<RefCell<OtpStorage>>,
+        encrypted_secrets: Rc<RefCell<SecretsStorage>>,
+        plain_secrets: Rc<RefCell<PlainSecretsStorage>>,
+        secret_mode: Rc<RefCell<SecretStorageModeStorage>>,
     }
 
     impl TestRepositories {
@@ -160,6 +198,17 @@ pub mod tests {
                 gate_user_status: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(GATE_USER_STATUS_MEMORY_ID),
                 ))),
+                otp: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(OTP_MEMORY_ID)))),
+                encrypted_secrets: Rc::new(RefCell::new(StableBTreeMap::init(
+                    mm.get(SECRETS_MEMORY_ID),
+                ))),
+                plain_secrets: Rc::new(RefCell::new(StableBTreeMap::init(
+                    mm.get(PLAIN_SECRETS_MEMORY_ID),
+                ))),
+                secret_mode: Rc::new(RefCell::new(StableCell::init(
+                    mm.get(SECRET_STORAGE_MODE_MEMORY_ID),
+                    SecretStorageMode::PlainText,
+                ))),
             }
         }
     }
@@ -167,9 +216,32 @@ pub mod tests {
     impl Repositories for TestRepositories {
         type Gate = Rc<RefCell<GateStorage>>;
         type GateUserStatus = Rc<RefCell<GateUserStatusStorage>>;
+        type Otp = Rc<RefCell<OtpStorage>>;
+        type EncryptedSecrets = Rc<RefCell<SecretsStorage>>;
+        type PlainSecrets = Rc<RefCell<PlainSecretsStorage>>;
+        type SecretMode = Rc<RefCell<SecretStorageModeStorage>>;
 
         fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
             GateRepository::new(self.gate.clone(), self.gate_user_status.clone())
+        }
+
+        fn otp(&self) -> OtpRepository<Self::Otp> {
+            OtpRepository::new(self.otp.clone())
+        }
+
+        fn secrets(
+            &self,
+        ) -> SecretRepository<Self::EncryptedSecrets, Self::PlainSecrets, Self::SecretMode>
+        {
+            SecretRepository::new(
+                self.encrypted_secrets.clone(),
+                self.plain_secrets.clone(),
+                self.secret_mode.clone(),
+            )
+        }
+
+        fn vetkey(&self) -> VetKeyRepository {
+            VetKeyRepository::new()
         }
     }
 }

@@ -45,3 +45,16 @@ pub const SECRET_BREVO_API_KEY: &str = "brevo_api_key";
 /// Secret key name for the Brevo email sender address.
 /// Set via `admin_secret_set` / `admin_plain_secret_set` canister endpoints.
 pub const SECRET_BREVO_EMAIL_SENDER: &str = "brevo_email_sender";
+
+/// IC network key name used for vetKD derivation.
+/// "key_1" is available on all IC networks (local dfx uses "dfx_test_key" for local testing only).
+pub const VETKEY_NAME: &str = "key_1";
+
+/// Derivation context — must match what the admin script passes to `vetkd_public_key`.
+pub const VETKEY_CONTEXT: &[u8] = b"cashier-gate-secrets";
+
+/// Derivation input — the identity used for all API secret keys.
+pub const VETKEY_INPUT: &[u8] = b"cashier-gate-secrets";
+
+/// HKDF domain separator used by `VetKey::derive_symmetric_key`.
+pub const VETKEY_SYMMETRIC_DOMAIN: &str = "cashier-api-secrets-v1";

@@ -176,7 +176,7 @@ async fn send_otp(gate_id: String, user: Principal) -> Result<(), GateServiceErr
     const OTP_TTL_NS: u64 = 600_000_000_000;
     let expires_at = ic_cdk::api::time() + OTP_TTL_NS;
 
-    let gate_service = get_state().gate_service;
+    let mut gate_service = get_state().gate_service;
     gate_service
         .send_otp(
             &gate_id,
