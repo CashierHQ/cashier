@@ -22,7 +22,9 @@
     null,
   );
 
-  function openLoginModal(payload?: { link_type: string; BE_link_id: string }) {
+  function openLoginModal(
+    payload: { link_type: string; BE_link_id: string } | undefined = undefined,
+  ) {
     if (payload) loginPayload = payload;
     isLoginModalOpen = true;
   }

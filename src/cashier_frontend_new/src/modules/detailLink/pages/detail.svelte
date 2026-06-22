@@ -324,7 +324,7 @@
     `${window.location.origin}/link/${linkStore?.link?.id}`,
   );
 
-  async function copyLink(closeDialog?: boolean) {
+  async function copyLink(closeDialog: boolean | undefined = undefined) {
     try {
       const linkUrl = link;
       await navigator.clipboard.writeText(linkUrl);
