@@ -37,7 +37,7 @@
     },
     {
       type: OTP_TYPE,
-      label: "OTP (Email / SMS)",
+      label: "OTP",
       enabled: true,
       iconComponent: Mail,
     },
