@@ -252,8 +252,8 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug" mode="":
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
-      token_storage_canister_id=principal \"${TOKEN_STORAGE_CANISTER_ID}\";
-      gate_service_canister_id=principal \"${GATE_SERVICE_CANISTER_ID}\";
+      token_storage_canister_id=opt principal \"${TOKEN_STORAGE_CANISTER_ID}\";
+      gate_service_canister_id=opt principal \"${GATE_SERVICE_CANISTER_ID}\";
   })" {{network}} {{mode}} --yes --upgrade-unchanged
 
 # Deploys the token_storage canister

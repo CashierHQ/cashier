@@ -107,10 +107,10 @@ jobs:
 
       - name: Build candid args (single run)
         run: |
+          # Owner-only install; token_storage + gate ids are wired post-deploy via
+          # admin_update_setting (see plan phase-04 runbook).
           owner=${{ vars.ORBIT_STATION_ID }}
-          ckbtc_minter_id=${{ vars.CKBTC_MINTER_ID }}
-          token_storage_canister_id=${{ vars.TOKEN_STORAGE_CANISTER_ID }}
-          just build_backend_args_hex "$owner" "$token_storage_canister_id" "${{ steps.log_filter.outputs.filter }}" backend_args
+          just build_backend_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args
           echo "Backend args:"
           cat backend_args.hex
 

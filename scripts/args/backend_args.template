@@ -5,5 +5,4 @@
     log_filter=opt "__LOG_FILTER__";
   };
   owner=principal "__OWNER__";
-  token_storage_canister_id=principal "__TOKEN_STORAGE_CANISTER_ID__";
 })
