@@ -1,6 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
+
 use crate::repository::{Repositories, settings::SettingsRepository};
 
 /// The settings service
@@ -30,6 +32,31 @@ impl<R: Repositories> SettingsService<R> {
     pub fn set_inspect_message_enabled(&mut self, inspect_message_enabled: bool) {
         self.settings_repo.update(|settings| {
             settings.inspect_message_enabled = inspect_message_enabled;
+        });
+    }
+
+    /// Get the CKBTC minter canister id (anonymous principal until set at init/admin)
+    pub fn get_ckbtc_minter_id(&self) -> Principal {
+        self.settings_repo.read(|settings| settings.ckbtc_minter_id)
+    }
+
+    /// Set the CKBTC minter canister id (persisted in stable memory)
+    pub fn set_ckbtc_minter_id(&mut self, canister_id: Principal) {
+        self.settings_repo.update(|settings| {
+            settings.ckbtc_minter_id = canister_id;
+        });
+    }
+
+    /// Get the Omnity Bitcoin canister id (anonymous principal until set at init/admin)
+    pub fn get_omnity_bitcoin_id(&self) -> Principal {
+        self.settings_repo
+            .read(|settings| settings.omnity_bitcoin_id)
+    }
+
+    /// Set the Omnity Bitcoin canister id (persisted in stable memory)
+    pub fn set_omnity_bitcoin_id(&mut self, canister_id: Principal) {
+        self.settings_repo.update(|settings| {
+            settings.omnity_bitcoin_id = canister_id;
         });
     }
 }

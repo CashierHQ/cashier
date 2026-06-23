@@ -9,7 +9,7 @@ use crate::{
     bitcoin::ckbtc::ic_ckbtc_minter_client::IcCkBtcMinterClient,
     ext::icrc::IcTokenMetadataFetcher,
     icrc7::ic_icrc7_validator::ICIcrc7Validator,
-    repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, Repositories, ThreadlocalRepositories},
     runes::ic_omnity_bitcoin::IcOmnityBitcoin,
     services::{
         auth::{AuthService, AuthServiceStorage},
@@ -22,13 +22,6 @@ use crate::{
         user_token::UserTokenService,
     },
 };
-
-thread_local! {
-    static CKBTC_MINTER_CANISTER_ID: RefCell<Principal> =
-        const { RefCell::new(Principal::anonymous()) };
-    static OMNITY_BITCOIN_CANISTER_ID: RefCell<Principal> =
-        const { RefCell::new(Principal::anonymous()) };
-}
 
 /// The state of the canister
 pub struct CanisterState {
@@ -54,6 +47,9 @@ impl CanisterState {
         let omnity_bitcoin = IcOmnityBitcoin;
         let token_metadata_fetcher = IcTokenMetadataFetcher;
 
+        // Canister ids are persisted in stable Settings; read omnity id for user_runes construction.
+        let omnity_bitcoin_id = repo.settings().read(|settings| settings.omnity_bitcoin_id);
+
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
@@ -63,46 +59,30 @@ impl CanisterState {
             user_token: UserTokenService::new(&repo),
             user_nft: UserNftService::new(&repo, ic_icrc7_validator),
             user_ckbtc: UserCkBtcService::new(&repo, ckbtc_minter_client),
-            user_runes: UserRunesService::new(&repo, Self::get_omnity_bitcoin_id_static()),
+            user_runes: UserRunesService::new(&repo, omnity_bitcoin_id),
             omnity_bitcoin,
             token_metadata_fetcher,
         }
     }
 
-    /// Sets the CKBTC minter canister ID
-    /// # Arguments
-    /// * `canister_id` - The principal ID of the CKBTC minter canister
-    pub fn set_ckbtc_minter_id(&self, canister_id: Principal) {
-        CKBTC_MINTER_CANISTER_ID.with(|id| {
-            *id.borrow_mut() = canister_id;
-        });
+    /// Sets the CKBTC minter canister ID (persisted in stable Settings; survives upgrades).
+    pub fn set_ckbtc_minter_id(&mut self, canister_id: Principal) {
+        self.settings.set_ckbtc_minter_id(canister_id);
     }
 
-    /// Gets the CKBTC minter canister ID
-    /// # Returns
-    /// * `Principal` - The principal ID of the CKBTC minter canister
+    /// Gets the CKBTC minter canister ID (from stable Settings).
     pub fn get_ckbtc_minter_id(&self) -> Principal {
-        CKBTC_MINTER_CANISTER_ID.with(|id| *id.borrow())
+        self.settings.get_ckbtc_minter_id()
     }
 
-    /// Sets the Omnity Bitcoin canister ID
-    /// # Arguments
-    /// * `canister_id` - The principal ID of the Omnity Bitcoin canister
-    pub fn set_omnity_bitcoin_id(&self, canister_id: Principal) {
-        OMNITY_BITCOIN_CANISTER_ID.with(|id| {
-            *id.borrow_mut() = canister_id;
-        });
+    /// Sets the Omnity Bitcoin canister ID (persisted in stable Settings; survives upgrades).
+    pub fn set_omnity_bitcoin_id(&mut self, canister_id: Principal) {
+        self.settings.set_omnity_bitcoin_id(canister_id);
     }
 
-    /// Gets the Omnity Bitcoin canister ID
-    /// # Returns
-    /// * `Principal` - The principal ID of the Omnity Bitcoin canister
+    /// Gets the Omnity Bitcoin canister ID (from stable Settings).
     pub fn get_omnity_bitcoin_id(&self) -> Principal {
-        Self::get_omnity_bitcoin_id_static()
-    }
-
-    fn get_omnity_bitcoin_id_static() -> Principal {
-        OMNITY_BITCOIN_CANISTER_ID.with(|id| *id.borrow())
+        self.settings.get_omnity_bitcoin_id()
     }
 }
 
