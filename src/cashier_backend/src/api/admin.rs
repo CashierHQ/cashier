@@ -75,7 +75,7 @@ pub fn admin_permissions_remove(
 }
 
 /// Updates canister settings.
-/// 
+///
 /// # Authorization
 /// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard).
 #[update]
