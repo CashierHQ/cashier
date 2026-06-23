@@ -22,8 +22,8 @@ use cashier_backend_types::link_v2::dto::*;
 use cashier_backend_types::link_v3::dto::{action::*, link::*};
 use cashier_backend_types::rate_limit::RateLimitConfig;
 use cashier_backend_types::service::link::*;
+use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
 use cashier_common::icrc::*;
 use gate_service_types::{GateKey, OpenGateSuccessResult};
-use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
 
 ic_cdk::export_candid!();

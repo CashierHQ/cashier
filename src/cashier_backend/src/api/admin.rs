@@ -82,6 +82,7 @@ pub fn admin_permissions_remove(
 /// # Authorization
 /// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard).
 #[update]
+#[allow(clippy::needless_pass_by_value)]
 pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError> {
     debug!("[admin_update_setting] arg={arg:?}");
     let mut state = get_state();
