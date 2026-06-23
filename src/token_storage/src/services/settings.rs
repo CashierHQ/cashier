@@ -3,7 +3,10 @@
 
 use candid::Principal;
 
-use crate::repository::{Repositories, settings::SettingsRepository};
+use crate::repository::{
+    Repositories,
+    settings::{Settings, SettingsRepository},
+};
 
 /// The settings service
 pub struct SettingsService<R: Repositories> {
@@ -33,6 +36,11 @@ impl<R: Repositories> SettingsService<R> {
         self.settings_repo.update(|settings| {
             settings.inspect_message_enabled = inspect_message_enabled;
         });
+    }
+
+    /// Get the full settings snapshot (for admin read-back / verification)
+    pub fn get(&self) -> Settings {
+        self.settings_repo.read(Clone::clone)
     }
 
     /// Get the CKBTC minter canister id (anonymous principal until set at init/admin)

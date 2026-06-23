@@ -10,6 +10,7 @@ pub mod error;
 pub mod icrc7;
 pub mod init;
 pub mod nft;
+pub mod settings;
 pub mod token;
 pub mod user;
 

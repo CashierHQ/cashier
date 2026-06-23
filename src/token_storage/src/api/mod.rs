@@ -17,6 +17,7 @@ use token_storage_types::auth::*;
 use token_storage_types::dto::{bitcoin::*, nft::*};
 use token_storage_types::error::*;
 use token_storage_types::init::*;
+use token_storage_types::settings::*;
 use token_storage_types::token::*;
 
 ic_cdk::export_candid!();
