@@ -29,17 +29,10 @@ use crate::{
         token_storage::service::TokenStorageService,
     },
     repositories::{
-        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
+        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, Repositories, ThreadlocalRepositories,
+        auth::AuthServiceStorage,
     },
 };
-
-thread_local! {
-    static TOKEN_STORAGE_CANISTER_ID: RefCell<Principal> =
-        const { RefCell::new(Principal::anonymous()) };
-
-    static GATE_SERVICE_CANISTER_ID: RefCell<Principal> =
-        const { RefCell::new(Principal::anonymous()) };
-}
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
@@ -74,7 +67,11 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
         let token_fee_service = TokenFeeService::new(&*repo, env.clone(), IcrcTokenFetcher::new());
 
-        let token_storage_canister_id = TOKEN_STORAGE_CANISTER_ID.with(|id| *id.borrow());
+        // Canister IDs are persisted in stable Settings; read them at construction.
+        // Default is the anonymous principal when unset (pre-wiring); set via init/admin endpoints.
+        let settings_repo = repo.settings();
+        let token_storage_canister_id =
+            settings_repo.read(|settings| settings.token_storage_canister_id);
         let token_standard_service = TokenStandardService::new(
             &*repo,
             TokenStorageService::new(token_storage_canister_id),
@@ -84,7 +81,8 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let validator_service = IcValidatorService::new(IcTransactionValidator);
         let executor_service = IcExecutorService::new(IcTransactionExecutor);
 
-        let gate_service_canister_id = GATE_SERVICE_CANISTER_ID.with(|id| *id.borrow());
+        let gate_service_canister_id =
+            settings_repo.read(|settings| settings.gate_service_canister_id);
         let gate_service =
             GateAppService::new(&*repo, GateServiceWrapper::new(gate_service_canister_id));
         let rate_limit_service = RateLimitService::new(&*repo);
@@ -114,10 +112,9 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     /// # Arguments
     /// * `canister_id` - The principal ID of the token storage canister
     pub fn set_token_storage_canister_id(&mut self, canister_id: Principal) {
-        TOKEN_STORAGE_CANISTER_ID.with(|id| {
-            *id.borrow_mut() = canister_id;
-        });
-
+        // Persist in stable Settings (survives upgrades)...
+        self.settings.set_token_storage_canister_id(canister_id);
+        // ...and propagate to the live service for this call cycle.
         self.token_standard_service
             .set_token_storage_canister_id(canister_id);
     }
@@ -126,10 +123,9 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     /// # Arguments
     /// * `canister_id` - The principal ID of the gate service canister
     pub fn set_gate_service_canister_id(&mut self, canister_id: Principal) {
-        GATE_SERVICE_CANISTER_ID.with(|id| {
-            *id.borrow_mut() = canister_id;
-        });
-
+        // Persist in stable Settings (survives upgrades)...
+        self.settings.set_gate_service_canister_id(canister_id);
+        // ...and propagate to the live service for this call cycle.
         self.gate_service.set_canister_id(canister_id);
     }
 }

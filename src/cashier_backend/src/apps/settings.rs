@@ -1,3 +1,5 @@
+use candid::Principal;
+
 use crate::repositories::{Repositories, settings::SettingsRepository};
 
 /// The settings service
@@ -23,6 +25,20 @@ impl<R: Repositories> SettingsService<R> {
     pub fn set_inspect_message_enabled(&mut self, inspect_message_enabled: bool) {
         self.settings_repo.update(|settings| {
             settings.inspect_message_enabled = inspect_message_enabled;
+        });
+    }
+
+    /// Set the token storage canister id (persisted in stable memory)
+    pub fn set_token_storage_canister_id(&mut self, canister_id: Principal) {
+        self.settings_repo.update(|settings| {
+            settings.token_storage_canister_id = canister_id;
+        });
+    }
+
+    /// Set the gate service canister id (persisted in stable memory)
+    pub fn set_gate_service_canister_id(&mut self, canister_id: Principal) {
+        self.settings_repo.update(|settings| {
+            settings.gate_service_canister_id = canister_id;
         });
     }
 }

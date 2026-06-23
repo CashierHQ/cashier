@@ -1,10 +1,16 @@
 use std::borrow::Cow;
 
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
+
+/// Default canister id sentinel ("unset"): the anonymous principal. Used both as the struct
+/// `Default` and as the serde default so pre-migration records (which lack the field) decode to it.
+fn default_canister_id() -> Principal {
+    Principal::anonymous()
+}
 
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
@@ -12,8 +18,22 @@ use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 pub struct Settings {
     /// Whether the inspect message is enabled
     pub inspect_message_enabled: bool,
+    /// Token storage canister id (set at init or via admin endpoint; persisted in stable memory).
+    /// Defaults to the anonymous principal when unset; `#[serde(default)]` keeps pre-migration
+    /// records (without this field) decodable.
+    #[serde(default = "default_canister_id")]
+    pub token_storage_canister_id: Principal,
+    /// Gate service canister id (set at init or via admin endpoint; persisted in stable memory).
+    /// Defaults to the anonymous principal when unset; `#[serde(default)]` keeps pre-migration
+    /// records (without this field) decodable.
+    #[serde(default = "default_canister_id")]
+    pub gate_service_canister_id: Principal,
 }
 
+// IMPORTANT: `Settings` is CBOR-encoded (`#[storable]`). Adding a field to `Settings` MUST mark it
+// `#[serde(default)]` so pre-existing `V1` records (which lack the field) still decode. If a future
+// change can't satisfy that, add a new `V2(Settings)` variant + a frozen old struct for `V1` and
+// migrate in `decode_ref` instead of mutating the `V1` shape.
 #[storable]
 pub enum SettingsCodec {
     V1(Settings),
@@ -22,7 +42,7 @@ pub enum SettingsCodec {
 impl RefCodec<Settings> for SettingsCodec {
     fn decode_ref(source: &Self) -> Cow<'_, Settings> {
         match source {
-            SettingsCodec::V1(link) => Cow::Borrowed(link),
+            SettingsCodec::V1(settings) => Cow::Borrowed(settings),
         }
     }
 
@@ -35,6 +55,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             inspect_message_enabled: true,
+            token_storage_canister_id: default_canister_id(),
+            gate_service_canister_id: default_canister_id(),
         }
     }
 }
@@ -90,6 +112,8 @@ mod tests {
     fn fixture_of_settings(inspect_message_enabled: bool) -> Settings {
         Settings {
             inspect_message_enabled,
+            token_storage_canister_id: Principal::anonymous(),
+            gate_service_canister_id: Principal::anonymous(),
         }
     }
 
@@ -147,5 +171,62 @@ mod tests {
         // Assert
         assert!(previous_value);
         assert_eq!(repo.read(Clone::clone), fixture_of_settings(false));
+    }
+
+    #[test]
+    fn it_should_persist_canister_ids() {
+        // Arrange
+        let mut repo = TestRepositories::new().settings();
+        // Distinct principals so a field-swap bug would fail the assertions.
+        let ts_id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        let gate_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+
+        // Act
+        repo.update(|settings| {
+            settings.token_storage_canister_id = ts_id;
+            settings.gate_service_canister_id = gate_id;
+        });
+        let settings = repo.read(Clone::clone);
+
+        // Assert
+        assert_eq!(settings.token_storage_canister_id, ts_id);
+        assert_eq!(settings.gate_service_canister_id, gate_id);
+    }
+
+    /// Backward-compat: a record written before the canister-id fields existed must still
+    /// decode (CBOR via `#[storable]`), defaulting the new fields to the anonymous principal.
+    /// Simulates the old stored shape `SettingsCodec::V1(Settings { inspect_message_enabled })`.
+    #[test]
+    fn it_should_decode_pre_migration_settings_record() {
+        use ic_stable_structures::Storable;
+        use std::borrow::Cow;
+
+        #[derive(serde::Serialize)]
+        struct OldSettings {
+            inspect_message_enabled: bool,
+        }
+        #[derive(serde::Serialize)]
+        enum OldSettingsCodec {
+            V1(OldSettings),
+        }
+
+        // Arrange: encode old-shape bytes (no canister-id fields).
+        let mut bytes = Vec::new();
+        ciborium::into_writer(
+            &OldSettingsCodec::V1(OldSettings {
+                inspect_message_enabled: false,
+            }),
+            &mut bytes,
+        )
+        .expect("encode old settings");
+
+        // Act: decode with the current codec.
+        let codec = SettingsCodec::from_bytes(Cow::Owned(bytes));
+        let settings = SettingsCodec::decode_ref(&codec).into_owned();
+
+        // Assert: old field preserved, new fields default to the anonymous principal (no trap).
+        assert!(!settings.inspect_message_enabled);
+        assert_eq!(settings.token_storage_canister_id, Principal::anonymous());
+        assert_eq!(settings.gate_service_canister_id, Principal::anonymous());
     }
 }
