@@ -144,4 +144,65 @@ mod tests {
         assert!(!result);
         assert!(!settings_repository.read(|settings| settings.inspect_message_enabled));
     }
+
+    #[test]
+    fn it_should_persist_canister_ids() {
+        use candid::Principal;
+
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut settings_repository = repositories.settings();
+        // Distinct principals so a field-swap bug would fail the assertions.
+        let ckbtc = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        let omnity = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+
+        // Act
+        settings_repository.update(|settings| {
+            settings.ckbtc_minter_id = ckbtc;
+            settings.omnity_bitcoin_id = omnity;
+        });
+
+        // Assert
+        assert_eq!(settings_repository.read(|s| s.ckbtc_minter_id), ckbtc);
+        assert_eq!(settings_repository.read(|s| s.omnity_bitcoin_id), omnity);
+    }
+
+    /// Backward-compat: a record written before the canister-id fields existed must still decode
+    /// (CBOR via `#[storable]`), defaulting the new fields to the anonymous principal.
+    #[test]
+    fn it_should_decode_pre_migration_settings_record() {
+        use super::{Settings, SettingsCodec};
+        use candid::Principal;
+        use ic_mple_structures::RefCodec;
+        use ic_stable_structures::Storable;
+        use std::borrow::Cow;
+
+        #[derive(serde::Serialize)]
+        struct OldSettings {
+            inspect_message_enabled: bool,
+        }
+        #[derive(serde::Serialize)]
+        enum OldSettingsCodec {
+            V1(OldSettings),
+        }
+
+        // Arrange: encode old-shape bytes (no canister-id fields).
+        let mut bytes = Vec::new();
+        ciborium::into_writer(
+            &OldSettingsCodec::V1(OldSettings {
+                inspect_message_enabled: false,
+            }),
+            &mut bytes,
+        )
+        .expect("encode old settings");
+
+        // Act: decode with the current codec.
+        let codec = SettingsCodec::from_bytes(Cow::Owned(bytes));
+        let settings: Settings = SettingsCodec::decode_ref(&codec).into_owned();
+
+        // Assert: old field preserved, new fields default to the anonymous principal (no trap).
+        assert!(!settings.inspect_message_enabled);
+        assert_eq!(settings.ckbtc_minter_id, Principal::anonymous());
+        assert_eq!(settings.omnity_bitcoin_id, Principal::anonymous());
+    }
 }
