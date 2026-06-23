@@ -9,6 +9,33 @@
         "src/shared/",
         ".github/workflows/orbit-frontend-deploy.yml"
       ]
+    },
+    {
+      "name": "backend",
+      "workflow": "orbit-backend-deploy.yml",
+      "paths": [
+        "src/cashier_backend/",
+        "src/cashier_backend_types/",
+        ".github/workflows/orbit-backend-deploy.yml"
+      ]
+    },
+    {
+      "name": "gate_service",
+      "workflow": "orbit-gate-deploy.yml",
+      "paths": [
+        "src/gate_service/",
+        "src/gate_service_types/",
+        ".github/workflows/orbit-gate-deploy.yml"
+      ]
+    },
+    {
+      "name": "token_storage",
+      "workflow": "orbit-token-storage-deploy.yml",
+      "paths": [
+        "src/token_storage/",
+        "src/token_storage_types/",
+        ".github/workflows/orbit-token-storage-deploy.yml"
+      ]
     }
   ]
 }
