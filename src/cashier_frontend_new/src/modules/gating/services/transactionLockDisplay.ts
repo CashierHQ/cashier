@@ -1,16 +1,18 @@
-import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { locale } from "$lib/i18n";
+import {
+  FALLBACK_LOCK_VALUE_LENGTH,
+  X_HANDLE_LOCK_TYPE,
+} from "$modules/gating/constants";
 import { GateType } from "$modules/gating/types/gate";
 import type {
+  GateKey,
   TransactionLockDisplay,
   TransactionLockInput,
 } from "$modules/gating/types/transactionLockDisplay";
 
-const FALLBACK_LOCK_VALUE_LENGTH = 12;
-const X_HANDLE_LOCK_TYPE = "xHandle";
-
-type GateKey = GateForUser["gate"]["key"];
-
+/**
+ * Extracts the backend gate key when the lock comes from link details.
+ */
 function getGateKey(lock: TransactionLockInput): GateKey | undefined {
   if (!("gate" in lock) || typeof lock.gate !== "object" || !lock.gate) {
     return undefined;
@@ -23,6 +25,9 @@ function getGateKey(lock: TransactionLockInput): GateKey | undefined {
     : undefined;
 }
 
+/**
+ * Resolves the lock type across backend gates and create-link drafts.
+ */
 function getLockType(lock: TransactionLockInput): string {
   const gateKey = getGateKey(lock);
   if (gateKey) {
@@ -37,6 +42,9 @@ function getLockType(lock: TransactionLockInput): string {
   return "type" in lock && typeof lock.type === "string" ? lock.type : "";
 }
 
+/**
+ * Returns the translation key used for the lock row label.
+ */
 function getLockLabelKey(lock: TransactionLockInput): string {
   const type = getLockType(lock);
 
@@ -51,6 +59,9 @@ function getLockLabelKey(lock: TransactionLockInput): string {
   return "links.linkForm.lock.configuredLock";
 }
 
+/**
+ * Returns the raw password only when the lock contains a revealable secret.
+ */
 function getSensitivePassword(lock: TransactionLockInput): string | undefined {
   const gateKey = getGateKey(lock);
   if (
@@ -66,6 +77,9 @@ function getSensitivePassword(lock: TransactionLockInput): string | undefined {
   return undefined;
 }
 
+/**
+ * Indicates whether a lock row can toggle between masked and revealed text.
+ */
 function canRevealSensitiveValue(lock: TransactionLockInput): boolean {
   return (
     getLockType(lock) === GateType.PASSWORD &&
@@ -73,6 +87,9 @@ function canRevealSensitiveValue(lock: TransactionLockInput): boolean {
   );
 }
 
+/**
+ * Returns the display value for a lock, masking sensitive values by default.
+ */
 function getLockValue(
   lock: TransactionLockInput,
   revealSensitiveValue = false,
@@ -108,6 +125,9 @@ function getLockValue(
   return locale.t("links.linkForm.lock.configuredLock");
 }
 
+/**
+ * Converts a draft/backend lock into a UI-ready display object.
+ */
 export function getTransactionLockDisplay(
   lock: TransactionLockInput,
   options: { revealSensitiveValue?: boolean } = {},
@@ -120,6 +140,9 @@ export function getTransactionLockDisplay(
   };
 }
 
+/**
+ * Builds a stable keyed-each value for transaction lock rows.
+ */
 export function getTransactionLockStableKey(
   lock: TransactionLockInput,
   index: number,

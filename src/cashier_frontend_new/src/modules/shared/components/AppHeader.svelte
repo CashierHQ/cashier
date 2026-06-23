@@ -10,10 +10,10 @@
   import WalletButton from "$modules/shared/components/WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { getCreateLinkHeaderDisplayName } from "$modules/shared/services/appHeader";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { paths } from "$modules/routing/paths";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
 
   type Props = {
@@ -61,25 +61,6 @@
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 
-  function getCreateLinkDisplayName() {
-    if (createLinkStep === LinkStep.ADD_ASSET) {
-      return locale.t("links.linkForm.header.addAssets");
-    }
-
-    if (createLinkStep === LinkStep.LOCK) {
-      return locale.t("links.linkForm.lock.title");
-    }
-
-    if (
-      createLinkStep === LinkStep.PREVIEW ||
-      createLinkStep === LinkStep.CREATED
-    ) {
-      return locale.t("links.linkForm.header.createLink");
-    }
-
-    return locale.t("links.linkForm.header.linkName");
-  }
-
   // Get display name for mobile header
   const displayName = $derived.by(() => {
     // If path ends with /use, don't show any text
@@ -88,7 +69,7 @@
     if (linkName) return linkName;
 
     if (isLinkFormPage && currentPath?.startsWith("/link/create")) {
-      return getCreateLinkDisplayName();
+      return getCreateLinkHeaderDisplayName(createLinkStep);
     }
 
     // Then check if headerName is set in store
