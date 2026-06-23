@@ -24,8 +24,6 @@ use cashier_backend_types::rate_limit::RateLimitConfig;
 use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
 use gate_service_types::{GateKey, OpenGateSuccessResult};
-
-use crate::apps::settings::UpdateSettingArgs;
-use crate::repositories::settings::Settings;
+use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
 
 ic_cdk::export_candid!();

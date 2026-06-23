@@ -1,6 +1,7 @@
 use candid::Principal;
 use cashier_backend_types::backoff::BackoffConfig;
 use cashier_backend_types::rate_limit::RateLimitConfig;
+use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
 use cashier_backend_types::{
     auth::Permission,
     dto::{
@@ -85,6 +86,19 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client
             .update("admin_inspect_message_enable", (inspect_message_enabled,))
             .await
+    }
+
+    /// Updates canister settings (partial; only `Some` fields are applied).
+    pub async fn admin_update_setting(
+        &self,
+        arg: UpdateSettingArgs,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client.update("admin_update_setting", (arg,)).await
+    }
+
+    /// Returns the current canister settings.
+    pub async fn admin_get_setting(&self) -> CanisterClientResult<SettingsDto> {
+        self.client.query("admin_get_setting", ()).await
     }
 
     /// Clears all cached token fees.

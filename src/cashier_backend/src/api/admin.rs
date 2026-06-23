@@ -7,12 +7,9 @@ use log::debug;
 use cashier_backend_types::backoff::BackoffConfig;
 use cashier_backend_types::rate_limit::RateLimitConfig;
 
-use crate::{
-    api::state::get_state,
-    apps::{auth::Permission, settings::UpdateSettingArgs},
-    build_data::canister_build_data,
-    repositories::settings::Settings,
-};
+use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
+
+use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
 
 /// Returns the build data of the canister.
 #[query]
@@ -112,14 +109,19 @@ pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError>
 /// # Authorization
 /// Requires `Permission::Admin`.
 #[query]
-pub fn admin_get_setting() -> Settings {
+pub fn admin_get_setting() -> SettingsDto {
     let state = get_state();
     let caller = msg_caller();
     state
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    state.settings.get()
+    let settings = state.settings.get();
+    SettingsDto {
+        inspect_message_enabled: settings.inspect_message_enabled,
+        token_storage_canister_id: settings.token_storage_canister_id,
+        gate_service_canister_id: settings.gate_service_canister_id,
+    }
 }
 
 /// Enables/disables the inspect message.
