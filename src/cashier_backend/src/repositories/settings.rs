@@ -6,8 +6,6 @@ use ic_mple_log::service::Storage;
 use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-/// Default canister id sentinel ("unset"): the anonymous principal. Used both as the struct
-/// `Default` and as the serde default so pre-migration records (which lack the field) decode to it.
 fn default_canister_id() -> Principal {
     Principal::anonymous()
 }
@@ -30,10 +28,6 @@ pub struct Settings {
     pub gate_service_canister_id: Principal,
 }
 
-// IMPORTANT: `Settings` is CBOR-encoded (`#[storable]`). Adding a field to `Settings` MUST mark it
-// `#[serde(default)]` so pre-existing `V1` records (which lack the field) still decode. If a future
-// change can't satisfy that, add a new `V2(Settings)` variant + a frozen old struct for `V1` and
-// migrate in `decode_ref` instead of mutating the `V1` shape.
 #[storable]
 pub enum SettingsCodec {
     V1(Settings),
