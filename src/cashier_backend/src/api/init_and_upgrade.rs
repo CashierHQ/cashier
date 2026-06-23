@@ -3,7 +3,7 @@
 
 use cashier_backend_types::init::{CashierBackendInitData, CashierBackendUpgradeData};
 use ic_cdk::{init, post_upgrade, pre_upgrade};
-use log::info;
+use log::{info, warn};
 
 use crate::api::state::get_state;
 use crate::apps::auth::Permission;
@@ -33,17 +33,30 @@ fn init(init_data: CashierBackendInitData) {
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
-    info!(
-        "[init] Set token storage canister id to {}",
-        init_data.token_storage_canister_id
-    );
-    state.set_token_storage_canister_id(init_data.token_storage_canister_id);
+    // Cross-canister IDs are optional at install; when omitted they stay at the stable default
+    // (anonymous) and are wired later via the admin endpoints.
+    if let Some(token_storage_canister_id) = init_data.token_storage_canister_id {
+        info!(
+            "[init] Set token storage canister id to {}",
+            token_storage_canister_id
+        );
+        state.set_token_storage_canister_id(token_storage_canister_id);
+    }
 
-    info!(
-        "[init] Set gate service canister id to {}",
-        init_data.gate_service_canister_id
-    );
-    state.set_gate_service_canister_id(init_data.gate_service_canister_id);
+    if let Some(gate_service_canister_id) = init_data.gate_service_canister_id {
+        info!(
+            "[init] Set gate service canister id to {}",
+            gate_service_canister_id
+        );
+        state.set_gate_service_canister_id(gate_service_canister_id);
+    }
+
+    if init_data.token_storage_canister_id.is_none() || init_data.gate_service_canister_id.is_none()
+    {
+        warn!(
+            "[init] cross-canister IDs not fully set; wire via admin endpoints before use (unset IDs default to the anonymous principal)"
+        );
+    }
 
     state.token_standard_service.init(
         init_data
@@ -75,18 +88,23 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
             .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
     );
 
-    // Update token storage canister id if provided in upgrade args
-    info!(
-        "[post_upgrade] Set token storage canister id to {}",
-        upgrade_data.token_storage_canister_id
-    );
-    get_state().set_token_storage_canister_id(upgrade_data.token_storage_canister_id);
+    // Apply cross-canister IDs ONLY if provided; when omitted, keep the existing stable value
+    // (never clobber). This lets upgrades run with empty args while preserving wired config.
+    if let Some(token_storage_canister_id) = upgrade_data.token_storage_canister_id {
+        info!(
+            "[post_upgrade] Set token storage canister id to {}",
+            token_storage_canister_id
+        );
+        get_state().set_token_storage_canister_id(token_storage_canister_id);
+    }
 
-    info!(
-        "[post_upgrade] Set gate service canister id to {}",
-        upgrade_data.gate_service_canister_id
-    );
-    get_state().set_gate_service_canister_id(upgrade_data.gate_service_canister_id);
+    if let Some(gate_service_canister_id) = upgrade_data.gate_service_canister_id {
+        info!(
+            "[post_upgrade] Set gate service canister id to {}",
+            gate_service_canister_id
+        );
+        get_state().set_gate_service_canister_id(gate_service_canister_id);
+    }
 
     // Re-initialize token standard cache TTL
     get_state().token_standard_service.init(
