@@ -304,7 +304,11 @@ async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
         let overridden_ckbtc = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-        let omnity_before = admin_client.admin_get_setting().await.unwrap().omnity_bitcoin_id;
+        let omnity_before = admin_client
+            .admin_get_setting()
+            .await
+            .unwrap()
+            .omnity_bitcoin_id;
 
         // Act: upgrade supplying only ckbtc id.
         let mut args = upgrade_args_empty();
