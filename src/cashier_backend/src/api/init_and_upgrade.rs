@@ -33,8 +33,6 @@ fn init(init_data: CashierBackendInitData) {
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
-    // Cross-canister IDs are optional at install; when omitted they stay at the stable default
-    // (anonymous) and are wired later via the admin endpoints.
     if let Some(token_storage_canister_id) = init_data.token_storage_canister_id {
         info!(
             "[init] Set token storage canister id to {}",

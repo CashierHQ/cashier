@@ -74,11 +74,8 @@ pub fn admin_permissions_remove(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
-/// Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
-/// applied, the rest are left unchanged. Canister-id changes are persisted in stable memory
-/// (survive upgrades) and propagated to live services — use to wire a freshly (re)created
-/// token_storage / gate_service canister without reinstalling the backend.
-///
+/// Updates canister settings.
+/// 
 /// # Authorization
 /// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard).
 #[update]
