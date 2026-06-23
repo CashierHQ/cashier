@@ -1,6 +1,22 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
+use serde::Deserialize;
 
-use crate::repositories::{Repositories, settings::SettingsRepository};
+use crate::repositories::{
+    Repositories,
+    settings::{Settings, SettingsRepository},
+};
+
+/// Partial settings update: every field is optional; only `Some` fields are applied.
+/// Used by the admin `update_setting` endpoint so settings can evolve without new endpoints.
+#[derive(Debug, Clone, Default, CandidType, Deserialize)]
+pub struct UpdateSettingArgs {
+    #[serde(default)]
+    pub inspect_message_enabled: Option<bool>,
+    #[serde(default)]
+    pub token_storage_canister_id: Option<Principal>,
+    #[serde(default)]
+    pub gate_service_canister_id: Option<Principal>,
+}
 
 /// The settings service
 pub struct SettingsService<R: Repositories> {
@@ -26,6 +42,11 @@ impl<R: Repositories> SettingsService<R> {
         self.settings_repo.update(|settings| {
             settings.inspect_message_enabled = inspect_message_enabled;
         });
+    }
+
+    /// Get the full settings snapshot (for admin read-back / verification)
+    pub fn get(&self) -> Settings {
+        self.settings_repo.read(Clone::clone)
     }
 
     /// Set the token storage canister id (persisted in stable memory)

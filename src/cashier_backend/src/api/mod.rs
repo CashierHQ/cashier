@@ -25,4 +25,7 @@ use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
 use gate_service_types::{GateKey, OpenGateSuccessResult};
 
+use crate::apps::settings::UpdateSettingArgs;
+use crate::repositories::settings::Settings;
+
 ic_cdk::export_candid!();
