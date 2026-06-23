@@ -96,8 +96,8 @@ async fn should_upgrade_with_tokens_upsert() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: Some(vec![new_token]),
             },),
         )
@@ -156,8 +156,8 @@ async fn should_upgrade_without_tokens_preserve_registry() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: None,
             },),
         )
@@ -211,8 +211,8 @@ async fn should_upgrade_upsert_existing_token() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: Some(vec![updated_icp]),
             },),
         )

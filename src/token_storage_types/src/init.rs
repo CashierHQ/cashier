@@ -22,10 +22,12 @@ pub struct TokenStorageInitData {
 
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct TokenStorageUpgradeData {
-    /// CKBTC minter canister id
-    pub ckbtc_minter_id: Principal,
-    /// Omnity Bitcoin canister id
-    pub omnity_bitcoin_id: Principal,
+    /// CKBTC minter canister id (optional on upgrade: omit to keep the existing stable value)
+    #[serde(default)]
+    pub ckbtc_minter_id: Option<Principal>,
+    /// Omnity Bitcoin canister id (optional on upgrade: omit to keep the existing stable value)
+    #[serde(default)]
+    pub omnity_bitcoin_id: Option<Principal>,
     /// Optional tokens to upsert during upgrade
     #[serde(default)]
     pub tokens: Option<Vec<RegistryToken>>,

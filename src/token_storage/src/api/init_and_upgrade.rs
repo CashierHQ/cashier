@@ -66,16 +66,15 @@ fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
 
-    info!(
-        "[init] Set CKBTC minter canister id to {}",
-        upgrade_data.ckbtc_minter_id
-    );
-    state.set_ckbtc_minter_id(upgrade_data.ckbtc_minter_id);
-    info!(
-        "[init] Set Omnity Bitcoin canister id to {}",
-        upgrade_data.omnity_bitcoin_id
-    );
-    state.set_omnity_bitcoin_id(upgrade_data.omnity_bitcoin_id);
+    // Apply ids ONLY if provided; when omitted, keep the existing stable value (never clobber).
+    if let Some(ckbtc_minter_id) = upgrade_data.ckbtc_minter_id {
+        info!("[post_upgrade] Set CKBTC minter canister id to {ckbtc_minter_id}");
+        state.set_ckbtc_minter_id(ckbtc_minter_id);
+    }
+    if let Some(omnity_bitcoin_id) = upgrade_data.omnity_bitcoin_id {
+        info!("[post_upgrade] Set Omnity Bitcoin canister id to {omnity_bitcoin_id}");
+        state.set_omnity_bitcoin_id(omnity_bitcoin_id);
+    }
 
     if let Some(tokens) = upgrade_data.tokens {
         info!("[post_upgrade] Upserting {} tokens", tokens.len());
