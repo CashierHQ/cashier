@@ -8,11 +8,7 @@ use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use std::borrow::Cow;
 
-/// Default canister id sentinel ("unset"): the anonymous principal. Used as struct `Default` and as
-/// the serde default so pre-migration records (without the field) decode to it (CBOR `#[storable]`).
-fn default_canister_id() -> Principal {
-    Principal::anonymous()
-}
+use crate::utils::default_canister_id;
 
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
@@ -68,12 +64,20 @@ pub struct SettingsRepository<S: Storage<SettingsRepositoryStorage>> {
 }
 
 impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
-    /// Create a new SettingsRepository
+    /// Create a new `SettingsRepository`.
+    /// # Arguments
+    /// * `storage` - The stable-cell storage backing the settings
+    /// # Returns
+    /// * `SettingsRepository` - A new repository instance
     pub fn new(storage: S) -> Self {
         Self { storage }
     }
 
-    /// Helper to read the settings
+    /// Read the settings via a closure (no clone of the whole record).
+    /// # Arguments
+    /// * `f` - Closure receiving `&Settings` and returning a derived value
+    /// # Returns
+    /// * `T` - Whatever the closure returns
     pub fn read<F, T>(&self, f: F) -> T
     where
         for<'a> F: FnOnce(&'a Settings) -> T,
@@ -81,7 +85,11 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
         self.storage.with_borrow(|store| f(store.get().as_ref()))
     }
 
-    /// Helper to update the settings
+    /// Mutate the settings via a closure, persisting the result to stable memory.
+    /// # Arguments
+    /// * `f` - Closure receiving `&mut Settings`; mutations are written back atomically
+    /// # Returns
+    /// * `T` - Whatever the closure returns
     pub fn update<F, T>(&mut self, f: F) -> T
     where
         for<'a> F: FnOnce(&'a mut Settings) -> T,

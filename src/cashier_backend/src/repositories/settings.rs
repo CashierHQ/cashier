@@ -64,19 +64,20 @@ pub struct SettingsRepository<S: Storage<SettingsRepositoryStorage>> {
 }
 
 impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
-    /// Create a new SettingsRepository
+    /// Create a new `SettingsRepository`.
+    /// # Arguments
+    /// * `storage` - The stable-cell storage backing the settings
+    /// # Returns
+    /// * `SettingsRepository` - A new repository instance
     pub fn new(storage: S) -> Self {
         Self { storage }
     }
 
-    // /// Set the settings
-    // pub fn set(&mut self, settings: Settings) {
-    //     self.storage.with_borrow_mut(|store| {
-    //         store.set(settings);
-    //     });
-    // }
-
-    /// Helper to read the settings
+    /// Read the settings via a closure (no clone of the whole record).
+    /// # Arguments
+    /// * `f` - Closure receiving `&Settings` and returning a derived value
+    /// # Returns
+    /// * `T` - Whatever the closure returns
     pub fn read<F, T>(&self, f: F) -> T
     where
         for<'a> F: FnOnce(&'a Settings) -> T,
@@ -84,7 +85,11 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
         self.storage.with_borrow(|store| f(store.get().as_ref()))
     }
 
-    /// Helper to update the settings
+    /// Mutate the settings via a closure, persisting the result to stable memory.
+    /// # Arguments
+    /// * `f` - Closure receiving `&mut Settings`; mutations are written back atomically
+    /// # Returns
+    /// * `T` - Whatever the closure returns
     pub fn update<F, T>(&mut self, f: F) -> T
     where
         for<'a> F: FnOnce(&'a mut Settings) -> T,
