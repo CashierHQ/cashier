@@ -11,9 +11,7 @@ use crate::utils::{
 fn upgrade_args_empty() -> CashierBackendUpgradeData {
     CashierBackendUpgradeData {
         token_fee_ttl_ns: None,
-        token_storage_canister_id: None,
         token_standard_cache_ttl_ns: None,
-        gate_service_canister_id: None,
     }
 }
 
@@ -22,7 +20,7 @@ fn upgrade_args_empty() -> CashierBackendUpgradeData {
 #[tokio::test]
 async fn should_persist_canister_ids_across_upgrade() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange: admin sets new distinct ids at runtime.
+        // Arrange: as admin, set new distinct ids and confirm they are stored (precondition).
         let admin = TestUser::CashierBackendAdmin.get_principal();
         let admin_client = ctx.new_cashier_backend_client(admin);
         let new_ts = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
@@ -42,7 +40,7 @@ async fn should_persist_canister_ids_across_upgrade() {
         assert_eq!(before.token_storage_canister_id, new_ts);
         assert_eq!(before.gate_service_canister_id, new_gate);
 
-        // Act: upgrade with EMPTY args (no ids supplied).
+        // Act: upgrade with EMPTY args (no ids supplied) — must not touch stable Settings.
         ctx.upgrade_canister(
             ctx.cashier_backend_principal,
             None,
@@ -51,40 +49,10 @@ async fn should_persist_canister_ids_across_upgrade() {
         )
         .await;
 
-        // Assert: stable ids preserved (not clobbered to anonymous).
+        // Assert: stable ids preserved (not clobbered to the anonymous principal).
         let after = admin_client.admin_get_setting().await.unwrap();
         assert_eq!(after.token_storage_canister_id, new_ts);
         assert_eq!(after.gate_service_canister_id, new_gate);
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-/// Upgrade args, when provided (`Some`), override the stable value.
-#[tokio::test]
-async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let admin = TestUser::CashierBackendAdmin.get_principal();
-        let admin_client = ctx.new_cashier_backend_client(admin);
-        let overridden_ts = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-
-        // Act: upgrade supplying only token_storage id.
-        let mut args = upgrade_args_empty();
-        args.token_storage_canister_id = Some(overridden_ts);
-        ctx.upgrade_canister(
-            ctx.cashier_backend_principal,
-            None,
-            get_cashier_backend_canister_bytecode(),
-            (args,),
-        )
-        .await;
-
-        // Assert: overridden value applied; the un-supplied gate id keeps its init value.
-        let after = admin_client.admin_get_setting().await.unwrap();
-        assert_eq!(after.token_storage_canister_id, overridden_ts);
-        assert_eq!(after.gate_service_canister_id, ctx.gate_service_principal);
 
         Ok(())
     })
@@ -96,13 +64,16 @@ async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
 #[tokio::test]
 async fn should_not_allow_non_admin_to_update_setting() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: a non-admin user and its client.
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_cashier_backend_client(user);
 
+        // Act: attempt to update settings as the non-admin user.
         let result = user_client
             .admin_update_setting(UpdateSettingArgs::default())
             .await;
 
+        // Assert: the call is rejected (non-admin not allowed to write settings).
         assert!(result.is_err());
 
         Ok(())
@@ -115,11 +86,14 @@ async fn should_not_allow_non_admin_to_update_setting() {
 #[tokio::test]
 async fn should_not_allow_non_admin_to_get_setting() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: a non-admin user and its client.
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_cashier_backend_client(user);
 
+        // Act: attempt to read settings as the non-admin user.
         let result = user_client.admin_get_setting().await;
 
+        // Assert: the call is rejected (non-admin not allowed to read settings).
         assert!(result.is_err());
 
         Ok(())

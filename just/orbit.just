@@ -67,41 +67,24 @@ orbit_upgrade canister_name mode network arg_file commit="" review_run_url="":
 
 # Build init and upgrade hex argument for backend canister
 [group('orbit')]
-build_backend_args_hex owner log_filter output_file token_storage_id="" gate_service_id="":
+build_backend_args_hex owner log_filter output_file:
   #!/usr/bin/env bash
   set -e
 
-  # step 1: build argument text by injecting fields values. Canister ids are optional:
-  # pass when known (baked at init) else omit to wire post-deploy via admin_update_setting.
-  just build_backend_args "{{owner}}" "{{log_filter}}" "{{output_file}}.txt" "{{token_storage_id}}" "{{gate_service_id}}"
+  # step 1: build argument text by injecting fields values (owner-only; cross-canister ids are
+  # wired post-deploy via admin_update_setting, never passed at init/upgrade).
+  just build_backend_args "{{owner}}" "{{log_filter}}" "{{output_file}}.txt"
 
   # step 2: encode argument text to hex format using didc and candid types
   didc encode -d ./target/artifacts/cashier_backend.did -t "(CashierBackendInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
 
 # Build the backend canister args and save to file
-# token_storage_id / gate_service_id: optional principal ids; empty => `null` (wired later via admin)
 [group('orbit')]
-build_backend_args owner log_filter file_name token_storage_id="" gate_service_id="":
+build_backend_args owner log_filter file_name:
   #!/usr/bin/env bash
-  set -e
-
-  # Emit `opt principal "<id>"` when an id is provided, else `null`.
-  if [ -n "{{token_storage_id}}" ]; then
-    ts_frag="opt principal \"{{token_storage_id}}\""
-  else
-    ts_frag="null"
-  fi
-  if [ -n "{{gate_service_id}}" ]; then
-    gate_frag="opt principal \"{{gate_service_id}}\""
-  else
-    gate_frag="null"
-  fi
-
   sed \
     -e 's/__OWNER__/{{owner}}/g' \
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
-    -e "s|__TOKEN_STORAGE_ID__|${ts_frag}|g" \
-    -e "s|__GATE_SERVICE_ID__|${gate_frag}|g" \
     scripts/args/backend_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 

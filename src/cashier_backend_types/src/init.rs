@@ -12,34 +12,20 @@ pub struct CashierBackendInitData {
     /// Token fee cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_fee_ttl_ns: Option<u64>,
-    // Token storage canister id (optional: omit to set later via admin endpoint; on upgrade,
-    // omitted = keep existing stable value)
-    #[serde(default)]
-    pub token_storage_canister_id: Option<Principal>,
     // Token standard cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_standard_cache_ttl_ns: Option<u64>,
-    // Gate service canister id (optional: omit to set later via admin endpoint; on upgrade,
-    // omitted = keep existing stable value)
-    #[serde(default)]
-    pub gate_service_canister_id: Option<Principal>,
 }
 
+// Cross-canister ids (token_storage, gate_service) are NOT init/upgrade args: they live in stable
+// `Settings` and are wired post-deploy via `admin_update_setting` (avoids stale/outdated args).
 #[derive(Debug, Clone, CandidType, Deserialize)]
 // These are the arguments which are taken by the cashier_backend canister upgrade fn
 pub struct CashierBackendUpgradeData {
     /// Token fee cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_fee_ttl_ns: Option<u64>,
-    // Token storage canister id (optional: omit to set later via admin endpoint; on upgrade,
-    // omitted = keep existing stable value)
-    #[serde(default)]
-    pub token_storage_canister_id: Option<Principal>,
     // Token standard cache TTL in nanoseconds (default: 168 hours / 7 days)
     #[serde(default)]
     pub token_standard_cache_ttl_ns: Option<u64>,
-    // Gate service canister id (optional: omit to set later via admin endpoint; on upgrade,
-    // omitted = keep existing stable value)
-    #[serde(default)]
-    pub gate_service_canister_id: Option<Principal>,
 }

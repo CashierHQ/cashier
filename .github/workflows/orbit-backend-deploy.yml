@@ -107,12 +107,10 @@ jobs:
 
       - name: Build candid args (single run)
         run: |
-          # Bake token_storage + gate ids at init when their GitHub vars are set; empty => `null`,
-          # wired post-deploy via admin_update_setting (see plan phase-04 runbook).
+          # Owner-only install. token_storage + gate ids are wired post-deploy via an Orbit request
+          # calling admin_update_setting (see plan phase-04 runbook) — never passed at init.
           owner=${{ vars.ORBIT_STATION_ID }}
-          token_storage_id=${{ vars.TOKEN_STORAGE_CANISTER_ID }}
-          gate_service_id=${{ vars.GATE_SERVICE_CANISTER_ID }}
-          just build_backend_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args "$token_storage_id" "$gate_service_id"
+          just build_backend_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args
           echo "Backend args:"
           cat backend_args.hex
 
