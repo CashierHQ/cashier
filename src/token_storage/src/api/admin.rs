@@ -154,8 +154,18 @@ pub fn admin_get_stats() -> Result<RegistryStats, String> {
 }
 
 /// Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
-/// applied, the rest unchanged. Canister-id changes are persisted in stable memory (survive
-/// upgrades). Auto-gated at ingress via the `admin_` prefix + in-method `Permission::Admin`.
+/// applied, the rest unchanged. Canister-id changes are persisted in stable memory (survive upgrades).
+///
+/// # Arguments
+/// * `arg` - Partial settings update: `inspect_message_enabled`, `ckbtc_minter_id`,
+///   `omnity_bitcoin_id` (each optional)
+///
+/// # Returns
+/// * `Ok(())` - Settings updated successfully (the only non-trap outcome)
+///
+/// # Authorization
+/// Requires `Permission::Admin` (auto-gated at ingress via the `admin_` prefix + in-method check);
+/// unauthorized callers are rejected (trap), not returned as `Err`.
 #[update]
 #[allow(clippy::needless_pass_by_value)]
 pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError> {
@@ -182,6 +192,10 @@ pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError>
 
 /// Returns the current canister settings (for verification).
 ///
+/// # Returns
+/// * `SettingsDto` - Current settings snapshot (inspect flag + ckbtc_minter/omnity_bitcoin ids)
+///
+/// # Authorization
 /// Requires `Permission::Admin`.
 #[query]
 pub fn admin_get_setting() -> SettingsDto {

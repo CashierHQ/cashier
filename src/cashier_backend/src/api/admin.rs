@@ -74,10 +74,19 @@ pub fn admin_permissions_remove(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
-/// Updates canister settings.
+/// Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
+/// applied, the rest left unchanged. Canister-id changes are persisted in stable memory.
+///
+/// # Arguments
+/// * `arg` - Partial settings update: `inspect_message_enabled`, `token_storage_canister_id`,
+///   `gate_service_canister_id` (each optional)
+///
+/// # Returns
+/// * `Ok(())` - Settings updated successfully (the only non-trap outcome)
 ///
 /// # Authorization
-/// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard).
+/// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard);
+/// unauthorized callers are rejected (trap), not returned as `Err`.
 #[update]
 #[allow(clippy::needless_pass_by_value)]
 pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError> {
@@ -103,6 +112,9 @@ pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError>
 }
 
 /// Returns the current canister settings (for verification).
+///
+/// # Returns
+/// * `SettingsDto` - Current settings snapshot (inspect flag + token_storage/gate canister ids)
 ///
 /// # Authorization
 /// Requires `Permission::Admin`.

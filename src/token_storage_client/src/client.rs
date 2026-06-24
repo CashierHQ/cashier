@@ -85,6 +85,11 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Updates canister settings (partial; only `Some` fields are applied).
+    /// # Arguments
+    /// * `arg` - Partial settings update (inspect flag + ckbtc_minter/omnity_bitcoin canister ids)
+    /// # Returns
+    /// * `Ok(())` - Settings updated successfully
+    /// * `Err(_)` - Transport failure or canister rejection (e.g. unauthorized caller)
     pub async fn admin_update_setting(
         &self,
         arg: UpdateSettingArgs,
@@ -93,6 +98,8 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Returns the current canister settings.
+    /// # Returns
+    /// * `SettingsDto` - Current settings snapshot (inspect flag + ckbtc_minter/omnity_bitcoin ids)
     pub async fn admin_get_setting(&self) -> CanisterClientResult<SettingsDto> {
         self.client.query("admin_get_setting", ()).await
     }
