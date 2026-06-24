@@ -3,6 +3,9 @@ import { LinkStep } from "$modules/links/types/linkStep";
 
 /**
  * Returns the mobile header title for the create-link flow.
+ *
+ * @param createLinkStep - Current create-link flow step.
+ * @returns The localized title to display in the mobile app header.
  */
 export function getCreateLinkHeaderDisplayName(
   createLinkStep: LinkStep | null | undefined,

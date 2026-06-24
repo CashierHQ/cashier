@@ -12,6 +12,9 @@ import type {
 
 /**
  * Extracts the backend gate key when the lock comes from link details.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @returns The backend gate key when present, otherwise `undefined`.
  */
 function getGateKey(lock: TransactionLockInput): GateKey | undefined {
   if (!("gate" in lock) || typeof lock.gate !== "object" || !lock.gate) {
@@ -27,6 +30,9 @@ function getGateKey(lock: TransactionLockInput): GateKey | undefined {
 
 /**
  * Resolves the lock type across backend gates and create-link drafts.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @returns The normalized lock type used by lock display UI.
  */
 function getLockType(lock: TransactionLockInput): string {
   const gateKey = getGateKey(lock);
@@ -44,6 +50,9 @@ function getLockType(lock: TransactionLockInput): string {
 
 /**
  * Returns the translation key used for the lock row label.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @returns The i18n key for the lock row label.
  */
 function getLockLabelKey(lock: TransactionLockInput): string {
   const type = getLockType(lock);
@@ -61,6 +70,9 @@ function getLockLabelKey(lock: TransactionLockInput): string {
 
 /**
  * Returns the raw password only when the lock contains a revealable secret.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @returns The revealable password value, or `undefined` when unavailable.
  */
 function getSensitivePassword(lock: TransactionLockInput): string | undefined {
   const gateKey = getGateKey(lock);
@@ -79,6 +91,9 @@ function getSensitivePassword(lock: TransactionLockInput): string | undefined {
 
 /**
  * Indicates whether a lock row can toggle between masked and revealed text.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @returns `true` when the lock has a revealable sensitive value.
  */
 function canRevealSensitiveValue(lock: TransactionLockInput): boolean {
   return (
@@ -89,6 +104,10 @@ function canRevealSensitiveValue(lock: TransactionLockInput): boolean {
 
 /**
  * Returns the display value for a lock, masking sensitive values by default.
+ *
+ * @param lock - Transaction lock draft or backend gate to inspect.
+ * @param revealSensitiveValue - Whether revealable sensitive values should be shown.
+ * @returns The value to render in the lock display row.
  */
 function getLockValue(
   lock: TransactionLockInput,
@@ -127,6 +146,10 @@ function getLockValue(
 
 /**
  * Converts a draft/backend lock into a UI-ready display object.
+ *
+ * @param lock - Transaction lock draft or backend gate to convert.
+ * @param options - Display options for sensitive values.
+ * @returns Normalized display data for transaction lock UI.
  */
 export function getTransactionLockDisplay(
   lock: TransactionLockInput,
@@ -142,6 +165,10 @@ export function getTransactionLockDisplay(
 
 /**
  * Builds a stable keyed-each value for transaction lock rows.
+ *
+ * @param lock - Transaction lock draft or backend gate to key.
+ * @param index - Fallback row index used to keep keys stable for repeated lock types.
+ * @returns A stable key for Svelte keyed each blocks.
  */
 export function getTransactionLockStableKey(
   lock: TransactionLockInput,
