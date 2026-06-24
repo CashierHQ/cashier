@@ -6,9 +6,7 @@ use ic_mple_log::service::Storage;
 use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-fn default_canister_id() -> Principal {
-    Principal::anonymous()
-}
+use crate::utils::default_canister_id;
 
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
