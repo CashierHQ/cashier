@@ -301,6 +301,7 @@ async fn should_persist_canister_ids_across_upgrade() {
 #[tokio::test]
 async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: admin client, the override value, and the current omnity id as baseline.
         let admin = TestUser::TokenStorageAdmin.get_principal();
         let admin_client = ctx.new_token_storage_client(admin);
         let overridden_ckbtc = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
@@ -336,16 +337,19 @@ async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
 #[tokio::test]
 async fn should_not_allow_non_admin_to_update_or_get_setting() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: a non-admin user and its client.
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_token_storage_client(user);
 
-        assert!(
-            user_client
-                .admin_update_setting(UpdateSettingArgs::default())
-                .await
-                .is_err()
-        );
-        assert!(user_client.admin_get_setting().await.is_err());
+        // Act: attempt to update and read settings as the non-admin user.
+        let update_result = user_client
+            .admin_update_setting(UpdateSettingArgs::default())
+            .await;
+        let get_result = user_client.admin_get_setting().await;
+
+        // Assert: both calls are rejected.
+        assert!(update_result.is_err());
+        assert!(get_result.is_err());
 
         Ok(())
     })
