@@ -21,12 +21,26 @@
     "OTPEmail" in gate.gate.key || "OTPEmailRedacted" in gate.gate.key,
   );
 
+  function maskPhone(phone: string): string {
+    const clean = phone.replace(/\s/g, "");
+    if (clean.length <= 4) return clean;
+    const last4 = clean.slice(-4);
+    const prefix = clean.match(/^(\+\d{1,2})/)?.[1] ?? "";
+    return `${prefix} ••••• ${last4}`;
+  }
+
+  function maskEmail(email: string): string {
+    const [local, domain] = email.split("@");
+    if (!domain) return email;
+    return `${local[0] ?? ""}•••••${local.slice(-4)}@${domain}`;
+  }
+
   const maskedDestination = $derived(() => {
     const key = gate.gate.key;
-    if ("OTPEmail" in key) return key.OTPEmail;
     if ("OTPEmailRedacted" in key) return key.OTPEmailRedacted;
-    if ("OTPSms" in key) return key.OTPSms;
     if ("OTPSmsRedacted" in key) return key.OTPSmsRedacted;
+    if ("OTPEmail" in key) return maskEmail(key.OTPEmail);
+    if ("OTPSms" in key) return maskPhone(key.OTPSms);
     return "";
   });
 
@@ -53,12 +67,6 @@
     } finally {
       isSending = false;
     }
-  }
-
-  async function handleResend() {
-    digits = ["", "", "", "", "", ""];
-    error = null;
-    await handleSendOtp();
   }
 
   function focusDigit(index: number) {
@@ -250,19 +258,6 @@
         />
       {/each}
     </div>
-
-    <!-- Resend -->
-    <p class="text-center text-sm text-foreground">
-      Didn't get it?
-      <button
-        type="button"
-        onclick={handleResend}
-        disabled={isSending}
-        class="font-semibold text-green disabled:opacity-50"
-      >
-        Resend code
-      </button>
-    </p>
 
     {#if error}
       <div

@@ -21,7 +21,7 @@
     Info,
     Lock,
     LockOpen,
-    Mail,
+    MessageSquareMore,
     RectangleEllipsis,
     X,
   } from "lucide-svelte";
@@ -217,7 +217,10 @@
             aria-hidden="true"
           />
         {:else if isOTPGate(gate)}
-          <Mail class="h-6 w-6 flex-none text-green" aria-hidden="true" />
+          <MessageSquareMore
+            class="h-6 w-6 flex-none text-green"
+            aria-hidden="true"
+          />
         {:else}
           <RectangleEllipsis
             class="h-6 w-6 flex-none text-green"
