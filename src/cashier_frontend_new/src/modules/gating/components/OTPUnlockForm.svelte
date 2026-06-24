@@ -3,7 +3,7 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
-  import { CircleAlert, CircleX, Mail, Phone, Send } from "lucide-svelte";
+  import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
 
   const {
     linkId,
@@ -17,20 +17,27 @@
     onClose: () => void;
   } = $props();
 
-  const isEmail = $derived("OTPEmail" in gate.gate.key);
-  const destination = $derived(
-    "OTPEmail" in gate.gate.key
-      ? gate.gate.key.OTPEmail
-      : "OTPSms" in gate.gate.key
-        ? gate.gate.key.OTPSms
-        : "",
+  const isEmail = $derived(
+    "OTPEmail" in gate.gate.key || "OTPEmailRedacted" in gate.gate.key,
   );
 
-  let otpCode = $state("");
+  const maskedDestination = $derived(() => {
+    const key = gate.gate.key;
+    if ("OTPEmail" in key) return key.OTPEmail;
+    if ("OTPEmailRedacted" in key) return key.OTPEmailRedacted;
+    if ("OTPSms" in key) return key.OTPSms;
+    if ("OTPSmsRedacted" in key) return key.OTPSmsRedacted;
+    return "";
+  });
+
+  let step = $state<"verify" | "code">("verify");
+  let digits = $state(["", "", "", "", "", ""]);
+  let inputEls = $state<HTMLInputElement[]>([]);
   let isSending = $state(false);
   let isVerifying = $state(false);
-  let codeSent = $state(false);
   let error = $state<string | null>(null);
+
+  const code = $derived(digits.join(""));
 
   async function handleSendOtp() {
     isSending = true;
@@ -38,8 +45,8 @@
     try {
       const result = await cashierBackendService.sendOtp(gate.gate.id);
       if (result.isOk()) {
-        codeSent = true;
-        otpCode = "";
+        digits = ["", "", "", "", "", ""];
+        step = "code";
       } else {
         error = result.unwrapErr().message;
       }
@@ -48,14 +55,48 @@
     }
   }
 
+  async function handleResend() {
+    digits = ["", "", "", "", "", ""];
+    error = null;
+    await handleSendOtp();
+  }
+
+  function focusDigit(index: number) {
+    inputEls[index]?.focus();
+  }
+
+  function handleDigitInput(index: number, value: string) {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    digits[index] = digit;
+    digits = [...digits];
+    if (digit && index < 5) focusDigit(index + 1);
+  }
+
+  function handleDigitKeydown(index: number, e: KeyboardEvent) {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      focusDigit(index - 1);
+    }
+  }
+
+  function handlePaste(e: ClipboardEvent) {
+    const pasted = e.clipboardData?.getData("text")?.replace(/\D/g, "") ?? "";
+    if (pasted.length === 0) return;
+    e.preventDefault();
+    const newDigits = [...digits];
+    for (let i = 0; i < 6 && i < pasted.length; i++) {
+      newDigits[i] = pasted[i];
+    }
+    digits = newDigits;
+    const nextEmpty = newDigits.findIndex((d) => d === "");
+    focusDigit(nextEmpty === -1 ? 5 : nextEmpty);
+  }
+
   async function handleVerify() {
-    if (!otpCode.trim()) return;
+    if (code.length < 6) return;
     isVerifying = true;
     error = null;
     try {
-      const credential = isEmail
-        ? { OTPEmail: otpCode.trim() }
-        : { OTPSms: otpCode.trim() };
+      const credential = isEmail ? { OTPEmail: code } : { OTPSms: code };
       const result = await cashierBackendService.openLinkGate(
         linkId,
         gate.gate.id,
@@ -90,7 +131,7 @@
             "Too many failed attempts. Please wait {{time}} before retrying.";
           error = template.replace("{{time}}", timeStr);
         } else {
-          error = "Invalid or expired OTP code. Please request a new code.";
+          error = "Invalid or expired code. Please try again.";
         }
       }
     } finally {
@@ -99,98 +140,157 @@
   }
 </script>
 
-<div class="space-y-5">
-  <!-- Destination info -->
-  <div class="space-y-1.5">
-    <p class="text-sm font-medium text-foreground">
-      {isEmail ? "Email OTP" : "SMS OTP"}
+<!-- Internal header (title changes between steps, so managed here) -->
+<div class="flex h-[30px] items-center justify-between pl-6">
+  <h2 class="flex-1 text-center text-lg font-semibold text-[#0c111d]">
+    {step === "verify" ? "Verify to unlock" : "Enter code"}
+  </h2>
+  <button
+    type="button"
+    onclick={onClose}
+    class="flex-none text-foreground"
+    aria-label="Close"
+  >
+    <X class="h-5 w-5" aria-hidden="true" />
+  </button>
+</div>
+
+<div class="mt-6 space-y-6">
+  {#if step === "verify"}
+    <!-- Step 1: Verify to unlock -->
+    <p class="text-sm text-foreground">
+      {#if isEmail}
+        This transaction is locked to one email address. We'll send a code there
+        to confirm it's you.
+      {:else}
+        This transaction is locked to one phone number. We'll send a code there
+        to confirm it's you.
+      {/if}
     </p>
+
+    <!-- Destination card -->
     <div
-      class="flex h-10 items-center gap-2 rounded-lg border border-[#ebebeb] px-3 py-2 text-sm"
+      class="flex items-center justify-center gap-3 rounded-xl bg-[#e8f2ee] p-3"
     >
       {#if isEmail}
-        <Mail
-          class="h-4 w-4 flex-none text-muted-foreground"
-          aria-hidden="true"
-        />
+        <Mail class="h-5 w-5 flex-none text-green" aria-hidden="true" />
       {:else}
-        <Phone
-          class="h-4 w-4 flex-none text-muted-foreground"
-          aria-hidden="true"
-        />
+        <Smartphone class="h-5 w-5 flex-none text-green" aria-hidden="true" />
       {/if}
-      <span class="flex-1 truncate text-foreground">{destination}</span>
-    </div>
-  </div>
-
-  <!-- Send OTP button -->
-  <Button
-    type="button"
-    disabled={isSending}
-    onclick={handleSendOtp}
-    class="h-10 w-full rounded-lg border border-green bg-transparent text-green hover:bg-green/10 disabled:opacity-50"
-  >
-    {#if isSending}
-      <div
-        class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-green border-t-transparent"
-      ></div>
-      Sending…
-    {:else}
-      <Send class="mr-2 h-4 w-4" aria-hidden="true" />
-      {codeSent ? "Resend OTP" : "Receive OTP"}
-    {/if}
-  </Button>
-
-  <!-- OTP input (shown after code sent) -->
-  {#if codeSent}
-    <div class="space-y-1.5">
-      <p class="text-sm font-medium text-foreground">Enter the 6-digit code</p>
-      <input
-        type="text"
-        inputmode="numeric"
-        maxlength={6}
-        bind:value={otpCode}
-        placeholder="123456"
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-center text-lg tracking-widest outline-none focus:border-green"
-      />
-    </div>
-  {/if}
-
-  <!-- Error banner -->
-  {#if error}
-    <div
-      class="flex items-center gap-3 rounded-xl bg-[#fffaf2] px-4 py-3 shadow-sm"
-    >
-      <div
-        class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#d26060]"
+      <span class="text-lg font-semibold text-green">{maskedDestination()}</span
       >
-        <CircleX class="h-3.5 w-3.5 text-white" aria-hidden="true" />
-      </div>
-      <p class="flex-1 text-sm font-semibold text-foreground">{error}</p>
     </div>
-  {/if}
 
-  <!-- Info note -->
-  <div class="flex items-start gap-1.5 text-green">
-    <CircleAlert class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-    <p class="text-sm">
-      The code expires in 10 minutes. Request a new one if it expires.
-    </p>
-  </div>
+    <!-- Hint -->
+    <div class="flex items-start gap-1.5 text-green">
+      <Info class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+      <p class="text-sm">
+        {#if isEmail}
+          Don't recognize this email? The link isn't meant for you.
+        {:else}
+          Don't recognize this number? The link isn't meant for you.
+        {/if}
+      </p>
+    </div>
 
-  <Button
-    type="button"
-    disabled={!codeSent || !otpCode.trim() || isVerifying}
-    onclick={handleVerify}
-    class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
-  >
-    {#if isVerifying}
+    {#if error}
       <div
-        class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-      ></div>
-      {locale.t("links.linkForm.lock.processing") ?? "Processing"}
-    {:else}
-      {locale.t("links.linkForm.lock.openButton") ?? "Open"}
+        class="flex items-center gap-3 rounded-xl bg-[#fffaf2] px-4 py-3 shadow-sm"
+      >
+        <div
+          class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#d26060]"
+        >
+          <CircleX class="h-3.5 w-3.5 text-white" aria-hidden="true" />
+        </div>
+        <p class="flex-1 text-sm font-semibold text-foreground">{error}</p>
+      </div>
     {/if}
-  </Button>
+
+    <Button
+      type="button"
+      disabled={isSending}
+      onclick={handleSendOtp}
+      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+    >
+      {#if isSending}
+        <div
+          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+        ></div>
+        Sending…
+      {:else}
+        Send code
+      {/if}
+    </Button>
+  {:else}
+    <!-- Step 2: Enter code -->
+    <p class="text-center text-sm text-foreground">
+      Code sent to <span class="font-semibold text-green"
+        >{maskedDestination()}</span
+      >
+    </p>
+
+    <!-- 6 digit inputs -->
+    <div class="flex items-center justify-center gap-1.5">
+      {#each digits as digit, i (i)}
+        <input
+          bind:this={inputEls[i]}
+          type="text"
+          inputmode="numeric"
+          maxlength={1}
+          value={digit}
+          oninput={(e) =>
+            handleDigitInput(i, (e.currentTarget as HTMLInputElement).value)}
+          onkeydown={(e) => handleDigitKeydown(i, e)}
+          onpaste={handlePaste}
+          class="flex h-12 w-12 items-center justify-center rounded-[7.5px] border text-center text-3xl font-medium text-green outline-none transition-colors
+            {digit
+            ? 'border-[#36a18b]'
+            : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
+          aria-label="Digit {i + 1}"
+        />
+      {/each}
+    </div>
+
+    <!-- Resend -->
+    <p class="text-center text-sm text-foreground">
+      Didn't get it?
+      <button
+        type="button"
+        onclick={handleResend}
+        disabled={isSending}
+        class="font-semibold text-green disabled:opacity-50"
+      >
+        Resend code
+      </button>
+    </p>
+
+    {#if error}
+      <div
+        class="flex items-center gap-3 rounded-xl bg-[#fffaf2] px-4 py-3 shadow-sm"
+      >
+        <div
+          class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-[#d26060]"
+        >
+          <CircleX class="h-3.5 w-3.5 text-white" aria-hidden="true" />
+        </div>
+        <p class="flex-1 text-sm font-semibold text-foreground">{error}</p>
+      </div>
+    {/if}
+
+    <Button
+      type="button"
+      disabled={code.length < 6 || isVerifying}
+      onclick={handleVerify}
+      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+    >
+      {#if isVerifying}
+        <div
+          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+        ></div>
+        {locale.t("links.linkForm.lock.processing") ?? "Processing"}
+      {:else}
+        Verify &amp; unlock
+      {/if}
+    </Button>
+  {/if}
 </div>

@@ -167,7 +167,7 @@
   <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
     <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
       <div class="relative flex items-center justify-center">
-        <DrawerTitle class="text-base font-semibold">Set OTP Lock</DrawerTitle>
+        <DrawerTitle class="text-base font-semibold">Set lock keys</DrawerTitle>
         <DrawerClose>
           <button
             type="button"

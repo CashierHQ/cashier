@@ -6,7 +6,7 @@
   import { locale } from "$lib/i18n";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { GateType } from "$modules/gating/types/gate";
-  import { Lock, Mail, RectangleEllipsis } from "lucide-svelte";
+  import { Lock, MessageSquare, RectangleEllipsis } from "lucide-svelte";
 
   const {
     store,
@@ -37,9 +37,9 @@
     },
     {
       type: OTP_TYPE,
-      label: "OTP",
+      label: "One-time code verification",
       enabled: true,
-      iconComponent: Mail,
+      iconComponent: MessageSquare,
     },
     {
       label: locale.t("links.linkForm.lock.telegramGroup"),

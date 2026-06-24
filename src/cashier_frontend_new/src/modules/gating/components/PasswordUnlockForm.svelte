@@ -73,10 +73,10 @@
       );
     }
     if ("OTPEmail" in key) {
-      return "Email OTP";
+      return "One-time code verification";
     }
     if ("OTPSms" in key) {
-      return "SMS OTP";
+      return "One-time code verification";
     }
     return "Unknown";
   }
@@ -256,23 +256,22 @@
 
 <Drawer bind:open={drawerOpen}>
   <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
-    <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
-      <div class="relative flex items-center justify-center">
-        <DrawerTitle class="text-base font-semibold">
-          {locale.t("links.linkForm.lock.openLock") ?? "Open lock"}
-        </DrawerTitle>
-        <DrawerClose>
-          <button
-            type="button"
-            class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
-          >
-            <X class="h-5 w-5" aria-hidden="true" />
-          </button>
-        </DrawerClose>
-      </div>
-    </DrawerHeader>
-
     {#if selectedGate && isXGate(selectedGate)}
+      <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
+        <div class="relative flex items-center justify-center">
+          <DrawerTitle class="text-base font-semibold">
+            {locale.t("links.linkForm.lock.openLock") ?? "Open lock"}
+          </DrawerTitle>
+          <DrawerClose>
+            <button
+              type="button"
+              class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
+            >
+              <X class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </DrawerClose>
+        </div>
+      </DrawerHeader>
       <XUnlockForm
         {linkId}
         gate={selectedGate}
@@ -293,6 +292,21 @@
         onClose={() => (drawerOpen = false)}
       />
     {:else}
+      <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
+        <div class="relative flex items-center justify-center">
+          <DrawerTitle class="text-base font-semibold">
+            {locale.t("links.linkForm.lock.openLock") ?? "Open lock"}
+          </DrawerTitle>
+          <DrawerClose>
+            <button
+              type="button"
+              class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
+            >
+              <X class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </DrawerClose>
+        </div>
+      </DrawerHeader>
       <div class="space-y-5">
         <div class="space-y-2">
           <label
