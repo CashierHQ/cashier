@@ -5,16 +5,11 @@
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenBasketDisplayProps } from "$modules/useLink/types";
   import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
   import { SvelteSet } from "svelte/reactivity";
 
-  const {
-    assets,
-    message,
-  }: {
-    assets: AssetInfo[];
-    message?: string;
-  } = $props();
+  const { assets, message }: TokenBasketDisplayProps = $props();
 
   // Track failed image loads
   let failedImageLoads = new SvelteSet<string>();
@@ -48,6 +43,12 @@
   const displayMessage = $derived(
     message ?? locale.t("links.linkForm.useLink.completed.tokenBasketMessage"),
   );
+
+  function formatAssetAmount(assetData: ReturnType<typeof processAssetInfo>) {
+    return formatNumber(assetData.amount, {
+      tofixed: assetData.decimals,
+    });
+  }
 </script>
 
 {#if assets && assets.length > 0}
@@ -58,7 +59,9 @@
     >
       {#each assets as assetInfoItem (getAssetAddress(assetInfoItem) || assetInfoItem.label)}
         {@const assetData = processAssetInfo(assetInfoItem)}
-        <div class="flex items-center gap-2 overflow-x-hidden">
+        {@const formattedAssetAmount = formatAssetAmount(assetData)}
+        {@const formattedAssetValue = `${formattedAssetAmount} ${assetData.symbol}`}
+        <div class="flex min-w-0 items-center gap-2 overflow-hidden">
           <!-- Token icon or first letter -->
           <TokenIcon
             address={assetData.address}
@@ -67,15 +70,16 @@
             size="md"
             {failedImageLoads}
             {onImageError}
-            class="object-contain"
+            class="shrink-0 object-contain"
           />
           <!-- Amount and symbol -->
-          <div class="flex-1 text-left">
-            <div class="text-[14px] font-semibold text-gray-900">
-              {formatNumber(assetData.amount, {
-                tofixed: assetData.decimals,
-              })}
-              {assetData.symbol}
+          <div class="min-w-0 flex-1 text-left">
+            <div
+              class="flex min-w-0 items-baseline gap-1 text-[14px] font-semibold text-gray-900"
+              title={formattedAssetValue}
+            >
+              <span class="min-w-0 truncate">{formattedAssetAmount}</span>
+              <span class="shrink-0">{assetData.symbol}</span>
             </div>
           </div>
         </div>

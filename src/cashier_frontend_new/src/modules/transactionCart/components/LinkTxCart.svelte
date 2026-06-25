@@ -103,7 +103,7 @@
 
   // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
   // viaClose parameter indicates if this was triggered by close (X button) or back button
-  function handleFeeInfoDrawerBack(viaClose?: boolean) {
+  function handleFeeInfoDrawerBack(viaClose: boolean | undefined = undefined) {
     if (viaClose) {
       // When closed via X button, set flag to prevent sync
       isClosingViaX = true;

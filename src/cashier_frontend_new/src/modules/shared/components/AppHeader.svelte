@@ -10,6 +10,7 @@
   import WalletButton from "$modules/shared/components/WalletButton.svelte";
   import { X } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { getCreateLinkHeaderDisplayName } from "$modules/shared/services/appHeader";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { paths } from "$modules/routing/paths";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
@@ -49,6 +50,9 @@
 
   // Get current user link step
   const userLinkStep = $derived(userLinkStore?.step ?? null);
+  const createLinkStep = $derived(
+    routeContext?.linkCreationStoreV3?.state.step ?? null,
+  );
 
   // Check if we're on /use page
   const isUsePage = $derived(currentPath?.endsWith("/use") ?? false);
@@ -64,15 +68,15 @@
 
     if (linkName) return linkName;
 
+    if (isLinkFormPage && currentPath?.startsWith("/link/create")) {
+      return getCreateLinkHeaderDisplayName(createLinkStep);
+    }
+
     // Then check if headerName is set in store
     const storeHeaderName = appHeaderStore.getHeaderName();
     if (storeHeaderName) return storeHeaderName;
 
     if (!isLinkFormPage) return "";
-
-    if (currentPath?.startsWith("/link/create")) {
-      return locale.t("links.linkForm.header.linkName");
-    }
 
     return locale.t("links.linkForm.header.editLink");
   });
@@ -97,27 +101,29 @@
 </script>
 
 <div
-  class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white {className}"
+  class="relative w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white {className}"
 >
   {#if isLinkFormPage}
     <!-- Mobile header for link form pages (create, detail, use) -->
-    <div class="md:hidden w-full flex items-center justify-center relative">
+    <div
+      class="md:hidden pointer-events-none absolute inset-x-4 top-1/2 -translate-y-1/2 flex items-center justify-center"
+    >
       {#if showBackButton}
         <button
           onclick={handleMobileBack}
-          class="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
+          class="pointer-events-auto absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
           type="button"
           aria-label={locale.t("links.linkForm.header.back")}
         >
           <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
         </button>
       {:else}
-        <div class="mr-auto">
+        <div class="pointer-events-auto absolute left-0">
           <CashierLogo onclick={handleLogoClick} />
         </div>
       {/if}
       <h4
-        class="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200 max-w-[70%] whitespace-nowrap overflow-hidden text-ellipsis text-center"
+        class="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200 max-w-[45vw] whitespace-nowrap overflow-hidden text-ellipsis text-center"
       >
         {displayName}
       </h4>
@@ -132,12 +138,12 @@
   {/if}
 
   {#if isLoggedIn && !isWalletPage}
-    <div class="flex items-center py-px">
+    <div class="ml-auto flex items-center py-px">
       <WalletButton onClick={handleWalletClick} />
       <MenuButton />
     </div>
   {:else if isWalletPage}
-    <button onclick={() => goto(resolve(paths.links()))}>
+    <button class="ml-auto" onclick={() => goto(resolve(paths.links()))}>
       <X class="h-6 w-6" />
     </button>
   {/if}

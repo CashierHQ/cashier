@@ -21,6 +21,7 @@
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
   import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import TransactionLocksDrawer from "$modules/creationLink/components/drawers/TransactionLocksDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
@@ -90,6 +91,8 @@
   let shouldShowCongratulations = $state(false);
   let detailsLandingTracked = $state(false);
   let showFeeInfoDrawer = $state(false);
+  let showTransactionLocksDrawer = $state(false);
+  const CREATE_LINK_PROGRESS_SEGMENTS = 4;
 
   function assetAndFeeListToForecastShape(
     list: AssetAndFeeList,
@@ -222,6 +225,11 @@
     showFeeInfoDrawer = true;
   }
 
+  function handleTransactionLockClick() {
+    if (!linkHasGates) return;
+    showTransactionLocksDrawer = true;
+  }
+
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
     if (!linkStore || !linkStore.link) return false;
@@ -317,7 +325,7 @@
     `${window.location.origin}/link/${linkStore?.link?.id}`,
   );
 
-  async function copyLink(closeDialog?: boolean) {
+  async function copyLink(closeDialog: boolean | undefined = undefined) {
     try {
       const linkUrl = link;
       await navigator.clipboard.writeText(linkUrl);
@@ -547,7 +555,10 @@
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
     <DetailLinkHeader linkTitle={linkStore.link.title} {onBack} />
     {#if linkStore.link.state === LinkState.CREATE_LINK}
-      <LinkCreationProgressBar filledCount={3} />
+      <LinkCreationProgressBar
+        filledCount={CREATE_LINK_PROGRESS_SEGMENTS}
+        segmentCount={CREATE_LINK_PROGRESS_SEGMENTS}
+      />
     {/if}
     {#if errorMessage}
       <div
@@ -574,6 +585,7 @@
         gatingStore={gatingStore ?? undefined}
         hasLocks={linkHasGates}
         isEnded={isTransactionLockEnded}
+        onLockClick={linkHasGates ? handleTransactionLockClick : undefined}
       />
 
       {#if linkStore.link.state === LinkState.CREATE_LINK && isSendLink && youSendPreviewLinkVm}
@@ -691,6 +703,10 @@
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
     feesBreakdown={createLinkFeesBreakdown}
+  />
+  <TransactionLocksDrawer
+    bind:open={showTransactionLocksDrawer}
+    locks={linkStore.gates ?? []}
   />
 {/if}
 
