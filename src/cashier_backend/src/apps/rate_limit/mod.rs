@@ -39,7 +39,7 @@ impl RateLimitGuard {
     /// * `now_ns` - the current IC timestamp in nanoseconds for rate limit calculations
     /// # Returns
     /// * `Ok(RateLimitGuard)` if the guard was successfully acquired,
-    /// * `Err(CanisterError::RateLimited)` if the user is already in-flight or exceeds the rate limit    
+    /// * `Err(CanisterError::RateLimited)` if the user is already in-flight or exceeds the rate limit
     pub fn new(
         service: &mut RateLimitService<impl Repositories>,
         user: Principal,

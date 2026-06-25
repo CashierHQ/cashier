@@ -194,6 +194,7 @@
         "telegramGroup": "Telegram group",
         "tokenOrNftOwnership": "Token or NFT ownership",
         "quizMultipleChoice": "Quiz: multiple choice",
+        "configuredLock": "Configured lock",
         "allLocksRequired": "User must open all locks to use transaction",
         "continue": "Continue",
         "continuing": "Continuing...",
@@ -291,6 +292,12 @@
           "networkFeeText1": "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
           "networkFeeText2": "When an asset is sent to the link, network fee is charged. The amount may depend on the blockchain.",
           "networkFeeText3": "When an asset is received from the link, network fee is charged. Cashier pre-emptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link.",
+          "closeButton": "Close"
+        },
+        "transactionLocks": {
+          "title": "Transaction locks",
+          "activeLabel": "active",
+          "back": "Back to preview",
           "closeButton": "Close"
         },
         "assetTransferInfo": {

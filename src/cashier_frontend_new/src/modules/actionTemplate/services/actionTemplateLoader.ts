@@ -238,7 +238,9 @@ export class ActionTemplateLoader {
     const linkCanisterId =
       CASHIER_BACKEND_CANISTER_ID || intents[0].dest_address.toText();
     const linkAddress = Principal.fromText(linkCanisterId);
-    for (let i = 0; i < intents.length && i < assetInfo.length; i++) {
+    const populatedIntentCount = Math.min(intents.length, assetInfo.length);
+
+    for (let i = 0; i < populatedIntentCount; i++) {
       const linkAssetInfo = assetInfo[i];
       const intent = intents[i];
       intent.asset = {
@@ -253,6 +255,11 @@ export class ActionTemplateLoader {
       intent.dest_address_type = SharedAddressType.Link;
       intent.label = `${intent.label}_${linkAssetInfo.asset.address.toText()}`;
     }
+
+    const unusedTemplateIntents = intents.slice(populatedIntentCount);
+    action.intents = action.intents.filter(
+      (intent) => !unusedTemplateIntents.includes(intent),
+    );
 
     return Ok(undefined);
   }

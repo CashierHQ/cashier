@@ -468,45 +468,45 @@ export type Wallet = {
 export interface _SERVICE {
   /**
    * Clears all cached token fees from the service.
-   * 
+   *
    * This admin endpoint invalidates all cached token transfer fees, forcing
    * subsequent fee queries to fetch fresh data from their respective token canisters.
    * Useful for cache invalidation when fee structures change or for testing purposes.
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
-   * 
+   *
    * # Returns
-   * 
+   *
    * Returns `Ok(())` on successful cache clearance.
-   * 
+   *
    * # Errors
-   * 
+   *
    * Currently always returns `Ok(())` after clearing the cache.
    */
   'admin_fee_cache_clear' : ActorMethod<[], Result>,
   /**
    * Clears the cached fee for a specific token.
-   * 
+   *
    * This admin endpoint invalidates the cached transfer fee for a single token,
    * forcing the next fee query for that token to fetch fresh data from its canister.
    * Useful when a specific token's fee structure changes without affecting other tokens.
-   * 
+   *
    * # Arguments
-   * 
+   *
    * * `token_id` - The `Principal` of the token canister whose cached fee should be cleared
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
-   * 
+   *
    * # Returns
-   * 
+   *
    * Returns `Ok(())` on successful cache clearance for the specified token.
-   * 
+   *
    * # Errors
-   * 
+   *
    * Currently always returns `Ok(())` after clearing the token's cached fee.
    */
   'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
@@ -518,55 +518,55 @@ export interface _SERVICE {
   'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
   /**
    * Returns the current gate API exponential backoff configuration.
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_get' : ActorMethod<[], BackoffConfig>,
   /**
    * Clears the backoff state for a specific user, allowing them to retry immediately.
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_reset_user' : ActorMethod<[Principal], Result>,
   /**
    * Updates the gate API exponential backoff configuration.
-   * 
+   *
    * Changes take effect immediately on the next `user_open_link_gate` call.
    * Set `enabled: false` to disable backoff entirely (e.g. for emergency access).
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_update' : ActorMethod<[BackoffConfig], Result>,
   /**
    * Returns the current gate API rate limit configuration.
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_get' : ActorMethod<[], RateLimitConfig>,
   /**
    * Clears the rate limit state for a specific user, allowing them to make requests immediately.
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_reset_user' : ActorMethod<[Principal], Result>,
   /**
    * Updates the gate API rate limit configuration.
-   * 
+   *
    * Changes take effect immediately on the next `user_open_link_gate` call.
    * Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
-   * 
+   *
    * # Authorization
-   * 
+   *
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_update' : ActorMethod<[RateLimitConfig], Result>,
@@ -598,15 +598,15 @@ export interface _SERVICE {
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   /**
    * Retrieves a specific link by its ID with optional action data.
-   * 
+   *
    * This endpoint is accessible to both anonymous and authenticated users. The response
    * includes the link details and optionally associated action data based on the caller's
    * permissions and the requested action type.
-   * 
+   *
    * # Arguments
    * * `link_id` - The unique identifier of the link to retrieve
    * * `options` - Optional parameters including action type to include in response
-   * 
+   *
    * # Returns
    * * `Ok(LinkDto)` - Link data
    * * `Err(String)` - Error message if link not found or access denied
@@ -711,13 +711,13 @@ export interface _SERVICE {
   >,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
-   * 
+   *
    * This endpoint requires the caller to be authenticated (non-anonymous) and returns
    * only the links that were created by the calling principal.
-   * 
+   *
    * # Arguments
    * * `input` - Optional pagination parameters (page size, offset, etc.)
-   * 
+   *
    * # Returns
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(CanisterError)` - Error message if retrieval fails

@@ -42,16 +42,16 @@
     currentView = { type: WalletViewType.TOKEN, token };
   }
 
-  function navigateToSwap(token?: string) {
+  function navigateToSwap(token: string | undefined = undefined) {
     // TODO: implement
     console.warn("navigateToSwap", token);
   }
 
-  function navigateToReceive(token?: string) {
+  function navigateToReceive(token: string | undefined = undefined) {
     currentView = { type: WalletViewType.RECEIVE, token };
   }
 
-  function navigateToSend(token?: string) {
+  function navigateToSend(token: string | undefined = undefined) {
     currentView = { type: WalletViewType.SEND, token };
   }
 

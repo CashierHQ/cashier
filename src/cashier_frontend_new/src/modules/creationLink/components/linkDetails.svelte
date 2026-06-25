@@ -1,5 +1,6 @@
 <script lang="ts">
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
+  import TransactionLocksDrawer from "$modules/creationLink/components/drawers/TransactionLocksDrawer.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
@@ -122,11 +123,19 @@
     return [];
   });
 
+  const activeLocks = $derived(gatingStore?.gateDrafts ?? []);
+
   let showFeeInfoDrawer = $state(false);
+  let showTransactionLocksDrawer = $state(false);
 
   function handleFeeBreakdownClick() {
     if (feesBreakdown.length === 0 && lockFees.length === 0) return;
     showFeeInfoDrawer = true;
+  }
+
+  function handleTransactionLockClick() {
+    if (activeLocks.length === 0) return;
+    showTransactionLocksDrawer = true;
   }
 
   // Track failed image loads
@@ -168,7 +177,12 @@
   />
 
   <!-- Block 2: Transaction Lock -->
-  <TransactionLockSection {gatingStore} />
+  <TransactionLockSection
+    {gatingStore}
+    onLockClick={activeLocks.length > 0
+      ? handleTransactionLockClick
+      : undefined}
+  />
 
   <!-- Block 3: You Send -->
   {#if isSendLink}
@@ -191,3 +205,7 @@
 </div>
 
 <FeeInfoDrawer bind:open={showFeeInfoDrawer} {feesBreakdown} {lockFees} />
+<TransactionLocksDrawer
+  bind:open={showTransactionLocksDrawer}
+  locks={activeLocks}
+/>
