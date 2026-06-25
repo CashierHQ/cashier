@@ -383,7 +383,10 @@ async fn should_apply_partial_update_leaving_other_fields_untouched() {
         let after = admin_client.admin_get_setting().await.unwrap();
         assert_eq!(after.ckbtc_minter_id, new_ckbtc);
         assert_eq!(after.omnity_bitcoin_id, before.omnity_bitcoin_id);
-        assert_eq!(after.inspect_message_enabled, before.inspect_message_enabled);
+        assert_eq!(
+            after.inspect_message_enabled,
+            before.inspect_message_enabled
+        );
 
         Ok(())
     })

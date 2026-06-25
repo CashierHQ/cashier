@@ -138,7 +138,10 @@ mod tests {
         let repositories = TestRepositories::new();
         let mut settings_service = SettingsService::new(&repositories);
         let id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
-        assert_eq!(settings_service.get_ckbtc_minter_id(), Principal::anonymous());
+        assert_eq!(
+            settings_service.get_ckbtc_minter_id(),
+            Principal::anonymous()
+        );
 
         // Act
         settings_service.set_ckbtc_minter_id(id);

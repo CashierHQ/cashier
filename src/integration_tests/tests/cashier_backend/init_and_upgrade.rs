@@ -131,7 +131,10 @@ async fn should_apply_partial_update_leaving_other_fields_untouched() {
             after.gate_service_canister_id,
             before.gate_service_canister_id
         );
-        assert_eq!(after.inspect_message_enabled, before.inspect_message_enabled);
+        assert_eq!(
+            after.inspect_message_enabled,
+            before.inspect_message_enabled
+        );
 
         Ok(())
     })
