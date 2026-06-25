@@ -8,8 +8,6 @@ use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use std::borrow::Cow;
 
-use crate::utils::default_canister_id;
-
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
 #[storable]
@@ -18,11 +16,11 @@ pub struct Settings {
     pub inspect_message_enabled: bool,
     /// CKBTC minter canister id (set at init or via admin; persisted in stable memory).
     /// Defaults to the anonymous principal; `#[serde(default)]` keeps pre-migration records decodable.
-    #[serde(default = "default_canister_id")]
+    #[serde(default = "Principal::anonymous")]
     pub ckbtc_minter_id: Principal,
     /// Omnity Bitcoin canister id (set at init or via admin; persisted in stable memory).
     /// Defaults to the anonymous principal; `#[serde(default)]` keeps pre-migration records decodable.
-    #[serde(default = "default_canister_id")]
+    #[serde(default = "Principal::anonymous")]
     pub omnity_bitcoin_id: Principal,
 }
 
@@ -30,8 +28,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             inspect_message_enabled: true,
-            ckbtc_minter_id: default_canister_id(),
-            omnity_bitcoin_id: default_canister_id(),
+            ckbtc_minter_id: Principal::anonymous(),
+            omnity_bitcoin_id: Principal::anonymous(),
         }
     }
 }

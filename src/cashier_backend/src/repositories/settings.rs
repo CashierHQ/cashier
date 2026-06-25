@@ -6,8 +6,6 @@ use ic_mple_log::service::Storage;
 use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-use crate::utils::default_canister_id;
-
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
 #[storable]
@@ -17,12 +15,12 @@ pub struct Settings {
     /// Token storage canister id (set at init or via admin endpoint; persisted in stable memory).
     /// Defaults to the anonymous principal when unset; `#[serde(default)]` keeps pre-migration
     /// records (without this field) decodable.
-    #[serde(default = "default_canister_id")]
+    #[serde(default = "Principal::anonymous")]
     pub token_storage_canister_id: Principal,
     /// Gate service canister id (set at init or via admin endpoint; persisted in stable memory).
     /// Defaults to the anonymous principal when unset; `#[serde(default)]` keeps pre-migration
     /// records (without this field) decodable.
-    #[serde(default = "default_canister_id")]
+    #[serde(default = "Principal::anonymous")]
     pub gate_service_canister_id: Principal,
 }
 
@@ -47,8 +45,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             inspect_message_enabled: true,
-            token_storage_canister_id: default_canister_id(),
-            gate_service_canister_id: default_canister_id(),
+            token_storage_canister_id: Principal::anonymous(),
+            gate_service_canister_id: Principal::anonymous(),
         }
     }
 }

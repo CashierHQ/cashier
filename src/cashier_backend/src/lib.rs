@@ -24,4 +24,3 @@ mod api;
 mod apps;
 mod build_data;
 mod repositories;
-mod utils;
