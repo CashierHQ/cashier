@@ -9,6 +9,7 @@
   } from "$lib/shadcn/components/ui/drawer";
   import { COUNTRY_DIAL_CODES } from "$modules/shared/data/countries";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import { filterSmsEligibleCountries } from "$modules/shared/services/countryPolicy";
   import {
     buildInternationalPhoneNumber,
     formatPhoneNumberForCountry,
@@ -26,11 +27,17 @@
     onLock: () => void;
   } = $props();
 
+  const smsEligibleCountries = filterSmsEligibleCountries(COUNTRY_DIAL_CODES);
+  const defaultCountryCode =
+    smsEligibleCountries.find((country) => country.code === "CA")?.code ??
+    smsEligibleCountries[0]?.code ??
+    "CA";
+
   let activeTab = $state<"phone" | "email">("phone");
   let submitted = $state(false);
   let countryDrawerOpen = $state(false);
   let countrySearch = $state("");
-  let countryCode = $state("US");
+  let countryCode = $state(defaultCountryCode);
   let phoneDigits = $state("");
   let emailDraft = $state("");
 
@@ -45,8 +52,8 @@
 
   const filteredCountries = $derived.by(() => {
     const q = countrySearch.trim().toLowerCase();
-    if (!q) return COUNTRY_DIAL_CODES;
-    return COUNTRY_DIAL_CODES.filter(
+    if (!q) return smsEligibleCountries;
+    return smsEligibleCountries.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.code.toLowerCase().includes(q) ||
