@@ -128,17 +128,21 @@ export class GatingStore {
 
   get otpEmailSetupError(): string | null {
     const email = this.#otpEmailDraft.trim();
-    if (email.length === 0) return "Email address is required";
+    if (email.length === 0) {
+      return locale.t("links.linkForm.lock.otp.errors.emailRequired");
+    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return "Enter a valid email address";
+      return locale.t("links.linkForm.lock.otp.errors.emailInvalid");
     return null;
   }
 
   get otpPhoneSetupError(): string | null {
     const phone = this.#otpPhoneDraft.trim();
-    if (phone.length === 0) return "Phone number is required";
+    if (phone.length === 0) {
+      return locale.t("links.linkForm.lock.otp.errors.phoneRequired");
+    }
     if (!/^\+?[\d\s\-()]{7,20}$/.test(phone))
-      return "Enter a valid phone number";
+      return locale.t("links.linkForm.lock.otp.errors.phoneInvalid");
     return null;
   }
 

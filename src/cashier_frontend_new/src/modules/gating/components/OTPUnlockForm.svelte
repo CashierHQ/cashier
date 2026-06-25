@@ -53,6 +53,16 @@
 
   const code = $derived(digits.join(""));
 
+  function getBackoffTimeText(remainingSecs: number): string {
+    const key =
+      remainingSecs >= 60
+        ? "links.linkForm.lock.otp.timeMinutes"
+        : "links.linkForm.lock.otp.timeSeconds";
+    const count =
+      remainingSecs >= 60 ? Math.ceil(remainingSecs / 60) : remainingSecs;
+    return locale.t(key).replace("{{count}}", String(count));
+  }
+
   async function handleSendOtp() {
     isSending = true;
     error = null;
@@ -130,16 +140,15 @@
             .BackoffThrottled;
           const match = backoffMsg.match(/Try again in (\d+)s/);
           const remainingSecs = match ? parseInt(match[1], 10) : 0;
-          const timeStr =
-            remainingSecs >= 60
-              ? `${Math.ceil(remainingSecs / 60)} minutes`
-              : `${remainingSecs} seconds`;
           const template =
             locale.t("links.linkForm.lock.tooManyFailedAttempts") ??
-            "Too many failed attempts. Please wait {{time}} before retrying.";
-          error = template.replace("{{time}}", timeStr);
+            locale.t("links.linkForm.lock.otp.errors.tooManyFailedAttempts");
+          error = template.replace(
+            "{{time}}",
+            getBackoffTimeText(remainingSecs),
+          );
         } else {
-          error = "Invalid or expired code. Please try again.";
+          error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
         }
       }
     } finally {
@@ -148,16 +157,18 @@
   }
 </script>
 
-<!-- Internal header (title changes between steps, so managed here) -->
+  <!-- Internal header (title changes between steps, so managed here) -->
 <div class="flex h-[30px] items-center justify-between pl-6">
   <h2 class="flex-1 text-center text-lg font-semibold text-[#0c111d]">
-    {step === "verify" ? "Verify to unlock" : "Enter code"}
+    {step === "verify"
+      ? locale.t("links.linkForm.lock.otp.verifyToUnlock")
+      : locale.t("links.linkForm.lock.otp.enterCode")}
   </h2>
   <button
     type="button"
     onclick={onClose}
     class="flex-none text-foreground"
-    aria-label="Close"
+    aria-label={locale.t("links.linkForm.lock.otp.closeUnlockDrawer")}
   >
     <X class="h-5 w-5" aria-hidden="true" />
   </button>
@@ -168,11 +179,9 @@
     <!-- Step 1: Verify to unlock -->
     <p class="text-sm text-foreground">
       {#if isEmail}
-        This transaction is locked to one email address. We'll send a code there
-        to confirm it's you.
+        {locale.t("links.linkForm.lock.otp.emailUnlockDescription")}
       {:else}
-        This transaction is locked to one phone number. We'll send a code there
-        to confirm it's you.
+        {locale.t("links.linkForm.lock.otp.phoneUnlockDescription")}
       {/if}
     </p>
 
@@ -194,9 +203,9 @@
       <Info class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
       <p class="text-sm">
         {#if isEmail}
-          Don't recognize this email? The link isn't meant for you.
+          {locale.t("links.linkForm.lock.otp.emailNotRecognized")}
         {:else}
-          Don't recognize this number? The link isn't meant for you.
+          {locale.t("links.linkForm.lock.otp.phoneNotRecognized")}
         {/if}
       </p>
     </div>
@@ -224,17 +233,16 @@
         <div
           class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
         ></div>
-        Sending…
+        {locale.t("links.linkForm.lock.otp.sendingCode")}
       {:else}
-        Send code
+        {locale.t("links.linkForm.lock.otp.sendCode")}
       {/if}
     </Button>
   {:else}
     <!-- Step 2: Enter code -->
     <p class="text-center text-sm text-foreground">
-      Code sent to <span class="font-semibold text-green"
-        >{maskedDestination()}</span
-      >
+      {locale.t("links.linkForm.lock.otp.codeSentTo")}
+      <span class="font-semibold text-green">{maskedDestination()}</span>
     </p>
 
     <!-- 6 digit inputs -->
@@ -254,7 +262,9 @@
             {digit
             ? 'border-[#36a18b]'
             : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
-          aria-label="Digit {i + 1}"
+          aria-label={locale
+            .t("links.linkForm.lock.otp.digitAriaLabel")
+            .replace("{{number}}", String(i + 1))}
         />
       {/each}
     </div>
@@ -284,7 +294,7 @@
         ></div>
         {locale.t("links.linkForm.lock.processing") ?? "Processing"}
       {:else}
-        Verify &amp; unlock
+        {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
       {/if}
     </Button>
   {/if}

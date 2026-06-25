@@ -37,7 +37,7 @@
     },
     {
       type: OTP_TYPE,
-      label: "One-time code verification",
+      label: locale.t("links.linkForm.lock.otp.oneTimeCodeVerification"),
       enabled: true,
       iconComponent: MessageSquareMore,
     },

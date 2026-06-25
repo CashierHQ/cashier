@@ -167,12 +167,14 @@
   <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
     <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
       <div class="relative flex items-center justify-center">
-        <DrawerTitle class="text-base font-semibold">Set lock keys</DrawerTitle>
+        <DrawerTitle class="text-base font-semibold">
+          {locale.t("links.linkForm.lock.otp.setOtpLockKeys")}
+        </DrawerTitle>
         <DrawerClose>
           <button
             type="button"
             class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
-            aria-label="Close OTP lock drawer"
+            aria-label={locale.t("links.linkForm.lock.otp.closeOtpLockDrawer")}
           >
             <X class="h-5 w-5" aria-hidden="true" />
           </button>

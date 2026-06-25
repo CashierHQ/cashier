@@ -72,11 +72,13 @@
         locale.t("links.linkForm.lock.key3RetweetPost") ?? "X Retweet post"
       );
     }
-    if ("OTPEmail" in key) {
-      return "One-time code verification";
-    }
-    if ("OTPSms" in key) {
-      return "One-time code verification";
+    if (
+      "OTPEmail" in key ||
+      "OTPEmailRedacted" in key ||
+      "OTPSms" in key ||
+      "OTPSmsRedacted" in key
+    ) {
+      return locale.t("links.linkForm.lock.otp.oneTimeCodeVerification");
     }
     return "Unknown";
   }
@@ -93,7 +95,12 @@
 
   function isOTPGate(gate: GateForUser): boolean {
     const key = gate.gate.key;
-    return "OTPEmail" in key || "OTPSms" in key;
+    return (
+      "OTPEmail" in key ||
+      "OTPEmailRedacted" in key ||
+      "OTPSms" in key ||
+      "OTPSmsRedacted" in key
+    );
   }
 
   function openDrawer(gate: GateForUser) {

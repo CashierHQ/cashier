@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
     DrawerContent,
@@ -28,7 +29,7 @@
   let emailDraft = $state("");
 
   const selectedCountryFlagClass = $derived(
-    `fi fi-${countryCode.toLowerCase()} fis flex-none rounded-sm`,
+    `fi fi-${countryCode.toLowerCase()} fis flex-none rounded-full text-xl`,
   );
 
   const filteredCountries = $derived.by(() => {
@@ -72,7 +73,7 @@
   >
     <button
       type="button"
-      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-xs transition-colors {activeTab ===
+      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-base transition-colors {activeTab ===
       'phone'
         ? 'bg-lightgreen text-green'
         : 'text-muted-foreground'}"
@@ -81,12 +82,12 @@
         submitted = false;
       }}
     >
-      <Smartphone class="h-4 w-4" aria-hidden="true" />
-      Phone
+      <Smartphone class="h-5 w-5" aria-hidden="true" />
+      {locale.t("links.linkForm.lock.otp.phone")}
     </button>
     <button
       type="button"
-      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-xs transition-colors {activeTab ===
+      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-base transition-colors {activeTab ===
       'email'
         ? 'bg-lightgreen text-green'
         : 'text-muted-foreground'}"
@@ -95,8 +96,8 @@
         submitted = false;
       }}
     >
-      <Mail class="h-4 w-4" aria-hidden="true" />
-      Email
+      <Mail class="h-5 w-5" aria-hidden="true" />
+      {locale.t("links.linkForm.lock.otp.email")}
     </button>
   </div>
 
@@ -104,7 +105,7 @@
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <label for="otp-phone" class="text-sm font-medium text-foreground">
-          Recipient's phone number
+          {locale.t("links.linkForm.lock.otp.recipientPhoneNumber")}
         </label>
         <button
           type="button"
@@ -115,7 +116,7 @@
             store.setOTPPhoneDraft("");
           }}
         >
-          Reset
+          {locale.t("links.linkForm.lock.reset")}
         </button>
       </div>
 
@@ -129,12 +130,12 @@
           <button
             type="button"
             class="flex h-9 items-center gap-2 rounded-md border border-transparent px-1.5 text-sm transition-colors hover:border-border hover:bg-lightgreen"
-            aria-label="Country dial code"
+            aria-label={locale.t("links.linkForm.lock.otp.countryDialCode")}
             aria-expanded={countryDrawerOpen}
             onclick={() => (countryDrawerOpen = true)}
           >
             <span class={selectedCountryFlagClass} aria-hidden="true"></span>
-            <span class="min-w-9 text-left">{dialCode}</span>
+            <span class="text-left">{dialCode}</span>
             <ChevronDown class="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
@@ -145,8 +146,8 @@
           inputmode="numeric"
           bind:value={rawPhone}
           oninput={() => store.setOTPPhoneDraft(dialCode + rawPhone)}
-          placeholder="(555) 000-0000"
-          class="min-w-0 flex-1 bg-transparent pl-2 text-sm outline-none placeholder:text-muted-foreground"
+          placeholder={locale.t("links.linkForm.lock.otp.phonePlaceholder")}
+          class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
         />
       </div>
 
@@ -157,14 +158,14 @@
   {:else}
     <div class="space-y-2">
       <label for="otp-email" class="text-sm font-medium text-foreground">
-        Recipient's email address
+        {locale.t("links.linkForm.lock.otp.recipientEmailAddress")}
       </label>
       <input
         id="otp-email"
         type="email"
         bind:value={emailDraft}
         oninput={() => store.setOTPEmailDraft(emailDraft)}
-        placeholder="Enter the email"
+        placeholder={locale.t("links.linkForm.lock.otp.enterEmail")}
         class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green {submitted &&
         store.otpEmailSetupError
           ? 'border-[#D26060]'
@@ -176,17 +177,12 @@
     </div>
   {/if}
 
-  <div class="flex items-start gap-2 text-xs text-green">
-    <Info class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
-    <p>The last 4 digits will be shown to whoever opens the link.</p>
-  </div>
-
   <Button
     type="button"
     onclick={handleLock}
     class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
   >
-    Lock
+    {locale.t("links.linkForm.lock.lock")}
   </Button>
 </div>
 
@@ -194,11 +190,13 @@
   <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
     <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
       <div class="relative flex items-center justify-center">
-        <DrawerTitle class="text-base font-semibold">Country code</DrawerTitle>
+        <DrawerTitle class="text-base font-semibold">
+          {locale.t("links.linkForm.lock.otp.countryCode")}
+        </DrawerTitle>
         <button
           type="button"
           class="absolute right-0 top-1/2 -translate-y-1/2 text-foreground"
-          aria-label="Close country picker"
+          aria-label={locale.t("links.linkForm.lock.otp.closeCountryPicker")}
           onclick={() => (countryDrawerOpen = false)}
         >
           <X class="h-5 w-5" aria-hidden="true" />
@@ -210,7 +208,7 @@
       <input
         type="search"
         bind:value={countrySearch}
-        placeholder="Search country or dial code…"
+        placeholder={locale.t("links.linkForm.lock.otp.searchCountryOrDialCode")}
         class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green"
       />
 
@@ -232,7 +230,7 @@
           </button>
         {:else}
           <p class="px-3 py-3 text-sm text-muted-foreground">
-            No countries found.
+            {locale.t("links.linkForm.lock.otp.noCountriesFound")}
           </p>
         {/each}
       </div>
