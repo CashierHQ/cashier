@@ -356,3 +356,37 @@ async fn should_not_allow_non_admin_to_update_or_get_setting() {
     .await
     .unwrap();
 }
+
+/// Partial update: a single `Some` field is applied; all omitted (`None`) fields stay unchanged.
+#[tokio::test]
+async fn should_apply_partial_update_leaving_other_fields_untouched() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: baseline snapshot + a new distinct ckbtc id (precondition: it differs).
+        let admin = TestUser::TokenStorageAdmin.get_principal();
+        let admin_client = ctx.new_token_storage_client(admin);
+        let before = admin_client.admin_get_setting().await.unwrap();
+        let new_ckbtc = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        assert_ne!(before.ckbtc_minter_id, new_ckbtc);
+
+        // Act: update ONLY ckbtc id (omnity + inspect omitted).
+        admin_client
+            .admin_update_setting(UpdateSettingArgs {
+                inspect_message_enabled: None,
+                ckbtc_minter_id: Some(new_ckbtc),
+                omnity_bitcoin_id: None,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert: ckbtc changed; omnity id and inspect flag preserved.
+        let after = admin_client.admin_get_setting().await.unwrap();
+        assert_eq!(after.ckbtc_minter_id, new_ckbtc);
+        assert_eq!(after.omnity_bitcoin_id, before.omnity_bitcoin_id);
+        assert_eq!(after.inspect_message_enabled, before.inspect_message_enabled);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

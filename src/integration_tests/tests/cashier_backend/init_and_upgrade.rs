@@ -101,3 +101,40 @@ async fn should_not_allow_non_admin_to_get_setting() {
     .await
     .unwrap();
 }
+
+/// Partial update: a single `Some` field is applied; all omitted (`None`) fields stay unchanged.
+#[tokio::test]
+async fn should_apply_partial_update_leaving_other_fields_untouched() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: baseline snapshot + a new distinct token_storage id (precondition: it differs).
+        let admin = TestUser::CashierBackendAdmin.get_principal();
+        let admin_client = ctx.new_cashier_backend_client(admin);
+        let before = admin_client.admin_get_setting().await.unwrap();
+        let new_ts = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        assert_ne!(before.token_storage_canister_id, new_ts);
+
+        // Act: update ONLY token_storage id (gate + inspect omitted).
+        admin_client
+            .admin_update_setting(UpdateSettingArgs {
+                inspect_message_enabled: None,
+                token_storage_canister_id: Some(new_ts),
+                gate_service_canister_id: None,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert: ts changed; gate id and inspect flag preserved.
+        let after = admin_client.admin_get_setting().await.unwrap();
+        assert_eq!(after.token_storage_canister_id, new_ts);
+        assert_eq!(
+            after.gate_service_canister_id,
+            before.gate_service_canister_id
+        );
+        assert_eq!(after.inspect_message_enabled, before.inspect_message_enabled);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

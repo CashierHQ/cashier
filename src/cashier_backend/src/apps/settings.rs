@@ -64,3 +64,73 @@ impl<R: Repositories> SettingsService<R> {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SettingsService;
+    use crate::repositories::tests::TestRepositories;
+    use candid::Principal;
+
+    #[test]
+    fn it_should_return_inspect_message_enabled_by_default() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let service = SettingsService::new(&repositories);
+
+        // Act
+        let result = service.is_inspect_message_enabled();
+
+        // Assert
+        assert!(result);
+    }
+
+    #[test]
+    fn it_should_set_inspect_message_enabled_to_false() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = SettingsService::new(&repositories);
+
+        // Act
+        service.set_inspect_message_enabled(false);
+
+        // Assert
+        assert!(!service.is_inspect_message_enabled());
+    }
+
+    #[test]
+    fn it_should_set_and_get_token_storage_canister_id() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = SettingsService::new(&repositories);
+        let id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        // Default is the anonymous principal (read back via the full snapshot).
+        assert_eq!(
+            service.get().token_storage_canister_id,
+            Principal::anonymous()
+        );
+
+        // Act
+        service.set_token_storage_canister_id(id);
+
+        // Assert
+        assert_eq!(service.get().token_storage_canister_id, id);
+    }
+
+    #[test]
+    fn it_should_set_and_get_gate_service_canister_id() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = SettingsService::new(&repositories);
+        let id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+        assert_eq!(
+            service.get().gate_service_canister_id,
+            Principal::anonymous()
+        );
+
+        // Act
+        service.set_gate_service_canister_id(id);
+
+        // Assert
+        assert_eq!(service.get().gate_service_canister_id, id);
+    }
+}

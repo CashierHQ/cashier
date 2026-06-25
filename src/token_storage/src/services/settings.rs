@@ -129,4 +129,42 @@ mod tests {
         // Assert
         assert!(result);
     }
+
+    #[test]
+    fn it_should_set_and_get_ckbtc_minter_id() {
+        use candid::Principal;
+
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut settings_service = SettingsService::new(&repositories);
+        let id = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        assert_eq!(settings_service.get_ckbtc_minter_id(), Principal::anonymous());
+
+        // Act
+        settings_service.set_ckbtc_minter_id(id);
+
+        // Assert (read back via getter and via the full snapshot)
+        assert_eq!(settings_service.get_ckbtc_minter_id(), id);
+        assert_eq!(settings_service.get().ckbtc_minter_id, id);
+    }
+
+    #[test]
+    fn it_should_set_and_get_omnity_bitcoin_id() {
+        use candid::Principal;
+
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut settings_service = SettingsService::new(&repositories);
+        let id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+        assert_eq!(
+            settings_service.get_omnity_bitcoin_id(),
+            Principal::anonymous()
+        );
+
+        // Act
+        settings_service.set_omnity_bitcoin_id(id);
+
+        // Assert
+        assert_eq!(settings_service.get_omnity_bitcoin_id(), id);
+    }
 }
