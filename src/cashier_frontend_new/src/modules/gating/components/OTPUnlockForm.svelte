@@ -2,8 +2,10 @@
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
+  import { onDestroy } from "svelte";
 
   const {
     linkId,
@@ -21,26 +23,12 @@
     "OTPEmail" in gate.gate.key || "OTPEmailRedacted" in gate.gate.key,
   );
 
-  function maskPhone(phone: string): string {
-    const clean = phone.replace(/\s/g, "");
-    if (clean.length <= 4) return clean;
-    const last4 = clean.slice(-4);
-    const prefix = clean.match(/^(\+\d{1,2})/)?.[1] ?? "";
-    return `${prefix} ••••• ${last4}`;
-  }
-
-  function maskEmail(email: string): string {
-    const [local, domain] = email.split("@");
-    if (!domain) return email;
-    return `${local[0] ?? ""}•••••${local.slice(-4)}@${domain}`;
-  }
-
-  const maskedDestination = $derived(() => {
+  const destination = $derived.by(() => {
     const key = gate.gate.key;
+    if ("OTPEmail" in key) return key.OTPEmail;
+    if ("OTPSms" in key) return key.OTPSms;
     if ("OTPEmailRedacted" in key) return key.OTPEmailRedacted;
     if ("OTPSmsRedacted" in key) return key.OTPSmsRedacted;
-    if ("OTPEmail" in key) return maskEmail(key.OTPEmail);
-    if ("OTPSms" in key) return maskPhone(key.OTPSms);
     return "";
   });
 
@@ -50,8 +38,37 @@
   let isSending = $state(false);
   let isVerifying = $state(false);
   let error = $state<string | null>(null);
+  let remainingSeconds = $state(OTP_EXPIRY_SECONDS);
+  let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
   const code = $derived(digits.join(""));
+  const formattedRemainingTime = $derived.by(() => {
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  });
+  const expiryText = $derived(
+    locale
+      .t("links.linkForm.lock.otp.codeExpiresIn")
+      .replace("{{time}}", formattedRemainingTime),
+  );
+
+  function stopCountdown() {
+    if (!countdownInterval) return;
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  function startCountdown() {
+    stopCountdown();
+    remainingSeconds = OTP_EXPIRY_SECONDS;
+    countdownInterval = setInterval(() => {
+      remainingSeconds = Math.max(0, remainingSeconds - 1);
+      if (remainingSeconds === 0) {
+        stopCountdown();
+      }
+    }, 1000);
+  }
 
   function getBackoffTimeText(remainingSecs: number): string {
     const key =
@@ -71,6 +88,7 @@
       if (result.isOk()) {
         digits = ["", "", "", "", "", ""];
         step = "code";
+        startCountdown();
       } else {
         error = result.unwrapErr().message;
       }
@@ -155,9 +173,11 @@
       isVerifying = false;
     }
   }
+
+  onDestroy(stopCountdown);
 </script>
 
-  <!-- Internal header (title changes between steps, so managed here) -->
+<!-- Internal header (title changes between steps, so managed here) -->
 <div class="flex h-[30px] items-center justify-between pl-6">
   <h2 class="flex-1 text-center text-lg font-semibold text-[#0c111d]">
     {step === "verify"
@@ -194,8 +214,7 @@
       {:else}
         <Smartphone class="h-5 w-5 flex-none text-green" aria-hidden="true" />
       {/if}
-      <span class="text-lg font-semibold text-green">{maskedDestination()}</span
-      >
+      <span class="text-lg font-semibold text-green">{destination}</span>
     </div>
 
     <!-- Hint -->
@@ -240,10 +259,13 @@
     </Button>
   {:else}
     <!-- Step 2: Enter code -->
-    <p class="text-center text-sm text-foreground">
-      {locale.t("links.linkForm.lock.otp.codeSentTo")}
-      <span class="font-semibold text-green">{maskedDestination()}</span>
-    </p>
+    <div class="space-y-1 text-center">
+      <p class="text-sm text-foreground">
+        {locale.t("links.linkForm.lock.otp.codeSentTo")}
+        <span class="font-semibold text-green">{destination}</span>
+      </p>
+      <p class="text-xs text-muted-foreground">{expiryText}</p>
+    </div>
 
     <!-- 6 digit inputs -->
     <div class="flex items-center justify-center gap-1.5">

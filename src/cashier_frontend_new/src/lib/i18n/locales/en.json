@@ -276,6 +276,7 @@
           "sendingCode": "Sending…",
           "sendCode": "Send code",
           "codeSentTo": "Code sent to ",
+          "codeExpiresIn": "Code expires in {{time}}",
           "digitAriaLabel": "Digit {{number}}",
           "verifyAndUnlock": "Verify & unlock",
           "timeMinutes": "{{count}} minutes",
