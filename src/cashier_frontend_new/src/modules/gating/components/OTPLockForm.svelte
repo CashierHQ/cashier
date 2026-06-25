@@ -9,6 +9,13 @@
   } from "$lib/shadcn/components/ui/drawer";
   import { COUNTRY_DIAL_CODES } from "$modules/shared/data/countries";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import {
+    buildInternationalPhoneNumber,
+    formatPhoneNumberForCountry,
+    getDigitsOnly,
+    getPhoneDialCode,
+    getPhonePlaceholder,
+  } from "$modules/shared/services/phoneNumber";
   import { ChevronDown, Info, Mail, Smartphone, X } from "lucide-svelte";
 
   const {
@@ -23,11 +30,15 @@
   let submitted = $state(false);
   let countryDrawerOpen = $state(false);
   let countrySearch = $state("");
-  let dialCode = $state("+1");
   let countryCode = $state("US");
-  let rawPhone = $state("");
+  let phoneDigits = $state("");
   let emailDraft = $state("");
 
+  const dialCode = $derived(getPhoneDialCode(countryCode));
+  const phonePlaceholder = $derived(getPhonePlaceholder(countryCode));
+  const formattedPhone = $derived(
+    formatPhoneNumberForCountry(phoneDigits, countryCode),
+  );
   const selectedCountryFlagClass = $derived(
     `fi fi-${countryCode.toLowerCase()} fis flex-none rounded-full text-xl`,
   );
@@ -39,22 +50,47 @@
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.code.toLowerCase().includes(q) ||
-        c.dialCode.includes(q),
+        getPhoneDialCode(c.code, c.dialCode).includes(q),
     );
   });
 
-  function handleCountrySelect(code: string, dial: string) {
+  function updatePhoneDraft(selectedCountryCode = countryCode) {
+    store.setOTPPhoneDraft(
+      buildInternationalPhoneNumber(selectedCountryCode, phoneDigits),
+    );
+  }
+
+  function handleCountrySelect(code: string) {
     countryCode = code;
-    dialCode = dial;
-    store.setOTPPhoneDraft(dial + rawPhone);
+    updatePhoneDraft(code);
     countryDrawerOpen = false;
     countrySearch = "";
+  }
+
+  function handlePhoneKeydown(e: KeyboardEvent) {
+    if (e.key !== "Backspace") return;
+
+    const input = e.currentTarget as HTMLInputElement;
+    const cursorIndex = input.selectionStart ?? input.value.length;
+    const previousCharacter = input.value[cursorIndex - 1];
+
+    if (!previousCharacter || /\d/.test(previousCharacter)) return;
+
+    const digitIndexToRemove =
+      getDigitsOnly(input.value.slice(0, cursorIndex)).length - 1;
+    if (digitIndexToRemove < 0) return;
+
+    e.preventDefault();
+    phoneDigits =
+      phoneDigits.slice(0, digitIndexToRemove) +
+      phoneDigits.slice(digitIndexToRemove + 1);
+    updatePhoneDraft();
   }
 
   const handleLock = () => {
     submitted = true;
     if (activeTab === "phone") {
-      store.setOTPPhoneDraft(dialCode + rawPhone);
+      updatePhoneDraft();
       if (store.otpPhoneSetupError) return;
       store.saveOTPSmsLock();
     } else {
@@ -112,7 +148,7 @@
           class="text-xs font-medium text-[#D26060]"
           onclick={() => {
             submitted = false;
-            rawPhone = "";
+            phoneDigits = "";
             store.setOTPPhoneDraft("");
           }}
         >
@@ -144,9 +180,15 @@
           id="otp-phone"
           type="tel"
           inputmode="numeric"
-          bind:value={rawPhone}
-          oninput={() => store.setOTPPhoneDraft(dialCode + rawPhone)}
-          placeholder={locale.t("links.linkForm.lock.otp.phonePlaceholder")}
+          value={formattedPhone}
+          oninput={(e) => {
+            phoneDigits = getDigitsOnly(
+              (e.currentTarget as HTMLInputElement).value,
+            );
+            updatePhoneDraft();
+          }}
+          onkeydown={handlePhoneKeydown}
+          placeholder={phonePlaceholder}
           class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
         />
       </div>
@@ -217,16 +259,16 @@
           <button
             type="button"
             class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm hover:bg-lightgreen"
-            onclick={() => handleCountrySelect(country.code, country.dialCode)}
+            onclick={() => handleCountrySelect(country.code)}
           >
             <span
               class="fi fi-{country.code.toLowerCase()} fis flex-none rounded-sm"
               aria-hidden="true"
             ></span>
             <span class="min-w-0 flex-1 truncate">{country.name}</span>
-            <span class="flex-none text-muted-foreground"
-              >{country.dialCode}</span
-            >
+            <span class="flex-none text-muted-foreground">
+              {getPhoneDialCode(country.code, country.dialCode)}
+            </span>
           </button>
         {:else}
           <p class="px-3 py-3 text-sm text-muted-foreground">

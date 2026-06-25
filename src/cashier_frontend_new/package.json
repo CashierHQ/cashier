@@ -63,8 +63,8 @@
     "vitest-browser-svelte": "^1.1.0"
   },
   "dependencies": {
-    "@cashier/gate-sdk": "workspace:*",
     "@amplitude/analytics-browser": "^2.42.2",
+    "@cashier/gate-sdk": "workspace:*",
     "@dfinity/ledger-icp": "^9.1.0",
     "@dfinity/ledger-icrc": "^7.1.0",
     "@dfinity/utils": "^4.2.1",
@@ -78,6 +78,7 @@
     "devalue": "^5.8.0",
     "flag-icons": "^7.5.0",
     "ic-vetkd-utils": "0.3.0",
+    "libphonenumber-js": "^1.13.7",
     "lucide-svelte": "^1.0.1",
     "qrcode": "^1.5.4",
     "query-string": "^9.3.1",
