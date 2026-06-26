@@ -1,5 +1,5 @@
 use candid::Principal;
-use cashier_backend_types::auth::Permission;
+use cashier_backend_types::{auth::Permission, settings::UpdateSettingArgs};
 
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
@@ -229,6 +229,88 @@ async fn should_not_allow_user_to_clear_token_fee_cache() {
 
         // Assert
         assert!(result.unwrap_err().to_string().contains("NotAuthorized"));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+/// Non-admin callers cannot update settings (rejected at inspect ingress / in-method).
+#[tokio::test]
+async fn should_not_allow_non_admin_to_update_setting() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: a non-admin user and its client.
+        let user = TestUser::User1.get_principal();
+        let user_client = ctx.new_cashier_backend_client(user);
+
+        // Act: attempt to update settings as the non-admin user.
+        let result = user_client
+            .admin_update_setting(UpdateSettingArgs::default())
+            .await;
+
+        // Assert: the call is rejected (non-admin not allowed to write settings).
+        assert!(result.is_err());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+/// Non-admin callers cannot read settings either.
+#[tokio::test]
+async fn should_not_allow_non_admin_to_get_setting() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: a non-admin user and its client.
+        let user = TestUser::User1.get_principal();
+        let user_client = ctx.new_cashier_backend_client(user);
+
+        // Act: attempt to read settings as the non-admin user.
+        let result = user_client.admin_get_setting().await;
+
+        // Assert: the call is rejected (non-admin not allowed to read settings).
+        assert!(result.is_err());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+/// Partial update: a single `Some` field is applied; all omitted (`None`) fields stay unchanged.
+#[tokio::test]
+async fn should_apply_partial_update_leaving_other_fields_untouched() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: baseline snapshot + a new distinct token_storage id (precondition: it differs).
+        let admin = TestUser::CashierBackendAdmin.get_principal();
+        let admin_client = ctx.new_cashier_backend_client(admin);
+        let before = admin_client.admin_get_setting().await.unwrap();
+        let new_ts = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        assert_ne!(before.token_storage_canister_id, new_ts);
+
+        // Act: update ONLY token_storage id (gate + inspect omitted).
+        admin_client
+            .admin_update_setting(UpdateSettingArgs {
+                inspect_message_enabled: None,
+                token_storage_canister_id: Some(new_ts),
+                gate_service_canister_id: None,
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert: ts changed; gate id and inspect flag preserved.
+        let after = admin_client.admin_get_setting().await.unwrap();
+        assert_eq!(after.token_storage_canister_id, new_ts);
+        assert_eq!(
+            after.gate_service_canister_id,
+            before.gate_service_canister_id
+        );
+        assert_eq!(
+            after.inspect_message_enabled,
+            before.inspect_message_enabled
+        );
 
         Ok(())
     })
