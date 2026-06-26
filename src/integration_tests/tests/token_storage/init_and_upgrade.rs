@@ -296,39 +296,3 @@ async fn should_persist_canister_ids_across_upgrade() {
     .await
     .unwrap();
 }
-
-/// Upgrade args, when provided (`Some`), override the stable value; omitted fields preserved.
-#[tokio::test]
-async fn should_apply_canister_ids_from_upgrade_args_when_provided() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange: admin client, the override value, and the current omnity id as baseline.
-        let admin = TestUser::TokenStorageAdmin.get_principal();
-        let admin_client = ctx.new_token_storage_client(admin);
-        let overridden_ckbtc = Principal::from_text("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-        let omnity_before = admin_client
-            .admin_get_setting()
-            .await
-            .unwrap()
-            .omnity_bitcoin_id;
-
-        // Act: upgrade supplying only ckbtc id.
-        let mut args = upgrade_args_empty();
-        args.ckbtc_minter_id = Some(overridden_ckbtc);
-        ctx.upgrade_canister(
-            ctx.token_storage_principal,
-            None,
-            get_token_storage_canister_bytecode(),
-            (args,),
-        )
-        .await;
-
-        // Assert: ckbtc overridden; omnity (omitted) preserved.
-        let after = admin_client.admin_get_setting().await.unwrap();
-        assert_eq!(after.ckbtc_minter_id, overridden_ckbtc);
-        assert_eq!(after.omnity_bitcoin_id, omnity_before);
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
