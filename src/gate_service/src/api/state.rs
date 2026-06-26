@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::{
     repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
@@ -18,7 +21,9 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
 }
 
 impl<E: IcEnvironment + Clone> CanisterState<E> {
-    /// Creates a new CanisterState
+    /// Creates a new `CanisterState` wiring all services to their stable-memory stores.
+    /// # Arguments
+    /// * `env`: IC environment abstraction (use `RealIcEnvironment` in production).
     pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
         CanisterState {
@@ -30,7 +35,11 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
     }
 }
 
-/// Returns the state of the canister
+/// Returns a fresh `CanisterState` bound to stable-memory stores.
+/// Called at the start of each API handler — it is cheap because the stores are
+/// thread-locals and no data is copied.
+/// # Returns
+/// A `CanisterState` ready for use within the current IC message.
 #[inline(always)]
 pub fn get_state() -> CanisterState<RealIcEnvironment> {
     CanisterState::new(RealIcEnvironment::new())

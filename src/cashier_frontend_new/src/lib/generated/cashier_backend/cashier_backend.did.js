@@ -9,8 +9,6 @@ export const idlFactory = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
-    'gate_service_canister_id' : IDL.Principal,
-    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });
@@ -63,10 +61,20 @@ export const idlFactory = ({ IDL }) => {
     'enabled' : IDL.Bool,
     'max_requests' : IDL.Nat32,
   });
+  const SettingsDto = IDL.Record({
+    'inspect_message_enabled' : IDL.Bool,
+    'gate_service_canister_id' : IDL.Principal,
+    'token_storage_canister_id' : IDL.Principal,
+  });
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
   const Result_1 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
+  });
+  const UpdateSettingArgs = IDL.Record({
+    'inspect_message_enabled' : IDL.Opt(IDL.Bool),
+    'gate_service_canister_id' : IDL.Opt(IDL.Principal),
+    'token_storage_canister_id' : IDL.Opt(IDL.Principal),
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -403,9 +411,19 @@ export const idlFactory = ({ IDL }) => {
   const Result_7 = IDL.Variant({ 'Ok' : CreateLinkDto, 'Err' : CanisterError });
   const GateKey = IDL.Variant({
     'Password' : IDL.Text,
+    'OTPSms' : IDL.Text,
+    'OTPEmail' : IDL.Text,
     'XFollowing' : IDL.Text,
     'DiscordServer' : IDL.Text,
+    'XLikedPost' : IDL.Text,
     'PasswordRedacted' : IDL.Null,
+    'XRetweetedPost' : IDL.Text,
+    'XRetweetedPostCredential' : IDL.Record({ 'user_id' : IDL.Text }),
+    'XOwnedAccount' : IDL.Text,
+    'XLikedPostCredential' : IDL.Record({
+      'user_id' : IDL.Text,
+      'access_token' : IDL.Text,
+    }),
     'TelegramGroup' : IDL.Text,
   });
   const CreateLinkInputV3 = IDL.Record({
@@ -529,6 +547,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'admin_gate_rate_limit_update' : IDL.Func([RateLimitConfig], [Result], []),
+    'admin_get_setting' : IDL.Func([], [SettingsDto], ['query']),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
@@ -545,6 +564,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_1],
         [],
       ),
+    'admin_update_setting' : IDL.Func([UpdateSettingArgs], [Result], []),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'get_link_details_v2' : IDL.Func(
         [IDL.Text, IDL.Opt(GetLinkOptions)],
@@ -618,8 +638,6 @@ export const init = ({ IDL }) => {
   const CashierBackendInitData = IDL.Record({
     'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
-    'gate_service_canister_id' : IDL.Principal,
-    'token_storage_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
     'token_standard_cache_ttl_ns' : IDL.Opt(IDL.Nat64),
   });

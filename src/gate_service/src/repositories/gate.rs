@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::utils::gate::generate_gate_id;
 use candid::Principal;
 use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
@@ -15,6 +18,10 @@ pub struct GateRepository<G: Storage<GateStorage>, U: Storage<GateUserStatusStor
 }
 
 impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<G, U> {
+    /// Creates a new `GateRepository` backed by the provided stable-memory stores.
+    /// # Arguments
+    /// * `gate_map`: Stable store mapping gate IDs to `Gate` values.
+    /// * `gate_user_map`: Stable store mapping `(gate_id, user)` pairs to `GateUserStatus`.
     pub fn new(gate_map: G, gate_user_map: U) -> Self {
         Self {
             gate_map,

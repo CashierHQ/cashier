@@ -11,17 +11,23 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 argon2 = { workspace = true }
+sha2 = "0.10"
+hex = "0.4"
 candid = { workspace = true }
 cashier_common = { workspace = true }
 cashier_macros = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 gate_service_types = { workspace = true }
-ic-cdk = { workspace = true }
+aes-gcm = "0.10"
+ic-cdk = "0.19.0-beta.2"
 ic-cdk-timers = { workspace = true }
+ic-vetkeys = "0.3"
 ic_mple_log = { workspace = true }
 ic_mple_auth = { workspace = true }
 ic-stable-structures = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]

@@ -157,6 +157,11 @@ export interface RuneInfo {
   'icon' : [] | [string],
   'rune_id' : string,
 }
+export interface SettingsDto {
+  'omnity_bitcoin_id' : Principal,
+  'ckbtc_minter_id' : Principal,
+  'inspect_message_enabled' : boolean,
+}
 export interface TokenDto {
   'id' : TokenId,
   'is_rune' : [] | [boolean],
@@ -207,6 +212,11 @@ export interface UpdateBridgeTransactionInputArg {
   'ckbtc_block_id' : [] | [bigint],
   'bridge_id' : string,
 }
+export interface UpdateSettingArgs {
+  'omnity_bitcoin_id' : [] | [Principal],
+  'ckbtc_minter_id' : [] | [Principal],
+  'inspect_message_enabled' : [] | [boolean],
+}
 export interface UpdateTokenInput {
   'token_id' : TokenId,
   'is_enabled' : boolean,
@@ -251,10 +261,23 @@ export interface _SERVICE {
    */
   'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
   'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
+  /**
+   * Returns the current canister settings (for verification).
+   * 
+   * # Returns
+   * * `SettingsDto` - Current settings snapshot (inspect flag + ckbtc_minter/omnity_bitcoin ids)
+   * 
+   * # Authorization
+   * Requires `Permission::Admin`.
+   */
+  'admin_get_setting' : ActorMethod<[], SettingsDto>,
   'admin_get_stats' : ActorMethod<[], Result>,
   'admin_initialize_registry' : ActorMethod<[], Result_1>,
   /**
    * Enables/disables the inspect message.
+   * 
+   * Deprecated: prefer `admin_update_setting` with `inspect_message_enabled = opt bool`.
+   * Kept for backward compatibility with existing callers.
    */
   'admin_inspect_message_enable' : ActorMethod<[boolean], Result_2>,
   /**
@@ -275,6 +298,22 @@ export interface _SERVICE {
     [Principal, Array<Permission>],
     Result_3
   >,
+  /**
+   * Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
+   * applied, the rest unchanged. Canister-id changes are persisted in stable memory (survive upgrades).
+   * 
+   * # Arguments
+   * * `arg` - Partial settings update: `inspect_message_enabled`, `ckbtc_minter_id`,
+   * `omnity_bitcoin_id` (each optional)
+   * 
+   * # Returns
+   * * `Ok(())` - Settings updated successfully (the only non-trap outcome)
+   * 
+   * # Authorization
+   * Requires `Permission::Admin` (auto-gated at ingress via the `admin_` prefix + in-method check);
+   * unauthorized callers are rejected (trap), not returned as `Err`.
+   */
+  'admin_update_setting' : ActorMethod<[UpdateSettingArgs], Result_2>,
   /**
    * Returns the build data of the canister.
    */
