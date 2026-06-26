@@ -11,6 +11,7 @@ use token_storage_types::{
         nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
     },
     error::CanisterError,
+    settings::{SettingsDto, UpdateSettingArgs},
     token::{
         AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenInput,
         UpdateTokenStandardsInput,
@@ -81,6 +82,26 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     /// Returns the inspect message status.
     pub async fn is_inspect_message_enabled(&self) -> CanisterClientResult<bool> {
         self.client.query("is_inspect_message_enabled", ()).await
+    }
+
+    /// Updates canister settings (partial; only `Some` fields are applied).
+    /// # Arguments
+    /// * `arg` - Partial settings update (inspect flag + ckbtc_minter/omnity_bitcoin canister ids)
+    /// # Returns
+    /// * `Ok(())` - Settings updated successfully
+    /// * `Err(_)` - Transport failure or canister rejection (e.g. unauthorized caller)
+    pub async fn admin_update_setting(
+        &self,
+        arg: UpdateSettingArgs,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client.update("admin_update_setting", (arg,)).await
+    }
+
+    /// Returns the current canister settings.
+    /// # Returns
+    /// * `SettingsDto` - Current settings snapshot (inspect flag + ckbtc_minter/omnity_bitcoin ids)
+    pub async fn admin_get_setting(&self) -> CanisterClientResult<SettingsDto> {
+        self.client.query("admin_get_setting", ()).await
     }
 
     /// Returns the build data of the canister.

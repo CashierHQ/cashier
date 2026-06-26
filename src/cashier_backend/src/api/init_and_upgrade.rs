@@ -33,17 +33,9 @@ fn init(init_data: CashierBackendInitData) {
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
-    info!(
-        "[init] Set token storage canister id to {}",
-        init_data.token_storage_canister_id
-    );
-    state.set_token_storage_canister_id(init_data.token_storage_canister_id);
-
-    info!(
-        "[init] Set gate service canister id to {}",
-        init_data.gate_service_canister_id
-    );
-    state.set_gate_service_canister_id(init_data.gate_service_canister_id);
+    // Cross-canister ids (token_storage, gate_service) default to the anonymous principal here;
+    // wire them post-deploy via `admin_update_setting` before any cross-canister call.
+    info!("[init] cross-canister IDs unset; wire via admin_update_setting before use");
 
     state.token_standard_service.init(
         init_data
@@ -75,18 +67,8 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
             .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
     );
 
-    // Update token storage canister id if provided in upgrade args
-    info!(
-        "[post_upgrade] Set token storage canister id to {}",
-        upgrade_data.token_storage_canister_id
-    );
-    get_state().set_token_storage_canister_id(upgrade_data.token_storage_canister_id);
-
-    info!(
-        "[post_upgrade] Set gate service canister id to {}",
-        upgrade_data.gate_service_canister_id
-    );
-    get_state().set_gate_service_canister_id(upgrade_data.gate_service_canister_id);
+    // Cross-canister ids live in stable `Settings` and are never touched on upgrade (no clobber);
+    // they are managed solely via `admin_update_setting`.
 
     // Re-initialize token standard cache TTL
     get_state().token_standard_service.init(

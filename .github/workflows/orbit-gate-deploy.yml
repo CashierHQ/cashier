@@ -1,4 +1,4 @@
-name: Orbit Backend Deploy
+name: Orbit Gate Deploy
 
 on:
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
           if [[ "$TARGET_BRANCH" == "main" ]]; then
             echo "network=production" >> $GITHUB_OUTPUT
           elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-            echo "network=staging" >> $GITHUB_OUTPUT          
+            echo "network=staging" >> $GITHUB_OUTPUT
           else
             # Any other branch will deploy to dev network
             echo "network=dev" >> $GITHUB_OUTPUT
@@ -78,28 +78,28 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister create cashier_backend --network ${{ needs.setup_environment.outputs.network }}
+          dfx canister create gate_service --network ${{ needs.setup_environment.outputs.network }}
 
       - name: Verify the canister id
         id: canister_ids
         run: |
-          BE_CANISTER_ID=$(just get_canister_id cashier_backend ${{ needs.setup_environment.outputs.network }})
-          echo "Cashier backend canister ID: $BE_CANISTER_ID"
-          echo "cashier_backend_id=$BE_CANISTER_ID" >> $GITHUB_OUTPUT
+          GATE_SERVICE_ID=$(just get_canister_id gate_service ${{ needs.setup_environment.outputs.network }})
+          echo "Gate service canister ID: $GATE_SERVICE_ID"
+          echo "gate_service_id=$GATE_SERVICE_ID" >> $GITHUB_OUTPUT
 
       - name: Set Orbit station as the controller
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          dfx canister update-settings cashier_backend --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
+          dfx canister update-settings gate_service --set-controller ${{ vars.ORBIT_STATION_ID }} --network ${{ needs.setup_environment.outputs.network }} -y
 
       - name: Set log filter
         id: log_filter
         run: |
           if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
-            echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
+            echo "filter=global,cashier=info" >> $GITHUB_OUTPUT
           else
-            echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
+            echo "filter=global,cashier=debug" >> $GITHUB_OUTPUT
           fi
 
       - name: Build canisters
@@ -107,27 +107,26 @@ jobs:
 
       - name: Build candid args (single run)
         run: |
-          # Owner-only install. token_storage + gate ids are wired post-deploy via an Orbit request
-          # calling admin_update_setting (see plan phase-04 runbook) — never passed at init.
           owner=${{ vars.ORBIT_STATION_ID }}
-          just build_backend_args_hex "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args
-          echo "Backend args:"
-          cat backend_args.hex
+          backend_canister_id=${{ vars.CASHIER_BACKEND_CANISTER_ID }}
+          just build_gate_service_args_hex "$owner" "$backend_canister_id" "${{ steps.log_filter.outputs.filter }}" gate_service_args
+          echo "Gate service args:"
+          cat gate_service_args.hex
 
-      - name: Install backend canister
-        id: backend
+      - name: Install gate_service canister
+        id: gate_service
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         shell: bash
         run: |
           set -o pipefail
 
-          canister_name=cashier_backend
+          canister_name=gate_service
           review_run_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           commit=${{ github.sha }}
 
           # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
+          output=$(just orbit_upgrade "$canister_name" "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" gate_service_args.hex "$commit" "$review_run_url" 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
 
           # Parse JSON fields
@@ -150,17 +149,17 @@ jobs:
           - **Mode**: `${{ env.MODE }}`
           - **Operator Principal**: `${{ steps.setup.outputs.operator }}`
 
-          ### Backend Canister
-          - **Canister ID**: `${{ steps.canister_ids.outputs.cashier_backend_id }}`
-          - **Arg:**
+          ### Gate Service Canister
+          - **Canister ID**: `${{ steps.canister_ids.outputs.gate_service_id }}`
+          **Arg:**
           ```
-          ${{ steps.backend.outputs.arg }}
+          ${{ steps.gate_service.outputs.arg }}
           ```
           | Field | Value |
           |-------|-------|
-          | WASM Checksum | `${{ steps.backend.outputs.wasm_checksum }}` |
-          | Arg Checksum | `${{ steps.backend.outputs.arg_checksum }}` |
-          | Request URL | ${{ steps.backend.outputs.request_url }} |
+          | WASM Checksum | `${{ steps.gate_service.outputs.wasm_checksum }}` |
+          | Arg Checksum | `${{ steps.gate_service.outputs.arg_checksum }}` |
+          | Request URL | ${{ steps.gate_service.outputs.request_url }} |
 
           ---
           EOF

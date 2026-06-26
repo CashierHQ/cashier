@@ -7,6 +7,8 @@ use log::debug;
 use cashier_backend_types::backoff::BackoffConfig;
 use cashier_backend_types::rate_limit::RateLimitConfig;
 
+use cashier_backend_types::settings::{SettingsDto, UpdateSettingArgs};
+
 use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
 
 /// Returns the build data of the canister.
@@ -72,7 +74,70 @@ pub fn admin_permissions_remove(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
+/// Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
+/// applied, the rest left unchanged. Canister-id changes are persisted in stable memory.
+///
+/// # Arguments
+/// * `arg` - Partial settings update: `inspect_message_enabled`, `token_storage_canister_id`,
+///   `gate_service_canister_id` (each optional)
+///
+/// # Returns
+/// * `Ok(())` - Settings updated successfully (the only non-trap outcome)
+///
+/// # Authorization
+/// Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard);
+/// unauthorized callers are rejected (trap), not returned as `Err`.
+#[update]
+#[allow(clippy::needless_pass_by_value)]
+pub fn admin_update_setting(arg: UpdateSettingArgs) -> Result<(), CanisterError> {
+    debug!("[admin_update_setting] arg={arg:?}");
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    if let Some(inspect_message_enabled) = arg.inspect_message_enabled {
+        state
+            .settings
+            .set_inspect_message_enabled(inspect_message_enabled);
+    }
+    if let Some(canister_id) = arg.token_storage_canister_id {
+        state.set_token_storage_canister_id(canister_id);
+    }
+    if let Some(canister_id) = arg.gate_service_canister_id {
+        state.set_gate_service_canister_id(canister_id);
+    }
+    Ok(())
+}
+
+/// Returns the current canister settings (for verification).
+///
+/// # Returns
+/// * `SettingsDto` - Current settings snapshot (inspect flag + token_storage/gate canister ids)
+///
+/// # Authorization
+/// Requires `Permission::Admin`.
+#[query]
+pub fn admin_get_setting() -> SettingsDto {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    let settings = state.settings.get();
+    SettingsDto {
+        inspect_message_enabled: settings.inspect_message_enabled,
+        token_storage_canister_id: settings.token_storage_canister_id,
+        gate_service_canister_id: settings.gate_service_canister_id,
+    }
+}
+
 /// Enables/disables the inspect message.
+///
+/// Deprecated: prefer `admin_update_setting` with `inspect_message_enabled = opt bool`.
+/// Kept for backward compatibility with existing callers.
 #[update]
 pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), CanisterError> {
     let mut state = get_state();

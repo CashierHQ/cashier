@@ -4,6 +4,7 @@
 use candid::{Nat, Principal};
 use token_storage_types::{
     init::TokenStorageUpgradeData,
+    settings::UpdateSettingArgs,
     token::{ChainTokenDetails, IcrcStandard, RegistryToken},
 };
 
@@ -96,8 +97,8 @@ async fn should_upgrade_with_tokens_upsert() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: Some(vec![new_token]),
             },),
         )
@@ -156,8 +157,8 @@ async fn should_upgrade_without_tokens_preserve_registry() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: None,
             },),
         )
@@ -211,8 +212,8 @@ async fn should_upgrade_upsert_existing_token() {
             None,
             get_token_storage_canister_bytecode(),
             (TokenStorageUpgradeData {
-                ckbtc_minter_id: ckbtc_minter_principal,
-                omnity_bitcoin_id: omnity_bitcoin_principal,
+                ckbtc_minter_id: Some(ckbtc_minter_principal),
+                omnity_bitcoin_id: Some(omnity_bitcoin_principal),
                 tokens: Some(vec![updated_icp]),
             },),
         )
@@ -236,6 +237,59 @@ async fn should_upgrade_upsert_existing_token() {
                 );
             }
         }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+fn upgrade_args_empty() -> TokenStorageUpgradeData {
+    TokenStorageUpgradeData {
+        ckbtc_minter_id: None,
+        omnity_bitcoin_id: None,
+        tokens: None,
+    }
+}
+
+/// Canister ids set via `admin_update_setting` must survive an upgrade run with EMPTY args
+/// (anti-clobber — they live in stable Settings, not volatile memory).
+#[tokio::test]
+async fn should_persist_canister_ids_across_upgrade() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: admin sets new distinct ids at runtime.
+        let admin = TestUser::TokenStorageAdmin.get_principal();
+        let admin_client = ctx.new_token_storage_client(admin);
+        let new_ckbtc = Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
+        let new_omnity = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+
+        admin_client
+            .admin_update_setting(UpdateSettingArgs {
+                inspect_message_enabled: None,
+                ckbtc_minter_id: Some(new_ckbtc),
+                omnity_bitcoin_id: Some(new_omnity),
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        let before = admin_client.admin_get_setting().await.unwrap();
+        assert_eq!(before.ckbtc_minter_id, new_ckbtc);
+        assert_eq!(before.omnity_bitcoin_id, new_omnity);
+
+        // Act: upgrade with EMPTY args (no ids supplied).
+        ctx.upgrade_canister(
+            ctx.token_storage_principal,
+            None,
+            get_token_storage_canister_bytecode(),
+            (upgrade_args_empty(),),
+        )
+        .await;
+
+        // Assert: stable ids preserved (not clobbered).
+        let after = admin_client.admin_get_setting().await.unwrap();
+        assert_eq!(after.ckbtc_minter_id, new_ckbtc);
+        assert_eq!(after.omnity_bitcoin_id, new_omnity);
 
         Ok(())
     })

@@ -9,7 +9,7 @@ use crate::{
 };
 use candid::{CandidType, Decode, Encode, Nat, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
-use cashier_backend_types::init::CashierBackendInitData;
+use cashier_backend_types::{init::CashierBackendInitData, settings::UpdateSettingArgs};
 use gate_service_client::client::GateServiceBackendClient;
 use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
@@ -288,12 +288,25 @@ async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
             log_settings: Some(log),
             owner: TestUser::CashierBackendAdmin.get_principal(),
             token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
-            token_storage_canister_id: token_storage_principal,
             token_standard_cache_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000),
-            gate_service_canister_id: gate_service_principal,
         }),
     )
     .await;
+
+    // Wire cross-canister ids post-deploy via admin_update_setting (they are no longer init args).
+    CashierBackendClient::new(PocketIcClient::from_client(
+        client.clone(),
+        cashier_backend_principal,
+        TestUser::CashierBackendAdmin.get_principal(),
+    ))
+    .admin_update_setting(UpdateSettingArgs {
+        inspect_message_enabled: None,
+        token_storage_canister_id: Some(token_storage_principal),
+        gate_service_canister_id: Some(gate_service_principal),
+    })
+    .await
+    .expect("admin_update_setting call failed")
+    .expect("admin_update_setting returned error");
 
     // Grant cashier_backend permission to create gates on gate_service.
     GateServiceBackendClient::new(PocketIcClient::from_client(

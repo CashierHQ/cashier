@@ -67,25 +67,48 @@ orbit_upgrade canister_name mode network arg_file commit="" review_run_url="":
 
 # Build init and upgrade hex argument for backend canister
 [group('orbit')]
-build_backend_args_hex owner token_storage_canister_id log_filter output_file:
+build_backend_args_hex owner log_filter output_file:
   #!/usr/bin/env bash
   set -e
 
-  # step 1: build argument text by injecting fields values
-  just build_backend_args "{{owner}}" "{{token_storage_canister_id}}" "{{log_filter}}" "{{output_file}}.txt"
+  # step 1: build argument text by injecting fields values (owner-only; cross-canister ids are
+  # wired post-deploy via admin_update_setting, never passed at init/upgrade).
+  just build_backend_args "{{owner}}" "{{log_filter}}" "{{output_file}}.txt"
 
   # step 2: encode argument text to hex format using didc and candid types
   didc encode -d ./target/artifacts/cashier_backend.did -t "(CashierBackendInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
 
 # Build the backend canister args and save to file
 [group('orbit')]
-build_backend_args owner token_storage_canister_id log_filter file_name:
+build_backend_args owner log_filter file_name:
   #!/usr/bin/env bash
   sed \
     -e 's/__OWNER__/{{owner}}/g' \
-    -e 's/__TOKEN_STORAGE_CANISTER_ID__/{{token_storage_canister_id}}/g' \
     -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     scripts/args/backend_args.template \
+    | tr -d '\n' | tr -s ' ' > {{file_name}}
+
+# Build init and upgrade hex argument for gate_service canister
+[group('orbit')]
+build_gate_service_args_hex owner backend_canister_id log_filter output_file:
+  #!/usr/bin/env bash
+  set -e
+
+  # step 1: build argument text by injecting fields values
+  just build_gate_service_args "{{owner}}" "{{backend_canister_id}}" "{{log_filter}}" "{{output_file}}.txt"
+
+  # step 2: encode argument text to hex format using didc and candid types
+  didc encode -d ./target/artifacts/gate_service.did -t "(GateServiceInitData)" "$(cat {{output_file}}.txt)" > {{output_file}}.hex
+
+# Build the gate_service canister args and save to file
+[group('orbit')]
+build_gate_service_args owner backend_canister_id log_filter file_name:
+  #!/usr/bin/env bash
+  sed \
+    -e 's/__OWNER__/{{owner}}/g' \
+    -e 's/__BACKEND_CANISTER_ID__/{{backend_canister_id}}/g' \
+    -e 's/__LOG_FILTER__/{{log_filter}}/g' \
+    scripts/args/gate_service_args.template \
     | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Build init and upgrade hex argument for token storage canister
