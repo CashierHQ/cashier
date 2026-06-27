@@ -16,6 +16,13 @@ use password::PasswordGateVerifier;
 use std::fmt::Debug;
 use x::{XFollowingVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
 
+pub struct GateVerificationContext<'a, O: Storage<OtpStorage>> {
+    pub gate_id: &'a str,
+    pub user: Principal,
+    pub current_time: u64,
+    pub otp_repo: &'a mut OtpRepository<O>,
+}
+
 pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's configured key.
     /// # Arguments
@@ -38,11 +45,9 @@ pub trait GateVerifier: Debug {
 /// # Arguments
 /// * `gate_config_key`: The key stored for the gate (e.g. `XFollowing("cashierapp")`).
 /// * `user_key`: The credential supplied by the caller at open time.
-/// * `gate_id`: The ID of the gate being opened (required by OTP verifiers to look up state).
-/// * `user`: The principal of the claimer (required by OTP verifiers to look up state).
 /// * `http`: HTTP outcall service passed through to the chosen verifier.
 /// * `secrets`: Secret service passed through to the chosen verifier.
-/// * `current_time`: Current IC time in nanoseconds, forwarded to OTP verifiers for expiry checks.
+/// * `context`: Gate-open context, including OTP repository and current IC time.
 /// # Returns
 /// * `Ok(VerificationResult)`: Verification completed (may be Success or Failure).
 /// * `Err(GateServiceError::UnsupportedGateKey)`: The gate type has no registered verifier.
@@ -50,12 +55,9 @@ pub trait GateVerifier: Debug {
 pub async fn verify_gate<H, S, O>(
     gate_config_key: GateKey,
     user_key: GateKey,
-    gate_id: &str,
-    user: Principal,
     http: &H,
     secrets: &S,
-    current_time: u64,
-    otp_repo: &mut OtpRepository<O>,
+    context: GateVerificationContext<'_, O>,
 ) -> Result<VerificationResult, GateServiceError>
 where
     H: HttpOutcallService,
@@ -89,15 +91,17 @@ where
                 .await
         }
         GateKey::OTPEmail(_) => {
-            let mut verifier = OTPEmailVerifier::new(gate_id.to_string(), user, otp_repo);
+            let mut verifier =
+                OTPEmailVerifier::new(context.gate_id.to_string(), context.user, context.otp_repo);
             verifier
-                .verify_with_time(user_key, http, secrets, current_time)
+                .verify_with_time(user_key, http, secrets, context.current_time)
                 .await
         }
         GateKey::OTPSms(_) => {
-            let mut verifier = OTPSmsVerifier::new(gate_id.to_string(), user, otp_repo);
+            let mut verifier =
+                OTPSmsVerifier::new(context.gate_id.to_string(), context.user, context.otp_repo);
             verifier
-                .verify_with_time(user_key, http, secrets, current_time)
+                .verify_with_time(user_key, http, secrets, context.current_time)
                 .await
         }
         _ => Err(GateServiceError::UnsupportedGateKey(format!(
@@ -136,12 +140,14 @@ mod tests {
         let result = verify_gate(
             gate_key,
             GateKey::Password("x".into()),
-            "test_gate_id",
-            user,
             &http,
             &secrets,
-            0,
-            &mut otp_repo,
+            GateVerificationContext {
+                gate_id: "test_gate_id",
+                user,
+                current_time: 0,
+                otp_repo: &mut otp_repo,
+            },
         )
         .await;
 
@@ -170,12 +176,14 @@ mod tests {
         let result = verify_gate(
             gate_config,
             GateKey::Password("password123".into()),
-            "test_gate_id",
-            user,
             &http,
             &secrets,
-            0,
-            &mut otp_repo,
+            GateVerificationContext {
+                gate_id: "test_gate_id",
+                user,
+                current_time: 0,
+                otp_repo: &mut otp_repo,
+            },
         )
         .await;
 

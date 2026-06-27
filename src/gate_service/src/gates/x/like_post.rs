@@ -89,7 +89,6 @@ impl GateVerifier for XLikedPostVerifier {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

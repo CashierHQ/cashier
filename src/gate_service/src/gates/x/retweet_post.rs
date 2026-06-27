@@ -89,7 +89,6 @@ impl GateVerifier for XRetweetedPostVerifier {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

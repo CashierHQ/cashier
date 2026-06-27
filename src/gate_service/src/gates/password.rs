@@ -56,7 +56,6 @@ impl GateVerifier for PasswordGateVerifier {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

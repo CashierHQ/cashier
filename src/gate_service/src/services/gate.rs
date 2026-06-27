@@ -286,12 +286,14 @@ impl<R: Repositories> GateService<R> {
         match gates::verify_gate(
             gate_config_key,
             key,
-            gate_id,
-            user,
             http,
             secrets,
-            current_time,
-            &mut self.otp_repo,
+            gates::GateVerificationContext {
+                gate_id,
+                user,
+                current_time,
+                otp_repo: &mut self.otp_repo,
+            },
         )
         .await?
         {

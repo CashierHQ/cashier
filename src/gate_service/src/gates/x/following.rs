@@ -84,8 +84,6 @@ impl GateVerifier for XFollowingVerifier {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;

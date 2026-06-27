@@ -55,8 +55,6 @@ impl GateVerifier for XOwnedAccountVerifier {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
