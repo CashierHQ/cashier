@@ -5,10 +5,12 @@ pub mod otp;
 pub mod password;
 pub mod x;
 
+use crate::repositories::otp::{OtpRepository, OtpStorage};
 use crate::services::http::HttpOutcallService;
 use crate::services::secret::SecretService;
 use candid::Principal;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
+use ic_mple_log::service::Storage;
 use otp::{OTPEmailVerifier, OTPSmsVerifier};
 use password::PasswordGateVerifier;
 use std::fmt::Debug;
@@ -45,7 +47,7 @@ pub trait GateVerifier: Debug {
 /// * `Ok(VerificationResult)`: Verification completed (may be Success or Failure).
 /// * `Err(GateServiceError::UnsupportedGateKey)`: The gate type has no registered verifier.
 /// * `Err(GateServiceError)`: A verifier-level error occurred.
-pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
+pub async fn verify_gate<H, S, O>(
     gate_config_key: GateKey,
     user_key: GateKey,
     gate_id: &str,
@@ -53,7 +55,13 @@ pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
     http: &H,
     secrets: &S,
     current_time: u64,
-) -> Result<VerificationResult, GateServiceError> {
+    otp_repo: &mut OtpRepository<O>,
+) -> Result<VerificationResult, GateServiceError>
+where
+    H: HttpOutcallService,
+    S: SecretService,
+    O: Storage<OtpStorage>,
+{
     match gate_config_key {
         GateKey::Password(hash) => {
             PasswordGateVerifier::new(hash)
@@ -81,12 +89,14 @@ pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
                 .await
         }
         GateKey::OTPEmail(_) => {
-            OTPEmailVerifier::new(gate_id.to_string(), user)
+            let mut verifier = OTPEmailVerifier::new(gate_id.to_string(), user, otp_repo);
+            verifier
                 .verify_with_time(user_key, http, secrets, current_time)
                 .await
         }
         GateKey::OTPSms(_) => {
-            OTPSmsVerifier::new(gate_id.to_string(), user)
+            let mut verifier = OTPSmsVerifier::new(gate_id.to_string(), user, otp_repo);
+            verifier
                 .verify_with_time(user_key, http, secrets, current_time)
                 .await
         }
@@ -100,6 +110,7 @@ pub async fn verify_gate<H: HttpOutcallService, S: SecretService>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::random_principal_id;
@@ -118,6 +129,8 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_key = GateKey::TelegramGroup("some_group".to_string());
         let user = random_principal_id();
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
 
         // Act
         let result = verify_gate(
@@ -128,6 +141,7 @@ mod tests {
             &http,
             &secrets,
             0,
+            &mut otp_repo,
         )
         .await;
 
@@ -149,6 +163,8 @@ mod tests {
         let hash = hash_password("password123").unwrap();
         let gate_config = GateKey::Password(hash);
         let user = random_principal_id();
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
 
         // Act
         let result = verify_gate(
@@ -159,6 +175,7 @@ mod tests {
             &http,
             &secrets,
             0,
+            &mut otp_repo,
         )
         .await;
 

@@ -29,6 +29,8 @@ impl<S: Storage<PasswordHashingAlgorithmStorage>> PasswordHashingAlgorithmReposi
     }
 
     /// Sets the active password hashing algorithm for future password gate creations.
+    /// # Arguments
+    /// * `algorithm`: The new password hashing algorithm to persist.
     pub fn set(&mut self, algorithm: PasswordHashingAlgorithm) {
         self.storage.with_borrow_mut(|cell| {
             let _ = cell.set(algorithm);

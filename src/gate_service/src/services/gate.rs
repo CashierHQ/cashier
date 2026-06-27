@@ -291,6 +291,7 @@ impl<R: Repositories> GateService<R> {
             http,
             secrets,
             current_time,
+            &mut self.otp_repo,
         )
         .await?
         {
@@ -314,8 +315,8 @@ impl<R: Repositories> GateService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::Repositories;
     use crate::repositories::tests::TestRepositories;
-    use crate::repositories::{OTP_STORE, otp::OtpRepository};
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
@@ -339,8 +340,13 @@ mod tests {
         (GateService::new(repos.clone()), repos)
     }
 
-    fn seed_otp_record(gate_id: &str, user: Principal, record: OtpRecord) {
-        OtpRepository::new(&OTP_STORE).set_otp_record(gate_id, user, record);
+    fn seed_otp_record(
+        repositories: &TestRepositories,
+        gate_id: &str,
+        user: Principal,
+        record: OtpRecord,
+    ) {
+        repositories.otp().set_otp_record(gate_id, user, record);
     }
 
     #[test]
@@ -1049,7 +1055,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_fail_open_otp_email_gate_due_to_wrong_code() {
         // Arrange
-        let (mut service, _repos) = fixture_of_gate_service();
+        let (mut service, repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1063,6 +1069,7 @@ mod tests {
             .unwrap();
         let user = random_principal_id();
         seed_otp_record(
+            &repos,
             &gate.id,
             user,
             OtpRecord {
@@ -1266,7 +1273,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_otp_email_gate() {
         // Arrange
-        let (mut service, _repos) = fixture_of_gate_service();
+        let (mut service, repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1280,6 +1287,7 @@ mod tests {
             .unwrap();
         let user = random_principal_id();
         seed_otp_record(
+            &repos,
             &gate.id,
             user,
             OtpRecord {
@@ -1313,7 +1321,7 @@ mod tests {
     #[tokio::test]
     async fn it_should_open_otp_sms_gate() {
         // Arrange
-        let (mut service, _repos) = fixture_of_gate_service();
+        let (mut service, repos) = fixture_of_gate_service();
         let (http, secrets) = fixture_of_services();
         let creator = random_principal_id();
         let gate = service
@@ -1327,6 +1335,7 @@ mod tests {
             .unwrap();
         let user = random_principal_id();
         seed_otp_record(
+            &repos,
             &gate.id,
             user,
             OtpRecord {

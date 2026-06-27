@@ -2,34 +2,50 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    gates::{GateVerifier, otp::verify_otp_code},
-    repositories::{OTP_STORE, otp::OtpRepository},
+    gates::otp::verify_otp_code,
+    repositories::otp::{OtpRepository, OtpStorage},
     services::{http::HttpOutcallService, secret::SecretService},
 };
 use candid::Principal;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
+use ic_mple_log::service::Storage;
 use std::fmt::Debug;
 
 /// Verifier for the OTP-SMS gate.
 /// Validates that the caller supplies the 6-digit code that was previously sent to the
 /// configured phone number via `send_otp`. Manages attempt tracking and record cleanup.
-pub struct OTPSmsVerifier {
+pub struct OTPSmsVerifier<'a, O: Storage<OtpStorage>> {
     gate_id: String,
     user: Principal,
+    otp_repo: &'a mut OtpRepository<O>,
 }
 
-impl OTPSmsVerifier {
+impl<'a, O: Storage<OtpStorage>> OTPSmsVerifier<'a, O> {
     /// Creates a new verifier for the given gate and user.
     /// # Arguments
     /// * `gate_id`: The ID of the OTPSms gate being opened.
     /// * `user`: The principal of the claimer whose OTP record to look up.
-    pub fn new(gate_id: String, user: Principal) -> Self {
-        Self { gate_id, user }
+    /// * `otp_repo`: Repository containing pending OTP records.
+    pub fn new(gate_id: String, user: Principal, otp_repo: &'a mut OtpRepository<O>) -> Self {
+        Self {
+            gate_id,
+            user,
+            otp_repo,
+        }
     }
 
     /// Inner verification with an injected current timestamp for testability.
+    /// # Arguments
+    /// * `key`: The gate key containing the submitted OTP code.
+    /// * `http`: HTTP service (not used for OTPSms but required by trait
+    /// * `secrets`: Secret service (not used for OTPSms but required by trait
+    /// * `current_time`: Current timestamp in seconds since the epoch, used to check OTP expiry.
+    /// # Returns
+    /// * `Ok(VerificationResult::Success)`: The submitted code matches the stored OTP and is not expired.
+    /// * `Ok(VerificationResult::Failure(msg))`: The code is incorrect or expired, with an explanatory message.
+    /// * `Err(GateServiceError)`: The key type is invalid or no OTP record exists for the user.
     pub(crate) async fn verify_with_time<H: HttpOutcallService, S: SecretService>(
-        &self,
+        &mut self,
         key: GateKey,
         _http: &H,
         _secrets: &S,
@@ -44,8 +60,8 @@ impl OTPSmsVerifier {
             }
         };
 
-        let mut otp_repo = OtpRepository::new(&OTP_STORE);
-        let record = otp_repo
+        let record = self
+            .otp_repo
             .get_otp_record(&self.gate_id, self.user)
             .ok_or_else(|| {
                 GateServiceError::KeyVerificationFailed(
@@ -55,32 +71,21 @@ impl OTPSmsVerifier {
 
         match verify_otp_code(&record, &submitted_code, current_time) {
             VerificationResult::Success => {
-                otp_repo.delete_otp_record(&self.gate_id, self.user);
+                self.otp_repo.delete_otp_record(&self.gate_id, self.user);
                 Ok(VerificationResult::Success)
             }
             VerificationResult::Failure(e) => {
                 let mut updated_record = record;
                 updated_record.attempts += 1;
-                otp_repo.set_otp_record(&self.gate_id, self.user, updated_record);
+                self.otp_repo
+                    .set_otp_record(&self.gate_id, self.user, updated_record);
                 Ok(VerificationResult::Failure(e))
             }
         }
     }
 }
 
-impl GateVerifier for OTPSmsVerifier {
-    async fn verify<H: HttpOutcallService, S: SecretService>(
-        &self,
-        key: GateKey,
-        http: &H,
-        secrets: &S,
-    ) -> Result<VerificationResult, GateServiceError> {
-        self.verify_with_time(key, http, secrets, ic_cdk::api::time())
-            .await
-    }
-}
-
-impl Debug for OTPSmsVerifier {
+impl<O: Storage<OtpStorage>> Debug for OTPSmsVerifier<'_, O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "OTPSmsVerifier(gate_id={})", self.gate_id)
     }
@@ -89,6 +94,7 @@ impl Debug for OTPSmsVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::random_principal_id;
@@ -110,12 +116,21 @@ mod tests {
         }
     }
 
-    fn seed_otp_record(gate_id: &str, user: Principal, record: OtpRecord) {
-        OtpRepository::new(&OTP_STORE).set_otp_record(gate_id, user, record);
+    fn seed_otp_record<O: Storage<OtpStorage>>(
+        otp_repo: &mut OtpRepository<O>,
+        gate_id: &str,
+        user: Principal,
+        record: OtpRecord,
+    ) {
+        otp_repo.set_otp_record(gate_id, user, record);
     }
 
-    fn read_otp_record(gate_id: &str, user: Principal) -> Option<OtpRecord> {
-        OtpRepository::new(&OTP_STORE).get_otp_record(gate_id, user)
+    fn read_otp_record<O: Storage<OtpStorage>>(
+        otp_repo: &OtpRepository<O>,
+        gate_id: &str,
+        user: Principal,
+    ) -> Option<OtpRecord> {
+        otp_repo.get_otp_record(gate_id, user)
     }
 
     #[tokio::test]
@@ -124,7 +139,9 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_sms_key_type".to_string();
         let user = random_principal_id();
-        let verifier = OTPSmsVerifier::new(gate_id, user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        let mut verifier = OTPSmsVerifier::new(gate_id, user, &mut otp_repo);
 
         // Act
         let result = verifier
@@ -144,7 +161,9 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_sms_no_record".to_string();
         let user = random_principal_id();
-        let verifier = OTPSmsVerifier::new(gate_id, user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        let mut verifier = OTPSmsVerifier::new(gate_id, user, &mut otp_repo);
 
         // Act
         let result = verifier
@@ -167,8 +186,15 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_sms_expired".to_string();
         let user = random_principal_id();
-        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", 500));
-        let verifier = OTPSmsVerifier::new(gate_id, user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        seed_otp_record(
+            &mut otp_repo,
+            &gate_id,
+            user,
+            fixture_of_otp_record("123456", 500),
+        );
+        let mut verifier = OTPSmsVerifier::new(gate_id, user, &mut otp_repo);
 
         // Act
         let result = verifier
@@ -193,8 +219,15 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_sms_wrong_code".to_string();
         let user = random_principal_id();
-        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
-        let verifier = OTPSmsVerifier::new(gate_id, user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        seed_otp_record(
+            &mut otp_repo,
+            &gate_id,
+            user,
+            fixture_of_otp_record("123456", u64::MAX),
+        );
+        let mut verifier = OTPSmsVerifier::new(gate_id, user, &mut otp_repo);
 
         // Act
         let result = verifier
@@ -214,8 +247,15 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_success_sms".to_string();
         let user = random_principal_id();
-        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
-        let verifier = OTPSmsVerifier::new(gate_id, user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        seed_otp_record(
+            &mut otp_repo,
+            &gate_id,
+            user,
+            fixture_of_otp_record("123456", u64::MAX),
+        );
+        let mut verifier = OTPSmsVerifier::new(gate_id, user, &mut otp_repo);
 
         // Act
         let result = verifier
@@ -232,16 +272,24 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_attempts_sms".to_string();
         let user = random_principal_id();
-        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
-        let verifier = OTPSmsVerifier::new(gate_id.clone(), user);
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
+        seed_otp_record(
+            &mut otp_repo,
+            &gate_id,
+            user,
+            fixture_of_otp_record("123456", u64::MAX),
+        );
+        let mut verifier = OTPSmsVerifier::new(gate_id.clone(), user, &mut otp_repo);
 
         // Act
         let _ = verifier
             .verify_with_time(GateKey::OTPSms("999999".to_string()), &http, &secrets, 0)
             .await;
+        drop(verifier);
 
         // Assert
-        let record = read_otp_record(&gate_id, user).expect("record should still exist");
+        let record = read_otp_record(&otp_repo, &gate_id, user).expect("record should still exist");
         assert_eq!(record.attempts, 1);
     }
 }
