@@ -1,4 +1,6 @@
 packages:
   - "src/cashier_frontend_new"
+  - "src/gate_frontend"
+  - "src/gate_sdk"
   - "src/lib/cashier_shared"
   - ".github/scripts"

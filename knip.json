@@ -24,6 +24,14 @@
       ],
       "ignoreUnresolved": ["\\$env/.+"]
     },
+    "src/gate_frontend": {
+      "project": ["src/**"],
+      "ignore": ["src/lib/generated/**"],
+      "ignoreDependencies": [
+        "@eslint/compat",
+        "@vitest/coverage-v8"
+      ]
+    },
     "src/lib/cashier_shared": {
       "entry": ["logic/**/*.ts", "scripts/**/*.ts"],
       "project": ["**/*.ts"],
