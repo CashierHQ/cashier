@@ -15,6 +15,22 @@ pub struct XRetweetedPostVerifier {
     tweet_url: String,
 }
 
+impl XRetweetedPostVerifier {
+    /// Creates a new verifier for the given tweet URL.
+    /// # Arguments
+    /// * `tweet_url`: Full URL of the tweet that the user must have retweeted
+    ///   (e.g. `"https://x.com/cashierapp/status/9876543210"`).
+    pub fn new(tweet_url: String) -> Self {
+        Self { tweet_url }
+    }
+}
+
+impl Debug for XRetweetedPostVerifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "XRetweetedPostVerifier(url={})", self.tweet_url)
+    }
+}
+
 impl GateVerifier for XRetweetedPostVerifier {
     async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
@@ -73,21 +89,6 @@ impl GateVerifier for XRetweetedPostVerifier {
     }
 }
 
-impl Debug for XRetweetedPostVerifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "XRetweetedPostVerifier(url={})", self.tweet_url)
-    }
-}
-
-impl XRetweetedPostVerifier {
-    /// Creates a new verifier for the given tweet URL.
-    /// # Arguments
-    /// * `tweet_url`: Full URL of the tweet that the user must have retweeted
-    ///   (e.g. `"https://x.com/cashierapp/status/9876543210"`).
-    pub fn new(tweet_url: String) -> Self {
-        Self { tweet_url }
-    }
-}
 
 #[cfg(test)]
 mod tests {

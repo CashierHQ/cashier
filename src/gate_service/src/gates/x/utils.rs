@@ -79,8 +79,6 @@ mod tests {
         }
     }
 
-    // ── decode_follow_response ────────────────────────────────────────────────
-
     #[test]
     fn it_should_fail_decode_follow_response_due_to_invalid_json() {
         // Arrange
@@ -128,8 +126,6 @@ mod tests {
         assert!(!result.unwrap().data.following);
     }
 
-    // ── parse_tweet_id ────────────────────────────────────────────────────────
-
     #[test]
     fn it_should_parse_tweet_id_from_url() {
         let url = "https://x.com/LinoLeighton/status/2065488386501059008";
@@ -140,8 +136,6 @@ mod tests {
     fn it_should_fail_parse_tweet_id_due_to_empty_url() {
         assert!(parse_tweet_id("").is_err());
     }
-
-    // ── decode_tweets_response ────────────────────────────────────────────────
 
     #[test]
     fn it_should_decode_tweets_response_with_data() {

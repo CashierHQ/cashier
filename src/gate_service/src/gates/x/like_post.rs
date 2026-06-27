@@ -15,6 +15,22 @@ pub struct XLikedPostVerifier {
     tweet_url: String,
 }
 
+impl XLikedPostVerifier {
+    /// Creates a new verifier for the given tweet URL.
+    /// # Arguments
+    /// * `tweet_url`: Full URL of the tweet that the user must have liked
+    ///   (e.g. `"https://x.com/cashierapp/status/1234567890"`).
+    pub fn new(tweet_url: String) -> Self {
+        Self { tweet_url }
+    }
+}
+
+impl Debug for XLikedPostVerifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "XLikedPostVerifier(url={})", self.tweet_url)
+    }
+}
+
 impl GateVerifier for XLikedPostVerifier {
     async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
@@ -73,21 +89,6 @@ impl GateVerifier for XLikedPostVerifier {
     }
 }
 
-impl Debug for XLikedPostVerifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "XLikedPostVerifier(url={})", self.tweet_url)
-    }
-}
-
-impl XLikedPostVerifier {
-    /// Creates a new verifier for the given tweet URL.
-    /// # Arguments
-    /// * `tweet_url`: Full URL of the tweet that the user must have liked
-    ///   (e.g. `"https://x.com/cashierapp/status/1234567890"`).
-    pub fn new(tweet_url: String) -> Self {
-        Self { tweet_url }
-    }
-}
 
 #[cfg(test)]
 mod tests {

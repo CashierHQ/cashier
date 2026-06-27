@@ -15,6 +15,21 @@ pub struct XFollowingVerifier {
     target_handle: String,
 }
 
+impl XFollowingVerifier {
+    /// Creates a new verifier for the given target X handle.
+    /// # Arguments
+    /// * `target_handle`: The X username that the user must be following (e.g. `"cashierapp"`).
+    pub fn new(target_handle: String) -> Self {
+        Self { target_handle }
+    }
+}
+
+impl Debug for XFollowingVerifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "XFollowingVerifier(target={})", self.target_handle)
+    }
+}
+
 impl GateVerifier for XFollowingVerifier {
     async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
@@ -69,20 +84,7 @@ impl GateVerifier for XFollowingVerifier {
     }
 }
 
-impl Debug for XFollowingVerifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "XFollowingVerifier(target={})", self.target_handle)
-    }
-}
 
-impl XFollowingVerifier {
-    /// Creates a new verifier for the given target X handle.
-    /// # Arguments
-    /// * `target_handle`: The X username that the user must be following (e.g. `"cashierapp"`).
-    pub fn new(target_handle: String) -> Self {
-        Self { target_handle }
-    }
-}
 
 #[cfg(test)]
 mod tests {

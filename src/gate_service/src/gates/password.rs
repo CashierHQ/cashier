@@ -13,6 +13,21 @@ pub struct PasswordGateVerifier {
     password_hash: String,
 }
 
+impl PasswordGateVerifier {
+    /// Creates a new verifier with a pre-computed password hash.
+    /// # Arguments
+    /// * `password_hash`: PHC-format Argon2 hash, or `sha256$<salt>$<hash>` for SHA-256 mode.
+    pub fn new(password_hash: String) -> Self {
+        Self { password_hash }
+    }
+}
+
+impl Debug for PasswordGateVerifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PasswordGateVerifier")
+    }
+}
+
 impl GateVerifier for PasswordGateVerifier {
     async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
@@ -41,20 +56,6 @@ impl GateVerifier for PasswordGateVerifier {
     }
 }
 
-impl Debug for PasswordGateVerifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PasswordGateVerifier")
-    }
-}
-
-impl PasswordGateVerifier {
-    /// Creates a new verifier with a pre-computed password hash.
-    /// # Arguments
-    /// * `password_hash`: PHC-format Argon2 hash, or `sha256$<salt>$<hash>` for SHA-256 mode.
-    pub fn new(password_hash: String) -> Self {
-        Self { password_hash }
-    }
-}
 
 #[cfg(test)]
 mod tests {
