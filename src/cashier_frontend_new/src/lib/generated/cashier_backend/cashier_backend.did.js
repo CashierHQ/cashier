@@ -625,6 +625,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_16],
         [],
       ),
+    'user_send_otp' : IDL.Func([IDL.Text], [Result], []),
     'user_sync_asset_balance_cache' : IDL.Func([IDL.Text], [Result_10], []),
   });
 };

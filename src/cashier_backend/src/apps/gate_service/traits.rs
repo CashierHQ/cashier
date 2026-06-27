@@ -18,6 +18,9 @@ pub trait GateServiceClient {
         user: Principal,
     ) -> Result<OpenGateSuccessResult, CanisterError>;
 
+    /// Generates an OTP code and sends it to the destination on the gate, keyed by `user`.
+    async fn send_otp(&self, gate_id: String, user: Principal) -> Result<(), CanisterError>;
+
     /// Updates the canister ID used for subsequent calls.
     fn set_canister_id(&mut self, canister_id: Principal);
 }

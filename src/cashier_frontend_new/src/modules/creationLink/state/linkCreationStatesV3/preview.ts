@@ -6,13 +6,33 @@ import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStat
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { GateKey } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { GateType } from "$modules/gating/types/gate";
+import { GateType, type GateDraft } from "$modules/gating/types/gate";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 
 /**
  * State handler for the Preview step in the V3 create-link flow.
  */
+export function gateDraftToGateKey(gateDraft: GateDraft): GateKey {
+  switch (gateDraft.type) {
+    case GateType.PASSWORD:
+      return { Password: gateDraft.password };
+    case GateType.X_FOLLOWING:
+      return { XFollowing: gateDraft.targetHandle };
+    case GateType.X_OWNED_ACCOUNT:
+      return { XOwnedAccount: gateDraft.targetHandle };
+    case GateType.X_LIKED_POST:
+      return { XLikedPost: gateDraft.tweetUrl };
+    case GateType.X_RETWEETED_POST:
+      return { XRetweetedPost: gateDraft.tweetUrl };
+    case GateType.OTP_EMAIL:
+      return { OTPEmail: gateDraft.email };
+    case GateType.OTP_SMS:
+      return { OTPSms: gateDraft.phone };
+  }
+}
+
+// State handler for Preview step in the link creation flow (V3)
 export class PreviewStateV3 implements LinkCreationStateV3 {
   readonly step = LinkStep.PREVIEW;
   #linkStore: LinkCreationStoreV3;
@@ -48,10 +68,9 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
 
     // call backend API to create the link (with gates if configured)
     const gateDraft = this.#linkStore.pendingGateDraft;
-    const gateKeys: GateKey[] = [];
-    if (gateDraft?.type === GateType.PASSWORD) {
-      gateKeys.push({ Password: gateDraft.password });
-    }
+    const gateKeys: GateKey[] = gateDraft
+      ? [gateDraftToGateKey(gateDraft)]
+      : [];
 
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,

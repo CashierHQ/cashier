@@ -809,6 +809,18 @@ export interface _SERVICE {
    */
   'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_16>,
   /**
+   * Sends an OTP code to the destination configured on the given gate.
+   * 
+   * The caller's principal is forwarded to GateService so the OTP is keyed by
+   * the actual end-user, not by this canister.
+   * # Arguments
+   * * `gate_id` - The unique identifier of the OTPEmail or OTPSms gate
+   * # Returns
+   * * `Ok(())` - Code generated and dispatched via Brevo
+   * * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed
+   */
+  'user_send_otp' : ActorMethod<[string], Result>,
+  /**
    * Syncs the asset balance cache for a link by querying actual token balances.
    * Only the link creator can trigger this.
    * # Arguments

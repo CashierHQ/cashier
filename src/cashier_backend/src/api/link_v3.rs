@@ -315,6 +315,25 @@ async fn user_open_link_gate(
     result
 }
 
+/// Sends an OTP code to the destination configured on the given gate.
+///
+/// The caller's principal is forwarded to GateService so the OTP is keyed by
+/// the actual end-user, not by this canister.
+/// # Arguments
+/// * `gate_id` - The unique identifier of the OTPEmail or OTPSms gate
+/// # Returns
+/// * `Ok(())` - Code generated and dispatched via Brevo
+/// * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed
+#[update(guard = "is_not_anonymous")]
+async fn user_send_otp(gate_id: String) -> Result<(), CanisterError> {
+    info!("[user_send_otp]");
+    debug!("[user_send_otp] gate_id: {gate_id}");
+
+    let caller = msg_caller();
+    let gate_service = get_state().gate_service;
+    gate_service.send_otp(&gate_id, caller).await
+}
+
 /// Returns link details together with gate metadata and the caller's gate status.
 /// # Arguments
 /// * `link_id` - The unique identifier of the link

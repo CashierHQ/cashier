@@ -3,6 +3,7 @@ import {
   getTransactionLockDisplay,
   getTransactionLockStableKey,
 } from "$modules/gating/services/transactionLockDisplay";
+import type { TransactionLockInput } from "$modules/gating/types/transactionLockDisplay";
 import { GateType } from "$modules/gating/types/gate";
 import { describe, expect, it, vi } from "vitest";
 
@@ -26,7 +27,7 @@ function buildGateForUser(key: GateForUser["gate"]["key"]): GateForUser {
 
 describe("transactionLockDisplay", () => {
   it("it_should_do_mask_and_reveal_draft_password_lock", () => {
-    const lock = {
+    const lock: TransactionLockInput = {
       type: GateType.PASSWORD,
       password: "secret",
     };
