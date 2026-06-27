@@ -3,26 +3,30 @@
 
 pub mod gate;
 pub mod otp;
+pub mod password_hashing_algorithm;
 pub mod secrets;
 pub mod vetkey;
-
-pub use secrets::get_decrypted_secret;
 
 use crate::{
     repositories::{
         gate::{GateRepository, GateStorage, GateUserStatusStorage},
-        otp::OtpRepository,
-        secrets::SecretRepository,
-        vetkey::VetKeyRepository,
+        otp::{OtpRepository, OtpStorage},
+        password_hashing_algorithm::{
+            PasswordHashingAlgorithmRepository, PasswordHashingAlgorithmStorage,
+        },
+        secrets::{
+            PlainSecretsStorage, SecretRepository, SecretStorageModeStorage, SecretsStorage,
+        },
+        vetkey::{VetKeyRepository, VetKeyStorage},
     },
     services::auth::AuthServiceStorage,
 };
-use gate_service_types::{GateUser, OtpRecord, PasswordHashingAlgorithm, SecretStorageMode};
+use gate_service_types::{PasswordHashingAlgorithm, SecretStorageMode};
 use ic_mple_log::{
     LogSettings,
     service::{LoggerServiceStorage, Storage},
 };
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use std::cell::RefCell;
 use std::thread::LocalKey;
@@ -35,6 +39,8 @@ pub trait Repositories {
     type EncryptedSecrets: Storage<SecretsStorage>;
     type PlainSecrets: Storage<PlainSecretsStorage>;
     type SecretMode: Storage<SecretStorageModeStorage>;
+    type VetKey: Storage<VetKeyStorage>;
+    type PasswordHashingAlgorithm: Storage<PasswordHashingAlgorithmStorage>;
 
     fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus>;
     fn otp(&self) -> OtpRepository<Self::Otp>;
@@ -42,7 +48,10 @@ pub trait Repositories {
         &self,
     ) -> SecretRepository<Self::EncryptedSecrets, Self::PlainSecrets, Self::SecretMode>;
     #[allow(dead_code)]
-    fn vetkey(&self) -> VetKeyRepository;
+    fn vetkey(&self) -> VetKeyRepository<Self::VetKey>;
+    fn password_hashing_algorithm(
+        &self,
+    ) -> PasswordHashingAlgorithmRepository<Self::PasswordHashingAlgorithm>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -55,6 +64,8 @@ impl Repositories for ThreadlocalRepositories {
     type EncryptedSecrets = &'static LocalKey<RefCell<SecretsStorage>>;
     type PlainSecrets = &'static LocalKey<RefCell<PlainSecretsStorage>>;
     type SecretMode = &'static LocalKey<RefCell<SecretStorageModeStorage>>;
+    type VetKey = &'static LocalKey<RefCell<VetKeyStorage>>;
+    type PasswordHashingAlgorithm = &'static LocalKey<RefCell<PasswordHashingAlgorithmStorage>>;
 
     fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
         GateRepository::new(&GATE_STORAGE, &GATE_USER_STATUS_STORAGE)
@@ -70,8 +81,14 @@ impl Repositories for ThreadlocalRepositories {
         SecretRepository::new(&SECRETS_STORE, &PLAIN_SECRETS_STORE, &SECRET_STORAGE_MODE)
     }
 
-    fn vetkey(&self) -> VetKeyRepository {
-        VetKeyRepository::new()
+    fn vetkey(&self) -> VetKeyRepository<Self::VetKey> {
+        VetKeyRepository::new(&VETKEY_CACHE)
+    }
+
+    fn password_hashing_algorithm(
+        &self,
+    ) -> PasswordHashingAlgorithmRepository<Self::PasswordHashingAlgorithm> {
+        PasswordHashingAlgorithmRepository::new(&PASSWORD_HASHING_ALGORITHM)
     }
 }
 
@@ -83,24 +100,8 @@ const SECRETS_MEMORY_ID: MemoryId = MemoryId::new(4);
 const PLAIN_SECRETS_MEMORY_ID: MemoryId = MemoryId::new(5);
 const SECRET_STORAGE_MODE_MEMORY_ID: MemoryId = MemoryId::new(6);
 const PASSWORD_HASHING_ALGORITHM_MEMORY_ID: MemoryId = MemoryId::new(7);
-const OTP_MEMORY_ID: MemoryId = MemoryId::new(8);
-
-/// Stores AES-256-GCM encrypted secrets as `nonce || ciphertext` byte blobs.
-/// Secrets are encrypted client-side using the canister's vetKD public key.
-pub type SecretsStorage = StableBTreeMap<String, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>;
-
-/// Stores plain-text secrets as raw UTF-8 strings (used in PlainText storage mode).
-pub type PlainSecretsStorage = StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>;
-
-/// Persists the active secret storage mode across upgrades.
-pub type SecretStorageModeStorage = StableCell<SecretStorageMode, VirtualMemory<DefaultMemoryImpl>>;
-
-/// Persists the active password hashing algorithm across upgrades.
-pub type PasswordHashingAlgorithmStorage =
-    StableCell<PasswordHashingAlgorithm, VirtualMemory<DefaultMemoryImpl>>;
-
-/// Stores pending OTP codes keyed by `(gate_id, user_principal)`.
-pub type OtpStorage = StableBTreeMap<GateUser, OtpRecord, VirtualMemory<DefaultMemoryImpl>>;
+// MemoryId 8 was formerly used for stable OTP storage. Do not reuse it
+// without an explicit migration decision.
 
 thread_local! {
     // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -160,15 +161,11 @@ thread_local! {
         )
     );
 
-    /// Stores pending OTP codes. Records are written by `send_otp` and consumed by `open_gate`.
-    pub static OTP_STORE: RefCell<OtpStorage> = RefCell::new(StableBTreeMap::init(
-        MEMORY_MANAGER.with_borrow(|m| m.get(OTP_MEMORY_ID)),
-    ));
-}
+    pub static OTP_STORE: RefCell<OtpStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 
-/// Returns the currently configured password hashing algorithm.
-pub fn get_password_hashing_algorithm() -> PasswordHashingAlgorithm {
-    PASSWORD_HASHING_ALGORITHM.with_borrow(|cell| cell.get().clone())
+    pub static VETKEY_CACHE: RefCell<VetKeyStorage> =
+        const { RefCell::new(None) };
 }
 
 #[cfg(test)]
@@ -184,6 +181,8 @@ pub mod tests {
         encrypted_secrets: Rc<RefCell<SecretsStorage>>,
         plain_secrets: Rc<RefCell<PlainSecretsStorage>>,
         secret_mode: Rc<RefCell<SecretStorageModeStorage>>,
+        vetkey: Rc<RefCell<VetKeyStorage>>,
+        password_hashing_algorithm: Rc<RefCell<PasswordHashingAlgorithmStorage>>,
     }
 
     impl TestRepositories {
@@ -198,7 +197,7 @@ pub mod tests {
                 gate_user_status: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(GATE_USER_STATUS_MEMORY_ID),
                 ))),
-                otp: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(OTP_MEMORY_ID)))),
+                otp: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
                 encrypted_secrets: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(SECRETS_MEMORY_ID),
                 ))),
@@ -208,6 +207,11 @@ pub mod tests {
                 secret_mode: Rc::new(RefCell::new(StableCell::init(
                     mm.get(SECRET_STORAGE_MODE_MEMORY_ID),
                     SecretStorageMode::PlainText,
+                ))),
+                vetkey: Rc::new(RefCell::new(None)),
+                password_hashing_algorithm: Rc::new(RefCell::new(StableCell::init(
+                    mm.get(PASSWORD_HASHING_ALGORITHM_MEMORY_ID),
+                    PasswordHashingAlgorithm::Argon2id,
                 ))),
             }
         }
@@ -220,6 +224,8 @@ pub mod tests {
         type EncryptedSecrets = Rc<RefCell<SecretsStorage>>;
         type PlainSecrets = Rc<RefCell<PlainSecretsStorage>>;
         type SecretMode = Rc<RefCell<SecretStorageModeStorage>>;
+        type VetKey = Rc<RefCell<VetKeyStorage>>;
+        type PasswordHashingAlgorithm = Rc<RefCell<PasswordHashingAlgorithmStorage>>;
 
         fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
             GateRepository::new(self.gate.clone(), self.gate_user_status.clone())
@@ -240,8 +246,14 @@ pub mod tests {
             )
         }
 
-        fn vetkey(&self) -> VetKeyRepository {
-            VetKeyRepository::new()
+        fn vetkey(&self) -> VetKeyRepository<Self::VetKey> {
+            VetKeyRepository::new(self.vetkey.clone())
+        }
+
+        fn password_hashing_algorithm(
+            &self,
+        ) -> PasswordHashingAlgorithmRepository<Self::PasswordHashingAlgorithm> {
+            PasswordHashingAlgorithmRepository::new(self.password_hashing_algorithm.clone())
         }
     }
 }

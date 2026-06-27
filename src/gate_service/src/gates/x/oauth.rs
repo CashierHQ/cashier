@@ -1,7 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::get_decrypted_secret;
+use crate::repositories::{
+    PLAIN_SECRETS_STORE, SECRET_STORAGE_MODE, SECRETS_STORE, secrets::SecretRepository,
+};
 use gate_service_types::constant::{
     SECRET_X_OAUTH_BASIC_AUTH, SECRET_X_REDIRECT_URI, X_PROFILE_URL, X_TOKEN_URL,
 };
@@ -22,8 +24,14 @@ use ic_cdk::management_canister::{HttpHeader, HttpMethod, HttpRequestArgs, HttpR
 /// * `Err(GateServiceError)`: Token exchange failed, profile fetch failed, or a required
 ///   secret (`x_oauth_basic_auth`, `x_redirect_uri`) is missing.
 pub async fn exchange_x_token(code: String) -> Result<XTokenExchangeResult, GateServiceError> {
-    let redirect_uri = get_decrypted_secret(SECRET_X_REDIRECT_URI).await?;
-    let basic_auth = get_decrypted_secret(SECRET_X_OAUTH_BASIC_AUTH).await?;
+    let secret_repo =
+        SecretRepository::new(&SECRETS_STORE, &PLAIN_SECRETS_STORE, &SECRET_STORAGE_MODE);
+    let redirect_uri = secret_repo
+        .get_decrypted_secret(SECRET_X_REDIRECT_URI)
+        .await?;
+    let basic_auth = secret_repo
+        .get_decrypted_secret(SECRET_X_OAUTH_BASIC_AUTH)
+        .await?;
 
     let form_data = format!(
         "code={}&grant_type=authorization_code&redirect_uri={}&code_verifier={}",

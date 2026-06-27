@@ -4,7 +4,8 @@
 use crate::{
     gates,
     repositories::{
-        Repositories, gate::GateRepository, get_password_hashing_algorithm, otp::OtpRepository,
+        Repositories, gate::GateRepository, otp::OtpRepository,
+        password_hashing_algorithm::PasswordHashingAlgorithmRepository,
     },
     services::{http::HttpOutcallService, secret::SecretService},
     utils::{
@@ -25,6 +26,8 @@ use std::rc::Rc;
 pub struct GateService<R: Repositories> {
     gate_repo: GateRepository<R::Gate, R::GateUserStatus>,
     otp_repo: OtpRepository<R::Otp>,
+    password_hashing_algorithm_repo:
+        PasswordHashingAlgorithmRepository<R::PasswordHashingAlgorithm>,
 }
 
 impl<R: Repositories> GateService<R> {
@@ -32,6 +35,7 @@ impl<R: Repositories> GateService<R> {
         Self {
             gate_repo: repositories.gate(),
             otp_repo: repositories.otp(),
+            password_hashing_algorithm_repo: repositories.password_hashing_algorithm(),
         }
     }
 
@@ -49,7 +53,7 @@ impl<R: Repositories> GateService<R> {
     ) -> Result<Gate, GateServiceError> {
         let gate_key = match &new_gate.key {
             GateKey::Password(password) => {
-                let hashed_password = match get_password_hashing_algorithm() {
+                let hashed_password = match self.password_hashing_algorithm_repo.get() {
                     PasswordHashingAlgorithm::Argon2id => {
                         hash_password(password).map_err(GateServiceError::HashingFailed)?
                     }
@@ -310,8 +314,8 @@ impl<R: Repositories> GateService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::otp::set_otp_record;
     use crate::repositories::tests::TestRepositories;
+    use crate::repositories::{OTP_STORE, otp::OtpRepository};
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
@@ -333,6 +337,10 @@ mod tests {
     fn fixture_of_gate_service() -> (GateService<TestRepositories>, Rc<TestRepositories>) {
         let repos = Rc::new(TestRepositories::new());
         (GateService::new(repos.clone()), repos)
+    }
+
+    fn seed_otp_record(gate_id: &str, user: Principal, record: OtpRecord) {
+        OtpRepository::new(&OTP_STORE).set_otp_record(gate_id, user, record);
     }
 
     #[test]
@@ -1054,7 +1062,7 @@ mod tests {
             )
             .unwrap();
         let user = random_principal_id();
-        set_otp_record(
+        seed_otp_record(
             &gate.id,
             user,
             OtpRecord {
@@ -1271,7 +1279,7 @@ mod tests {
             )
             .unwrap();
         let user = random_principal_id();
-        set_otp_record(
+        seed_otp_record(
             &gate.id,
             user,
             OtpRecord {
@@ -1318,7 +1326,7 @@ mod tests {
             )
             .unwrap();
         let user = random_principal_id();
-        set_otp_record(
+        seed_otp_record(
             &gate.id,
             user,
             OtpRecord {

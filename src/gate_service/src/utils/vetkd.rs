@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::vetkey::VetKeyRepository;
+use crate::repositories::{Repositories, ThreadlocalRepositories};
 use gate_service_types::{
     constant::{VETKEY_CONTEXT, VETKEY_INPUT, VETKEY_NAME, VETKEY_SYMMETRIC_DOMAIN},
     error::GateServiceError,
@@ -96,7 +96,8 @@ async fn derive_aes_key_from_ic() -> Result<[u8; 32], GateServiceError> {
 /// * `Err(GateServiceError::KeyVerificationFailed)`: Transport key generation, IC call,
 ///   VetKey decryption, or HKDF output failed (first call only; cached calls never fail).
 pub async fn derive_aes_key() -> Result<[u8; 32], GateServiceError> {
-    let repo = VetKeyRepository::new();
+    let repositories = ThreadlocalRepositories;
+    let mut repo = repositories.vetkey();
     if let Some(key) = repo.get_cached_key() {
         return Ok(key);
     }
@@ -113,7 +114,9 @@ mod tests {
     async fn it_should_return_cached_key_without_ic_call() {
         // Arrange — seed cache to bypass any IC management call
         let expected = [42u8; 32];
-        VetKeyRepository::new().set_cached_key(expected);
+        let repositories = ThreadlocalRepositories;
+        let mut repo = repositories.vetkey();
+        repo.set_cached_key(expected);
 
         // Act
         let result = derive_aes_key().await.unwrap();
@@ -122,6 +125,6 @@ mod tests {
         assert_eq!(result, expected);
 
         // Cleanup
-        VetKeyRepository::new().clear_cached_key();
+        repo.clear_cached_key();
     }
 }

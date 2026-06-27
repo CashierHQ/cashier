@@ -1,15 +1,21 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    repositories::{
-        PLAIN_SECRETS_STORE, PlainSecretsStorage, SECRET_STORAGE_MODE, SECRETS_STORE,
-        SecretStorageModeStorage, SecretsStorage,
-    },
-    utils::{crypto::aes_decrypt, vetkd::derive_aes_key},
-};
+use crate::utils::{crypto::aes_decrypt, vetkd::derive_aes_key};
 use gate_service_types::{SecretStorageMode, error::GateServiceError};
 use ic_mple_log::service::Storage;
+use ic_stable_structures::memory_manager::VirtualMemory;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
+
+/// Stores AES-256-GCM encrypted secrets as `nonce || ciphertext` byte blobs.
+/// Secrets are encrypted client-side using the canister's vetKD public key.
+pub type SecretsStorage = StableBTreeMap<String, Vec<u8>, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Stores plain-text secrets as raw UTF-8 strings (used in PlainText storage mode).
+pub type PlainSecretsStorage = StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>;
+
+/// Persists the active secret storage mode across upgrades.
+pub type SecretStorageModeStorage = StableCell<SecretStorageMode, VirtualMemory<DefaultMemoryImpl>>;
 
 /// Repository for managing named secrets backed by stable-memory stores.
 ///
@@ -93,9 +99,169 @@ where
     }
 }
 
-/// Retrieves a named secret using the active storage mode from the canister's thread-local stores.
-pub async fn get_decrypted_secret(key: &str) -> Result<String, GateServiceError> {
-    SecretRepository::new(&SECRETS_STORE, &PLAIN_SECRETS_STORE, &SECRET_STORAGE_MODE)
-        .get_decrypted_secret(key)
-        .await
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use cashier_common::test_utils::random_id_string;
+
+    fn assert_key_verification_error_contains(
+        result: Result<String, GateServiceError>,
+        expected: &str,
+    ) {
+        match result {
+            Err(GateServiceError::KeyVerificationFailed(message)) => {
+                assert!(
+                    message.contains(expected),
+                    "Expected error containing '{expected}', got: {message}"
+                );
+            }
+            other => panic!("Expected KeyVerificationFailed, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn it_should_return_none_when_secret_ciphertext_does_not_exist() {
+        // Arrange
+        let repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+
+        // Act
+        let result = repo.get_secret_ciphertext(&key);
+
+        // Assert
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn it_should_get_secret_ciphertext() {
+        // Arrange
+        let mut repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+        let ciphertext = vec![1, 2, 3, 4, 5];
+        repo.encrypted
+            .with_borrow_mut(|store| store.insert(key.clone(), ciphertext.clone()));
+
+        // Act
+        let result = repo.get_secret_ciphertext(&key);
+
+        // Assert
+        assert_eq!(result, Some(ciphertext));
+    }
+
+    #[test]
+    fn it_should_return_cloned_secret_ciphertext_without_mutating_storage() {
+        // Arrange
+        let mut repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+        let ciphertext = vec![1, 2, 3, 4, 5];
+        repo.encrypted
+            .with_borrow_mut(|store| store.insert(key.clone(), ciphertext.clone()));
+
+        // Act
+        let mut result = repo
+            .get_secret_ciphertext(&key)
+            .expect("ciphertext should exist");
+        result.push(6);
+
+        // Assert
+        assert_eq!(repo.get_secret_ciphertext(&key), Some(ciphertext));
+    }
+
+    #[tokio::test]
+    async fn it_should_get_plain_text_secret_when_mode_is_plain_text() {
+        // Arrange
+        let mut repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+        let value = "secret-value".to_string();
+        repo.plain
+            .with_borrow_mut(|store| store.insert(key.clone(), value.clone()));
+
+        // Act
+        let result = repo.get_decrypted_secret(&key).await;
+
+        // Assert
+        assert_eq!(result.unwrap(), value);
+    }
+
+    #[tokio::test]
+    async fn it_should_return_error_when_plain_text_secret_does_not_exist() {
+        // Arrange
+        let repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+
+        // Act
+        let result = repo.get_decrypted_secret(&key).await;
+
+        // Assert
+        assert_key_verification_error_contains(result, "not configured in plain-text store");
+    }
+
+    #[tokio::test]
+    async fn it_should_ignore_ciphertext_store_when_mode_is_plain_text() {
+        // Arrange
+        let mut repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+        repo.encrypted
+            .with_borrow_mut(|store| store.insert(key.clone(), vec![1, 2, 3]));
+
+        // Act
+        let result = repo.get_decrypted_secret(&key).await;
+
+        // Assert
+        assert_key_verification_error_contains(result, "not configured in plain-text store");
+    }
+
+    #[tokio::test]
+    async fn it_should_return_error_when_vetkey_secret_ciphertext_does_not_exist() {
+        // Arrange
+        let mut repo = TestRepositories::new().secrets();
+        let key = random_id_string();
+        repo.mode.with_borrow_mut(|mode| {
+            let _ = mode.set(SecretStorageMode::VetKey);
+        });
+
+        // Act
+        let result = repo.get_decrypted_secret(&key).await;
+
+        // Assert
+        assert_key_verification_error_contains(result, "not configured");
+    }
+
+    #[test]
+    fn it_should_share_secret_stores_across_repositories_with_same_storage() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut first_repo = repositories.secrets();
+        let second_repo = repositories.secrets();
+        let key = random_id_string();
+        let ciphertext = vec![9, 8, 7];
+        first_repo
+            .encrypted
+            .with_borrow_mut(|store| store.insert(key.clone(), ciphertext.clone()));
+
+        // Act
+        let result = second_repo.get_secret_ciphertext(&key);
+
+        // Assert
+        assert_eq!(result, Some(ciphertext));
+    }
+
+    #[tokio::test]
+    async fn it_should_share_secret_mode_across_repositories_with_same_storage() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut first_repo = repositories.secrets();
+        let second_repo = repositories.secrets();
+        let key = random_id_string();
+        first_repo.mode.with_borrow_mut(|mode| {
+            let _ = mode.set(SecretStorageMode::VetKey);
+        });
+
+        // Act
+        let result = second_repo.get_decrypted_secret(&key).await;
+
+        // Assert
+        assert_key_verification_error_contains(result, "not configured");
+    }
 }

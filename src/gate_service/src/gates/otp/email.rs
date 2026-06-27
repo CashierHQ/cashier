@@ -3,7 +3,7 @@
 
 use crate::{
     gates::{GateVerifier, otp::verify_otp_code},
-    repositories::otp::{delete_otp_record, get_otp_record, set_otp_record},
+    repositories::{OTP_STORE, otp::OtpRepository},
     services::{http::HttpOutcallService, secret::SecretService},
 };
 use candid::Principal;
@@ -44,21 +44,24 @@ impl OTPEmailVerifier {
             }
         };
 
-        let record = get_otp_record(&self.gate_id, self.user).ok_or_else(|| {
-            GateServiceError::KeyVerificationFailed(
-                "No OTP code found. Please request a new code.".to_string(),
-            )
-        })?;
+        let mut otp_repo = OtpRepository::new(&OTP_STORE);
+        let record = otp_repo
+            .get_otp_record(&self.gate_id, self.user)
+            .ok_or_else(|| {
+                GateServiceError::KeyVerificationFailed(
+                    "No OTP code found. Please request a new code.".to_string(),
+                )
+            })?;
 
         match verify_otp_code(&record, &submitted_code, current_time) {
             VerificationResult::Success => {
-                delete_otp_record(&self.gate_id, self.user);
+                otp_repo.delete_otp_record(&self.gate_id, self.user);
                 Ok(VerificationResult::Success)
             }
             VerificationResult::Failure(e) => {
                 let mut updated_record = record;
                 updated_record.attempts += 1;
-                set_otp_record(&self.gate_id, self.user, updated_record);
+                otp_repo.set_otp_record(&self.gate_id, self.user, updated_record);
                 Ok(VerificationResult::Failure(e))
             }
         }
@@ -86,7 +89,6 @@ impl Debug for OTPEmailVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::otp::set_otp_record;
     use crate::services::http::test_utils::MockHttpOutcallService;
     use crate::services::secret::test_utils::MockSecretService;
     use cashier_common::test_utils::random_principal_id;
@@ -106,6 +108,14 @@ mod tests {
             expires_at,
             attempts: 0,
         }
+    }
+
+    fn seed_otp_record(gate_id: &str, user: Principal, record: OtpRecord) {
+        OtpRepository::new(&OTP_STORE).set_otp_record(gate_id, user, record);
+    }
+
+    fn read_otp_record(gate_id: &str, user: Principal) -> Option<OtpRecord> {
+        OtpRepository::new(&OTP_STORE).get_otp_record(gate_id, user)
     }
 
     #[tokio::test]
@@ -157,7 +167,7 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_expired".to_string();
         let user = random_principal_id();
-        set_otp_record(&gate_id, user, fixture_of_otp_record("123456", 500));
+        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", 500));
         let verifier = OTPEmailVerifier::new(gate_id, user);
 
         // Act
@@ -183,7 +193,7 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_wrong_code".to_string();
         let user = random_principal_id();
-        set_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
+        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
         let verifier = OTPEmailVerifier::new(gate_id, user);
 
         // Act
@@ -204,7 +214,7 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_success_email".to_string();
         let user = random_principal_id();
-        set_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
+        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
         let verifier = OTPEmailVerifier::new(gate_id, user);
 
         // Act
@@ -222,7 +232,7 @@ mod tests {
         let (http, secrets) = fixture_of_services();
         let gate_id = "gate_attempts_email".to_string();
         let user = random_principal_id();
-        set_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
+        seed_otp_record(&gate_id, user, fixture_of_otp_record("123456", u64::MAX));
         let verifier = OTPEmailVerifier::new(gate_id.clone(), user);
 
         // Act
@@ -231,7 +241,7 @@ mod tests {
             .await;
 
         // Assert
-        let record = get_otp_record(&gate_id, user).expect("record should still exist");
+        let record = read_otp_record(&gate_id, user).expect("record should still exist");
         assert_eq!(record.attempts, 1);
     }
 }

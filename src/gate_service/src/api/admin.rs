@@ -3,7 +3,7 @@
 
 use crate::api::state::get_state;
 use crate::repositories::{
-    PASSWORD_HASHING_ALGORITHM, PLAIN_SECRETS_STORE, SECRET_STORAGE_MODE, SECRETS_STORE,
+    PLAIN_SECRETS_STORE, Repositories, SECRET_STORAGE_MODE, SECRETS_STORE, ThreadlocalRepositories,
 };
 use crate::utils::vetkd::{derive_encrypted_vetkey, fetch_derived_public_key};
 use candid::Principal;
@@ -233,7 +233,7 @@ pub fn admin_get_password_hashing_algorithm() -> PasswordHashingAlgorithm {
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    PASSWORD_HASHING_ALGORITHM.with_borrow(|m| m.get().clone())
+    ThreadlocalRepositories.password_hashing_algorithm().get()
 }
 
 /// Switches the password hashing algorithm used for all future password gate creations.
@@ -254,9 +254,9 @@ pub fn admin_set_password_hashing_algorithm(
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    PASSWORD_HASHING_ALGORITHM.with_borrow_mut(|m| {
-        m.set(mode);
-    });
+    ThreadlocalRepositories
+        .password_hashing_algorithm()
+        .set(mode);
     Ok(())
 }
 
