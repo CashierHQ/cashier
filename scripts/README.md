@@ -58,3 +58,39 @@ After running the sync, inspect:
 ```bash
 git diff scripts/args/token_storage_args.template
 ```
+
+## Set the Gate canister secrets
+
+- Populate the secrets in the `.env` file
+
+- Set plaintext mode (default)
+
+```bash
+node scripts/set-gate-secrets.mjs --network <network-name>
+```
+
+- Set vetKeys mode
+
+```bash
+node scripts/set-gate-secrets.mjs --mode vetkd --network <network-name>
+```
+
+## Set the Gate canister hashing mode
+
+- Get the current mode
+
+```bash
+node scripts/get-gate-secret-hashing-mode.mjs --network <network-name>
+```
+
+- Set SHA256 mode (default)
+
+```bash
+node scripts/set-password-hashing-mode.mjs --network <network-name>
+```
+
+- Set Argon2 mode
+
+```bash
+node scripts/set-password-hashing-mode.mjs --mode argon2id --network <network-name>
+```
