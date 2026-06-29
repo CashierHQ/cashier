@@ -25,7 +25,7 @@ check_code:
 
 # Runs prettier, lint, and type checks on the frontend + shared TS packages
 [group('code_check')]
-frontend_check_code: install_frontend_deps
+frontend_check_code: install_frontend_deps build_gate_sdk
     pnpm --filter cashier_frontend_new lint
     # Copy .env.dev for svelte-check type generation, run check, cleanup
     cp {{FRONTEND_DIR_NEW}}/.env.dev {{FRONTEND_DIR_NEW}}/.env && pnpm --filter cashier_frontend_new check || (rm -f {{FRONTEND_DIR_NEW}}/.env && exit 1)
