@@ -114,6 +114,15 @@ export class GatingStore {
     return this.#otpPhoneDraft;
   }
 
+  get hasConfiguredAnyX(): boolean {
+    return (
+      this.hasConfiguredXFollowing ||
+      this.hasConfiguredXOwnedAccount ||
+      this.hasConfiguredXLikedPost ||
+      this.hasConfiguredXRetweetedPost
+    );
+  }
+
   get hasLocks(): boolean {
     return (
       this.hasConfiguredPassword ||
@@ -274,10 +283,38 @@ export class GatingStore {
 
     if (!gateDraft) return;
 
+    this.#selectedGateTypes = [gateDraft.type];
+
     switch (gateDraft.type) {
       case GateType.PASSWORD:
         this.#configuredPassword = gateDraft.password;
-        this.#selectedGateTypes = [gateDraft.type];
+        this.#password = gateDraft.password;
+        this.#confirmPassword = gateDraft.password;
+        break;
+      case GateType.X_FOLLOWING:
+        this.#xFollowingHandle = gateDraft.targetHandle;
+        this.#xFollowingDraft = gateDraft.targetHandle;
+        this.#xRewardAccountDraft = gateDraft.rewardAccount;
+        break;
+      case GateType.X_OWNED_ACCOUNT:
+        this.#xOwnedAccountHandle = gateDraft.targetHandle;
+        this.#xOwnedAccountDraft = gateDraft.targetHandle;
+        break;
+      case GateType.X_LIKED_POST:
+        this.#xLikedPostUrl = gateDraft.tweetUrl;
+        this.#xLikedPostDraft = gateDraft.tweetUrl;
+        break;
+      case GateType.X_RETWEETED_POST:
+        this.#xRetweetedPostUrl = gateDraft.tweetUrl;
+        this.#xRetweetedPostDraft = gateDraft.tweetUrl;
+        break;
+      case GateType.OTP_EMAIL:
+        this.#otpEmail = gateDraft.email;
+        this.#otpEmailDraft = gateDraft.email;
+        break;
+      case GateType.OTP_SMS:
+        this.#otpPhone = gateDraft.phone;
+        this.#otpPhoneDraft = gateDraft.phone;
         break;
     }
   }

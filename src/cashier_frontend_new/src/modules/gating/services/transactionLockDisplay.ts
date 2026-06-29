@@ -1,8 +1,5 @@
 import { locale } from "$lib/i18n";
-import {
-  FALLBACK_LOCK_VALUE_LENGTH,
-  X_HANDLE_LOCK_TYPE,
-} from "$modules/gating/constants";
+import { FALLBACK_LOCK_VALUE_LENGTH } from "$modules/gating/constants";
 import { GateType } from "$modules/gating/types/gate";
 import type {
   GateKey,
@@ -40,9 +37,12 @@ function getLockType(lock: TransactionLockInput): string {
     if ("Password" in gateKey || "PasswordRedacted" in gateKey) {
       return GateType.PASSWORD;
     }
-    if ("XFollowing" in gateKey) {
-      return X_HANDLE_LOCK_TYPE;
-    }
+    if ("XFollowing" in gateKey) return GateType.X_FOLLOWING;
+    if ("XOwnedAccount" in gateKey) return GateType.X_OWNED_ACCOUNT;
+    if ("XLikedPost" in gateKey) return GateType.X_LIKED_POST;
+    if ("XRetweetedPost" in gateKey) return GateType.X_RETWEETED_POST;
+    if ("OTPEmail" in gateKey) return GateType.OTP_EMAIL;
+    if ("OTPSms" in gateKey) return GateType.OTP_SMS;
   }
 
   return "type" in lock && typeof lock.type === "string" ? lock.type : "";
@@ -55,17 +55,24 @@ function getLockType(lock: TransactionLockInput): string {
  * @returns The i18n key for the lock row label.
  */
 function getLockLabelKey(lock: TransactionLockInput): string {
-  const type = getLockType(lock);
-
-  if (type === GateType.PASSWORD) {
-    return "links.linkForm.lock.password";
+  switch (getLockType(lock)) {
+    case GateType.PASSWORD:
+      return "links.linkForm.lock.password";
+    case GateType.X_FOLLOWING:
+      return "links.linkForm.lock.key1FollowAccount";
+    case GateType.X_OWNED_ACCOUNT:
+      return "links.linkForm.lock.keyOwnedAccount";
+    case GateType.X_LIKED_POST:
+      return "links.linkForm.lock.key2LikePost";
+    case GateType.X_RETWEETED_POST:
+      return "links.linkForm.lock.key3RetweetPost";
+    case GateType.OTP_EMAIL:
+      return "links.linkForm.lock.otp.email";
+    case GateType.OTP_SMS:
+      return "links.linkForm.lock.otp.phone";
+    default:
+      return "links.linkForm.lock.configuredLock";
   }
-
-  if (type === X_HANDLE_LOCK_TYPE) {
-    return "links.linkForm.lock.xHandle";
-  }
-
-  return "links.linkForm.lock.configuredLock";
 }
 
 /**
@@ -128,6 +135,21 @@ function getLockValue(
       return gateKey.XFollowing;
     }
     if (
+      "XOwnedAccount" in gateKey &&
+      typeof gateKey.XOwnedAccount === "string"
+    ) {
+      return gateKey.XOwnedAccount;
+    }
+    if ("XLikedPost" in gateKey && typeof gateKey.XLikedPost === "string") {
+      return gateKey.XLikedPost;
+    }
+    if (
+      "XRetweetedPost" in gateKey &&
+      typeof gateKey.XRetweetedPost === "string"
+    ) {
+      return gateKey.XRetweetedPost;
+    }
+    if (
       "DiscordServer" in gateKey &&
       typeof gateKey.DiscordServer === "string"
     ) {
@@ -139,6 +161,26 @@ function getLockValue(
     ) {
       return gateKey.TelegramGroup;
     }
+    if ("OTPEmail" in gateKey && typeof gateKey.OTPEmail === "string") {
+      return gateKey.OTPEmail;
+    }
+    if ("OTPSms" in gateKey && typeof gateKey.OTPSms === "string") {
+      return gateKey.OTPSms;
+    }
+  }
+
+  // Extract values from draft gate types
+  if ("targetHandle" in lock && typeof lock.targetHandle === "string") {
+    return lock.targetHandle;
+  }
+  if ("tweetUrl" in lock && typeof lock.tweetUrl === "string") {
+    return lock.tweetUrl;
+  }
+  if ("email" in lock && typeof lock.email === "string") {
+    return lock.email;
+  }
+  if ("phone" in lock && typeof lock.phone === "string") {
+    return lock.phone;
   }
 
   return locale.t("links.linkForm.lock.configuredLock");

@@ -61,6 +61,13 @@
   const isOtpConfigured = $derived(
     store.hasConfiguredOTPEmail || store.hasConfiguredOTPSms,
   );
+
+  function isOptionConfigured(type: GateType | undefined): boolean {
+    if (!type) return false;
+    if (type === GateType.X_FOLLOWING) return store.hasConfiguredAnyX;
+    if (type === OTP_TYPE) return isOtpConfigured;
+    return store.selectedGateTypes.includes(type);
+  }
 </script>
 
 <div class="space-y-2">
@@ -93,8 +100,7 @@
             onOtpClick();
           }
         }}
-        class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&
-        store.selectedGateTypes.includes(option.type)
+        class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {isOptionConfigured(option.type)
           ? 'border-green'
           : ''}"
       >
@@ -114,11 +120,7 @@
         <span class="text-sm text-foreground">
           {option.label}
         </span>
-        {#if option.type === GateType.PASSWORD && store.hasConfiguredPassword}
-          <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
-        {:else if option.type === GateType.X_FOLLOWING && store.hasConfiguredXFollowing}
-          <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
-        {:else if option.type === OTP_TYPE && isOtpConfigured}
+        {#if isOptionConfigured(option.type)}
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">
