@@ -284,7 +284,7 @@
         },
         action: linkStore.action,
         setLinkType: () => {},
-        setPendingGateDraft: () => {},
+        setPendingGateDrafts: () => {},
         goNext: async () => {},
         goBack: async () => {},
       };

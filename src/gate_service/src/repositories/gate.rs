@@ -3,7 +3,7 @@
 
 use crate::utils::gate::generate_gate_id;
 use candid::Principal;
-use gate_service_types::{Gate, GateKey, GateStatus, GateUser, GateUserStatus, NewGate};
+use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -188,7 +188,6 @@ mod tests {
         assert_eq!(gate.subject_id, new_gate.subject_id);
         assert_eq!(gate.key, new_gate.key);
     }
-
 
     #[test]
     fn it_should_none_get_gate_user_status() {

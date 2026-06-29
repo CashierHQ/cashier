@@ -60,7 +60,6 @@ async fn it_should_error_add_gate_due_to_unauthorized_caller() {
     .unwrap();
 }
 
-
 #[tokio::test]
 async fn it_should_get_gate_by_id() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {

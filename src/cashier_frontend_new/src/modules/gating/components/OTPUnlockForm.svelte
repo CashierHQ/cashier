@@ -33,7 +33,7 @@
     return "";
   });
 
-  const redactedDestination = $derived(redactDestination(destination, isEmail));
+  const redactedDestination = $derived(redactDestination(destination as string, isEmail));
 
   let step = $state<"verify" | "code">("verify");
   let digits = $state(["", "", "", "", "", ""]);
