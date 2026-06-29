@@ -34,10 +34,6 @@ build_gate_sdk: install_frontend_deps
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps build_gate_sdk
   pnpm --filter cashier_frontend_new build:{{mode}}
-
-# Builds the gate frontend canister
-[group('build')]
-build_gate_frontend mode="local_dev": install_frontend_deps
   pnpm --filter gate_frontend build:{{mode}}
 
 # Generates the ts files for the canister services 

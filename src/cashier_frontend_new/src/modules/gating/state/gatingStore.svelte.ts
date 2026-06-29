@@ -21,6 +21,8 @@ export class GatingStore {
   #otpEmailDraft = $state("");
   #otpPhone = $state<string | null>(null);
   #otpPhoneDraft = $state("");
+  #otpPhoneDigits = $state("");
+  #otpCountryCode = $state("");
 
   get selectedGateTypes(): GateType[] {
     return this.#selectedGateTypes;
@@ -104,6 +106,14 @@ export class GatingStore {
 
   get otpPhone(): string | null {
     return this.#otpPhone;
+  }
+
+  get otpPhoneDigits(): string {
+    return this.#otpPhoneDigits;
+  }
+
+  get otpCountryCode(): string {
+    return this.#otpCountryCode;
   }
 
   get otpEmailDraft(): string {
@@ -272,6 +282,8 @@ export class GatingStore {
       gates.push({
         type: GateType.OTP_SMS,
         phone: this.#otpPhone ?? "",
+        digits: this.#otpPhoneDigits,
+        countryCode: this.#otpCountryCode,
       });
     }
 
@@ -320,6 +332,8 @@ export class GatingStore {
         case GateType.OTP_SMS:
           this.#otpPhone = gateDraft.phone;
           this.#otpPhoneDraft = gateDraft.phone;
+          this.#otpPhoneDigits = gateDraft.digits;
+          this.#otpCountryCode = gateDraft.countryCode;
           break;
       }
     }
@@ -455,9 +469,11 @@ export class GatingStore {
     }
   }
 
-  saveOTPSmsLock(): void {
+  saveOTPSmsLock(phoneDigits: string, countryCode: string): void {
     if (this.otpPhoneSetupError) return;
     this.#otpPhone = this.#otpPhoneDraft.trim();
+    this.#otpPhoneDigits = phoneDigits;
+    this.#otpCountryCode = countryCode;
     if (!this.#selectedGateTypes.includes(GateType.OTP_SMS)) {
       this.#selectedGateTypes = [...this.#selectedGateTypes, GateType.OTP_SMS];
     }
@@ -489,5 +505,7 @@ export class GatingStore {
     this.#otpEmailDraft = "";
     this.#otpPhone = null;
     this.#otpPhoneDraft = "";
+    this.#otpPhoneDigits = "";
+    this.#otpCountryCode = "";
   }
 }

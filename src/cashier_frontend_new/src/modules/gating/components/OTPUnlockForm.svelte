@@ -4,6 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { redactDestination } from "$modules/gating/utils/redactDestination";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
   import { onDestroy } from "svelte";
 
@@ -31,6 +32,8 @@
     if ("OTPSmsRedacted" in key) return key.OTPSmsRedacted;
     return "";
   });
+
+  const redactedDestination = $derived(redactDestination(destination, isEmail));
 
   let step = $state<"verify" | "code">("verify");
   let digits = $state(["", "", "", "", "", ""]);
@@ -214,7 +217,7 @@
       {:else}
         <Smartphone class="h-5 w-5 flex-none text-green" aria-hidden="true" />
       {/if}
-      <span class="text-lg font-semibold text-green">{destination}</span>
+      <span class="text-lg font-semibold text-green">{redactedDestination}</span>
     </div>
 
     <!-- Hint -->
@@ -262,7 +265,7 @@
     <div class="space-y-1 text-center">
       <p class="text-sm text-foreground">
         {locale.t("links.linkForm.lock.otp.codeSentTo")}
-        <span class="font-semibold text-green">{destination}</span>
+        <span class="font-semibold text-green">{redactedDestination}</span>
       </p>
       <p class="text-xs text-muted-foreground">{expiryText}</p>
     </div>

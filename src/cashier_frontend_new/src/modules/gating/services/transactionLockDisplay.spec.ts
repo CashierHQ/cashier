@@ -213,6 +213,8 @@ describe("transactionLockDisplay", () => {
     const lock: TransactionLockInput = {
       type: GateType.OTP_SMS,
       phone: "+15550001234",
+      digits: "5550001234",
+      countryCode: "US",
     };
 
     expect(getTransactionLockDisplay(lock)).toEqual({

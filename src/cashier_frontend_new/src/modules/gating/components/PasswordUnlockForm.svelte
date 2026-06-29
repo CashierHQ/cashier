@@ -59,26 +59,22 @@
       return locale.t("links.linkForm.lock.password") ?? "Password";
     }
     if ("XFollowing" in key) {
-      return locale.t("links.linkForm.lock.xHandle") ?? "X Follow";
+      return locale.t("links.linkForm.lock.key1FollowAccount");
     }
     if ("XOwnedAccount" in key) {
       return locale.t("links.linkForm.lock.keyOwnedAccount");
     }
     if ("XLikedPost" in key) {
-      return locale.t("links.linkForm.lock.key2LikePost") ?? "X Like post";
+      return locale.t("links.linkForm.lock.key2LikePost");
     }
     if ("XRetweetedPost" in key) {
-      return (
-        locale.t("links.linkForm.lock.key3RetweetPost") ?? "X Retweet post"
-      );
+      return locale.t("links.linkForm.lock.key3RetweetPost");
     }
-    if (
-      "OTPEmail" in key ||
-      "OTPEmailRedacted" in key ||
-      "OTPSms" in key ||
-      "OTPSmsRedacted" in key
-    ) {
-      return locale.t("links.linkForm.lock.otp.oneTimeCodeVerification");
+    if ("OTPEmail" in key || "OTPEmailRedacted" in key) {
+      return locale.t("links.linkForm.lock.otp.email");
+    }
+    if ("OTPSms" in key || "OTPSmsRedacted" in key) {
+      return locale.t("links.linkForm.lock.otp.phone");
     }
     return "Unknown";
   }

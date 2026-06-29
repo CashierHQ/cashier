@@ -166,7 +166,7 @@ describe("gateDraftToGateKey", () => {
     ],
     [
       "otp sms",
-      { type: GateType.OTP_SMS, phone: "+15555550123" },
+      { type: GateType.OTP_SMS, phone: "+15555550123", digits: "5555550123", countryCode: "US" },
       { OTPSms: "+15555550123" },
     ],
   ] satisfies Array<[string, GateDraft, unknown]>)(

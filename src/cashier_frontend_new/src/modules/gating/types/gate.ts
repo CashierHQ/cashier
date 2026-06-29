@@ -42,6 +42,8 @@ export type OTPEmailGateDraft = {
 export type OTPSmsGateDraft = {
   type: GateType.OTP_SMS;
   phone: string;
+  digits: string;
+  countryCode: string;
 };
 
 export type GateDraft =
