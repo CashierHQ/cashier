@@ -33,7 +33,9 @@
     return "";
   });
 
-  const redactedDestination = $derived(redactDestination(destination as string, isEmail));
+  const redactedDestination = $derived(
+    redactDestination(destination as string, isEmail),
+  );
 
   let step = $state<"verify" | "code">("verify");
   let digits = $state(["", "", "", "", "", ""]);
@@ -217,7 +219,8 @@
       {:else}
         <Smartphone class="h-5 w-5 flex-none text-green" aria-hidden="true" />
       {/if}
-      <span class="text-lg font-semibold text-green">{redactedDestination}</span>
+      <span class="text-lg font-semibold text-green">{redactedDestination}</span
+      >
     </div>
 
     <!-- Hint -->

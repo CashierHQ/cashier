@@ -100,7 +100,9 @@
             onOtpClick();
           }
         }}
-        class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {isOptionConfigured(option.type)
+        class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {isOptionConfigured(
+          option.type,
+        )
           ? 'border-green'
           : ''}"
       >

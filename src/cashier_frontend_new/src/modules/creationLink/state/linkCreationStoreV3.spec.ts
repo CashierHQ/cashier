@@ -422,7 +422,9 @@ describe("LinkCreationStoreV3", () => {
           max_use: 5n,
         }),
       );
-      store.pendingGateDrafts = [{ type: GateType.PASSWORD, password: "secret" }];
+      store.pendingGateDrafts = [
+        { type: GateType.PASSWORD, password: "secret" },
+      ];
 
       const result = store.initializeCreateLinkActionFromTemplate();
       expect(result.isOk()).toBe(true);

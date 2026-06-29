@@ -5,16 +5,22 @@ const DOTS = "•••••";
 
 describe("redactDestination — email", () => {
   it("redacts a typical email keeping first char, last 4 of local part, and full domain", () => {
-    expect(redactDestination("htsvnn@gmail.com", true)).toBe(`h${DOTS}svnn@gmail.com`);
+    expect(redactDestination("htsvnn@gmail.com", true)).toBe(
+      `h${DOTS}svnn@gmail.com`,
+    );
   });
 
   it("redacts an email whose local part has exactly 5 chars", () => {
-    expect(redactDestination("abcde@example.org", true)).toBe(`a${DOTS}bcde@example.org`);
+    expect(redactDestination("abcde@example.org", true)).toBe(
+      `a${DOTS}bcde@example.org`,
+    );
   });
 
   it("redacts an email with a long local part", () => {
     // local="john.doe.smith", last 4="mith"
-    expect(redactDestination("john.doe.smith@company.com", true)).toBe(`j${DOTS}mith@company.com`);
+    expect(redactDestination("john.doe.smith@company.com", true)).toBe(
+      `j${DOTS}mith@company.com`,
+    );
   });
 
   it("returns unchanged when local part is a single character", () => {

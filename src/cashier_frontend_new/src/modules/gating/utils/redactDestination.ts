@@ -23,7 +23,8 @@ function redactPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   const last4 = digits.slice(-4);
   if (phone.startsWith("+") && digits.length > 4) {
-    const dialCode = DIAL_CODES_SORTED.find((dc) => phone.startsWith(dc)) ?? "+";
+    const dialCode =
+      DIAL_CODES_SORTED.find((dc) => phone.startsWith(dc)) ?? "+";
     const firstLocal = phone.slice(dialCode.length).replace(/\D/g, "")[0] ?? "";
     return `${dialCode}${firstLocal}${DOTS}${last4}`;
   }

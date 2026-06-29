@@ -33,7 +33,9 @@
     smsEligibleCountries[0]?.code ??
     "CA";
 
-  let activeTab = $state<"phone" | "email">(store.hasConfiguredOTPEmail ? "email" : "phone");
+  let activeTab = $state<"phone" | "email">(
+    store.hasConfiguredOTPEmail ? "email" : "phone",
+  );
   let submitted = $state(false);
   let countryDrawerOpen = $state(false);
   let countrySearch = $state("");
