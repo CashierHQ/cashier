@@ -38,7 +38,7 @@
 
     try {
       isContinuing = true;
-      link.setPendingGateDraft(store.gateDrafts[0] ?? null);
+      link.setPendingGateDrafts(store.gateDrafts);
       await link.goNext();
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);

@@ -1,7 +1,7 @@
 import { DRAFT_LINK_GATES_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 import type { GateDraft } from "$modules/gating/types/gate";
 
-type DraftGateRecord = Record<string, GateDraft>;
+type DraftGateRecord = Record<string, GateDraft[]>;
 
 export class DraftGateRepository {
   storeKey(owner: string) {
@@ -22,20 +22,20 @@ export class DraftGateRepository {
     }
   }
 
-  save(owner: string, draftLinkId: string, gateDraft: GateDraft): void {
-    const gates = this.load(owner);
-    gates[draftLinkId] = gateDraft;
-    localStorage.setItem(this.storeKey(owner), JSON.stringify(gates));
+  save(owner: string, draftLinkId: string, gateDrafts: GateDraft[]): void {
+    const record = this.load(owner);
+    record[draftLinkId] = gateDrafts;
+    localStorage.setItem(this.storeKey(owner), JSON.stringify(record));
   }
 
-  get(owner: string, draftLinkId: string): GateDraft | null {
-    return this.load(owner)[draftLinkId] ?? null;
+  get(owner: string, draftLinkId: string): GateDraft[] {
+    return this.load(owner)[draftLinkId] ?? [];
   }
 
   delete(owner: string, draftLinkId: string): void {
-    const gates = this.load(owner);
-    delete gates[draftLinkId];
-    localStorage.setItem(this.storeKey(owner), JSON.stringify(gates));
+    const record = this.load(owner);
+    delete record[draftLinkId];
+    localStorage.setItem(this.storeKey(owner), JSON.stringify(record));
   }
 }
 

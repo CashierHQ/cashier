@@ -67,10 +67,9 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     }
 
     // call backend API to create the link (with gates if configured)
-    const gateDraft = this.#linkStore.pendingGateDraft;
-    const gateKeys: GateKey[] = gateDraft
-      ? [gateDraftToGateKey(gateDraft)]
-      : [];
+    const gateKeys: GateKey[] = this.#linkStore.pendingGateDrafts.map(
+      gateDraftToGateKey,
+    );
 
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,

@@ -113,23 +113,6 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
             .await
     }
 
-    /// Returns the gate associated with the given subject ID for the caller.
-    /// # Arguments
-    /// * `subject_id`: The subject ID to look up (e.g. a link ID).
-    /// # Returns
-    /// * `Ok(Ok(Some(Gate)))`: Gate found.
-    /// * `Ok(Ok(None))`: No gate exists for that subject.
-    /// * `Ok(Err(GateServiceError))`: The canister rejected the request.
-    /// * `Err(...)`: The canister call failed.
-    pub async fn get_gate_by_subject(
-        &self,
-        subject_id: String,
-    ) -> CanisterClientResult<Result<Option<Gate>, GateServiceError>> {
-        self.client
-            .query("get_gate_by_subject", (subject_id,))
-            .await
-    }
-
     /// Returns the gate with the given ID.
     /// # Arguments
     /// * `gate_id`: The unique gate ID to look up.

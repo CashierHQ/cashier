@@ -106,7 +106,7 @@ describe("LinkCreationStoreV3", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.account = { owner: CREATOR_TEXT };
-    vi.mocked(draftGateRepository.get).mockReturnValue(null);
+    vi.mocked(draftGateRepository.get).mockReturnValue([]);
     vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
       Err(new Error("no template configured")),
     );
@@ -215,11 +215,10 @@ describe("LinkCreationStoreV3", () => {
       expect(store.id).toBe("my-id");
     });
 
-    it("it_should_succeed_restore_pending_gate_draft_from_storage", () => {
-      vi.mocked(draftGateRepository.get).mockReturnValue({
-        type: GateType.PASSWORD,
-        password: "secret",
-      });
+    it("it_should_succeed_restore_pending_gate_drafts_from_storage", () => {
+      vi.mocked(draftGateRepository.get).mockReturnValue([
+        { type: GateType.PASSWORD, password: "secret" },
+      ]);
 
       const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
 
@@ -227,36 +226,31 @@ describe("LinkCreationStoreV3", () => {
         CREATOR_TEXT,
         "my-id",
       );
-      expect(store.pendingGateDraft).toEqual({
-        type: GateType.PASSWORD,
-        password: "secret",
-      });
+      expect(store.pendingGateDrafts).toEqual([
+        { type: GateType.PASSWORD, password: "secret" },
+      ]);
     });
   });
 
-  describe("pendingGateDraft", () => {
-    it("it_should_succeed_persist_pending_gate_draft_for_current_draft_link", () => {
+  describe("pendingGateDrafts", () => {
+    it("it_should_succeed_persist_pending_gate_drafts_for_current_draft_link", () => {
       const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
 
-      store.pendingGateDraft = {
-        type: GateType.PASSWORD,
-        password: "secret",
-      };
+      store.pendingGateDrafts = [
+        { type: GateType.PASSWORD, password: "secret" },
+      ];
 
       expect(draftGateRepository.save).toHaveBeenCalledWith(
         CREATOR_TEXT,
         "my-id",
-        {
-          type: GateType.PASSWORD,
-          password: "secret",
-        },
+        [{ type: GateType.PASSWORD, password: "secret" }],
       );
     });
 
-    it("it_should_succeed_delete_pending_gate_draft_when_cleared", () => {
+    it("it_should_succeed_delete_pending_gate_drafts_when_cleared", () => {
       const store = new LinkCreationStoreV3(makeDraftLink({ id: "my-id" }));
 
-      store.pendingGateDraft = null;
+      store.pendingGateDrafts = [];
 
       expect(draftGateRepository.delete).toHaveBeenCalledWith(
         CREATOR_TEXT,
@@ -428,10 +422,7 @@ describe("LinkCreationStoreV3", () => {
           max_use: 5n,
         }),
       );
-      store.pendingGateDraft = {
-        type: GateType.PASSWORD,
-        password: "secret",
-      };
+      store.pendingGateDrafts = [{ type: GateType.PASSWORD, password: "secret" }];
 
       const result = store.initializeCreateLinkActionFromTemplate();
       expect(result.isOk()).toBe(true);

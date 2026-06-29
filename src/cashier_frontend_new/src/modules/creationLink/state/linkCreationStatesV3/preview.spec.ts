@@ -94,7 +94,7 @@ function makeStore(options?: {
   setDraftActionOnInit?: boolean;
   storeId?: string | null;
   linkType?: LinkType;
-  pendingGateDraft?: GateDraft | null;
+  pendingGateDrafts?: GateDraft[];
 }): LinkCreationStoreV3 {
   const {
     draftLinkUndefined,
@@ -102,7 +102,7 @@ function makeStore(options?: {
     setDraftActionOnInit = true,
     storeId = "store-id",
     linkType = LinkType.SendTip,
-    pendingGateDraft = null,
+    pendingGateDrafts = [],
   } = options ?? {};
 
   const store: Record<string, unknown> = {
@@ -114,7 +114,7 @@ function makeStore(options?: {
     state: undefined,
     backendLink: undefined,
     backendAction: undefined,
-    pendingGateDraft,
+    pendingGateDrafts,
     initializeCreateLinkActionFromTemplate: vi.fn(() => {
       if (initActionResult === "err") {
         return Err(new Error("template init failed"));
@@ -284,13 +284,15 @@ describe("PreviewStateV3", () => {
       expect(store.backendAction).toEqual(MOCK_ACTION);
     });
 
-    it("it_should_succeed_go_next_send_x_gate_key_to_backend", async () => {
+    it("it_should_succeed_go_next_send_single_gate_key_to_backend", async () => {
       const store = makeStore({
-        pendingGateDraft: {
-          type: GateType.X_FOLLOWING,
-          targetHandle: "cashierapp",
-          rewardAccount: "reward-account",
-        },
+        pendingGateDrafts: [
+          {
+            type: GateType.X_FOLLOWING,
+            targetHandle: "cashierapp",
+            rewardAccount: "reward-account",
+          },
+        ],
       });
       const state = new PreviewStateV3(store);
       await state.goNext();
@@ -299,6 +301,30 @@ describe("PreviewStateV3", () => {
         store.draftLink,
         store.draftAction,
         [{ XFollowing: "cashierapp" }],
+      );
+    });
+
+    it("it_should_succeed_go_next_send_multiple_gate_keys_to_backend", async () => {
+      const store = makeStore({
+        pendingGateDrafts: [
+          {
+            type: GateType.X_OWNED_ACCOUNT,
+            targetHandle: "htsvnn",
+          },
+          {
+            type: GateType.X_FOLLOWING,
+            targetHandle: "elonmusk",
+            rewardAccount: "",
+          },
+        ],
+      });
+      const state = new PreviewStateV3(store);
+      await state.goNext();
+
+      expect(cashierBackendService.createLinkV3).toHaveBeenCalledWith(
+        store.draftLink,
+        store.draftAction,
+        [{ XOwnedAccount: "htsvnn" }, { XFollowing: "elonmusk" }],
       );
     });
 

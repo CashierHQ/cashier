@@ -91,20 +91,6 @@ impl<R: Repositories> GateService<R> {
         self.gate_repo.get_gate(gate_id).map(redact_password_gate)
     }
 
-    /// Retrieves a gate by its subject's ID.
-    /// # Arguments
-    /// * `creator`: The creator of the gate.
-    /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
-    /// # Returns
-    /// * `Ok(Some(Gate))`: If a gate is found.
-    /// * `Ok(None)`: If no gate is found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_gate_by_subject(&self, creator: Principal, subject_id: &str) -> Option<Gate> {
-        self.gate_repo
-            .get_gate_by_subject(creator, subject_id)
-            .map(redact_password_gate)
-    }
-
     /// Retrieves the user status of a gate for a specific user.
     /// # Arguments
     /// * `gate_id`: The ID of the gate to be checked.
@@ -448,67 +434,6 @@ mod tests {
 
         // Act
         let gate = service.get_gate(&gate.id);
-
-        // Assert
-        assert!(gate.is_some());
-        let gate = gate.unwrap();
-        assert!(!gate.id.is_empty());
-        assert_eq!(gate.creator, creator);
-        assert_eq!(gate.subject_id, subject_id);
-        assert_eq!(gate.key, GateKey::XFollowing("x_handle".to_string()));
-    }
-
-    #[test]
-    fn it_should_none_get_gate_by_subject_id() {
-        // Arrange
-        let (service, _repos) = fixture_of_gate_service();
-        let creator = random_principal_id();
-
-        // Act
-        let gate = service.get_gate_by_subject(creator, "non_existent_subject_id");
-
-        // Assert
-        assert!(gate.is_none());
-    }
-
-    #[test]
-    fn it_should_get_password_gate_by_subject_id() {
-        // Arrange
-        let (mut service, _repos) = fixture_of_gate_service();
-        let creator = random_principal_id();
-        let subject_id = random_id_string();
-        let new_gate = NewGate {
-            subject_id: subject_id.clone(),
-            key: GateKey::Password("password123".to_string()),
-        };
-        service.add_gate(creator, new_gate).unwrap();
-
-        // Act
-        let gate = service.get_gate_by_subject(creator, &subject_id);
-
-        // Assert
-        assert!(gate.is_some());
-        let gate = gate.unwrap();
-        assert!(!gate.id.is_empty());
-        assert_eq!(gate.creator, creator);
-        assert_eq!(gate.subject_id, subject_id);
-        assert_eq!(gate.key, GateKey::PasswordRedacted);
-    }
-
-    #[test]
-    fn it_should_get_xfollowing_gate_by_subject_id() {
-        // Arrange
-        let (mut service, _repos) = fixture_of_gate_service();
-        let creator = random_principal_id();
-        let subject_id = random_id_string();
-        let new_gate = NewGate {
-            subject_id: subject_id.clone(),
-            key: GateKey::XFollowing("x_handle".to_string()),
-        };
-        service.add_gate(creator, new_gate).unwrap();
-
-        // Act
-        let gate = service.get_gate_by_subject(creator, &subject_id);
 
         // Assert
         assert!(gate.is_some());

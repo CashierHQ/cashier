@@ -19,14 +19,15 @@ pub fn redact_password_gate(gate: Gate) -> Gate {
     }
 }
 
-/// Generates a unique gate ID based on the creator's principal and subject ID.
+/// Generates a unique gate ID based on the creator's principal, subject ID, and key type.
 /// # Arguments
 /// * `creator`: The creator of the gate.
 /// * `subject_id`: The ID of the subject being gated.
+/// * `key`: The gate key, used to differentiate multiple gates on the same subject.
 /// # Returns
 /// A unique gate ID.
-pub fn generate_gate_id(creator: Principal, subject_id: &str) -> String {
-    format!("{}_{}", creator, subject_id)
+pub fn generate_gate_id(creator: Principal, subject_id: &str, key: &GateKey) -> String {
+    format!("{}_{}_{}", creator, subject_id, key)
 }
 
 #[cfg(test)]
@@ -57,11 +58,56 @@ mod tests {
         // Arrange
         let creator = Principal::anonymous();
         let subject_id = "test_subject";
+        let key = GateKey::Password("secret".to_string());
 
         // Act
-        let gate_id = generate_gate_id(creator, subject_id);
+        let gate_id = generate_gate_id(creator, subject_id, &key);
 
         // Assert
-        assert_eq!(gate_id, format!("{}_{}", creator, subject_id));
+        assert_eq!(
+            gate_id,
+            format!("{}_{}_{}", creator, subject_id, "password")
+        );
+    }
+
+    #[test]
+    fn it_should_display_gate_key() {
+        assert_eq!(GateKey::Password("x".into()).to_string(), "password");
+        assert_eq!(GateKey::PasswordRedacted.to_string(), "password");
+        assert_eq!(GateKey::XFollowing("x".into()).to_string(), "xfollowing");
+        assert_eq!(
+            GateKey::XOwnedAccount("x".into()).to_string(),
+            "xownedaccount"
+        );
+        assert_eq!(GateKey::XLikedPost("x".into()).to_string(), "xlikedpost");
+        assert_eq!(
+            GateKey::XLikedPostCredential {
+                user_id: "u".into(),
+                access_token: "t".into()
+            }
+            .to_string(),
+            "xlikedpost"
+        );
+        assert_eq!(
+            GateKey::XRetweetedPost("x".into()).to_string(),
+            "xretweetedpost"
+        );
+        assert_eq!(
+            GateKey::XRetweetedPostCredential {
+                user_id: "u".into()
+            }
+            .to_string(),
+            "xretweetedpost"
+        );
+        assert_eq!(
+            GateKey::TelegramGroup("x".into()).to_string(),
+            "telegramgroup"
+        );
+        assert_eq!(
+            GateKey::DiscordServer("x".into()).to_string(),
+            "discordserver"
+        );
+        assert_eq!(GateKey::OTPEmail("x".into()).to_string(), "otpemail");
+        assert_eq!(GateKey::OTPSms("x".into()).to_string(), "otpsms");
     }
 }

@@ -13,6 +13,7 @@ pub use secret::{PasswordHashingAlgorithm, SecretStorageMode};
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
 use serde::Serialize;
+use std::fmt;
 
 #[derive(CandidType, Debug, Clone)]
 #[storable]
@@ -108,6 +109,25 @@ pub enum GateKey {
     OTPEmail(String),
     /// Gate config: destination phone number. Credential: the 6-digit OTP code the user received.
     OTPSms(String),
+}
+
+impl fmt::Display for GateKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            GateKey::Password(_) | GateKey::PasswordRedacted => "password",
+            GateKey::XFollowing(_) => "xfollowing",
+            GateKey::XOwnedAccount(_) => "xownedaccount",
+            GateKey::XLikedPost(_) | GateKey::XLikedPostCredential { .. } => "xlikedpost",
+            GateKey::XRetweetedPost(_) | GateKey::XRetweetedPostCredential { .. } => {
+                "xretweetedpost"
+            }
+            GateKey::TelegramGroup(_) => "telegramgroup",
+            GateKey::DiscordServer(_) => "discordserver",
+            GateKey::OTPEmail(_) => "otpemail",
+            GateKey::OTPSms(_) => "otpsms",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]

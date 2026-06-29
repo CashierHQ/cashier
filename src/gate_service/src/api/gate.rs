@@ -35,27 +35,6 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
     Ok(gate)
 }
 
-#[query(guard = "is_not_anonymous")]
-/// Retrieves a gate by its subject's ID.
-/// This API is guarded to ensure that only authenticated users with GateCreate permission can access it.
-/// # Arguments
-/// * `subject_id`: The ID of the subject whose gate is to be retrieved.
-/// # Returns
-/// * `Ok(Some(Gate))`: If a gate is found.
-/// * `Ok(None)`: If no gate is found.
-/// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_by_subject(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
-    let state = get_state();
-    let caller = msg_caller();
-    state
-        .auth_service
-        .must_have_permission(&caller, Permission::GateCreate);
-
-    let gate_service = get_state().gate_service;
-    let gate = gate_service.get_gate_by_subject(caller, &subject_id);
-    Ok(gate)
-}
-
 #[query]
 /// Retrieves a gate by its ID.
 /// # Arguments
