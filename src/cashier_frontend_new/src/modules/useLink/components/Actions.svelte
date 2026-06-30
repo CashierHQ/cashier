@@ -22,12 +22,15 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
       type="button"
     >
-      {#if disabled}
-        <div
-          class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-        ></div>
-      {/if}
-      {locale.t("links.linkForm.useLink.claimButton")}
+      <span class="relative inline-flex items-center">
+        {#if disabled}
+          <span
+            class="absolute right-full mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"
+            aria-hidden="true"
+          ></span>
+        {/if}
+        {locale.t("links.linkForm.useLink.claimButton")}
+      </span>
     </Button>
   </div>
 {/if}
