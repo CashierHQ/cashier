@@ -4,9 +4,9 @@
   "version": "0.0.3",
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000 --mode local_dev",
-    "dev:dev": "vite dev --port 3000 --mode dev",
-    "dev:e2e": "vite dev --port 3001 --mode e2e",
+    "dev": "vite dev --port 3000 --mode local_dev --host",
+    "dev:dev": "vite dev --port 3000 --mode dev --host",
+    "dev:e2e": "vite dev --port 3001 --mode e2e --host",
     "build:local_dev": "vite build --mode local_dev",
     "build:dev": "vite build --mode dev",
     "build:staging": "vite build --mode staging",
