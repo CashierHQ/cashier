@@ -27,7 +27,8 @@
   let hydratedGateDraftForId: string | null = null;
 
   let cachedCreationStore:
-    (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null = null;
+    | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
+    | null = null;
   const linkStore = $derived.by<
     (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null
   >(() => {
