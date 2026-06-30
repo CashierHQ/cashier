@@ -580,7 +580,7 @@
             type="number"
             min="1"
             step="1"
-            class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-[16px] sm:text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             value={link.maxUse}
             oninput={handleMaxUseInput}
             onblur={handleMaxUseBlur}
