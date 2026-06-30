@@ -7,23 +7,22 @@
   const {
     linkTitle,
     linkStep,
-    showLockStep = false,
     onBack,
   }: {
     linkTitle?: string;
     linkStep: LinkStep;
-    showLockStep?: boolean;
     onBack: () => Promise<void>;
   } = $props();
 
-  const segmentCount = $derived(showLockStep ? 4 : 3);
+  const segmentCount = 4;
 
   const progress = $derived.by(() => {
     if (linkStep === LinkStep.CHOOSE_TYPE) return 1;
     if (linkStep === LinkStep.ADD_ASSET) return 2;
-    if (linkStep === LinkStep.LOCK) return showLockStep ? 3 : 0;
-    if (linkStep === LinkStep.PREVIEW || linkStep === LinkStep.CREATED)
-      return showLockStep ? 4 : 3;
+    if (linkStep === LinkStep.LOCK) return 3;
+    if (linkStep === LinkStep.PREVIEW || linkStep === LinkStep.CREATED) {
+      return 4;
+    }
     return 0;
   });
 

@@ -27,8 +27,7 @@
   let hydratedGateDraftForId: string | null = null;
 
   let cachedCreationStore:
-    | (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM)
-    | null = null;
+    (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null = null;
   const linkStore = $derived.by<
     (GenericCreationLinkStoreVM & ChooseLinkTypeVM & AddAssetVM) | null
   >(() => {
@@ -103,7 +102,7 @@
 
 {#if linkStore}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader {linkStep} {linkTitle} showLockStep onBack={handleBack} />
+    <CreateLinkHeader {linkStep} {linkTitle} onBack={handleBack} />
     {#if linkStore.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={linkStore} />
     {:else if linkStore.step === LinkStep.ADD_ASSET}

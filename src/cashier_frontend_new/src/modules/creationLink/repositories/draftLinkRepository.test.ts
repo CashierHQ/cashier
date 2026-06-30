@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
 
-import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
+import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
+import type { DraftLink } from "$modules/creationLink/types/draftLink";
+import { LinkStep } from "$modules/links/types/linkStep";
+import { DRAFT_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 import { LinkState, LinkType } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
+import * as devalue from "devalue";
 import { beforeEach, describe, expect, it } from "vitest";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
 
@@ -220,6 +224,54 @@ describe("DraftLinkRepository", () => {
     expect(actual.find((draft) => draft.id === "draft-2")?.title).toBe(
       "Second Updated",
     );
+  });
+
+  it("it_should_do_preserve_creation_step_when_updating_draft_link", () => {
+    // Arrange
+    const fixture_of_existing_draft_link = fixture_of_draft_link({
+      id: "draft-with-step",
+      link_state: LinkState.Preview,
+    });
+    draftLinkRepository.create({
+      id: fixture_of_existing_draft_link.id,
+      draftLink: fixture_of_existing_draft_link,
+      owner: fixture_of_owner,
+    });
+
+    // Act
+    draftLinkRepository.update({
+      id: "draft-with-step",
+      owner: fixture_of_owner,
+      updateData: {
+        creationStep: LinkStep.PREVIEW,
+      },
+    });
+
+    // Assert
+    const actual = draftLinkRepository.get(fixture_of_owner);
+    expect(actual[0].creationStep).toBe(LinkStep.PREVIEW);
+  });
+
+  it("it_should_do_restore_creation_step_from_legacy_shared_link_storage", () => {
+    // Arrange
+    const fixture_of_legacy_preview_link = fixture_of_draft_link({
+      id: "legacy-preview",
+      link_state: LinkState.Preview,
+    });
+    localStorage.setItem(
+      `${DRAFT_LINKS_STORAGE_KEY_PREFIX}.${fixture_of_owner}`,
+      devalue.stringify(
+        [fixture_of_legacy_preview_link],
+        SharedLinkMapper.serde.serialize,
+      ),
+    );
+
+    // Act
+    const actual = draftLinkRepository.get(fixture_of_owner);
+
+    // Assert
+    expect(actual[0].id).toBe("legacy-preview");
+    expect(actual[0].creationStep).toBe(LinkStep.PREVIEW);
   });
 
   it("it_should_do_delete_only_targeted_draft_link_when_many_draft_links_exist", () => {

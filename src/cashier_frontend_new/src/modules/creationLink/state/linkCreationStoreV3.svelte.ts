@@ -2,7 +2,6 @@ import { assertUnreachable } from "$lib/rsMatch";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import type { GateDraft } from "$modules/gating/types/gate";
 import { authState } from "$modules/auth/state/auth.svelte";
-import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreationStatesV3";
@@ -10,6 +9,7 @@ import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { type Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
@@ -25,6 +25,7 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
+import type { DraftLink } from "$modules/creationLink/types/draftLink";
 
 /**
  * Store for draft link state management
@@ -157,9 +158,10 @@ export class LinkCreationStoreV3 {
   }
 
   /**
-   * Pure function derive the initial state based on the given LinkStateValue
-   * @param state LinkStateValue to initialize from
-   * @returns LinkCreationState corresponding to the given state
+   * Derives the initial create-flow state from the persisted draft link.
+   *
+   * @param draftLink Draft link to restore.
+   * @returns Create-flow state matching the stored draft progress.
    */
   private getStateHandler(draftLink: DraftLink): LinkCreationStateV3 {
     let initialState: LinkCreationStateV3;
@@ -172,7 +174,10 @@ export class LinkCreationStoreV3 {
         initialState = new AddAssetStateV3(this);
         break;
       case SharedLinkState.Preview:
-        initialState = new LockStateV3(this);
+        initialState =
+          draftLink.creationStep === LinkStep.LOCK
+            ? new LockStateV3(this)
+            : new PreviewStateV3(this);
         break;
       case SharedLinkState.Created:
         initialState = new LinkCreatedStateV3();
@@ -229,6 +234,7 @@ export class LinkCreationStoreV3 {
           assetInfo,
           maxUse,
           state: linkState,
+          creationStep: this.#state.step,
         },
         owner: authState.account.owner,
       });

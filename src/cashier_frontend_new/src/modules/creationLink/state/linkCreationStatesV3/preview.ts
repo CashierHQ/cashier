@@ -71,7 +71,7 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     this.#linkStore.backendAction = createLinkResponse.action;
   }
 
-  // Go back to the add asset state
+  // Go back to the lock state
   async goBack(): Promise<void> {
     this.#linkStore.state = new LockStateV3(this.#linkStore);
   }

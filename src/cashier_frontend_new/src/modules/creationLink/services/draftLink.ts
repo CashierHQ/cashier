@@ -1,8 +1,6 @@
 import { authState } from "$modules/auth/state/auth.svelte";
-import {
-  draftLinkRepository,
-  type DraftLink,
-} from "$modules/creationLink/repositories/draftLinkRepository";
+import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
+import type { DraftLink } from "$modules/creationLink/types/draftLink";
 import {
   LinkState as SharedLinkState,
   LinkType as SharedLinkType,
@@ -11,6 +9,7 @@ import {
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
+import type { LinkStep } from "$modules/links/types/linkStep";
 
 /**
  * Service encapsulating the logic to create and manage draft links
@@ -98,6 +97,7 @@ export class DraftLinkService {
       maxUse?: bigint;
       assetInfo?: SharedAssetInfo[];
       state?: SharedLinkState;
+      creationStep?: LinkStep;
     };
     owner: string;
   }) {
