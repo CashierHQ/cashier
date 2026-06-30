@@ -326,7 +326,7 @@
       return;
     }
 
-    const maxTokenAmount = maxTokenBalance;
+    const maxTokenAmount = maxTotalAmount;
 
     localTokenAmount = maxTokenAmount.toString();
 
@@ -337,7 +337,13 @@
       localUsdAmount = formatUsdAmount(roundedUsdValue);
     }
 
-    setTokenAmount(maxTokenAmount.toString());
+    const amount = formatBalanceUnits(maxTokenAmount, decimals);
+    link.setAssets([
+      {
+        address: selectedToken.address,
+        useAmount: amount,
+      },
+    ]);
   }
 
   // Total amount = useAmount * maxUse (derived from validationService.totalAssetAmount)
