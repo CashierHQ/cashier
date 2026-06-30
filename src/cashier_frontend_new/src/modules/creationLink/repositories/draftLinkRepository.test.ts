@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
-import type { DraftLink } from "$modules/creationLink/types/draftLink";
+import type { DraftLink } from "$modules/creationLink/types";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { DRAFT_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 import { LinkState, LinkType } from "$shared";

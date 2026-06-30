@@ -25,7 +25,7 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 import type { AddAssetItem } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
-import type { DraftLink } from "$modules/creationLink/types/draftLink";
+import type { DraftLink } from "$modules/creationLink/types";
 
 /**
  * Store for draft link state management
@@ -147,12 +147,20 @@ export class LinkCreationStoreV3 {
     return this.#draftLink.link_type;
   }
 
-  // Move to the next state
+  /**
+   * Delegates to the active create-flow state to move forward.
+   *
+   * @returns Promise that resolves when the active state transition completes.
+   */
   async goNext(): Promise<void> {
     await this.#state.goNext();
   }
 
-  // Move to the previous state
+  /**
+   * Delegates to the active create-flow state to move backward.
+   *
+   * @returns Promise that resolves when the active state transition completes.
+   */
   async goBack(): Promise<void> {
     await this.#state.goBack();
   }
@@ -160,7 +168,7 @@ export class LinkCreationStoreV3 {
   /**
    * Derives the initial create-flow state from the persisted draft link.
    *
-   * @param draftLink Draft link to restore.
+   * @param draftLink - Draft link to restore.
    * @returns Create-flow state matching the stored draft progress.
    */
   private getStateHandler(draftLink: DraftLink): LinkCreationStateV3 {
@@ -190,8 +198,9 @@ export class LinkCreationStoreV3 {
   }
 
   /**
-   * Update and persist the draft link in the local storage
-   * @returns
+   * Updates and persists the draft link in local storage.
+   *
+   * @returns Nothing.
    */
   syncDraftLinkToStorage(): void {
     if (this.#state.step === LinkStep.CREATED) {
@@ -242,10 +251,12 @@ export class LinkCreationStoreV3 {
   }
 
   /**
-   * Set the asset information in the draft link based on the given assets from Add Asset step
-   * @param assets
+   * Sets asset information in the draft link from the Add Asset step model.
+   *
+   * @param assets - Assets selected in the Add Asset step.
+   * @returns Nothing.
    */
-  setAssets(assets: AddAssetItem[]) {
+  setAssets(assets: AddAssetItem[]): void {
     const assetInfo = assets.map((asset) => {
       const tokenMetadataRes = walletStore.findTokenByAddress(asset.address);
       let networkFee = 0n;
@@ -278,7 +289,9 @@ export class LinkCreationStoreV3 {
   }
 
   /**
-   * Initialize Action from template
+   * Initializes the create-link action from the current link template.
+   *
+   * @returns Result indicating whether the action was initialized.
    */
   initializeCreateLinkActionFromTemplate(): Result<boolean, Error> {
     if (authState.account?.owner === undefined) {

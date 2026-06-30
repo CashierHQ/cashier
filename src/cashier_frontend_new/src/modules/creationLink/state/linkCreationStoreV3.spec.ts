@@ -1,7 +1,7 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
-import type { DraftLink } from "$modules/creationLink/types/draftLink";
+import type { DraftLink } from "$modules/creationLink/types";
 import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";

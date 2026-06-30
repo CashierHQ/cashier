@@ -1,6 +1,11 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
+  import {
+    CREATE_LINK_PROGRESS_SEGMENTS,
+    getCreateLinkCardHeaderDisplayName,
+    getCreateLinkProgress,
+  } from "$modules/creationLink/services/createLinkHeader";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { ChevronLeft } from "lucide-svelte";
 
@@ -14,33 +19,10 @@
     onBack: () => Promise<void>;
   } = $props();
 
-  const segmentCount = 4;
-
-  const progress = $derived.by(() => {
-    if (linkStep === LinkStep.CHOOSE_TYPE) return 1;
-    if (linkStep === LinkStep.ADD_ASSET) return 2;
-    if (linkStep === LinkStep.LOCK) return 3;
-    if (linkStep === LinkStep.PREVIEW || linkStep === LinkStep.CREATED) {
-      return 4;
-    }
-    return 0;
-  });
-
-  const linkName = $derived.by(() => {
-    if (linkStep === LinkStep.ADD_ASSET) {
-      return locale.t("links.linkForm.header.addAssets");
-    }
-
-    if (linkStep === LinkStep.LOCK) {
-      return locale.t("links.linkForm.lock.title");
-    }
-
-    if (linkStep === LinkStep.PREVIEW) {
-      return locale.t("links.linkForm.header.createLink");
-    }
-
-    return linkTitle?.trim() || locale.t("links.linkForm.header.linkName");
-  });
+  const progress = $derived(getCreateLinkProgress(linkStep));
+  const linkName = $derived(
+    getCreateLinkCardHeaderDisplayName(linkStep, linkTitle),
+  );
 </script>
 
 <div class="w-full flex-none mb-2">
@@ -61,5 +43,8 @@
       <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
     </button>
   </div>
-  <LinkCreationProgressBar filledCount={progress} {segmentCount} />
+  <LinkCreationProgressBar
+    filledCount={progress}
+    segmentCount={CREATE_LINK_PROGRESS_SEGMENTS}
+  />
 </div>
