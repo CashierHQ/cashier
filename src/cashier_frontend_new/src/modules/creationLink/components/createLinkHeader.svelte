@@ -5,7 +5,7 @@
     CREATE_LINK_PROGRESS_SEGMENTS,
     getCreateLinkCardHeaderDisplayName,
     getCreateLinkProgress,
-  } from "$modules/creationLink/services/createLinkHeader";
+  } from "$modules/creationLink/utils/createLinkHeader";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { ChevronLeft } from "lucide-svelte";
 
