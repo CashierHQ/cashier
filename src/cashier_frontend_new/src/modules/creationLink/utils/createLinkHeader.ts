@@ -1,8 +1,6 @@
 import { locale } from "$lib/i18n";
 import { LinkStep } from "$modules/links/types/linkStep";
 
-export const CREATE_LINK_PROGRESS_SEGMENTS = 4;
-
 /**
  * Resolves the filled progress-bar segment count for the create-link flow.
  *

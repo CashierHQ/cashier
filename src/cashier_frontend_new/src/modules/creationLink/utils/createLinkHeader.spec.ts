@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+import { CREATE_LINK_PROGRESS_SEGMENTS } from "$modules/creationLink/constants/createLinkHeader";
 import { LinkStep } from "$modules/links/types/linkStep";
 import {
-  CREATE_LINK_PROGRESS_SEGMENTS,
   getCreateLinkCardHeaderDisplayName,
   getCreateLinkProgress,
 } from "$modules/creationLink/utils/createLinkHeader";

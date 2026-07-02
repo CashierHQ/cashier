@@ -1,8 +1,8 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import LinkCreationProgressBar from "$modules/creationLink/components/LinkCreationProgressBar.svelte";
+  import { CREATE_LINK_PROGRESS_SEGMENTS } from "$modules/creationLink/constants/createLinkHeader";
   import {
-    CREATE_LINK_PROGRESS_SEGMENTS,
     getCreateLinkCardHeaderDisplayName,
     getCreateLinkProgress,
   } from "$modules/creationLink/utils/createLinkHeader";
