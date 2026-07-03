@@ -46,3 +46,6 @@ plans/
 .repomixignore
 .claude
 .codex
+
+# temporary files
+ip-cleanup/

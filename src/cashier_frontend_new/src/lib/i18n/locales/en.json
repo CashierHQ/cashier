@@ -295,7 +295,10 @@
           "passwordRequired": "Password is required",
           "confirmPasswordRequired": "Confirm password is required",
           "passwordsDifferent": "The passwords are different.",
-          "xHandleRequired": "X handle is required"
+          "xHandleRequired": "X handle is required",
+          "connectXAccountFailed": "Failed to connect X account",
+          "accessTokenMissing": "Access token missing — please reconnect your X account",
+          "unsupportedGateType": "Unsupported gate type"
         }
       },
       "preview": {

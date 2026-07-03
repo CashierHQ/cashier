@@ -4,6 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { getBackoffTimeText } from "$modules/gating/utils/backoffTime";
   import { redactDestination } from "$modules/gating/utils/redactDestination";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
   import { onDestroy } from "svelte";
@@ -73,16 +74,6 @@
         stopCountdown();
       }
     }, 1000);
-  }
-
-  function getBackoffTimeText(remainingSecs: number): string {
-    const key =
-      remainingSecs >= 60
-        ? "links.linkForm.lock.otp.timeMinutes"
-        : "links.linkForm.lock.otp.timeSeconds";
-    const count =
-      remainingSecs >= 60 ? Math.ceil(remainingSecs / 60) : remainingSecs;
-    return locale.t(key).replace("{{count}}", String(count));
   }
 
   async function handleSendOtp() {

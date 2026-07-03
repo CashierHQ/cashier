@@ -4,6 +4,8 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { resolveXGateDisplay } from "$modules/gating/utils/xGateDisplay";
+  import type { XProfile } from "$modules/gating/types/xProfile";
   import { Check, CircleAlert, CircleX, RefreshCw } from "lucide-svelte";
   import { GateSDK } from "@cashier/gate-sdk";
   import { PUBLIC_GATE_ORIGIN } from "$env/static/public";
@@ -22,49 +24,9 @@
     onClose: () => void;
   } = $props();
 
-  const gateType = $derived(
-    "XFollowing" in gate.gate.key
-      ? "following"
-      : "XOwnedAccount" in gate.gate.key
-        ? "owned"
-        : "XLikedPost" in gate.gate.key
-          ? "liked"
-          : "XRetweetedPost" in gate.gate.key
-            ? "retweeted"
-            : "unknown",
+  const { gateType, targetValue, verifyLabel } = $derived(
+    resolveXGateDisplay(gate),
   );
-
-  const targetValue = $derived(
-    "XFollowing" in gate.gate.key
-      ? gate.gate.key.XFollowing
-      : "XOwnedAccount" in gate.gate.key
-        ? gate.gate.key.XOwnedAccount
-        : "XLikedPost" in gate.gate.key
-          ? gate.gate.key.XLikedPost
-          : "XRetweetedPost" in gate.gate.key
-            ? gate.gate.key.XRetweetedPost
-            : "",
-  );
-
-  const verifyLabel = $derived(
-    gateType === "following"
-      ? (locale.t("links.linkForm.lock.key2FollowAccount") ?? "Follow account")
-      : gateType === "owned"
-        ? locale.t("links.linkForm.lock.keyOwnedAccount")
-        : gateType === "liked"
-          ? (locale.t("links.linkForm.lock.key2LikePost") ?? "Like post")
-          : gateType === "retweeted"
-            ? (locale.t("links.linkForm.lock.key3RetweetPost") ??
-              "Retweet post")
-            : "Verify",
-  );
-
-  type XProfile = {
-    id: string;
-    username: string;
-    name: string;
-    profile_image_url: string;
-  };
 
   let connectedProfile = $state<XProfile | null>(null);
   let accessToken = $state<string | null>(null);
@@ -82,7 +44,9 @@
       accessToken = result.accessToken;
     } catch (err) {
       error =
-        err instanceof Error ? err.message : "Failed to connect X account";
+        err instanceof Error
+          ? err.message
+          : locale.t("links.linkForm.lock.errors.connectXAccountFailed");
     } finally {
       isConnecting = false;
     }
@@ -108,7 +72,7 @@
       credential = { XOwnedAccount: connectedProfile.username };
     } else if (gateType === "liked") {
       if (!accessToken) {
-        error = "Access token missing — please reconnect your X account";
+        error = locale.t("links.linkForm.lock.errors.accessTokenMissing");
         isVerifying = false;
         return;
       }
@@ -123,7 +87,7 @@
         XRetweetedPostCredential: { user_id: connectedProfile.id },
       };
     } else {
-      error = "Unsupported gate type";
+      error = locale.t("links.linkForm.lock.errors.unsupportedGateType");
       isVerifying = false;
       return;
     }

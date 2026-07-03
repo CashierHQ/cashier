@@ -33,15 +33,15 @@
     smsEligibleCountries[0]?.code ??
     "CA";
 
-  let activeTab = $state<"phone" | "email">(
+  let activeTab = $derived<"phone" | "email">(
     store.hasConfiguredOTPEmail ? "email" : "phone",
   );
   let submitted = $state(false);
   let countryDrawerOpen = $state(false);
   let countrySearch = $state("");
-  let countryCode = $state(store.otpCountryCode || defaultCountryCode);
-  let phoneDigits = $state(store.otpPhoneDigits);
-  let emailDraft = $state(store.otpEmail ?? "");
+  let countryCode = $derived(store.otpCountryCode || defaultCountryCode);
+  let phoneDigits = $derived(store.otpPhoneDigits);
+  let emailDraft = $derived(store.otpEmail ?? "");
 
   const dialCode = $derived(getPhoneDialCode(countryCode));
   const phonePlaceholder = $derived(getPhonePlaceholder(countryCode));

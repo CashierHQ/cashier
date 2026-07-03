@@ -13,10 +13,10 @@
   } = $props();
 
   let submitted = $state(false);
-  let ownedAccountEnabled = $state(store.hasConfiguredXOwnedAccount);
-  let followingEnabled = $state(store.hasConfiguredXFollowing);
-  let likedPostEnabled = $state(store.hasConfiguredXLikedPost);
-  let retweetedPostEnabled = $state(store.hasConfiguredXRetweetedPost);
+  let ownedAccountEnabled = $derived(store.hasConfiguredXOwnedAccount);
+  let followingEnabled = $derived(store.hasConfiguredXFollowing);
+  let likedPostEnabled = $derived(store.hasConfiguredXLikedPost);
+  let retweetedPostEnabled = $derived(store.hasConfiguredXRetweetedPost);
 
   const hasAnyError = $derived(
     (ownedAccountEnabled && store.xOwnedAccountSetupError !== null) ||

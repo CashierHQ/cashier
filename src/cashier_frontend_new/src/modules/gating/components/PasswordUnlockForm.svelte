@@ -14,6 +14,12 @@
   } from "$lib/shadcn/components/ui/drawer";
   import OTPUnlockForm from "$modules/gating/components/OTPUnlockForm.svelte";
   import XUnlockForm from "$modules/gating/components/XUnlockForm.svelte";
+  import {
+    gateLabel,
+    isGateOpen,
+    isOtpGate,
+    isXGate,
+  } from "$modules/gating/utils/gateHelpers";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import {
     Eye,
@@ -45,59 +51,10 @@
   let isSubmitting = $state(false);
   let error = $state<string | null>(null);
 
-  function isGateOpen(gate: GateForUser): boolean {
-    if (localOpenGates[gate.gate.id]) return true;
-    const status = gate.gate_user_status[0]?.status;
-    return status != null && "Open" in status;
-  }
-
-  const allOpen = $derived(gates.length === 0 || gates.every(isGateOpen));
-
-  function gateLabel(gate: GateForUser): string {
-    const key = gate.gate.key;
-    if ("PasswordRedacted" in key || "Password" in key) {
-      return locale.t("links.linkForm.lock.password") ?? "Password";
-    }
-    if ("XFollowing" in key) {
-      return locale.t("links.linkForm.lock.key1FollowAccount");
-    }
-    if ("XOwnedAccount" in key) {
-      return locale.t("links.linkForm.lock.keyOwnedAccount");
-    }
-    if ("XLikedPost" in key) {
-      return locale.t("links.linkForm.lock.key2LikePost");
-    }
-    if ("XRetweetedPost" in key) {
-      return locale.t("links.linkForm.lock.key3RetweetPost");
-    }
-    if ("OTPEmail" in key || "OTPEmailRedacted" in key) {
-      return locale.t("links.linkForm.lock.otp.email");
-    }
-    if ("OTPSms" in key || "OTPSmsRedacted" in key) {
-      return locale.t("links.linkForm.lock.otp.phone");
-    }
-    return "Unknown";
-  }
-
-  function isXGate(gate: GateForUser): boolean {
-    const key = gate.gate.key;
-    return (
-      "XFollowing" in key ||
-      "XOwnedAccount" in key ||
-      "XLikedPost" in key ||
-      "XRetweetedPost" in key
-    );
-  }
-
-  function isOTPGate(gate: GateForUser): boolean {
-    const key = gate.gate.key;
-    return (
-      "OTPEmail" in key ||
-      "OTPEmailRedacted" in key ||
-      "OTPSms" in key ||
-      "OTPSmsRedacted" in key
-    );
-  }
+  const allOpen = $derived(
+    gates.length === 0 ||
+      gates.every((gate) => isGateOpen(gate, localOpenGates)),
+  );
 
   function openDrawer(gate: GateForUser) {
     selectedGate = gate;
@@ -208,6 +165,7 @@
         onclick={() => openDrawer(gate)}
         class="flex h-11 w-full items-center gap-3 rounded-lg border bg-background px-4 text-left transition-colors {isGateOpen(
           gate,
+          localOpenGates,
         )
           ? 'border-green'
           : 'border-border'}"
@@ -219,7 +177,7 @@
             class="h-6 w-6 flex-none"
             aria-hidden="true"
           />
-        {:else if isOTPGate(gate)}
+        {:else if isOtpGate(gate)}
           <MessageSquareMore
             class="h-6 w-6 flex-none text-green"
             aria-hidden="true"
@@ -231,7 +189,7 @@
           />
         {/if}
         <span class="text-sm text-foreground">{gateLabel(gate)}</span>
-        {#if isGateOpen(gate)}
+        {#if isGateOpen(gate, localOpenGates)}
           <LockOpen class="ml-auto h-5 w-5 text-green" aria-hidden="true" />
         {:else}
           <Lock
@@ -287,7 +245,7 @@
         }}
         onClose={() => (drawerOpen = false)}
       />
-    {:else if selectedGate && isOTPGate(selectedGate)}
+    {:else if selectedGate && isOtpGate(selectedGate)}
       <OTPUnlockForm
         {linkId}
         gate={selectedGate}
