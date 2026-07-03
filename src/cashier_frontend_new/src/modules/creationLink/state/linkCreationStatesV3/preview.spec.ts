@@ -1,6 +1,6 @@
-import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { CreateLinkResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
@@ -22,9 +22,9 @@ vi.mock("$lib/i18n", () => ({
   locale: { t: vi.fn((key: string) => key) },
 }));
 
-vi.mock("$modules/creationLink/state/linkCreationStatesV3/addAsset", () => ({
-  AddAssetStateV3: class AddAssetStateV3 {
-    readonly step = LinkStep.ADD_ASSET;
+vi.mock("$modules/creationLink/state/linkCreationStatesV3/lock", () => ({
+  LockStateV3: class LockStateV3 {
+    readonly step = LinkStep.LOCK;
     constructor() {}
   },
 }));

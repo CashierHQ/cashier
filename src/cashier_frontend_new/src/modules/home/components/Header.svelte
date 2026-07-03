@@ -3,6 +3,10 @@
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
   import { paths } from "$modules/routing/paths";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import MenuButton from "$modules/shared/components/MenuButton.svelte";
+  import WalletButton from "$modules/shared/components/WalletButton.svelte";
+  import WalletDrawer from "$modules/shared/components/WalletDrawer.svelte";
 
   type Props = {
     onLoginClick?: () => void;
@@ -10,6 +14,8 @@
   };
 
   let { onLoginClick, showLogin = true }: Props = $props();
+  let walletDrawerOpen = $state(false);
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 
   function handleLoginClick(): void {
     onLoginClick?.();
@@ -21,7 +27,12 @@
     <div class="flex justify-between items-center">
       <!-- Logo -->
       <CashierLogo href={resolve(paths.home())} />
-      {#if showLogin}
+      {#if isLoggedIn}
+        <div class="ml-auto flex items-center py-px">
+          <WalletButton onClick={() => (walletDrawerOpen = true)} />
+          <MenuButton />
+        </div>
+      {:else if showLogin}
         <button
           id="connect"
           onclick={handleLoginClick}
@@ -33,3 +44,5 @@
     </div>
   </div>
 </header>
+
+<WalletDrawer bind:open={walletDrawerOpen} />

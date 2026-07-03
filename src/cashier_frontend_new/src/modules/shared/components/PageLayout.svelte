@@ -16,7 +16,9 @@
 </script>
 
 <div
-  class="flex flex-col min-h-screen {isLink ? '' : 'sm:bg-lightgreen'} bg-white"
+  class="flex flex-col min-h-[100dvh] {isLink
+    ? ''
+    : 'sm:bg-lightgreen'} bg-white"
 >
   <AppHeader {isLinkFormPage} />
 
@@ -33,7 +35,7 @@
         : 'bg-white'} sm:rounded-xl flex flex-col h-full"
     >
       <div
-        class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-86px)] overflow-y-auto scrollbar-hide flex flex-col grow-1"
+        class="sm:max-h-[calc(100dvh-156px)] max-h-[calc(100dvh-86px)] overflow-y-auto scrollbar-hide flex flex-col grow-1"
       >
         {@render children()}
       </div>

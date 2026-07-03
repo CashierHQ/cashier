@@ -1,23 +1,27 @@
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
-import { DRAFT_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 import {
-  type AssetInfo as SharedAssetInfo,
-  type Link as SharedLink,
-  type LinkState as SharedLinkState,
-  type LinkType as SharedLinkType,
-} from "$shared";
+  toDraftLink,
+  toDraftLinkStorageRecord,
+} from "$modules/creationLink/services/draftLinkStorage";
+import type {
+  DraftLink,
+  DraftLinkCreateParams,
+  DraftLinkStorageRecord,
+  DraftLinkUpdateParams,
+} from "$modules/creationLink/types";
+import { DRAFT_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
+import { type Link as SharedLink } from "$shared";
 import * as devalue from "devalue";
-
-export type DraftLink = SharedLink;
 
 /**
  * Repository for managing draft links in localStorage.
  */
 export class DraftLinkRepository {
   /**
-   * LocalStorage key generator
-   * @param owner owner identifier for the key
-   * @returns localStorage key string
+   * Builds the localStorage key for a draft-link owner.
+   *
+   * @param owner - Owner identifier for the key.
+   * @returns LocalStorage key string.
    */
   storeKey(owner: string) {
     return `${DRAFT_LINKS_STORAGE_KEY_PREFIX}.${owner}`;
@@ -25,19 +29,21 @@ export class DraftLinkRepository {
 
   /**
    * Load draft links from localStorage for the given owner.
-   * @param owner owner identifier for loading
-   * @returns array of SharedLink objects
+   *
+   * @param owner - Owner identifier for loading.
+   * @returns Draft links restored from localStorage.
    */
   private load(owner: string): DraftLink[] {
     const key = this.storeKey(owner);
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     try {
-      const list: DraftLink[] = devalue.parse(
+      const list = devalue.parse(
         raw,
         SharedLinkMapper.serde.deserialize,
-      );
-      return list;
+      ) as Array<DraftLinkStorageRecord | SharedLink>;
+
+      return list.map(toDraftLink);
     } catch (error) {
       const details = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to parse draft links from storage: ${details}`, {
@@ -48,33 +54,30 @@ export class DraftLinkRepository {
 
   /**
    * Save draft links to localStorage for the given owner.
-   * @param links array of SharedLink objects to save
-   * @param owner owner identifier for saving
+   *
+   * @param links - Draft links to save.
+   * @param owner - Owner identifier for saving.
+   * @returns Nothing.
    */
   save(links: DraftLink[], owner: string): void {
     const key = this.storeKey(owner);
     const stringified = devalue.stringify(
-      links,
+      links.map(toDraftLinkStorageRecord),
       SharedLinkMapper.serde.serialize,
     );
     localStorage.setItem(key, stringified);
   }
 
   /**
-   * Save a draft link to localStorage
-   * @param id local identifier for the draft link
-   * @param owner owner identifier for saving
-   * @param draftLink SharedLink object to save
+   * Creates or replaces a draft link in localStorage.
+   *
+   * @param params - Draft link create parameters.
+   * @param params.id - Local identifier for the draft link.
+   * @param params.owner - Owner identifier for saving.
+   * @param params.draftLink - Draft link to save.
+   * @returns Nothing.
    */
-  create({
-    id,
-    owner,
-    draftLink,
-  }: {
-    id: string;
-    owner: string;
-    draftLink: DraftLink;
-  }) {
+  create({ id, owner, draftLink }: DraftLinkCreateParams): void {
     const links = this.load(owner);
     const idx = links.findIndex((x) => String(x.id) === id);
     if (idx >= 0) links[idx] = draftLink;
@@ -85,25 +88,14 @@ export class DraftLinkRepository {
 
   /**
    * Update an existing draft link in localStorage.
-   * @param id local identifier for the draft link
-   * @param updateDraftLink object containing state and/or link data to update
-   * @param owner owner identifier for updating
+   *
+   * @param params - Draft link update parameters.
+   * @param params.id - Local identifier for the draft link.
+   * @param params.updateData - Draft fields to update.
+   * @param params.owner - Owner identifier for updating.
+   * @returns Nothing.
    */
-  update({
-    id,
-    updateData,
-    owner,
-  }: {
-    id: string;
-    updateData: {
-      title?: string;
-      linkType?: SharedLinkType;
-      maxUse?: bigint;
-      assetInfo?: SharedAssetInfo[];
-      state?: SharedLinkState;
-    };
-    owner: string;
-  }) {
+  update({ id, updateData, owner }: DraftLinkUpdateParams): void {
     const links = this.load(owner);
     if (!links.length) return;
 
@@ -120,6 +112,7 @@ export class DraftLinkRepository {
           : draftLink.max_use,
       asset_info: updateData.assetInfo ?? draftLink.asset_info,
       link_state: updateData.state ?? draftLink.link_state,
+      creationStep: updateData.creationStep ?? draftLink.creationStep,
     };
 
     const updatedLinks = links.map((x) => (String(x.id) === id ? updated : x));
@@ -128,10 +121,12 @@ export class DraftLinkRepository {
 
   /**
    * Remove a draft link by id from localStorage.
-   * @param id local identifier for the draft link to remove
-   * @param owner owner identifier for removing
+   *
+   * @param id - Local identifier for the draft link to remove.
+   * @param owner - Owner identifier for removing.
+   * @returns Nothing.
    */
-  delete(id: string, owner: string) {
+  delete(id: string, owner: string): void {
     const links = this.load(owner);
     if (!links.length) return;
 
@@ -141,8 +136,9 @@ export class DraftLinkRepository {
 
   /**
    * Retrieve all draft links for the given owner from localStorage.
-   * @param owner owner identifier for retrieving
-   * @returns array of SharedLink objects
+   *
+   * @param owner - Owner identifier for retrieving.
+   * @returns Draft links for the owner.
    */
   get(owner: string): DraftLink[] {
     const list = this.load(owner);
@@ -152,9 +148,10 @@ export class DraftLinkRepository {
 
   /**
    * Retrieve a single draft link by id for the given owner from localStorage.
-   * @param owner owner identifier for retrieving
-   * @param draftLinkId local identifier for the draft link to retrieve
-   * @returns the SharedLink object or undefined if not found
+   *
+   * @param owner - Owner identifier for retrieving.
+   * @param draftLinkId - Local identifier for the draft link to retrieve.
+   * @returns Draft link when found; otherwise `undefined`.
    */
   getOne(owner: string, draftLinkId: string): DraftLink | undefined {
     const links = this.load(owner);

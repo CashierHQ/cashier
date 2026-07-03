@@ -1,15 +1,17 @@
 import { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import { ChooseLinkTypeStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/chooseLinkType";
 import { AddAssetStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/addAsset";
-import type { DraftLink } from "$modules/creationLink/repositories/draftLinkRepository";
+import type { DraftLink } from "$modules/creationLink/types";
 import { draftGateRepository } from "$modules/creationLink/repositories/draftGateRepository";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
+import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { actionTemplateLoader } from "$modules/actionTemplate/services/actionTemplateLoader";
 import { draftLinkService } from "$modules/creationLink/services/draftLink";
 import { GateType } from "$modules/gating/types/gate";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { TokenStandard } from "$modules/token/types/tokenStandard";
+import { LinkStep } from "$modules/links/types/linkStep";
 import {
   ActionState,
   ActionType,
@@ -125,14 +127,24 @@ describe("LinkCreationStoreV3", () => {
       expect(store.state).toBeInstanceOf(AddAssetStateV3);
     });
 
-    it("it_should_succeed_initialize_with_lock_state_for_preview_link_state", () => {
+    it("it_should_succeed_initialize_with_preview_state_for_preview_link_state", () => {
       const store = new LinkCreationStoreV3(
         makeDraftLink({ link_state: LinkState.Preview }),
+      );
+      expect(store.state).toBeInstanceOf(PreviewStateV3);
+    });
+
+    it("it_should_succeed_initialize_with_lock_state_for_preview_link_state_when_creation_step_is_lock", () => {
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({
+          link_state: LinkState.Preview,
+          creationStep: LinkStep.LOCK,
+        }),
       );
       expect(store.state).toBeInstanceOf(LockStateV3);
     });
 
-    it("it_should_not_initialize_preview_action_from_restored_preview_draft_link", () => {
+    it("it_should_succeed_initialize_preview_action_from_restored_preview_draft_link", () => {
       vi.mocked(actionTemplateLoader.createActionFromTemplate).mockReturnValue(
         Ok(makeMockActionFull()),
       );
@@ -160,7 +172,16 @@ describe("LinkCreationStoreV3", () => {
 
       expect(
         actionTemplateLoader.createActionFromTemplate,
-      ).not.toHaveBeenCalled();
+      ).toHaveBeenCalledWith(
+        LinkType.SendTokenBasket,
+        ActionType.CreateLink,
+        expect.any(Principal),
+        {
+          assetInfo,
+          gateCount: 0,
+          maxUse: 3,
+        },
+      );
     });
 
     it("it_should_succeed_initialize_with_created_state_for_created_link_state", () => {
@@ -485,14 +506,36 @@ describe("LinkCreationStoreV3", () => {
       );
     });
 
-    it("it_should_succeed_sync_with_preview_state", () => {
+    it("it_should_succeed_sync_with_restored_preview_state", () => {
       const store = new LinkCreationStoreV3(
         makeDraftLink({ id: "test-id", link_state: LinkState.Preview }),
       );
       store.syncDraftLinkToStorage();
       expect(draftLinkService.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          updateData: expect.objectContaining({ state: LinkState.Preview }),
+          updateData: expect.objectContaining({
+            state: LinkState.Preview,
+            creationStep: LinkStep.PREVIEW,
+          }),
+        }),
+      );
+    });
+
+    it("it_should_succeed_sync_with_restored_lock_state", () => {
+      const store = new LinkCreationStoreV3(
+        makeDraftLink({
+          id: "test-id",
+          link_state: LinkState.Preview,
+          creationStep: LinkStep.LOCK,
+        }),
+      );
+      store.syncDraftLinkToStorage();
+      expect(draftLinkService.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updateData: expect.objectContaining({
+            state: LinkState.Preview,
+            creationStep: LinkStep.LOCK,
+          }),
         }),
       );
     });

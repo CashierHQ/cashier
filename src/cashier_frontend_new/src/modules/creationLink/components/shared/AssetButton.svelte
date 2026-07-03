@@ -224,7 +224,7 @@
                 onkeydown={handleKeyDown}
                 onblur={handleBlur}
                 type="number"
-                class="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                class="w-auto min-w-[30px] ml-auto text-end text-[16px] sm:text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 style="width: {inputWidth}; max-width: 92px; position: relative; z-index: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 placeholder="0"
                 min={0}

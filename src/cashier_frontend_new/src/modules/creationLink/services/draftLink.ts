@@ -1,25 +1,26 @@
 import { authState } from "$modules/auth/state/auth.svelte";
-import {
-  draftLinkRepository,
-  type DraftLink,
-} from "$modules/creationLink/repositories/draftLinkRepository";
+import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
+import type {
+  DraftLink,
+  DraftLinkUpdateParams,
+} from "$modules/creationLink/types";
 import {
   LinkState as SharedLinkState,
   LinkType as SharedLinkType,
-  type AssetInfo as SharedAssetInfo,
   type Link as SharedLink,
 } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 
 /**
- * Service encapsulating the logic to create and manage draft links
+ * Service encapsulating the logic to create and manage draft links.
  */
 export class DraftLinkService {
   /**
-   * Create a new draft link for the given principal ID and persist it in the repository
-   * @param principalId
-   * @returns Result containing the created draft link or an error
+   * Creates a new draft link for a principal and persists it locally.
+   *
+   * @param principalId - Principal that owns the draft link.
+   * @returns Result containing the created draft link or an error.
    */
   createAndPersistDraftLink(principalId: Principal): Result<SharedLink, Error> {
     const createResult = this.createDraftLinkFromPrincipalId(principalId);
@@ -42,9 +43,10 @@ export class DraftLinkService {
   }
 
   /**
-   * Create a new draft link for the given principal ID
-   * @param principalId
-   * @returns Result containing the created draft link or an error
+   * Creates a new unsaved draft link for a principal.
+   *
+   * @param principalId - Principal that owns the draft link.
+   * @returns Result containing the created draft link or an error.
    */
   createDraftLinkFromPrincipalId(
     principalId: Principal,
@@ -68,10 +70,10 @@ export class DraftLinkService {
   }
 
   /**
-   * Get a draft link by principal ID and link ID from the repository
-   * @param principalId
-   * @param id
-   * @returns
+   * Gets a draft link for the authenticated owner.
+   *
+   * @param id - Local identifier for the draft link.
+   * @returns Draft link when found; otherwise `undefined`.
    */
   getDraftLink(id: string): DraftLink | undefined {
     if (!authState.account) return undefined;
@@ -80,27 +82,15 @@ export class DraftLinkService {
   }
 
   /**
-   * Update a draft link in local storage
-   * @param id local identifier for the draft link
-   * @param updateData object containing state and/or createLinkData to update
-   * @param principalId owner principal identifier for updating
-   * @returns
+   * Updates a draft link in local storage.
+   *
+   * @param params - Draft link update parameters.
+   * @param params.id - Local identifier for the draft link.
+   * @param params.updateData - Draft fields to update.
+   * @param params.owner - Owner identifier for updating.
+   * @returns Nothing.
    */
-  update({
-    id,
-    updateData,
-    owner,
-  }: {
-    id: string;
-    updateData: {
-      title?: string;
-      linkType?: SharedLinkType;
-      maxUse?: bigint;
-      assetInfo?: SharedAssetInfo[];
-      state?: SharedLinkState;
-    };
-    owner: string;
-  }) {
+  update({ id, updateData, owner }: DraftLinkUpdateParams): void {
     draftLinkRepository.update({
       id,
       updateData,

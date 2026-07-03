@@ -1,0 +1,1 @@
+export const CREATE_LINK_PROGRESS_SEGMENTS = 4;

@@ -121,7 +121,7 @@
     <div class="mb-3 px-4">
       <div class="relative w-full">
         <input
-          class="input-field w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md hover:border-green focus:border-green focus:ring-0 focus:outline-none"
+          class="input-field w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-[16px] sm:text-sm hover:border-green focus:border-green focus:ring-0 focus:outline-none"
           placeholder={locale.t("links.linkForm.addAsset.searchAssets")}
           bind:value={searchQuery}
         />

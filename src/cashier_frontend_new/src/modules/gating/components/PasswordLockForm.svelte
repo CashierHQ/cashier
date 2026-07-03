@@ -52,7 +52,7 @@
         oninput={(e) =>
           store.setPassword((e.currentTarget as HTMLInputElement).value)}
         placeholder={locale.t("links.linkForm.lock.enterPassword")}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green"
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-[16px] sm:text-sm outline-none focus:border-green"
       />
 
       <button
@@ -88,7 +88,7 @@
         oninput={(e) =>
           store.setConfirmPassword((e.currentTarget as HTMLInputElement).value)}
         placeholder={locale.t("links.linkForm.lock.enterPassword")}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green {submitted &&
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-[16px] sm:text-sm outline-none focus:border-green {submitted &&
         store.passwordSetupError
           ? 'border-[#D26060]'
           : ''}"

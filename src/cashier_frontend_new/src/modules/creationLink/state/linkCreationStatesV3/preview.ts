@@ -10,7 +10,9 @@ import { GateType } from "$modules/gating/types/gate";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 
-// State handler for Preview step in the link creation flow (V3)
+/**
+ * State handler for the Preview step in the V3 create-link flow.
+ */
 export class PreviewStateV3 implements LinkCreationStateV3 {
   readonly step = LinkStep.PREVIEW;
   #linkStore: LinkCreationStoreV3;
@@ -20,7 +22,12 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     this.#linkStore.initializeCreateLinkActionFromTemplate();
   }
 
-  // Create the link using the backend service and move to the created state
+  /**
+   * Creates the link through the backend service and moves to the created state.
+   *
+   * @returns Promise that resolves when the link is created.
+   * @throws Error when the draft link, action initialization, or backend create call fails.
+   */
   async goNext(): Promise<void> {
     if (!this.#linkStore.draftLink) {
       throw new Error("Link must be initialized to create");
@@ -71,7 +78,11 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     this.#linkStore.backendAction = createLinkResponse.action;
   }
 
-  // Go back to the add asset state
+  /**
+   * Moves from preview back to the lock step.
+   *
+   * @returns Promise that resolves when the state is updated.
+   */
   async goBack(): Promise<void> {
     this.#linkStore.state = new LockStateV3(this.#linkStore);
   }
