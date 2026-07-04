@@ -1,8 +1,9 @@
+import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import { PreviewStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/preview";
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
-import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
 import type { CreateLinkResponseV3 } from "$modules/creationLink/types/dto/create_link_v3";
+import { GateType, type GateDraft } from "$modules/gating/types/gate";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import {
@@ -90,6 +91,7 @@ function makeStore(options?: {
   setDraftActionOnInit?: boolean;
   storeId?: string | null;
   linkType?: LinkType;
+  pendingGateDrafts?: GateDraft[];
 }): LinkCreationStoreV3 {
   const {
     draftLinkUndefined,
@@ -97,6 +99,7 @@ function makeStore(options?: {
     setDraftActionOnInit = true,
     storeId = "store-id",
     linkType = LinkType.SendTip,
+    pendingGateDrafts = [],
   } = options ?? {};
 
   const store: Record<string, unknown> = {
@@ -108,7 +111,7 @@ function makeStore(options?: {
     state: undefined,
     backendLink: undefined,
     backendAction: undefined,
-    pendingGateDraft: null,
+    pendingGateDrafts,
     initializeCreateLinkActionFromTemplate: vi.fn(() => {
       if (initActionResult === "err") {
         return Err(new Error("template init failed"));
@@ -227,6 +230,50 @@ describe("PreviewStateV3", () => {
       const state = new PreviewStateV3(store);
       await state.goNext();
       expect(store.backendAction).toEqual(MOCK_ACTION);
+    });
+
+    it("it_should_succeed_go_next_send_single_gate_key_to_backend", async () => {
+      const store = makeStore({
+        pendingGateDrafts: [
+          {
+            type: GateType.X_FOLLOWING,
+            targetHandle: "cashierapp",
+            rewardAccount: "reward-account",
+          },
+        ],
+      });
+      const state = new PreviewStateV3(store);
+      await state.goNext();
+
+      expect(cashierBackendService.createLinkV3).toHaveBeenCalledWith(
+        store.draftLink,
+        store.draftAction,
+        [{ XFollowing: "cashierapp" }],
+      );
+    });
+
+    it("it_should_succeed_go_next_send_multiple_gate_keys_to_backend", async () => {
+      const store = makeStore({
+        pendingGateDrafts: [
+          {
+            type: GateType.X_OWNED_ACCOUNT,
+            targetHandle: "htsvnn",
+          },
+          {
+            type: GateType.X_FOLLOWING,
+            targetHandle: "elonmusk",
+            rewardAccount: "",
+          },
+        ],
+      });
+      const state = new PreviewStateV3(store);
+      await state.goNext();
+
+      expect(cashierBackendService.createLinkV3).toHaveBeenCalledWith(
+        store.draftLink,
+        store.draftAction,
+        [{ XOwnedAccount: "htsvnn" }, { XFollowing: "elonmusk" }],
+      );
     });
 
     it("it_should_succeed_go_next_set_link_backend_id_from_backend_link", async () => {

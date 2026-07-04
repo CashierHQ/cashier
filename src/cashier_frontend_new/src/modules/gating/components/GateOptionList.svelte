@@ -1,49 +1,44 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
+  import { GATE_OPTIONS, OTP_TYPE } from "$modules/gating/constants";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { GateType } from "$modules/gating/types/gate";
-  import xIcon from "$lib/assets/x-icon.svg";
-  import telegramIcon from "$lib/assets/telegram-icon.svg";
-  import quizIcon from "$lib/assets/gating/quiz-icon.svg";
-  import coinTokenIcon from "$lib/assets/gating/coin-token-icon.svg";
-  import { Lock, RectangleEllipsis } from "lucide-svelte";
+  import { Lock } from "lucide-svelte";
+  import { SvelteMap } from "svelte/reactivity";
 
   const {
     store,
     onPasswordClick,
+    onXClick,
+    onOtpClick,
   }: {
     store: GatingStore;
     onPasswordClick: () => void;
+    onXClick: () => void;
+    onOtpClick: () => void;
   } = $props();
 
-  const options = [
-    {
-      type: GateType.PASSWORD,
-      label: locale.t("links.linkForm.lock.password"),
-      enabled: true,
-      iconComponent: RectangleEllipsis,
-    },
-    {
-      label: locale.t("links.linkForm.lock.xHandle"),
-      enabled: false,
-      iconSrc: xIcon,
-    },
-    {
-      label: locale.t("links.linkForm.lock.telegramGroup"),
-      enabled: false,
-      iconSrc: telegramIcon,
-    },
-    {
-      label: locale.t("links.linkForm.lock.tokenOrNftOwnership"),
-      enabled: false,
-      iconSrc: coinTokenIcon,
-    },
-    {
-      label: locale.t("links.linkForm.lock.quizMultipleChoice"),
-      enabled: false,
-      iconSrc: quizIcon,
-    },
-  ];
+  const isOtpConfigured = $derived(
+    store.hasConfiguredOTPEmail || store.hasConfiguredOTPSms,
+  );
+
+  const isOptionConfigured = $derived.by(() => {
+    const configured = new SvelteMap<GateType, boolean>();
+    for (const option of GATE_OPTIONS) {
+      if (!option.type) continue;
+      if (option.type === GateType.X_FOLLOWING) {
+        configured.set(option.type, store.hasConfiguredAnyX);
+      } else if (option.type === OTP_TYPE) {
+        configured.set(option.type, isOtpConfigured);
+      } else {
+        configured.set(
+          option.type,
+          store.selectedGateTypes.includes(option.type),
+        );
+      }
+    }
+    return configured;
+  });
 </script>
 
 <div class="space-y-2">
@@ -63,17 +58,21 @@
   </div>
 
   <div class="space-y-2">
-    {#each options as option (option.label)}
+    {#each GATE_OPTIONS as option (option.label)}
       <button
         type="button"
         disabled={!option.enabled}
         onclick={() => {
           if (option.type === GateType.PASSWORD) {
             onPasswordClick();
+          } else if (option.type === GateType.X_FOLLOWING) {
+            onXClick();
+          } else if (option.type === OTP_TYPE) {
+            onOtpClick();
           }
         }}
         class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&
-        store.selectedGateTypes.includes(option.type)
+        isOptionConfigured.get(option.type)
           ? 'border-green'
           : ''}"
       >
@@ -93,7 +92,7 @@
         <span class="text-sm text-foreground">
           {option.label}
         </span>
-        {#if option.type === GateType.PASSWORD && store.hasConfiguredPassword}
+        {#if option.type && isOptionConfigured.get(option.type)}
           <Lock class="ml-auto h-6 w-6 text-green" aria-hidden="true" />
         {:else if !option.enabled}
           <span class="ml-auto text-xs text-muted-foreground">

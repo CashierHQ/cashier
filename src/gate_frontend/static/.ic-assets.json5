@@ -1,0 +1,11 @@
+// ICP asset canister custom headers.
+// COOP must be set to unsafe-none so window.opener is accessible from
+// the /auth page when called as an OAuth popup from a third-party origin.
+[
+  {
+    match: "**/*",
+    headers: {
+      "Cross-Origin-Opener-Policy": "unsafe-none",
+    },
+  },
+]

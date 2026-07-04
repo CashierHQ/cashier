@@ -31,7 +31,7 @@ export type GenericCreationLinkStoreVM = {
   createLinkData: CreateLinkData;
   action: Action | undefined;
   setLinkType: (type: LinkTypeValue) => void;
-  setPendingGateDraft: (draft: GateDraft | null) => void;
+  setPendingGateDrafts: (drafts: GateDraft[]) => void;
   goNext: () => Promise<void>;
   goBack: () => Promise<void>;
 };

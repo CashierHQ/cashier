@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::utils::gate::generate_gate_id;
 use candid::Principal;
 use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
@@ -15,6 +18,10 @@ pub struct GateRepository<G: Storage<GateStorage>, U: Storage<GateUserStatusStor
 }
 
 impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<G, U> {
+    /// Creates a new `GateRepository` backed by the provided stable-memory stores.
+    /// # Arguments
+    /// * `gate_map`: Stable store mapping gate IDs to `Gate` values.
+    /// * `gate_user_map`: Stable store mapping `(gate_id, user)` pairs to `GateUserStatus`.
     pub fn new(gate_map: G, gate_user_map: U) -> Self {
         Self {
             gate_map,
@@ -30,7 +37,7 @@ impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<
     /// * `Ok(Gate)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
     pub fn create_gate(&mut self, creator: Principal, new_gate: NewGate) -> Result<Gate, String> {
-        let gate_id = generate_gate_id(creator, &new_gate.subject_id);
+        let gate_id = generate_gate_id(creator, &new_gate.subject_id, &new_gate.key);
 
         let gate = Gate {
             id: gate_id.clone(),
@@ -55,19 +62,6 @@ impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<
     pub fn get_gate(&self, gate_id: &str) -> Option<Gate> {
         self.gate_map
             .with_borrow(|map| map.get(&gate_id.to_string()))
-    }
-
-    /// Retrieves a gate by its subject's ID.
-    /// # Arguments
-    /// * `creator`: The creator of the gate.
-    /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
-    /// # Returns
-    /// * `Ok(Some(Gate))`: If a gate is found.
-    /// * `Ok(None)`: If no gate is found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_gate_by_subject(&self, creator: Principal, subject_id: &str) -> Option<Gate> {
-        let gate_id = generate_gate_id(creator, subject_id);
-        self.get_gate(&gate_id)
     }
 
     /// Retrieves the user status of a gate for a specific user.
@@ -185,42 +179,6 @@ mod tests {
 
         // Act
         let gate = repo.get_gate(&gate.id);
-
-        // Assert
-        assert!(gate.is_some());
-        let gate = gate.unwrap();
-        assert!(!gate.id.is_empty());
-        assert_eq!(gate.creator, creator);
-        assert_eq!(gate.subject_id, new_gate.subject_id);
-        assert_eq!(gate.key, new_gate.key);
-    }
-
-    #[test]
-    fn it_should_none_get_gate_by_subject_id() {
-        // Arrange
-        let repo = TestRepositories::new().gate();
-        let creator = random_principal_id();
-
-        // Act
-        let gate = repo.get_gate_by_subject(creator, "non_existent_subject");
-
-        // Assert
-        assert!(gate.is_none());
-    }
-
-    #[test]
-    fn it_should_get_gate_by_subject_id() {
-        // Arrange
-        let mut repo = TestRepositories::new().gate();
-        let creator = random_principal_id();
-        let new_gate = NewGate {
-            subject_id: "subject1".to_string(),
-            key: GateKey::Password("password123".to_string()),
-        };
-        let gate = repo.create_gate(creator, new_gate.clone()).unwrap();
-
-        // Act
-        let gate = repo.get_gate_by_subject(creator, &gate.subject_id);
 
         // Assert
         assert!(gate.is_some());

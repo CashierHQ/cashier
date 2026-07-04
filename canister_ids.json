@@ -7,6 +7,9 @@
     "production": "jg57n-xyaaa-aaaam-admqq-cai",
     "staging": "iqwhg-ciaaa-aaaam-admvq-cai"
   },
+  "gate_frontend": {
+    "dev": "amc67-2iaaa-aaaam-ajema-cai"
+  },
   "gate_service": {
     "dev": "gk64c-dqaaa-aaaam-ajdha-cai"
   },

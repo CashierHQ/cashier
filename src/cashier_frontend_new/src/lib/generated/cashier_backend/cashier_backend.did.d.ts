@@ -100,8 +100,6 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
-  'gate_service_canister_id' : Principal,
-  'token_storage_canister_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
   'token_standard_cache_ttl_ns' : [] | [bigint],
 }
@@ -150,9 +148,16 @@ export interface GateForUser {
   'gate' : Gate,
 }
 export type GateKey = { 'Password' : string } |
+  { 'OTPSms' : string } |
+  { 'OTPEmail' : string } |
   { 'XFollowing' : string } |
   { 'DiscordServer' : string } |
+  { 'XLikedPost' : string } |
   { 'PasswordRedacted' : null } |
+  { 'XRetweetedPost' : string } |
+  { 'XRetweetedPostCredential' : { 'user_id' : string } } |
+  { 'XOwnedAccount' : string } |
+  { 'XLikedPostCredential' : { 'user_id' : string, 'access_token' : string } } |
   { 'TelegramGroup' : string };
 export type GateStatus = { 'Open' : null } |
   { 'Closed' : null };
@@ -433,6 +438,11 @@ export type Result_8 = { 'Ok' : CreateLinkResponseV3 } |
   { 'Err' : CanisterError };
 export type Result_9 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
+export interface SettingsDto {
+  'inspect_message_enabled' : boolean,
+  'gate_service_canister_id' : Principal,
+  'token_storage_canister_id' : Principal,
+}
 export type TokenStandard = { 'ICRC1' : null } |
   { 'ICRC2' : null };
 export interface TransactionDto {
@@ -459,6 +469,11 @@ export interface TransferFromData {
   'approve_amount' : [] | [bigint],
   'spender' : Wallet,
 }
+export interface UpdateSettingArgs {
+  'inspect_message_enabled' : [] | [boolean],
+  'gate_service_canister_id' : [] | [Principal],
+  'token_storage_canister_id' : [] | [Principal],
+}
 export type Wallet = {
     'IC' : {
       'subaccount' : [] | [Uint8Array | number[]],
@@ -468,45 +483,45 @@ export type Wallet = {
 export interface _SERVICE {
   /**
    * Clears all cached token fees from the service.
-   *
+   * 
    * This admin endpoint invalidates all cached token transfer fees, forcing
    * subsequent fee queries to fetch fresh data from their respective token canisters.
    * Useful for cache invalidation when fee structures change or for testing purposes.
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
-   *
+   * 
    * # Returns
-   *
+   * 
    * Returns `Ok(())` on successful cache clearance.
-   *
+   * 
    * # Errors
-   *
+   * 
    * Currently always returns `Ok(())` after clearing the cache.
    */
   'admin_fee_cache_clear' : ActorMethod<[], Result>,
   /**
    * Clears the cached fee for a specific token.
-   *
+   * 
    * This admin endpoint invalidates the cached transfer fee for a single token,
    * forcing the next fee query for that token to fetch fresh data from its canister.
    * Useful when a specific token's fee structure changes without affecting other tokens.
-   *
+   * 
    * # Arguments
-   *
+   * 
    * * `token_id` - The `Principal` of the token canister whose cached fee should be cleared
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
-   *
+   * 
    * # Returns
-   *
+   * 
    * Returns `Ok(())` on successful cache clearance for the specified token.
-   *
+   * 
    * # Errors
-   *
+   * 
    * Currently always returns `Ok(())` after clearing the token's cached fee.
    */
   'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
@@ -518,60 +533,73 @@ export interface _SERVICE {
   'admin_flush_token_standard_cache' : ActorMethod<[], Result>,
   /**
    * Returns the current gate API exponential backoff configuration.
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_get' : ActorMethod<[], BackoffConfig>,
   /**
    * Clears the backoff state for a specific user, allowing them to retry immediately.
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_reset_user' : ActorMethod<[Principal], Result>,
   /**
    * Updates the gate API exponential backoff configuration.
-   *
+   * 
    * Changes take effect immediately on the next `user_open_link_gate` call.
    * Set `enabled: false` to disable backoff entirely (e.g. for emergency access).
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_backoff_update' : ActorMethod<[BackoffConfig], Result>,
   /**
    * Returns the current gate API rate limit configuration.
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_get' : ActorMethod<[], RateLimitConfig>,
   /**
    * Clears the rate limit state for a specific user, allowing them to make requests immediately.
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_reset_user' : ActorMethod<[Principal], Result>,
   /**
    * Updates the gate API rate limit configuration.
-   *
+   * 
    * Changes take effect immediately on the next `user_open_link_gate` call.
    * Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
-   *
+   * 
    * # Authorization
-   *
+   * 
    * Requires `Permission::Admin`.
    */
   'admin_gate_rate_limit_update' : ActorMethod<[RateLimitConfig], Result>,
   /**
+   * Returns the current canister settings (for verification).
+   * 
+   * # Returns
+   * * `SettingsDto` - Current settings snapshot (inspect flag + token_storage/gate canister ids)
+   * 
+   * # Authorization
+   * Requires `Permission::Admin`.
+   */
+  'admin_get_setting' : ActorMethod<[], SettingsDto>,
+  /**
    * Enables/disables the inspect message.
+   * 
+   * Deprecated: prefer `admin_update_setting` with `inspect_message_enabled = opt bool`.
+   * Kept for backward compatibility with existing callers.
    */
   'admin_inspect_message_enable' : ActorMethod<[boolean], Result>,
   /**
@@ -593,20 +621,36 @@ export interface _SERVICE {
     Result_1
   >,
   /**
+   * Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
+   * applied, the rest left unchanged. Canister-id changes are persisted in stable memory.
+   * 
+   * # Arguments
+   * * `arg` - Partial settings update: `inspect_message_enabled`, `token_storage_canister_id`,
+   * `gate_service_canister_id` (each optional)
+   * 
+   * # Returns
+   * * `Ok(())` - Settings updated successfully (the only non-trap outcome)
+   * 
+   * # Authorization
+   * Requires `Permission::Admin` (enforced in-method and at ingress via the `admin_` prefix guard);
+   * unauthorized callers are rejected (trap), not returned as `Err`.
+   */
+  'admin_update_setting' : ActorMethod<[UpdateSettingArgs], Result>,
+  /**
    * Returns the build data of the canister.
    */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   /**
    * Retrieves a specific link by its ID with optional action data.
-   *
+   * 
    * This endpoint is accessible to both anonymous and authenticated users. The response
    * includes the link details and optionally associated action data based on the caller's
    * permissions and the requested action type.
-   *
+   * 
    * # Arguments
    * * `link_id` - The unique identifier of the link to retrieve
    * * `options` - Optional parameters including action type to include in response
-   *
+   * 
    * # Returns
    * * `Ok(LinkDto)` - Link data
    * * `Err(String)` - Error message if link not found or access denied
@@ -711,13 +755,13 @@ export interface _SERVICE {
   >,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
-   *
+   * 
    * This endpoint requires the caller to be authenticated (non-anonymous) and returns
    * only the links that were created by the calling principal.
-   *
+   * 
    * # Arguments
    * * `input` - Optional pagination parameters (page size, offset, etc.)
-   *
+   * 
    * # Returns
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(CanisterError)` - Error message if retrieval fails
@@ -764,6 +808,18 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
   'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_16>,
+  /**
+   * Sends an OTP code to the destination configured on the given gate.
+   * 
+   * The caller's principal is forwarded to GateService so the OTP is keyed by
+   * the actual end-user, not by this canister.
+   * # Arguments
+   * * `gate_id` - The unique identifier of the OTPEmail or OTPSms gate
+   * # Returns
+   * * `Ok(())` - Code generated and dispatched via Brevo
+   * * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed
+   */
+  'user_send_otp' : ActorMethod<[string], Result>,
   /**
    * Syncs the asset balance cache for a link by querying actual token balances.
    * Only the link creator can trigger this.

@@ -1,82 +1,193 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+pub mod otp;
 pub mod password;
+pub mod x;
 
+use crate::repositories::otp::{OtpRepository, OtpStorage};
+use crate::services::http::HttpOutcallService;
+use crate::services::secret::SecretService;
+use candid::Principal;
 use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
+use ic_mple_log::service::Storage;
+use otp::{OTPEmailVerifier, OTPSmsVerifier};
 use password::PasswordGateVerifier;
-use std::{fmt::Debug, future::Future, pin::Pin};
+use std::fmt::Debug;
+use x::{XFollowingVerifier, XLikedPostVerifier, XOwnedAccountVerifier, XRetweetedPostVerifier};
 
-pub trait GateVerifier: Debug {
-    /// Verifies the provided key against the gate's key.
-    /// # Arguments
-    /// * `key`: The key to be verified.
-    /// # Returns
-    /// * `Ok(VerificationResult)`: If the key is verified successfully.
-    /// * `Err(String)`: If there is an error during verification.
-    fn verify(
-        &self,
-        key: GateKey,
-    ) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>>;
+pub struct GateVerificationContext<'a, O: Storage<OtpStorage>> {
+    pub gate_id: &'a str,
+    pub user: Principal,
+    pub current_time: u64,
+    pub otp_repo: &'a mut OtpRepository<O>,
 }
 
-pub struct GateFactory {}
-
-impl GateFactory {
-    /// Creates a new GateVerifier instance.
-    /// This gate instance will be used to verify the provided key.
+pub trait GateVerifier: Debug {
+    /// Verifies the provided key against the gate's configured key.
     /// # Arguments
-    /// * `gate_type`: The type of the gate to be created.
-    /// * `gate_key`: The key to be used for the gate.
+    /// * `key`: The credential supplied by the caller (e.g. `XFollowing("alice")`).
+    /// * `http`: HTTP outcall service for verifiers that call external APIs.
+    /// * `secrets`: Secret service for verifiers that need stored credentials.
     /// # Returns
-    /// * `Ok(Box<dyn GateVerifier + Send + Sync>)`: If the gate is created successfully.
-    /// * `Err(String)`: If there is an error during gate creation.
-    pub fn get_gate_verifier(
+    /// * `Ok(VerificationResult::Success)`: The credential satisfies the gate.
+    /// * `Ok(VerificationResult::Failure(_))`: The credential is valid but does not satisfy the gate.
+    /// * `Err(GateServiceError)`: An error occurred during verification.
+    async fn verify<H: HttpOutcallService, S: SecretService>(
         &self,
-        gate_key: GateKey,
-    ) -> Result<Box<dyn GateVerifier + Send + Sync>, GateServiceError> {
-        match gate_key {
-            GateKey::Password(password_hash) => {
-                let gate = PasswordGateVerifier::new(password_hash);
-                Ok(Box::new(gate))
-            }
-            _ => Err(GateServiceError::UnsupportedGateKey(format!(
-                "{:?}",
-                gate_key
-            ))),
+        key: GateKey,
+        http: &H,
+        secrets: &S,
+    ) -> Result<VerificationResult, GateServiceError>;
+}
+
+/// Dispatches verification to the correct verifier based on the gate's stored key type.
+/// # Arguments
+/// * `gate_config_key`: The key stored for the gate (e.g. `XFollowing("cashierapp")`).
+/// * `user_key`: The credential supplied by the caller at open time.
+/// * `http`: HTTP outcall service passed through to the chosen verifier.
+/// * `secrets`: Secret service passed through to the chosen verifier.
+/// * `context`: Gate-open context, including OTP repository and current IC time.
+/// # Returns
+/// * `Ok(VerificationResult)`: Verification completed (may be Success or Failure).
+/// * `Err(GateServiceError::UnsupportedGateKey)`: The gate type has no registered verifier.
+/// * `Err(GateServiceError)`: A verifier-level error occurred.
+pub async fn verify_gate<H, S, O>(
+    gate_config_key: GateKey,
+    user_key: GateKey,
+    http: &H,
+    secrets: &S,
+    context: GateVerificationContext<'_, O>,
+) -> Result<VerificationResult, GateServiceError>
+where
+    H: HttpOutcallService,
+    S: SecretService,
+    O: Storage<OtpStorage>,
+{
+    match gate_config_key {
+        GateKey::Password(hash) => {
+            PasswordGateVerifier::new(hash)
+                .verify(user_key, http, secrets)
+                .await
         }
+        GateKey::XFollowing(handle) => {
+            XFollowingVerifier::new(handle)
+                .verify(user_key, http, secrets)
+                .await
+        }
+        GateKey::XOwnedAccount(handle) => {
+            XOwnedAccountVerifier::new(handle)
+                .verify(user_key, http, secrets)
+                .await
+        }
+        GateKey::XLikedPost(url) => {
+            XLikedPostVerifier::new(url)
+                .verify(user_key, http, secrets)
+                .await
+        }
+        GateKey::XRetweetedPost(url) => {
+            XRetweetedPostVerifier::new(url)
+                .verify(user_key, http, secrets)
+                .await
+        }
+        GateKey::OTPEmail(_) => {
+            let mut verifier =
+                OTPEmailVerifier::new(context.gate_id.to_string(), context.user, context.otp_repo);
+            verifier
+                .verify_with_time(user_key, http, secrets, context.current_time)
+                .await
+        }
+        GateKey::OTPSms(_) => {
+            let mut verifier =
+                OTPSmsVerifier::new(context.gate_id.to_string(), context.user, context.otp_repo);
+            verifier
+                .verify_with_time(user_key, http, secrets, context.current_time)
+                .await
+        }
+        _ => Err(GateServiceError::UnsupportedGateKey(format!(
+            "{:?}",
+            gate_config_key
+        ))),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use crate::services::http::test_utils::MockHttpOutcallService;
+    use crate::services::secret::test_utils::MockSecretService;
+    use cashier_common::test_utils::random_principal_id;
+    use std::collections::HashMap;
 
-    #[test]
-    fn it_should_error_get_gate_verifier_due_to_unsupported_gate_type() {
+    fn fixture_of_services() -> (MockHttpOutcallService, MockSecretService) {
+        (
+            MockHttpOutcallService::new(vec![]),
+            MockSecretService::new(HashMap::new()),
+        )
+    }
+
+    #[tokio::test]
+    async fn it_should_error_verify_gate_due_to_unsupported_gate_type() {
         // Arrange
-        let factory = GateFactory {};
-        let gate_key = GateKey::XFollowing("elon_musk".to_string());
+        let (http, secrets) = fixture_of_services();
+        let gate_key = GateKey::TelegramGroup("some_group".to_string());
+        let user = random_principal_id();
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
 
         // Act
-        let result = factory.get_gate_verifier(gate_key);
+        let result = verify_gate(
+            gate_key,
+            GateKey::Password("x".into()),
+            &http,
+            &secrets,
+            GateVerificationContext {
+                gate_id: "test_gate_id",
+                user,
+                current_time: 0,
+                otp_repo: &mut otp_repo,
+            },
+        )
+        .await;
 
         // Assert
-        assert!(result.is_err());
+        assert!(matches!(
+            result,
+            Err(GateServiceError::UnsupportedGateKey(_))
+        ));
         if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
-            assert!(e.contains("XFollowing"));
-        } else {
-            panic!("Expected error but got success");
+            assert!(e.contains("TelegramGroup"));
         }
     }
 
-    #[test]
-    fn it_should_success_get_gate_verifier_password() {
+    #[tokio::test]
+    async fn it_should_verify_password_gate() {
         // Arrange
-        let factory = GateFactory {};
-        let gate_key = GateKey::Password("0xabc".to_string());
+        use crate::utils::hashing::hash_password;
+        let (http, secrets) = fixture_of_services();
+        let hash = hash_password("password123").unwrap();
+        let gate_config = GateKey::Password(hash);
+        let user = random_principal_id();
+        let repositories = TestRepositories::new();
+        let mut otp_repo = repositories.otp();
 
         // Act
-        let result = factory.get_gate_verifier(gate_key);
+        let result = verify_gate(
+            gate_config,
+            GateKey::Password("password123".into()),
+            &http,
+            &secrets,
+            GateVerificationContext {
+                gate_id: "test_gate_id",
+                user,
+                current_time: 0,
+                otp_repo: &mut otp_repo,
+            },
+        )
+        .await;
 
         // Assert
-        assert!(result.is_ok());
+        assert!(matches!(result, Ok(VerificationResult::Success)));
     }
 }

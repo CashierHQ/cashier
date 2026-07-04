@@ -1,11 +1,17 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::api::state::get_state;
+use crate::gates::x::exchange_x_token as x_exchange_token;
+use crate::services::http::IcHttpOutcallService;
+use crate::services::secret::IcSecretService;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
-    error::GateServiceError,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, XTokenExchangeResult,
+    auth::Permission, error::GateServiceError,
 };
-use ic_cdk::{api::msg_caller, query, update};
+use ic_cdk::{api::msg_caller, management_canister::raw_rand, query, update};
 
 #[update(guard = "is_not_anonymous")]
 /// Adds a new gate
@@ -26,27 +32,6 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
     let mut gate_service = get_state().gate_service;
     let gate = gate_service.add_gate(caller, new_gate)?;
 
-    Ok(gate)
-}
-
-#[query(guard = "is_not_anonymous")]
-/// Retrieves a gate by its subject's ID.
-/// This API is guarded to ensure that only authenticated users with GateCreate permission can access it.
-/// # Arguments
-/// * `subject_id`: The ID of the subject whose gate is to be retrieved.
-/// # Returns
-/// * `Ok(Some(Gate))`: If a gate is found.
-/// * `Ok(None)`: If no gate is found.
-/// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_by_subject(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
-    let state = get_state();
-    let caller = msg_caller();
-    state
-        .auth_service
-        .must_have_permission(&caller, Permission::GateCreate);
-
-    let gate_service = get_state().gate_service;
-    let gate = gate_service.get_gate_by_subject(caller, &subject_id);
     Ok(gate)
 }
 
@@ -123,5 +108,80 @@ async fn open_gate(
         caller
     };
     let mut gate_service = get_state().gate_service;
-    gate_service.open_gate(&gate_id, key, effective_user).await
+    gate_service
+        .open_gate(
+            &gate_id,
+            key,
+            effective_user,
+            &IcHttpOutcallService,
+            &IcSecretService,
+            ic_cdk::api::time(),
+        )
+        .await
+}
+
+#[update(guard = "is_not_anonymous")]
+/// Generates an OTP code and sends it to the destination configured on the gate.
+///
+/// Principals with `GateCreate` permission (e.g. cashier_backend) may pass an explicit
+/// `user` to send the OTP on behalf of that user; all other callers are treated as
+/// the user themselves. Any previously issued code for this gate/user pair is overwritten.
+/// The generated code expires after 10 minutes.
+/// # Arguments
+/// * `gate_id`: The ID of an OTPEmail or OTPSms gate.
+/// * `user`: The principal of the user who will later verify the code. Ignored (replaced by caller) unless the caller has GateCreate permission.
+/// # Returns
+/// * `Ok(())`: Code generated and dispatched via Brevo.
+/// * `Err(GateServiceError::NotFound)`: Gate does not exist.
+/// * `Err(GateServiceError::UnsupportedGateKey)`: Gate is not an OTP type.
+/// * `Err(GateServiceError::KeyVerificationFailed)`: Brevo API call failed.
+async fn send_otp(gate_id: String, user: Principal) -> Result<(), GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    let effective_user = if state
+        .auth_service
+        .check_has_permission(&caller, Permission::GateCreate)
+        .is_ok()
+    {
+        user
+    } else {
+        caller
+    };
+    let rand_bytes = raw_rand()
+        .await
+        .map_err(|e| GateServiceError::KeyVerificationFailed(format!("raw_rand: {e:?}")))?;
+    let rand_u32 = u32::from_le_bytes([rand_bytes[0], rand_bytes[1], rand_bytes[2], rand_bytes[3]]);
+    let code = format!("{:06}", rand_u32 % 1_000_000);
+    const OTP_TTL_NS: u64 = 600_000_000_000;
+    let expires_at = ic_cdk::api::time() + OTP_TTL_NS;
+
+    let mut gate_service = get_state().gate_service;
+    gate_service
+        .send_otp(
+            &gate_id,
+            effective_user,
+            &IcHttpOutcallService,
+            &IcSecretService,
+            &code,
+            expires_at,
+        )
+        .await
+}
+
+#[update]
+/// Exchanges an X OAuth 2.0 authorization code for the caller's X profile and access token.
+///
+/// The backend performs the token exchange via a non-replicated HTTP outcall so
+/// that the single-use authorization code is consumed exactly once. Anonymous
+/// callers are permitted because the X authorization code is single-use and
+/// PKCE-protected; there is no session data at risk.
+/// # Arguments
+/// * `code`: The authorization code received from the X OAuth callback.
+/// # Returns
+/// * `Ok(XTokenExchangeResult)`: The authenticated user's X profile and OAuth access token.
+/// * `Err(GateServiceError)`: If the token exchange or profile fetch fails.
+async fn exchange_x_token(code: String) -> Result<XTokenExchangeResult, GateServiceError> {
+    x_exchange_token(code)
+        .await
+        .map_err(|e| GateServiceError::KeyVerificationFailed(e.to_string()))
 }

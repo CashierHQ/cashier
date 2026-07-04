@@ -49,14 +49,14 @@
     const storeV3 = context.linkCreationStoreV3;
     if (!storeV3?.id || hydratedGateDraftForId === storeV3.id) return;
 
-    gatingStore.loadGateDraft(storeV3.pendingGateDraft);
+    gatingStore.loadGateDrafts(storeV3.pendingGateDrafts);
     hydratedGateDraftForId = storeV3.id;
   });
 
   $effect(() => {
     if (!linkStore) return;
 
-    linkStore.setPendingGateDraft(gatingStore.gateDrafts[0] ?? null);
+    linkStore.setPendingGateDrafts(gatingStore.gateDrafts);
   });
 
   let cachedDetailStoreKey: string | null = null;

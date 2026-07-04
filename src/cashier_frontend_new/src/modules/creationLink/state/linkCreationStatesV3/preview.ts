@@ -5,8 +5,8 @@ import type { LinkCreationStateV3 } from "$modules/creationLink/state/linkCreati
 import { LinkCreatedStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/created";
 import { LockStateV3 } from "$modules/creationLink/state/linkCreationStatesV3/lock";
 import type { LinkCreationStoreV3 } from "$modules/creationLink/state/linkCreationStoreV3.svelte";
+import { gateDraftToGateKey } from "$modules/creationLink/utils/gateDraftToGateKey";
 import type { GateKey } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { GateType } from "$modules/gating/types/gate";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 
@@ -47,11 +47,8 @@ export class PreviewStateV3 implements LinkCreationStateV3 {
     }
 
     // call backend API to create the link (with gates if configured)
-    const gateDraft = this.#linkStore.pendingGateDraft;
-    const gateKeys: GateKey[] = [];
-    if (gateDraft?.type === GateType.PASSWORD) {
-      gateKeys.push({ Password: gateDraft.password });
-    }
+    const gateKeys: GateKey[] =
+      this.#linkStore.pendingGateDrafts.map(gateDraftToGateKey);
 
     const result = await cashierBackendService.createLinkV3(
       this.#linkStore.draftLink,

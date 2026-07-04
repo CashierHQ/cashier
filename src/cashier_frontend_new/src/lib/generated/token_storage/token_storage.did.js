@@ -62,6 +62,11 @@ export const idlFactory = ({ IDL }) => {
     'string_id' : IDL.Text,
     'symbol' : IDL.Text,
   });
+  const SettingsDto = IDL.Record({
+    'omnity_bitcoin_id' : IDL.Principal,
+    'ckbtc_minter_id' : IDL.Principal,
+    'inspect_message_enabled' : IDL.Bool,
+  });
   const RegistryStats = IDL.Record({
     'total_enabled_default' : IDL.Nat64,
     'total_tokens' : IDL.Nat64,
@@ -113,6 +118,11 @@ export const idlFactory = ({ IDL }) => {
   const Result_3 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
+  });
+  const UpdateSettingArgs = IDL.Record({
+    'omnity_bitcoin_id' : IDL.Opt(IDL.Principal),
+    'ckbtc_minter_id' : IDL.Opt(IDL.Principal),
+    'inspect_message_enabled' : IDL.Opt(IDL.Bool),
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -273,6 +283,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenDto)],
         ['query'],
       ),
+    'admin_get_setting' : IDL.Func([], [SettingsDto], ['query']),
     'admin_get_stats' : IDL.Func([], [Result], ['query']),
     'admin_initialize_registry' : IDL.Func([], [Result_1], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_2], []),
@@ -291,6 +302,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_3],
         [],
       ),
+    'admin_update_setting' : IDL.Func([UpdateSettingArgs], [Result_2], []),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'get_token_by_id' : IDL.Func([IDL.Principal], [Result_4], ['query']),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),

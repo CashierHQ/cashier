@@ -1,10 +1,19 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 pub mod auth;
+pub mod constant;
 pub mod error;
 pub mod init;
+pub mod secret;
+pub mod x_response;
+
+pub use secret::{PasswordHashingAlgorithm, SecretStorageMode};
 
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
 use serde::Serialize;
+use std::fmt;
 
 #[derive(CandidType, Debug, Clone)]
 #[storable]
@@ -81,6 +90,44 @@ pub enum GateKey {
     XFollowing(String),
     TelegramGroup(String),
     DiscordServer(String),
+    /// Gate config: target X handle. Credential: the user's X handle (from OAuth profile).
+    XOwnedAccount(String),
+    /// Gate config: tweet URL. Credential: use XLikedPostCredential.
+    XLikedPost(String),
+    /// Gate config: tweet URL. Credential: use XRetweetedPostCredential.
+    XRetweetedPost(String),
+    /// User credential for opening an XLikedPost gate.
+    XLikedPostCredential {
+        user_id: String,
+        access_token: String,
+    },
+    /// User credential for opening an XRetweetedPost gate.
+    XRetweetedPostCredential {
+        user_id: String,
+    },
+    /// Gate config: destination email address. Credential: the 6-digit OTP code the user received.
+    OTPEmail(String),
+    /// Gate config: destination phone number. Credential: the 6-digit OTP code the user received.
+    OTPSms(String),
+}
+
+impl fmt::Display for GateKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            GateKey::Password(_) | GateKey::PasswordRedacted => "password",
+            GateKey::XFollowing(_) => "xfollowing",
+            GateKey::XOwnedAccount(_) => "xownedaccount",
+            GateKey::XLikedPost(_) | GateKey::XLikedPostCredential { .. } => "xlikedpost",
+            GateKey::XRetweetedPost(_) | GateKey::XRetweetedPostCredential { .. } => {
+                "xretweetedpost"
+            }
+            GateKey::TelegramGroup(_) => "telegramgroup",
+            GateKey::DiscordServer(_) => "discordserver",
+            GateKey::OTPEmail(_) => "otpemail",
+            GateKey::OTPSms(_) => "otpsms",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -98,4 +145,41 @@ pub enum VerificationResult {
 pub struct OpenGateSuccessResult {
     pub gate: Gate,
     pub gate_user_status: GateUserStatus,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+/// The public profile of an X (Twitter) user returned after OAuth token exchange.
+/// Fields:
+/// * `id`: The X user ID.
+/// * `name`: The display name.
+/// * `username`: The @handle (without the @ prefix).
+/// * `profile_image_url`: URL of the user's avatar image.
+pub struct XProfile {
+    pub id: String,
+    pub name: String,
+    pub username: String,
+    pub profile_image_url: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+/// Result of the X OAuth token exchange.
+/// Fields:
+/// * `profile`: The authenticated user's public X profile.
+/// * `access_token`: The OAuth 2.0 access token for making X API calls on behalf of the user.
+pub struct XTokenExchangeResult {
+    pub profile: XProfile,
+    pub access_token: String,
+}
+
+#[derive(CandidType, Debug, Clone)]
+#[storable]
+/// A stored OTP code for a specific gate and user, with expiry and attempt tracking.
+/// Fields:
+/// * `code`: The 6-digit numeric code.
+/// * `expires_at`: Nanosecond timestamp after which the code is invalid.
+/// * `attempts`: Number of failed verification attempts (used for rate-limiting).
+pub struct OtpRecord {
+    pub code: String,
+    pub expires_at: u64,
+    pub attempts: u8,
 }

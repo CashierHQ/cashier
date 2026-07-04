@@ -141,8 +141,8 @@ export class CreationStoreV3ViewModelAdapter
     );
   }
 
-  setPendingGateDraft(draft: GateDraft | null) {
-    this.linkStore.pendingGateDraft = draft;
+  setPendingGateDrafts(drafts: GateDraft[]) {
+    this.linkStore.pendingGateDrafts = drafts;
   }
 
   goNext: () => Promise<void> = async () => {

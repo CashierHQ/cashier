@@ -50,14 +50,14 @@ export class LinkCreationStoreV3 {
   #backendAction = $state<SharedAction | undefined>();
   #icrc112Requests = $state<Icrc112Requests | undefined>();
   #id = $state<string>();
-  #pendingGateDraft = $state<GateDraft | null>(null);
+  #pendingGateDrafts = $state<GateDraft[]>([]);
 
   constructor(draftLink: DraftLink) {
     this.#id = draftLink.id;
-    this.#pendingGateDraft =
+    this.#pendingGateDrafts =
       authState.account && this.#id
         ? draftGateRepository.get(authState.account.owner, this.#id)
-        : null;
+        : [];
     this.#draftLink = draftLink;
     this.#state = this.getStateHandler(draftLink);
 
@@ -127,17 +127,17 @@ export class LinkCreationStoreV3 {
     this.#icrc112Requests = requests;
   }
 
-  get pendingGateDraft(): GateDraft | null {
-    return this.#pendingGateDraft;
+  get pendingGateDrafts(): GateDraft[] {
+    return this.#pendingGateDrafts;
   }
 
-  set pendingGateDraft(draft: GateDraft | null) {
-    this.#pendingGateDraft = draft;
+  set pendingGateDrafts(drafts: GateDraft[]) {
+    this.#pendingGateDrafts = drafts;
 
     if (!this.#id || !authState.account) return;
 
-    if (draft) {
-      draftGateRepository.save(authState.account.owner, this.#id, draft);
+    if (drafts.length > 0) {
+      draftGateRepository.save(authState.account.owner, this.#id, drafts);
     } else {
       draftGateRepository.delete(authState.account.owner, this.#id);
     }
@@ -303,7 +303,7 @@ export class LinkCreationStoreV3 {
     }
 
     const creator = Principal.fromText(authState.account.owner);
-    const gateCount = this.#pendingGateDraft ? 1 : 0;
+    const gateCount = this.#pendingGateDrafts.length;
     const loadedActionResult = actionTemplateLoader.createActionFromTemplate(
       this.linkType,
       SharedActionType.CreateLink,

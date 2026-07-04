@@ -25,10 +25,16 @@ build_canisters: pre_build
   just build_canister "gate_service" "" "gate_service"
 
 
+# Builds the gate SDK (must run before any frontend that imports @cashier/gate-sdk)
+[group('build')]
+build_gate_sdk: install_frontend_deps
+  pnpm --filter @cashier/gate-sdk build
+
 # Builds the frontend
 [group('build')]
-build_frontend mode="local_dev": install_frontend_deps
+build_frontend mode="local_dev": install_frontend_deps build_gate_sdk
   pnpm --filter cashier_frontend_new build:{{mode}}
+  pnpm --filter gate_frontend build:{{mode}}
 
 # Generates the ts files for the canister services 
 [group('build')]
