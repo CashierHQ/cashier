@@ -75,6 +75,31 @@ node scripts/set-gate-secrets.mjs --network <network-name>
 node scripts/set-gate-secrets.mjs --mode vetkd --network <network-name>
 ```
 
+### Set the Gate canister secrets via CI (dev)
+
+`.github/workflows/gate-secrets-dev.yml` runs this same script against the `dev` network from a `workflow_dispatch` trigger, so secrets can be (re)applied without anyone running it from a local `.env` file. It authenticates with the `dev` Environment's `DEPLOYER` identity (the same one used to deploy `gate_service` on dev, which is why it already holds `Permission::Admin` there), then writes `scripts/.env` on the runner from the `dev` Environment secrets below before invoking the script, and deletes the file afterwards:
+
+- `GATE_TWITTER_API_KEY`
+- `GATE_X_OAUTH_BASIC_AUTH`
+- `GATE_X_REDIRECT_URI`
+- `GATE_X_BEARER_TOKEN`
+- `GATE_BREVO_API_KEY`
+- `GATE_BREVO_EMAIL_SENDER`
+
+Set these once under repo Settings → Environments → `dev` → Secrets (values match the local `scripts/.env` keys, just prefixed with `GATE_`).
+
+This workflow only exists for `dev` — on staging/production, `gate_service` is owned by the Orbit station (see `orbit-gate-deploy.yml`), not the `DEPLOYER` identity, so this direct-call approach doesn't apply there.
+
+To run it:
+
+```bash
+gh workflow run gate-secrets-dev.yml --repo CashierHQ/cashier --ref <branch> -f mode=plaintext
+```
+
+or from the GitHub UI: Actions tab → "Set Gate Secrets (dev)" → Run workflow (choose `mode` and branch).
+
+Note: GitHub only resolves a workflow by filename (both via the UI and the API/`gh` CLI) once that file exists on the repository's default branch — it must be merged there first before it can be dispatched at all, even against a different `--ref`.
+
 ## Set the Gate canister hashing mode
 
 - Get the current mode
