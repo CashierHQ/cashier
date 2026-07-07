@@ -153,8 +153,17 @@ export class UserLinkStoreV3 {
     return this.linkDetail?.action;
   }
 
+  /**
+   * Whether the public link route is waiting for its initial link payload.
+   *
+   * Background refreshes can happen after user actions are created or processed.
+   * Once a link is already available, those refreshes should not make the route
+   * guard replace the current screen with a full-page loading state.
+   *
+   * @returns `true` only while the link query is loading and no link is loaded.
+   */
   get isLoading() {
-    return this.linkDetail?.query?.isLoading ?? false;
+    return (this.linkDetail?.query?.isLoading ?? false) && !this.link;
   }
 
   get query() {
