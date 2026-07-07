@@ -177,6 +177,7 @@
         "uses": "Uses",
         "amountTotal": "Amount total",
         "addAsset": "Add Asset",
+        "scrollDown": "Scroll down",
         "totalValue": "Total value"
       },
       "lock": {
