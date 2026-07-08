@@ -38,22 +38,20 @@
 <div
   class="flex flex-col items-center {claimedCount !== undefined &&
   totalCount !== undefined
-    ? 'pt-10'
-    : ''}"
+    ? '-mx-5 -mt-5 w-[calc(100%+2.5rem)]'
+    : 'w-full'}"
 >
-  <!-- Progress bar for airdrop (if claimedCount and totalCount are provided) -->
   {#if claimedCount !== undefined && totalCount !== undefined}
-    <div class="w-full bg-greenwhite px-2.5 8y-/1.2solute sopiboldft-0 right-0">
-      <div class="text-center text-white text-[18px/1.2] font-semibold">
+    <div class="w-full rounded-t-[13px] bg-primary px-4 py-3 text-center">
+      <div class="text-[18px] font-semibold leading-[120%] text-white">
         {claimedCount}/{totalCount} claimed
       </div>
     </div>
   {/if}
 
-  <!-- Token Image or Fallback -->
   {#if imageError}
     <span
-      class="w-[220px] h-[220px] flex items-center justify-center bg-gray-300 rounded-full mt-[14%] mb-4 text-[84px] font-semibold text-gray-600"
+      class="mt-8 mb-4 flex h-[220px] w-[220px] items-center justify-center rounded-full bg-gray-300 text-[84px] font-semibold text-gray-600"
     >
       {firstLetter}
     </span>
@@ -61,12 +59,11 @@
     <img
       src={tokenLogo}
       alt={symbol}
-      class="w-[220px] h-[220px] object-contain mt-[14%] mb-4"
+      class="mt-8 mb-4 h-[220px] w-[220px] object-contain"
       onerror={handleImageError}
     />
   {/if}
 
-  <!-- Amount and Symbol -->
   <div
     class="text-center mb-1.5 text-gray-900 text-[16px] font-semibold leading-[120%]"
   >
@@ -74,7 +71,6 @@
     {symbol}
   </div>
 
-  <!-- Message -->
   <div
     class="text-center text-gray-600 text-[14px] font-normal leading-[120%] mb-8 max-w-[180px]"
   >

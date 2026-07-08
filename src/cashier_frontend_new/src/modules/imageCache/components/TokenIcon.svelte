@@ -78,8 +78,16 @@
     return getTokenLogo(address, true); // Use skipStore to get original URL
   });
 
-  // Check if image failed to load
-  const hasFailed = $derived(localFailed || failedImageLoads.has(address));
+  const externalImageSrc = $derived(getTokenLogo(address, true));
+
+  // Check if image failed to load. Parent sets are address-based for legacy
+  // failures, so only apply that failure to the external fallback URL. If a
+  // better logo URL arrives later, the component should retry it.
+  const hasFailed = $derived(
+    localFailed ||
+      failedImageLoads.has(imageSrc) ||
+      (!logo && imageSrc === externalImageSrc && failedImageLoads.has(address)),
+  );
 
   const showImage = $derived(loaded && !hasFailed);
 

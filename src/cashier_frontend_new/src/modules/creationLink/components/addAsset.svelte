@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
   import {
     AnalyticsEvent,
     trackEvent,
@@ -9,6 +10,7 @@
   import type { AddAssetVM } from "$modules/creationLink/types/viewModels/addAssetVM";
   import type { GenericCreationLinkStoreVM } from "$modules/creationLink/types/viewModels/genericCreationLinkStoreVM";
   import { LinkType } from "$modules/links/types/link/linkType";
+  import ScrollDownFab from "$modules/shared/components/ScrollDownFab.svelte";
   import { onMount } from "svelte";
 
   const {
@@ -16,6 +18,8 @@
   }: {
     link: GenericCreationLinkStoreVM & AddAssetVM;
   } = $props();
+
+  let addAssetRoot = $state<HTMLElement>();
 
   onMount(() => {
     trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_LANDING, {
@@ -25,10 +29,17 @@
   });
 </script>
 
-{#if link.linkType === LinkType.TIP}
-  <TipLinkAddAsset {link} />
-{:else if link.linkType === LinkType.AIRDROP}
-  <AirDropAddAsset {link} />
-{:else if link.linkType === LinkType.TOKEN_BASKET}
-  <TokenBasketAddAsset {link} />
-{/if}
+<div bind:this={addAssetRoot} class="contents">
+  {#if link.linkType === LinkType.TIP}
+    <TipLinkAddAsset {link} />
+  {:else if link.linkType === LinkType.AIRDROP}
+    <AirDropAddAsset {link} />
+  {:else if link.linkType === LinkType.TOKEN_BASKET}
+    <TokenBasketAddAsset {link} />
+  {/if}
+</div>
+
+<ScrollDownFab
+  root={addAssetRoot}
+  ariaLabel={locale.t("links.linkForm.addAsset.scrollDown")}
+/>

@@ -146,7 +146,7 @@ describe("UserLinkStoreV3", () => {
   });
 
   describe("convenience getters", () => {
-    it("it_should_succeed_do_return_link_action_loading_and_query", () => {
+    it("it_should_succeed_do_return_link_action_and_query", () => {
       const detailStore = makeDetailStore({
         link: { id: "link-1", link_type: "TIP" },
         action: { id: "action-1", type: ActionType.RECEIVE },
@@ -161,8 +161,37 @@ describe("UserLinkStoreV3", () => {
 
       expect(store.link).toBe(detailStore.link);
       expect(store.action).toBe(detailStore.action);
-      expect(store.isLoading).toBe(true);
       expect(store.query).toBe(detailStore.query);
+    });
+
+    it("it_should_succeed_do_report_initial_loading_when_link_is_missing", () => {
+      const detailStore = makeDetailStore({
+        link: undefined,
+        query: {
+          isLoading: true,
+          refreshAsync: vi.fn().mockResolvedValue(undefined),
+          data: undefined,
+        },
+      });
+      mocks.LinkDetailStoreV3.mockImplementation(() => detailStore);
+      const store = new UserLinkStoreV3({ id: "link-1" });
+
+      expect(store.isLoading).toBe(true);
+    });
+
+    it("it_should_succeed_do_not_report_loading_for_background_refresh", () => {
+      const detailStore = makeDetailStore({
+        link: { id: "link-1", link_type: "TIP" },
+        query: {
+          isLoading: true,
+          refreshAsync: vi.fn().mockResolvedValue(undefined),
+          data: undefined,
+        },
+      });
+      mocks.LinkDetailStoreV3.mockImplementation(() => detailStore);
+      const store = new UserLinkStoreV3({ id: "link-1" });
+
+      expect(store.isLoading).toBe(false);
     });
 
     it("it_should_succeed_do_refresh_async_from_query", async () => {

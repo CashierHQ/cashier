@@ -3,10 +3,17 @@
 
 	let {
 		shouldScaleBackground = true,
+		repositionInputs = false,
 		open = $bindable(false),
 		activeSnapPoint = $bindable(null),
 		...restProps
 	}: DrawerPrimitive.RootProps = $props();
 </script>
 
-<DrawerPrimitive.Root {shouldScaleBackground} bind:open bind:activeSnapPoint {...restProps} />
+<DrawerPrimitive.Root
+	{shouldScaleBackground}
+	{repositionInputs}
+	bind:open
+	bind:activeSnapPoint
+	{...restProps}
+/>
