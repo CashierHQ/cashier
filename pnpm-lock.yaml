@@ -80,6 +80,9 @@ importers:
       flag-icons:
         specifier: ^7.5.0
         version: 7.5.0
+      ic-vetkd-utils:
+        specifier: 0.3.0
+        version: 0.3.0
       libphonenumber-js:
         specifier: ^1.13.7
         version: 1.13.7
@@ -2852,6 +2855,9 @@ packages:
   human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
+
+  ic-vetkd-utils@0.3.0:
+    resolution: {integrity: sha512-evDet3WM4jGurrXPEl16x2yvl+NoqugxzVKA57MahFdoeAigP4zoES/2bL448xO8e7Ag2T+tf66AxLycyvEdXQ==}
 
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
@@ -6888,6 +6894,8 @@ snapshots:
       - supports-color
 
   human-signals@2.1.0: {}
+
+  ic-vetkd-utils@0.3.0: {}
 
   iconv-lite@0.6.3:
     dependencies:

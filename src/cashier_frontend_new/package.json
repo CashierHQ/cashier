@@ -76,13 +76,14 @@
     "@windoge98/plug-n-play": "github:CashierHQ/plug-n-play#main",
     "axios": "^1.16.0",
     "devalue": "^5.8.0",
+    "flag-icons": "^7.5.0",
+    "ic-vetkd-utils": "0.3.0",
+    "libphonenumber-js": "^1.13.7",
     "lucide-svelte": "^1.0.1",
     "qrcode": "^1.5.4",
     "query-string": "^9.3.1",
     "runed": "^0.37.1",
     "svelte-sonner": "^1.1.1",
-    "ts-results-es": "^7.0.0",
-    "flag-icons": "^7.5.0",
-    "libphonenumber-js": "^1.13.7"
+    "ts-results-es": "^7.0.0"
   }
 }

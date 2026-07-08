@@ -20,6 +20,7 @@
         "@tailwindcss/typography",
         "@vitest/coverage-v8",
         "cross-fetch",
+        "ic-vetkd-utils",
         "vitest-browser-svelte"
       ],
       "ignoreUnresolved": ["\\$env/.+"]
