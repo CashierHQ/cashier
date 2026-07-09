@@ -230,13 +230,12 @@
       <div class="px-3 mb-2">
         <PrimaryActionButton
           onclick={handleConfirm}
-          disabled={hasProcessingAssets}
+          loading={hasProcessingAssets}
+          loadingLabel={locale.t(`${txCartI18nKey}.processingButton`)}
         >
-          {hasProcessingAssets
-            ? locale.t(`${txCartI18nKey}.processingButton`)
-            : errorMessage
-              ? locale.t(`${txCartI18nKey}.retryButton`)
-              : locale.t(`${txCartI18nKey}.confirmButton`)}
+          {errorMessage
+            ? locale.t(`${txCartI18nKey}.retryButton`)
+            : locale.t(`${txCartI18nKey}.confirmButton`)}
         </PrimaryActionButton>
       </div>
     </Drawer.Content>

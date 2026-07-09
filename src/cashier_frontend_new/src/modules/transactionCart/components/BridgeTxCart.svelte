@@ -243,10 +243,12 @@
     </div>
 
     <div class="px-3 mb-2">
-      <PrimaryActionButton onclick={handleConfirm} disabled={isProcessing}>
-        {#if isProcessing}
-          {locale.t(`bitcoin.txCart.processing`)}
-        {:else if canRetryFailedBridge}
+      <PrimaryActionButton
+        onclick={handleConfirm}
+        loading={isProcessing}
+        loadingLabel={locale.t(`bitcoin.txCart.processing`)}
+      >
+        {#if canRetryFailedBridge}
           {locale.t(`bitcoin.txCart.retry`)}
         {:else if errorMessage && isCreatedExport}
           {locale.t(`bitcoin.txCart.retry`)}

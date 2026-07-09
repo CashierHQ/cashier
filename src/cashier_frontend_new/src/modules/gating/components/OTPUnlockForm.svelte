@@ -235,17 +235,11 @@
 
     <PrimaryActionButton
       type="button"
-      disabled={isSending}
+      loading={isSending}
+      loadingLabel={locale.t("links.linkForm.lock.otp.sendingCode")}
       onclick={handleSendOtp}
     >
-      {#if isSending}
-        <div
-          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-        ></div>
-        {locale.t("links.linkForm.lock.otp.sendingCode")}
-      {:else}
-        {locale.t("links.linkForm.lock.otp.sendCode")}
-      {/if}
+      {locale.t("links.linkForm.lock.otp.sendCode")}
     </PrimaryActionButton>
   {:else}
     <!-- Step 2: Enter code -->
@@ -296,17 +290,12 @@
 
     <PrimaryActionButton
       type="button"
-      disabled={code.length < 6 || isVerifying}
+      disabled={code.length < 6}
+      loading={isVerifying}
+      loadingLabel={locale.t("links.linkForm.lock.processing") ?? "Processing"}
       onclick={handleVerify}
     >
-      {#if isVerifying}
-        <div
-          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-        ></div>
-        {locale.t("links.linkForm.lock.processing") ?? "Processing"}
-      {:else}
-        {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
-      {/if}
+      {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
     </PrimaryActionButton>
   {/if}
 </div>

@@ -5,12 +5,16 @@
   const {
     label,
     disabled = false,
+    loading = false,
+    loadingLabel,
     tone = "primary",
     variant = "default",
     onClick = () => {},
   }: {
     label: string;
     disabled?: boolean;
+    loading?: boolean;
+    loadingLabel?: string;
     tone?: "primary" | "destructive";
     variant?: ButtonVariant;
     onClick?: () => void;
@@ -22,6 +26,8 @@
   {tone}
   {variant}
   {disabled}
+  {loading}
+  {loadingLabel}
   onclick={onClick}
 >
   {label}

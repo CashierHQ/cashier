@@ -7,7 +7,7 @@
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
   import { Principal } from "@icp-sdk/core/principal";
-  import { Clipboard, LoaderCircle } from "lucide-svelte";
+  import { Clipboard } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   type Props = {
@@ -129,14 +129,10 @@
     >
       <PrimaryActionButton
         onclick={handleImport}
-        disabled={isLoading}
+        loading={isLoading}
         type="button"
       >
-        {#if isLoading}
-          <LoaderCircle class="animate-spin" size={20} />
-        {:else}
-          {locale.t("wallet.import.import")}
-        {/if}
+        {locale.t("wallet.import.import")}
       </PrimaryActionButton>
     </div>
   </div>

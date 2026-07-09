@@ -16,16 +16,12 @@
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
-    <PrimaryActionButton onclick={onCreateUseAction} {disabled} type="button">
-      <span class="relative inline-flex items-center">
-        {#if disabled}
-          <span
-            class="absolute right-full mr-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"
-            aria-hidden="true"
-          ></span>
-        {/if}
-        {locale.t("links.linkForm.useLink.claimButton")}
-      </span>
+    <PrimaryActionButton
+      onclick={onCreateUseAction}
+      loading={disabled}
+      type="button"
+    >
+      {locale.t("links.linkForm.useLink.claimButton")}
     </PrimaryActionButton>
   </div>
 {/if}

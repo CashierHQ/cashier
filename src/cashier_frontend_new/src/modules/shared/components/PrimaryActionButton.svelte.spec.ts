@@ -13,7 +13,7 @@ describe("PrimaryActionButton", () => {
 
     const button = screen.getByRole("button", { name: "Continue" });
 
-    expect(button).toHaveClass("h-12");
+    expect(button).toHaveClass("h-11");
     expect(button).toHaveClass("w-full");
     expect(button).toHaveClass("rounded-full");
     expect(button).toHaveClass("bg-green");
@@ -61,7 +61,7 @@ describe("PrimaryActionButton", () => {
 
     const button = screen.getByRole("button", { name: "Delete" });
 
-    expect(button).toHaveClass("h-12");
+    expect(button).toHaveClass("h-11");
     expect(button).toHaveClass("rounded-full");
     expect(button).toHaveClass("bg-[#D26060]");
     expect(button).not.toHaveClass("bg-green");
@@ -77,7 +77,7 @@ describe("PrimaryActionButton", () => {
 
     const button = screen.getByRole("button", { name: "End link" });
 
-    expect(button).toHaveClass("h-12");
+    expect(button).toHaveClass("h-11");
     expect(button).toHaveClass("rounded-full");
     expect(button).toHaveClass("border-red-200");
     expect(button).toHaveClass("text-red-600");
@@ -96,9 +96,43 @@ describe("PrimaryActionButton", () => {
 
     const button = screen.getByRole("button", { name: "End link" });
 
-    expect(button).toHaveClass("h-12");
+    expect(button).toHaveClass("h-11");
     expect(button).toHaveClass("rounded-full");
     expect(button).toHaveClass("border");
     expect(button).not.toHaveClass("bg-green");
+  });
+
+  it("it_should_do_render_loading_spinner_without_changing_label_text", () => {
+    render(PrimaryActionButtonTestHost, {
+      props: {
+        label: "Claim",
+        loading: true,
+      },
+    });
+
+    const button = screen.getByRole("button", { name: "Claim" });
+    const spinner = button.querySelector(".animate-spin");
+
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByText("Claim")).toBeInTheDocument();
+    expect(spinner).toHaveClass("absolute");
+    expect(spinner).toHaveClass("right-full");
+  });
+
+  it("it_should_do_render_loading_label_when_provided", () => {
+    render(PrimaryActionButtonTestHost, {
+      props: {
+        label: "Send code",
+        loading: true,
+        loadingLabel: "Sending code",
+      },
+    });
+
+    const button = screen.getByRole("button", { name: "Sending code" });
+
+    expect(button).toBeDisabled();
+    expect(screen.queryByText("Send code")).not.toBeInTheDocument();
+    expect(screen.getByText("Sending code")).toBeInTheDocument();
   });
 });

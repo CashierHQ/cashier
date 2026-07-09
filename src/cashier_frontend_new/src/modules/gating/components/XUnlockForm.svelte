@@ -268,19 +268,14 @@
 
   <PrimaryActionButton
     type="button"
-    disabled={!connectedProfile || isVerifying || !verified}
+    disabled={!connectedProfile || !verified}
+    loading={isVerifying}
+    loadingLabel={locale.t("links.linkForm.lock.processing")}
     onclick={() => {
       onUnlocked();
       onClose();
     }}
   >
-    {#if isVerifying}
-      <div
-        class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-      ></div>
-      {locale.t("links.linkForm.lock.processing")}
-    {:else}
-      {locale.t("links.linkForm.lock.openButton")}
-    {/if}
+    {locale.t("links.linkForm.lock.openButton")}
   </PrimaryActionButton>
 </div>

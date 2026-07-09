@@ -644,14 +644,9 @@
       >
         <PrimaryActionButton
           onclick={handleContinue}
-          disabled={isCreatingExportBridge}
+          loading={isCreatingExportBridge}
           type="button"
         >
-          {#if isCreatingExportBridge}
-            <div
-              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-            ></div>
-          {/if}
           {locale.t("wallet.send.continueButton")}
         </PrimaryActionButton>
       </div>

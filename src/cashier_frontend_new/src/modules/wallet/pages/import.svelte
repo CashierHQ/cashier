@@ -16,7 +16,7 @@
   } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
   import { getValidationErrorMessage } from "$modules/wallet/utils/validationErrorMessage";
-  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
+  import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   type Props = {
@@ -259,14 +259,10 @@
       >
         <PrimaryActionButton
           onclick={handleContinue}
-          disabled={isLoading}
+          loading={isLoading}
           type="button"
         >
-          {#if isLoading}
-            <LoaderCircle class="animate-spin" size={20} />
-          {:else}
-            {locale.t("wallet.import.continue")}
-          {/if}
+          {locale.t("wallet.import.continue")}
         </PrimaryActionButton>
       </div>
     </div>
@@ -384,14 +380,10 @@
       >
         <PrimaryActionButton
           onclick={handleImport}
-          disabled={isLoading}
+          loading={isLoading}
           type="button"
         >
-          {#if isLoading}
-            <LoaderCircle class="animate-spin" size={20} />
-          {:else}
-            {locale.t("wallet.import.import")}
-          {/if}
+          {locale.t("wallet.import.import")}
         </PrimaryActionButton>
       </div>
     </div>

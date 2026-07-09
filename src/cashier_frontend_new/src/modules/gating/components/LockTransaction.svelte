@@ -110,13 +110,12 @@
   >
     <PrimaryActionButton
       type="button"
-      disabled={isContinuing}
+      loading={isContinuing}
+      loadingLabel={locale.t("links.linkForm.lock.continuing")}
       onclick={handleContinue}
       class="mt-auto"
     >
-      {isContinuing
-        ? locale.t("links.linkForm.lock.continuing")
-        : locale.t("links.linkForm.lock.continue")}
+      {locale.t("links.linkForm.lock.continue")}
     </PrimaryActionButton>
   </div>
 </div>

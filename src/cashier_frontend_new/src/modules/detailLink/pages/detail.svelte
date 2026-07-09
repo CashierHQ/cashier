@@ -627,14 +627,8 @@
         <PrimaryActionButton
           tone="destructive"
           onclick={openEndLinkConfirm}
-          disabled={isEndingLink}
-          class="gap-2"
+          loading={isEndingLink}
         >
-          {#if isEndingLink}
-            <div
-              class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
-            ></div>
-          {/if}
           {locale.t("links.linkForm.detail.endLink")}
         </PrimaryActionButton>
       {/if}
@@ -666,14 +660,8 @@
       {#if linkStore.link.state === LinkState.INACTIVE}
         <PrimaryActionButton
           onclick={createWithdrawAction}
-          disabled={isCreatingWithdraw}
-          class="gap-2"
+          loading={isCreatingWithdraw}
         >
-          {#if isCreatingWithdraw}
-            <div
-              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-            ></div>
-          {/if}
           {locale.t("links.linkForm.detail.withdraw")}
         </PrimaryActionButton>
       {/if}

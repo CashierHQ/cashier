@@ -275,12 +275,14 @@
       </div>
 
       <div class="px-3 mb-2">
-        <PrimaryActionButton onclick={handleConfirm} disabled={isProcessing}>
-          {isProcessing
-            ? locale.t(`${txCartI18nKey}.processingButton`)
-            : errorMessage
-              ? locale.t(`${txCartI18nKey}.retryButton`)
-              : locale.t(`${txCartI18nKey}.confirmButton`)}
+        <PrimaryActionButton
+          onclick={handleConfirm}
+          loading={isProcessing}
+          loadingLabel={locale.t(`${txCartI18nKey}.processingButton`)}
+        >
+          {errorMessage
+            ? locale.t(`${txCartI18nKey}.retryButton`)
+            : locale.t(`${txCartI18nKey}.confirmButton`)}
         </PrimaryActionButton>
       </div>
     </Drawer.Content>

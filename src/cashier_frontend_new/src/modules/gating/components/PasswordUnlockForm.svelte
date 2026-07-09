@@ -309,17 +309,13 @@
 
         <PrimaryActionButton
           type="button"
-          disabled={isSubmitting || !password}
+          disabled={!password}
+          loading={isSubmitting}
+          loadingLabel={locale.t("links.linkForm.lock.processing") ??
+            "Processing"}
           onclick={handleOpen}
         >
-          {#if isSubmitting}
-            <div
-              class="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"
-            ></div>
-            {locale.t("links.linkForm.lock.processing") ?? "Processing"}
-          {:else}
-            {locale.t("links.linkForm.lock.openButton") ?? "Open"}
-          {/if}
+          {locale.t("links.linkForm.lock.openButton") ?? "Open"}
         </PrimaryActionButton>
       </div>
     {/if}
