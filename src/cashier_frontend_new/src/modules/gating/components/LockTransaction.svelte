@@ -2,7 +2,7 @@
   import lockedLock from "$lib/assets/gating/locked-lock.svg";
   import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     Drawer,
     DrawerClose,
@@ -105,16 +105,20 @@
     <p>{locale.t("links.linkForm.lock.allLocksRequired")}</p>
   </div>
 
-  <Button
-    type="button"
-    disabled={isContinuing}
-    onclick={handleContinue}
-    class="mt-auto h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+  <div
+    class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
-    {isContinuing
-      ? locale.t("links.linkForm.lock.continuing")
-      : locale.t("links.linkForm.lock.continue")}
-  </Button>
+    <PrimaryActionButton
+      type="button"
+      disabled={isContinuing}
+      onclick={handleContinue}
+      class="mt-auto"
+    >
+      {isContinuing
+        ? locale.t("links.linkForm.lock.continuing")
+        : locale.t("links.linkForm.lock.continue")}
+    </PrimaryActionButton>
+  </div>
 </div>
 
 <Drawer bind:open={passwordDrawerOpen}>

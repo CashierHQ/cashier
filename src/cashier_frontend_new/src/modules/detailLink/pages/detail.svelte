@@ -4,7 +4,7 @@
   import { page } from "$app/state";
   import { paths } from "$modules/routing/paths";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     Dialog,
     DialogContent,
@@ -624,11 +624,11 @@
       class="flex-none w-[95%] mx-auto px-2 left-0 right-0 z-10 mt-auto pt-2 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
-        <Button
-          variant="outline"
+        <PrimaryActionButton
+          tone="destructive"
           onclick={openEndLinkConfirm}
           disabled={isEndingLink}
-          class="w-full h-11 border border-red-200 text-red-600 rounded-full cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="gap-2"
         >
           {#if isEndingLink}
             <div
@@ -636,16 +636,13 @@
             ></div>
           {/if}
           {locale.t("links.linkForm.detail.endLink")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
 
       {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
-        <Button
-          onclick={goToLinks}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-        >
+        <PrimaryActionButton onclick={goToLinks}>
           {locale.t("links.linkForm.detail.goToLinks")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
     </div>
 
@@ -653,24 +650,24 @@
       class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4 mb-0"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
-        <Button
+        <PrimaryActionButton
           id="copy-link-button"
           onclick={async () => {
             await copyLink();
           }}
-          class="relative z-[60] rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+          class="relative z-[60]"
           style={showCongratulationsDrawer ? "visibility: hidden;" : ""}
         >
           {showCopied
             ? locale.t("links.linkForm.detail.copied")
             : locale.t("links.linkForm.detail.copyLink")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
       {#if linkStore.link.state === LinkState.INACTIVE}
-        <Button
+        <PrimaryActionButton
           onclick={createWithdrawAction}
           disabled={isCreatingWithdraw}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen gap-2"
+          class="gap-2"
         >
           {#if isCreatingWithdraw}
             <div
@@ -678,24 +675,17 @@
             ></div>
           {/if}
           {locale.t("links.linkForm.detail.withdraw")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
       {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
-        <Button
-          disabled={true}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen mb-3"
-        >
+        <PrimaryActionButton disabled={true} class="mb-3">
           {locale.t("links.status.ended")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
       {#if linkStore.link.state === LinkState.CREATE_LINK}
-        <Button
-          onclick={openDrawer}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-          type="button"
-        >
+        <PrimaryActionButton onclick={openDrawer} type="button">
           {locale.t("links.linkForm.detail.create")}
-        </Button>
+        </PrimaryActionButton>
       {/if}
     </div>
   </div>
@@ -821,17 +811,16 @@
             <div
               class="flex-none msx w-[95%] max-w-[510px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
-              <Button
+              <PrimaryActionButton
                 id="copy-link-button-modal"
                 onmousedown={() => {
                   lastClickWasOnButton = true;
                 }}
-                class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
               >
                 {showCopied
                   ? locale.t("links.linkForm.detail.copied")
                   : locale.t("links.linkForm.detail.copyLink")}
-              </Button>
+              </PrimaryActionButton>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
@@ -275,17 +275,13 @@
       </div>
 
       <div class="px-3 mb-2">
-        <Button
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-          onclick={handleConfirm}
-          disabled={isProcessing}
-        >
+        <PrimaryActionButton onclick={handleConfirm} disabled={isProcessing}>
           {isProcessing
             ? locale.t(`${txCartI18nKey}.processingButton`)
             : errorMessage
               ? locale.t(`${txCartI18nKey}.retryButton`)
               : locale.t(`${txCartI18nKey}.confirmButton`)}
-        </Button>
+        </PrimaryActionButton>
       </div>
     </Drawer.Content>
   </Drawer.Root>

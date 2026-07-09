@@ -37,16 +37,19 @@ export const GATE_OPTIONS = [
     label: locale.t("links.linkForm.lock.telegramGroup"),
     enabled: false,
     iconSrc: telegramIcon,
+    hidden: true,
   },
   {
     label: locale.t("links.linkForm.lock.tokenOrNftOwnership"),
     enabled: false,
     iconSrc: coinTokenIcon,
+    hidden: true,
   },
   {
     label: locale.t("links.linkForm.lock.quizMultipleChoice"),
     enabled: false,
     iconSrc: quizIcon,
+    hidden: true,
   },
 ];
 

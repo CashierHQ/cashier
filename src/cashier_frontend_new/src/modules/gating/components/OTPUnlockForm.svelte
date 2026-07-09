@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { getBackoffTimeText } from "$modules/gating/utils/backoffTime";
@@ -233,11 +233,10 @@
       </div>
     {/if}
 
-    <Button
+    <PrimaryActionButton
       type="button"
       disabled={isSending}
       onclick={handleSendOtp}
-      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
     >
       {#if isSending}
         <div
@@ -247,7 +246,7 @@
       {:else}
         {locale.t("links.linkForm.lock.otp.sendCode")}
       {/if}
-    </Button>
+    </PrimaryActionButton>
   {:else}
     <!-- Step 2: Enter code -->
     <div class="space-y-1 text-center">
@@ -295,11 +294,10 @@
       </div>
     {/if}
 
-    <Button
+    <PrimaryActionButton
       type="button"
       disabled={code.length < 6 || isVerifying}
       onclick={handleVerify}
-      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
     >
       {#if isVerifying}
         <div
@@ -309,6 +307,6 @@
       {:else}
         {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
       {/if}
-    </Button>
+    </PrimaryActionButton>
   {/if}
 </div>

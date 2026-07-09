@@ -1,8 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { paths } from "$modules/routing/paths";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
 </script>
 
 <div
@@ -17,7 +17,7 @@
     </p>
   </div>
 
-  <Button href={resolve(paths.home())} class="w-full max-w-xs rounded-full">
+  <PrimaryActionButton href={resolve(paths.home())} class="max-w-xs">
     {locale.t("links.linkForm.useLink.ended.backButton")}
-  </Button>
+  </PrimaryActionButton>
 </div>

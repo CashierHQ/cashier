@@ -58,7 +58,7 @@
   </div>
 
   <div class="space-y-2">
-    {#each GATE_OPTIONS as option (option.label)}
+    {#each GATE_OPTIONS.filter((option) => !option.hidden) as option (option.label)}
       <button
         type="button"
         disabled={!option.enabled}

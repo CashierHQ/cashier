@@ -4,7 +4,7 @@
   import xIcon from "$lib/assets/x-icon.svg";
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     Drawer,
     DrawerClose,
@@ -208,14 +208,14 @@
     </p>
   </div>
 
-  <Button
+  <PrimaryActionButton
     type="button"
     disabled={!allOpen}
     onclick={onUnlocked}
-    class="mt-auto h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+    class="mt-auto"
   >
     {locale.t("links.linkForm.lock.continue")}
-  </Button>
+  </PrimaryActionButton>
 </div>
 
 <Drawer bind:open={drawerOpen}>
@@ -307,11 +307,10 @@
           {/if}
         </div>
 
-        <Button
+        <PrimaryActionButton
           type="button"
           disabled={isSubmitting || !password}
           onclick={handleOpen}
-          class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
         >
           {#if isSubmitting}
             <div
@@ -321,7 +320,7 @@
           {:else}
             {locale.t("links.linkForm.lock.openButton") ?? "Open"}
           {/if}
-        </Button>
+        </PrimaryActionButton>
       </div>
     {/if}
   </DrawerContent>

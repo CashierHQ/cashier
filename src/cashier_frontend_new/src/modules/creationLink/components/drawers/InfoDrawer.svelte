@@ -5,8 +5,8 @@
     DrawerHeader,
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
-  import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { ChevronLeft } from "lucide-svelte";
 
   type Props = {
@@ -59,11 +59,8 @@
       {/if}
     </div>
 
-    <Button
-      class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-      onclick={handleClose}
-    >
+    <PrimaryActionButton onclick={handleClose}>
       {closeButtonText}
-    </Button>
+    </PrimaryActionButton>
   </DrawerContent>
 </Drawer>
