@@ -9,6 +9,7 @@
   } from "$lib/shadcn/components/ui/drawer";
   import { COUNTRY_DIAL_CODES } from "$modules/shared/data/countries";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import type { OTPLockMode } from "$modules/gating/types/gate";
   import { filterSmsEligibleCountries } from "$modules/shared/services/countryPolicy";
   import {
     buildInternationalPhoneNumber,
@@ -17,13 +18,15 @@
     getPhoneDialCode,
     getPhonePlaceholder,
   } from "$modules/shared/services/phoneNumber";
-  import { ChevronDown, Mail, Smartphone, X } from "lucide-svelte";
+  import { ChevronDown, X } from "lucide-svelte";
 
   const {
     store,
+    mode,
     onLock,
   }: {
     store: GatingStore;
+    mode: OTPLockMode;
     onLock: () => void;
   } = $props();
 
@@ -33,20 +36,22 @@
     smsEligibleCountries[0]?.code ??
     "CA";
 
-  let activeTab = $derived<"phone" | "email">(
-    store.hasConfiguredOTPEmail ? "email" : "phone",
-  );
   let submitted = $state(false);
   let countryDrawerOpen = $state(false);
   let countrySearch = $state("");
   let countryCode = $derived(store.otpCountryCode || defaultCountryCode);
   let phoneDigits = $derived(store.otpPhoneDigits);
-  let emailDraft = $derived(store.otpEmail ?? "");
+  let confirmPhoneDigits = $derived(store.otpPhoneConfirmDigits);
+  let emailDraft = $derived(store.otpEmailDraft);
+  let confirmEmailDraft = $derived(store.otpEmailConfirmDraft);
 
   const dialCode = $derived(getPhoneDialCode(countryCode));
   const phonePlaceholder = $derived(getPhonePlaceholder(countryCode));
   const formattedPhone = $derived(
     formatPhoneNumberForCountry(phoneDigits, countryCode),
+  );
+  const formattedConfirmPhone = $derived(
+    formatPhoneNumberForCountry(confirmPhoneDigits, countryCode),
   );
   const selectedCountryFlagClass = $derived(
     `fi fi-${countryCode.toLowerCase()} fis flex-none rounded-full text-xl`,
@@ -69,14 +74,24 @@
     );
   }
 
+  function updateConfirmPhoneDraft(selectedCountryCode = countryCode) {
+    store.setOTPPhoneConfirmDraft(
+      buildInternationalPhoneNumber(selectedCountryCode, confirmPhoneDigits),
+    );
+  }
+
   function handleCountrySelect(code: string) {
     countryCode = code;
     updatePhoneDraft(code);
+    updateConfirmPhoneDraft(code);
     countryDrawerOpen = false;
     countrySearch = "";
   }
 
-  function handlePhoneKeydown(e: KeyboardEvent) {
+  function handlePhoneKeydown(
+    e: KeyboardEvent,
+    inputName: "phone" | "confirm",
+  ) {
     if (e.key !== "Backspace") return;
 
     const input = e.currentTarget as HTMLInputElement;
@@ -90,20 +105,30 @@
     if (digitIndexToRemove < 0) return;
 
     e.preventDefault();
-    phoneDigits =
-      phoneDigits.slice(0, digitIndexToRemove) +
-      phoneDigits.slice(digitIndexToRemove + 1);
-    updatePhoneDraft();
+    if (inputName === "phone") {
+      phoneDigits =
+        phoneDigits.slice(0, digitIndexToRemove) +
+        phoneDigits.slice(digitIndexToRemove + 1);
+      updatePhoneDraft();
+    } else {
+      confirmPhoneDigits =
+        confirmPhoneDigits.slice(0, digitIndexToRemove) +
+        confirmPhoneDigits.slice(digitIndexToRemove + 1);
+      store.setOTPPhoneConfirmDigits(confirmPhoneDigits);
+      updateConfirmPhoneDraft();
+    }
   }
 
   const handleLock = () => {
     submitted = true;
-    if (activeTab === "phone") {
+    if (mode === "phone") {
       updatePhoneDraft();
+      updateConfirmPhoneDraft();
       if (store.otpPhoneSetupError) return;
       store.saveOTPSmsLock(phoneDigits, countryCode);
     } else {
       store.setOTPEmailDraft(emailDraft);
+      store.setOTPEmailConfirmDraft(confirmEmailDraft);
       if (store.otpEmailSetupError) return;
       store.saveOTPEmailLock();
     }
@@ -112,41 +137,7 @@
 </script>
 
 <div class="space-y-5">
-  <!-- Tab switcher -->
-  <div
-    class="mx-auto flex w-fit rounded-full border border-border bg-background p-0.5"
-  >
-    <button
-      type="button"
-      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-base transition-colors {activeTab ===
-      'phone'
-        ? 'bg-lightgreen text-green'
-        : 'text-muted-foreground'}"
-      onclick={() => {
-        activeTab = "phone";
-        submitted = false;
-      }}
-    >
-      <Smartphone class="h-5 w-5" aria-hidden="true" />
-      {locale.t("links.linkForm.lock.otp.phone")}
-    </button>
-    <button
-      type="button"
-      class="flex h-7 items-center gap-1.5 rounded-full px-4 text-base transition-colors {activeTab ===
-      'email'
-        ? 'bg-lightgreen text-green'
-        : 'text-muted-foreground'}"
-      onclick={() => {
-        activeTab = "email";
-        submitted = false;
-      }}
-    >
-      <Mail class="h-5 w-5" aria-hidden="true" />
-      {locale.t("links.linkForm.lock.otp.email")}
-    </button>
-  </div>
-
-  {#if activeTab === "phone"}
+  {#if mode === "phone"}
     <div class="space-y-2">
       <div class="flex items-center justify-between">
         <label for="otp-phone" class="text-sm font-medium text-foreground">
@@ -158,7 +149,10 @@
           onclick={() => {
             submitted = false;
             phoneDigits = "";
+            confirmPhoneDigits = "";
             store.setOTPPhoneDraft("");
+            store.setOTPPhoneConfirmDraft("");
+            store.setOTPPhoneConfirmDigits("");
           }}
         >
           {locale.t("links.linkForm.lock.reset")}
@@ -196,26 +190,99 @@
             );
             updatePhoneDraft();
           }}
-          onkeydown={handlePhoneKeydown}
+          onkeydown={(e) => handlePhoneKeydown(e, "phone")}
           placeholder={phonePlaceholder}
           class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
         />
       </div>
+    </div>
 
+    <div class="space-y-2">
+      <label
+        for="otp-confirm-phone"
+        class="text-sm font-medium text-foreground"
+      >
+        {locale.t("links.linkForm.lock.otp.confirmPhoneNumber")}
+      </label>
+
+      <div
+        class="flex h-11 items-center rounded-lg border bg-background px-3 focus-within:border-green {submitted &&
+        store.otpPhoneSetupError
+          ? 'border-[#D26060]'
+          : 'border-border'}"
+      >
+        <div class="mr-2 flex h-9 flex-none items-center gap-2 px-1.5 text-sm">
+          <span class={selectedCountryFlagClass} aria-hidden="true"></span>
+          <span class="text-left">{dialCode}</span>
+          <ChevronDown class="h-4 w-4 text-transparent" aria-hidden="true" />
+        </div>
+
+        <input
+          id="otp-confirm-phone"
+          type="tel"
+          inputmode="numeric"
+          value={formattedConfirmPhone}
+          oninput={(e) => {
+            confirmPhoneDigits = getDigitsOnly(
+              (e.currentTarget as HTMLInputElement).value,
+            );
+            store.setOTPPhoneConfirmDigits(confirmPhoneDigits);
+            updateConfirmPhoneDraft();
+          }}
+          onkeydown={(e) => handlePhoneKeydown(e, "confirm")}
+          placeholder={phonePlaceholder}
+          class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
+        />
+      </div>
       {#if submitted && store.otpPhoneSetupError}
         <p class="text-xs text-[#D26060]">{store.otpPhoneSetupError}</p>
       {/if}
     </div>
   {:else}
     <div class="space-y-2">
-      <label for="otp-email" class="text-sm font-medium text-foreground">
-        {locale.t("links.linkForm.lock.otp.recipientEmailAddress")}
-      </label>
+      <div class="flex items-center justify-between">
+        <label for="otp-email" class="text-sm font-medium text-foreground">
+          {locale.t("links.linkForm.lock.otp.recipientEmailAddress")}
+        </label>
+        <button
+          type="button"
+          class="text-xs font-medium text-[#D26060]"
+          onclick={() => {
+            submitted = false;
+            emailDraft = "";
+            confirmEmailDraft = "";
+            store.setOTPEmailDraft("");
+            store.setOTPEmailConfirmDraft("");
+          }}
+        >
+          {locale.t("links.linkForm.lock.reset")}
+        </button>
+      </div>
       <input
         id="otp-email"
         type="email"
         bind:value={emailDraft}
         oninput={() => store.setOTPEmailDraft(emailDraft)}
+        placeholder={locale.t("links.linkForm.lock.otp.enterEmail")}
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green {submitted &&
+        store.otpEmailSetupError
+          ? 'border-[#D26060]'
+          : ''}"
+      />
+    </div>
+
+    <div class="space-y-2">
+      <label
+        for="otp-confirm-email"
+        class="text-sm font-medium text-foreground"
+      >
+        {locale.t("links.linkForm.lock.otp.confirmEmailAddress")}
+      </label>
+      <input
+        id="otp-confirm-email"
+        type="email"
+        bind:value={confirmEmailDraft}
+        oninput={() => store.setOTPEmailConfirmDraft(confirmEmailDraft)}
         placeholder={locale.t("links.linkForm.lock.otp.enterEmail")}
         class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green {submitted &&
         store.otpEmailSetupError

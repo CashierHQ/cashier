@@ -16,6 +16,7 @@
   import PasswordLockForm from "$modules/gating/components/PasswordLockForm.svelte";
   import XLockForm from "$modules/gating/components/XLockForm.svelte";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import type { OTPLockMode } from "$modules/gating/types/gate";
   import { Info, X } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -32,6 +33,7 @@
   let passwordDrawerOpen = $state(false);
   let xDrawerOpen = $state(false);
   let otpDrawerOpen = $state(false);
+  let otpLockMode = $state<OTPLockMode>("phone");
 
   const handleContinue = async () => {
     errorMessage = null;
@@ -93,7 +95,10 @@
     {store}
     onPasswordClick={() => (passwordDrawerOpen = true)}
     onXClick={() => (xDrawerOpen = true)}
-    onOtpClick={() => (otpDrawerOpen = true)}
+    onOtpClick={(mode) => {
+      otpLockMode = mode;
+      otpDrawerOpen = true;
+    }}
   />
 
   {#if errorMessage}
@@ -185,6 +190,6 @@
       </div>
     </DrawerHeader>
 
-    <OTPLockForm {store} onLock={handleOTPLock} />
+    <OTPLockForm {store} mode={otpLockMode} onLock={handleOTPLock} />
   </DrawerContent>
 </Drawer>

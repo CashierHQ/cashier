@@ -17,7 +17,9 @@
   import {
     gateLabel,
     isGateOpen,
+    isOtpEmailGate,
     isOtpGate,
+    isOtpSmsGate,
     isXGate,
   } from "$modules/gating/utils/gateHelpers";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
@@ -27,8 +29,10 @@
     Info,
     Lock,
     LockOpen,
+    Mail,
     MessageSquareMore,
     RectangleEllipsis,
+    Smartphone,
     X,
   } from "lucide-svelte";
   import { onMount } from "svelte";
@@ -177,6 +181,10 @@
             class="h-6 w-6 flex-none"
             aria-hidden="true"
           />
+        {:else if isOtpSmsGate(gate)}
+          <Smartphone class="h-6 w-6 flex-none text-green" aria-hidden="true" />
+        {:else if isOtpEmailGate(gate)}
+          <Mail class="h-6 w-6 flex-none text-green" aria-hidden="true" />
         {:else if isOtpGate(gate)}
           <MessageSquareMore
             class="h-6 w-6 flex-none text-green"

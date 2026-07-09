@@ -4,15 +4,13 @@ import telegramIcon from "$lib/assets/telegram-icon.svg";
 import xIcon from "$lib/assets/x-icon.svg";
 import { locale } from "$lib/i18n";
 import { GateType } from "$modules/gating/types/gate";
-import { MessageSquareMore, RectangleEllipsis } from "lucide-svelte";
+import { Mail, RectangleEllipsis, Smartphone } from "lucide-svelte";
 import { COUNTRY_DIAL_CODES } from "$modules/shared/data/countries";
 import { getPhoneDialCode } from "$modules/shared/services/phoneNumber";
 
 export const FALLBACK_LOCK_VALUE_LENGTH = 12;
 export const X_HANDLE_LOCK_TYPE = "xHandle";
 export const OTP_EXPIRY_SECONDS = 10 * 60;
-
-export const OTP_TYPE = GateType.OTP_EMAIL;
 
 export const GATE_OPTIONS = [
   {
@@ -28,10 +26,16 @@ export const GATE_OPTIONS = [
     iconSrc: xIcon,
   },
   {
-    type: OTP_TYPE,
-    label: locale.t("links.linkForm.lock.otp.oneTimeCodeVerification"),
+    type: GateType.OTP_SMS,
+    label: locale.t("links.linkForm.lock.otp.phoneVerification"),
     enabled: true,
-    iconComponent: MessageSquareMore,
+    iconComponent: Smartphone,
+  },
+  {
+    type: GateType.OTP_EMAIL,
+    label: locale.t("links.linkForm.lock.otp.emailVerification"),
+    enabled: true,
+    iconComponent: Mail,
   },
   {
     label: locale.t("links.linkForm.lock.telegramGroup"),

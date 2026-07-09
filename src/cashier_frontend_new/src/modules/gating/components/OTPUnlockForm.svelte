@@ -37,6 +37,8 @@
   let digits = $state(["", "", "", "", "", ""]);
   let inputEls = $state<HTMLInputElement[]>([]);
   let isSending = $state(false);
+  let isResending = $state(false);
+  let hasResentCode = $state(false);
   let isVerifying = $state(false);
   let error = $state<string | null>(null);
   let remainingSeconds = $state(OTP_EXPIRY_SECONDS);
@@ -85,6 +87,26 @@
       }
     } finally {
       isSending = false;
+    }
+  }
+
+  async function handleResendOtp() {
+    if (hasResentCode || isResending) return;
+
+    hasResentCode = true;
+    isResending = true;
+    error = null;
+    try {
+      const result = await cashierBackendService.sendOtp(gate.gate.id);
+      if (result.isOk()) {
+        digits = ["", "", "", "", "", ""];
+        startCountdown();
+        focusDigit(0);
+      } else {
+        error = result.unwrapErr().message;
+      }
+    } finally {
+      isResending = false;
     }
   }
 
@@ -248,31 +270,56 @@
         {locale.t("links.linkForm.lock.otp.codeSentTo")}
         <span class="font-semibold text-green">{destination}</span>
       </p>
+      {#if isEmail}
+        <p class="text-xs text-foreground">
+          {locale.t("links.linkForm.lock.otp.checkSpam")}
+        </p>
+      {/if}
       <p class="text-xs text-muted-foreground">{expiryText}</p>
     </div>
 
     <!-- 6 digit inputs -->
-    <div class="flex items-center justify-center gap-1.5">
-      {#each digits as digit, i (i)}
-        <input
-          bind:this={inputEls[i]}
-          type="text"
-          inputmode="numeric"
-          maxlength={1}
-          value={digit}
-          oninput={(e) =>
-            handleDigitInput(i, (e.currentTarget as HTMLInputElement).value)}
-          onkeydown={(e) => handleDigitKeydown(i, e)}
-          onpaste={handlePaste}
-          class="flex h-12 w-12 items-center justify-center rounded-[7.5px] border text-center text-3xl font-medium text-green outline-none transition-colors
+    <div class="space-y-3">
+      <div class="flex items-center justify-center gap-1.5">
+        {#each digits as digit, i (i)}
+          <input
+            bind:this={inputEls[i]}
+            type="text"
+            inputmode="numeric"
+            maxlength={1}
+            value={digit}
+            oninput={(e) =>
+              handleDigitInput(i, (e.currentTarget as HTMLInputElement).value)}
+            onkeydown={(e) => handleDigitKeydown(i, e)}
+            onpaste={handlePaste}
+            class="flex h-12 w-12 items-center justify-center rounded-[7.5px] border text-center text-3xl font-medium text-green outline-none transition-colors
             {digit
-            ? 'border-[#36a18b]'
-            : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
-          aria-label={locale
-            .t("links.linkForm.lock.otp.digitAriaLabel")
-            .replace("{{number}}", String(i + 1))}
-        />
-      {/each}
+              ? 'border-[#36a18b]'
+              : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
+            aria-label={locale
+              .t("links.linkForm.lock.otp.digitAriaLabel")
+              .replace("{{number}}", String(i + 1))}
+          />
+        {/each}
+      </div>
+
+      <p class="text-center text-xs text-foreground">
+        {locale.t("links.linkForm.lock.otp.didNotGetIt")}
+        <button
+          type="button"
+          class="font-semibold text-green disabled:cursor-not-allowed disabled:text-muted-foreground"
+          disabled={hasResentCode || isResending}
+          onclick={handleResendOtp}
+        >
+          {#if isResending}
+            {locale.t("links.linkForm.lock.otp.resendingCode")}
+          {:else if hasResentCode}
+            {locale.t("links.linkForm.lock.otp.codeResent")}
+          {:else}
+            {locale.t("links.linkForm.lock.otp.resendCode")}
+          {/if}
+        </button>
+      </p>
     </div>
 
     {#if error}
