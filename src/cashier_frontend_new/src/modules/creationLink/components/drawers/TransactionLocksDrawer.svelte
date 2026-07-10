@@ -1,6 +1,5 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import { Button } from "$lib/shadcn/components/ui/button";
   import {
     Drawer,
     DrawerContent,
@@ -8,6 +7,7 @@
     DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import type { TransactionLocksDrawerProps } from "$modules/creationLink/types";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     getTransactionLockDisplay,
     getTransactionLockStableKey,
@@ -129,12 +129,8 @@
       {/each}
     </div>
 
-    <Button
-      type="button"
-      class="mt-7 h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90"
-      onclick={handleClose}
-    >
+    <PrimaryActionButton type="button" class="mt-7" onclick={handleClose}>
       {locale.t("links.linkForm.drawers.transactionLocks.closeButton")}
-    </Button>
+    </PrimaryActionButton>
   </DrawerContent>
 </Drawer>

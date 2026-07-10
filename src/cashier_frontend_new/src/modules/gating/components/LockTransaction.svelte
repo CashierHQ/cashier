@@ -2,7 +2,7 @@
   import lockedLock from "$lib/assets/gating/locked-lock.svg";
   import unlockedLock from "$lib/assets/gating/unlocked-lock.svg";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     Drawer,
     DrawerClose,
@@ -16,6 +16,7 @@
   import PasswordLockForm from "$modules/gating/components/PasswordLockForm.svelte";
   import XLockForm from "$modules/gating/components/XLockForm.svelte";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
+  import type { OTPLockMode } from "$modules/gating/types/gate";
   import { Info, X } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -32,6 +33,7 @@
   let passwordDrawerOpen = $state(false);
   let xDrawerOpen = $state(false);
   let otpDrawerOpen = $state(false);
+  let otpLockMode = $state<OTPLockMode>("phone");
 
   const handleContinue = async () => {
     errorMessage = null;
@@ -93,7 +95,10 @@
     {store}
     onPasswordClick={() => (passwordDrawerOpen = true)}
     onXClick={() => (xDrawerOpen = true)}
-    onOtpClick={() => (otpDrawerOpen = true)}
+    onOtpClick={(mode) => {
+      otpLockMode = mode;
+      otpDrawerOpen = true;
+    }}
   />
 
   {#if errorMessage}
@@ -105,16 +110,19 @@
     <p>{locale.t("links.linkForm.lock.allLocksRequired")}</p>
   </div>
 
-  <Button
-    type="button"
-    disabled={isContinuing}
-    onclick={handleContinue}
-    class="mt-auto h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
+  <div
+    class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
-    {isContinuing
-      ? locale.t("links.linkForm.lock.continuing")
-      : locale.t("links.linkForm.lock.continue")}
-  </Button>
+    <PrimaryActionButton
+      type="button"
+      loading={isContinuing}
+      loadingLabel={locale.t("links.linkForm.lock.continuing")}
+      onclick={handleContinue}
+      class="mt-auto"
+    >
+      {locale.t("links.linkForm.lock.continue")}
+    </PrimaryActionButton>
+  </div>
 </div>
 
 <Drawer bind:open={passwordDrawerOpen}>
@@ -182,6 +190,6 @@
       </div>
     </DrawerHeader>
 
-    <OTPLockForm {store} onLock={handleOTPLock} />
+    <OTPLockForm {store} mode={otpLockMode} onLock={handleOTPLock} />
   </DrawerContent>
 </Drawer>

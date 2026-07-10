@@ -2,7 +2,7 @@
   import xIcon from "$lib/assets/x-icon.svg";
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { resolveXGateDisplay } from "$modules/gating/utils/xGateDisplay";
   import type { XProfile } from "$modules/gating/types/xProfile";
@@ -266,22 +266,16 @@
     </p>
   </div>
 
-  <Button
+  <PrimaryActionButton
     type="button"
-    disabled={!connectedProfile || isVerifying || !verified}
+    disabled={!connectedProfile || !verified}
+    loading={isVerifying}
+    loadingLabel={locale.t("links.linkForm.lock.processing")}
     onclick={() => {
       onUnlocked();
       onClose();
     }}
-    class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
   >
-    {#if isVerifying}
-      <div
-        class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-      ></div>
-      {locale.t("links.linkForm.lock.processing")}
-    {:else}
-      {locale.t("links.linkForm.lock.openButton")}
-    {/if}
-  </Button>
+    {locale.t("links.linkForm.lock.openButton")}
+  </PrimaryActionButton>
 </div>

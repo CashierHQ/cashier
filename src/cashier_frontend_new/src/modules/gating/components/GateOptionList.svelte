@@ -1,8 +1,8 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import { GATE_OPTIONS, OTP_TYPE } from "$modules/gating/constants";
+  import { GATE_OPTIONS } from "$modules/gating/constants";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
-  import { GateType } from "$modules/gating/types/gate";
+  import { GateType, type OTPLockMode } from "$modules/gating/types/gate";
   import { Lock } from "lucide-svelte";
   import { SvelteMap } from "svelte/reactivity";
 
@@ -15,12 +15,8 @@
     store: GatingStore;
     onPasswordClick: () => void;
     onXClick: () => void;
-    onOtpClick: () => void;
+    onOtpClick: (mode: OTPLockMode) => void;
   } = $props();
-
-  const isOtpConfigured = $derived(
-    store.hasConfiguredOTPEmail || store.hasConfiguredOTPSms,
-  );
 
   const isOptionConfigured = $derived.by(() => {
     const configured = new SvelteMap<GateType, boolean>();
@@ -28,8 +24,10 @@
       if (!option.type) continue;
       if (option.type === GateType.X_FOLLOWING) {
         configured.set(option.type, store.hasConfiguredAnyX);
-      } else if (option.type === OTP_TYPE) {
-        configured.set(option.type, isOtpConfigured);
+      } else if (option.type === GateType.OTP_SMS) {
+        configured.set(option.type, store.hasConfiguredOTPSms);
+      } else if (option.type === GateType.OTP_EMAIL) {
+        configured.set(option.type, store.hasConfiguredOTPEmail);
       } else {
         configured.set(
           option.type,
@@ -58,7 +56,7 @@
   </div>
 
   <div class="space-y-2">
-    {#each GATE_OPTIONS as option (option.label)}
+    {#each GATE_OPTIONS.filter((option) => !option.hidden) as option (option.label)}
       <button
         type="button"
         disabled={!option.enabled}
@@ -67,8 +65,10 @@
             onPasswordClick();
           } else if (option.type === GateType.X_FOLLOWING) {
             onXClick();
-          } else if (option.type === OTP_TYPE) {
-            onOtpClick();
+          } else if (option.type === GateType.OTP_SMS) {
+            onOtpClick("phone");
+          } else if (option.type === GateType.OTP_EMAIL) {
+            onOtpClick("email");
           }
         }}
         class="flex h-11 w-full items-center gap-3 rounded-lg border border-border bg-background px-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 {option.type &&

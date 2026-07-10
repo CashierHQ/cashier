@@ -2,7 +2,9 @@ import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend
 import {
   gateLabel,
   isGateOpen,
+  isOtpEmailGate,
   isOtpGate,
+  isOtpSmsGate,
   isXGate,
 } from "$modules/gating/utils/gateHelpers";
 import { describe, expect, it, vi } from "vitest";
@@ -89,10 +91,13 @@ describe("gateLabel", () => {
       "links.linkForm.lock.key3RetweetPost",
       { XRetweetedPost: "https://x.com/user/status/123" },
     ],
-    ["links.linkForm.lock.otp.email", { OTPEmail: "user@example.com" }],
-    ["links.linkForm.lock.otp.email", OTP_EMAIL_REDACTED],
-    ["links.linkForm.lock.otp.phone", { OTPSms: "+15550001234" }],
-    ["links.linkForm.lock.otp.phone", OTP_SMS_REDACTED],
+    [
+      "links.linkForm.lock.otp.emailVerification",
+      { OTPEmail: "user@example.com" },
+    ],
+    ["links.linkForm.lock.otp.emailVerification", OTP_EMAIL_REDACTED],
+    ["links.linkForm.lock.otp.phoneVerification", { OTPSms: "+15550001234" }],
+    ["links.linkForm.lock.otp.phoneVerification", OTP_SMS_REDACTED],
   ])("returns %s for %j", (expected, key) => {
     expect(gateLabel(buildGate(key))).toBe(expected);
   });
@@ -144,5 +149,41 @@ describe("isOtpGate", () => {
     { XRetweetedPost: "https://x.com/user/status/123" },
   ])("returns false for %j", (key) => {
     expect(isOtpGate(buildGate(key))).toBe(false);
+  });
+});
+
+describe("isOtpEmailGate", () => {
+  it.each<GateForUser["gate"]["key"]>([
+    { OTPEmail: "user@example.com" },
+    OTP_EMAIL_REDACTED,
+  ])("returns true for %j", (key) => {
+    expect(isOtpEmailGate(buildGate(key))).toBe(true);
+  });
+
+  it.each<GateForUser["gate"]["key"]>([
+    { OTPSms: "+15550001234" },
+    OTP_SMS_REDACTED,
+    { Password: "secret" },
+    { XFollowing: "@handle" },
+  ])("returns false for %j", (key) => {
+    expect(isOtpEmailGate(buildGate(key))).toBe(false);
+  });
+});
+
+describe("isOtpSmsGate", () => {
+  it.each<GateForUser["gate"]["key"]>([
+    { OTPSms: "+15550001234" },
+    OTP_SMS_REDACTED,
+  ])("returns true for %j", (key) => {
+    expect(isOtpSmsGate(buildGate(key))).toBe(true);
+  });
+
+  it.each<GateForUser["gate"]["key"]>([
+    { OTPEmail: "user@example.com" },
+    OTP_EMAIL_REDACTED,
+    { Password: "secret" },
+    { XFollowing: "@handle" },
+  ])("returns false for %j", (key) => {
+    expect(isOtpSmsGate(buildGate(key))).toBe(false);
   });
 });

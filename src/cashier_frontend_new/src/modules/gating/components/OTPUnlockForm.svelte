@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { getBackoffTimeText } from "$modules/gating/utils/backoffTime";
@@ -37,6 +37,8 @@
   let digits = $state(["", "", "", "", "", ""]);
   let inputEls = $state<HTMLInputElement[]>([]);
   let isSending = $state(false);
+  let isResending = $state(false);
+  let hasResentCode = $state(false);
   let isVerifying = $state(false);
   let error = $state<string | null>(null);
   let remainingSeconds = $state(OTP_EXPIRY_SECONDS);
@@ -85,6 +87,26 @@
       }
     } finally {
       isSending = false;
+    }
+  }
+
+  async function handleResendOtp() {
+    if (hasResentCode || isResending) return;
+
+    hasResentCode = true;
+    isResending = true;
+    error = null;
+    try {
+      const result = await cashierBackendService.sendOtp(gate.gate.id);
+      if (result.isOk()) {
+        digits = ["", "", "", "", "", ""];
+        startCountdown();
+        focusDigit(0);
+      } else {
+        error = result.unwrapErr().message;
+      }
+    } finally {
+      isResending = false;
     }
   }
 
@@ -233,21 +255,14 @@
       </div>
     {/if}
 
-    <Button
+    <PrimaryActionButton
       type="button"
-      disabled={isSending}
+      loading={isSending}
+      loadingLabel={locale.t("links.linkForm.lock.otp.sendingCode")}
       onclick={handleSendOtp}
-      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
     >
-      {#if isSending}
-        <div
-          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-        ></div>
-        {locale.t("links.linkForm.lock.otp.sendingCode")}
-      {:else}
-        {locale.t("links.linkForm.lock.otp.sendCode")}
-      {/if}
-    </Button>
+      {locale.t("links.linkForm.lock.otp.sendCode")}
+    </PrimaryActionButton>
   {:else}
     <!-- Step 2: Enter code -->
     <div class="space-y-1 text-center">
@@ -255,31 +270,56 @@
         {locale.t("links.linkForm.lock.otp.codeSentTo")}
         <span class="font-semibold text-green">{destination}</span>
       </p>
+      {#if isEmail}
+        <p class="text-xs text-foreground">
+          {locale.t("links.linkForm.lock.otp.checkSpam")}
+        </p>
+      {/if}
       <p class="text-xs text-muted-foreground">{expiryText}</p>
     </div>
 
     <!-- 6 digit inputs -->
-    <div class="flex items-center justify-center gap-1.5">
-      {#each digits as digit, i (i)}
-        <input
-          bind:this={inputEls[i]}
-          type="text"
-          inputmode="numeric"
-          maxlength={1}
-          value={digit}
-          oninput={(e) =>
-            handleDigitInput(i, (e.currentTarget as HTMLInputElement).value)}
-          onkeydown={(e) => handleDigitKeydown(i, e)}
-          onpaste={handlePaste}
-          class="flex h-12 w-12 items-center justify-center rounded-[7.5px] border text-center text-3xl font-medium text-green outline-none transition-colors
+    <div class="space-y-3">
+      <div class="flex items-center justify-center gap-1.5">
+        {#each digits as digit, i (i)}
+          <input
+            bind:this={inputEls[i]}
+            type="text"
+            inputmode="numeric"
+            maxlength={1}
+            value={digit}
+            oninput={(e) =>
+              handleDigitInput(i, (e.currentTarget as HTMLInputElement).value)}
+            onkeydown={(e) => handleDigitKeydown(i, e)}
+            onpaste={handlePaste}
+            class="flex h-12 w-12 items-center justify-center rounded-[7.5px] border text-center text-3xl font-medium text-green outline-none transition-colors
             {digit
-            ? 'border-[#36a18b]'
-            : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
-          aria-label={locale
-            .t("links.linkForm.lock.otp.digitAriaLabel")
-            .replace("{{number}}", String(i + 1))}
-        />
-      {/each}
+              ? 'border-[#36a18b]'
+              : 'border-[#d9d9d9] focus:border-[#36a18b]'}"
+            aria-label={locale
+              .t("links.linkForm.lock.otp.digitAriaLabel")
+              .replace("{{number}}", String(i + 1))}
+          />
+        {/each}
+      </div>
+
+      <p class="text-center text-xs text-foreground">
+        {locale.t("links.linkForm.lock.otp.didNotGetIt")}
+        <button
+          type="button"
+          class="font-semibold text-green disabled:cursor-not-allowed disabled:text-muted-foreground"
+          disabled={hasResentCode || isResending}
+          onclick={handleResendOtp}
+        >
+          {#if isResending}
+            {locale.t("links.linkForm.lock.otp.resendingCode")}
+          {:else if hasResentCode}
+            {locale.t("links.linkForm.lock.otp.codeResent")}
+          {:else}
+            {locale.t("links.linkForm.lock.otp.resendCode")}
+          {/if}
+        </button>
+      </p>
     </div>
 
     {#if error}
@@ -295,20 +335,14 @@
       </div>
     {/if}
 
-    <Button
+    <PrimaryActionButton
       type="button"
-      disabled={code.length < 6 || isVerifying}
+      disabled={code.length < 6}
+      loading={isVerifying}
+      loadingLabel={locale.t("links.linkForm.lock.processing") ?? "Processing"}
       onclick={handleVerify}
-      class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90 disabled:bg-disabledgreen"
     >
-      {#if isVerifying}
-        <div
-          class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-        ></div>
-        {locale.t("links.linkForm.lock.processing") ?? "Processing"}
-      {:else}
-        {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
-      {/if}
-    </Button>
+      {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
+    </PrimaryActionButton>
   {/if}
 </div>

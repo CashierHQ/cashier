@@ -12,6 +12,11 @@ export enum GateType {
 }
 
 /**
+ * Selects which one-time-code lock setup form is rendered.
+ */
+export type OTPLockMode = "phone" | "email";
+
+/**
  * Draft configuration for a password gate, before it's saved to the backend.
  */
 export type PasswordGateDraft = {

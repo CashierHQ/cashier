@@ -42,10 +42,10 @@ export function gateLabel(gate: GateForUser): string {
     return locale.t("links.linkForm.lock.key3RetweetPost");
   }
   if ("OTPEmail" in key || "OTPEmailRedacted" in key) {
-    return locale.t("links.linkForm.lock.otp.email");
+    return locale.t("links.linkForm.lock.otp.emailVerification");
   }
   if ("OTPSms" in key || "OTPSmsRedacted" in key) {
-    return locale.t("links.linkForm.lock.otp.phone");
+    return locale.t("links.linkForm.lock.otp.phoneVerification");
   }
   return "Unknown";
 }
@@ -73,11 +73,27 @@ export function isXGate(gate: GateForUser): boolean {
  * @returns `true` if the gate key is `OTPEmail`, `OTPEmailRedacted`, `OTPSms`, or `OTPSmsRedacted`.
  */
 export function isOtpGate(gate: GateForUser): boolean {
+  return isOtpEmailGate(gate) || isOtpSmsGate(gate);
+}
+
+/**
+ * Checks whether a gate is an email OTP gate.
+ *
+ * @param gate - The gate to check.
+ * @returns `true` if the gate key is `OTPEmail` or `OTPEmailRedacted`.
+ */
+export function isOtpEmailGate(gate: GateForUser): boolean {
   const key = gate.gate.key;
-  return (
-    "OTPEmail" in key ||
-    "OTPEmailRedacted" in key ||
-    "OTPSms" in key ||
-    "OTPSmsRedacted" in key
-  );
+  return "OTPEmail" in key || "OTPEmailRedacted" in key;
+}
+
+/**
+ * Checks whether a gate is an SMS OTP gate.
+ *
+ * @param gate - The gate to check.
+ * @returns `true` if the gate key is `OTPSms` or `OTPSmsRedacted`.
+ */
+export function isOtpSmsGate(gate: GateForUser): boolean {
+  const key = gate.gate.key;
+  return "OTPSms" in key || "OTPSmsRedacted" in key;
 }

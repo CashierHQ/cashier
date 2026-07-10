@@ -9,6 +9,7 @@
     Copy,
   } from "lucide-svelte";
   import { getAppLinks } from "$modules/shared/constants/links";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { toast } from "svelte-sonner";
   import DisconnectModal from "$modules/shared/components/DisconnectModal.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
@@ -166,13 +167,14 @@
           </div>
         </div>
 
-        <button
+        <PrimaryActionButton
           onclick={handleDisconnect}
-          class="w-[95%] border border-[#D26060] cursor-pointer mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] mt-4 hover:bg-[#D26060] hover:text-white transition-colors"
+          tone="destructive"
+          class="w-[95%] mx-auto mt-4"
           type="button"
         >
           {locale.t("links.appSidebar.disconnect")}
-        </button>
+        </PrimaryActionButton>
       </div>
     </div>
   </div>

@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import {
     AnalyticsEvent,
     trackEvent,
@@ -312,12 +312,9 @@
             {locale.t("links.linkForm.useLink.transactionLocked") ??
               "This transaction is locked!"}
           </div>
-          <Button
-            onclick={handleWalletUnlockLocked}
-            class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full"
-          >
+          <PrimaryActionButton onclick={handleWalletUnlockLocked}>
             {locale.t("links.linkForm.useLink.unlockButton") ?? "Unlock"}
-          </Button>
+          </PrimaryActionButton>
         </div>
       </div>
     {:else if userStore && userStore.state.step === UserLinkStep.GATE}

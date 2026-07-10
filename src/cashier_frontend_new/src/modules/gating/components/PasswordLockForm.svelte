@@ -1,6 +1,6 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import type { GatingStore } from "$modules/gating/state/gatingStore.svelte";
   import { Eye, EyeOff } from "lucide-svelte";
 
@@ -115,11 +115,7 @@
     {/if}
   </div>
 
-  <Button
-    type="button"
-    onclick={handleLock}
-    class="h-12 w-full rounded-full bg-green text-primary-foreground hover:bg-green/90"
-  >
+  <PrimaryActionButton type="button" onclick={handleLock}>
     {locale.t("links.linkForm.lock.lock")}
-  </Button>
+  </PrimaryActionButton>
 </div>

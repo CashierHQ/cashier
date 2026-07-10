@@ -19,9 +19,12 @@ export class GatingStore {
   #xRetweetedPostDraft = $state("");
   #otpEmail = $state<string | null>(null);
   #otpEmailDraft = $state("");
+  #otpEmailConfirmDraft = $state("");
   #otpPhone = $state<string | null>(null);
   #otpPhoneDraft = $state("");
+  #otpPhoneConfirmDraft = $state("");
   #otpPhoneDigits = $state("");
+  #otpPhoneConfirmDigits = $state("");
   #otpCountryCode = $state("");
 
   get selectedGateTypes(): GateType[] {
@@ -112,6 +115,10 @@ export class GatingStore {
     return this.#otpPhoneDigits;
   }
 
+  get otpPhoneConfirmDigits(): string {
+    return this.#otpPhoneConfirmDigits;
+  }
+
   get otpCountryCode(): string {
     return this.#otpCountryCode;
   }
@@ -120,8 +127,16 @@ export class GatingStore {
     return this.#otpEmailDraft;
   }
 
+  get otpEmailConfirmDraft(): string {
+    return this.#otpEmailConfirmDraft;
+  }
+
   get otpPhoneDraft(): string {
     return this.#otpPhoneDraft;
+  }
+
+  get otpPhoneConfirmDraft(): string {
+    return this.#otpPhoneConfirmDraft;
   }
 
   get hasConfiguredAnyX(): boolean {
@@ -152,6 +167,9 @@ export class GatingStore {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return locale.t("links.linkForm.lock.otp.errors.emailInvalid");
+    if (email !== this.#otpEmailConfirmDraft.trim()) {
+      return locale.t("links.linkForm.lock.otp.errors.emailsDifferent");
+    }
     return null;
   }
 
@@ -162,6 +180,9 @@ export class GatingStore {
     }
     if (!/^\+?[\d\s\-()]{7,20}$/.test(phone))
       return locale.t("links.linkForm.lock.otp.errors.phoneInvalid");
+    if (phone !== this.#otpPhoneConfirmDraft.trim()) {
+      return locale.t("links.linkForm.lock.otp.errors.phoneNumbersDifferent");
+    }
     return null;
   }
 
@@ -328,11 +349,14 @@ export class GatingStore {
         case GateType.OTP_EMAIL:
           this.#otpEmail = gateDraft.email;
           this.#otpEmailDraft = gateDraft.email;
+          this.#otpEmailConfirmDraft = gateDraft.email;
           break;
         case GateType.OTP_SMS:
           this.#otpPhone = gateDraft.phone;
           this.#otpPhoneDraft = gateDraft.phone;
+          this.#otpPhoneConfirmDraft = gateDraft.phone;
           this.#otpPhoneDigits = gateDraft.digits;
+          this.#otpPhoneConfirmDigits = gateDraft.digits;
           this.#otpCountryCode = gateDraft.countryCode;
           break;
       }
@@ -454,8 +478,20 @@ export class GatingStore {
     this.#otpEmailDraft = email;
   }
 
+  setOTPEmailConfirmDraft(email: string): void {
+    this.#otpEmailConfirmDraft = email;
+  }
+
   setOTPPhoneDraft(phone: string): void {
     this.#otpPhoneDraft = phone;
+  }
+
+  setOTPPhoneConfirmDraft(phone: string): void {
+    this.#otpPhoneConfirmDraft = phone;
+  }
+
+  setOTPPhoneConfirmDigits(digits: string): void {
+    this.#otpPhoneConfirmDigits = digits;
   }
 
   saveOTPEmailLock(): void {
@@ -481,10 +517,14 @@ export class GatingStore {
 
   clearOTPEmailDraft(): void {
     this.#otpEmailDraft = "";
+    this.#otpEmailConfirmDraft = "";
   }
 
   clearOTPPhoneDraft(): void {
     this.#otpPhoneDraft = "";
+    this.#otpPhoneConfirmDraft = "";
+    this.#otpPhoneDigits = "";
+    this.#otpPhoneConfirmDigits = "";
   }
 
   resetAll(): void {
@@ -503,9 +543,12 @@ export class GatingStore {
     this.#xRetweetedPostDraft = "";
     this.#otpEmail = null;
     this.#otpEmailDraft = "";
+    this.#otpEmailConfirmDraft = "";
     this.#otpPhone = null;
     this.#otpPhoneDraft = "";
+    this.#otpPhoneConfirmDraft = "";
     this.#otpPhoneDigits = "";
+    this.#otpPhoneConfirmDigits = "";
     this.#otpCountryCode = "";
   }
 }
