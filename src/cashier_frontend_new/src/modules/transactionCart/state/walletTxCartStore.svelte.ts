@@ -14,7 +14,7 @@ import {
 } from "$modules/transactionCart/types/txCart";
 import { ReceiveAddressType } from "$modules/wallet/types";
 import { Err, Ok, type Result } from "ts-results-es";
-import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
+import { createDeduplicationMemo } from "$modules/token/utils/memo";
 
 /**
  * Transaction cart store for Wallet-based (ICRC/ICP) transactions.
@@ -89,7 +89,7 @@ export class WalletTxCartStore implements TxCartStore {
     // Must include both principal (owner) and timestamp to reduce collisions across users.
     const id = `${owner}-${nowMs}-${nonce}`;
     return {
-      memo: createDeduplicationMemo32(id),
+      memo: createDeduplicationMemo(id),
       createdAtTime: BigInt(nowMs) * 1_000_000n,
     };
   }
