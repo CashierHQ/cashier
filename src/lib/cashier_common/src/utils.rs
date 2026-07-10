@@ -32,14 +32,14 @@ pub fn to_subaccount(id: &str) -> Result<Subaccount, String> {
     Ok(subaccount)
 }
 
-/// Converts a string UUID to a 32-byte Memo format for ICRC transactions
+/// Converts a string UUID to a 16-byte Memo format for ICRC transactions
 ///
-/// This function takes a string UUID and converts it to a 32-byte memo where:
-/// - The first 16 bytes contain the UUID bytes
-/// - The remaining 16 bytes are zeros (for padding)
+/// This function takes a string UUID and converts it to a memo containing exactly
+/// the UUID's 16 bytes, with no padding. Some ICRC ledgers cap the memo field at
+/// 16 bytes (rather than the ICRC-1 default of 32), so the memo must not exceed that.
 ///
-/// Used for creating memos in ICRC1 transfers and ICRC2 transfer_from operations
-/// to maintain traceability of transactions.
+/// Used for creating memos in ICRC1 transfers, ICRC2 approve, and ICRC2
+/// transfer_from operations to maintain traceability of transactions.
 pub fn to_memo(id: &str) -> Result<Memo, String> {
     let uuid = match Uuid::parse_str(id) {
         Ok(u) => u,
@@ -47,10 +47,7 @@ pub fn to_memo(id: &str) -> Result<Memo, String> {
     };
     let uuid_bytes = uuid.as_bytes();
 
-    let mut memo: [u8; 32] = [0; 32];
-    memo[..16].copy_from_slice(&uuid_bytes[0..]);
-
-    Ok(Memo(ByteBuf::from(memo.to_vec())))
+    Ok(Memo(ByteBuf::from(uuid_bytes.to_vec())))
 }
 
 /// Converts a Nat value to u64, returning an error if the value is too large
@@ -131,4 +128,35 @@ pub fn get_link_ext_account(link_id: &str, canister_id: Principal) -> Result<Acc
         owner: canister_id,
         subaccount: Some(subaccount),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_should_produce_a_16_byte_memo_from_a_uuid() {
+        let id = "550e8400-e29b-41d4-a716-446655440000";
+        let uuid = Uuid::parse_str(id).unwrap();
+
+        let memo = to_memo(id).unwrap();
+
+        assert_eq!(memo.0.len(), 16);
+        assert_eq!(memo.0.as_slice(), uuid.as_bytes().as_slice());
+    }
+
+    #[test]
+    fn it_should_fail_to_memo_for_an_invalid_uuid() {
+        let result = to_memo("not-a-uuid");
+
+        assert_eq!(result, Err("Invalid UUID format".to_string()));
+    }
+
+    #[test]
+    fn it_should_produce_different_memos_for_different_uuids() {
+        let a = to_memo("550e8400-e29b-41d4-a716-446655440000").unwrap();
+        let b = to_memo("6ba7b810-9dad-11d1-80b4-00c04fd430c8").unwrap();
+
+        assert_ne!(a.0, b.0);
+    }
 }

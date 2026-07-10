@@ -13,7 +13,7 @@ import { Ok } from "ts-results-es";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
-import { createDeduplicationMemo32 } from "$modules/token/utils/memo32";
+import { createDeduplicationMemo } from "$modules/token/utils/memo";
 import { WalletTxCartStore } from "$modules/transactionCart/state/walletTxCartStore.svelte";
 
 // Mock constants
@@ -139,7 +139,7 @@ describe("WalletTxCartStore", () => {
       expect(store).toBeInstanceOf(WalletTxCartStore);
     });
 
-    it("should create memo <= 32 bytes and deterministic for fixed inputs", async () => {
+    it("should create memo <= 16 bytes and deterministic for fixed inputs", async () => {
       vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
       const cryptoMock: Pick<Crypto, "randomUUID"> = {
         randomUUID: () => "00000000-0000-0000-0000-000000000000",
@@ -159,15 +159,15 @@ describe("WalletTxCartStore", () => {
       const deduplication = mockTransferToAccount.mock.calls[0][2];
       const expectedId =
         "principal-abc-1700000000000-00000000-0000-0000-0000-000000000000";
-      expect(deduplication.memo).toEqual(createDeduplicationMemo32(expectedId));
+      expect(deduplication.memo).toEqual(createDeduplicationMemo(expectedId));
       expect(deduplication.memo).toBeInstanceOf(Uint8Array);
       expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
-        32,
+        16,
       );
       expect(deduplication.createdAtTime).toBe(1700000000000n * 1_000_000n);
     });
 
-    it("should keep memo <= 32 bytes even when owner is long", async () => {
+    it("should keep memo <= 16 bytes even when owner is long", async () => {
       vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000);
       const cryptoMock: Pick<Crypto, "randomUUID"> = {
         randomUUID: () => "00000000-0000-0000-0000-000000000000",
@@ -187,7 +187,7 @@ describe("WalletTxCartStore", () => {
 
       const deduplication = mockTransferToAccount.mock.calls[0][2];
       expect((deduplication.memo as Uint8Array).byteLength).toBeLessThanOrEqual(
-        32,
+        16,
       );
     });
   });
