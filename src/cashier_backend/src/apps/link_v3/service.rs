@@ -206,6 +206,28 @@ impl<R: Repositories> LinkV3Service<R> {
             creator,
         );
 
+        // Reject a new claim while the caller already has a pending (not yet
+        // successful) action for this link+type. Repeat claims are only
+        // allowed once the previous one has resolved, so this closes the
+        // race that used to be prevented by accident (e.g. two tabs).
+        if let Some(existing_actions) = self
+            .user_link_action_repository
+            .get_actions_by_user_link_and_type(creator, link_id, &action_model.action_type)
+        {
+            let has_pending = existing_actions.iter().any(|link_action| {
+                self.action_service
+                    .get_action_data(&link_action.action_id)
+                    .map(|data| data.action.state != ActionState::Success)
+                    .unwrap_or(false)
+            });
+
+            if has_pending {
+                return Err(CanisterError::ValidationErrors(
+                    "A pending action already exists for this link".to_string(),
+                ));
+            }
+        }
+
         let link_instance = LinkFactoryV3::create_from_link_model(link_model, canister_id)?;
         let result = link_instance
             .create_action(
@@ -229,15 +251,16 @@ impl<R: Repositories> LinkV3Service<R> {
             link_user_state: None,
         };
 
+        // store_action_data already records the LinkAction in
+        // user_link_action_repository — do not insert it a second time here,
+        // or every claim would be double-counted in get_link_details's actions.
         self.action_service.store_action_data(
-            link_action.clone(),
+            link_action,
             result.create_action_result.action.clone(),
             result.create_action_result.intents.clone(),
             result.create_action_result.intent_txs_map.clone(),
             result.create_action_result.action.creator,
         )?;
-
-        self.user_link_action_repository.create(link_action);
 
         // format response
         let link_shared = result.link.to_shared();
@@ -434,41 +457,47 @@ impl<R: Repositories> LinkV3Service<R> {
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        // pick first Action and link_user_state
-        let (action, link_user_state) = self
-            .action_service
-            .get_first_action(&caller, link_id, options);
+        // fetch all of the caller's actions for this link+type, so repeat
+        // claims can be resumed or started fresh rather than always
+        // resolving to the very first action ever created.
+        let actions = self.action_service.get_actions(&caller, link_id, options);
 
-        // build response dto
+        // the first not-yet-successful action (by creation order) is the one
+        // to resume; icrc112_requests are only ever built for it.
+        let pending_index = actions.iter().position(|a| a.state != ActionState::Success);
+
         let link_shared = link_model.to_shared();
-        let (action_shared, icrc112_requests): (Option<SharedAction>, Option<Icrc112Requests>) =
-            if let Some(action) = action {
-                let action_data = self
-                    .action_service
-                    .get_action_data(&action.id)
-                    .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+        let mut icrc112_requests: Option<Icrc112Requests> = None;
+        let mut actions_shared: Vec<SharedAction> = Vec::with_capacity(actions.len());
 
+        for (idx, action) in actions.into_iter().enumerate() {
+            let action_data = self
+                .action_service
+                .get_action_data(&action.id)
+                .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
+
+            if Some(idx) == pending_index {
                 let create_action_result = transaction_manager.create_action(
                     action,
                     action_data.intents,
                     Some(action_data.intent_txs),
                 )?;
 
-                let action_shared = create_action_result
-                    .action
-                    .to_shared(create_action_result.intents);
-                let icrc112_requests = create_action_result.icrc112_requests;
-
-                (Some(action_shared), icrc112_requests)
+                icrc112_requests = create_action_result.icrc112_requests;
+                actions_shared.push(
+                    create_action_result
+                        .action
+                        .to_shared(create_action_result.intents),
+                );
             } else {
-                (None, None)
-            };
+                actions_shared.push(action.to_shared(action_data.intents));
+            }
+        }
 
         Ok(GetLinkResponseV3 {
             link: link_shared,
-            action: action_shared,
+            actions: actions_shared,
             icrc112_requests,
-            link_user_state,
         })
     }
 
@@ -1491,10 +1520,212 @@ mod tests {
 
         // Assert
         assert_eq!(response.link.id, created.link.id);
-        assert!(response.action.is_some());
+        assert_eq!(response.actions.len(), 1);
         assert_eq!(
-            response.action.expect("action should exist").action_type,
+            response.actions[0].action_type,
             SharedActionType::CreateLink
+        );
+    }
+
+    /// Seeds a RECEIVE `LinkAction`/`ActionV3` pair directly into the repositories,
+    /// bypassing the full create_action flow, so tests can set up a specific
+    /// combination of prior claims (e.g. one Success + one still pending) cheaply.
+    fn seed_receive_action(
+        service: &mut LinkV3Service<TestRepositories>,
+        link_id: &str,
+        user_id: Principal,
+        state: ActionState,
+    ) -> String {
+        let action_id = random_id_string();
+        let action = ActionV3 {
+            id: action_id.clone(),
+            action_type: ActionType::Receive,
+            state,
+            creator: user_id,
+            creator_address_type: AddressTypeV3::User,
+            link_id: link_id.to_string(),
+            intent_ids: vec![],
+        };
+        let link_action = LinkAction {
+            link_id: link_id.to_string(),
+            action_type: ActionType::Receive,
+            action_id: action_id.clone(),
+            user_id,
+            link_user_state: None,
+        };
+        service
+            .action_service
+            .store_action_data(
+                link_action,
+                action,
+                vec![],
+                std::collections::HashMap::new(),
+                user_id,
+            )
+            .expect("store action data should succeed");
+        action_id
+    }
+
+    #[tokio::test]
+    async fn it_should_return_all_actions_for_user_with_multiple_claims() {
+        // Arrange — a link with two of the same user's RECEIVE actions: one already
+        // Success (a prior claim) and one still pending (a resumable in-flight claim).
+        // Previously get_link_details only ever surfaced the first action ever
+        // created, permanently hiding later claims from the caller.
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let receiver = random_principal_id();
+        let link_id = random_id_string();
+        service
+            .link_v3_repository
+            .create(fixture_of_link_v3(&link_id, creator, LinkState::Active));
+
+        seed_receive_action(&mut service, &link_id, receiver, ActionState::Success);
+        seed_receive_action(&mut service, &link_id, receiver, ActionState::Created);
+
+        // Act
+        let response = service
+            .get_link_details(
+                receiver,
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+                MockTransactionManagerV3::default(),
+            )
+            .await
+            .expect("get link details should succeed");
+
+        // Assert — both of the user's claims are returned, not just the first.
+        assert_eq!(response.actions.len(), 2);
+        assert_eq!(response.actions[0].action_state, SharedActionState::Success);
+        assert_eq!(response.actions[1].action_state, SharedActionState::Created);
+    }
+
+    #[tokio::test]
+    async fn it_should_not_call_transaction_manager_for_a_completed_only_action_set() {
+        // Arrange — only an already-Success claim (no pending action). The mock
+        // transaction manager is configured to fail every create_action call; if
+        // get_link_details incorrectly invoked it for the completed action too,
+        // this test would fail.
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let receiver = random_principal_id();
+        let link_id = random_id_string();
+        service
+            .link_v3_repository
+            .create(fixture_of_link_v3(&link_id, creator, LinkState::Active));
+
+        seed_receive_action(&mut service, &link_id, receiver, ActionState::Success);
+
+        let mut failing_transaction_manager = MockTransactionManagerV3::default();
+        failing_transaction_manager.set_failed(true);
+
+        // Act
+        let response = service
+            .get_link_details(
+                receiver,
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+                failing_transaction_manager,
+            )
+            .await;
+
+        // Assert
+        assert!(
+            response.is_ok(),
+            "a failing transaction manager must not be invoked for a completed action: {response:?}"
+        );
+        assert_eq!(response.unwrap().actions.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn it_should_propagate_error_when_pending_action_transaction_manager_fails() {
+        // Arrange — a pending (not yet successful) claim. get_link_details must build
+        // icrc112_requests for it via the transaction manager, so a failure there must
+        // surface as an error rather than being silently swallowed.
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let receiver = random_principal_id();
+        let link_id = random_id_string();
+        service
+            .link_v3_repository
+            .create(fixture_of_link_v3(&link_id, creator, LinkState::Active));
+
+        seed_receive_action(&mut service, &link_id, receiver, ActionState::Created);
+
+        let mut failing_transaction_manager = MockTransactionManagerV3::default();
+        failing_transaction_manager.set_failed(true);
+
+        // Act
+        let response = service
+            .get_link_details(
+                receiver,
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+                failing_transaction_manager,
+            )
+            .await;
+
+        // Assert
+        assert!(response.is_err());
+    }
+
+    #[tokio::test]
+    async fn it_should_reject_create_action_when_pending_action_already_exists() {
+        // Arrange — the caller already has a pending (not yet successful) RECEIVE
+        // action for this link. A second concurrent claim attempt (e.g. two tabs)
+        // must be rejected rather than creating a second pending action.
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let receiver = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+        let created_at = 1_000_000;
+        let link_id = random_id_string();
+        service
+            .link_v3_repository
+            .create(fixture_of_link_v3(&link_id, creator, LinkState::Active));
+
+        seed_receive_action(&mut service, &link_id, receiver, ActionState::Created);
+
+        let (token_fee_service, token_standard_service, token_balance_service) =
+            fixture_of_services(created_at);
+
+        // Act
+        let result = service
+            .create_action(
+                &link_id,
+                fixture_of_shared_action(
+                    SharedActionType::Receive,
+                    receiver,
+                    canister_id,
+                    ledger_id,
+                ),
+                receiver,
+                canister_id,
+                created_at,
+                MockTransactionManagerV3::default(),
+                token_fee_service,
+                token_standard_service,
+                token_balance_service,
+                make_gate_validator(&repositories),
+                0,
+            )
+            .await;
+
+        // Assert
+        assert!(
+            matches!(result, Err(CanisterError::ValidationErrors(_))),
+            "creating a second pending action while one exists must be rejected, got {result:?}"
         );
     }
 

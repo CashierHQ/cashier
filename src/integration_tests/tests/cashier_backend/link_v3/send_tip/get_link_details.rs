@@ -123,7 +123,8 @@ async fn it_should_succeed_get_link_details_with_create_action_succeeded() {
         assert_eq!(link.id, link_id);
         assert_eq!(link.link_state, LinkStateShared::Active);
         assert!(link.asset_info[0].available_amount.is_some());
-        let action = get_link_result.action.unwrap();
+        assert_eq!(get_link_result.actions.len(), 1);
+        let action = &get_link_result.actions[0];
         assert_eq!(action.action_state, ActionStateShared::Success);
         assert_eq!(action.intents.len(), 2);
         let intent0 = &action.intents[0];
@@ -169,7 +170,7 @@ async fn it_should_succeed_get_link_details_with_option_action_not_existent() {
         let link = get_link_result.link;
         assert_eq!(link.id, link_id);
         assert_eq!(link.link_state, LinkStateShared::Active);
-        assert!(get_link_result.action.is_none());
+        assert!(get_link_result.actions.is_empty());
 
         Ok(())
     })

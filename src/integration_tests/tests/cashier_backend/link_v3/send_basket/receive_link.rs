@@ -6,7 +6,7 @@ use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
     link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3},
-    repository::{action::v1::ActionType, link_action::v1::LinkUserState},
+    repository::action::v1::ActionType,
 };
 use cashier_shared::types::{
     ActionState as ActionStateShared, ActionType as ActionTypeShared,
@@ -310,7 +310,11 @@ async fn it_should_succeed_receive_basket_link() {
             .await;
         assert!(link_detail_result.is_ok());
         let link_detail = link_detail_result.unwrap();
-        assert_eq!(link_detail.link_user_state, Some(LinkUserState::Completed));
+        assert_eq!(link_detail.actions.len(), 1);
+        assert_eq!(
+            link_detail.actions[0].action_state,
+            ActionStateShared::Success
+        );
 
         Ok(())
     })
