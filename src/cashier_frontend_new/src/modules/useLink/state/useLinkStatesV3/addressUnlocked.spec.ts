@@ -193,7 +193,11 @@ describe("AddressUnlockedStateV3", () => {
 
       expect(mocks.processActionV3).toHaveBeenCalledWith("action-1");
       expect(mocks.refreshAsync).toHaveBeenCalled();
-      expect(storeWithReceiveAction.state).toBeInstanceOf(CompletedStateV3);
+      // The next state (stay AddressUnlocked to allow another claim, or move
+      // to Completed once the link has ended) is now decided by
+      // UserLinkStoreV3's reconciling effect from the refreshed data, not
+      // forced here — a successful claim no longer always means "done".
+      expect(storeWithReceiveAction.state).not.toBeInstanceOf(CompletedStateV3);
       expect(result).toBe(backendResponse);
     });
 

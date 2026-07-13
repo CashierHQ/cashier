@@ -25,7 +25,6 @@
     shouldRedirectTo404,
   } from "$modules/useLink/utils/errorHandler";
   import { onDestroy, onMount } from "svelte";
-  import { ActionState } from "$shared/types";
 
   const {
     onIsLinkChange,
@@ -52,13 +51,10 @@
   let useWalletLockedTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
+  // userStore.action already only ever resolves to a pending (not yet
+  // successful) action — see UserLinkStoreV3.action / LinkDetailStoreV3.action.
   let isCartOpen = $derived.by(() => {
-    return !!(
-      userStore?.action !== null &&
-      userStore?.link !== null &&
-      userStore?.action &&
-      userStore.action.state != ActionState.Success
-    );
+    return !!(userStore?.action && userStore?.link);
   });
 
   const onCloseDrawer = () => {

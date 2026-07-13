@@ -3,8 +3,8 @@ import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.s
 import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
 import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
-import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
+import { isLinkEnded } from "$modules/links/utils/linkEnded";
 import { userLinkRepository } from "$modules/useLink/repositories/userLinkRepository";
 import type {
   UserActionCapableStateV3,
@@ -50,11 +50,28 @@ export class UserLinkStoreV3 {
       this.syncUserLink();
     });
 
-    // react to backend-driven user state changes (e.g., completed)
+    // Reconcile state with backend-driven data: as long as the link isn't
+    // ended, the user can always start a fresh claim (or resume a pending
+    // one) even after previously completing one — multiple claims per user
+    // are allowed while slots remain. Only once the link has ended, and there
+    // is no pending action to resume, does the user land on Completed.
+    // Unlike the old one-directional effect (which only ever pushed toward
+    // Completed and could never reverse), this also moves a user back off a
+    // stale/persisted Completed step once the backend confirms they can
+    // claim again.
     $effect(() => {
-      const s = this.linkDetail.query.data?.link_user_state;
-      if (s === LinkUserState.COMPLETED) {
+      if (!this.linkDetail.query.data) return;
+
+      const nextStep = resolveReconciledStep(
+        !!this.linkDetail.action,
+        isLinkEnded(this.link),
+        this.#state.step,
+      );
+
+      if (nextStep === UserLinkStep.COMPLETED) {
         this.#state = new CompletedStateV3();
+      } else if (nextStep === UserLinkStep.ADDRESS_UNLOCKED) {
+        this.#state = new AddressUnlockedStateV3(this);
       }
     });
 
@@ -228,6 +245,7 @@ export class UserLinkStoreV3 {
 
   /**
    * Check if the current state supports user actions
+   * @param state The current state
    * @returns True if the current state supports user actions, false otherwise
    */
   private isActionCapable(
@@ -244,4 +262,29 @@ export class UserLinkStoreV3 {
     if (!this.link) return null;
     return findUseActionTypeFromLinkType(this.link.link_type);
   }
+}
+
+/**
+ * Pure decision logic for the state-reconciliation effect above, extracted so
+ * it can be unit tested directly without needing a live Svelte effect root.
+ * @param hasPendingAction Whether the link has a pending action to resume
+ * @param linkEnded Whether the link has ended (no more claims possible)
+ * @param currentStep The current step in the user link flow
+ * @returns the step to transition to, or `null` if the current step should
+ * be left alone.
+ */
+export function resolveReconciledStep(
+  hasPendingAction: boolean,
+  linkEnded: boolean,
+  currentStep: UserLinkStep,
+): UserLinkStep | null {
+  if (linkEnded && !hasPendingAction) {
+    return currentStep !== UserLinkStep.COMPLETED
+      ? UserLinkStep.COMPLETED
+      : null;
+  }
+  if (currentStep === UserLinkStep.COMPLETED) {
+    return UserLinkStep.ADDRESS_UNLOCKED;
+  }
+  return null;
 }

@@ -1,7 +1,10 @@
 import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
+import {
+  resolveReconciledStep,
+  UserLinkStoreV3,
+} from "$modules/useLink/state/userLinkStoreV3.svelte";
 
 const mocks = vi.hoisted(() => ({
   LinkDetailStoreV3: vi.fn(),
@@ -322,6 +325,73 @@ describe("UserLinkStoreV3", () => {
 
       expect(processAction).toHaveBeenCalled();
       expect(result).toEqual({ id: "processed-action", is_success: true });
+    });
+  });
+
+  // UserLinkStoreV3's reconciling $effect only decides state transitions by
+  // delegating to this pure function, so it's tested directly here rather
+  // than through the store (this spec file runs in a plain Node
+  // environment with no Svelte effect root, so $effect bodies never fire).
+  describe("resolveReconciledStep", () => {
+    it("it_should_resume_a_stale_completed_step_when_a_pending_action_exists", () => {
+      const nextStep = resolveReconciledStep(
+        true,
+        false,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
+    });
+
+    it("it_should_allow_a_fresh_claim_from_a_stale_completed_step_when_no_pending_action_and_link_not_ended", () => {
+      const nextStep = resolveReconciledStep(
+        false,
+        false,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
+    });
+
+    it("it_should_move_to_completed_when_no_pending_action_and_link_has_ended", () => {
+      const nextStep = resolveReconciledStep(
+        false,
+        true,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.COMPLETED);
+    });
+
+    it("it_should_not_move_to_completed_when_a_pending_action_exists_even_if_link_has_ended", () => {
+      const nextStep = resolveReconciledStep(
+        true,
+        true,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      );
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_leave_an_already_completed_step_alone_when_link_is_ended_and_no_pending_action", () => {
+      const nextStep = resolveReconciledStep(
+        false,
+        true,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_leave_landing_and_gated_steps_alone_when_link_is_active_with_no_pending_action", () => {
+      for (const currentStep of [
+        UserLinkStep.LANDING,
+        UserLinkStep.ADDRESS_LOCKED,
+        UserLinkStep.GATE,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      ]) {
+        expect(resolveReconciledStep(false, false, currentStep)).toBeNull();
+      }
     });
   });
 

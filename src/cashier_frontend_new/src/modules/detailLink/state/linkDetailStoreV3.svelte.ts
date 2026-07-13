@@ -17,9 +17,11 @@ import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import type { Action as SharedAction } from "$shared";
 import {
+  ActionState as SharedActionState,
   ActionType as SharedActionType,
   LinkState as SharedLinkState,
 } from "$shared";
+import type Action from "$modules/links/types/action/action";
 import { Principal } from "@icp-sdk/core/principal";
 import { Err, Ok, Result } from "ts-results-es";
 
@@ -94,21 +96,56 @@ export class LinkDetailStoreV3 {
     return this.#linkDetailQuery.data?.link;
   }
 
+  /**
+   * The current user's pending (not yet successful) action for this link, if any.
+   * This is the action to resume via the tx cart. Replaces the old singular
+   * `action`, which used to be whichever action the backend happened to return
+   * first — now the backend returns all of the user's actions, so "pending" must
+   * be derived explicitly rather than assumed.
+   */
   get action() {
-    if (!this.backendAction) {
+    if (!this.pendingBackendAction) {
       return undefined;
     }
     return ActionMapper.fromSharedAction(
-      this.backendAction,
+      this.pendingBackendAction,
       this.icrc112Requests,
     );
   }
 
   /**
-   * Get action from the query result
+   * All of the current user's actions for this link (not just the pending one).
    */
-  get backendAction() {
-    return this.#linkDetailQuery.data?.action;
+  get actions(): SharedAction[] {
+    return this.#linkDetailQuery.data?.actions ?? [];
+  }
+
+  /**
+   * The first not-yet-successful action, if any — the one to resume.
+   */
+  get pendingBackendAction(): SharedAction | undefined {
+    return this.actions.find(
+      (action) => action.action_state !== SharedActionState.Success,
+    );
+  }
+
+  /**
+   * The owner-flow action for this link (e.g. CreateLink, Withdraw) — these
+   * action types only ever have a single action per link, so this prefers the
+   * pending one (to process/resume) and falls back to the existing one so
+   * owner-flow consumers can still see it once it succeeds.
+   */
+  get backendAction(): SharedAction | undefined {
+    return this.pendingBackendAction ?? this.actions[0];
+  }
+
+  /**
+   * All of the current user's successfully completed actions for this link.
+   */
+  get completedActions(): Action[] {
+    return this.actions
+      .filter((action) => action.action_state === SharedActionState.Success)
+      .map((action) => ActionMapper.fromSharedAction(action, undefined));
   }
 
   /**

@@ -14,19 +14,16 @@ export class UserLinkStoreV3ViewModelAdapter implements GenericUserLinkStoreVM {
     return this.userLinkStoreV3.action ?? undefined;
   }
 
+  get completedActions() {
+    return this.userLinkStoreV3.linkDetail.completedActions;
+  }
+
   get state() {
     return this.userLinkStoreV3.state;
   }
 
   get step() {
     return this.userLinkStoreV3.step;
-  }
-
-  get link_user_state() {
-    if (!this.userLinkStoreV3.query.data) {
-      return undefined;
-    }
-    return this.userLinkStoreV3.query.data.link_user_state;
   }
 
   async createAction(actionType: ActionTypeValue) {

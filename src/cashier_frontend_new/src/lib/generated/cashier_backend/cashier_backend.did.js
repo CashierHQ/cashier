@@ -253,6 +253,32 @@ export const idlFactory = ({ IDL }) => {
     'address' : IDL.Principal,
     'network_fee' : IDL.Opt(IDL.Nat),
   });
+  const AssetInfo = IDL.Record({
+    'asset' : Asset_1,
+    'label' : IDL.Text,
+    'available_amount' : IDL.Opt(IDL.Nat),
+    'amount' : IDL.Nat,
+  });
+  const LinkState_1 = IDL.Variant({
+    'Ended' : IDL.Null,
+    'Preview' : IDL.Null,
+    'ChooseType' : IDL.Null,
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+    'AddAsset' : IDL.Null,
+    'Created' : IDL.Null,
+  });
+  const Link = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'creator' : IDL.Principal,
+    'asset_info' : IDL.Vec(AssetInfo),
+    'link_state' : LinkState_1,
+    'link_type' : LinkType_1,
+    'created_at' : IDL.Opt(IDL.Nat64),
+    'use_count' : IDL.Nat64,
+    'max_use' : IDL.Nat64,
+  });
   const AddressType = IDL.Variant({
     'Gate' : IDL.Null,
     'Link' : IDL.Null,
@@ -288,36 +314,9 @@ export const idlFactory = ({ IDL }) => {
     'creator_address_type' : AddressType,
     'intent_ids' : IDL.Opt(IDL.Vec(IDL.Text)),
   });
-  const AssetInfo = IDL.Record({
-    'asset' : Asset_1,
-    'label' : IDL.Text,
-    'available_amount' : IDL.Opt(IDL.Nat),
-    'amount' : IDL.Nat,
-  });
-  const LinkState_1 = IDL.Variant({
-    'Ended' : IDL.Null,
-    'Preview' : IDL.Null,
-    'ChooseType' : IDL.Null,
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-    'AddAsset' : IDL.Null,
-    'Created' : IDL.Null,
-  });
-  const Link = IDL.Record({
-    'id' : IDL.Text,
-    'title' : IDL.Text,
-    'creator' : IDL.Principal,
-    'asset_info' : IDL.Vec(AssetInfo),
-    'link_state' : LinkState_1,
-    'link_type' : LinkType_1,
-    'created_at' : IDL.Opt(IDL.Nat64),
-    'use_count' : IDL.Nat64,
-    'max_use' : IDL.Nat64,
-  });
   const GetLinkResponseV3 = IDL.Record({
-    'action' : IDL.Opt(Action),
-    'link_user_state' : IDL.Opt(LinkUserState),
     'link' : Link,
+    'actions' : IDL.Vec(Action),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
   const Result_3 = IDL.Variant({
@@ -466,9 +465,8 @@ export const idlFactory = ({ IDL }) => {
     'gate' : Gate,
   });
   const GetLinkDetailsResponseV3 = IDL.Record({
-    'action' : IDL.Opt(Action),
-    'link_user_state' : IDL.Opt(LinkUserState),
     'link' : Link,
+    'actions' : IDL.Vec(Action),
     'gates' : IDL.Vec(GateForUser),
     'icrc112_requests' : IDL.Opt(IDL.Vec(IDL.Vec(Icrc112Request))),
   });
