@@ -193,11 +193,10 @@ describe("AddressUnlockedStateV3", () => {
 
       expect(mocks.processActionV3).toHaveBeenCalledWith("action-1");
       expect(mocks.refreshAsync).toHaveBeenCalled();
-      // The next state (stay AddressUnlocked to allow another claim, or move
-      // to Completed once the link has ended) is now decided by
-      // UserLinkStoreV3's reconciling effect from the refreshed data, not
-      // forced here — a successful claim no longer always means "done".
-      expect(storeWithReceiveAction.state).not.toBeInstanceOf(CompletedStateV3);
+      // A successful claim always ends the flow at Completed, regardless of
+      // remaining slots — multiple claims are supported by reopening the
+      // link fresh, not by staying on AddressUnlocked after claiming.
+      expect(storeWithReceiveAction.state).toBeInstanceOf(CompletedStateV3);
       expect(result).toBe(backendResponse);
     });
 

@@ -2,7 +2,7 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  resolveReconciledStep,
+  resolveStaleCompletedStep,
   UserLinkStoreV3,
 } from "$modules/useLink/state/userLinkStoreV3.svelte";
 
@@ -328,13 +328,13 @@ describe("UserLinkStoreV3", () => {
     });
   });
 
-  // UserLinkStoreV3's reconciling $effect only decides state transitions by
-  // delegating to this pure function, so it's tested directly here rather
-  // than through the store (this spec file runs in a plain Node
+  // UserLinkStoreV3's one-shot stale-Completed effect only decides state
+  // transitions by delegating to this pure function, so it's tested directly
+  // here rather than through the store (this spec file runs in a plain Node
   // environment with no Svelte effect root, so $effect bodies never fire).
-  describe("resolveReconciledStep", () => {
-    it("it_should_resume_a_stale_completed_step_when_a_pending_action_exists", () => {
-      const nextStep = resolveReconciledStep(
+  describe("resolveStaleCompletedStep", () => {
+    it("it_should_resume_to_address_unlocked_when_completed_step_has_a_pending_action", () => {
+      const nextStep = resolveStaleCompletedStep(
         true,
         false,
         UserLinkStep.COMPLETED,
@@ -343,54 +343,54 @@ describe("UserLinkStoreV3", () => {
       expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
     });
 
-    it("it_should_allow_a_fresh_claim_from_a_stale_completed_step_when_no_pending_action_and_link_not_ended", () => {
-      const nextStep = resolveReconciledStep(
+    it("it_should_restart_from_landing_when_completed_step_has_no_pending_action_and_link_not_ended", () => {
+      const nextStep = resolveStaleCompletedStep(
         false,
         false,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.LANDING);
+    });
+
+    it("it_should_leave_completed_step_alone_when_link_has_truly_ended_and_no_pending_action", () => {
+      const nextStep = resolveStaleCompletedStep(
+        false,
+        true,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_prefer_resuming_a_pending_action_over_restarting_even_if_link_has_ended", () => {
+      const nextStep = resolveStaleCompletedStep(
+        true,
+        true,
         UserLinkStep.COMPLETED,
       );
 
       expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
     });
 
-    it("it_should_move_to_completed_when_no_pending_action_and_link_has_ended", () => {
-      const nextStep = resolveReconciledStep(
-        false,
-        true,
-        UserLinkStep.ADDRESS_UNLOCKED,
-      );
-
-      expect(nextStep).toBe(UserLinkStep.COMPLETED);
-    });
-
-    it("it_should_not_move_to_completed_when_a_pending_action_exists_even_if_link_has_ended", () => {
-      const nextStep = resolveReconciledStep(
-        true,
-        true,
-        UserLinkStep.ADDRESS_UNLOCKED,
-      );
-
-      expect(nextStep).toBeNull();
-    });
-
-    it("it_should_leave_an_already_completed_step_alone_when_link_is_ended_and_no_pending_action", () => {
-      const nextStep = resolveReconciledStep(
-        false,
-        true,
-        UserLinkStep.COMPLETED,
-      );
-
-      expect(nextStep).toBeNull();
-    });
-
-    it("it_should_leave_landing_and_gated_steps_alone_when_link_is_active_with_no_pending_action", () => {
+    it("it_should_leave_non_completed_steps_alone_regardless_of_pending_or_ended_state", () => {
       for (const currentStep of [
         UserLinkStep.LANDING,
         UserLinkStep.ADDRESS_LOCKED,
         UserLinkStep.GATE,
         UserLinkStep.ADDRESS_UNLOCKED,
       ]) {
-        expect(resolveReconciledStep(false, false, currentStep)).toBeNull();
+        for (const hasPendingAction of [true, false]) {
+          for (const linkEnded of [true, false]) {
+            expect(
+              resolveStaleCompletedStep(
+                hasPendingAction,
+                linkEnded,
+                currentStep,
+              ),
+            ).toBeNull();
+          }
+        }
       }
     });
   });

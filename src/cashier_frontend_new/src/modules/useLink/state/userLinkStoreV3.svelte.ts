@@ -12,7 +12,6 @@ import type {
 } from "$modules/useLink/state/useLinkStatesV3";
 import { AddressLockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressLocked";
 import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
-import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 import { findUseActionTypeFromLinkType } from "$modules/useLink/utils/useActionTypeFromLinkType";
 import { userLinkStateFromStepV3 } from "$modules/useLink/utils/userLinkStateFromStep";
@@ -23,6 +22,7 @@ import { userLinkStateFromStepV3 } from "$modules/useLink/utils/userLinkStateFro
 export class UserLinkStoreV3 {
   #state = $state<UserLinkStateV3>(new LandingStateV3(this));
   #persistedStateRestoredOwner = $state<string | null>(null);
+  #hasReconciledStaleCompletedStep = false;
   public linkDetail: LinkDetailStoreV3;
 
   constructor({ id }: { id: string }) {
@@ -50,26 +50,21 @@ export class UserLinkStoreV3 {
       this.syncUserLink();
     });
 
-    // Reconcile state with backend-driven data: as long as the link isn't
-    // ended, the user can always start a fresh claim (or resume a pending
-    // one) even after previously completing one — multiple claims per user
-    // are allowed while slots remain. Only once the link has ended, and there
-    // is no pending action to resume, does the user land on Completed.
-    // Unlike the old one-directional effect (which only ever pushed toward
-    // Completed and could never reverse), this also moves a user back off a
-    // stale/persisted Completed step once the backend confirms they can
-    // claim again.
-    $effect(() => {
+    $effect.pre(() => {
+      if (this.linkDetail.query.isLoading) return;
+      if (this.#hasReconciledStaleCompletedStep) return;
+      this.#hasReconciledStaleCompletedStep = true;
+
       if (!this.linkDetail.query.data) return;
 
-      const nextStep = resolveReconciledStep(
+      const nextStep = resolveStaleCompletedStep(
         !!this.linkDetail.action,
         isLinkEnded(this.link),
         this.#state.step,
       );
 
-      if (nextStep === UserLinkStep.COMPLETED) {
-        this.#state = new CompletedStateV3();
+      if (nextStep === UserLinkStep.LANDING) {
+        this.#state = new LandingStateV3(this);
       } else if (nextStep === UserLinkStep.ADDRESS_UNLOCKED) {
         this.#state = new AddressUnlockedStateV3(this);
       }
@@ -265,26 +260,29 @@ export class UserLinkStoreV3 {
 }
 
 /**
- * Pure decision logic for the state-reconciliation effect above, extracted so
- * it can be unit tested directly without needing a live Svelte effect root.
+ * Resolve a stale persisted Completed step to the correct next step, if any.
+ * This is used to correct a persisted Completed step that is no longer valid
+ * due to changes in the link state (e.g. a pending action exists or the link
+ * has not ended).
  * @param hasPendingAction Whether the link has a pending action to resume
  * @param linkEnded Whether the link has ended (no more claims possible)
  * @param currentStep The current step in the user link flow
  * @returns the step to transition to, or `null` if the current step should
  * be left alone.
  */
-export function resolveReconciledStep(
+export function resolveStaleCompletedStep(
   hasPendingAction: boolean,
   linkEnded: boolean,
   currentStep: UserLinkStep,
 ): UserLinkStep | null {
-  if (linkEnded && !hasPendingAction) {
-    return currentStep !== UserLinkStep.COMPLETED
-      ? UserLinkStep.COMPLETED
-      : null;
+  if (currentStep !== UserLinkStep.COMPLETED) {
+    return null;
   }
-  if (currentStep === UserLinkStep.COMPLETED) {
+  if (hasPendingAction) {
     return UserLinkStep.ADDRESS_UNLOCKED;
+  }
+  if (!linkEnded) {
+    return UserLinkStep.LANDING;
   }
   return null;
 }
