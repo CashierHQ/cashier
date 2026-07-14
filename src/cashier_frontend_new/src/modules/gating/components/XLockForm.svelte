@@ -63,7 +63,7 @@
               (e.currentTarget as HTMLInputElement).value,
             )}
           placeholder={locale.t("links.linkForm.lock.xHandlePlaceholder")}
-          class="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed"
+          class="flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed sm:text-sm"
         />
         {#if ownedAccountEnabled && store.xOwnedAccountDraft}
           <button
@@ -120,7 +120,7 @@
               (e.currentTarget as HTMLInputElement).value,
             )}
           placeholder={locale.t("links.linkForm.lock.xHandlePlaceholder")}
-          class="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed"
+          class="flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed sm:text-sm"
         />
         {#if followingEnabled && store.xFollowingDraft}
           <button
@@ -178,7 +178,7 @@
             )}
           placeholder={locale.t("links.linkForm.lock.enterUrlPost") ??
             "https://x.com/user/status/..."}
-          class="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed"
+          class="flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed sm:text-sm"
         />
         {#if likedPostEnabled && store.xLikedPostDraft}
           <button
@@ -236,7 +236,7 @@
             )}
           placeholder={locale.t("links.linkForm.lock.enterUrlPost") ??
             "https://x.com/user/status/..."}
-          class="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed"
+          class="flex-1 bg-transparent text-[16px] text-foreground outline-none placeholder:text-[#d9d9d9] disabled:cursor-not-allowed sm:text-sm"
         />
         {#if retweetedPostEnabled && store.xRetweetedPostDraft}
           <button
