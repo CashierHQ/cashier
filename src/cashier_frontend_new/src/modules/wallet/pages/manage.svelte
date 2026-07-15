@@ -129,16 +129,16 @@
   });
 </script>
 
-<div>
+<div class="flex h-full min-h-0 flex-col">
   <NavBar
     mode="back-only"
     title={locale.t("wallet.manage.header")}
     onBack={onNavigateBack}
   />
 
-  <div>
+  <div class="flex min-h-0 flex-1 flex-col">
     <!-- Header -->
-    <div class="bg-white sticky top-0 z-10">
+    <div class="bg-white flex-none">
       <div class="px-4 py-3">
         <div class="flex gap-2 items-center">
           <div class="relative flex-1">
@@ -174,7 +174,7 @@
     </div>
 
     <!-- Content -->
-    <div class="px-4">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4">
       {#if walletStore.query.isSuccess && walletStore.query.data?.length && filteredTokens.length === 0}
         <div class="flex flex-col items-center justify-center py-16">
           <div

@@ -119,10 +119,10 @@
     {/if}
 
     <div
-      class="flex-1 flex flex-col overflow-y-auto p-4 {currentView.type ===
-      'main'
-        ? 'pt-10'
-        : ''}"
+      class="flex-1 min-h-0 flex flex-col p-4 {currentView.type ===
+      WalletViewType.MANAGE
+        ? 'overflow-hidden'
+        : 'overflow-y-auto'} {currentView.type === 'main' ? 'pt-10' : ''}"
     >
       {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
