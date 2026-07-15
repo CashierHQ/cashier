@@ -2,7 +2,6 @@
   import { locale } from "$lib/i18n";
   import {
     Drawer,
-    DrawerClose,
     DrawerContent,
     DrawerHeader,
     DrawerTitle,
@@ -12,7 +11,7 @@
     formatFeeBreakdownItem,
     formatLinkCreationFeeView,
   } from "$modules/links/utils/feesBreakdown";
-  import { ChevronLeft, X } from "lucide-svelte";
+  import { ChevronLeft } from "lucide-svelte";
 
   type FeeBreakdownItem = {
     name: string;
@@ -111,15 +110,6 @@
         >
           {locale.t("links.linkForm.preview.feesBreakdown")}
         </DrawerTitle>
-        <DrawerClose>
-          <X
-            size={28}
-            stroke-width={1.5}
-            class="cursor-pointer opacity-70 hover:opacity-100"
-            aria-hidden="true"
-            onclick={handleClose}
-          />
-        </DrawerClose>
       </div>
     </DrawerHeader>
     <div
