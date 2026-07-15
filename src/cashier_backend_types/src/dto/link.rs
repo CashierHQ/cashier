@@ -3,7 +3,6 @@
 
 use candid::{CandidType, Nat, Principal};
 
-use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
@@ -42,18 +41,6 @@ impl LinkDetailUpdateAssetInfoInput {
     pub fn is_changed(&self, asset_info: &AssetInfo) -> bool {
         self.to_model() != *asset_info
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
-pub enum LinkStateMachineGoto {
-    Continue,
-    Back,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct UpdateLinkInput {
-    pub id: String,
-    pub goto: LinkStateMachineGoto,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -161,18 +148,4 @@ pub struct LinkGetUserStateInput {
 pub struct LinkGetUserStateOutput {
     pub action: ActionDto,
     pub link_user_state: LinkUserState,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct LinkUpdateUserStateInput {
-    pub link_id: String,
-    pub action_type: ActionType,
-    pub anonymous_wallet_address: Option<Principal>,
-    pub goto: UserStateMachineGoto,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
-pub enum UserStateMachineGoto {
-    Continue,
-    Back,
 }

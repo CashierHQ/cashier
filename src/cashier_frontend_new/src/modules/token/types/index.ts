@@ -20,6 +20,3 @@ export type {
 // Display transaction types with mapper
 export type { DisplayTransaction } from "$modules/token/types/displayTransaction";
 export { DisplayTransactionMapper } from "$modules/token/types/displayTransaction";
-
-// Transaction group type
-export type { TransactionGroup } from "$modules/token/types/transactionGroup";
