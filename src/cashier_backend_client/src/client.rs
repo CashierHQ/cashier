@@ -6,7 +6,7 @@ use cashier_backend_types::{
     auth::Permission,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
+        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto},
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
@@ -249,13 +249,6 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: UpdateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
         self.client.update("user_update_action", ((input),)).await
-    }
-
-    pub async fn user_update_link(
-        &self,
-        input: UpdateLinkInput,
-    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("user_update_link", ((input),)).await
     }
 
     /// Retrieves a specific link by its ID with optional action data.

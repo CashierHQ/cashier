@@ -242,20 +242,13 @@
   });
 
   const transactionsByDate = $derived.by(() => {
-    const grouped: Record<string, HistoryItem[]> = {};
+    const dateKeys = transactions.map((tx) => getDateKey(tx.timestamp));
+    const orderedUniqueKeys = [...new Set(dateKeys)];
 
-    transactions.forEach((tx) => {
-      const dateKey = getDateKey(tx.timestamp);
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey].push(tx);
+    return orderedUniqueKeys.map((dateKey) => {
+      const txs = transactions.filter((_, i) => dateKeys[i] === dateKey);
+      return { date: formatDate(txs[0].timestamp), transactions: txs };
     });
-
-    return Object.values(grouped).map((txs) => ({
-      date: formatDate(txs[0].timestamp),
-      transactions: txs,
-    }));
   });
 
   function calculateUsdValue(amount: number): number {
