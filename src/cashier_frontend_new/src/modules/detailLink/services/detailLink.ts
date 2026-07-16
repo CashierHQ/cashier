@@ -95,12 +95,12 @@ export class DetailLinkService {
         const gates = !anonymous
           ? (initialRes as BackendGetLinkDetailsResponseV3).gates
           : undefined;
-        return Ok({ link: sharedLink, gates });
+        return Ok({ link: sharedLink, actions: [], gates });
       }
 
       if (anonymous) {
         // don't fetch action when anonymous: actions may require auth
-        return Ok({ link: sharedLink });
+        return Ok({ link: sharedLink, actions: [] });
       }
 
       const getLinkResp = await cashierBackendService.getUserLinkDetailsV3(id, {

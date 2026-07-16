@@ -7,9 +7,9 @@ import {
 } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserActionCapableStateV3 } from "$modules/useLink/state/useLinkStatesV3";
+import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
-import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 
 export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
   readonly step = UserLinkStep.ADDRESS_UNLOCKED;

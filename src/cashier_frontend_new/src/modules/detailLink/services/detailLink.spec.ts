@@ -118,9 +118,8 @@ describe("fetchLinkDetailV3", () => {
     const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
     const resp: GetLinkDetailsResponseV3 = {
       link: linkDto,
-      action: [],
+      actions: [],
       icrc112_requests: [],
-      link_user_state: [],
       gates: [],
     };
     vi.mocked(cashierBackendService.getUserLinkDetailsV3).mockResolvedValueOnce(
@@ -146,16 +145,14 @@ describe("fetchLinkDetailV3", () => {
     const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
     const firstResp: GetLinkDetailsResponseV3 = {
       link: linkDto,
-      action: [],
+      actions: [],
       icrc112_requests: [],
-      link_user_state: [],
       gates: [],
     };
     const secondResp: GetLinkDetailsResponseV3 = {
       link: linkDto,
-      action: [],
+      actions: [],
       icrc112_requests: [],
-      link_user_state: [],
       gates: [],
     };
     vi.mocked(cashierBackendService.getUserLinkDetailsV3).mockResolvedValueOnce(
@@ -182,9 +179,8 @@ describe("fetchLinkDetailV3", () => {
     const linkDto = makeLinkV3Dto({ Active: null }, { SendTip: null });
     const resp: GetLinkResponseV3 = {
       link: linkDto,
-      action: [],
+      actions: [],
       icrc112_requests: [],
-      link_user_state: [],
     };
     vi.mocked(cashierBackendService.getLinkV3).mockResolvedValueOnce(Ok(resp));
 

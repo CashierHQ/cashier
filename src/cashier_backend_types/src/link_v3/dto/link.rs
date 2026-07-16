@@ -8,10 +8,7 @@ use cashier_shared::types::{
 use gate_service_types::{Gate, GateForUser, GateKey};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    dto::action::Icrc112Requests,
-    {repository::link_action::v1::LinkUserState, service::link::PaginateResult},
-};
+use crate::{dto::action::Icrc112Requests, service::link::PaginateResult};
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateLinkInputV3 {
@@ -45,18 +42,16 @@ pub type GetLinksResponseV3 = PaginateResult<LinkShared>;
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkResponseV3 {
     pub link: LinkShared,
-    pub action: Option<ActionShared>,
+    pub actions: Vec<ActionShared>,
     pub icrc112_requests: Option<Icrc112Requests>,
-    pub link_user_state: Option<LinkUserState>,
 }
 
 /// Extended link details response that includes gate information.
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkDetailsResponseV3 {
     pub link: LinkShared,
-    pub action: Option<ActionShared>,
+    pub actions: Vec<ActionShared>,
     pub icrc112_requests: Option<Icrc112Requests>,
-    pub link_user_state: Option<LinkUserState>,
     /// Gate metadata and per-user open status for each gate on the link.
     pub gates: Vec<GateForUser>,
 }

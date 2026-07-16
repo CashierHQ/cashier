@@ -6,9 +6,9 @@ use cashier_backend_types::{
     dto::link::GetLinkOptions,
     error::CanisterError,
     link_v3::dto::action::{CreateActionInputV3, ProcessActionInputV3, ProcessActionResponseV3},
-    repository::{action::v1::ActionType, link_action::v1::LinkUserState},
+    repository::action::v1::ActionType,
 };
-use cashier_shared::types::LinkState as LinkStateShared;
+use cashier_shared::types::{ActionState as ActionStateShared, LinkState as LinkStateShared};
 use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
@@ -193,27 +193,31 @@ async fn it_should_not_corrupt_basket_link_when_two_users_claim_simultaneously()
             );
         }
 
-        // Assert: exactly one receiver is marked Completed (backend user-state guard).
+        // Assert: exactly one receiver has a successfully completed action (backend user-state guard).
         let options = GetLinkOptions {
             action_type: ActionType::Receive,
         };
-        let state1 = receiver1_fixture
+        let actions1 = receiver1_fixture
             .get_link_details_v3(&link_id, Some(options.clone()))
             .await
             .unwrap()
-            .link_user_state;
-        let state2 = receiver2_fixture
+            .actions;
+        let actions2 = receiver2_fixture
             .get_link_details_v3(&link_id, Some(options))
             .await
             .unwrap()
-            .link_user_state;
-        let completed_count = [&state1, &state2]
+            .actions;
+        let completed_count = [&actions1, &actions2]
             .iter()
-            .filter(|s| ***s == Some(LinkUserState::Completed))
+            .filter(|actions| {
+                actions
+                    .first()
+                    .is_some_and(|a| a.action_state == ActionStateShared::Success)
+            })
             .count();
         assert_eq!(
             completed_count, 1,
-            "exactly one receiver must be Completed, got state1={state1:?}, state2={state2:?}"
+            "exactly one receiver must have a successfully completed action, got actions1={actions1:?}, actions2={actions2:?}"
         );
 
         Ok(())

@@ -5,7 +5,6 @@
   } from "$modules/analytics/amplitudeStore";
   import { getRouteContext } from "$modules/routing/state/routeContext.svelte";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import Ended from "$modules/useLink/components/Ended.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
@@ -43,7 +42,7 @@
 
   const isEndedWithoutCompletion = $derived(
     userStore?.link?.state === LinkState.INACTIVE_ENDED &&
-      userStore?.link_user_state !== LinkUserState.COMPLETED,
+      !userStore?.completedActions?.length,
   );
 </script>
 

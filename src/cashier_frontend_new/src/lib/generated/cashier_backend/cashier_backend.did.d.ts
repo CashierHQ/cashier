@@ -167,9 +167,8 @@ export interface GateUserStatus {
   'gate_id' : string,
 }
 export interface GetLinkDetailsResponseV3 {
-  'action' : [] | [Action],
-  'link_user_state' : [] | [LinkUserState],
   'link' : Link,
+  'actions' : Array<Action>,
   'gates' : Array<GateForUser>,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
@@ -180,9 +179,8 @@ export interface GetLinkResp {
   'link' : LinkDto,
 }
 export interface GetLinkResponseV3 {
-  'action' : [] | [Action],
-  'link_user_state' : [] | [LinkUserState],
   'link' : Link,
+  'actions' : Array<Action>,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
