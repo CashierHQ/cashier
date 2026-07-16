@@ -76,6 +76,22 @@
     currentView = { type: WalletViewType.MAIN };
     currentMainTab = WalletTab.NFTS;
   }
+
+  function getWalletContentClass(viewType: WalletViewType) {
+    const classes = ["flex-1", "min-h-0", "flex", "flex-col", "p-4"];
+
+    classes.push(
+      viewType === WalletViewType.MANAGE
+        ? "overflow-hidden"
+        : "overflow-y-auto",
+    );
+
+    if (viewType === WalletViewType.MAIN) {
+      classes.push("pt-10");
+    }
+
+    return classes.join(" ");
+  }
 </script>
 
 {#if open}
@@ -118,12 +134,7 @@
       </div>
     {/if}
 
-    <div
-      class="flex-1 min-h-0 flex flex-col p-4 {currentView.type ===
-      WalletViewType.MANAGE
-        ? 'overflow-hidden'
-        : 'overflow-y-auto'} {currentView.type === 'main' ? 'pt-10' : ''}"
-    >
+    <div class={getWalletContentClass(currentView.type)}>
       {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
           activeTab={currentMainTab}
