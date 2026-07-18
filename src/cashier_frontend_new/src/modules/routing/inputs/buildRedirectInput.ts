@@ -1,6 +1,6 @@
 import { LinkStep } from "$modules/links/types/linkStep";
-import { LinkState as LegacyLinkState } from "$modules/links/types/link/linkState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
+import { isLinkEnded } from "$modules/links/utils/linkEnded";
 import { parseRoute } from "$modules/routing/routeScreen";
 import type { RouteContext } from "$modules/routing/state/routeContext.svelte";
 import type {
@@ -88,20 +88,7 @@ function getIsLoading(context: RouteContext): boolean {
  */
 function getLinkEnded(context: RouteContext, linkState: LinkStep | null) {
   const link = context.getLink() as LinkLike | undefined;
-  const useCount = link?.link_use_action_counter ?? link?.use_count;
-  const maxUse = link?.link_use_action_max_count ?? link?.max_use;
-  const isFullyUsed =
-    useCount !== undefined &&
-    maxUse !== undefined &&
-    BigInt(maxUse) > 0n &&
-    BigInt(useCount) >= BigInt(maxUse);
-
-  return (
-    linkState === LinkStep.ENDED ||
-    link?.state === LegacyLinkState.INACTIVE ||
-    link?.state === LegacyLinkState.INACTIVE_ENDED ||
-    isFullyUsed
-  );
+  return linkState === LinkStep.ENDED || isLinkEnded(link);
 }
 
 /**

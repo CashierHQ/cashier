@@ -3,14 +3,14 @@ import Action from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
-import type { LinkUserState } from "$modules/links/types/link/linkUserState";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
 
 export type GenericUserLinkStoreVM = {
   link: Link | undefined;
   action: Action | undefined;
+  /** The current user's successfully completed claims for this link. */
+  completedActions: Action[];
   state: LinkState;
-  link_user_state: LinkUserState | undefined;
   step: UserLinkStep | undefined;
   createAction(actionType: ActionTypeValue): Promise<Action>;
   processAction(): Promise<ProcessActionResult>;

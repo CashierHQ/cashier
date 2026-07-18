@@ -362,9 +362,8 @@ async fn user_get_link_details_v3(
 
     Ok(GetLinkDetailsResponseV3 {
         link: base.link,
-        action: base.action,
+        actions: base.actions,
         icrc112_requests: base.icrc112_requests,
-        link_user_state: base.link_user_state,
         gates,
     })
 }

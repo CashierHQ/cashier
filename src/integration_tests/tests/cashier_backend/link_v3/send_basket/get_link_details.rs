@@ -139,7 +139,8 @@ async fn it_should_succeed_get_basket_link_details_with_create_action_succeeded(
                 .iter()
                 .all(|asset| asset.available_amount.is_some())
         );
-        let action = get_link_result.action.unwrap();
+        assert_eq!(get_link_result.actions.len(), 1);
+        let action = get_link_result.actions[0].clone();
         assert_eq!(action.action_state, ActionStateShared::Success);
         assert_eq!(action.intents.len(), 4);
         for intent in action.intents {
@@ -184,7 +185,7 @@ async fn it_should_succeed_get_basket_link_details_with_option_action_not_existe
         let link = get_link_result.link;
         assert_eq!(link.id, link_id);
         assert_eq!(link.link_state, LinkStateShared::Active);
-        assert!(get_link_result.action.is_none());
+        assert!(get_link_result.actions.is_empty());
 
         Ok(())
     })

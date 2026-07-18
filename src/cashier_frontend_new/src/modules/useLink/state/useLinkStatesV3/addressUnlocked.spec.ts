@@ -193,6 +193,9 @@ describe("AddressUnlockedStateV3", () => {
 
       expect(mocks.processActionV3).toHaveBeenCalledWith("action-1");
       expect(mocks.refreshAsync).toHaveBeenCalled();
+      // A successful claim always ends the flow at Completed, regardless of
+      // remaining slots — multiple claims are supported by reopening the
+      // link fresh, not by staying on AddressUnlocked after claiming.
       expect(storeWithReceiveAction.state).toBeInstanceOf(CompletedStateV3);
       expect(result).toBe(backendResponse);
     });

@@ -8,31 +8,23 @@ import { SharedActionMapper } from "$modules/actionTemplate/types/action";
 import { SharedLinkMapper } from "$modules/actionTemplate/types/link";
 import type Icrc112Request from "$modules/icrc112/types/icrc112Request";
 import { Icrc112RequestMapper } from "$modules/icrc112/types/icrc112Request";
-import {
-  LinkUserStateMapper,
-  type LinkUserStateValue,
-} from "$modules/links/types/link/linkUserState";
 import type { Action as SharedAction, Link as SharedLink } from "$shared";
-import { fromNullable } from "@dfinity/utils";
 
 export class LinkActionV3 {
   link: SharedLink;
-  action?: SharedAction | undefined;
+  actions: SharedAction[];
   icrc112_requests?: Icrc112Request[][];
-  link_user_state?: LinkUserStateValue;
   gates?: GateForUser[];
 
   constructor(
     link: SharedLink,
-    action?: SharedAction | undefined,
+    actions: SharedAction[],
     icrc112_requests?: Icrc112Request[][],
-    link_user_state?: LinkUserStateValue,
     gates?: GateForUser[],
   ) {
     this.link = link;
-    this.action = action;
+    this.actions = actions;
     this.icrc112_requests = icrc112_requests;
-    this.link_user_state = link_user_state;
     this.gates = gates;
   }
 }
@@ -40,13 +32,9 @@ export class LinkActionV3 {
 export class LinkActionV3Mapper {
   static fromBackendResponse(response: BackendGetLinkResponseV3): LinkActionV3 {
     const link = SharedLinkMapper.toLocalType(response.link);
-    const actionBE =
-      response.action.length > 0 && response.action[0] !== undefined
-        ? response.action[0]
-        : undefined;
-    const action = actionBE
-      ? SharedActionMapper.toLocalType(actionBE)
-      : undefined;
+    const actions = response.actions.map((action) =>
+      SharedActionMapper.toLocalType(action),
+    );
 
     let icrc112_requests: Icrc112Request[][] | undefined = undefined;
     if (response.icrc112_requests && response.icrc112_requests.length === 1) {
@@ -58,16 +46,10 @@ export class LinkActionV3Mapper {
       );
     }
 
-    const linkUserStateBE = fromNullable(response.link_user_state);
-    const linkUserState = linkUserStateBE
-      ? LinkUserStateMapper.fromBackendType(linkUserStateBE)
-      : undefined;
-
     return {
       link,
-      action,
+      actions,
       icrc112_requests,
-      link_user_state: linkUserState,
     };
   }
 

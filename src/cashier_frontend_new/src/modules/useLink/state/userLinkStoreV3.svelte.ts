@@ -3,8 +3,8 @@ import { LinkDetailStoreV3 } from "$modules/detailLink/state/linkDetailStoreV3.s
 import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
 import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
-import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
+import { isLinkEnded } from "$modules/links/utils/linkEnded";
 import { userLinkRepository } from "$modules/useLink/repositories/userLinkRepository";
 import type {
   UserActionCapableStateV3,
@@ -12,7 +12,6 @@ import type {
 } from "$modules/useLink/state/useLinkStatesV3";
 import { AddressLockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressLocked";
 import { AddressUnlockedStateV3 } from "$modules/useLink/state/useLinkStatesV3/addressUnlocked";
-import { CompletedStateV3 } from "$modules/useLink/state/useLinkStatesV3/completed";
 import { LandingStateV3 } from "$modules/useLink/state/useLinkStatesV3/landing";
 import { findUseActionTypeFromLinkType } from "$modules/useLink/utils/useActionTypeFromLinkType";
 import { userLinkStateFromStepV3 } from "$modules/useLink/utils/userLinkStateFromStep";
@@ -23,6 +22,7 @@ import { userLinkStateFromStepV3 } from "$modules/useLink/utils/userLinkStateFro
 export class UserLinkStoreV3 {
   #state = $state<UserLinkStateV3>(new LandingStateV3(this));
   #persistedStateRestoredOwner = $state<string | null>(null);
+  #hasReconciledStaleCompletedStep = false;
   public linkDetail: LinkDetailStoreV3;
 
   constructor({ id }: { id: string }) {
@@ -50,11 +50,23 @@ export class UserLinkStoreV3 {
       this.syncUserLink();
     });
 
-    // react to backend-driven user state changes (e.g., completed)
-    $effect(() => {
-      const s = this.linkDetail.query.data?.link_user_state;
-      if (s === LinkUserState.COMPLETED) {
-        this.#state = new CompletedStateV3();
+    $effect.pre(() => {
+      if (this.linkDetail.query.isLoading) return;
+      if (this.#hasReconciledStaleCompletedStep) return;
+      this.#hasReconciledStaleCompletedStep = true;
+
+      if (!this.linkDetail.query.data) return;
+
+      const nextStep = resolveStaleCompletedStep(
+        !!this.linkDetail.action,
+        isLinkEnded(this.link),
+        this.#state.step,
+      );
+
+      if (nextStep === UserLinkStep.LANDING) {
+        this.#state = new LandingStateV3(this);
+      } else if (nextStep === UserLinkStep.ADDRESS_UNLOCKED) {
+        this.#state = new AddressUnlockedStateV3(this);
       }
     });
 
@@ -228,6 +240,7 @@ export class UserLinkStoreV3 {
 
   /**
    * Check if the current state supports user actions
+   * @param state The current state
    * @returns True if the current state supports user actions, false otherwise
    */
   private isActionCapable(
@@ -244,4 +257,32 @@ export class UserLinkStoreV3 {
     if (!this.link) return null;
     return findUseActionTypeFromLinkType(this.link.link_type);
   }
+}
+
+/**
+ * Resolve a stale persisted Completed step to the correct next step, if any.
+ * This is used to correct a persisted Completed step that is no longer valid
+ * due to changes in the link state (e.g. a pending action exists or the link
+ * has not ended).
+ * @param hasPendingAction Whether the link has a pending action to resume
+ * @param linkEnded Whether the link has ended (no more claims possible)
+ * @param currentStep The current step in the user link flow
+ * @returns the step to transition to, or `null` if the current step should
+ * be left alone.
+ */
+export function resolveStaleCompletedStep(
+  hasPendingAction: boolean,
+  linkEnded: boolean,
+  currentStep: UserLinkStep,
+): UserLinkStep | null {
+  if (currentStep !== UserLinkStep.COMPLETED) {
+    return null;
+  }
+  if (hasPendingAction) {
+    return UserLinkStep.ADDRESS_UNLOCKED;
+  }
+  if (!linkEnded) {
+    return UserLinkStep.LANDING;
+  }
+  return null;
 }

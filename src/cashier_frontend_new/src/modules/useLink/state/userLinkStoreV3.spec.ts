@@ -1,7 +1,10 @@
 import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
+import {
+  resolveStaleCompletedStep,
+  UserLinkStoreV3,
+} from "$modules/useLink/state/userLinkStoreV3.svelte";
 
 const mocks = vi.hoisted(() => ({
   LinkDetailStoreV3: vi.fn(),
@@ -322,6 +325,73 @@ describe("UserLinkStoreV3", () => {
 
       expect(processAction).toHaveBeenCalled();
       expect(result).toEqual({ id: "processed-action", is_success: true });
+    });
+  });
+
+  // UserLinkStoreV3's one-shot stale-Completed effect only decides state
+  // transitions by delegating to this pure function, so it's tested directly
+  // here rather than through the store (this spec file runs in a plain Node
+  // environment with no Svelte effect root, so $effect bodies never fire).
+  describe("resolveStaleCompletedStep", () => {
+    it("it_should_resume_to_address_unlocked_when_completed_step_has_a_pending_action", () => {
+      const nextStep = resolveStaleCompletedStep(
+        true,
+        false,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
+    });
+
+    it("it_should_restart_from_landing_when_completed_step_has_no_pending_action_and_link_not_ended", () => {
+      const nextStep = resolveStaleCompletedStep(
+        false,
+        false,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.LANDING);
+    });
+
+    it("it_should_leave_completed_step_alone_when_link_has_truly_ended_and_no_pending_action", () => {
+      const nextStep = resolveStaleCompletedStep(
+        false,
+        true,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_prefer_resuming_a_pending_action_over_restarting_even_if_link_has_ended", () => {
+      const nextStep = resolveStaleCompletedStep(
+        true,
+        true,
+        UserLinkStep.COMPLETED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
+    });
+
+    it("it_should_leave_non_completed_steps_alone_regardless_of_pending_or_ended_state", () => {
+      for (const currentStep of [
+        UserLinkStep.LANDING,
+        UserLinkStep.ADDRESS_LOCKED,
+        UserLinkStep.GATE,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      ]) {
+        for (const hasPendingAction of [true, false]) {
+          for (const linkEnded of [true, false]) {
+            expect(
+              resolveStaleCompletedStep(
+                hasPendingAction,
+                linkEnded,
+                currentStep,
+              ),
+            ).toBeNull();
+          }
+        }
+      }
     });
   });
 

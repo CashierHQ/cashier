@@ -196,7 +196,7 @@ describe("LinkDetailStoreV3", () => {
       const icrc112Requests = [[{ id: "req-1" }]];
       mocks.queryState.data = {
         link: sharedLink,
-        action: backendAction,
+        actions: [backendAction],
         icrc112_requests: icrc112Requests,
       };
 
@@ -219,7 +219,7 @@ describe("LinkDetailStoreV3", () => {
       const icrc112Requests = [[{ id: "req-1" }]];
       mocks.queryState.data = {
         link: makeSharedLink(SharedLinkState.Active),
-        action: backendAction,
+        actions: [backendAction],
         icrc112_requests: icrc112Requests,
       };
 
@@ -228,6 +228,49 @@ describe("LinkDetailStoreV3", () => {
         backendAction,
         icrc112Requests,
       );
+    });
+
+    it("it_should_return_all_actions_and_only_the_pending_one_as_action_when_multiple_claims_exist", () => {
+      const store = new LinkDetailStoreV3({ id: "link-1" });
+      const completedAction = {
+        ...makeSharedAction(SharedActionType.Receive),
+        id: "action-completed",
+        action_state: SharedActionState.Success,
+      };
+      const pendingAction = {
+        ...makeSharedAction(SharedActionType.Receive),
+        id: "action-pending",
+        action_state: SharedActionState.Created,
+      };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.Active),
+        actions: [completedAction, pendingAction],
+        icrc112_requests: undefined,
+      };
+
+      expect(store.actions).toEqual([completedAction, pendingAction]);
+      expect(store.pendingBackendAction).toBe(pendingAction);
+      void store.action;
+      expect(mocks.fromSharedAction).toHaveBeenCalledWith(
+        pendingAction,
+        undefined,
+      );
+    });
+
+    it("it_should_return_undefined_pending_action_when_all_claims_are_completed", () => {
+      const store = new LinkDetailStoreV3({ id: "link-1" });
+      const completedAction = {
+        ...makeSharedAction(SharedActionType.Receive),
+        action_state: SharedActionState.Success,
+      };
+      mocks.queryState.data = {
+        link: makeSharedLink(SharedLinkState.Active),
+        actions: [completedAction],
+      };
+
+      expect(store.pendingBackendAction).toBeUndefined();
+      expect(store.action).toBeUndefined();
+      expect(store.completedActions).toHaveLength(1);
     });
   });
 
