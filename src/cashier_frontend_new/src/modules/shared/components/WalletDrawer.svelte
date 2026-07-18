@@ -77,7 +77,6 @@
     currentView = { type: WalletViewType.MAIN };
     currentMainTab = WalletTab.NFTS;
   }
-
 </script>
 
 {#if open}
