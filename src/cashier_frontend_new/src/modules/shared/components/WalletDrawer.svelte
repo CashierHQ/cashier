@@ -3,6 +3,7 @@
     WalletViewType,
     type WalletView,
   } from "$modules/shared/types/wallet";
+  import { getWalletContentClass } from "$modules/shared/utils/walletDrawer";
   import ImportPage from "$modules/wallet/pages/import.svelte";
   import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
@@ -77,21 +78,6 @@
     currentMainTab = WalletTab.NFTS;
   }
 
-  function getWalletContentClass(viewType: WalletViewType) {
-    const classes = ["flex-1", "min-h-0", "flex", "flex-col", "p-4"];
-
-    classes.push(
-      viewType === WalletViewType.MANAGE
-        ? "overflow-hidden"
-        : "overflow-y-auto",
-    );
-
-    if (viewType === WalletViewType.MAIN) {
-      classes.push("pt-10");
-    }
-
-    return classes.join(" ");
-  }
 </script>
 
 {#if open}
