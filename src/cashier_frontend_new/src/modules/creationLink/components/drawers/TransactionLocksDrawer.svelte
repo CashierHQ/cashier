@@ -1,4 +1,5 @@
 <script lang="ts">
+  import xIcon from "$lib/assets/x-icon.svg";
   import { locale } from "$lib/i18n";
   import {
     Drawer,
@@ -19,7 +20,9 @@
     Eye,
     EyeOff,
     Lock,
+    Mail,
     RectangleEllipsis,
+    Smartphone,
   } from "lucide-svelte";
 
   let {
@@ -49,6 +52,15 @@
     } else {
       visiblePasswordIndexes.add(index);
     }
+  }
+
+  function isXLock(type: string): boolean {
+    return (
+      type === GateType.X_FOLLOWING ||
+      type === GateType.X_OWNED_ACCOUNT ||
+      type === GateType.X_LIKED_POST ||
+      type === GateType.X_RETWEETED_POST
+    );
   }
 </script>
 
@@ -86,12 +98,45 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               {#if display.type === GateType.PASSWORD}
-                <RectangleEllipsis
-                  class="h-6 w-6 text-green"
+                <span
+                  class="flex h-6 w-6 flex-none items-center justify-center"
                   aria-hidden="true"
+                  data-lock-icon="password"
+                >
+                  <RectangleEllipsis class="h-6 w-6 text-green" />
+                </span>
+              {:else if isXLock(display.type)}
+                <img
+                  src={xIcon}
+                  alt=""
+                  class="h-6 w-6 flex-none"
+                  aria-hidden="true"
+                  data-lock-icon="x"
                 />
+              {:else if display.type === GateType.OTP_EMAIL}
+                <span
+                  class="flex h-6 w-6 flex-none items-center justify-center"
+                  aria-hidden="true"
+                  data-lock-icon="email"
+                >
+                  <Mail class="h-6 w-6 text-green" />
+                </span>
+              {:else if display.type === GateType.OTP_SMS}
+                <span
+                  class="flex h-6 w-6 flex-none items-center justify-center"
+                  aria-hidden="true"
+                  data-lock-icon="phone"
+                >
+                  <Smartphone class="h-6 w-6 text-green" />
+                </span>
               {:else}
-                <Lock class="h-6 w-6 text-green" aria-hidden="true" />
+                <span
+                  class="flex h-6 w-6 flex-none items-center justify-center"
+                  aria-hidden="true"
+                  data-lock-icon="fallback"
+                >
+                  <Lock class="h-6 w-6 text-green" />
+                </span>
               {/if}
               <p class="text-sm font-medium">
                 {locale.t(display.labelKey)}

@@ -147,4 +147,25 @@ describe("TransactionLocksDrawer", () => {
       "readonly",
     );
   });
+
+  it("it_should_do_render_lock_type_icons_matching_gate_options", () => {
+    const { baseElement } = render(TransactionLocksDrawer, {
+      props: {
+        open: true,
+        locks: [
+          { type: GateType.PASSWORD, password: "secret" },
+          { type: GateType.X_OWNED_ACCOUNT, targetHandle: "cashier" },
+          { type: GateType.OTP_EMAIL, email: "user@example.com" },
+          { type: GateType.OTP_SMS, phone: "+14379830751" },
+        ],
+      },
+    });
+
+    expect(
+      baseElement.querySelector('[data-lock-icon="password"]'),
+    ).toBeTruthy();
+    expect(baseElement.querySelector('[data-lock-icon="x"]')).toBeTruthy();
+    expect(baseElement.querySelector('[data-lock-icon="email"]')).toBeTruthy();
+    expect(baseElement.querySelector('[data-lock-icon="phone"]')).toBeTruthy();
+  });
 });
