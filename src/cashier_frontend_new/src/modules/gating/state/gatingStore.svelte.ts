@@ -27,6 +27,12 @@ export class GatingStore {
   #otpPhoneConfirmDigits = $state("");
   #otpCountryCode = $state("");
 
+  #removeSelectedGateType(type: GateType): void {
+    this.#selectedGateTypes = this.#selectedGateTypes.filter(
+      (selectedType) => selectedType !== type,
+    );
+  }
+
   get selectedGateTypes(): GateType[] {
     return this.#selectedGateTypes;
   }
@@ -457,6 +463,12 @@ export class GatingStore {
     this.#confirmPassword = "";
   }
 
+  removePasswordLock(): void {
+    this.#removeSelectedGateType(GateType.PASSWORD);
+    this.#configuredPassword = null;
+    this.clearPasswordDraft();
+  }
+
   clearXFollowingDraft(): void {
     this.#xFollowingDraft = "";
     this.#xRewardAccountDraft = "";
@@ -472,6 +484,24 @@ export class GatingStore {
 
   clearXRetweetedPostDraft(): void {
     this.#xRetweetedPostDraft = "";
+  }
+
+  removeXLocks(): void {
+    this.#selectedGateTypes = this.#selectedGateTypes.filter(
+      (selectedType) =>
+        selectedType !== GateType.X_FOLLOWING &&
+        selectedType !== GateType.X_OWNED_ACCOUNT &&
+        selectedType !== GateType.X_LIKED_POST &&
+        selectedType !== GateType.X_RETWEETED_POST,
+    );
+    this.#xFollowingHandle = null;
+    this.#xOwnedAccountHandle = null;
+    this.#xLikedPostUrl = null;
+    this.#xRetweetedPostUrl = null;
+    this.clearXFollowingDraft();
+    this.clearXOwnedAccountDraft();
+    this.clearXLikedPostDraft();
+    this.clearXRetweetedPostDraft();
   }
 
   setOTPEmailDraft(email: string): void {
@@ -520,11 +550,24 @@ export class GatingStore {
     this.#otpEmailConfirmDraft = "";
   }
 
+  removeOTPEmailLock(): void {
+    this.#removeSelectedGateType(GateType.OTP_EMAIL);
+    this.#otpEmail = null;
+    this.clearOTPEmailDraft();
+  }
+
   clearOTPPhoneDraft(): void {
     this.#otpPhoneDraft = "";
     this.#otpPhoneConfirmDraft = "";
     this.#otpPhoneDigits = "";
     this.#otpPhoneConfirmDigits = "";
+  }
+
+  removeOTPSmsLock(): void {
+    this.#removeSelectedGateType(GateType.OTP_SMS);
+    this.#otpPhone = null;
+    this.clearOTPPhoneDraft();
+    this.#otpCountryCode = "";
   }
 
   resetAll(): void {

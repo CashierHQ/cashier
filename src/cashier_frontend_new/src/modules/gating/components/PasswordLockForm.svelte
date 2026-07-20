@@ -7,9 +7,11 @@
   const {
     store,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   let showPassword = $state(false);
@@ -37,7 +39,8 @@
         class="text-xs font-medium text-[#D26060]"
         onclick={() => {
           submitted = false;
-          store.clearPasswordDraft();
+          store.removePasswordLock();
+          onReset();
         }}
       >
         {locale.t("links.linkForm.lock.reset")}

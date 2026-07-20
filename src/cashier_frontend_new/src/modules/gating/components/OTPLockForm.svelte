@@ -24,10 +24,12 @@
     store,
     mode,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     mode: OTPLockMode;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   const smsEligibleCountries = filterSmsEligibleCountries(COUNTRY_DIAL_CODES);
@@ -150,9 +152,8 @@
             submitted = false;
             phoneDigits = "";
             confirmPhoneDigits = "";
-            store.setOTPPhoneDraft("");
-            store.setOTPPhoneConfirmDraft("");
-            store.setOTPPhoneConfirmDigits("");
+            store.removeOTPSmsLock();
+            onReset();
           }}
         >
           {locale.t("links.linkForm.lock.reset")}
@@ -251,8 +252,8 @@
             submitted = false;
             emailDraft = "";
             confirmEmailDraft = "";
-            store.setOTPEmailDraft("");
-            store.setOTPEmailConfirmDraft("");
+            store.removeOTPEmailLock();
+            onReset();
           }}
         >
           {locale.t("links.linkForm.lock.reset")}

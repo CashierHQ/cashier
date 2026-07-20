@@ -7,9 +7,11 @@
   const {
     store,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   let submitted = $state(false);
@@ -38,6 +40,20 @@
 </script>
 
 <div class="space-y-6">
+  <div class="flex items-center justify-end">
+    <button
+      type="button"
+      class="text-xs font-medium text-[#D26060]"
+      onclick={() => {
+        submitted = false;
+        store.removeXLocks();
+        onReset();
+      }}
+    >
+      {locale.t("links.linkForm.lock.reset")}
+    </button>
+  </div>
+
   <!-- Owned account -->
   <div class="space-y-1.5 {ownedAccountEnabled ? '' : 'opacity-40'}">
     <p class="text-sm font-medium text-foreground">
