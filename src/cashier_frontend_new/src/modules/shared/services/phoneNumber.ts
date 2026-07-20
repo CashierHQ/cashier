@@ -2,6 +2,7 @@ import {
   AsYouType,
   getCountryCallingCode,
   getExampleNumber,
+  isValidPhoneNumber,
   type CountryCode,
 } from "libphonenumber-js/min";
 import examples from "libphonenumber-js/examples.mobile.json";
@@ -67,4 +68,8 @@ export function buildInternationalPhoneNumber(
   const digits = getDigitsOnly(phoneDigits);
 
   return `${dialCode}${digits}`;
+}
+
+export function isValidInternationalPhoneNumber(phoneNumber: string): boolean {
+  return isValidPhoneNumber(phoneNumber);
 }

@@ -1,5 +1,6 @@
 import { locale } from "$lib/i18n";
 import { GateType, type GateDraft } from "$modules/gating/types/gate";
+import { isValidInternationalPhoneNumber } from "$modules/shared/services/phoneNumber";
 
 const TWEET_URL_PATTERN = /^https:\/\/x\.com\/.+\/status\/\d+$/;
 
@@ -184,7 +185,7 @@ export class GatingStore {
     if (phone.length === 0) {
       return locale.t("links.linkForm.lock.otp.errors.phoneRequired");
     }
-    if (!/^\+?[\d\s\-()]{7,20}$/.test(phone))
+    if (!isValidInternationalPhoneNumber(phone))
       return locale.t("links.linkForm.lock.otp.errors.phoneInvalid");
     if (phone !== this.#otpPhoneConfirmDraft.trim()) {
       return locale.t("links.linkForm.lock.otp.errors.phoneNumbersDifferent");

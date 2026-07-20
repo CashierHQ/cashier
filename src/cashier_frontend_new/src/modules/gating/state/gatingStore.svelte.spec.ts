@@ -32,17 +32,17 @@ describe("GatingStore OTP confirmation", () => {
   it("it_should_do_save_sms_otp_lock_when_confirmation_matches", () => {
     const store = new GatingStore();
 
-    store.setOTPPhoneDraft("+15551234567");
-    store.setOTPPhoneConfirmDraft("+15551234567");
-    store.setOTPPhoneConfirmDigits("5551234567");
-    store.saveOTPSmsLock("5551234567", "US");
+    store.setOTPPhoneDraft("+14379830751");
+    store.setOTPPhoneConfirmDraft("+14379830751");
+    store.setOTPPhoneConfirmDigits("4379830751");
+    store.saveOTPSmsLock("4379830751", "CA");
 
     expect(store.gateDrafts).toEqual([
       {
         type: GateType.OTP_SMS,
-        phone: "+15551234567",
-        digits: "5551234567",
-        countryCode: "US",
+        phone: "+14379830751",
+        digits: "4379830751",
+        countryCode: "CA",
       },
     ]);
   });
@@ -50,11 +50,24 @@ describe("GatingStore OTP confirmation", () => {
   it("it_should_do_reject_sms_otp_lock_when_confirmation_does_not_match", () => {
     const store = new GatingStore();
 
-    store.setOTPPhoneDraft("+15551234567");
-    store.setOTPPhoneConfirmDraft("+15557654321");
-    store.setOTPPhoneConfirmDigits("5557654321");
-    store.saveOTPSmsLock("5551234567", "US");
+    store.setOTPPhoneDraft("+14379830751");
+    store.setOTPPhoneConfirmDraft("+12025550143");
+    store.setOTPPhoneConfirmDigits("2025550143");
+    store.saveOTPSmsLock("4379830751", "CA");
 
+    expect(store.hasConfiguredOTPSms).toBe(false);
+    expect(store.gateDrafts).toEqual([]);
+  });
+
+  it("it_should_do_reject_sms_otp_lock_when_phone_number_is_invalid", () => {
+    const store = new GatingStore();
+
+    store.setOTPPhoneDraft("+143798307511");
+    store.setOTPPhoneConfirmDraft("+143798307511");
+    store.setOTPPhoneConfirmDigits("43798307511");
+    store.saveOTPSmsLock("43798307511", "CA");
+
+    expect(store.otpPhoneSetupError).toBe("Enter a valid phone number");
     expect(store.hasConfiguredOTPSms).toBe(false);
     expect(store.gateDrafts).toEqual([]);
   });
@@ -121,10 +134,10 @@ describe("GatingStore lock removal", () => {
     store.setOTPEmailDraft("user@example.com");
     store.setOTPEmailConfirmDraft("user@example.com");
     store.saveOTPEmailLock();
-    store.setOTPPhoneDraft("+15551234567");
-    store.setOTPPhoneConfirmDraft("+15551234567");
-    store.setOTPPhoneConfirmDigits("5551234567");
-    store.saveOTPSmsLock("5551234567", "US");
+    store.setOTPPhoneDraft("+14379830751");
+    store.setOTPPhoneConfirmDraft("+14379830751");
+    store.setOTPPhoneConfirmDigits("4379830751");
+    store.saveOTPSmsLock("4379830751", "CA");
 
     store.removeOTPEmailLock();
 
@@ -134,9 +147,9 @@ describe("GatingStore lock removal", () => {
     expect(store.gateDrafts).toEqual([
       {
         type: GateType.OTP_SMS,
-        phone: "+15551234567",
-        digits: "5551234567",
-        countryCode: "US",
+        phone: "+14379830751",
+        digits: "4379830751",
+        countryCode: "CA",
       },
     ]);
   });
@@ -147,10 +160,10 @@ describe("GatingStore lock removal", () => {
     store.setOTPEmailDraft("user@example.com");
     store.setOTPEmailConfirmDraft("user@example.com");
     store.saveOTPEmailLock();
-    store.setOTPPhoneDraft("+15551234567");
-    store.setOTPPhoneConfirmDraft("+15551234567");
-    store.setOTPPhoneConfirmDigits("5551234567");
-    store.saveOTPSmsLock("5551234567", "US");
+    store.setOTPPhoneDraft("+14379830751");
+    store.setOTPPhoneConfirmDraft("+14379830751");
+    store.setOTPPhoneConfirmDigits("4379830751");
+    store.saveOTPSmsLock("4379830751", "CA");
 
     store.removeOTPSmsLock();
 
