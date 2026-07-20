@@ -105,7 +105,7 @@
             <input
               readonly
               value={display.value}
-              class="h-11 w-full rounded-lg border border-border bg-[#F7F7F7] px-4 pr-11 text-sm text-foreground outline-none"
+              class="h-11 w-full rounded-lg border border-border bg-[#F7F7F7] px-4 pr-11 text-[16px] text-foreground outline-none"
             />
 
             {#if display.type === GateType.PASSWORD && display.canRevealSensitiveValue}

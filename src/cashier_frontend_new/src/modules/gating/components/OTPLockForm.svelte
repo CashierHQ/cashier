@@ -192,7 +192,7 @@
           }}
           onkeydown={(e) => handlePhoneKeydown(e, "phone")}
           placeholder={phonePlaceholder}
-          class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
+          class="min-w-0 flex-1 bg-transparent pl-0 text-[16px] outline-none placeholder:text-muted-foreground/50 sm:text-sm"
         />
       </div>
     </div>
@@ -231,7 +231,7 @@
           }}
           onkeydown={(e) => handlePhoneKeydown(e, "confirm")}
           placeholder={phonePlaceholder}
-          class="min-w-0 flex-1 bg-transparent pl-0 text-sm outline-none placeholder:text-muted-foreground/50"
+          class="min-w-0 flex-1 bg-transparent pl-0 text-[16px] outline-none placeholder:text-muted-foreground/50 sm:text-sm"
         />
       </div>
       {#if submitted && store.otpPhoneSetupError}
@@ -264,7 +264,7 @@
         bind:value={emailDraft}
         oninput={() => store.setOTPEmailDraft(emailDraft)}
         placeholder={locale.t("links.linkForm.lock.otp.enterEmail")}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green {submitted &&
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm {submitted &&
         store.otpEmailSetupError
           ? 'border-[#D26060]'
           : ''}"
@@ -284,7 +284,7 @@
         bind:value={confirmEmailDraft}
         oninput={() => store.setOTPEmailConfirmDraft(confirmEmailDraft)}
         placeholder={locale.t("links.linkForm.lock.otp.enterEmail")}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green {submitted &&
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm {submitted &&
         store.otpEmailSetupError
           ? 'border-[#D26060]'
           : ''}"
@@ -325,7 +325,7 @@
         placeholder={locale.t(
           "links.linkForm.lock.otp.searchCountryOrDialCode",
         )}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-green"
+        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm"
       />
 
       <div class="max-h-[55vh] overflow-y-auto">

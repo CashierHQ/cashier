@@ -100,8 +100,10 @@
 </script>
 
 <Drawer bind:open>
-  <DrawerContent class="max-w-full w-[400px] mx-auto">
-    <DrawerHeader>
+  <DrawerContent
+    class="max-w-full w-[400px] mx-auto h-[85svh] max-h-[85svh] sm:h-auto sm:max-h-[80vh]"
+  >
+    <DrawerHeader class="flex-none">
       <div class="flex justify-center items-center relative mb-2">
         <DrawerTitle
           class="text-[18px] font-[600] leading-[20px] px-8 text-center w-[100%]"
@@ -118,7 +120,7 @@
         </DrawerClose>
       </div>
     </DrawerHeader>
-    <div class="mb-3 px-4">
+    <div class="mb-3 flex-none px-4">
       <div class="relative w-full">
         <input
           class="input-field w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-[16px] sm:text-sm hover:border-green focus:border-green focus:ring-0 focus:outline-none"
@@ -135,7 +137,7 @@
         </div>
       </div>
     </div>
-    <div class="px-4 pb-4 max-h-[60vh] overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
       {#if walletStore.query.data}
         {#if filteredTokens.length > 0}
           <div class="font-semibold">

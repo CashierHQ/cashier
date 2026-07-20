@@ -16,9 +16,13 @@
 
   let mobileImageHeight = $state(getMobileImageHeight());
 
-  // Update height on window resize
   onMount(() => {
+    let viewportWidth = window.innerWidth;
+
     function updateHeight() {
+      if (window.innerWidth === viewportWidth) return;
+
+      viewportWidth = window.innerWidth;
       mobileImageHeight = getMobileImageHeight();
     }
 

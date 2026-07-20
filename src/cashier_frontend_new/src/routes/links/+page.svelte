@@ -50,16 +50,16 @@
 </script>
 
 {#if decision.kind === "allow"}
-  <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
+  <div class="flex h-dvh flex-col overflow-hidden sm:bg-lightgreen bg-white">
     <AppHeader />
 
-    <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
+    <div
+      class="min-h-0 flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col"
+    >
       <div
-        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
+        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 min-h-0 flex-1 bg-white sm:rounded-xl overflow-hidden"
       >
-        <div
-          class="sm:max-h-[calc(100vh-158px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
-        >
+        <div class="h-full overflow-y-auto scrollbar-hide">
           <LinksPage />
         </div>
       </div>

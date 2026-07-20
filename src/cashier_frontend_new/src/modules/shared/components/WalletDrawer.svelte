@@ -3,6 +3,7 @@
     WalletViewType,
     type WalletView,
   } from "$modules/shared/types/wallet";
+  import { getWalletContentClass } from "$modules/shared/utils/walletDrawer";
   import ImportPage from "$modules/wallet/pages/import.svelte";
   import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
@@ -118,12 +119,7 @@
       </div>
     {/if}
 
-    <div
-      class="flex-1 flex flex-col overflow-y-auto p-4 {currentView.type ===
-      'main'
-        ? 'pt-10'
-        : ''}"
-    >
+    <div class={getWalletContentClass(currentView.type)}>
       {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
           activeTab={currentMainTab}
