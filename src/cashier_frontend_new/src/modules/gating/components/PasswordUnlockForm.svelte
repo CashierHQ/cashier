@@ -299,6 +299,7 @@
 
             <button
               type="button"
+              tabindex="-1"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               onclick={() => (showPassword = !showPassword)}
             >
