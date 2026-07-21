@@ -2,6 +2,7 @@
   import { page } from "$app/state";
   import UseLink from "$modules/useLink/pages/use.svelte";
   import Ended from "$modules/useLink/components/Ended.svelte";
+  import UseLinkSkeleton from "$modules/useLink/components/UseLinkSkeleton.svelte";
   import PageLayout from "$modules/shared/components/PageLayout.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
   import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
@@ -33,6 +34,11 @@
           onShowFooterChange={handleShowFooterChange}
         />
       {/if}
+    </PageLayout>
+  {/snippet}
+  {#snippet loading()}
+    <PageLayout isLinkFormPage={true}>
+      <UseLinkSkeleton />
     </PageLayout>
   {/snippet}
 </RedirectBoundary>
