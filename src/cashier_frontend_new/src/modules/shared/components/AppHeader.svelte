@@ -50,6 +50,7 @@
 
   // Get current user link step
   const userLinkStep = $derived(userLinkStore?.step ?? null);
+  const userLinkAction = $derived(userLinkStore?.action ?? null);
   const createLinkStep = $derived(
     routeContext?.linkCreationStoreV3?.state.step ?? null,
   );
@@ -84,9 +85,12 @@
   // Determine if back button should be shown
   const showBackButton = $derived.by(() => {
     if (!isUsePage) return true;
-    // On LANDING step, don't show back button (show empty span)
-    // On ADDRESS_UNLOCKED step, show back button
-    return userLinkStep === UserLinkStep.ADDRESS_UNLOCKED;
+    return (
+      !userLinkAction &&
+      (userLinkStep === UserLinkStep.ADDRESS_LOCKED ||
+        userLinkStep === UserLinkStep.GATE ||
+        userLinkStep === UserLinkStep.ADDRESS_UNLOCKED)
+    );
   });
 
   // Handle back button for mobile (delegates to appHeaderStore back handler)

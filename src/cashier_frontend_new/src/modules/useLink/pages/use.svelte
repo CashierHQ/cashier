@@ -18,7 +18,7 @@
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
   import AssetList from "$modules/useLink/components/AssetList.svelte";
   import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
-  import { Lock } from "lucide-svelte";
+  import { ChevronLeft, Lock } from "lucide-svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
   import {
     shouldRedirectErrorTo404,
@@ -50,6 +50,16 @@
   let useLandingLoggedInTracked = $state(false);
   let useWalletLockedTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
+
+  const canUseFlowBack = $derived.by(() => {
+    if (!userStore || userStore.action) return false;
+
+    return (
+      userStore.step === UserLinkStep.ADDRESS_LOCKED ||
+      userStore.step === UserLinkStep.GATE ||
+      userStore.step === UserLinkStep.ADDRESS_UNLOCKED
+    );
+  });
 
   // userStore.action already only ever resolves to a pending (not yet
   // successful) action — see UserLinkStoreV3.action / LinkDetailStoreV3.action.
@@ -254,14 +264,21 @@
     await userStore.goNext();
   };
 
+  const handleUseFlowBack = async () => {
+    if (!userStore) return;
+
+    try {
+      await userStore.goBack();
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : String(err);
+    }
+  };
+
   // Register back handler for AppHeader on the use flow
   const handleBack = async () => {
-    if (userStore && userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
-      await userStore.goBack();
-      return;
+    if (canUseFlowBack) {
+      await handleUseFlowBack();
     }
-
-    await appHeaderStore.triggerBack();
   };
 
   onMount(() => {
@@ -288,6 +305,19 @@
         class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
       >
         {successMessage}
+      </div>
+    {/if}
+
+    {#if canUseFlowBack}
+      <div class="hidden md:flex flex-none items-center mb-2">
+        <button
+          onclick={handleUseFlowBack}
+          class="cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
+          type="button"
+          aria-label={locale.t("links.linkForm.header.back")}
+        >
+          <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
+        </button>
       </div>
     {/if}
 
