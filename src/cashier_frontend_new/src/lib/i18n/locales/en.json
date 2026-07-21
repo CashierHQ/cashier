@@ -168,6 +168,7 @@
           "noTokensAvailable": "No tokens available",
           "allTokensSelected": "All available tokens have been selected",
           "atLeastOneAssetRequired": "At least one asset is required",
+          "duplicateAssets": "You selected the same asset more than once.",
           "maxUseMustBeGreaterThanZero": "Max use must be greater than zero",
           "maxUseCannotExceedOnce": "Max use cannot exceed 1"
         },

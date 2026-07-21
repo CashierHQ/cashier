@@ -302,8 +302,8 @@
 </div>
 
 <DrawerNestedRoot bind:open={countryDrawerOpen}>
-  <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
-    <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
+  <DrawerContent class="max-w-full w-[400px] mx-auto p-5 sm:h-[400px] sm:min-h-[400px] sm:max-h-[400px] sm:overflow-hidden">
+    <DrawerHeader class="pb-5 pl-0 pr-0 pt-0 sm:flex-none">
       <div class="relative flex items-center justify-center">
         <DrawerTitle class="text-base font-semibold">
           {locale.t("links.linkForm.lock.otp.countryCode")}
@@ -319,7 +319,7 @@
       </div>
     </DrawerHeader>
 
-    <div class="space-y-3">
+    <div class="space-y-3 sm:flex sm:min-h-0 sm:flex-1 sm:flex-col sm:space-y-0">
       <input
         type="search"
         bind:value={countrySearch}
@@ -329,7 +329,7 @@
         class="h-11 w-full rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm"
       />
 
-      <div class="max-h-[55vh] overflow-y-auto">
+      <div class="max-h-[55vh] overflow-y-auto sm:max-h-none sm:min-h-0 sm:flex-1">
         {#each filteredCountries as country (country.code)}
           <button
             type="button"

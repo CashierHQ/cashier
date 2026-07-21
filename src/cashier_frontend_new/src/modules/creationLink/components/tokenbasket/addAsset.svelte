@@ -37,6 +37,14 @@
   // Track display mode (token vs USD) for each asset
   let isUsdStates = $state<boolean[]>([]);
 
+  const hasDuplicateAssets = $derived.by(() => {
+    const selectedAddresses = link.assets
+      .map((asset) => asset.address)
+      .filter(Boolean);
+
+    return selectedAddresses.length !== new Set(selectedAddresses).size;
+  });
+
   function getFirstUnusedTokenAddress(): string | null {
     if (!walletStore.query.data || walletStore.query.data.length === 0) {
       return null;
@@ -111,17 +119,6 @@
     link.setAssets(newAssets);
     showAssetDrawer = false;
     selectedAssetIndex = null;
-  }
-
-  function getExcludedAddressesForIndex(index: number): string[] {
-    const currentAddress = link.assets[index]?.address;
-
-    const addresses = link.assets
-      .map((asset) => asset.address)
-      .filter((address) => address && address !== currentAddress);
-
-    // unique addresses
-    return Array.from(new Set(addresses));
   }
 
   function handleAmountChange(value: string, index: number) {
@@ -271,6 +268,11 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      if (hasDuplicateAssets) {
+        toast.error(locale.t("links.linkForm.addAsset.errors.duplicateAssets"));
+        return;
+      }
+
       trackEvent(AnalyticsEvent.LINK_CREATION_ASSET_CONTINUE, {
         link_type: link.createLinkData.linkType,
         FE_link_id: link.id ?? "",
@@ -378,9 +380,6 @@
       selectedAddress={selectedAssetIndex !== null
         ? link.assets[selectedAssetIndex]?.address
         : undefined}
-      excludeAddresses={selectedAssetIndex !== null
-        ? getExcludedAddressesForIndex(selectedAssetIndex)
-        : []}
       onSelectToken={(address) => {
         if (selectedAssetIndex !== null) {
           handleSelectToken(address, selectedAssetIndex);
