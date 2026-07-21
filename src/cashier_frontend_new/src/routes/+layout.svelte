@@ -5,6 +5,7 @@
   import { Toaster } from "$lib/shadcn/components/ui/sonner";
   import ProtectedIP from "$modules/routing/components/ProtectedIP.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import DebugSessionTimers from "$modules/auth/components/DebugSessionTimers.svelte";
   import { refreshAmplitudeUserIdFromAuth } from "$modules/analytics/amplitudeStore";
   import "../app.css";
 
@@ -28,4 +29,5 @@
   {@render children?.()}
 </ProtectedIP>
 
+<DebugSessionTimers />
 <Toaster />
