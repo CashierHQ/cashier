@@ -284,11 +284,13 @@
           "checkSpam": "Check spam if you don't see it.",
           "didNotGetIt": "Didn't get it? ",
           "resendCode": "Resend code",
+          "resendIn": "Resend in {{time}}",
           "resendingCode": "Resending…",
           "codeResent": "Code resent",
           "codeExpiresIn": "Code expires in {{time}}",
           "digitAriaLabel": "Digit {{number}}",
           "verifyAndUnlock": "Verify & unlock",
+          "tryAgainIn": "Try again in {{time}}",
           "timeMinutes": "{{count}} minutes",
           "timeSeconds": "{{count}} seconds",
           "errors": {

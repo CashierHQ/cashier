@@ -11,6 +11,8 @@ import { getPhoneDialCode } from "$modules/shared/services/phoneNumber";
 export const FALLBACK_LOCK_VALUE_LENGTH = 12;
 export const X_HANDLE_LOCK_TYPE = "xHandle";
 export const OTP_EXPIRY_SECONDS = 10 * 60;
+export const OTP_RESEND_COOLDOWN_SECONDS = 60;
+export const OTP_VERIFY_RETRY_COOLDOWN_SECONDS = 3;
 
 export const GATE_OPTIONS = [
   {

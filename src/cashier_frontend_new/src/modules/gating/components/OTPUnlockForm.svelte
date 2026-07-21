@@ -2,11 +2,11 @@
   import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
   import { locale } from "$lib/i18n";
   import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
-  import { OTP_EXPIRY_SECONDS } from "$modules/gating/constants";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { otpUnlockSessionStore } from "$modules/gating/state/otpUnlockSessionStore.svelte";
   import { getBackoffTimeText } from "$modules/gating/utils/backoffTime";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   const {
     linkId,
@@ -33,18 +33,28 @@
     return "";
   });
 
-  let step = $state<"verify" | "code">("verify");
-  let digits = $state(["", "", "", "", "", ""]);
   let inputEls = $state<HTMLInputElement[]>([]);
   let isSending = $state(false);
   let isResending = $state(false);
-  let hasResentCode = $state(false);
   let isVerifying = $state(false);
   let error = $state<string | null>(null);
-  let remainingSeconds = $state(OTP_EXPIRY_SECONDS);
-  let countdownInterval: ReturnType<typeof setInterval> | null = null;
+  let now = $state(Date.now());
+  let tickInterval: ReturnType<typeof setInterval> | null = null;
 
-  const code = $derived(digits.join(""));
+  const sessionKey = $derived(`${linkId}:${gate.gate.id}:${destination}`);
+  const session = $derived.by(() =>
+    otpUnlockSessionStore.getSession(sessionKey),
+  );
+  const code = $derived(session.digits.join(""));
+  const remainingSeconds = $derived.by(() =>
+    secondsUntil(session.expiresAtMs),
+  );
+  const resendRemainingSeconds = $derived.by(() =>
+    secondsUntil(session.resendAvailableAtMs),
+  );
+  const verifyRemainingSeconds = $derived.by(() =>
+    secondsUntil(session.verifyAvailableAtMs),
+  );
   const formattedRemainingTime = $derived.by(() => {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
@@ -55,22 +65,20 @@
       .t("links.linkForm.lock.otp.codeExpiresIn")
       .replace("{{time}}", formattedRemainingTime),
   );
+  const resendInText = $derived(
+    locale
+      .t("links.linkForm.lock.otp.resendIn")
+      .replace("{{time}}", getBackoffTimeText(resendRemainingSeconds)),
+  );
+  const tryAgainText = $derived(
+    locale
+      .t("links.linkForm.lock.otp.tryAgainIn")
+      .replace("{{time}}", getBackoffTimeText(verifyRemainingSeconds)),
+  );
 
-  function stopCountdown() {
-    if (!countdownInterval) return;
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-
-  function startCountdown() {
-    stopCountdown();
-    remainingSeconds = OTP_EXPIRY_SECONDS;
-    countdownInterval = setInterval(() => {
-      remainingSeconds = Math.max(0, remainingSeconds - 1);
-      if (remainingSeconds === 0) {
-        stopCountdown();
-      }
-    }, 1000);
+  function secondsUntil(timestamp: number | null | undefined) {
+    if (!timestamp) return 0;
+    return Math.max(0, Math.ceil((timestamp - now) / 1000));
   }
 
   async function handleSendOtp() {
@@ -79,9 +87,7 @@
     try {
       const result = await cashierBackendService.sendOtp(gate.gate.id);
       if (result.isOk()) {
-        digits = ["", "", "", "", "", ""];
-        step = "code";
-        startCountdown();
+        otpUnlockSessionStore.markCodeSent(sessionKey);
       } else {
         error = result.unwrapErr().message;
       }
@@ -91,16 +97,14 @@
   }
 
   async function handleResendOtp() {
-    if (hasResentCode || isResending) return;
+    if (resendRemainingSeconds > 0 || isResending) return;
 
-    hasResentCode = true;
     isResending = true;
     error = null;
     try {
       const result = await cashierBackendService.sendOtp(gate.gate.id);
       if (result.isOk()) {
-        digits = ["", "", "", "", "", ""];
-        startCountdown();
+        otpUnlockSessionStore.markCodeSent(sessionKey);
         focusDigit(0);
       } else {
         error = result.unwrapErr().message;
@@ -116,13 +120,14 @@
 
   function handleDigitInput(index: number, value: string) {
     const digit = value.replace(/\D/g, "").slice(-1);
-    digits[index] = digit;
-    digits = [...digits];
+    const nextDigits = [...session.digits];
+    nextDigits[index] = digit;
+    otpUnlockSessionStore.setDigits(sessionKey, nextDigits);
     if (digit && index < 5) focusDigit(index + 1);
   }
 
   function handleDigitKeydown(index: number, e: KeyboardEvent) {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
+    if (e.key === "Backspace" && !session.digits[index] && index > 0) {
       focusDigit(index - 1);
     }
   }
@@ -131,17 +136,17 @@
     const pasted = e.clipboardData?.getData("text")?.replace(/\D/g, "") ?? "";
     if (pasted.length === 0) return;
     e.preventDefault();
-    const newDigits = [...digits];
+    const newDigits = [...session.digits];
     for (let i = 0; i < 6 && i < pasted.length; i++) {
       newDigits[i] = pasted[i];
     }
-    digits = newDigits;
+    otpUnlockSessionStore.setDigits(sessionKey, newDigits);
     const nextEmpty = newDigits.findIndex((d) => d === "");
     focusDigit(nextEmpty === -1 ? 5 : nextEmpty);
   }
 
   async function handleVerify() {
-    if (code.length < 6) return;
+    if (code.length < 6 || verifyRemainingSeconds > 0) return;
     isVerifying = true;
     error = null;
     try {
@@ -152,6 +157,7 @@
         credential,
       );
       if (result.isOk()) {
+        otpUnlockSessionStore.clear(sessionKey);
         onUnlocked();
         onClose();
       } else {
@@ -171,6 +177,7 @@
             .BackoffThrottled;
           const match = backoffMsg.match(/Try again in (\d+)s/);
           const remainingSecs = match ? parseInt(match[1], 10) : 0;
+          otpUnlockSessionStore.setVerifyCooldown(sessionKey, remainingSecs);
           const template =
             locale.t("links.linkForm.lock.tooManyFailedAttempts") ??
             locale.t("links.linkForm.lock.otp.errors.tooManyFailedAttempts");
@@ -179,6 +186,7 @@
             getBackoffTimeText(remainingSecs),
           );
         } else {
+          otpUnlockSessionStore.setVerifyCooldown(sessionKey);
           error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
         }
       }
@@ -187,13 +195,23 @@
     }
   }
 
-  onDestroy(stopCountdown);
+  onMount(() => {
+    tickInterval = setInterval(() => {
+      now = Date.now();
+    }, 1000);
+  });
+
+  onDestroy(() => {
+    if (tickInterval) {
+      clearInterval(tickInterval);
+    }
+  });
 </script>
 
 <!-- Internal header (title changes between steps, so managed here) -->
 <div class="flex h-[30px] items-center justify-between pl-6">
   <h2 class="flex-1 text-center text-lg font-semibold text-[#0c111d]">
-    {step === "verify"
+    {session.step === "verify"
       ? locale.t("links.linkForm.lock.otp.verifyToUnlock")
       : locale.t("links.linkForm.lock.otp.enterCode")}
   </h2>
@@ -208,7 +226,7 @@
 </div>
 
 <div class="mt-6 space-y-6">
-  {#if step === "verify"}
+  {#if session.step === "verify"}
     <!-- Step 1: Verify to unlock -->
     <p class="text-sm text-foreground">
       {#if isEmail}
@@ -281,7 +299,7 @@
     <!-- 6 digit inputs -->
     <div class="space-y-3">
       <div class="flex items-center justify-center gap-1.5">
-        {#each digits as digit, i (i)}
+        {#each session.digits as digit, i (i)}
           <input
             bind:this={inputEls[i]}
             type="text"
@@ -308,13 +326,13 @@
         <button
           type="button"
           class="font-semibold text-green disabled:cursor-not-allowed disabled:text-muted-foreground"
-          disabled={hasResentCode || isResending}
+          disabled={resendRemainingSeconds > 0 || isResending}
           onclick={handleResendOtp}
         >
           {#if isResending}
             {locale.t("links.linkForm.lock.otp.resendingCode")}
-          {:else if hasResentCode}
-            {locale.t("links.linkForm.lock.otp.codeResent")}
+          {:else if resendRemainingSeconds > 0}
+            {resendInText}
           {:else}
             {locale.t("links.linkForm.lock.otp.resendCode")}
           {/if}
@@ -337,12 +355,16 @@
 
     <PrimaryActionButton
       type="button"
-      disabled={code.length < 6}
+      disabled={code.length < 6 || verifyRemainingSeconds > 0}
       loading={isVerifying}
       loadingLabel={locale.t("links.linkForm.lock.processing") ?? "Processing"}
       onclick={handleVerify}
     >
-      {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
+      {#if verifyRemainingSeconds > 0}
+        {tryAgainText}
+      {:else}
+        {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
+      {/if}
     </PrimaryActionButton>
   {/if}
 </div>
