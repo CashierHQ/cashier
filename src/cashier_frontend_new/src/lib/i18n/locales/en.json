@@ -309,6 +309,7 @@
           "confirmPasswordRequired": "Confirm password is required",
           "passwordsDifferent": "The passwords are different.",
           "xHandleRequired": "X handle is required",
+          "xLockRequired": "Select at least one X lock",
           "connectXAccountFailed": "Failed to connect X account",
           "accessTokenMissing": "Access token missing — please reconnect your X account",
           "unsupportedGateType": "Unsupported gate type"

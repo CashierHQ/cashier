@@ -20,6 +20,13 @@
   let likedPostEnabled = $derived(store.hasConfiguredXLikedPost);
   let retweetedPostEnabled = $derived(store.hasConfiguredXRetweetedPost);
 
+  const hasSelectedXLockOption = $derived(
+    ownedAccountEnabled ||
+      followingEnabled ||
+      likedPostEnabled ||
+      retweetedPostEnabled,
+  );
+
   const hasAnyError = $derived(
     (ownedAccountEnabled && store.xOwnedAccountSetupError !== null) ||
       (followingEnabled && store.xFollowingSetupError !== null) ||
@@ -29,6 +36,7 @@
 
   const handleLock = () => {
     submitted = true;
+    if (!hasSelectedXLockOption) return;
     if (hasAnyError) return;
 
     if (ownedAccountEnabled) store.saveXOwnedAccountLock();
@@ -289,6 +297,12 @@
     <Info class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
     <p class="text-sm">{locale.t("links.linkForm.lock.xAllKeysRequired")}</p>
   </div>
+
+  {#if submitted && !hasSelectedXLockOption}
+    <p class="text-left text-xs text-[#D26060]">
+      {locale.t("links.linkForm.lock.errors.xLockRequired")}
+    </p>
+  {/if}
 
   <PrimaryActionButton type="button" onclick={handleLock}>
     {locale.t("links.linkForm.lock.lock")}
