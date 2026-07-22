@@ -51,6 +51,15 @@ export type EnrichedNFT = NFT & {
 };
 
 /**
+ * A token the current user owns according to nftGeek's portfolio lookup. nftGeek only
+ * reports ownership (no image/name/attributes), so this is deliberately minimal.
+ */
+export type OwnedTokenRecord = {
+  readonly tokenId: bigint;
+  readonly lastUpdatedAt?: string;
+};
+
+/**
  * NFT trait display model used by detail cards.
  */
 export type NftAttribute = {

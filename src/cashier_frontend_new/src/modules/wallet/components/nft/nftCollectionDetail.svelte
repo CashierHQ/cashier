@@ -18,6 +18,7 @@
     onNavigateBack: () => void;
     onReceive: (collectionId: string) => void;
     onSend: (collectionId: string, tokenId: bigint) => void;
+    onRefresh: () => void;
   };
 
   let {
@@ -27,6 +28,7 @@
     onNavigateBack,
     onReceive,
     onSend,
+    onRefresh,
   }: Props = $props();
   let failedImageLoads = new SvelteSet<string>();
   let selectedTokenId = $state<bigint | null>(null);
@@ -87,6 +89,7 @@
 
     <button
       type="button"
+      onclick={onRefresh}
       class="text-green flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-lightgreen"
       aria-label={locale.t("wallet.nfts.detail.refreshAria")}
     >

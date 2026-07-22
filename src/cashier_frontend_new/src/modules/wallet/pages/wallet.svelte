@@ -10,9 +10,11 @@
   import { SvelteSet } from "svelte/reactivity";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
+  import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
   import {
     getNftCollectionSummaries,
     getNftsForCollection,
+    mapOwnedTokenRecordToEnrichedNft,
   } from "$modules/wallet/utils/nftCollections";
 
   type Props = {
@@ -105,11 +107,25 @@
       standard: registryEntry.standard,
     };
   });
-  const selectedCollectionNfts = $derived(
-    selectedCollectionId
-      ? getNftsForCollection(visibleNfts, selectedCollectionId)
-      : [],
-  );
+  const selectedCollectionNfts = $derived.by(() => {
+    const collectionId = selectedCollectionId;
+    if (!collectionId) return [];
+
+    const owned = getNftsForCollection(visibleNfts, collectionId);
+    const ownedTokenIds = new Set(owned.map((nft) => nft.tokenId.toString()));
+    const collectionName = selectedCollection?.name ?? "";
+
+    // Fill in NFTs nftGeek reports as owned but that weren't manually added via
+    // "Add NFT" — additive to (never replaces) the existing owned-NFT mechanism.
+    const portfolioNfts = nftPortfolioStore
+      .getTokensForCollection(collectionId)
+      .filter((record) => !ownedTokenIds.has(record.tokenId.toString()))
+      .map((record) =>
+        mapOwnedTokenRecordToEnrichedNft(record, collectionId, collectionName),
+      );
+
+    return [...owned, ...portfolioNfts];
+  });
 
   $effect(() => {
     if (typeof window !== "undefined") {
@@ -199,6 +215,11 @@
   function handleSendNft(collectionId: string, tokenId: bigint) {
     onNavigateToNftSend(collectionId, tokenId);
   }
+
+  function handleRefreshCollectionDetail() {
+    walletNftStore.query.refresh();
+    nftPortfolioStore.query.refresh();
+  }
 </script>
 
 {#if activeTab === WalletTab.NFTS && selectedCollection}
@@ -209,6 +230,7 @@
     onNavigateBack={handleCollectionBack}
     onReceive={handleReceiveCollection}
     onSend={handleSendNft}
+    onRefresh={handleRefreshCollectionDetail}
   />
 {:else}
   <WalletOverviewHeader

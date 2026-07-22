@@ -1,6 +1,7 @@
 import type {
   EnrichedNFT,
   NftCollectionSummary,
+  OwnedTokenRecord,
 } from "$modules/wallet/types/nft";
 
 /**
@@ -56,4 +57,30 @@ export function getNftsForCollection(
   collectionId: string,
 ): EnrichedNFT[] {
   return nfts.filter((nft) => nft.collectionId === collectionId);
+}
+
+/**
+ * Builds a sparse `EnrichedNFT` from an nftGeek-derived ownership record. nftGeek only
+ * reports ownership (no image/name/attributes), so `name`/`description`/`imageUrl` are
+ * left empty — existing NFT rendering already falls back to a placeholder image and
+ * `#<tokenId>` display name for these fields.
+ * @param record the owned-token record from nftPortfolioStore
+ * @param collectionId collection canister id
+ * @param collectionName the collection's display name, already known by the caller
+ * @returns a sparse EnrichedNFT suitable for the collection-details grid
+ */
+export function mapOwnedTokenRecordToEnrichedNft(
+  record: OwnedTokenRecord,
+  collectionId: string,
+  collectionName: string,
+): EnrichedNFT {
+  return {
+    collectionId,
+    tokenId: record.tokenId,
+    name: "",
+    description: "",
+    imageUrl: "",
+    collectionName,
+    lastTransferAt: record.lastUpdatedAt,
+  };
 }

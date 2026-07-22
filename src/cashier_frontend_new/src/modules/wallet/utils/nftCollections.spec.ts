@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { EnrichedNFT } from "$modules/wallet/types/nft";
+import type { EnrichedNFT, OwnedTokenRecord } from "$modules/wallet/types/nft";
 import {
   getNftCollectionSummaries,
   getNftsForCollection,
+  mapOwnedTokenRecordToEnrichedNft,
 } from "$modules/wallet/utils/nftCollections";
 
 const nfts: EnrichedNFT[] = [
@@ -106,5 +107,42 @@ describe("getNftsForCollection", () => {
     expect(
       collectionNfts.every((nft) => nft.collectionId === "collection-b"),
     ).toBe(true);
+  });
+});
+
+describe("mapOwnedTokenRecordToEnrichedNft", () => {
+  it("should build a sparse EnrichedNFT with empty display fields", () => {
+    const record: OwnedTokenRecord = {
+      tokenId: 42n,
+      lastUpdatedAt: "1/1/2026",
+    };
+
+    const nft = mapOwnedTokenRecordToEnrichedNft(
+      record,
+      "collection-a",
+      "Alpha Collection",
+    );
+
+    expect(nft).toEqual({
+      collectionId: "collection-a",
+      tokenId: 42n,
+      name: "",
+      description: "",
+      imageUrl: "",
+      collectionName: "Alpha Collection",
+      lastTransferAt: "1/1/2026",
+    });
+  });
+
+  it("should leave lastTransferAt undefined when lastUpdatedAt is missing", () => {
+    const record: OwnedTokenRecord = { tokenId: 7n };
+
+    const nft = mapOwnedTokenRecordToEnrichedNft(
+      record,
+      "collection-b",
+      "Beta Collection",
+    );
+
+    expect(nft.lastTransferAt).toBeUndefined();
   });
 });
