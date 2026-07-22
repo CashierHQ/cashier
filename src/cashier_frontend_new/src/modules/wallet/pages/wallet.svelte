@@ -114,6 +114,7 @@
     const owned = getNftsForCollection(visibleNfts, collectionId);
     const ownedTokenIds = new Set(owned.map((nft) => nft.tokenId.toString()));
     const collectionName = selectedCollection?.name ?? "";
+    const standard = selectedCollection?.standard;
 
     // Fill in NFTs nftGeek reports as owned but that weren't manually added via
     // "Add NFT" — additive to (never replaces) the existing owned-NFT mechanism.
@@ -121,7 +122,12 @@
       .getTokensForCollection(collectionId)
       .filter((record) => !ownedTokenIds.has(record.tokenId.toString()))
       .map((record) =>
-        mapOwnedTokenRecordToEnrichedNft(record, collectionId, collectionName),
+        mapOwnedTokenRecordToEnrichedNft(
+          record,
+          collectionId,
+          collectionName,
+          standard,
+        ),
       );
 
     return [...owned, ...portfolioNfts];

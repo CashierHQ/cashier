@@ -145,4 +145,32 @@ describe("mapOwnedTokenRecordToEnrichedNft", () => {
 
     expect(nft.lastTransferAt).toBeUndefined();
   });
+
+  it("should build a real thumbnail image URL for EXT-standard collections", () => {
+    const record: OwnedTokenRecord = { tokenId: 239n };
+
+    const nft = mapOwnedTokenRecordToEnrichedNft(
+      record,
+      "kembn-6qaaa-aaaag-qc7ga-cai",
+      "Some EXT Collection",
+      "EXT",
+    );
+
+    expect(nft.imageUrl).toBe(
+      "https://kembn-6qaaa-aaaag-qc7ga-cai.raw.icp0.io/?type=thumbnail&tokenid=4el4t-lykor-uwiaa-aaaaa-buaxz-qaqca-aaadx-q",
+    );
+  });
+
+  it("should leave imageUrl empty for non-EXT standards", () => {
+    const record: OwnedTokenRecord = { tokenId: 1n };
+
+    const nft = mapOwnedTokenRecordToEnrichedNft(
+      record,
+      "collection-c",
+      "ICRC Collection",
+      "ICRC-7",
+    );
+
+    expect(nft.imageUrl).toBe("");
+  });
 });
