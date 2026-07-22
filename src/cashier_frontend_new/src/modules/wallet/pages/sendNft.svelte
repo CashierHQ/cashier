@@ -10,8 +10,8 @@
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
   import type {
+    CollectionSummary,
     EnrichedNFT,
-    NftCollectionSummary,
   } from "$modules/wallet/types/nft";
   import { mergeOwnedAndPortfolioNfts } from "$modules/wallet/utils/nftCollections";
   import {
@@ -51,38 +51,11 @@
       collectionStore.isCollectionEnabled(nft.collectionId),
     ),
   );
-  const enabledRegistryCollections = $derived.by(() =>
+  const collections = $derived.by(() =>
     (collectionStore.query.data ?? []).filter((collection) =>
       collectionStore.isCollectionEnabled(collection.collectionId),
     ),
   );
-  const collections = $derived.by(() => {
-    return enabledRegistryCollections
-      .map((collection): NftCollectionSummary | null => {
-        const nfts = mergeOwnedAndPortfolioNfts(
-          enabledNfts,
-          nftPortfolioStore.getTokensForCollection(collection.collectionId),
-          collection.collectionId,
-          collection.name,
-          collection.standard,
-        );
-
-        if (nfts.length === 0) {
-          return null;
-        }
-
-        return {
-          collectionId: collection.collectionId,
-          name: collection.name,
-          description: collection.description,
-          imageUrl: collection.imageUrl,
-          itemCount: nfts.length,
-          standard: collection.standard,
-        };
-      })
-      .filter((collection) => collection !== null)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  });
   const selectedCollection = $derived(
     selectedCollectionId
       ? (collections.find(
@@ -208,7 +181,7 @@
     initialSelectionApplied = true;
   });
 
-  function getCollectionImage(collection: NftCollectionSummary) {
+  function getCollectionImage(collection: CollectionSummary) {
     if (failedImageLoads.has(collection.collectionId)) {
       return NFT_FALLBACK_IMAGE_URL;
     }
@@ -234,7 +207,7 @@
     failedImageLoads.add(key);
   }
 
-  function handleSelectCollection(collection: NftCollectionSummary) {
+  function handleSelectCollection(collection: CollectionSummary) {
     selectedCollectionId = collection.collectionId;
     selectedTokenId = null;
     nftSearchQuery = "";
@@ -339,7 +312,7 @@
         {locale.t("wallet.nfts.send.enabledCollections")}
       </p>
 
-      {#if (walletNftStore.query.isLoading && !walletNftStore.query.data) || (collectionStore.query.isLoading && !collectionStore.query.data)}
+      {#if collectionStore.query.isLoading && !collectionStore.query.data}
         <div class="flex items-center justify-center py-12">
           <LoaderCircle class="text-walletpurple h-8 w-8 animate-spin" />
         </div>
