@@ -68,14 +68,14 @@
 
   // Get airdrop progress info
   const claimedCount = $derived(
-    userLink.link?.link_use_action_counter
-      ? Number(userLink.link.link_use_action_counter ?? 0n)
+    userLink.link?.link_use_action_counter !== undefined
+      ? Number(userLink.link.link_use_action_counter)
       : undefined,
   );
 
   const totalCount = $derived(
-    userLink.link?.link_use_action_max_count
-      ? Number(userLink.link.link_use_action_max_count ?? 1n)
+    userLink.link?.link_use_action_max_count !== undefined
+      ? Number(userLink.link.link_use_action_max_count)
       : undefined,
   );
 
