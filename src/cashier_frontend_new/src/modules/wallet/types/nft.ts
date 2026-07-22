@@ -34,7 +34,61 @@ export type EnrichedNFT = NFT & {
   readonly name: string;
   readonly description: string;
   readonly imageUrl: string;
+  readonly owner?: string;
+  readonly mintedAt?: string;
+  readonly lastTransferAt?: string;
   readonly collectionName: string;
+  readonly collectionDescription?: string;
+  readonly collectionImageUrl?: string;
+  readonly collectionSymbol?: string;
+  readonly rarity?: string;
+  readonly supply?: string;
+  readonly floor?: string;
+  readonly type?: string;
+  readonly standard?: string;
+  readonly symbol?: string;
+  readonly attributes?: NftAttribute[];
+};
+
+/**
+ * NFT trait display model used by detail cards.
+ */
+export type NftAttribute = {
+  readonly traitType: string;
+  readonly value: string;
+  readonly rarity?: string;
+};
+
+/**
+ * NFT collection display model used by collection grid and manage screens.
+ */
+export type NftCollectionSummary = {
+  readonly collectionId: string;
+  readonly name: string;
+  readonly description: string;
+  readonly imageUrl: string;
+  readonly itemCount: number;
+  readonly supply?: string;
+  readonly floor?: string;
+  readonly type?: string;
+  readonly standard?: string;
+  readonly symbol?: string;
+};
+
+/**
+ * Registry collection display model, sourced from the token_storage collection registry
+ * (not derived from owned NFTs). `itemCount` here is the collection's total supply, not
+ * how many the current user owns — real ownership counts are a later ("User portfolio") phase.
+ */
+export type CollectionSummary = {
+  readonly collectionId: string;
+  readonly name: string;
+  readonly description: string;
+  readonly imageUrl: string;
+  readonly itemCount: number;
+  readonly floorPrice?: bigint;
+  readonly standard: string;
+  readonly isCashier: boolean;
 };
 
 /**
@@ -50,6 +104,31 @@ export class NFTMapper {
     return {
       tokenId: nft.token_id,
       collectionId: nft.collection_id.toText(),
+    };
+  }
+}
+
+/**
+ * Mapper class to convert token storage CollectionDto data to the local display type
+ */
+export class CollectionMapper {
+  /**
+   * Map a token storage CollectionDto to a local CollectionSummary
+   * @param dto token storage collection registry entry
+   * @returns Local CollectionSummary type
+   */
+  public static fromCollectionDto(
+    dto: tokenStorage.CollectionDto,
+  ): CollectionSummary {
+    return {
+      collectionId: dto.collection_id.toText(),
+      name: dto.name,
+      description: dto.description,
+      imageUrl: dto.image,
+      itemCount: Number(dto.total_items),
+      floorPrice: dto.floor_price[0],
+      standard: dto.standard,
+      isCashier: dto.is_cashier,
     };
   }
 }

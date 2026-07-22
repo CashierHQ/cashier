@@ -59,6 +59,47 @@ After running the sync, inspect:
 git diff scripts/args/token_storage_args.template
 ```
 
+## Sync NFT Collections
+
+Use `sync_nft_collections_to_token_storage.mjs` to fetch NFT collection metadata from nftGeek, Toniq (Entrepot) and DGDG, merge it, and push it into the `token_storage` canister's collection registry.
+
+The script:
+
+- fetches the canonical collection list (canister id, name, standard) from nftGeek's `/api/1/collections`
+- enriches each collection with description/image/royalty from Toniq's `/api/collections`, and total item count/floor price from DGDG's `/nfts/collections`, matched by canister id
+- ignores Toniq's own `standard` field (inconsistent values like `"legacy1.5"`) — nftGeek's `interface` is always used instead
+- batches the merged records and calls `collection_manager_upsert_collections` on `token_storage` via `dfx canister call`, upserting (replacing, not duplicating) by `collection_id`
+
+Unlike `sync_omnity_runes_to_token_storage.mjs`, this makes a **live authenticated update call**, not a template-file patch — it uses your ambient `dfx identity`, which must hold `Permission::Admin` or `Permission::CollectionManager` on the target canister.
+
+Prerequisites:
+
+- run from the repository root
+- network access to nftGeek/Toniq/DGDG and to the target IC network
+- `dfx identity` set to a principal holding `Permission::Admin` or `Permission::CollectionManager` on `token_storage`
+
+Dry run first (fetches and merges, prints a summary + sample, does not call the canister):
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs --dry-run
+```
+
+Apply changes:
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs --network local
+node scripts/sync_nft_collections_to_token_storage.mjs --network ic
+```
+
+Optional flags:
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs \
+  --canister-id token_storage \
+  --limit 50 \
+  --batch-size 100
+```
+
 ## Set the Gate canister secrets
 
 - Populate the secrets in the `.env` file

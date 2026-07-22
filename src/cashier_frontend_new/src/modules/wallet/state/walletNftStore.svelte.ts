@@ -3,6 +3,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { NFT_PAGE_SIZE } from "$modules/wallet/constants";
 import { Icrc7Service } from "$modules/wallet/services/icrc7Service";
+import { getDemoNfts } from "$modules/wallet/services/nftDemoData";
 import type {
   CollectionMetadata,
   EnrichedNFT,
@@ -24,10 +25,25 @@ class WalletNftStore {
     this.#walletNftQuery = managedState<EnrichedNFT[]>({
       queryFn: async () => {
         const start = this.#currentPage * NFT_PAGE_SIZE;
-        const nfts: NFT[] = await tokenStorageService.getNfts(
-          start,
-          NFT_PAGE_SIZE,
-        );
+        let nfts: NFT[] = [];
+
+        try {
+          nfts = await tokenStorageService.getNfts(start, NFT_PAGE_SIZE);
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            this.hasMore = false;
+            this.#allNfts = getDemoNfts();
+            return this.#allNfts;
+          }
+
+          throw error;
+        }
+
+        if (import.meta.env.DEV && nfts.length === 0) {
+          this.hasMore = false;
+          this.#allNfts = getDemoNfts();
+          return this.#allNfts;
+        }
 
         if (nfts.length < NFT_PAGE_SIZE) {
           this.hasMore = false;

@@ -80,7 +80,7 @@ class TokenStorageService {
     if (!actor) {
       throw new Error("User is not authenticated");
     }
-    const res: tokenStorage.Result_5 = await actor.list_tokens();
+    const res: tokenStorage.Result_8 = await actor.list_tokens();
     return parseListTokens(res);
   }
 

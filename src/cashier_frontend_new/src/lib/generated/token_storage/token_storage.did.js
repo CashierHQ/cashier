@@ -40,6 +40,26 @@ export const idlFactory = ({ IDL }) => {
     'ckbtc_minter_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
+  const CollectionRegistryStats = IDL.Record({
+    'total_collections' : IDL.Nat64,
+    'total_cashier' : IDL.Nat64,
+  });
+  const Result = IDL.Variant({
+    'Ok' : CollectionRegistryStats,
+    'Err' : IDL.Text,
+  });
+  const CollectionDto = IDL.Record({
+    'floor_price' : IDL.Opt(IDL.Nat),
+    'creator' : IDL.Principal,
+    'is_cashier' : IDL.Bool,
+    'name' : IDL.Text,
+    'total_items' : IDL.Nat64,
+    'collection_id' : IDL.Principal,
+    'description' : IDL.Text,
+    'image' : IDL.Text,
+    'royalty' : IDL.Opt(IDL.Nat64),
+    'standard' : IDL.Text,
+  });
   const TokenRegistryMetadata = IDL.Record({
     'last_updated' : IDL.Nat64,
     'version' : IDL.Nat64,
@@ -71,8 +91,8 @@ export const idlFactory = ({ IDL }) => {
     'total_enabled_default' : IDL.Nat64,
     'total_tokens' : IDL.Nat64,
   });
-  const Result = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
-  const Result_1 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
+  const Result_1 = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
+  const Result_2 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
   CanisterError.fill(
     IDL.Variant({
       'InvalidDataError' : IDL.Text,
@@ -110,12 +130,13 @@ export const idlFactory = ({ IDL }) => {
       'CallCanisterFailed' : IDL.Text,
     })
   );
-  const Result_2 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
+  const Result_3 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
   const Permission = IDL.Variant({
     'TokenManager' : IDL.Null,
     'Admin' : IDL.Null,
+    'CollectionManager' : IDL.Null,
   });
-  const Result_3 = IDL.Variant({
+  const Result_4 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
   });
@@ -123,6 +144,14 @@ export const idlFactory = ({ IDL }) => {
     'omnity_bitcoin_id' : IDL.Opt(IDL.Principal),
     'ckbtc_minter_id' : IDL.Opt(IDL.Principal),
     'inspect_message_enabled' : IDL.Opt(IDL.Bool),
+  });
+  const UpsertCollectionsInput = IDL.Record({
+    'collections' : IDL.Vec(CollectionDto),
+  });
+  const UpsertCollectionsResult = IDL.Record({ 'upserted' : IDL.Nat32 });
+  const Result_5 = IDL.Variant({
+    'Ok' : UpsertCollectionsResult,
+    'Err' : CanisterError,
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -136,7 +165,12 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
-  const Result_4 = IDL.Variant({ 'Ok' : TokenDto, 'Err' : CanisterError });
+  const Result_6 = IDL.Variant({ 'Ok' : CollectionDto, 'Err' : CanisterError });
+  const Result_7 = IDL.Variant({ 'Ok' : TokenDto, 'Err' : CanisterError });
+  const ListCollectionsInput = IDL.Record({
+    'limit' : IDL.Opt(IDL.Nat32),
+    'start' : IDL.Opt(IDL.Nat32),
+  });
   const UserPreference = IDL.Record({
     'hide_zero_balance' : IDL.Bool,
     'selected_chain' : IDL.Vec(Chain),
@@ -147,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Vec(TokenDto),
     'perference' : IDL.Opt(UserPreference),
   });
-  const Result_5 = IDL.Variant({
+  const Result_8 = IDL.Variant({
     'Ok' : TokenListResponse,
     'Err' : CanisterError,
   });
@@ -161,7 +195,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddUserNftInput = IDL.Record({ 'nft' : Nft });
   const UserNftDto = IDL.Record({ 'nft' : Nft, 'user' : IDL.Principal });
-  const Result_6 = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
+  const Result_9 = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
   const AddTokenInput = IDL.Record({
     'is_rune' : IDL.Opt(IDL.Bool),
     'token_id' : TokenId,
@@ -233,9 +267,16 @@ export const idlFactory = ({ IDL }) => {
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
   });
-  const Result_7 = IDL.Variant({
+  const Result_10 = IDL.Variant({
     'Ok' : UserBridgeTransactionDto,
     'Err' : CanisterError,
+  });
+  const EnableCollectionInput = IDL.Record({
+    'collection_id' : IDL.Principal,
+    'is_enabled' : IDL.Bool,
+  });
+  const EnableCollectionsInput = IDL.Record({
+    'collection_ids' : IDL.Vec(IDL.Principal),
   });
   const GetUserBridgeTransactionsInputArg = IDL.Record({
     'status' : IDL.Opt(BridgeTransactionStatus),
@@ -245,7 +286,7 @@ export const idlFactory = ({ IDL }) => {
     'rune_id' : IDL.Opt(IDL.Text),
     'bridge_type' : IDL.Opt(BridgeType),
   });
-  const Result_8 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
+  const Result_11 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const GetUserNftInput = IDL.Record({
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
@@ -273,6 +314,12 @@ export const idlFactory = ({ IDL }) => {
     'is_enabled' : IDL.Bool,
   });
   return IDL.Service({
+    'admin_get_collection_stats' : IDL.Func([], [Result], ['query']),
+    'admin_get_registry_collections' : IDL.Func(
+        [],
+        [IDL.Vec(CollectionDto)],
+        ['query'],
+      ),
     'admin_get_registry_metadata' : IDL.Func(
         [],
         [TokenRegistryMetadata],
@@ -284,12 +331,13 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'admin_get_setting' : IDL.Func([], [SettingsDto], ['query']),
-    'admin_get_stats' : IDL.Func([], [Result], ['query']),
-    'admin_initialize_registry' : IDL.Func([], [Result_1], []),
-    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_2], []),
+    'admin_get_stats' : IDL.Func([], [Result_1], ['query']),
+    'admin_initialize_collection_registry' : IDL.Func([], [Result_2], []),
+    'admin_initialize_registry' : IDL.Func([], [Result_2], []),
+    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_3], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_3],
+        [Result_4],
         [],
       ),
     'admin_permissions_get' : IDL.Func(
@@ -299,25 +347,46 @@ export const idlFactory = ({ IDL }) => {
       ),
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
+        [Result_4],
+        [],
+      ),
+    'admin_update_setting' : IDL.Func([UpdateSettingArgs], [Result_3], []),
+    'collection_manager_upsert_collections' : IDL.Func(
+        [UpsertCollectionsInput],
+        [Result_5],
+        [],
+      ),
+    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
+    'get_collection_by_id' : IDL.Func([IDL.Principal], [Result_6], ['query']),
+    'get_token_by_id' : IDL.Func([IDL.Principal], [Result_7], ['query']),
+    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
+    'list_collections' : IDL.Func(
+        [ListCollectionsInput],
+        [IDL.Vec(CollectionDto)],
+        ['query'],
+      ),
+    'list_tokens' : IDL.Func([], [Result_8], ['query']),
+    'token_manager_update_token_standards' : IDL.Func(
+        [UpdateTokenStandardsInput],
         [Result_3],
         [],
       ),
-    'admin_update_setting' : IDL.Func([UpdateSettingArgs], [Result_2], []),
-    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
-    'get_token_by_id' : IDL.Func([IDL.Principal], [Result_4], ['query']),
-    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'list_tokens' : IDL.Func([], [Result_5], ['query']),
-    'token_manager_update_token_standards' : IDL.Func(
-        [UpdateTokenStandardsInput],
-        [Result_2],
-        [],
-      ),
-    'user_add_nft' : IDL.Func([AddUserNftInput], [Result_6], []),
-    'user_add_token' : IDL.Func([AddTokenInput], [Result_2], []),
-    'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_2], []),
+    'user_add_nft' : IDL.Func([AddUserNftInput], [Result_9], []),
+    'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
+    'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
     'user_create_bridge_transaction' : IDL.Func(
         [CreateBridgeTransactionInputArg],
-        [Result_7],
+        [Result_10],
+        [],
+      ),
+    'user_enable_collection' : IDL.Func(
+        [EnableCollectionInput],
+        [Result_3],
+        [],
+      ),
+    'user_enable_collections_batch' : IDL.Func(
+        [EnableCollectionsInput],
+        [Result_3],
         [],
       ),
     'user_get_bridge_transaction_by_id' : IDL.Func(
@@ -330,16 +399,21 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(UserBridgeTransactionDto)],
         ['query'],
       ),
-    'user_get_btc_address' : IDL.Func([], [Result_8], []),
+    'user_get_btc_address' : IDL.Func([], [Result_11], []),
+    'user_get_enabled_collections' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
     'user_get_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
-    'user_get_rune_address' : IDL.Func([], [Result_8], []),
-    'user_sync_token_list' : IDL.Func([], [Result_2], []),
+    'user_get_rune_address' : IDL.Func([], [Result_11], []),
+    'user_sync_token_list' : IDL.Func([], [Result_3], []),
     'user_update_bridge_transaction' : IDL.Func(
         [UpdateBridgeTransactionInputArg],
-        [Result_7],
+        [Result_10],
         [],
       ),
-    'user_update_token_enable' : IDL.Func([UpdateTokenInput], [Result_2], []),
+    'user_update_token_enable' : IDL.Func([UpdateTokenInput], [Result_3], []),
   });
 };
 export const init = ({ IDL }) => {

@@ -6,6 +6,7 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 use token_storage_types::{
+    collection::{CollectionDto, CollectionRegistryStats},
     error::CanisterError,
     settings::{SettingsDto, UpdateSettingArgs},
     token::{RegistryStats, TokenDto, TokenRegistryMetadata},
@@ -151,6 +152,48 @@ pub fn admin_get_stats() -> Result<RegistryStats, String> {
         total_tokens,
         total_enabled_default,
     })
+}
+
+#[query]
+pub fn admin_get_registry_collections() -> Vec<CollectionDto> {
+    debug!("[admin_get_registry_collections]");
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state.collection_registry.list_collections(None, None)
+}
+
+#[update]
+pub fn admin_initialize_collection_registry() -> Result<(), String> {
+    info!("[admin_initialize_collection_registry]");
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    let mut registry = state.collection_registry;
+    registry
+        .delete_all()
+        .expect("Should be able to delete collection registry");
+
+    Ok(())
+}
+
+#[query]
+pub fn admin_get_collection_stats() -> Result<CollectionRegistryStats, String> {
+    debug!("[admin_get_collection_stats]");
+
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    Ok(state.collection_registry.stats())
 }
 
 /// Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are

@@ -80,6 +80,22 @@ export type ChainTokenDetails = {
       'supported_standards' : Array<IcrcStandard>,
     }
   };
+export interface CollectionDto {
+  'floor_price' : [] | [bigint],
+  'creator' : Principal,
+  'is_cashier' : boolean,
+  'name' : string,
+  'total_items' : bigint,
+  'collection_id' : Principal,
+  'description' : string,
+  'image' : string,
+  'royalty' : [] | [bigint],
+  'standard' : string,
+}
+export interface CollectionRegistryStats {
+  'total_collections' : bigint,
+  'total_cashier' : bigint,
+}
 export interface CreateBridgeTransactionInputArg {
   'vin' : [] | [Array<UTXO>],
   'deposit_fee_btc_sats' : [] | [bigint],
@@ -97,6 +113,11 @@ export interface CreateBridgeTransactionInputArg {
   'btc_address' : string,
   'bridge_type' : BridgeType,
 }
+export interface EnableCollectionInput {
+  'collection_id' : Principal,
+  'is_enabled' : boolean,
+}
+export interface EnableCollectionsInput { 'collection_ids' : Array<Principal> }
 export interface GetUserBridgeTransactionsInputArg {
   'status' : [] | [BridgeTransactionStatus],
   'asset_type' : [] | [BridgeAssetType],
@@ -112,6 +133,10 @@ export interface GetUserNftInput {
 export type IcrcStandard = { 'ICRC1' : null } |
   { 'ICRC2' : null } |
   { 'ICRC3' : null };
+export interface ListCollectionsInput {
+  'limit' : [] | [number],
+  'start' : [] | [number],
+}
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
@@ -120,7 +145,8 @@ export interface LogServiceSettings {
 }
 export interface Nft { 'token_id' : bigint, 'collection_id' : Principal }
 export type Permission = { 'TokenManager' : null } |
-  { 'Admin' : null };
+  { 'Admin' : null } |
+  { 'CollectionManager' : null };
 export interface RegistryStats {
   'total_enabled_default' : bigint,
   'total_tokens' : bigint,
@@ -134,23 +160,29 @@ export interface RegistryToken {
   'details' : ChainTokenDetails,
   'symbol' : string,
 }
-export type Result = { 'Ok' : RegistryStats } |
+export type Result = { 'Ok' : CollectionRegistryStats } |
   { 'Err' : string };
-export type Result_1 = { 'Ok' : null } |
+export type Result_1 = { 'Ok' : RegistryStats } |
   { 'Err' : string };
+export type Result_10 = { 'Ok' : UserBridgeTransactionDto } |
+  { 'Err' : CanisterError };
+export type Result_11 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : null } |
+  { 'Err' : string };
+export type Result_3 = { 'Ok' : null } |
   { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : Array<Permission> } |
+export type Result_4 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_4 = { 'Ok' : TokenDto } |
+export type Result_5 = { 'Ok' : UpsertCollectionsResult } |
   { 'Err' : CanisterError };
-export type Result_5 = { 'Ok' : TokenListResponse } |
+export type Result_6 = { 'Ok' : CollectionDto } |
   { 'Err' : CanisterError };
-export type Result_6 = { 'Ok' : UserNftDto } |
+export type Result_7 = { 'Ok' : TokenDto } |
   { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : UserBridgeTransactionDto } |
+export type Result_8 = { 'Ok' : TokenListResponse } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : string } |
+export type Result_9 = { 'Ok' : UserNftDto } |
   { 'Err' : CanisterError };
 export interface RuneInfo {
   'token_id' : string,
@@ -225,6 +257,8 @@ export interface UpdateTokenStandardsInput {
   'token_id' : TokenId,
   'supported_standards' : Array<IcrcStandard>,
 }
+export interface UpsertCollectionsInput { 'collections' : Array<CollectionDto> }
+export interface UpsertCollectionsResult { 'upserted' : number }
 export interface UserBridgeTransactionDto {
   'vin' : [] | [Array<UTXO>],
   'deposit_fee_btc_sats' : [] | [bigint],
@@ -255,6 +289,8 @@ export interface UserPreference {
   'hide_unknown_token' : boolean,
 }
 export interface _SERVICE {
+  'admin_get_collection_stats' : ActorMethod<[], Result>,
+  'admin_get_registry_collections' : ActorMethod<[], Array<CollectionDto>>,
   /**
    * Gets the full metadata of the token registry
    * Includes version number and last updated timestamp
@@ -271,21 +307,22 @@ export interface _SERVICE {
    * Requires `Permission::Admin`.
    */
   'admin_get_setting' : ActorMethod<[], SettingsDto>,
-  'admin_get_stats' : ActorMethod<[], Result>,
-  'admin_initialize_registry' : ActorMethod<[], Result_1>,
+  'admin_get_stats' : ActorMethod<[], Result_1>,
+  'admin_initialize_collection_registry' : ActorMethod<[], Result_2>,
+  'admin_initialize_registry' : ActorMethod<[], Result_2>,
   /**
    * Enables/disables the inspect message.
    * 
    * Deprecated: prefer `admin_update_setting` with `inspect_message_enabled = opt bool`.
    * Kept for backward compatibility with existing callers.
    */
-  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_2>,
+  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_3>,
   /**
    * Adds permissions to a principal and returns the principal permissions.
    */
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_3
+    Result_4
   >,
   /**
    * Returns the permissions of a principal.
@@ -296,7 +333,7 @@ export interface _SERVICE {
    */
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_3
+    Result_4
   >,
   /**
    * Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
@@ -313,11 +350,27 @@ export interface _SERVICE {
    * Requires `Permission::Admin` (auto-gated at ingress via the `admin_` prefix + in-method check);
    * unauthorized callers are rejected (trap), not returned as `Err`.
    */
-  'admin_update_setting' : ActorMethod<[UpdateSettingArgs], Result_2>,
+  'admin_update_setting' : ActorMethod<[UpdateSettingArgs], Result_3>,
+  /**
+   * Upserts a batch of collections into the registry. Intended to be called by the offchain
+   * collection-sync script, authenticated as a principal holding `Permission::Admin` or
+   * `Permission::CollectionManager`.
+   */
+  'collection_manager_upsert_collections' : ActorMethod<
+    [UpsertCollectionsInput],
+    Result_5
+  >,
   /**
    * Returns the build data of the canister.
    */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
+  /**
+   * Get a single collection from the registry by id. No auth guard — mirrors `get_token_by_id`.
+   * # Returns
+   * * `Ok(CollectionDto)` - The collection details if found
+   * * `Err(CanisterError::NotFound)` - If the collection doesn't exist in the registry
+   */
+  'get_collection_by_id' : ActorMethod<[Principal], Result_6>,
   /**
    * Get token from registry by token id
    * # Arguments
@@ -326,24 +379,36 @@ export interface _SERVICE {
    * * Ok(TokenDto) - The token details if found
    * * Err(CanisterError) - An error message if the token is not found
    */
-  'get_token_by_id' : ActorMethod<[Principal], Result_4>,
+  'get_token_by_id' : ActorMethod<[Principal], Result_7>,
   /**
    * Returns the inspect message status.
    */
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
+  /**
+   * Lists collections in the registry, paginated. No auth guard — registry data is public,
+   * mirroring `list_tokens`.
+   * # Arguments
+   * * `input` - Pagination parameters
+   * # Returns
+   * * `Vec<CollectionDto>` - The page of collections
+   */
+  'list_collections' : ActorMethod<
+    [ListCollectionsInput],
+    Array<CollectionDto>
+  >,
   /**
    * Lists the tokens in the registry for the caller
    * # Returns
    * * `Ok(TokenListResponse)` - The list of tokens and related metadata
    * * `Err(CanisterError)` - An error message if the tokens could not be retrieved
    */
-  'list_tokens' : ActorMethod<[], Result_5>,
+  'list_tokens' : ActorMethod<[], Result_8>,
   /**
    * Override for a token's supported standards
    */
   'token_manager_update_token_standards' : ActorMethod<
     [UpdateTokenStandardsInput],
-    Result_2
+    Result_3
   >,
   /**
    * Adds a new NFT to the user's collection
@@ -353,7 +418,7 @@ export interface _SERVICE {
    * * `Ok(UserNftDto)` - The added NFT with user information
    * * `Err(CanisterError)` - An error message if the NFT could not be added
    */
-  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_6>,
+  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_9>,
   /**
    * Add new token to the registry
    * # Arguments
@@ -362,7 +427,7 @@ export interface _SERVICE {
    * * `Ok(())` - If the token was successfully added
    * * `Err(CanisterError)` - An error message if the token could not be added
    */
-  'user_add_token' : ActorMethod<[AddTokenInput], Result_2>,
+  'user_add_token' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Add new tokens to the registry in batch
    * # Arguments
@@ -371,7 +436,7 @@ export interface _SERVICE {
    * * `Ok(())` - If the tokens were successfully added
    * * `Err(CanisterError)` - An error message if the tokens could not be
    */
-  'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_2>,
+  'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_3>,
   /**
    * Creates a new bridge transaction for the calling user
    * # Arguments
@@ -382,7 +447,28 @@ export interface _SERVICE {
    */
   'user_create_bridge_transaction' : ActorMethod<
     [CreateBridgeTransactionInputArg],
-    Result_7
+    Result_10
+  >,
+  /**
+   * Enables or disables a single collection for the calling user
+   * # Arguments
+   * * `input` - The collection id and desired enabled state
+   * # Returns
+   * * `Ok(())` - If the collection exists in the registry and its state was updated
+   * * `Err(CanisterError::NotFound)` - If the collection doesn't exist in the registry
+   */
+  'user_enable_collection' : ActorMethod<[EnableCollectionInput], Result_3>,
+  /**
+   * Enables multiple collections for the calling user in one call. Unknown collection ids
+   * are silently dropped.
+   * # Arguments
+   * * `input` - The collection ids to enable
+   * # Returns
+   * * `Ok(())`
+   */
+  'user_enable_collections_batch' : ActorMethod<
+    [EnableCollectionsInput],
+    Result_3
   >,
   /**
    * Retrieves a specific bridge transaction by its ID for the calling user
@@ -412,7 +498,13 @@ export interface _SERVICE {
    * # Returns
    * * `String` - The BTC address of the user, or a CanisterError
    */
-  'user_get_btc_address' : ActorMethod<[], Result_8>,
+  'user_get_btc_address' : ActorMethod<[], Result_11>,
+  /**
+   * Retrieves the ids of the collections enabled by the calling user
+   * # Returns
+   * * `Vec<CollectionId>` - The caller's enabled collection ids
+   */
+  'user_get_enabled_collections' : ActorMethod<[], Array<Principal>>,
   /**
    * Retrieves the NFTs owned by the calling user
    * # Arguments
@@ -427,14 +519,14 @@ export interface _SERVICE {
    * * `Ok(String)` - The Rune deposit address of the user
    * * `Err(CanisterError)` - An error if the address cannot be retrieved
    */
-  'user_get_rune_address' : ActorMethod<[], Result_8>,
+  'user_get_rune_address' : ActorMethod<[], Result_11>,
   /**
    * Sync the user's token list with the registry, adding any new tokens from the registry to the user's list
    * # Returns
    * * `Ok(())` - If the token list was successfully synced
    * * `Err(CanisterError)` - An error message if the token list could not be synced
    */
-  'user_sync_token_list' : ActorMethod<[], Result_2>,
+  'user_sync_token_list' : ActorMethod<[], Result_3>,
   /**
    * Updates an existing bridge transaction for the calling user
    * # Arguments
@@ -445,7 +537,7 @@ export interface _SERVICE {
    */
   'user_update_bridge_transaction' : ActorMethod<
     [UpdateBridgeTransactionInputArg],
-    Result_7
+    Result_10
   >,
   /**
    * Update a token's enabled state for the user
@@ -455,7 +547,7 @@ export interface _SERVICE {
    * * `Ok(())` - If the token's enabled state was successfully updated
    * * `Err(CanisterError)` - An error message if the token's enabled state could not be updated
    */
-  'user_update_token_enable' : ActorMethod<[UpdateTokenInput], Result_2>,
+  'user_update_token_enable' : ActorMethod<[UpdateTokenInput], Result_3>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

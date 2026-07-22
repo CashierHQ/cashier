@@ -1,13 +1,14 @@
 <script lang="ts">
-  import {
-    WalletViewType,
-    type WalletView,
-  } from "$modules/shared/types/wallet";
-  import { getWalletContentClass } from "$modules/shared/utils/walletDrawer";
+  import { locale } from "$lib/i18n";
+  import { WalletNavigationState } from "$modules/shared/state/walletNavigation.svelte";
+  import { WalletViewType } from "$modules/shared/types/wallet";
   import ImportPage from "$modules/wallet/pages/import.svelte";
   import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
+  import ManageCollectionsPage from "$modules/wallet/pages/manageCollections.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
+  import ReceiveNftPage from "$modules/wallet/pages/receiveNft.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
+  import SendNftPage from "$modules/wallet/pages/sendNft.svelte";
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
@@ -20,13 +21,12 @@
 
   let { open = $bindable(false) }: Props = $props();
 
-  let currentView = $state<WalletView>({ type: WalletViewType.MAIN });
-  let currentMainTab = $state<WalletTab>(WalletTab.TOKENS);
+  const walletNavigation = new WalletNavigationState();
   let isToggling = $state(false);
 
   function handleClose() {
     open = false;
-    currentView = { type: WalletViewType.MAIN };
+    walletNavigation.reset();
   }
 
   function handleOverlayClick(event: MouseEvent) {
@@ -36,46 +36,47 @@
   }
 
   function handleSwitchMainTab(tab: WalletTab) {
-    currentMainTab = tab;
+    walletNavigation.switchMainTab(tab);
   }
 
   function navigateToToken(token: string) {
-    currentView = { type: WalletViewType.TOKEN, token };
+    walletNavigation.navigateToToken(token);
   }
 
-  function navigateToSwap(token: string | undefined = undefined) {
-    // TODO: implement
-    console.warn("navigateToSwap", token);
+  function navigateToSwap(token?: string) {
+    walletNavigation.navigateToSwap(token);
   }
 
-  function navigateToReceive(token: string | undefined = undefined) {
-    currentView = { type: WalletViewType.RECEIVE, token };
+  function navigateToReceive(token?: string) {
+    walletNavigation.navigateToReceive(token);
   }
 
-  function navigateToSend(token: string | undefined = undefined) {
-    currentView = { type: WalletViewType.SEND, token };
+  function navigateToNftReceive(collectionId?: string) {
+    walletNavigation.navigateToNftReceive(collectionId);
+  }
+
+  function navigateToNftSend(collectionId?: string, tokenId?: bigint) {
+    walletNavigation.navigateToNftSend(collectionId, tokenId);
+  }
+
+  function navigateToSend(token?: string) {
+    walletNavigation.navigateToSend(token);
   }
 
   function navigateToImport() {
-    currentView = { type: WalletViewType.IMPORT };
+    walletNavigation.navigateToImport();
   }
 
   function navigateToManage() {
-    currentView = { type: WalletViewType.MANAGE };
+    walletNavigation.navigateToManage();
   }
 
-  function navigateToMain() {
-    currentView = { type: WalletViewType.MAIN };
-    currentMainTab = WalletTab.TOKENS;
+  function navigateToManageCollections() {
+    walletNavigation.navigateToManageCollections();
   }
 
-  function navigateToAddNft() {
-    currentView = { type: WalletViewType.ADD_NFT };
-  }
-
-  function navigateToMainNft() {
-    currentView = { type: WalletViewType.MAIN };
-    currentMainTab = WalletTab.NFTS;
+  function handleMainNestedViewChange(isNested: boolean) {
+    walletNavigation.setMainNestedView(isNested);
   }
 </script>
 
@@ -94,19 +95,26 @@
     class="fixed z-[40] gap-4 bg-white shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm w-full flex flex-col h-full"
     tabindex="-1"
   >
-    <div class="absolute right-4 top-4 z-10">
-      <button
-        type="button"
-        onclick={handleClose}
-        class="cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        <X
-          size={24}
-          class="text-gray-500 hover:text-gray-700 transition-colors"
+    {#if walletNavigation.currentView.type === WalletViewType.MAIN && !walletNavigation.mainViewHasNestedPage}
+      <div class="flex items-center justify-between px-4 py-4">
+        <img
+          alt={locale.t("wallet.drawer.logoAlt")}
+          class="max-w-[130px]"
+          src="/logo.svg"
         />
-        <span class="sr-only">Close wallet</span>
-      </button>
-    </div>
+        <button
+          type="button"
+          onclick={handleClose}
+          class="cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <X
+            size={28}
+            class="text-black transition-colors hover:text-gray-700"
+          />
+          <span class="sr-only">{locale.t("wallet.drawer.close")}</span>
+        </button>
+      </div>
+    {/if}
 
     <!-- Loading overlay for entire wallet -->
     {#if isToggling}
@@ -119,49 +127,75 @@
       </div>
     {/if}
 
-    <div class={getWalletContentClass(currentView.type)}>
-      {#if currentView.type === WalletViewType.MAIN}
+    <div
+      class="flex-1 flex flex-col overflow-y-auto p-4 {walletNavigation
+        .currentView.type === WalletViewType.MAIN
+        ? 'pt-0'
+        : ''}"
+    >
+      {#if walletNavigation.currentView.type === WalletViewType.MAIN}
         <WalletPage
-          activeTab={currentMainTab}
+          activeTab={walletNavigation.currentMainTab}
+          initialSelectedCollectionId={walletNavigation.currentView
+            .selectedCollectionId}
+          initialSelectedTokenId={walletNavigation.currentView.selectedTokenId}
           onNavigateToToken={navigateToToken}
           onNavigateToManage={navigateToManage}
           onNavigateToSend={navigateToSend}
+          onNavigateToNftSend={navigateToNftSend}
           onNavigateToReceive={navigateToReceive}
+          onNavigateToNftReceive={navigateToNftReceive}
           onNavigateToSwap={navigateToSwap}
-          onNavigateToAddNft={navigateToAddNft}
+          onNavigateToManageNfts={navigateToManageCollections}
           onTabChange={handleSwitchMainTab}
+          onNestedViewChange={handleMainNestedViewChange}
         />
-      {:else if currentView.type === WalletViewType.TOKEN}
+      {:else if walletNavigation.currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage
-          token={currentView.token}
-          onNavigateBack={navigateToMain}
+          token={walletNavigation.currentView.token}
+          onNavigateBack={() => walletNavigation.navigateBack()}
           onNavigateToSend={(token) => navigateToSend(token)}
           onNavigateToReceive={(token) => navigateToReceive(token)}
           onNavigateToSwap={(token) => navigateToSwap(token)}
         />
-      {:else if currentView.type === WalletViewType.RECEIVE}
+      {:else if walletNavigation.currentView.type === WalletViewType.RECEIVE}
         <ReceivePage
-          initialToken={currentView.token}
-          onNavigateBack={navigateToMain}
+          initialToken={walletNavigation.currentView.token}
+          onNavigateBack={() => walletNavigation.navigateBack()}
         />
-      {:else if currentView.type === WalletViewType.SEND}
+      {:else if walletNavigation.currentView.type === WalletViewType.NFT_RECEIVE}
+        <ReceiveNftPage
+          initialCollectionId={walletNavigation.currentView.collectionId}
+          onNavigateBack={() => walletNavigation.navigateBack()}
+        />
+      {:else if walletNavigation.currentView.type === WalletViewType.NFT_SEND}
+        <SendNftPage
+          initialCollectionId={walletNavigation.currentView.collectionId}
+          initialTokenId={walletNavigation.currentView.tokenId}
+          onNavigateBack={() => walletNavigation.navigateBack()}
+        />
+      {:else if walletNavigation.currentView.type === WalletViewType.SEND}
         <SendPage
-          initialToken={currentView.token}
-          onNavigateBack={navigateToMain}
+          initialToken={walletNavigation.currentView.token}
+          onNavigateBack={() => walletNavigation.navigateBack()}
         />
-      {:else if currentView.type === WalletViewType.IMPORT}
+      {:else if walletNavigation.currentView.type === WalletViewType.IMPORT}
         <ImportPage
-          onNavigateBack={navigateToMain}
+          onNavigateBack={() => walletNavigation.navigateBack()}
           onNavigateToToken={navigateToToken}
         />
-      {:else if currentView.type === WalletViewType.MANAGE}
+      {:else if walletNavigation.currentView.type === WalletViewType.MANAGE}
         <ManagePage
-          onNavigateBack={navigateToMain}
+          onNavigateBack={() => walletNavigation.navigateBack()}
           onNavigateToImport={navigateToImport}
           bind:isToggling
         />
-      {:else if currentView.type === WalletViewType.ADD_NFT}
-        <ImportNftPage onNavigateBack={navigateToMainNft} />
+      {:else if walletNavigation.currentView.type === WalletViewType.ADD_NFT}
+        <ImportNftPage onNavigateBack={() => walletNavigation.navigateBack()} />
+      {:else if walletNavigation.currentView.type === WalletViewType.MANAGE_COLLECTIONS}
+        <ManageCollectionsPage
+          onNavigateBack={() => walletNavigation.navigateBack()}
+        />
       {/if}
     </div>
   </div>
