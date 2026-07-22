@@ -249,7 +249,7 @@
         <UsdSwitch
           {token}
           amount={parseFloat(tokenValue || "0") || 0}
-          symbol={token?.name ?? ""}
+          symbol={token.symbol}
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}
