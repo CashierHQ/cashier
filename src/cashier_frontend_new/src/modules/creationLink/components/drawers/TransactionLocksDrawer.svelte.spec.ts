@@ -156,7 +156,12 @@ describe("TransactionLocksDrawer", () => {
           { type: GateType.PASSWORD, password: "secret" },
           { type: GateType.X_OWNED_ACCOUNT, targetHandle: "cashier" },
           { type: GateType.OTP_EMAIL, email: "user@example.com" },
-          { type: GateType.OTP_SMS, phone: "+14375551234" },
+          {
+            type: GateType.OTP_SMS,
+            phone: "+14375551234",
+            digits: "4375551234",
+            countryCode: "CA",
+          },
         ],
       },
     });
