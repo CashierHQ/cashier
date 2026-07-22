@@ -133,9 +133,18 @@
   }
   html {
     font-family: var(--font-family-sans);
+    touch-action: manipulation;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    touch-action: manipulation;
   }
 }
 
