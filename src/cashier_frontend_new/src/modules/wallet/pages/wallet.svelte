@@ -11,10 +11,7 @@
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
   import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
-  import {
-    getNftCollectionSummaries,
-    mergeOwnedAndPortfolioNfts,
-  } from "$modules/wallet/utils/nftCollections";
+  import { mergeOwnedAndPortfolioNfts } from "$modules/wallet/utils/nftCollections";
 
   type Props = {
     activeTab?: WalletTab;
@@ -70,41 +67,49 @@
       collectionStore.isCollectionEnabled(nft.collectionId),
     ),
   );
-  // Registry rows for the collections the user has enabled — this is the source of truth
-  // for the NFT tab's grid and empty state, independent of whether the user owns anything
-  // from a given collection yet (real ownership counts are a later "User portfolio" phase).
-  const nftCollections = $derived(
-    (collectionStore.query.data ?? []).filter((collection) =>
-      collectionStore.isCollectionEnabled(collection.collectionId),
+  // Registry rows for the collections the user has enabled, with per-collection
+  // counts sourced from both manual wallet NFTs and nftGeek portfolio ownership.
+  const nftCollections = $derived.by(() =>
+    (collectionStore.query.data ?? [])
+      .filter((collection) =>
+        collectionStore.isCollectionEnabled(collection.collectionId),
+      )
+      .map((collection) => {
+        const ownedNfts = mergeOwnedAndPortfolioNfts(
+          visibleNfts,
+          nftPortfolioStore.getTokensForCollection(collection.collectionId),
+          collection.collectionId,
+          collection.name,
+          collection.standard,
+        );
+
+        return {
+          collectionId: collection.collectionId,
+          name: collection.name,
+          description: collection.description,
+          imageUrl: collection.imageUrl,
+          itemCount: ownedNfts.length,
+          standard: collection.standard,
+        };
+      }),
+  );
+  const nftCount = $derived(
+    nftCollections.reduce(
+      (total, collection) => total + collection.itemCount,
+      0,
     ),
   );
   const collectionCount = $derived(nftCollections.length);
-  const ownedCollectionSummaries = $derived(
-    getNftCollectionSummaries(visibleNfts),
+  const isRefreshingNfts = $derived(
+    walletNftStore.query.isLoading || nftPortfolioStore.query.isLoading,
   );
   const selectedCollection = $derived.by(() => {
     if (!selectedCollectionId) return null;
 
-    const owned = ownedCollectionSummaries.find(
+    const collection = nftCollections.find(
       (collection) => collection.collectionId === selectedCollectionId,
     );
-    if (owned) return owned;
-
-    // Enabled collection the user owns nothing from yet — fall back to registry
-    // metadata so the detail page still opens instead of silently doing nothing.
-    const registryEntry = nftCollections.find(
-      (collection) => collection.collectionId === selectedCollectionId,
-    );
-    if (!registryEntry) return null;
-
-    return {
-      collectionId: registryEntry.collectionId,
-      name: registryEntry.name,
-      description: registryEntry.description,
-      imageUrl: registryEntry.imageUrl,
-      itemCount: 0,
-      standard: registryEntry.standard,
-    };
+    return collection ?? null;
   });
   const selectedCollectionNfts = $derived.by(() => {
     const collectionId = selectedCollectionId;
@@ -211,9 +216,11 @@
     onNavigateToNftSend(collectionId, tokenId);
   }
 
-  function handleRefreshCollectionDetail() {
-    walletNftStore.query.refresh();
-    nftPortfolioStore.query.refresh();
+  async function handleRefreshCollectionDetail() {
+    await Promise.allSettled([
+      walletNftStore.query.refreshAsync(),
+      nftPortfolioStore.query.refreshAsync(),
+    ]);
   }
 </script>
 
@@ -226,12 +233,13 @@
     onReceive={handleReceiveCollection}
     onSend={handleSendNft}
     onRefresh={handleRefreshCollectionDetail}
+    isRefreshing={isRefreshingNfts}
   />
 {:else}
   <WalletOverviewHeader
     {activeTab}
     isBalanceVisible={balanceVisible}
-    nftCount={visibleNfts.length}
+    {nftCount}
     {collectionCount}
     onToggleBalance={handleToggle}
     onSend={handleSend}

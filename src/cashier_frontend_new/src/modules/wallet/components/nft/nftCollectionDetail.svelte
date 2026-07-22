@@ -18,7 +18,8 @@
     onNavigateBack: () => void;
     onReceive: (collectionId: string) => void;
     onSend: (collectionId: string, tokenId: bigint) => void;
-    onRefresh: () => void;
+    onRefresh: () => Promise<void> | void;
+    isRefreshing?: boolean;
   };
 
   let {
@@ -29,6 +30,7 @@
     onReceive,
     onSend,
     onRefresh,
+    isRefreshing = false,
   }: Props = $props();
   let failedImageLoads = new SvelteSet<string>();
   let selectedTokenId = $state<bigint | null>(null);
@@ -90,10 +92,12 @@
     <button
       type="button"
       onclick={onRefresh}
-      class="text-green flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-lightgreen"
+      disabled={isRefreshing}
+      aria-busy={isRefreshing}
+      class="text-green flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-lightgreen disabled:cursor-not-allowed disabled:opacity-70"
       aria-label={locale.t("wallet.nfts.detail.refreshAria")}
     >
-      <RefreshCw size={22} />
+      <RefreshCw size={22} class={isRefreshing ? "animate-spin" : ""} />
     </button>
   </div>
 
