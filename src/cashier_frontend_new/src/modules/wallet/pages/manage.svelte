@@ -174,7 +174,9 @@
     </div>
 
     <!-- Content -->
-    <div class="min-h-0 flex-1 overflow-y-auto px-4">
+    <div
+      class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 [touch-action:pan-y]"
+    >
       {#if walletStore.query.isSuccess && walletStore.query.data?.length && filteredTokens.length === 0}
         <div class="flex flex-col items-center justify-center py-16">
           <div
