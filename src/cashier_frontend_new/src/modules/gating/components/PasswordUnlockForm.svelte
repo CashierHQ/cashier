@@ -294,7 +294,7 @@
               type={showPassword ? "text" : "password"}
               bind:value={password}
               placeholder={locale.t("links.linkForm.lock.enterPassword")}
-              class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-sm outline-none focus:border-green"
+              class="h-11 w-full rounded-lg border border-border bg-background px-4 pr-11 text-[16px] outline-none focus:border-green sm:text-sm"
             />
 
             <button
