@@ -1,12 +1,14 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import NftCardDetail from "$modules/wallet/components/nft/nftCardDetail.svelte";
+  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import type {
     EnrichedNFT,
     NftCollectionSummary,
   } from "$modules/wallet/types/nft";
-  import { ArrowDown, ChevronLeft, RefreshCw } from "lucide-svelte";
+  import { ArrowDown, ChevronLeft, Copy, RefreshCw } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
@@ -38,6 +40,15 @@
 
   function handleImageError(id: string) {
     failedImageLoads.add(id);
+  }
+
+  async function copyCanisterId() {
+    try {
+      await navigator.clipboard.writeText(collection.collectionId);
+      toast.success(locale.t("constants.copiedToClipboard"));
+    } catch {
+      toast.error(locale.t("wallet.receive.copyError"));
+    }
   }
 
   $effect(() => {
@@ -141,6 +152,26 @@
               {locale.t("wallet.nfts.detail.symbol")}
             </dt>
             <dd class="text-right text-gray-900">{collection.symbol ?? "-"}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-gray-700 font-medium">
+              {locale.t("wallet.nfts.detail.canisterId")}
+            </dt>
+            <dd
+              class="flex min-w-0 items-center justify-end gap-1 text-right text-gray-900"
+            >
+              <span class="truncate"
+                >{transformShortAddress(collection.collectionId)}</span
+              >
+              <button
+                type="button"
+                class="text-walletpurple flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full hover:bg-walletlightpurple"
+                aria-label={locale.t("wallet.nfts.detail.copyCanisterId")}
+                onclick={copyCanisterId}
+              >
+                <Copy size={15} />
+              </button>
+            </dd>
           </div>
         </dl>
       </section>

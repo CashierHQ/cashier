@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Offchain script: aggregate NFT collection metadata from nftGeek, Toniq (Entrepot) and DGDG,
+ * Offchain script: aggregate NFT collection metadata from nftGeek and Toniq (Entrepot),
  * then push the merged records into the `token_storage` canister's collection registry via
  * `collection_manager_upsert_collections`.
  *
@@ -12,7 +12,11 @@
  * Data sources:
  *   - nftGeek  https://api.nftgeek.app/api/1/collections            (canonical: canisterId, name, standard)
  *   - Toniq    https://us-central1-entrepot-api.cloudfunctions.net/api/collections  (enrich: description, image, royalty)
- *   - DGDG     https://dgdg.app/nfts/collections                    (enrich: total_items, image fallback, floor_price)
+ *
+ * DGDG (https://dgdg.app/nfts/collections) is intentionally NOT used as a source: it's a
+ * client-rendered page, not a JSON API (fetching it returns HTML, not data), so `total_items`
+ * and `floor_price` have no source for now and default to 0/null. Revisit if DGDG exposes a
+ * real JSON endpoint later.
  *
  * Usage:
  *   node scripts/sync_nft_collections_to_token_storage.mjs --dry-run
@@ -32,7 +36,6 @@ const repoRoot = path.resolve(__dirname, "..");
 
 const NFTGEEK_COLLECTIONS_URL = "https://api.nftgeek.app/api/1/collections";
 const TONIQ_COLLECTIONS_URL = "https://us-central1-entrepot-api.cloudfunctions.net/api/collections";
-const DGDG_COLLECTIONS_URL = "https://dgdg.app/nfts/collections";
 
 const DEFAULT_NETWORK = "local";
 const DEFAULT_CANISTER_ID = "token_storage";
@@ -119,33 +122,12 @@ async function fetchToniqCollections() {
   return fetchJson(TONIQ_COLLECTIONS_URL);
 }
 
-async function fetchDgdgCollections() {
-  return fetchJson(DGDG_COLLECTIONS_URL);
-}
-
 // ── Merge ─────────────────────────────────────────────────────────────────────
-
-/** Extracts every canister id DGDG associates with a collection entry (it spreads them
- * across several marketplace-specific fields, any of which may match nftGeek's canisterId). */
-function dgdgCanisterIds(entry) {
-  const canisters = entry?.collection?.canisters ?? {};
-  return Object.values(canisters).filter((id) => typeof id === "string" && id.length > 0);
-}
 
 function buildToniqIndex(toniqCollections) {
   const index = new Map();
   for (const entry of toniqCollections) {
     if (entry?.id) index.set(entry.id, entry);
-  }
-  return index;
-}
-
-function buildDgdgIndex(dgdgCollections) {
-  const index = new Map();
-  for (const entry of dgdgCollections) {
-    for (const canisterId of dgdgCanisterIds(entry)) {
-      index.set(canisterId, entry);
-    }
   }
   return index;
 }
@@ -161,35 +143,23 @@ function parseToniqRoyalty(royalty) {
   return Math.round(rate * 100);
 }
 
-/** Best-effort floor price from DGDG's `collection.floor.displayPrice` (units are whatever
- * currency that specific listing used — DGDG mixes currencies across collections, so this is
- * a best-effort, not a normalized on-chain amount). */
-function parseDgdgFloorPrice(entry) {
-  const displayPrice = entry?.collection?.floor?.displayPrice;
-  if (typeof displayPrice !== "number" || Number.isNaN(displayPrice)) return null;
-  return BigInt(Math.round(displayPrice));
-}
-
 /**
- * Merges the 3 data sources into `RegistryCollection`-shaped plain objects, keyed by nftGeek's
+ * Merges the 2 data sources into `RegistryCollection`-shaped plain objects, keyed by nftGeek's
  * `canisterId` (the canonical source of which collections exist and their standard/interface).
- * Toniq and DGDG only enrich metadata (description/image/royalty/total_items/floor_price) —
- * their own `standard`-like fields are unreliable (e.g. Toniq's "legacy1.5") and are ignored.
+ * Toniq only enriches metadata (description/image/royalty) — its own `standard`-like field is
+ * unreliable (e.g. "legacy1.5") and is ignored. `total_items`/`floor_price` have no data source
+ * currently (DGDG isn't a JSON API) and default to 0/null.
  */
-export function mergeCollections(nftGeekCollections, toniqCollections, dgdgCollections) {
+export function mergeCollections(nftGeekCollections, toniqCollections) {
   const toniqIndex = buildToniqIndex(toniqCollections);
-  const dgdgIndex = buildDgdgIndex(dgdgCollections);
 
   return nftGeekCollections
     .filter((entry) => typeof entry.canisterId === "string" && entry.canisterId.length > 0)
     .map((entry) => {
       const toniq = toniqIndex.get(entry.canisterId);
-      const dgdg = dgdgIndex.get(entry.canisterId);
 
       const description = toniq?.description ?? "";
-      const image = toniq?.avatar || toniq?.collection || dgdg?.collection?.images?.avatar || "";
-      const totalItems = dgdg?.collection?.count ?? 0;
-      const floorPrice = dgdg ? parseDgdgFloorPrice(dgdg) : null;
+      const image = toniq?.avatar || toniq?.collection || "";
       const royalty = toniq ? parseToniqRoyalty(toniq.royalty) : null;
 
       return {
@@ -197,8 +167,8 @@ export function mergeCollections(nftGeekCollections, toniqCollections, dgdgColle
         name: entry.name ?? entry.alias ?? entry.canisterId,
         description,
         image,
-        totalItems: BigInt(totalItems),
-        floorPrice,
+        totalItems: 0n,
+        floorPrice: null,
         royalty,
         // Neither source exposes a true creator/controller principal; no Cashier-originated
         // collections exist yet in phase 1 (the Factory is a later phase). Both fields are
@@ -311,10 +281,8 @@ async function main() {
   const nftGeekCollections = await fetchNftGeekCollections();
   console.error("Fetching Toniq collections…");
   const toniqCollections = await fetchToniqCollections();
-  console.error("Fetching DGDG collections…");
-  const dgdgCollections = await fetchDgdgCollections();
 
-  let merged = mergeCollections(nftGeekCollections, toniqCollections, dgdgCollections);
+  let merged = mergeCollections(nftGeekCollections, toniqCollections);
   if (Number.isInteger(args.limit)) {
     merged = merged.slice(0, args.limit);
   }
@@ -322,12 +290,18 @@ async function main() {
   const batches = chunk(merged, args.batchSize);
 
   console.log(
-    `NFT collection sync summary: nftGeek=${nftGeekCollections.length}, toniq=${toniqCollections.length}, dgdg=${dgdgCollections.length}, merged=${merged.length}, batches=${batches.length}`,
+    `NFT collection sync summary: nftGeek=${nftGeekCollections.length}, toniq=${toniqCollections.length}, merged=${merged.length}, batches=${batches.length}`,
   );
 
   if (args.dryRun) {
     console.log("Sample (first 5):");
-    console.log(JSON.stringify(merged.slice(0, 5), null, 2));
+    console.log(
+      JSON.stringify(
+        merged.slice(0, 5),
+        (_key, value) => (typeof value === "bigint" ? value.toString() : value),
+        2,
+      ),
+    );
     return;
   }
 
