@@ -64,15 +64,15 @@
     toast.success(locale.t("links.linkForm.lock.lockAdded"));
   };
 
-  const handlePasswordReset = () => {
+  const onPasswordReset = () => {
     passwordDrawerOpen = false;
   };
 
-  const handleXReset = () => {
+  const onXReset = () => {
     xDrawerOpen = false;
   };
 
-  const handleOTPReset = () => {
+  const onOTPReset = () => {
     otpDrawerOpen = false;
   };
 </script>
@@ -159,7 +159,7 @@
     <PasswordLockForm
       {store}
       onLock={handlePasswordLock}
-      onReset={handlePasswordReset}
+      onReset={onPasswordReset}
     />
   </DrawerContent>
 </Drawer>
@@ -183,7 +183,7 @@
       </div>
     </DrawerHeader>
 
-    <XLockForm {store} onLock={handleXLock} onReset={handleXReset} />
+    <XLockForm {store} onLock={handleXLock} onReset={onXReset} />
   </DrawerContent>
 </Drawer>
 
@@ -210,7 +210,7 @@
       {store}
       mode={otpLockMode}
       onLock={handleOTPLock}
-      onReset={handleOTPReset}
+      onReset={onOTPReset}
     />
   </DrawerContent>
 </Drawer>
