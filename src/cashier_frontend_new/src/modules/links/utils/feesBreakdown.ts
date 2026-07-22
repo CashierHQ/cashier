@@ -34,8 +34,6 @@ export function calculateFeesBreakdown(
   findTokenByAddress: FindTokenByAddress,
 ): FeeBreakdownItem[] {
   const breakdown: FeeBreakdownItem[] = [];
-  const maxUseNum = maxUse || 1;
-
   // Calculate network fees for each asset
   for (const assetAddress of assetAddresses) {
     if (!assetAddress) continue;
@@ -44,8 +42,7 @@ export function calculateFeesBreakdown(
     if (tokenResult.isErr()) continue;
 
     const token = tokenResult.unwrap();
-    // Network fee = token.fee * maxUse (one fee per use)
-    const networkFee = token.fee * BigInt(maxUseNum);
+    const networkFee = token.fee;
     const networkFeeAmount = parseBalanceUnits(networkFee, token.decimals);
     const usdValue = token.priceUSD ? networkFeeAmount * token.priceUSD : 0;
 

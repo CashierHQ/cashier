@@ -122,7 +122,7 @@ describe("feesBreakdown", () => {
       );
     });
 
-    it("should multiply network fees by maxUse", () => {
+    it("should charge one network fee regardless of maxUse", () => {
       const assetAddresses = [TEST_ICP_LEDGER_CANISTER_ID];
       const maxUse = 5;
 
@@ -150,7 +150,7 @@ describe("feesBreakdown", () => {
             fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
-      expect(networkFee?.amount).toBe(50_000n); // 10_000 * 5
+      expect(networkFee?.amount).toBe(10_000n);
     });
 
     it("should use maxUse = 1 when maxUse is 0", () => {

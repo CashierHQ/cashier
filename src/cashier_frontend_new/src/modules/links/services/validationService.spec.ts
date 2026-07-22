@@ -132,7 +132,7 @@ describe("validateRequiredAmount", () => {
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe(
-        "Insufficient amount for asset 0xtoken1, required: 2030000, available: 1000000",
+        "Insufficient amount for asset 0xtoken1, required: 2020000, available: 1000000",
       );
     }
   });
@@ -252,8 +252,8 @@ function makeFeeToken(balance: bigint): TokenWithPriceAndBalance {
 describe("calculateRequiredAssetAmountV3", () => {
   // CreatorToLink:
   //   intent_total_amount = amount * maxUse
-  //   intent_total_network_fee (ICRC2) = 2*fee + fee*maxUse
-  //   intent_total_network_fee (ICRC1) = 1*fee + fee*maxUse
+  //   intent_total_network_fee (ICRC2) = 2*fee + 1*fee
+  //   intent_total_network_fee (ICRC1) = 1*fee + 1*fee
   //   required = intent_total_amount + intent_total_network_fee
 
   it("it_should_succeed_calculate_required_amount_for_icrc2_token_with_max_use_1", () => {
@@ -274,7 +274,7 @@ describe("calculateRequiredAssetAmountV3", () => {
 
   it("it_should_succeed_calculate_required_amount_for_icrc2_token_with_max_use_3", () => {
     // amount=500_000, maxUse=3, fee=10_000, ICRC2
-    // total = 500_000*3 + (2*10_000 + 10_000*3) = 1_500_000 + 50_000 = 1_550_000
+    // total = 500_000*3 + (2*10_000 + 10_000) = 1_500_000 + 30_000 = 1_530_000
     const result = validationService.calculateRequiredAssetAmountV3(
       {
         address: ASSET_PRINCIPAL,
@@ -285,7 +285,7 @@ describe("calculateRequiredAssetAmountV3", () => {
       3,
     );
     expect(result.isOk()).toBe(true);
-    expect(result.unwrap()).toBe(1_550_000n);
+    expect(result.unwrap()).toBe(1_530_000n);
   });
 
   it("it_should_succeed_calculate_required_amount_for_icrc1_token", () => {
@@ -589,9 +589,9 @@ describe("calculateMaxAssetAmountV3", () => {
 
     // non-fee token formula (unknown standard defaults to ICRC2, max_use=2):
     //   inboundMultiplier = 2 (ICRC2)
-    //   networkFee = 2*10_000 + 2*10_000 = 40_000
-    //   availableBalance = 1_000_000 - 40_000 = 960_000
-    //   max per-use = 960_000 / 2 = 480_000
+    //   networkFee = 2*10_000 + 10_000 = 30_000
+    //   availableBalance = 1_000_000 - 30_000 = 970_000
+    //   max per-use = 970_000 / 2 = 485_000
     const result = validationService.calculateMaxAssetAmountV3(
       ASSET_TOKEN_ADDRESS,
       2,
@@ -599,14 +599,14 @@ describe("calculateMaxAssetAmountV3", () => {
     );
 
     expect(result.isOk()).toBe(true);
-    expect(result.isOk() && result.value).toBe(480_000n);
+    expect(result.isOk() && result.value).toBe(485_000n);
   });
 
   it("should calculate max per-use amount for airdrop non-fee token (max_use=3)", () => {
     // Airdrop scenario: ICRC2, max_use=3, balance=1_000_000, fee=10_000
-    //   networkFee = 2*10_000 + 3*10_000 = 50_000
-    //   availableBalance = 1_000_000 - 50_000 = 950_000
-    //   max per-use = 950_000 / 3 = 316_666 (integer division)
+    //   networkFee = 2*10_000 + 10_000 = 30_000
+    //   availableBalance = 1_000_000 - 30_000 = 970_000
+    //   max per-use = 970_000 / 3 = 323_333 (integer division)
     const result = validationService.calculateMaxAssetAmountV3(
       ASSET_TOKEN_ADDRESS,
       3,
@@ -614,7 +614,7 @@ describe("calculateMaxAssetAmountV3", () => {
     );
 
     expect(result.isOk()).toBe(true);
-    expect(result.isOk() && result.value).toBe(316_666n);
+    expect(result.isOk() && result.value).toBe(323_333n);
   });
 
   it("should calculate max per-use amount when asset token is also fee token (max_use=2)", () => {
@@ -625,9 +625,9 @@ describe("calculateMaxAssetAmountV3", () => {
 
     // fee-token, ICRC2 (defaults), max_use=2, balance=1_000_000, fee=10_000:
     //   creatorToTreasury = intent_total_amount(10_000) + intent_total_network_fee(2*10_000) = 30_000
-    //   networkFee = 2*10_000 + 2*10_000 - 10_000 = 30_000  (one fee already in required fee)
-    //   availableBalance = 1_000_000 - 30_000 - 30_000 = 940_000
-    //   max per-use = 940_000 / 2 = 470_000
+    //   networkFee = 2*10_000 + 10_000 - 10_000 = 20_000  (one fee already in required fee)
+    //   availableBalance = 1_000_000 - 30_000 - 20_000 = 950_000
+    //   max per-use = 950_000 / 2 = 475_000
     const result = validationService.calculateMaxAssetAmountV3(
       FEE_TOKEN_ADDRESS,
       2,
@@ -635,7 +635,7 @@ describe("calculateMaxAssetAmountV3", () => {
     );
 
     expect(result.isOk()).toBe(true);
-    expect(result.isOk() && result.value).toBe(470_000n);
+    expect(result.isOk() && result.value).toBe(475_000n);
   });
 
   it("should calculate max per-use amount for airdrop when asset token is also fee token (max_use=3)", () => {
@@ -646,9 +646,9 @@ describe("calculateMaxAssetAmountV3", () => {
 
     // fee-token, ICRC2 (defaults), max_use=3, balance=2_000_000, fee=10_000:
     //   creatorToTreasury = 10_000 + 2*10_000 = 30_000
-    //   networkFee = 2*10_000 + 3*10_000 - 10_000 = 40_000
-    //   availableBalance = 2_000_000 - 30_000 - 40_000 = 1_930_000
-    //   max per-use = 1_930_000 / 3 = 643_333 (integer division)
+    //   networkFee = 2*10_000 + 10_000 - 10_000 = 20_000
+    //   availableBalance = 2_000_000 - 30_000 - 20_000 = 1_950_000
+    //   max per-use = 1_950_000 / 3 = 650_000
     const result = validationService.calculateMaxAssetAmountV3(
       FEE_TOKEN_ADDRESS,
       3,
@@ -656,7 +656,7 @@ describe("calculateMaxAssetAmountV3", () => {
     );
 
     expect(result.isOk()).toBe(true);
-    expect(result.isOk() && result.value).toBe(643_333n);
+    expect(result.isOk() && result.value).toBe(650_000n);
   });
 
   it("should return Ok(0n) when balance is insufficient to cover fees", () => {
@@ -667,8 +667,8 @@ describe("calculateMaxAssetAmountV3", () => {
 
     // fee-token, ICRC2 (defaults), max_use=2, balance=50_000:
     //   creatorToTreasury = 10_000 + 20_000 = 30_000
-    //   networkFee = 2*10_000 + 2*10_000 - 10_000 = 30_000
-    //   availableBalance = 50_000 - 30_000 - 30_000 = -10_000 (clamped to 0n)
+    //   networkFee = 2*10_000 + 10_000 - 10_000 = 20_000
+    //   availableBalance = 50_000 - 30_000 - 20_000 = 0 (clamped to 0n)
     const result = validationService.calculateMaxAssetAmountV3(
       FEE_TOKEN_ADDRESS,
       2,
