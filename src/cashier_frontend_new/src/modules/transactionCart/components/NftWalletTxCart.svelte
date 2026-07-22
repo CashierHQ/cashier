@@ -81,6 +81,10 @@
     return nft.name || `#${nft.tokenId.toString()}`;
   }
 
+  function hasNftName(nft: EnrichedNFT) {
+    return nft.name.trim().length > 0;
+  }
+
   onMount(() => {
     nftTxCartStore = new NftTxCartStore(source);
   });
@@ -141,9 +145,11 @@
           <p class="text-lg font-semibold text-gray-900">
             #{nft.tokenId.toString()}
           </p>
-          <p class="text-lg font-semibold leading-tight text-gray-900">
-            {getNftDisplayName(nft)}
-          </p>
+          {#if hasNftName(nft)}
+            <p class="text-lg font-semibold leading-tight text-gray-900">
+              {nft.name}
+            </p>
+          {/if}
           <p class="mt-1 text-xs font-normal text-gray-700">
             {nft.collectionName}
           </p>
