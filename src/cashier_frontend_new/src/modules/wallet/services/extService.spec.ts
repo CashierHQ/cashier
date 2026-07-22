@@ -1,8 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 
-const { mockBuildActor, mockExtTransfer } = vi.hoisted(() => ({
+const { mockBuildActor, mockTransfer, mockExtTransfer } = vi.hoisted(() => ({
   mockBuildActor: vi.fn(),
+  mockTransfer: vi.fn(),
   mockExtTransfer: vi.fn(),
 }));
 
@@ -25,12 +26,13 @@ describe("ExtService", () => {
       owner: "aaaaa-aa",
     } as typeof authState.account;
     mockBuildActor.mockReturnValue({
+      transfer: mockTransfer,
       ext_transfer: mockExtTransfer,
     });
   });
 
   it("should build an authenticated actor and transfer to a principal", async () => {
-    mockExtTransfer.mockResolvedValue({ ok: 100n });
+    mockTransfer.mockResolvedValue({ ok: 100n });
     const to = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
     const service = new ExtService(COLLECTION_ID);
 
@@ -40,7 +42,7 @@ describe("ExtService", () => {
       canisterId: COLLECTION_ID,
       idlFactory: expect.any(Function),
     });
-    expect(mockExtTransfer).toHaveBeenCalledWith({
+    expect(mockTransfer).toHaveBeenCalledWith({
       to: { principal: to },
       from: { principal: Principal.fromText("aaaaa-aa") },
       token: "4el4t-lykor-uwiaa-aaaaa-buaxz-qaqca-aaadx-q",
@@ -49,21 +51,38 @@ describe("ExtService", () => {
       memo: [],
       amount: 1n,
     });
+    expect(mockExtTransfer).not.toHaveBeenCalled();
     expect(result.unwrap()).toBe(100n);
   });
 
   it("should transfer to an EXT account identifier", async () => {
-    mockExtTransfer.mockResolvedValue({ ok: 101n });
+    mockTransfer.mockResolvedValue({ ok: 101n });
     const service = new ExtService(COLLECTION_ID);
 
     const result = await service.transfer(239n, {
       address: "a".repeat(64),
     });
 
-    expect(mockExtTransfer).toHaveBeenCalledWith(
+    expect(mockTransfer).toHaveBeenCalledWith(
       expect.objectContaining({ to: { address: "a".repeat(64) } }),
     );
     expect(result.unwrap()).toBe(101n);
+  });
+
+  it("should fall back to ext_transfer when legacy transfer is unavailable", async () => {
+    mockTransfer.mockRejectedValue(
+      new Error("Canister has no update method 'transfer'"),
+    );
+    mockExtTransfer.mockResolvedValue({ ok: 102n });
+    const service = new ExtService(COLLECTION_ID);
+
+    const result = await service.transfer(239n, {
+      principal: Principal.fromText("aaaaa-aa"),
+    });
+
+    expect(mockTransfer).toHaveBeenCalled();
+    expect(mockExtTransfer).toHaveBeenCalled();
+    expect(result.unwrap()).toBe(102n);
   });
 
   it("should return Err when actor is unavailable", async () => {
@@ -99,6 +118,7 @@ describe("ExtService", () => {
     );
 
     expect(result.unwrapErr()).toBe("Invalid EXT token id");
+    expect(mockTransfer).not.toHaveBeenCalled();
     expect(mockExtTransfer).not.toHaveBeenCalled();
   });
 
@@ -116,7 +136,7 @@ describe("ExtService", () => {
     ],
     [{ Other: "custom error" }, "custom error"],
   ])("should map EXT transfer error %#", async (err, message) => {
-    mockExtTransfer.mockResolvedValue({ err });
+    mockTransfer.mockResolvedValue({ err });
     const service = new ExtService(COLLECTION_ID);
 
     const result = await service.transfer(239n, {

@@ -261,6 +261,14 @@
   }
 
   function handleSendSuccess() {
+    if (selectedNft) {
+      walletNftStore.removeNft(selectedNft.collectionId, selectedNft.tokenId);
+      nftPortfolioStore.removeToken(
+        selectedNft.collectionId,
+        selectedNft.tokenId,
+      );
+    }
+
     walletNftStore.query.refresh();
     nftPortfolioStore.query.refresh();
     toast.success(locale.t("wallet.nfts.send.confirmSuccess"));

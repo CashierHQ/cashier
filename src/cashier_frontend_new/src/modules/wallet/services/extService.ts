@@ -1,5 +1,5 @@
 import * as ext from "$lib/generated/ext/ext.did";
-import type { User } from "$lib/generated/ext/ext.did";
+import type { TransferRequest, User } from "$lib/generated/ext/ext.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { encodeExtTokenIdentifier } from "$modules/wallet/utils/extTokenIdentifier";
 import { Principal } from "@icp-sdk/core/principal";
@@ -37,7 +37,7 @@ export class ExtService {
       return Err("Invalid EXT token id");
     }
 
-    const response = await actor.ext_transfer({
+    const request: TransferRequest = {
       to: to as User,
       from: { principal: Principal.fromText(owner) } as User,
       token: encodeExtTokenIdentifier(this.#canisterId, tokenIndex),
@@ -45,7 +45,9 @@ export class ExtService {
       subaccount: [],
       memo: [],
       amount: 1n,
-    });
+    };
+
+    const response = await callExtTransfer(actor, request);
 
     if ("ok" in response) {
       return Ok(response.ok);
@@ -53,6 +55,29 @@ export class ExtService {
 
     return Err(mapExtTransferError(response.err));
   }
+}
+
+async function callExtTransfer(
+  actor: ext._SERVICE,
+  request: TransferRequest,
+): Promise<ext.TransferResponse> {
+  try {
+    return await actor.transfer(request);
+  } catch (error) {
+    if (!isMethodNotFoundError(error, "transfer")) {
+      throw error;
+    }
+    return actor.ext_transfer(request);
+  }
+}
+
+function isMethodNotFoundError(error: unknown, methodName: string): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes(`Method name: ${methodName}`) ||
+    message.includes(`method ${methodName}`) ||
+    message.includes(`no update method '${methodName}'`)
+  );
 }
 
 function mapExtTransferError(
