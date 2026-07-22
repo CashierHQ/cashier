@@ -78,6 +78,10 @@
   function handleMainNestedViewChange(isNested: boolean) {
     walletNavigation.setMainNestedView(isNested);
   }
+
+  const logoColor = $derived(
+    walletNavigation.currentMainTab === WalletTab.NFTS ? "#8b5cf6" : "#35A18A",
+  );
 </script>
 
 {#if open}
@@ -97,11 +101,14 @@
   >
     {#if walletNavigation.currentView.type === WalletViewType.MAIN && !walletNavigation.mainViewHasNestedPage}
       <div class="flex items-center justify-between px-4 py-4">
-        <img
-          alt={locale.t("wallet.drawer.logoAlt")}
-          class="max-w-[130px]"
-          src="/logo.svg"
-        />
+        <div
+          role="img"
+          aria-label={locale.t("wallet.drawer.logoAlt")}
+          class="h-[38px] w-[98px] transition-colors duration-300"
+          style:background-color={logoColor}
+          style:mask="url('/logo.svg') no-repeat center / contain"
+          style:-webkit-mask="url('/logo.svg') no-repeat center / contain"
+        ></div>
         <button
           type="button"
           onclick={handleClose}

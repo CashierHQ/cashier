@@ -12,13 +12,20 @@
 </script>
 
 <div
-  class="mx-auto grid h-10 w-full max-w-[290px] grid-cols-2 rounded-full border border-gray-100 bg-white p-0.5 shadow-[0_1px_3px_0_rgba(16,24,40,0.08)]"
+  class="relative mx-auto grid h-10 w-full max-w-[290px] grid-cols-2 overflow-hidden rounded-full border border-gray-100 bg-white p-0.5 shadow-[0_1px_3px_0_rgba(16,24,40,0.08)]"
 >
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute left-0.5 top-0.5 h-[calc(100%-4px)] w-[calc(50%-2px)] rounded-full transition-[transform,background-color] duration-300 ease-out will-change-transform"
+    style:transform={`translateX(${activeTab === WalletTab.NFTS ? "100%" : "0"})`}
+    class:bg-lightgreen={activeTab === WalletTab.TOKENS}
+    class:bg-walletlightpurple={activeTab === WalletTab.NFTS}
+  ></div>
+
   <button
     type="button"
     onclick={() => onTabChange(WalletTab.TOKENS)}
-    class="flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
-    class:bg-lightgreen={activeTab === WalletTab.TOKENS}
+    class="relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors duration-200"
     class:text-green={activeTab === WalletTab.TOKENS}
     class:text-grey={activeTab !== WalletTab.TOKENS}
     aria-pressed={activeTab === WalletTab.TOKENS}
@@ -32,8 +39,7 @@
   <button
     type="button"
     onclick={() => onTabChange(WalletTab.NFTS)}
-    class="flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors"
-    class:bg-walletlightpurple={activeTab === WalletTab.NFTS}
+    class="relative z-10 flex cursor-pointer items-center justify-center gap-1.5 rounded-full text-base font-semibold transition-colors duration-200"
     class:text-walletpurple={activeTab === WalletTab.NFTS}
     class:text-grey={activeTab !== WalletTab.NFTS}
     aria-pressed={activeTab === WalletTab.NFTS}

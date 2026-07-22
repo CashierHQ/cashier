@@ -379,6 +379,8 @@
       "summaryTitle": "NFTs",
       "collectionsSummarySingular": "in {{count}} collection",
       "collectionsSummaryPlural": "in {{count}} collections",
+      "collectionCountSingular": "{{count}} collection",
+      "collectionCountPlural": "{{count}} collections",
       "noCollections": "No NFT Collections",
       "manageCta": "+ Manage",
       "manage": {

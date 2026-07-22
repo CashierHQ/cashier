@@ -5,13 +5,14 @@
   import WalletActionButtons from "$modules/wallet/components/header/WalletActionButtons.svelte";
   import WalletModeTabs from "$modules/wallet/components/header/WalletModeTabs.svelte";
   import { WalletTab } from "$modules/wallet/types";
+  import { horizontalSlide } from "$modules/wallet/utils/horizontalSlide";
   import { Eye, EyeOff } from "lucide-svelte";
+  import { cubicOut } from "svelte/easing";
 
   type Props = {
     activeTab: WalletTab;
     isBalanceVisible: boolean;
     nftCount: number;
-    collectionCount: number;
     onToggleBalance: () => void;
     onSend: () => void;
     onReceive: () => void;
@@ -24,7 +25,6 @@
     activeTab,
     isBalanceVisible,
     nftCount,
-    collectionCount,
     onToggleBalance,
     onSend,
     onReceive,
@@ -47,61 +47,75 @@
   }
 
   let totalBalance = $derived.by(() => calculateTotalBalance());
-  let collectionSummary = $derived(
-    locale
-      .t(
-        collectionCount === 1
-          ? "wallet.nfts.collectionsSummarySingular"
-          : "wallet.nfts.collectionsSummaryPlural",
-      )
-      .replace("{{count}}", collectionCount.toString()),
+
+  const slideDuration = 260;
+  const contentEnterXPercent = $derived(
+    activeTab === WalletTab.NFTS ? 100 : -100,
+  );
+  const contentExitXPercent = $derived(
+    activeTab === WalletTab.NFTS ? -100 : 100,
   );
 </script>
 
 <header class="border-b border-[#E5EAE8] pb-4">
   <WalletModeTabs {activeTab} {onTabChange} />
 
-  <div class="mt-8 text-center">
-    {#if activeTab === WalletTab.NFTS}
-      <h2 class="text-[38px]/[100%] font-semibold text-[#242424]">
-        {nftCount}
-        {locale.t("wallet.nfts.summaryTitle")}
-      </h2>
-      <p class="mt-1 text-lg font-light leading-none text-grey">
-        {collectionSummary}
-      </p>
-    {:else}
-      <div class="relative mx-auto w-fit">
-        <h2 class="text-[38px]/[100%] font-semibold text-[#242424]">
-          {#if isBalanceVisible}
-            ${totalBalance.toFixed(2)}
+  <div class="grid overflow-hidden">
+    {#key activeTab}
+      <div
+        class="col-start-1 row-start-1 w-full"
+        in:horizontalSlide={{
+          xPercent: contentEnterXPercent,
+          duration: slideDuration,
+          easing: cubicOut,
+        }}
+        out:horizontalSlide={{
+          xPercent: contentExitXPercent,
+          duration: slideDuration,
+          easing: cubicOut,
+        }}
+      >
+        <div class="mt-8 text-center">
+          {#if activeTab === WalletTab.NFTS}
+            <h2 class="text-[38px]/[100%] font-semibold text-[#242424]">
+              {nftCount}
+              {locale.t("wallet.nfts.summaryTitle")}
+            </h2>
           {:else}
-            ****
+            <div class="relative mx-auto w-fit">
+              <h2 class="text-[38px]/[100%] font-semibold text-[#242424]">
+                {#if isBalanceVisible}
+                  ${totalBalance.toFixed(2)}
+                {:else}
+                  ****
+                {/if}
+              </h2>
+              <button
+                type="button"
+                onclick={onToggleBalance}
+                class="absolute top-1/2 right-[-36px] -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700 active:scale-95"
+                aria-label={locale.t("wallet.navBar.toggleBalance")}
+              >
+                {#if isBalanceVisible}
+                  <Eye size={24} />
+                {:else}
+                  <EyeOff size={24} />
+                {/if}
+              </button>
+            </div>
           {/if}
-        </h2>
-        <button
-          type="button"
-          onclick={onToggleBalance}
-          class="absolute top-1/2 right-[-36px] -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700 active:scale-95"
-          aria-label={locale.t("wallet.navBar.toggleBalance")}
-        >
-          {#if isBalanceVisible}
-            <Eye size={24} />
-          {:else}
-            <EyeOff size={24} />
-          {/if}
-        </button>
-      </div>
-    {/if}
-  </div>
+        </div>
 
-  <div class="mt-6">
-    <WalletActionButtons
-      {activeTab}
-      {onSend}
-      {onReceive}
-      {onSwap}
-      {onManageNfts}
-    />
+        <div class="mt-6">
+          <WalletActionButtons
+            {activeTab}
+            {onSend}
+            {onReceive}
+            {onSwap}
+            {onManageNfts}
+          />
+        </div>
+      </div>
+    {/key}
   </div>
 </header>
