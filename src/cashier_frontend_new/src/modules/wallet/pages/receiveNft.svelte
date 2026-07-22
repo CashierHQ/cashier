@@ -6,9 +6,7 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
-  import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
-  import type { NftCollectionSummary } from "$modules/wallet/types/nft";
-  import { getNftCollectionSummaries } from "$modules/wallet/utils/nftCollections";
+  import type { CollectionSummary } from "$modules/wallet/types/nft";
   import {
     ChevronRight,
     Copy,
@@ -32,12 +30,13 @@
   let failedImageLoads = new SvelteSet<string>();
   let initialSelectionApplied = $state(false);
 
-  const enabledNfts = $derived.by(() =>
-    (walletNftStore.query.data ?? []).filter((nft) =>
-      collectionStore.isCollectionEnabled(nft.collectionId),
+  // Registry rows for the collections the user has enabled — not derived from owned NFTs,
+  // since receiving is precisely how a user gets their first NFT in a collection.
+  const collections = $derived(
+    (collectionStore.query.data ?? []).filter((collection) =>
+      collectionStore.isCollectionEnabled(collection.collectionId),
     ),
   );
-  const collections = $derived(getNftCollectionSummaries(enabledNfts));
   const selectedCollection = $derived(
     selectedCollectionId
       ? (collections.find(
@@ -101,9 +100,15 @@
     failedImageLoads.add(collectionId);
   }
 
-  function handleSelectCollection(collection: NftCollectionSummary) {
+  function handleSelectCollection(collection: CollectionSummary) {
     selectedCollectionId = collection.collectionId;
   }
+
+  const selectedWarningParts = $derived.by(() => {
+    const template = locale.t("wallet.nfts.receive.selectedWarning");
+    const [prefix, suffix = ""] = template.split("{{collection}}");
+    return { prefix, suffix };
+  });
 
   async function handleCopyAddress() {
     try {
@@ -127,9 +132,9 @@
       <div class="flex items-start gap-1.5">
         <Info class="text-walletpurple mt-0.5 h-4 w-4 flex-shrink-0" />
         <p class="text-walletpurple text-xs leading-tight">
-          {locale
-            .t("wallet.nfts.receive.selectedWarning")
-            .replace("{{collection}}", selectedCollection.name)}
+          {selectedWarningParts.prefix}<span class="font-semibold"
+            >{selectedCollection.name}</span
+          >{selectedWarningParts.suffix}
         </p>
       </div>
 
@@ -158,9 +163,7 @@
               <p class="truncate text-sm font-medium text-gray-900">
                 {selectedCollection.name}
               </p>
-              <p class="text-xs text-gray-700">
-                {selectedCollection.symbol ?? "-"}
-              </p>
+              <p class="text-xs text-gray-700">-</p>
             </div>
           </div>
           <span
@@ -229,7 +232,7 @@
         {locale.t("wallet.nfts.receive.enabledCollections")}
       </p>
 
-      {#if walletNftStore.query.isLoading && !walletNftStore.query.data}
+      {#if collectionStore.query.isLoading && !collectionStore.query.data}
         <div class="flex items-center justify-center py-12">
           <LoaderCircle class="text-walletpurple h-8 w-8 animate-spin" />
         </div>
