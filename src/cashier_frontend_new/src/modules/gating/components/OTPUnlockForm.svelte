@@ -46,9 +46,7 @@
     otpUnlockSessionStore.getSession(sessionKey),
   );
   const code = $derived(session.digits.join(""));
-  const remainingSeconds = $derived.by(() =>
-    secondsUntil(session.expiresAtMs),
-  );
+  const remainingSeconds = $derived.by(() => secondsUntil(session.expiresAtMs));
   const resendRemainingSeconds = $derived.by(() =>
     secondsUntil(session.resendAvailableAtMs),
   );

@@ -103,7 +103,8 @@ class OTPUnlockSessionStore {
    * @param key - The unique lock/session key to remove.
    */
   clear(key: string): void {
-    const { [key]: _removed, ...remaining } = this.#sessions;
+    const remaining = { ...this.#sessions };
+    delete remaining[key];
     this.#sessions = remaining;
   }
 }

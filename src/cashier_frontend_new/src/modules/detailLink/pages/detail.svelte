@@ -628,7 +628,6 @@
           {locale.t("links.linkForm.detail.endLink")}
         </PrimaryActionButton>
       {/if}
-
     </div>
 
     <div

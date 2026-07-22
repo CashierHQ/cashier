@@ -363,10 +363,7 @@ class ValidationService {
 
     const overlappingFee = isFeeToken ? assetToken.fee : 0n;
     const availableBalance =
-      assetToken.balance -
-      requiredFeeAmount -
-      assetNetworkFee +
-      overlappingFee;
+      assetToken.balance - requiredFeeAmount - assetNetworkFee + overlappingFee;
     const maxAssetAmount = availableBalance > 0n ? availableBalance : 0n;
 
     if (maxAssetAmount < 0n) {

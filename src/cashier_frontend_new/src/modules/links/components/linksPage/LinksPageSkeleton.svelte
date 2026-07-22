@@ -11,11 +11,11 @@
 <div class="flex w-full flex-col" aria-label="Loading links">
   <h2 class="mt-0 text-base font-semibold">Links created by me</h2>
   <div class="mt-4 space-y-4">
-    {#each groups as rows, groupIndex}
+    {#each groups as rows, groupIndex (groupIndex)}
       <div>
         <Skeleton class="mb-2 h-[17px] w-24" />
         <ul>
-          {#each rows as titleWidth, rowIndex}
+          {#each rows as titleWidth, rowIndex (rowIndex)}
             <li>
               <div class="my-3 flex w-full items-center justify-between">
                 <div class="flex items-center gap-x-5">
