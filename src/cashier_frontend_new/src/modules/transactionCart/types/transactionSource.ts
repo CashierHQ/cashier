@@ -3,6 +3,7 @@ import type { ProcessActionResult } from "$modules/detailLink/types/genericDetai
 import type Action from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
 import type { ReceiveAddressType } from "$modules/wallet/types";
+import type { EnrichedNFT } from "$modules/wallet/types/nft";
 import type { Principal } from "@icp-sdk/core/principal";
 import type { Result } from "ts-results-es";
 
@@ -65,6 +66,18 @@ export type WalletSource = {
   to: Principal | string;
   amount: bigint;
   /* receive type principal or account */
+  receiveType: ReceiveAddressType;
+  onSuccess?: (blockIndex: bigint) => void;
+};
+
+/**
+ * NFT wallet transaction source (direct EXT/ICRC-7 transfer)
+ */
+export type NftSource = {
+  nft: EnrichedNFT;
+  collectionStandard?: string | null;
+  /* recipient address - principal or EXT account identifier (string) */
+  to: Principal | string;
   receiveType: ReceiveAddressType;
   onSuccess?: (blockIndex: bigint) => void;
 };

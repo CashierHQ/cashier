@@ -13,8 +13,7 @@
   import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
   import {
     getNftCollectionSummaries,
-    getNftsForCollection,
-    mapOwnedTokenRecordToEnrichedNft,
+    mergeOwnedAndPortfolioNfts,
   } from "$modules/wallet/utils/nftCollections";
 
   type Props = {
@@ -111,26 +110,16 @@
     const collectionId = selectedCollectionId;
     if (!collectionId) return [];
 
-    const owned = getNftsForCollection(visibleNfts, collectionId);
-    const ownedTokenIds = new Set(owned.map((nft) => nft.tokenId.toString()));
     const collectionName = selectedCollection?.name ?? "";
     const standard = selectedCollection?.standard;
 
-    // Fill in NFTs nftGeek reports as owned but that weren't manually added via
-    // "Add NFT" — additive to (never replaces) the existing owned-NFT mechanism.
-    const portfolioNfts = nftPortfolioStore
-      .getTokensForCollection(collectionId)
-      .filter((record) => !ownedTokenIds.has(record.tokenId.toString()))
-      .map((record) =>
-        mapOwnedTokenRecordToEnrichedNft(
-          record,
-          collectionId,
-          collectionName,
-          standard,
-        ),
-      );
-
-    return [...owned, ...portfolioNfts];
+    return mergeOwnedAndPortfolioNfts(
+      visibleNfts,
+      nftPortfolioStore.getTokensForCollection(collectionId),
+      collectionId,
+      collectionName,
+      standard,
+    );
   });
 
   $effect(() => {

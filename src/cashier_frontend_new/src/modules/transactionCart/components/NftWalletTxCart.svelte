@@ -1,57 +1,41 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
-  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
-  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
+  import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import { NftTxCartStore } from "$modules/transactionCart/state/nftTxCartStore.svelte";
+  import type { NftSource } from "$modules/transactionCart/types/transactionSource";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import type { EnrichedNFT } from "$modules/wallet/types/nft";
   import { X } from "lucide-svelte";
+  import { onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
 
-  const MOCK_NFT_FEE_USD = 0.0502;
-  const MOCK_NFT_FEE_BREAKDOWN: FeeBreakdownItem[] = [
-    {
-      name: "Network fee",
-      amount: 2_008_000n,
-      tokenAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      tokenSymbol: "ICP",
-      tokenDecimals: 8,
-      usdAmount: MOCK_NFT_FEE_USD,
-    },
-  ];
-
   type Props = {
-    nft: EnrichedNFT;
-    collectionStandard?: string | null;
-    sendAddress: string;
+    source: NftSource;
     isOpen: boolean;
     onCloseDrawer: () => void;
-    onConfirm: () => void;
   };
 
-  let {
-    nft,
-    collectionStandard = null,
-    sendAddress,
-    isOpen = $bindable(),
-    onCloseDrawer,
-    onConfirm,
-  }: Props = $props();
+  let { source, isOpen = $bindable(), onCloseDrawer }: Props = $props();
 
+  let nftTxCartStore = $state<NftTxCartStore | null>(null);
   let failedImageLoads = new SvelteSet<string>();
-  let showFeeInfoDrawer = $state(false);
+  let errorMessage: string | null = $state(null);
 
+  const nft = $derived(source.nft);
+  const sendAddress = $derived(
+    typeof source.to === "string" ? source.to : source.to.toText(),
+  );
   const shortenedSendAddress = $derived(
     transformShortAddress(sendAddress.trim()),
   );
   const standard = $derived(
     nft.standard ??
-      collectionStandard ??
+      source.collectionStandard ??
       locale.t("wallet.nfts.send.standardFallback"),
   );
+  const isProcessing = $derived(nftTxCartStore?.state === "PROCESSING");
 
   function getNftImageKey(nft: EnrichedNFT) {
     return `${nft.collectionId}:${nft.tokenId.toString()}`;
@@ -72,25 +56,40 @@
   }
 
   function handleOpenChange(open: boolean) {
-    isOpen = open;
-
-    if (!open && !showFeeInfoDrawer) {
+    if (!open) {
       onCloseDrawer();
     }
   }
 
-  function handleFeeBreakdownClick() {
-    isOpen = false;
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoDrawerBack(viaClose?: boolean) {
-    showFeeInfoDrawer = false;
-
-    if (!viaClose) {
-      isOpen = true;
+  async function handleConfirm() {
+    if (!nftTxCartStore || isProcessing) {
+      return;
     }
+
+    errorMessage = null;
+    const result = await nftTxCartStore.execute();
+    if (result.isOk()) {
+      source.onSuccess?.(result.value);
+      onCloseDrawer();
+      return;
+    }
+
+    errorMessage = result.error;
   }
+
+  function getNftDisplayName(nft: EnrichedNFT) {
+    return nft.name || `#${nft.tokenId.toString()}`;
+  }
+
+  onMount(() => {
+    nftTxCartStore = new NftTxCartStore(source);
+  });
+
+  $effect(() => {
+    if (nftTxCartStore && source) {
+      nftTxCartStore.updateSource(source);
+    }
+  });
 </script>
 
 <Drawer.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
@@ -115,6 +114,14 @@
     </Drawer.Header>
 
     <div class="h-auto px-4 pb-4">
+      {#if errorMessage}
+        <div
+          class="mb-3 rounded border border-red-300 bg-red-100 p-2 text-sm text-red-700"
+        >
+          {errorMessage}
+        </div>
+      {/if}
+
       <p class="mb-3 text-sm font-medium text-gray-900">
         {locale.t("wallet.nfts.send.youSend")}
       </p>
@@ -125,8 +132,8 @@
         >
           <img
             src={getNftImage(nft)}
-            alt={nft.name}
-            class="h-full w-full aspect-square object-contain"
+            alt={getNftDisplayName(nft)}
+            class="aspect-square h-full w-full object-contain"
             onerror={() => handleImageError(getNftImageKey(nft))}
           />
         </div>
@@ -135,7 +142,7 @@
             #{nft.tokenId.toString()}
           </p>
           <p class="text-lg font-semibold leading-tight text-gray-900">
-            {nft.name}
+            {getNftDisplayName(nft)}
           </p>
           <p class="mt-1 text-xs font-normal text-gray-700">
             {nft.collectionName}
@@ -145,19 +152,19 @@
 
       <dl class="space-y-2 text-sm">
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-900 font-medium text-base">
+          <dt class="text-base font-medium text-gray-900">
             {locale.t("wallet.nfts.send.to")}
           </dt>
           <dd class="truncate text-gray-500">{shortenedSendAddress}</dd>
         </div>
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-900 font-medium text-base">
+          <dt class="text-base font-medium text-gray-900">
             {locale.t("wallet.nfts.send.network")}
           </dt>
           <dd class="text-gray-500">ICP</dd>
         </div>
         <div class="flex justify-between gap-4">
-          <dt class="text-gray-900 font-medium text-base">
+          <dt class="text-base font-medium text-gray-900">
             {locale.t("wallet.nfts.send.standard")}
           </dt>
           <dd class="text-gray-500">{standard}</dd>
@@ -167,29 +174,22 @@
       <p class="my-5 text-sm font-normal leading-snug text-gray-700">
         {locale.t("wallet.nfts.send.terms")}
       </p>
-
-      <div class="mb-6">
-        <FeesBreakdownSection
-          totalFeesUsd={MOCK_NFT_FEE_USD}
-          onBreakdownClick={handleFeeBreakdownClick}
-        />
-      </div>
     </div>
 
     <div class="mb-2 px-3">
-      <Button
-        onclick={onConfirm}
-        class="bg-walletpurple hover:bg-walletpurple/90 inline-flex h-[44px] w-full cursor-pointer items-center justify-center rounded-full px-4 font-medium text-primary-foreground shadow"
+      <PrimaryActionButton
+        onclick={handleConfirm}
+        class="!bg-walletpurple hover:!bg-walletpurple/90 disabled:!bg-walletpurple/60"
+        loading={isProcessing}
+        loadingLabel={locale.t(
+          "links.linkForm.drawers.txCart.wallet.processingButton",
+        )}
         type="button"
       >
-        {locale.t("wallet.nfts.send.confirmButton")}
-      </Button>
+        {errorMessage
+          ? locale.t("links.linkForm.drawers.txCart.wallet.retryButton")
+          : locale.t("wallet.nfts.send.confirmButton")}
+      </PrimaryActionButton>
     </div>
   </Drawer.Content>
 </Drawer.Root>
-
-<FeeInfoDrawer
-  bind:open={showFeeInfoDrawer}
-  feesBreakdown={MOCK_NFT_FEE_BREAKDOWN}
-  onBack={handleFeeInfoDrawerBack}
-/>

@@ -2,18 +2,22 @@
   import { locale } from "$lib/i18n";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import NftWalletTxCart from "$modules/transactionCart/components/NftWalletTxCart.svelte";
+  import type { NftSource } from "$modules/transactionCart/types/transactionSource";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
+  import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
+  import { ReceiveAddressType } from "$modules/wallet/types";
   import type {
     EnrichedNFT,
     NftCollectionSummary,
   } from "$modules/wallet/types/nft";
+  import { mergeOwnedAndPortfolioNfts } from "$modules/wallet/utils/nftCollections";
   import {
-    getNftCollectionSummaries,
-    getNftsForCollection,
-  } from "$modules/wallet/utils/nftCollections";
+    isValidAccountId,
+    isValidPrincipal,
+  } from "$modules/wallet/utils/address";
   import {
     ChevronRight,
     Image,
@@ -37,6 +41,7 @@
   let collectionSearchQuery = $state("");
   let nftSearchQuery = $state("");
   let sendAddress = $state("");
+  let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
   let failedImageLoads = new SvelteSet<string>();
   let initialSelectionApplied = $state(false);
@@ -46,7 +51,38 @@
       collectionStore.isCollectionEnabled(nft.collectionId),
     ),
   );
-  const collections = $derived(getNftCollectionSummaries(enabledNfts));
+  const enabledRegistryCollections = $derived.by(() =>
+    (collectionStore.query.data ?? []).filter((collection) =>
+      collectionStore.isCollectionEnabled(collection.collectionId),
+    ),
+  );
+  const collections = $derived.by(() => {
+    return enabledRegistryCollections
+      .map((collection): NftCollectionSummary | null => {
+        const nfts = mergeOwnedAndPortfolioNfts(
+          enabledNfts,
+          nftPortfolioStore.getTokensForCollection(collection.collectionId),
+          collection.collectionId,
+          collection.name,
+          collection.standard,
+        );
+
+        if (nfts.length === 0) {
+          return null;
+        }
+
+        return {
+          collectionId: collection.collectionId,
+          name: collection.name,
+          description: collection.description,
+          imageUrl: collection.imageUrl,
+          itemCount: nfts.length,
+          standard: collection.standard,
+        };
+      })
+      .filter((collection) => collection !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
   const selectedCollection = $derived(
     selectedCollectionId
       ? (collections.find(
@@ -54,9 +90,15 @@
         ) ?? null)
       : null,
   );
-  const selectedCollectionNfts = $derived(
+  const selectedCollectionNfts = $derived.by(() =>
     selectedCollectionId
-      ? getNftsForCollection(enabledNfts, selectedCollectionId)
+      ? mergeOwnedAndPortfolioNfts(
+          enabledNfts,
+          nftPortfolioStore.getTokensForCollection(selectedCollectionId),
+          selectedCollectionId,
+          selectedCollection?.name ?? "",
+          selectedCollection?.standard,
+        )
       : [],
   );
   const selectedNft = $derived(
@@ -90,9 +132,51 @@
         nft.tokenId.toString().includes(normalizedSearch),
     );
   });
-  const canContinue = $derived(
-    selectedNft !== null && sendAddress.trim().length > 0,
+  const selectedStandard = $derived(
+    selectedNft?.standard ??
+      selectedCollection?.standard ??
+      locale.t("wallet.nfts.send.standardFallback"),
   );
+  const shouldShowAddressTypeSelector = $derived(
+    selectedStandard.trim().toUpperCase() === "EXT",
+  );
+  const parsedSendAddress = $derived.by(() => {
+    const trimmedAddress = sendAddress.trim();
+    if (!trimmedAddress) {
+      return null;
+    }
+
+    if (receiveType === ReceiveAddressType.ACCOUNT_ID) {
+      const result = isValidAccountId(trimmedAddress);
+      return result.isOk() ? trimmedAddress : null;
+    }
+
+    const result = isValidPrincipal(trimmedAddress);
+    return result.isOk() ? result.value : null;
+  });
+  const nftSource = $derived.by((): NftSource | null => {
+    if (!selectedNft || !parsedSendAddress) {
+      return null;
+    }
+
+    return {
+      nft: selectedNft,
+      collectionStandard: selectedCollection?.standard ?? null,
+      to: parsedSendAddress,
+      receiveType,
+      onSuccess: handleSendSuccess,
+    };
+  });
+  const canContinue = $derived(nftSource !== null);
+
+  $effect(() => {
+    if (
+      !shouldShowAddressTypeSelector &&
+      receiveType === ReceiveAddressType.ACCOUNT_ID
+    ) {
+      receiveType = ReceiveAddressType.PRINCIPAL;
+    }
+  });
 
   $effect(() => {
     if (!initialCollectionId || initialSelectionApplied) {
@@ -155,11 +239,13 @@
     selectedTokenId = null;
     nftSearchQuery = "";
     sendAddress = "";
+    receiveType = ReceiveAddressType.PRINCIPAL;
   }
 
   function handleSelectNft(nft: EnrichedNFT) {
     selectedTokenId = nft.tokenId;
     sendAddress = "";
+    receiveType = ReceiveAddressType.PRINCIPAL;
   }
 
   function handleBack() {
@@ -194,17 +280,30 @@
   }
 
   function handleContinue() {
-    if (!canContinue) {
+    if (!nftSource) {
       return;
     }
 
     showConfirmDrawer = true;
   }
 
-  function handleConfirm() {
-    showConfirmDrawer = false;
+  function handleSendSuccess() {
+    walletNftStore.query.refresh();
+    nftPortfolioStore.query.refresh();
     toast.success(locale.t("wallet.nfts.send.confirmSuccess"));
     onNavigateBack();
+  }
+
+  function getNftDisplayName(nft: EnrichedNFT) {
+    return nft.name || `#${nft.tokenId.toString()}`;
+  }
+
+  function handleSetReceiveTypePrincipal() {
+    receiveType = ReceiveAddressType.PRINCIPAL;
+  }
+
+  function handleSetReceiveTypeAccountId() {
+    receiveType = ReceiveAddressType.ACCOUNT_ID;
   }
 </script>
 
@@ -240,7 +339,7 @@
         {locale.t("wallet.nfts.send.enabledCollections")}
       </p>
 
-      {#if walletNftStore.query.isLoading && !walletNftStore.query.data}
+      {#if (walletNftStore.query.isLoading && !walletNftStore.query.data) || (collectionStore.query.isLoading && !collectionStore.query.data)}
         <div class="flex items-center justify-center py-12">
           <LoaderCircle class="text-walletpurple h-8 w-8 animate-spin" />
         </div>
@@ -340,7 +439,7 @@
                 </div>
                 <div class="min-w-0">
                   <p class="truncate text-sm font-medium text-gray-900">
-                    {nft.name}
+                    {getNftDisplayName(nft)}
                   </p>
                   <p class="text-xs text-gray-500">#{nft.tokenId.toString()}</p>
                 </div>
@@ -373,7 +472,7 @@
             </div>
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-gray-900">
-                {selectedNft.name}
+                {getNftDisplayName(selectedNft)}
               </p>
               <p class="truncate text-xs text-gray-700">
                 {selectedNft.collectionName}
@@ -383,9 +482,7 @@
           <span
             class="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-500"
           >
-            {selectedNft.standard ??
-              selectedCollection.standard ??
-              locale.t("wallet.nfts.send.standardFallback")}
+            {selectedStandard}
           </span>
         </div>
       </section>
@@ -394,6 +491,30 @@
         <p class="text-sm font-medium text-gray-900">
           {locale.t("wallet.nfts.send.addressLabel")}
         </p>
+        {#if shouldShowAddressTypeSelector}
+          <div class="mb-2 flex gap-1.5">
+            <button
+              type="button"
+              onclick={handleSetReceiveTypePrincipal}
+              class="flex-1 rounded-lg border p-2 text-sm font-medium transition-colors {receiveType ===
+              ReceiveAddressType.PRINCIPAL
+                ? 'border-[#36A18B] bg-green-50'
+                : 'border-gray-300 hover:border-gray-400'}"
+            >
+              {locale.t("wallet.send.principalId")}
+            </button>
+            <button
+              type="button"
+              onclick={handleSetReceiveTypeAccountId}
+              class="flex-1 rounded-lg border p-2 text-sm font-medium transition-colors {receiveType ===
+              ReceiveAddressType.ACCOUNT_ID
+                ? 'border-[#36A18B] bg-green-50'
+                : 'border-gray-300 hover:border-gray-400'}"
+            >
+              {locale.t("wallet.send.accountId")}
+            </button>
+          </div>
+        {/if}
         <input
           type="text"
           bind:value={sendAddress}
@@ -401,7 +522,11 @@
           class="focus:border-walletpurple w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none"
         />
         <p class="text-xs text-gray-400">
-          {locale.t("wallet.nfts.send.addressExample")}
+          {locale.t(
+            receiveType === ReceiveAddressType.PRINCIPAL
+              ? "wallet.send.addressPrincipleExample"
+              : "wallet.send.addressAccountExample",
+          )}
         </p>
       </section>
 
@@ -419,13 +544,10 @@
   {/if}
 </div>
 
-{#if selectedNft}
+{#if nftSource}
   <NftWalletTxCart
-    nft={selectedNft}
-    collectionStandard={selectedCollection?.standard ?? null}
-    {sendAddress}
+    source={nftSource}
     bind:isOpen={showConfirmDrawer}
     onCloseDrawer={() => (showConfirmDrawer = false)}
-    onConfirm={handleConfirm}
   />
 {/if}

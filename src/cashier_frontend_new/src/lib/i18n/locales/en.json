@@ -547,9 +547,8 @@
         "terms": "By confirming, you agree to execute the transaction above and agree to the terms of service.",
         "feesBreakdown": "Fees breakdown",
         "totalFees": "Total fees",
-        "mockFee": "~$0.0502",
         "confirmButton": "Confirm",
-        "confirmSuccess": "NFT send confirmed. No transaction was submitted.",
+        "confirmSuccess": "NFT sent successfully.",
         "standardFallback": "ICRC-7",
         "emptyNfts": "No NFTs found"
       }

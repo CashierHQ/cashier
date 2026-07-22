@@ -94,3 +94,33 @@ export function mapOwnedTokenRecordToEnrichedNft(
     lastTransferAt: record.lastUpdatedAt,
   };
 }
+
+/**
+ * Merge NFTs tracked by the wallet with nftGeek ownership records for one collection.
+ * Wallet-tracked NFTs win when both sources report the same token id because they carry
+ * richer metadata.
+ */
+export function mergeOwnedAndPortfolioNfts(
+  owned: EnrichedNFT[],
+  portfolioRecords: OwnedTokenRecord[],
+  collectionId: string,
+  collectionName: string,
+  standard?: string,
+): EnrichedNFT[] {
+  const ownedForCollection = getNftsForCollection(owned, collectionId);
+  const ownedTokenIds = new Set(
+    ownedForCollection.map((nft) => nft.tokenId.toString()),
+  );
+  const portfolioNfts = portfolioRecords
+    .filter((record) => !ownedTokenIds.has(record.tokenId.toString()))
+    .map((record) =>
+      mapOwnedTokenRecordToEnrichedNft(
+        record,
+        collectionId,
+        collectionName,
+        standard,
+      ),
+    );
+
+  return [...ownedForCollection, ...portfolioNfts];
+}

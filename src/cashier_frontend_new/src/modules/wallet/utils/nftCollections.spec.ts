@@ -4,6 +4,7 @@ import {
   getNftCollectionSummaries,
   getNftsForCollection,
   mapOwnedTokenRecordToEnrichedNft,
+  mergeOwnedAndPortfolioNfts,
 } from "$modules/wallet/utils/nftCollections";
 
 const nfts: EnrichedNFT[] = [
@@ -172,5 +173,48 @@ describe("mapOwnedTokenRecordToEnrichedNft", () => {
     );
 
     expect(nft.imageUrl).toBe("");
+  });
+});
+
+describe("mergeOwnedAndPortfolioNfts", () => {
+  it("should merge wallet NFTs with nftGeek portfolio records", () => {
+    const portfolioRecords: OwnedTokenRecord[] = [
+      { tokenId: 4n, lastUpdatedAt: "1/2/2026" },
+    ];
+
+    const result = mergeOwnedAndPortfolioNfts(
+      nfts,
+      portfolioRecords,
+      "collection-b",
+      "Beta Collection",
+      "ICRC-7",
+    );
+
+    expect(result.map((nft) => nft.tokenId)).toEqual([1n, 3n, 4n]);
+    expect(result[2]).toMatchObject({
+      collectionId: "collection-b",
+      tokenId: 4n,
+      collectionName: "Beta Collection",
+      lastTransferAt: "1/2/2026",
+    });
+  });
+
+  it("should dedupe portfolio records and preserve wallet metadata", () => {
+    const portfolioRecords: OwnedTokenRecord[] = [
+      { tokenId: 1n, lastUpdatedAt: "newer" },
+      { tokenId: 5n },
+    ];
+
+    const result = mergeOwnedAndPortfolioNfts(
+      nfts,
+      portfolioRecords,
+      "collection-b",
+      "Beta Collection",
+      "ICRC-7",
+    );
+
+    expect(result.map((nft) => nft.tokenId)).toEqual([1n, 3n, 5n]);
+    expect(result[0].name).toBe("Beta #1");
+    expect(result[0].imageUrl).toBe("https://example.com/beta-1.png");
   });
 });
