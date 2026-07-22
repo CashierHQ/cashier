@@ -11,7 +11,10 @@
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
   import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
-  import { mergeOwnedAndPortfolioNfts } from "$modules/wallet/utils/nftCollections";
+  import {
+    getOwnedNftCountForCollection,
+    mergeOwnedAndPortfolioNfts,
+  } from "$modules/wallet/utils/nftCollections";
 
   type Props = {
     activeTab?: WalletTab;
@@ -75,7 +78,7 @@
         collectionStore.isCollectionEnabled(collection.collectionId),
       )
       .map((collection) => {
-        const ownedNfts = mergeOwnedAndPortfolioNfts(
+        const itemCount = getOwnedNftCountForCollection(
           visibleNfts,
           nftPortfolioStore.getTokensForCollection(collection.collectionId),
           collection.collectionId,
@@ -88,7 +91,7 @@
           name: collection.name,
           description: collection.description,
           imageUrl: collection.imageUrl,
-          itemCount: ownedNfts.length,
+          itemCount,
           standard: collection.standard,
         };
       }),

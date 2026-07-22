@@ -124,3 +124,19 @@ export function mergeOwnedAndPortfolioNfts(
 
   return [...ownedForCollection, ...portfolioNfts];
 }
+
+export function getOwnedNftCountForCollection(
+  owned: EnrichedNFT[],
+  portfolioRecords: OwnedTokenRecord[],
+  collectionId: string,
+  collectionName: string,
+  standard?: string,
+): number {
+  return mergeOwnedAndPortfolioNfts(
+    owned,
+    portfolioRecords,
+    collectionId,
+    collectionName,
+    standard,
+  ).length;
+}

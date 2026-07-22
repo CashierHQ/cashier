@@ -13,7 +13,10 @@
     CollectionSummary,
     EnrichedNFT,
   } from "$modules/wallet/types/nft";
-  import { mergeOwnedAndPortfolioNfts } from "$modules/wallet/utils/nftCollections";
+  import {
+    getOwnedNftCountForCollection,
+    mergeOwnedAndPortfolioNfts,
+  } from "$modules/wallet/utils/nftCollections";
   import {
     isValidAccountId,
     isValidPrincipal,
@@ -52,9 +55,20 @@
     ),
   );
   const collections = $derived.by(() =>
-    (collectionStore.query.data ?? []).filter((collection) =>
-      collectionStore.isCollectionEnabled(collection.collectionId),
-    ),
+    (collectionStore.query.data ?? [])
+      .filter((collection) =>
+        collectionStore.isCollectionEnabled(collection.collectionId),
+      )
+      .map((collection) => ({
+        ...collection,
+        itemCount: getOwnedNftCountForCollection(
+          enabledNfts,
+          nftPortfolioStore.getTokensForCollection(collection.collectionId),
+          collection.collectionId,
+          collection.name,
+          collection.standard,
+        ),
+      })),
   );
   const selectedCollection = $derived(
     selectedCollectionId

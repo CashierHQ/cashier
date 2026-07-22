@@ -3,6 +3,7 @@ import type { EnrichedNFT, OwnedTokenRecord } from "$modules/wallet/types/nft";
 import {
   getNftCollectionSummaries,
   getNftsForCollection,
+  getOwnedNftCountForCollection,
   mapOwnedTokenRecordToEnrichedNft,
   mergeOwnedAndPortfolioNfts,
 } from "$modules/wallet/utils/nftCollections";
@@ -216,5 +217,24 @@ describe("mergeOwnedAndPortfolioNfts", () => {
     expect(result.map((nft) => nft.tokenId)).toEqual([1n, 3n, 5n]);
     expect(result[0].name).toBe("Beta #1");
     expect(result[0].imageUrl).toBe("https://example.com/beta-1.png");
+  });
+});
+
+describe("getOwnedNftCountForCollection", () => {
+  it("should count wallet NFTs plus nftGeek records and dedupe by token id", () => {
+    const portfolioRecords: OwnedTokenRecord[] = [
+      { tokenId: 1n },
+      { tokenId: 6n },
+    ];
+
+    const result = getOwnedNftCountForCollection(
+      nfts,
+      portfolioRecords,
+      "collection-b",
+      "Beta Collection",
+      "ICRC-7",
+    );
+
+    expect(result).toBe(3);
   });
 });

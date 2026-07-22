@@ -6,7 +6,10 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { NFT_FALLBACK_IMAGE_URL } from "$modules/wallet/constants";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
+  import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
+  import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import type { CollectionSummary } from "$modules/wallet/types/nft";
+  import { getOwnedNftCountForCollection } from "$modules/wallet/utils/nftCollections";
   import {
     ChevronRight,
     Copy,
@@ -30,12 +33,27 @@
   let failedImageLoads = new SvelteSet<string>();
   let initialSelectionApplied = $state(false);
 
-  // Registry rows for the collections the user has enabled — not derived from owned NFTs,
-  // since receiving is precisely how a user gets their first NFT in a collection.
-  const collections = $derived(
-    (collectionStore.query.data ?? []).filter((collection) =>
-      collectionStore.isCollectionEnabled(collection.collectionId),
+  const enabledNfts = $derived.by(() =>
+    (walletNftStore.query.data ?? []).filter((nft) =>
+      collectionStore.isCollectionEnabled(nft.collectionId),
     ),
+  );
+  // Show all enabled collections, but display the current user's owned count.
+  const collections = $derived.by(() =>
+    (collectionStore.query.data ?? [])
+      .filter((collection) =>
+        collectionStore.isCollectionEnabled(collection.collectionId),
+      )
+      .map((collection) => ({
+        ...collection,
+        itemCount: getOwnedNftCountForCollection(
+          enabledNfts,
+          nftPortfolioStore.getTokensForCollection(collection.collectionId),
+          collection.collectionId,
+          collection.name,
+          collection.standard,
+        ),
+      })),
   );
   const selectedCollection = $derived(
     selectedCollectionId
