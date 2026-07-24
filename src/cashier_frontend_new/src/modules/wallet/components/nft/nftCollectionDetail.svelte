@@ -187,16 +187,22 @@
         <button
           type="button"
           onclick={() => onReceive(collection.collectionId)}
-          class="receive-nft-tile relative flex h-full flex-col items-center justify-center gap-3 rounded-lg text-walletpurple"
+          class="receive-nft-tile relative flex flex-col overflow-hidden rounded-lg text-walletpurple"
         >
-          <span
-            class="border-walletpurple/10 flex h-11 w-11 items-center justify-center rounded-lg border bg-white text-xl"
+          <div
+            class="flex aspect-square flex-col items-center justify-center gap-3"
           >
-            <ArrowDown size={22} />
-          </span>
-          <span class="text-sm font-medium">
-            {locale.t("wallet.nfts.detail.receiveNft")}
-          </span>
+            <span
+              class="border-walletpurple/10 flex h-11 w-11 items-center justify-center rounded-lg border bg-white text-xl"
+            >
+              <ArrowDown size={22} />
+            </span>
+          </div>
+          <div class="flex items-center justify-center gap-2 px-2 py-1.5">
+            <span class="text-sm font-medium">
+              {locale.t("wallet.nfts.detail.receiveNft")}
+            </span>
+          </div>
         </button>
 
         {#each nfts as nft (nft.collectionId + nft.tokenId.toString())}
