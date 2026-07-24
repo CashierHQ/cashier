@@ -138,6 +138,8 @@ pub struct CollectionRegistryStats {
 }
 
 /// Validate a collection's required text fields.
+/// # Arguments
+/// * `collection` - The collection to validate
 /// # Returns
 /// * `Ok(())` if `name` and `standard` are both non-empty.
 /// * `Err(String)` describing the first invalid field otherwise.
@@ -180,32 +182,38 @@ mod tests {
 
     #[test]
     fn it_should_roundtrip_v1_codec() {
+        // Arrange
         let collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
 
+        // Act
         let codec = RegistryCollectionCodec::encode(collection.clone());
         let bytes = codec.to_bytes();
         let decoded_codec = RegistryCollectionCodec::from_bytes(bytes);
         let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
 
+        // Assert
         assert_eq!(result, collection);
     }
 
     #[test]
     fn it_should_roundtrip_v1_codec_with_is_default_true() {
+        // Arrange
         let mut collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
         collection.is_default = true;
 
+        // Act
         let codec = RegistryCollectionCodec::encode(collection.clone());
         let bytes = codec.to_bytes();
         let decoded_codec = RegistryCollectionCodec::from_bytes(bytes);
         let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
 
+        // Assert
         assert_eq!(result, collection);
         assert!(result.is_default);
     }
@@ -236,6 +244,7 @@ mod tests {
             V1(OldRegistryCollectionShape),
         }
 
+        // Arrange
         let collection_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
         let legacy = OldRegistryCollectionShape {
             collection_id,
@@ -254,9 +263,11 @@ mod tests {
         ciborium::into_writer(&OldRegistryCollectionCodec::V1(legacy), &mut bytes)
             .expect("should be able to serialize legacy codec shape to cbor");
 
+        // Act
         let decoded_codec = RegistryCollectionCodec::from_bytes(std::borrow::Cow::Owned(bytes));
         let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
 
+        // Assert
         assert_eq!(result.collection_id, collection_id);
         assert_eq!(result.name, "Bored Ape");
         assert_eq!(result.description, "Bored Ape description");
@@ -272,26 +283,32 @@ mod tests {
 
     #[test]
     fn it_should_roundtrip_user_collection_codec() {
+        // Arrange
         let collection_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
         let set: HashSet<CollectionId> = vec![collection_id].into_iter().collect();
 
+        // Act
         let codec = UserCollectionCodec::encode(set.clone());
         let bytes = codec.to_bytes();
         let decoded_codec = UserCollectionCodec::from_bytes(bytes);
         let result: HashSet<CollectionId> = UserCollectionCodec::decode(decoded_codec);
 
+        // Assert
         assert_eq!(result, set);
     }
 
     #[test]
     fn it_should_convert_registry_collection_into_dto() {
+        // Arrange
         let collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
 
+        // Act
         let dto = CollectionDto::from(collection.clone());
 
+        // Assert
         assert_eq!(dto.collection_id, collection.collection_id);
         assert_eq!(dto.name, collection.name);
         assert_eq!(dto.is_default, collection.is_default);
@@ -299,41 +316,50 @@ mod tests {
 
     #[test]
     fn it_should_fail_validate_collection_input_due_to_empty_name() {
+        // Arrange
         let mut collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
         collection.name = "  ".to_string();
 
+        // Act
         let result = validate_collection_input(&collection);
 
+        // Assert
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("name must not be empty"));
     }
 
     #[test]
     fn it_should_fail_validate_collection_input_due_to_empty_standard() {
+        // Arrange
         let mut collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
         collection.standard = "".to_string();
 
+        // Act
         let result = validate_collection_input(&collection);
 
+        // Assert
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("standard must not be empty"));
     }
 
     #[test]
     fn it_should_pass_validate_collection_input() {
+        // Arrange
         let collection = fixture_of_collection(
             Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
             "Bored Ape",
         );
 
+        // Act
         let result = validate_collection_input(&collection);
 
+        // Assert
         assert!(result.is_ok());
     }
 }
