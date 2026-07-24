@@ -14,6 +14,11 @@ use crate::api::state::get_state;
 /// Upserts a batch of collections into the registry. Intended to be called by the offchain
 /// collection-sync script, authenticated as a principal holding `Permission::Admin` or
 /// `Permission::CollectionManager`.
+/// # Arguments
+/// * `input` - The input containing the collections to upsert
+/// # Returns
+/// * `Ok(UpsertCollectionsResult)` - The result containing the number of collections upserted
+/// * `Err(CanisterError)` - If there was an error during the operation, such as validation errors or permission issues
 #[update]
 pub fn collection_manager_upsert_collections(
     input: UpsertCollectionsInput,

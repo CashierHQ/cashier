@@ -23,13 +23,21 @@ impl<R: Repositories> CollectionRegistryService<R> {
     }
 
     /// Get a collection from the registry by id
+    /// # Arguments
+    /// * `collection_id` - The id of the collection to get
+    /// # Returns
+    /// * `Option<RegistryCollection>` - The collection if it exists, None otherwise
     pub fn get_collection(&self, collection_id: &CollectionId) -> Option<RegistryCollection> {
         self.registry_repository.get_collection(collection_id)
     }
 
     /// List collections from the registry, paginated, as DTOs
     /// # Arguments
+    /// * `start` - The starting index for pagination
+    /// * `limit` - The maximum number of collections to return
     /// * `is_default` - If set, only collections with a matching `is_default` value are returned
+    /// # Returns
+    /// * `Vec<CollectionDto>` - The list of collections matching the criteria
     pub fn list_collections(
         &self,
         start: Option<u32>,
@@ -44,6 +52,8 @@ impl<R: Repositories> CollectionRegistryService<R> {
     }
 
     /// Validate and upsert a batch of collections, replacing any existing entries by id.
+    /// # Arguments
+    /// * `collections` - The list of collections to upsert
     /// # Returns
     /// * `Ok(u32)` - The number of collections upserted
     /// * `Err(CanisterError::ValidationErrors)` - If any collection fails validation; no
@@ -65,11 +75,16 @@ impl<R: Repositories> CollectionRegistryService<R> {
     }
 
     /// Delete all collections from the registry
+    /// # Returns
+    /// * `Ok(())` - If the operation was successful
+    /// * `Err(CanisterError)` - If there was an error during the operation
     pub fn delete_all(&mut self) -> Result<(), CanisterError> {
         self.registry_repository.delete_all()
     }
 
     /// Get aggregate stats about the registry
+    /// # Returns
+    /// * `CollectionRegistryStats` - The stats about the registry
     pub fn stats(&self) -> CollectionRegistryStats {
         let collections = self.registry_repository.list_collections(None, None, None);
         CollectionRegistryStats {

@@ -28,6 +28,8 @@ pub fn list_collections(input: ListCollectionsInput) -> Vec<CollectionDto> {
 }
 
 /// Get a single collection from the registry by id. No auth guard — mirrors `get_token_by_id`.
+/// # Arguments
+/// * `collection_id` - The id of the collection to retrieve
 /// # Returns
 /// * `Ok(CollectionDto)` - The collection details if found
 /// * `Err(CanisterError::NotFound)` - If the collection doesn't exist in the registry

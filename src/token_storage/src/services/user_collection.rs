@@ -23,6 +23,10 @@ impl<R: Repositories> UserCollectionService<R> {
     }
 
     /// Enable or disable a single collection for a user.
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// * `collection_id` - The id of the collection to enable or disable
+    /// * `is_enabled` - True to enable the collection, false to disable it
     /// # Returns
     /// * `Ok(())` if the collection exists in the registry and its state was updated
     /// * `Err(CanisterError::NotFound)` if the collection doesn't exist in the registry
@@ -46,8 +50,12 @@ impl<R: Repositories> UserCollectionService<R> {
 
     /// Enable multiple collections for a user in one call. Unknown collection ids are
     /// silently dropped rather than failing the whole batch.
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// * `collection_ids` - The ids of the collections to enable
     /// # Returns
     /// * `Ok(())` - Even if the input list was empty or entirely unknown
+    /// * `Err(CanisterError)` - If there was an error during the operation
     pub fn enable_bulk(
         &mut self,
         user_id: Principal,
@@ -68,6 +76,10 @@ impl<R: Repositories> UserCollectionService<R> {
 
     /// List the collection ids enabled by a user. Returns an empty list for a user who
     /// hasn't enabled anything yet.
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// # Returns
+    /// * `Vec<CollectionId>` - The list of enabled collection ids for the user
     pub fn list_enabled(&self, user_id: &Principal) -> Vec<CollectionId> {
         self.collection_repository
             .list_enabled(user_id)
