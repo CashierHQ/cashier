@@ -46,12 +46,20 @@ impl<S: Storage<CollectionRegistryRepositoryStorage>> CollectionRegistryReposito
     }
 
     /// Check if a collection is in the registry
+    /// # Arguments
+    /// * `collection_id` - The id of the collection to check
+    /// # Returns
+    /// * `bool` - True if the collection is in the registry, false otherwise
     pub fn contains(&self, collection_id: &CollectionId) -> bool {
         self.collection_reg_repo
             .with_borrow(|store| store.contains_key(collection_id))
     }
 
     /// Get a collection from the registry
+    /// # Arguments
+    /// * `collection_id` - The id of the collection to get
+    /// # Returns
+    /// * `Option<RegistryCollection>` - The collection if it exists, None otherwise
     pub fn get_collection(&self, collection_id: &CollectionId) -> Option<RegistryCollection> {
         self.collection_reg_repo
             .with_borrow(|store| store.get(collection_id))
