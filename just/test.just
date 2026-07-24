@@ -23,33 +23,40 @@ test test_name="": download_artifacts build_canisters
 # total: total number of partitions
 # archive: nextest archive file (using by CI)
 # workspace: workspace remap (using by CI)
+# threads: value for nextest's --test-threads (lower this if the PocketIC-backed
+#          suite is crashing/flaky under the default full-CPU-count concurrency)
 [group('test')]
-test_integration partition="" total="" archive="" workspace="":
+test_integration partition="" total="" archive="" workspace="" threads="":
   #!/usr/bin/env bash
   set -e
   rm -rf ./target/pocket-ic-test-state
-  
+
+  THREADS_ARG=""
+  if [ -n "{{threads}}" ]; then
+    THREADS_ARG="--test-threads {{threads}}"
+  fi
+
   if [ -n "{{archive}}" ]; then
     # Use pre-built archive (CI mode)
-    NEXTEST_CMD="cargo nextest run --archive-file {{archive}}"
-    
+    NEXTEST_CMD="cargo nextest run --archive-file {{archive}} $THREADS_ARG"
+
     # Add workspace remap if provided (needed in CI)
     if [ -n "{{workspace}}" ]; then
       NEXTEST_CMD="$NEXTEST_CMD --workspace-remap {{workspace}}"
     fi
-    
+
     # Add partition if provided
     if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
       NEXTEST_CMD="$NEXTEST_CMD --partition count:{{partition}}/{{total}}"
     fi
-    
+
     $NEXTEST_CMD
   else
     # Build and run (local mode)
     if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
-      cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
+      cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}} $THREADS_ARG
     else
-      cargo nextest run -p integration_tests
+      cargo nextest run -p integration_tests $THREADS_ARG
     fi
   fi
 
