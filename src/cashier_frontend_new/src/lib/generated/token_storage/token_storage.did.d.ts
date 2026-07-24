@@ -357,6 +357,11 @@ export interface _SERVICE {
    * Upserts a batch of collections into the registry. Intended to be called by the offchain
    * collection-sync script, authenticated as a principal holding `Permission::Admin` or
    * `Permission::CollectionManager`.
+   * # Arguments
+   * * `input` - The input containing the collections to upsert
+   * # Returns
+   * * `Ok(UpsertCollectionsResult)` - The result containing the number of collections upserted
+   * * `Err(CanisterError)` - If there was an error during the operation, such as validation errors or permission issues
    */
   'collection_manager_upsert_collections' : ActorMethod<
     [UpsertCollectionsInput],
@@ -368,6 +373,8 @@ export interface _SERVICE {
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   /**
    * Get a single collection from the registry by id. No auth guard — mirrors `get_token_by_id`.
+   * # Arguments
+   * * `collection_id` - The id of the collection to retrieve
    * # Returns
    * * `Ok(CollectionDto)` - The collection details if found
    * * `Err(CanisterError::NotFound)` - If the collection doesn't exist in the registry

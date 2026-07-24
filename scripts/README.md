@@ -104,6 +104,31 @@ node scripts/sync_nft_collections_to_token_storage.mjs \
   --batch-size 100
 ```
 
+### Sync NFT Collections via CI (dev)
+
+`.github/workflows/token-storage-sync-collections-dev.yml` runs this same script against the
+`dev` network from a `workflow_dispatch` trigger (no inputs — always a live, full sync at the
+script's own defaults), so it can be (re)run without anyone using a local `dfx identity`. It
+authenticates with the `dev` Environment's `DEPLOYER` identity, the same one
+`gate-secrets-dev.yml`/`gate-password-hashing-mode-dev.yml` use. Unlike those, `DEPLOYER` isn't
+implicitly guaranteed to hold `Permission::Admin`/`Permission::CollectionManager` on
+`token_storage` — this script's identity requirement (see Prerequisites above) needs to be
+verified (or granted, via `admin_permissions_add`) for `DEPLOYER` on the dev `token_storage`
+canister before this workflow can succeed there.
+
+To run it:
+
+```bash
+gh workflow run token-storage-sync-collections-dev.yml --repo CashierHQ/cashier --ref <branch>
+```
+
+or from the GitHub UI: Actions tab → "Sync NFT Collections to Token Storage (dev)" → Run
+workflow (choose branch).
+
+Note: GitHub only resolves a workflow by filename (both via the UI and the API/`gh` CLI) once
+that file exists on the repository's default branch — it must be merged there first before it
+can be dispatched at all, even against a different `--ref`.
+
 ## Set the Gate canister secrets
 
 - Populate the secrets in the `.env` file
