@@ -1,5 +1,6 @@
 import type { GateForUser } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { locale } from "$lib/i18n";
+import { GateType } from "$modules/gating/types/gate";
 
 /**
  * Determines whether a gate is open, checking local overrides first and
@@ -63,6 +64,21 @@ export function isXGate(gate: GateForUser): boolean {
     "XOwnedAccount" in key ||
     "XLikedPost" in key ||
     "XRetweetedPost" in key
+  );
+}
+
+/**
+ * Checks whether a lock type is one of the X (Twitter) lock types.
+ *
+ * @param type - The lock type to check.
+ * @returns `true` if the lock type is `X_FOLLOWING`, `X_OWNED_ACCOUNT`, `X_LIKED_POST`, or `X_RETWEETED_POST`.
+ */
+export function isXLock(type: string): boolean {
+  return (
+    type === GateType.X_FOLLOWING ||
+    type === GateType.X_OWNED_ACCOUNT ||
+    type === GateType.X_LIKED_POST ||
+    type === GateType.X_RETWEETED_POST
   );
 }
 

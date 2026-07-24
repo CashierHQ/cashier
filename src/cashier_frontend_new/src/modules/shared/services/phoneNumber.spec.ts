@@ -5,7 +5,6 @@ import {
   getDigitsOnly,
   getPhoneDialCode,
   getPhonePlaceholder,
-  isValidInternationalPhoneNumber,
 } from "$modules/shared/services/phoneNumber";
 
 describe("phoneNumber", () => {
@@ -31,10 +30,5 @@ describe("phoneNumber", () => {
 
   it("normalizes country dial codes from country metadata", () => {
     expect(getPhoneDialCode("KY", "+ 345")).toBe("+1");
-  });
-
-  it("validates international phone numbers against numbering rules", () => {
-    expect(isValidInternationalPhoneNumber("+14375551234")).toBe(true);
-    expect(isValidInternationalPhoneNumber("+143755512341")).toBe(false);
   });
 });

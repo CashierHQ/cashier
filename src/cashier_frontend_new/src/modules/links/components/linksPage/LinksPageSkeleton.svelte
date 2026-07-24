@@ -1,17 +1,12 @@
 <script lang="ts">
+  import { LINKS_PAGE_SKELETON_GROUPS } from "$modules/links/constants";
   import Skeleton from "$modules/shared/components/Skeleton.svelte";
-
-  const groups = [
-    [120, 150, 110],
-    [130, 118, 132, 126],
-    [210, 190, 118],
-  ];
 </script>
 
 <div class="flex w-full flex-col" aria-label="Loading links">
   <h2 class="mt-0 text-base font-semibold">Links created by me</h2>
   <div class="mt-4 space-y-4">
-    {#each groups as rows, groupIndex (groupIndex)}
+    {#each LINKS_PAGE_SKELETON_GROUPS as rows, groupIndex (groupIndex)}
       <div>
         <Skeleton class="mb-2 h-[17px] w-24" />
         <ul>

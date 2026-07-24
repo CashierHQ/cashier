@@ -7,9 +7,11 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import DebugSessionTimers from "$modules/auth/components/DebugSessionTimers.svelte";
   import { refreshAmplitudeUserIdFromAuth } from "$modules/analytics/amplitudeStore";
+  import { BUILD_TYPE } from "$modules/shared/constants";
   import "../app.css";
 
   let { children } = $props();
+  const showDebugSessionTimers = BUILD_TYPE === "dev" || BUILD_TYPE === "local";
 
   // Initialize i18n on mount
   initLocale();
@@ -29,5 +31,7 @@
   {@render children?.()}
 </ProtectedIP>
 
-<DebugSessionTimers />
+{#if showDebugSessionTimers}
+  <DebugSessionTimers />
+{/if}
 <Toaster />

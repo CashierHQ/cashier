@@ -13,6 +13,7 @@
     getTransactionLockDisplay,
     getTransactionLockStableKey,
   } from "$modules/gating/services/transactionLockDisplay";
+  import { isXLock } from "$modules/gating/utils/gateHelpers";
   import { GateType } from "$modules/gating/types/gate";
   import { SvelteSet } from "svelte/reactivity";
   import {
@@ -52,15 +53,6 @@
     } else {
       visiblePasswordIndexes.add(index);
     }
-  }
-
-  function isXLock(type: string): boolean {
-    return (
-      type === GateType.X_FOLLOWING ||
-      type === GateType.X_OWNED_ACCOUNT ||
-      type === GateType.X_LIKED_POST ||
-      type === GateType.X_RETWEETED_POST
-    );
   }
 </script>
 

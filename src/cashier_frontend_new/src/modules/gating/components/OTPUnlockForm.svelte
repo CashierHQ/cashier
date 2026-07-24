@@ -4,7 +4,6 @@
   import PrimaryActionButton from "$modules/shared/components/PrimaryActionButton.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { otpUnlockSessionStore } from "$modules/gating/state/otpUnlockSessionStore.svelte";
-  import { getBackoffTimeText } from "$modules/gating/utils/backoffTime";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
 
@@ -47,12 +46,6 @@
   );
   const code = $derived(session.digits.join(""));
   const remainingSeconds = $derived.by(() => secondsUntil(session.expiresAtMs));
-  const resendRemainingSeconds = $derived.by(() =>
-    secondsUntil(session.resendAvailableAtMs),
-  );
-  const verifyRemainingSeconds = $derived.by(() =>
-    secondsUntil(session.verifyAvailableAtMs),
-  );
   const formattedRemainingTime = $derived.by(() => {
     const minutes = Math.floor(remainingSeconds / 60);
     const seconds = remainingSeconds % 60;
@@ -62,16 +55,6 @@
     locale
       .t("links.linkForm.lock.otp.codeExpiresIn")
       .replace("{{time}}", formattedRemainingTime),
-  );
-  const resendInText = $derived(
-    locale
-      .t("links.linkForm.lock.otp.resendIn")
-      .replace("{{time}}", getBackoffTimeText(resendRemainingSeconds)),
-  );
-  const tryAgainText = $derived(
-    locale
-      .t("links.linkForm.lock.otp.tryAgainIn")
-      .replace("{{time}}", getBackoffTimeText(verifyRemainingSeconds)),
   );
 
   function secondsUntil(timestamp: number | null | undefined) {
@@ -95,7 +78,7 @@
   }
 
   async function handleResendOtp() {
-    if (resendRemainingSeconds > 0 || isResending) return;
+    if (isResending) return;
 
     isResending = true;
     error = null;
@@ -144,7 +127,7 @@
   }
 
   async function handleVerify() {
-    if (code.length < 6 || verifyRemainingSeconds > 0) return;
+    if (code.length < 6) return;
     isVerifying = true;
     error = null;
     try {
@@ -159,34 +142,7 @@
         onUnlocked();
         onClose();
       } else {
-        const message = result.unwrapErr().message;
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(message);
-        } catch {
-          parsed = null;
-        }
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          "BackoffThrottled" in parsed
-        ) {
-          const backoffMsg = (parsed as { BackoffThrottled: string })
-            .BackoffThrottled;
-          const match = backoffMsg.match(/Try again in (\d+)s/);
-          const remainingSecs = match ? parseInt(match[1], 10) : 0;
-          otpUnlockSessionStore.setVerifyCooldown(sessionKey, remainingSecs);
-          const template =
-            locale.t("links.linkForm.lock.tooManyFailedAttempts") ??
-            locale.t("links.linkForm.lock.otp.errors.tooManyFailedAttempts");
-          error = template.replace(
-            "{{time}}",
-            getBackoffTimeText(remainingSecs),
-          );
-        } else {
-          otpUnlockSessionStore.setVerifyCooldown(sessionKey);
-          error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
-        }
+        error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
       }
     } finally {
       isVerifying = false;
@@ -324,13 +280,11 @@
         <button
           type="button"
           class="font-semibold text-green disabled:cursor-not-allowed disabled:text-muted-foreground"
-          disabled={resendRemainingSeconds > 0 || isResending}
+          disabled={isResending}
           onclick={handleResendOtp}
         >
           {#if isResending}
             {locale.t("links.linkForm.lock.otp.resendingCode")}
-          {:else if resendRemainingSeconds > 0}
-            {resendInText}
           {:else}
             {locale.t("links.linkForm.lock.otp.resendCode")}
           {/if}
@@ -353,16 +307,12 @@
 
     <PrimaryActionButton
       type="button"
-      disabled={code.length < 6 || verifyRemainingSeconds > 0}
+      disabled={code.length < 6}
       loading={isVerifying}
       loadingLabel={locale.t("links.linkForm.lock.processing") ?? "Processing"}
       onclick={handleVerify}
     >
-      {#if verifyRemainingSeconds > 0}
-        {tryAgainText}
-      {:else}
-        {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
-      {/if}
+      {locale.t("links.linkForm.lock.otp.verifyAndUnlock")}
     </PrimaryActionButton>
   {/if}
 </div>
