@@ -6,6 +6,13 @@
   import NftCollectionDetail from "$modules/wallet/components/nft/nftCollectionDetail.svelte";
   import NftList from "$modules/wallet/components/nft/nftList.svelte";
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
+  import {
+    WALLET_TAB_SLIDE_DURATION_MS,
+    WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
+  } from "$modules/wallet/constants";
   import { WalletTab } from "$modules/wallet/types";
   import { horizontalSlide } from "$modules/wallet/utils/horizontalSlide";
   import { SvelteSet } from "svelte/reactivity";
@@ -95,12 +102,15 @@
       ? getNftsForCollection(visibleNfts, selectedCollectionId)
       : [],
   );
-  const slideDuration = 260;
   const contentEnterXPercent = $derived(
-    activeTab === WalletTab.NFTS ? 100 : -100,
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT
+      : WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
   );
   const contentExitXPercent = $derived(
-    activeTab === WalletTab.NFTS ? -100 : 100,
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT
+      : WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
   );
 
   $effect(() => {
@@ -225,12 +235,12 @@
         class="col-start-1 row-start-1 w-full"
         in:horizontalSlide={{
           xPercent: contentEnterXPercent,
-          duration: slideDuration,
+          duration: WALLET_TAB_SLIDE_DURATION_MS,
           easing: cubicOut,
         }}
         out:horizontalSlide={{
           xPercent: contentExitXPercent,
-          duration: slideDuration,
+          duration: WALLET_TAB_SLIDE_DURATION_MS,
           easing: cubicOut,
         }}
       >

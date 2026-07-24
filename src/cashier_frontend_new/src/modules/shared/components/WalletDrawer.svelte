@@ -12,6 +12,10 @@
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
+  import {
+    WALLET_LOGO_NFT_COLOR,
+    WALLET_LOGO_TOKEN_COLOR,
+  } from "$modules/wallet/constants";
   import { WalletTab } from "$modules/wallet/types";
   import { LoaderCircle, X } from "lucide-svelte";
 
@@ -80,7 +84,9 @@
   }
 
   const logoColor = $derived(
-    walletNavigation.currentMainTab === WalletTab.NFTS ? "#8b5cf6" : "#35A18A",
+    walletNavigation.currentMainTab === WalletTab.NFTS
+      ? WALLET_LOGO_NFT_COLOR
+      : WALLET_LOGO_TOKEN_COLOR,
   );
 </script>
 
