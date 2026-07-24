@@ -1,8 +1,7 @@
 import { locale } from "$lib/i18n";
+import { TWEET_URL_PATTERN } from "$modules/gating/constants";
 import { GateType, type GateDraft } from "$modules/gating/types/gate";
 import { isValidPhoneNumber } from "libphonenumber-js/min";
-
-const TWEET_URL_PATTERN = /^https:\/\/x\.com\/.+\/status\/\d+$/;
 
 export class GatingStore {
   #selectedGateTypes = $state<GateType[]>([]);

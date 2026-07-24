@@ -51,16 +51,6 @@
   let useWalletLockedTracked = $state(false);
   let useWalletUnlockedTracked = $state(false);
 
-  const canUseFlowBack = $derived.by(() => {
-    if (!userStore || userStore.action) return false;
-
-    return (
-      userStore.step === UserLinkStep.ADDRESS_LOCKED ||
-      userStore.step === UserLinkStep.GATE ||
-      userStore.step === UserLinkStep.ADDRESS_UNLOCKED
-    );
-  });
-
   // userStore.action already only ever resolves to a pending (not yet
   // successful) action — see UserLinkStoreV3.action / LinkDetailStoreV3.action.
   let isCartOpen = $derived.by(() => {
@@ -276,7 +266,7 @@
 
   // Register back handler for AppHeader on the use flow
   const handleBack = async () => {
-    if (canUseFlowBack) {
+    if (userStore?.canGoBack) {
       await handleUseFlowBack();
     }
   };
@@ -308,7 +298,7 @@
       </div>
     {/if}
 
-    {#if canUseFlowBack}
+    {#if userStore?.canGoBack}
       <div class="hidden md:flex flex-none items-center mb-2">
         <button
           onclick={handleUseFlowBack}

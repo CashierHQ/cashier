@@ -1,5 +1,3 @@
-<!-- WILL BE REMOVED, TEMPORARY COMPONENT FOR DEBUGGING PURPOSES. -->
-
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { IDLE_TIMEOUT_MILLIS_SECOND } from "$modules/auth/constants";

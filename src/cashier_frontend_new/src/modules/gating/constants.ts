@@ -11,6 +11,7 @@ import { getPhoneDialCode } from "$modules/shared/services/phoneNumber";
 
 export const FALLBACK_LOCK_VALUE_LENGTH = 12;
 export const X_HANDLE_LOCK_TYPE = "xHandle";
+export const TWEET_URL_PATTERN = /^https:\/\/x\.com\/.+\/status\/\d+$/;
 export const OTP_EXPIRY_SECONDS = 10 * 60;
 export const EMPTY_OTP_DIGITS = ["", "", "", "", "", ""];
 export const INITIAL_OTP_UNLOCK_SESSION: OTPUnlockSession = {

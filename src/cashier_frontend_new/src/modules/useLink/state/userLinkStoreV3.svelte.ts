@@ -178,6 +178,24 @@ export class UserLinkStoreV3 {
     return (this.linkDetail?.query?.isLoading ?? false) && !this.link;
   }
 
+  /**
+   * Whether the current use-link state allows navigating to the previous step.
+   *
+   * The user flow should not move backward once an action exists because the
+   * action drawer is responsible for resuming or completing that pending work.
+   *
+   * @returns `true` when the current state can go back and no action exists.
+   */
+  get canGoBack(): boolean {
+    if (this.action) return false;
+
+    return (
+      this.step === UserLinkStep.ADDRESS_LOCKED ||
+      this.step === UserLinkStep.GATE ||
+      this.step === UserLinkStep.ADDRESS_UNLOCKED
+    );
+  }
+
   get query() {
     return this.linkDetail?.query;
   }
