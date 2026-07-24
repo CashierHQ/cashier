@@ -98,6 +98,7 @@ export type CollectionSummary = {
   readonly floorPrice?: bigint;
   readonly standard: string;
   readonly isCashier: boolean;
+  readonly isDefault: boolean;
 };
 
 /**
@@ -138,6 +139,7 @@ export class CollectionMapper {
       floorPrice: dto.floor_price[0],
       standard: dto.standard,
       isCashier: dto.is_cashier,
+      isDefault: dto.is_default,
     };
   }
 }

@@ -45,6 +45,7 @@ pub fn fixture_of_collection(collection_id: Principal, name: &str) -> RegistryCo
         creator: collection_id,
         standard: "EXT".to_string(),
         is_cashier: false,
+        is_default: false,
     }
 }
 

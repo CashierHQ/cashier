@@ -121,6 +121,7 @@ async fn it_should_replace_not_duplicate_on_re_upsert() {
             .list_collections(ListCollectionsInput {
                 start: None,
                 limit: None,
+                is_default: None,
             })
             .await
             .unwrap();
@@ -128,6 +129,54 @@ async fn it_should_replace_not_duplicate_on_re_upsert() {
         // Assert: exactly one record, with the latest name
         assert_eq!(all.len(), 1);
         assert_eq!(all[0].name, "Bored Ape v2");
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_roundtrip_is_default_through_candid_upsert_and_list() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let admin_client =
+            ctx.new_token_storage_client(TestUser::TokenStorageAdmin.get_principal());
+        let mut default_collection =
+            fixture_of_collection(candid::Principal::from_slice(&[1; 1]), "Cashier Curated");
+        default_collection.is_default = true;
+        let non_default_collection =
+            fixture_of_collection(candid::Principal::from_slice(&[2; 1]), "Bored Ape");
+
+        // Act
+        admin_client
+            .collection_manager_upsert_collections(UpsertCollectionsInput {
+                collections: vec![default_collection.clone(), non_default_collection.clone()],
+            })
+            .await
+            .unwrap()
+            .unwrap();
+
+        let all = admin_client
+            .list_collections(ListCollectionsInput {
+                start: None,
+                limit: None,
+                is_default: None,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        let listed_default = all
+            .iter()
+            .find(|c| c.collection_id == default_collection.collection_id)
+            .unwrap();
+        let listed_non_default = all
+            .iter()
+            .find(|c| c.collection_id == non_default_collection.collection_id)
+            .unwrap();
+        assert!(listed_default.is_default);
+        assert!(!listed_non_default.is_default);
 
         Ok(())
     })

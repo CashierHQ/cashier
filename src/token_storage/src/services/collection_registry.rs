@@ -28,9 +28,16 @@ impl<R: Repositories> CollectionRegistryService<R> {
     }
 
     /// List collections from the registry, paginated, as DTOs
-    pub fn list_collections(&self, start: Option<u32>, limit: Option<u32>) -> Vec<CollectionDto> {
+    /// # Arguments
+    /// * `is_default` - If set, only collections with a matching `is_default` value are returned
+    pub fn list_collections(
+        &self,
+        start: Option<u32>,
+        limit: Option<u32>,
+        is_default: Option<bool>,
+    ) -> Vec<CollectionDto> {
         self.registry_repository
-            .list_collections(start, limit)
+            .list_collections(start, limit, is_default)
             .into_iter()
             .map(CollectionDto::from)
             .collect()
@@ -64,7 +71,7 @@ impl<R: Repositories> CollectionRegistryService<R> {
 
     /// Get aggregate stats about the registry
     pub fn stats(&self) -> CollectionRegistryStats {
-        let collections = self.registry_repository.list_collections(None, None);
+        let collections = self.registry_repository.list_collections(None, None, None);
         CollectionRegistryStats {
             total_collections: self.registry_repository.count() as usize,
             total_cashier: collections.iter().filter(|c| c.is_cashier).count(),
@@ -90,6 +97,7 @@ mod tests {
             creator: collection_id,
             standard: "EXT".to_string(),
             is_cashier: false,
+            is_default: false,
         }
     }
 
@@ -159,7 +167,7 @@ mod tests {
 
         // Act
         let result = service.upsert_collections(vec![collection_1.clone(), collection_2.clone()]);
-        let listed = service.list_collections(None, None);
+        let listed = service.list_collections(None, None, None);
 
         // Assert
         assert_eq!(result.unwrap(), 2);
@@ -214,6 +222,81 @@ mod tests {
     }
 
     #[test]
+    fn it_should_preserve_is_default_flag_through_upsert_and_list() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = CollectionRegistryService::new(&repo);
+        let mut default_collection = fixture_of_collection(
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            "Cashier Curated",
+        );
+        default_collection.is_default = true;
+        let non_default_collection = fixture_of_collection(
+            Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
+            "Bored Ape",
+        );
+
+        // Act
+        service
+            .upsert_collections(vec![
+                default_collection.clone(),
+                non_default_collection.clone(),
+            ])
+            .unwrap();
+        let listed = service.list_collections(None, None, None);
+
+        // Assert
+        let listed_default = listed
+            .iter()
+            .find(|c| c.collection_id == default_collection.collection_id)
+            .unwrap();
+        let listed_non_default = listed
+            .iter()
+            .find(|c| c.collection_id == non_default_collection.collection_id)
+            .unwrap();
+        assert!(listed_default.is_default);
+        assert!(!listed_non_default.is_default);
+    }
+
+    #[test]
+    fn it_should_filter_list_collections_by_is_default() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut service = CollectionRegistryService::new(&repo);
+        let mut default_collection = fixture_of_collection(
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            "Cashier Curated",
+        );
+        default_collection.is_default = true;
+        let non_default_collection = fixture_of_collection(
+            Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
+            "Bored Ape",
+        );
+        service
+            .upsert_collections(vec![
+                default_collection.clone(),
+                non_default_collection.clone(),
+            ])
+            .unwrap();
+
+        // Act
+        let only_default = service.list_collections(None, None, Some(true));
+        let only_non_default = service.list_collections(None, None, Some(false));
+
+        // Assert
+        assert_eq!(only_default.len(), 1);
+        assert_eq!(
+            only_default[0].collection_id,
+            default_collection.collection_id
+        );
+        assert_eq!(only_non_default.len(), 1);
+        assert_eq!(
+            only_non_default[0].collection_id,
+            non_default_collection.collection_id
+        );
+    }
+
+    #[test]
     fn it_should_do_compute_stats() {
         // Arrange
         let repo = TestRepositories::new();
@@ -256,6 +339,6 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
-        assert!(service.list_collections(None, None).is_empty());
+        assert!(service.list_collections(None, None, None).is_empty());
     }
 }

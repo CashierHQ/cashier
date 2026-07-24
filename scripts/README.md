@@ -68,6 +68,8 @@ The script:
 - fetches the canonical collection list (canister id, name, standard) from nftGeek's `/api/1/collections`
 - enriches each collection with description/image/royalty from Toniq's `/api/collections`, matched by canister id
 - ignores Toniq's own `standard` field (inconsistent values like `"legacy1.5"`) — nftGeek's `interface` is always used instead
+- **skips any collection missing full metadata** — `name`, `description`, `image`, and `standard` must all be genuinely present (no canister-id-as-name or guessed `"EXT"` standard fallback); a collection missing any of these is dropped rather than indexed with placeholder data
+- marks every collection it indexes with `is_default = true`, since this script is the registry's sole source of "default" (curated, non-Cashier) collections
 - batches the merged records and calls `collection_manager_upsert_collections` on `token_storage` via `dfx canister call`, upserting (replacing, not duplicating) by `collection_id`
 
 DGDG (`https://dgdg.app/nfts/collections`) is **not** used as a source — it's a client-rendered page, not a JSON API (fetching it returns HTML), so `total_items`/`floor_price` currently have no data source and default to `0`/`null`. Revisit if DGDG exposes a real JSON endpoint later.

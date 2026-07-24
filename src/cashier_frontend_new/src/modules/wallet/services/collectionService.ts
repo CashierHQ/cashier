@@ -39,16 +39,19 @@ class CollectionService {
    * registry is public.
    * @param start pagination offset
    * @param limit maximum number of collections to return
+   * @param isDefault if set, only returns collections with a matching `is_default` value
    * @returns Page of collection summaries
    */
   public async listCollections(
     start: number,
     limit: number,
+    isDefault?: boolean,
   ): Promise<CollectionSummary[]> {
     const actor = this.#getAnonymousActor();
     const res = await actor.list_collections({
       start: [start],
       limit: [limit],
+      is_default: isDefault === undefined ? [] : [isDefault],
     });
     return res.map(CollectionMapper.fromCollectionDto);
   }

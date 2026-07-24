@@ -56,6 +56,7 @@ export const idlFactory = ({ IDL }) => {
     'total_items' : IDL.Nat64,
     'collection_id' : IDL.Principal,
     'description' : IDL.Text,
+    'is_default' : IDL.Bool,
     'image' : IDL.Text,
     'royalty' : IDL.Opt(IDL.Nat64),
     'standard' : IDL.Text,
@@ -169,6 +170,7 @@ export const idlFactory = ({ IDL }) => {
   const Result_7 = IDL.Variant({ 'Ok' : TokenDto, 'Err' : CanisterError });
   const ListCollectionsInput = IDL.Record({
     'limit' : IDL.Opt(IDL.Nat32),
+    'is_default' : IDL.Opt(IDL.Bool),
     'start' : IDL.Opt(IDL.Nat32),
   });
   const UserPreference = IDL.Record({

@@ -19,12 +19,14 @@ class CollectionStore {
         const collections: CollectionSummary[] = [];
         let start = 0;
 
-        // The registry is paginated server-side; fetch every page up front since
-        // Manage Collections is a flat searchable list, not an infinite-scroll grid.
+        // The registry is paginated server-side; fetch every default-collection page up
+        // front since Manage Collections is a flat searchable list, not an infinite-scroll
+        // grid, and should only surface curated (is_default) collections.
         while (true) {
           const page = await collectionService.listCollections(
             start,
             COLLECTION_PAGE_SIZE,
+            true,
           );
           collections.push(...page);
           if (page.length < COLLECTION_PAGE_SIZE) break;

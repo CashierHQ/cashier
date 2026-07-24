@@ -88,6 +88,7 @@ export interface CollectionDto {
   'total_items' : bigint,
   'collection_id' : Principal,
   'description' : string,
+  'is_default' : boolean,
   'image' : string,
   'royalty' : [] | [bigint],
   'standard' : string,
@@ -135,6 +136,7 @@ export type IcrcStandard = { 'ICRC1' : null } |
   { 'ICRC3' : null };
 export interface ListCollectionsInput {
   'limit' : [] | [number],
+  'is_default' : [] | [boolean],
   'start' : [] | [number],
 }
 export interface LogServiceSettings {
@@ -388,7 +390,7 @@ export interface _SERVICE {
    * Lists collections in the registry, paginated. No auth guard — registry data is public,
    * mirroring `list_tokens`.
    * # Arguments
-   * * `input` - Pagination parameters
+   * * `input` - Pagination parameters, optionally filtered to only `is_default` collections
    * # Returns
    * * `Vec<CollectionDto>` - The page of collections
    */

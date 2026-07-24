@@ -16,7 +16,7 @@ use token_storage_types::{
 /// Lists collections in the registry, paginated. No auth guard — registry data is public,
 /// mirroring `list_tokens`.
 /// # Arguments
-/// * `input` - Pagination parameters
+/// * `input` - Pagination parameters, optionally filtered to only `is_default` collections
 /// # Returns
 /// * `Vec<CollectionDto>` - The page of collections
 #[query]
@@ -24,7 +24,7 @@ pub fn list_collections(input: ListCollectionsInput) -> Vec<CollectionDto> {
     let state = get_state();
     state
         .collection_registry
-        .list_collections(input.start, input.limit)
+        .list_collections(input.start, input.limit, input.is_default)
 }
 
 /// Get a single collection from the registry by id. No auth guard — mirrors `get_token_by_id`.

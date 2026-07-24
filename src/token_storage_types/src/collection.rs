@@ -24,6 +24,8 @@ pub struct RegistryCollection {
     pub creator: Principal,
     pub standard: String,
     pub is_cashier: bool,
+    #[serde(default)]
+    pub is_default: bool,
 }
 
 #[storable]
@@ -78,6 +80,7 @@ pub struct CollectionDto {
     pub creator: Principal,
     pub standard: String,
     pub is_cashier: bool,
+    pub is_default: bool,
 }
 
 impl From<RegistryCollection> for CollectionDto {
@@ -93,6 +96,7 @@ impl From<RegistryCollection> for CollectionDto {
             creator: collection.creator,
             standard: collection.standard,
             is_cashier: collection.is_cashier,
+            is_default: collection.is_default,
         }
     }
 }
@@ -101,6 +105,7 @@ impl From<RegistryCollection> for CollectionDto {
 pub struct ListCollectionsInput {
     pub start: Option<u32>,
     pub limit: Option<u32>,
+    pub is_default: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -169,6 +174,7 @@ mod tests {
             creator: collection_id,
             standard: "EXT".to_string(),
             is_cashier: false,
+            is_default: false,
         }
     }
 
@@ -185,6 +191,83 @@ mod tests {
         let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
 
         assert_eq!(result, collection);
+    }
+
+    #[test]
+    fn it_should_roundtrip_v1_codec_with_is_default_true() {
+        let mut collection = fixture_of_collection(
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            "Bored Ape",
+        );
+        collection.is_default = true;
+
+        let codec = RegistryCollectionCodec::encode(collection.clone());
+        let bytes = codec.to_bytes();
+        let decoded_codec = RegistryCollectionCodec::from_bytes(bytes);
+        let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
+
+        assert_eq!(result, collection);
+        assert!(result.is_default);
+    }
+
+    #[test]
+    fn it_should_deserialize_legacy_bytes_without_is_default_field() {
+        use ic_mple_structures::Storable;
+
+        // Mirrors the pre-`is_default` shape of `RegistryCollection`/`RegistryCollectionCodec`,
+        // to prove old stable-memory bytes (written before this field existed) still decode
+        // correctly via `#[serde(default)]` rather than requiring a versioned codec bump.
+        #[derive(serde::Serialize)]
+        struct OldRegistryCollectionShape {
+            collection_id: CollectionId,
+            name: String,
+            description: String,
+            image: String,
+            total_items: u64,
+            floor_price: Option<Nat>,
+            royalty: Option<u64>,
+            creator: Principal,
+            standard: String,
+            is_cashier: bool,
+        }
+
+        #[derive(serde::Serialize)]
+        enum OldRegistryCollectionCodec {
+            V1(OldRegistryCollectionShape),
+        }
+
+        let collection_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+        let legacy = OldRegistryCollectionShape {
+            collection_id,
+            name: "Bored Ape".to_string(),
+            description: "Bored Ape description".to_string(),
+            image: "https://example.com/image.png".to_string(),
+            total_items: 100,
+            floor_price: Some(Nat::from(10u64)),
+            royalty: Some(5),
+            creator: collection_id,
+            standard: "EXT".to_string(),
+            is_cashier: false,
+        };
+
+        let mut bytes = Vec::new();
+        ciborium::into_writer(&OldRegistryCollectionCodec::V1(legacy), &mut bytes)
+            .expect("should be able to serialize legacy codec shape to cbor");
+
+        let decoded_codec = RegistryCollectionCodec::from_bytes(std::borrow::Cow::Owned(bytes));
+        let result: RegistryCollection = RegistryCollectionCodec::decode(decoded_codec);
+
+        assert_eq!(result.collection_id, collection_id);
+        assert_eq!(result.name, "Bored Ape");
+        assert_eq!(result.description, "Bored Ape description");
+        assert_eq!(result.image, "https://example.com/image.png");
+        assert_eq!(result.total_items, 100);
+        assert_eq!(result.floor_price, Some(Nat::from(10u64)));
+        assert_eq!(result.royalty, Some(5));
+        assert_eq!(result.creator, collection_id);
+        assert_eq!(result.standard, "EXT");
+        assert!(!result.is_cashier);
+        assert!(!result.is_default);
     }
 
     #[test]
@@ -211,6 +294,7 @@ mod tests {
 
         assert_eq!(dto.collection_id, collection.collection_id);
         assert_eq!(dto.name, collection.name);
+        assert_eq!(dto.is_default, collection.is_default);
     }
 
     #[test]

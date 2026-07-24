@@ -18,6 +18,11 @@
  * and `floor_price` have no source for now and default to 0/null. Revisit if DGDG exposes a
  * real JSON endpoint later.
  *
+ * Only collections with full metadata (name, description, image, standard all genuinely
+ * present) are indexed — see `hasFullMetadata`. Every collection this script indexes is marked
+ * `is_default = true`, since it's the registry's sole source of "default" (curated, non-Cashier)
+ * collections.
+ *
  * Usage:
  *   node scripts/sync_nft_collections_to_token_storage.mjs --dry-run
  *   node scripts/sync_nft_collections_to_token_storage.mjs --network local
@@ -144,11 +149,32 @@ function parseToniqRoyalty(royalty) {
 }
 
 /**
+ * True iff `name`, `description`, `image`, and `standard` are all real (non-empty, non-
+ * whitespace-only) values. Used to filter out entries that lack genuine metadata before they're
+ * indexed to the registry — a collection missing any of these is skipped entirely rather than
+ * indexed with a synthetic placeholder value.
+ */
+export function hasFullMetadata(collection) {
+  return (
+    Boolean(collection.name?.trim()) &&
+    Boolean(collection.description?.trim()) &&
+    Boolean(collection.image?.trim()) &&
+    Boolean(collection.standard?.trim())
+  );
+}
+
+/**
  * Merges the 2 data sources into `RegistryCollection`-shaped plain objects, keyed by nftGeek's
  * `canisterId` (the canonical source of which collections exist and their standard/interface).
  * Toniq only enriches metadata (description/image/royalty) — its own `standard`-like field is
  * unreliable (e.g. "legacy1.5") and is ignored. `total_items`/`floor_price` have no data source
  * currently (DGDG isn't a JSON API) and default to 0/null.
+ *
+ * Only collections with full metadata (`name`, `description`, `image`, `standard` all genuinely
+ * present — see `hasFullMetadata`) are kept; `name`/`standard` deliberately have no synthetic
+ * fallback (no canister-id-as-name, no guessed "EXT" standard) so incomplete entries can actually
+ * be filtered out instead of indexed with placeholder data. Every surviving collection is marked
+ * `isDefault: true`, since this script is the sole source of the registry's "default" collections.
  */
 export function mergeCollections(nftGeekCollections, toniqCollections) {
   const toniqIndex = buildToniqIndex(toniqCollections);
@@ -164,7 +190,7 @@ export function mergeCollections(nftGeekCollections, toniqCollections) {
 
       return {
         collectionId: entry.canisterId,
-        name: entry.name ?? entry.alias ?? entry.canisterId,
+        name: entry.name ?? entry.alias ?? "",
         description,
         image,
         totalItems: 0n,
@@ -174,10 +200,12 @@ export function mergeCollections(nftGeekCollections, toniqCollections) {
         // collections exist yet in phase 1 (the Factory is a later phase). Both fields are
         // therefore harmless placeholders.
         creator: entry.canisterId,
-        standard: entry.interface ?? "EXT",
+        standard: entry.interface ?? "",
         isCashier: false,
+        isDefault: true,
       };
-    });
+    })
+    .filter(hasFullMetadata);
 }
 
 // ── Candid encoding ───────────────────────────────────────────────────────────
@@ -209,6 +237,7 @@ function generateCollectionRecord(collection) {
     creator = principal "${collection.creator}";
     standard = "${escapeCandidText(collection.standard)}";
     is_cashier = ${collection.isCashier};
+    is_default = ${collection.isDefault};
   }`;
 }
 
@@ -315,7 +344,12 @@ async function main() {
   console.log(`Upserted ${totalUpserted} collections into ${args.canisterId} on ${args.network}.`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// Only run when executed directly (`node sync_nft_collections_to_token_storage.mjs`), not when
+// imported as a module (e.g. by the test file, to exercise `mergeCollections`/`hasFullMetadata`
+// without triggering a live fetch + `dfx canister call`).
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

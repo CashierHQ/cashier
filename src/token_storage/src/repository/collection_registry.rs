@@ -62,15 +62,22 @@ impl<S: Storage<CollectionRegistryRepositoryStorage>> CollectionRegistryReposito
     /// # Arguments
     /// * `start` - Optional start index for pagination
     /// * `limit` - Optional limit for pagination
+    /// * `is_default` - If set, only collections with a matching `is_default` value are
+    ///   considered. Applied before `start`/`limit` so pagination is over the filtered set.
     pub fn list_collections(
         &self,
         start: Option<u32>,
         limit: Option<u32>,
+        is_default: Option<bool>,
     ) -> Vec<RegistryCollection> {
         let start_idx = start.unwrap_or(0) as usize;
 
         self.collection_reg_repo.with_borrow(|store| {
-            let iter = store.iter().skip(start_idx).map(|entry| entry.1);
+            let iter = store
+                .iter()
+                .map(|entry| entry.1)
+                .filter(|c| is_default.is_none_or(|want| c.is_default == want))
+                .skip(start_idx);
             match limit {
                 Some(limit) => iter.take(limit as usize).collect(),
                 None => iter.collect(),
@@ -110,6 +117,7 @@ mod tests {
             creator: collection_id,
             standard: "EXT".to_string(),
             is_cashier: false,
+            is_default: false,
         }
     }
 
@@ -193,10 +201,10 @@ mod tests {
         }
 
         // Act
-        let page_1 = collection_registry_repository.list_collections(Some(0), Some(5));
-        let page_1_again = collection_registry_repository.list_collections(Some(0), Some(5));
-        let page_2 = collection_registry_repository.list_collections(Some(5), Some(5));
-        let page_3 = collection_registry_repository.list_collections(Some(10), Some(5));
+        let page_1 = collection_registry_repository.list_collections(Some(0), Some(5), None);
+        let page_1_again = collection_registry_repository.list_collections(Some(0), Some(5), None);
+        let page_2 = collection_registry_repository.list_collections(Some(5), Some(5), None);
+        let page_3 = collection_registry_repository.list_collections(Some(10), Some(5), None);
 
         // Assert
         assert_eq!(page_1.len(), 5);
@@ -213,10 +221,45 @@ mod tests {
         let collection_registry_repository = repo.collection_registry();
 
         // Act
-        let result = collection_registry_repository.list_collections(None, None);
+        let result = collection_registry_repository.list_collections(None, None, None);
 
         // Assert
         assert!(result.is_empty());
+    }
+
+    #[test]
+    fn it_should_filter_collections_by_is_default_before_pagination() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut collection_registry_repository = repo.collection_registry();
+        // Interleave non-default/default collections so an unfiltered `.skip/.take` window
+        // would land on a mix — proves the filter runs before, not after, skip/take.
+        for i in 0..10u8 {
+            let id = Principal::from_slice(&[i; 1]);
+            let mut collection = fixture_of_collection(id, &format!("Collection {i}"));
+            collection.is_default = i % 2 == 0;
+            collection_registry_repository.upsert_collection(collection);
+        }
+
+        // Act
+        let default_page =
+            collection_registry_repository.list_collections(Some(0), Some(3), Some(true));
+        let non_default_page =
+            collection_registry_repository.list_collections(Some(0), Some(3), Some(false));
+        let all_defaults = collection_registry_repository.list_collections(None, None, Some(true));
+        let unfiltered = collection_registry_repository.list_collections(None, None, None);
+
+        // Assert
+        assert_eq!(
+            default_page.len(),
+            3,
+            "should return a full page of defaults even though non-default items are interleaved earlier in iteration order"
+        );
+        assert!(default_page.iter().all(|c| c.is_default));
+        assert_eq!(non_default_page.len(), 3);
+        assert!(non_default_page.iter().all(|c| !c.is_default));
+        assert_eq!(all_defaults.len(), 5);
+        assert_eq!(unfiltered.len(), 10);
     }
 
     #[test]

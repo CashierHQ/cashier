@@ -2,10 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use token_storage_types::collection::ListCollectionsInput;
+use token_storage_types::collection::{ListCollectionsInput, UpsertCollectionsInput};
 
-use crate::token_storage::collection::fixture::seed_collections;
-use crate::utils::with_pocket_ic_context;
+use crate::token_storage::collection::fixture::{fixture_of_collection, seed_collections};
+use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
 #[tokio::test]
 async fn it_should_return_empty_list_for_empty_registry() {
@@ -18,6 +18,7 @@ async fn it_should_return_empty_list_for_empty_registry() {
             .list_collections(ListCollectionsInput {
                 start: None,
                 limit: None,
+                is_default: None,
             })
             .await
             .unwrap();
@@ -43,6 +44,7 @@ async fn it_should_allow_anonymous_caller_to_list_collections() {
             .list_collections(ListCollectionsInput {
                 start: None,
                 limit: None,
+                is_default: None,
             })
             .await
             .unwrap();
@@ -68,6 +70,7 @@ async fn it_should_paginate_collections_with_stable_pages() {
             .list_collections(ListCollectionsInput {
                 start: Some(0),
                 limit: Some(5),
+                is_default: None,
             })
             .await
             .unwrap();
@@ -75,6 +78,7 @@ async fn it_should_paginate_collections_with_stable_pages() {
             .list_collections(ListCollectionsInput {
                 start: Some(5),
                 limit: Some(5),
+                is_default: None,
             })
             .await
             .unwrap();
@@ -82,6 +86,7 @@ async fn it_should_paginate_collections_with_stable_pages() {
             .list_collections(ListCollectionsInput {
                 start: Some(10),
                 limit: Some(5),
+                is_default: None,
             })
             .await
             .unwrap();
@@ -93,6 +98,86 @@ async fn it_should_paginate_collections_with_stable_pages() {
         let page_1_ids: Vec<_> = page_1.iter().map(|c| c.collection_id).collect();
         let page_2_ids: Vec<_> = page_2.iter().map(|c| c.collection_id).collect();
         assert!(page_1_ids.iter().all(|id| !page_2_ids.contains(id)));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_filter_and_paginate_default_collections_only() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let admin = TestUser::TokenStorageAdmin.get_principal();
+        let admin_client = ctx.new_token_storage_client(admin);
+
+        let mut collections: Vec<_> = (0..10u8)
+            .map(|i| {
+                let mut collection =
+                    fixture_of_collection(Principal::from_slice(&[i; 1]), &format!("Default {i}"));
+                collection.is_default = true;
+                collection
+            })
+            .collect();
+        let non_default_collections: Vec<_> = (10..15u8)
+            .map(|i| fixture_of_collection(Principal::from_slice(&[i; 1]), &format!("Other {i}")))
+            .collect();
+        let non_default_ids: Vec<_> = non_default_collections
+            .iter()
+            .map(|c| c.collection_id)
+            .collect();
+        collections.extend(non_default_collections);
+
+        admin_client
+            .collection_manager_upsert_collections(UpsertCollectionsInput { collections })
+            .await
+            .unwrap()
+            .unwrap();
+
+        let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
+
+        // Act
+        let page_1 = token_storage_client
+            .list_collections(ListCollectionsInput {
+                start: Some(0),
+                limit: Some(5),
+                is_default: Some(true),
+            })
+            .await
+            .unwrap();
+        let page_2 = token_storage_client
+            .list_collections(ListCollectionsInput {
+                start: Some(5),
+                limit: Some(5),
+                is_default: Some(true),
+            })
+            .await
+            .unwrap();
+        let page_3 = token_storage_client
+            .list_collections(ListCollectionsInput {
+                start: Some(10),
+                limit: Some(5),
+                is_default: Some(true),
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert_eq!(page_1.len(), 5);
+        assert_eq!(page_2.len(), 5);
+        assert!(page_3.is_empty());
+        assert!(page_1.iter().all(|c| c.is_default));
+        assert!(page_2.iter().all(|c| c.is_default));
+        let page_1_ids: Vec<_> = page_1.iter().map(|c| c.collection_id).collect();
+        let page_2_ids: Vec<_> = page_2.iter().map(|c| c.collection_id).collect();
+        assert!(page_1_ids.iter().all(|id| !page_2_ids.contains(id)));
+        assert!(
+            page_1_ids
+                .iter()
+                .chain(page_2_ids.iter())
+                .all(|id| !non_default_ids.contains(id))
+        );
 
         Ok(())
     })

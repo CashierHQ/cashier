@@ -163,7 +163,7 @@ pub fn admin_get_registry_collections() -> Vec<CollectionDto> {
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    state.collection_registry.list_collections(None, None)
+    state.collection_registry.list_collections(None, None, None)
 }
 
 #[update]

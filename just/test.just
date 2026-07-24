@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript tests for backend and frontend
 [group('test')]
-test_all: test test_frontend
+test_all: test test_frontend test_scripts
 
 
 # Run unit tests
@@ -69,6 +69,12 @@ test_unit_i686 test_name="":
 [group('test')]
 test_frontend: install_frontend_deps
   pnpm --filter cashier_frontend_new test
+
+
+# Run tests for the offchain scripts (scripts/*.mjs)
+[group('test')]
+test_scripts: install_frontend_deps
+  pnpm --filter scripts test
 
 
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.
