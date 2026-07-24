@@ -28,9 +28,7 @@
       collection.standard ??
       locale.t("wallet.nfts.send.standardFallback"),
   );
-  const symbol = $derived(
-    nft.symbol ?? collection.symbol ?? locale.t("wallet.nfts.detail.symbol"),
-  );
+  const symbol = $derived(nft.symbol ?? collection.symbol ?? "");
   const displayName = $derived(nft.name || `#${nft.tokenId.toString()}`);
   const collectionDescription = $derived(
     nft.collectionDescription ?? collection.description,
