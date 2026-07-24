@@ -116,7 +116,7 @@
                   ? NFT_FALLBACK_IMAGE_URL
                   : collection.imageUrl || NFT_FALLBACK_IMAGE_URL}
                 alt={collection.name}
-                class="h-full w-full object-contain p-2"
+                class="h-full w-full object-cover"
                 onerror={() => handleImageError(collection.collectionId)}
               />
             </div>
@@ -213,7 +213,7 @@
                   ? NFT_FALLBACK_IMAGE_URL
                   : nft.imageUrl || NFT_FALLBACK_IMAGE_URL}
                 alt={nft.name}
-                class="h-full w-full object-contain p-6"
+                class="h-full w-full object-cover"
                 onerror={() =>
                   handleImageError(
                     `${nft.collectionId}-${nft.tokenId.toString()}`,

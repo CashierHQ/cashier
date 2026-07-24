@@ -362,7 +362,7 @@
                   <img
                     src={getCollectionImage(collection)}
                     alt={collection.name}
-                    class="h-full w-full object-contain p-2"
+                    class="h-full w-full object-cover"
                     onerror={() => handleImageError(collection.collectionId)}
                   />
                 </div>
@@ -428,7 +428,7 @@
                   <img
                     src={getNftImage(nft)}
                     alt={nft.name}
-                    class="h-full w-full object-contain p-2"
+                    class="h-full w-full object-cover"
                     onerror={() => handleImageError(getNftImageKey(nft))}
                   />
                 </div>
@@ -461,7 +461,7 @@
               <img
                 src={getNftImage(selectedNft)}
                 alt={selectedNft.name}
-                class="h-full w-full object-contain"
+                class="h-full w-full object-cover"
                 onerror={() => handleImageError(getNftImageKey(selectedNft))}
               />
             </div>
