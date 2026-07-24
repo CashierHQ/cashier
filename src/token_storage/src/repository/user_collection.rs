@@ -34,6 +34,10 @@ impl<S: Storage<UserCollectionRepositoryStorage>> UserCollectionRepository<S> {
     }
 
     /// Enable or disable a collection for a user
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// * `collection_id` - The id of the collection to enable or disable
+    /// * `is_enabled` - True to enable the collection, false to disable it
     pub fn set_enabled(
         &mut self,
         user_id: Principal,
@@ -54,6 +58,9 @@ impl<S: Storage<UserCollectionRepositoryStorage>> UserCollectionRepository<S> {
     }
 
     /// Enable multiple collections for a user in one write
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// * `collection_ids` - The ids of the collections to enable
     pub fn set_enabled_bulk(&mut self, user_id: Principal, collection_ids: &[CollectionId]) {
         self.collection_store.with_borrow_mut(|store| {
             let mut enabled = store.get(&user_id).unwrap_or_default();
@@ -63,6 +70,10 @@ impl<S: Storage<UserCollectionRepositoryStorage>> UserCollectionRepository<S> {
     }
 
     /// List the collections enabled by a user. Returns an empty set for unknown users.
+    /// # Arguments
+    /// * `user_id` - The id of the user
+    /// # Returns
+    /// * `HashSet<CollectionId>` - The set of enabled collections for the user
     pub fn list_enabled(&self, user_id: &Principal) -> HashSet<CollectionId> {
         self.collection_store
             .with_borrow(|store| store.get(user_id).unwrap_or_default())
