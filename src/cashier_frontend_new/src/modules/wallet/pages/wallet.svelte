@@ -6,7 +6,15 @@
   import NftCollectionDetail from "$modules/wallet/components/nft/nftCollectionDetail.svelte";
   import NftList from "$modules/wallet/components/nft/nftList.svelte";
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
+  import {
+    WALLET_TAB_SLIDE_DURATION_MS,
+    WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
+  } from "$modules/wallet/constants";
   import { WalletTab } from "$modules/wallet/types";
+  import { horizontalSlide } from "$modules/wallet/utils/horizontalSlide";
   import { SvelteSet } from "svelte/reactivity";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
@@ -15,6 +23,7 @@
     getOwnedNftCountForCollection,
     mergeOwnedAndPortfolioNfts,
   } from "$modules/wallet/utils/nftCollections";
+  import { cubicOut } from "svelte/easing";
 
   type Props = {
     activeTab?: WalletTab;
@@ -103,6 +112,15 @@
     ),
   );
   const collectionCount = $derived(nftCollections.length);
+  const collectionSummary = $derived(
+    locale
+      .t(
+        collectionCount === 1
+          ? "wallet.nfts.collectionCountSingular"
+          : "wallet.nfts.collectionCountPlural",
+      )
+      .replace("{{count}}", collectionCount.toString()),
+  );
   const isRefreshingNfts = $derived(
     walletNftStore.query.isLoading || nftPortfolioStore.query.isLoading,
   );
@@ -129,6 +147,16 @@
       standard,
     );
   });
+  const contentEnterXPercent = $derived(
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT
+      : WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
+  );
+  const contentExitXPercent = $derived(
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT
+      : WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
+  );
 
   $effect(() => {
     if (typeof window !== "undefined") {
@@ -243,7 +271,6 @@
     {activeTab}
     isBalanceVisible={balanceVisible}
     {nftCount}
-    {collectionCount}
     onToggleBalance={handleToggle}
     onSend={handleSend}
     onReceive={handleReceive}
@@ -252,56 +279,75 @@
     onTabChange={handleTabChange}
   />
 
-  <div class="pb-6 pt-4">
-    {#if activeTab === WalletTab.TOKENS}
-      {#if walletStore.query.data}
-        <TokenList
-          tokens={enabledTokens}
-          {balanceVisible}
-          onSelectToken={handleSelectToken}
-          onImageError={handleImageError}
-          {failedImageLoads}
-        />
+  <div class="grid overflow-hidden pb-6 pt-4">
+    {#key activeTab}
+      <div
+        class="col-start-1 row-start-1 w-full"
+        in:horizontalSlide={{
+          xPercent: contentEnterXPercent,
+          duration: WALLET_TAB_SLIDE_DURATION_MS,
+          easing: cubicOut,
+        }}
+        out:horizontalSlide={{
+          xPercent: contentExitXPercent,
+          duration: WALLET_TAB_SLIDE_DURATION_MS,
+          easing: cubicOut,
+        }}
+      >
+        {#if activeTab === WalletTab.TOKENS}
+          {#if walletStore.query.data}
+            <TokenList
+              tokens={enabledTokens}
+              {balanceVisible}
+              onSelectToken={handleSelectToken}
+              onImageError={handleImageError}
+              {failedImageLoads}
+            />
 
-        <div class="mt-2 text-center">
-          <button
-            onclick={handleManageTokens}
-            class="text-green hover:text-teal-700 text-sm transition-colors"
-          >
-            {locale.t("wallet.manageTokensBtn")}
-          </button>
-        </div>
-      {:else if walletStore.query.error}
-        <div class="text-center py-8">
-          <p class="text-red-600 mb-4">
-            {locale.t("wallet.errorMsg")}
-            {walletStore.query.error}
-          </p>
-        </div>
-      {:else}
-        <div class="text-center py-8">
-          <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-        </div>
-      {/if}
-    {:else if activeTab === WalletTab.NFTS}
-      {#if collectionStore.query.data}
-        <NftList
-          collections={nftCollections}
-          onSelectCollection={handleSelectCollection}
-          onManageNfts={handleManageNfts}
-        />
-      {:else if collectionStore.query.error}
-        <div class="text-center py-8">
-          <p class="text-red-600 mb-4">
-            {locale.t("wallet.errorMsg")}
-            {collectionStore.query.error}
-          </p>
-        </div>
-      {:else}
-        <div class="text-center py-8">
-          <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-        </div>
-      {/if}
-    {/if}
+            <div class="mt-2 text-center">
+              <button
+                onclick={handleManageTokens}
+                class="text-green hover:text-teal-700 text-sm transition-colors"
+              >
+                {locale.t("wallet.manageTokensBtn")}
+              </button>
+            </div>
+          {:else if walletStore.query.error}
+            <div class="text-center py-8">
+              <p class="text-red-600 mb-4">
+                {locale.t("wallet.errorMsg")}
+                {walletStore.query.error}
+              </p>
+            </div>
+          {:else}
+            <div class="text-center py-8">
+              <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+            </div>
+          {/if}
+        {:else if activeTab === WalletTab.NFTS}
+          {#if collectionStore.query.data}
+            <p class="mb-3 text-right text-sm font-normal text-grey">
+              {collectionSummary}
+            </p>
+            <NftList
+              collections={nftCollections}
+              onSelectCollection={handleSelectCollection}
+              onManageNfts={handleManageNfts}
+            />
+          {:else if collectionStore.query.error}
+            <div class="text-center py-8">
+              <p class="text-red-600 mb-4">
+                {locale.t("wallet.errorMsg")}
+                {collectionStore.query.error}
+              </p>
+            </div>
+          {:else}
+            <div class="text-center py-8">
+              <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    {/key}
   </div>
 {/if}
