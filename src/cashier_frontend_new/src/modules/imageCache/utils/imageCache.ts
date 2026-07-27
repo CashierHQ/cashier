@@ -5,6 +5,9 @@
 
 import { SvelteMap } from "svelte/reactivity";
 
+const STORAGE_KEY = "cashier_token_image_cache";
+const MAX_CACHE_ENTRIES = 150;
+
 // Reactive cache for token images using SvelteMap for reactivity
 // Key: token address, Value: cached image data URL or original URL
 // SvelteMap makes the cache reactive so components can react to cache updates
@@ -12,17 +15,68 @@ const tokenImageCache = new SvelteMap<string, string>();
 
 // Track which addresses are currently being loaded to prevent duplicate requests
 const loadingAddresses = new Set<string>();
+const failedTokenImageKeys = new Set<string>();
 
-function isIcExplorerTokenImageUrl(url: string): boolean {
+function getFailureKey(address: string, imageUrl: string): string {
+  return `${address}\n${imageUrl}`;
+}
+
+function getPersistentStorage(): Storage | null {
   try {
-    const u = new URL(url);
-    return (
-      u.hostname === "api.icexplorer.io" && u.pathname.startsWith("/images/")
-    );
+    return globalThis.localStorage ?? null;
   } catch {
-    return false;
+    return null;
   }
 }
+
+function readPersistedCache(): [string, string][] {
+  const storage = getPersistentStorage();
+  if (!storage) return [];
+
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(
+      (entry): entry is [string, string] =>
+        Array.isArray(entry) &&
+        entry.length === 2 &&
+        typeof entry[0] === "string" &&
+        typeof entry[1] === "string",
+    );
+  } catch {
+    storage.removeItem(STORAGE_KEY);
+    return [];
+  }
+}
+
+function persistCache(): void {
+  const storage = getPersistentStorage();
+  if (!storage) return;
+
+  try {
+    const entries = Array.from(tokenImageCache.entries()).slice(
+      -MAX_CACHE_ENTRIES,
+    );
+    storage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // Storage can fail in private mode or when quota is exceeded. The in-memory
+    // cache should still work, so persistence errors are intentionally ignored.
+  }
+}
+
+function cacheTokenImage(address: string, imageUrl: string): void {
+  tokenImageCache.set(address, imageUrl);
+  failedTokenImageKeys.delete(getFailureKey(address, imageUrl));
+  persistCache();
+}
+
+readPersistedCache().forEach(([address, imageUrl]) => {
+  tokenImageCache.set(address, imageUrl);
+});
 
 /**
  * Get cached token image if available
@@ -45,6 +99,27 @@ export function isImageLoading(address: string): boolean {
 }
 
 /**
+ * Check if a specific token image source has already failed in this session.
+ *
+ * @param address Token address.
+ * @param imageUrl Image source URL.
+ * @returns true when this exact token/image pair already failed to load.
+ */
+export function isTokenImageFailed(address: string, imageUrl: string): boolean {
+  return failedTokenImageKeys.has(getFailureKey(address, imageUrl));
+}
+
+/**
+ * Mark a token image source as failed for the current session.
+ *
+ * @param address Token address.
+ * @param imageUrl Image source URL.
+ */
+export function markTokenImageFailed(address: string, imageUrl: string): void {
+  failedTokenImageKeys.add(getFailureKey(address, imageUrl));
+}
+
+/**
  * Load image for a token address and store it in cache
  * Uses fetch to get blob (works with octet-stream and other content types)
  * Converts blob to data URL via FileReader for reliable caching
@@ -58,7 +133,17 @@ export async function loadTokenImage(
   imageUrl: string,
 ): Promise<void> {
   // Skip if already cached
-  if (tokenImageCache.has(address)) {
+  const cachedImage = tokenImageCache.get(address);
+  if (
+    cachedImage &&
+    (cachedImage.startsWith("data:") ||
+      cachedImage.startsWith("blob:") ||
+      cachedImage !== imageUrl)
+  ) {
+    return;
+  }
+
+  if (isTokenImageFailed(address, imageUrl)) {
     return;
   }
 
@@ -71,13 +156,6 @@ export async function loadTokenImage(
   loadingAddresses.add(address);
 
   try {
-    if (isIcExplorerTokenImageUrl(imageUrl)) {
-      tokenImageCache.set(address, imageUrl);
-      const preload = new Image();
-      preload.src = imageUrl;
-      return;
-    }
-
     // First, try to fetch as blob (works with octet-stream and all content types)
     try {
       const response = await fetch(imageUrl, {
@@ -108,7 +186,7 @@ export async function loadTokenImage(
       });
 
       // Store data URL in cache - this prevents any future network requests
-      tokenImageCache.set(address, dataUrl);
+      cacheTokenImage(address, dataUrl);
       return;
     } catch {
       // If fetch fails (e.g., CORS or network error), fall back to Image object
@@ -127,7 +205,7 @@ export async function loadTokenImage(
               ctx.drawImage(img, 0, 0);
               const dataUrl = canvas.toDataURL("image/png");
               // Store data URL in cache
-              tokenImageCache.set(address, dataUrl);
+              cacheTokenImage(address, dataUrl);
               resolve();
               return;
             }
@@ -137,7 +215,7 @@ export async function loadTokenImage(
 
           // If canvas conversion failed, store original URL
           // Browser should use cache for subsequent requests
-          tokenImageCache.set(address, imageUrl);
+          cacheTokenImage(address, imageUrl);
           resolve();
         };
 
@@ -157,19 +235,20 @@ export async function loadTokenImage(
             if (ctx) {
               ctx.drawImage(img, 0, 0);
               const dataUrl = canvas.toDataURL("image/png");
-              tokenImageCache.set(address, dataUrl);
+              cacheTokenImage(address, dataUrl);
               resolve();
               return;
             }
           } catch {
             // Canvas failed, use original URL
           }
-          tokenImageCache.set(address, imageUrl);
+          cacheTokenImage(address, imageUrl);
           resolve();
         }
       });
     }
   } catch {
+    markTokenImageFailed(address, imageUrl);
     // Don't throw - continue loading other images
   } finally {
     // Remove from loading set
@@ -201,6 +280,12 @@ export async function loadTokenImages(
  */
 export function clearCache(address: string): void {
   tokenImageCache.delete(address);
+  for (const key of failedTokenImageKeys) {
+    if (key.startsWith(`${address}\n`)) {
+      failedTokenImageKeys.delete(key);
+    }
+  }
+  persistCache();
 }
 
 /**
@@ -209,6 +294,8 @@ export function clearCache(address: string): void {
 export function clearAllCache(): void {
   tokenImageCache.clear();
   loadingAddresses.clear();
+  failedTokenImageKeys.clear();
+  persistCache();
 }
 
 /**

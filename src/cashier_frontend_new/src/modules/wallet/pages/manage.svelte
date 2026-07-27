@@ -2,7 +2,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import NavBar from "$modules/token/components/navBar.svelte";
-  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
+  import { getResolvedTokenLogo, TokenIcon } from "$modules/imageCache";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
@@ -207,7 +207,7 @@
                     <TokenIcon
                       address={token.address}
                       symbol={token.symbol}
-                      logo={token.runeInfo?.icon ?? getTokenLogo(token.address)}
+                      logo={getResolvedTokenLogo(token)}
                       size="md"
                       {failedImageLoads}
                       onImageError={handleImageError}

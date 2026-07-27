@@ -10,9 +10,15 @@ export {
   clearCache,
   clearAllCache,
   getCacheSize,
+  isTokenImageFailed,
+  markTokenImageFailed,
 } from "$modules/imageCache/utils/imageCache";
 
-export { getTokenLogo } from "$modules/imageCache/utils/getTokenLogo";
+export {
+  getResolvedTokenLogo,
+  getTokenLogo,
+  normalizeTokenMetadataIcon,
+} from "$modules/imageCache/utils/getTokenLogo";
 
 export {
   isImagePreloaded,

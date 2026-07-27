@@ -7,7 +7,7 @@
   import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
   import ReceiveRunes from "$modules/bitcoin/components/receiveRunes.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import { TokenIcon } from "$modules/imageCache";
+  import { getResolvedTokenLogo, TokenIcon } from "$modules/imageCache";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
@@ -171,7 +171,7 @@
               <TokenIcon
                 address={selectedTokenObj.address}
                 symbol={selectedTokenObj.symbol}
-                logo={selectedTokenObj.runeInfo?.icon}
+                logo={getResolvedTokenLogo(selectedTokenObj)}
                 size="sm"
                 failedImageLoads={imageLoadFailures}
                 onImageError={handleImageError}
