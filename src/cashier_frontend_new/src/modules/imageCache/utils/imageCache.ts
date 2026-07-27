@@ -4,9 +4,10 @@
  */
 
 import { SvelteMap } from "svelte/reactivity";
-
-const STORAGE_KEY = "cashier_token_image_cache";
-const MAX_CACHE_ENTRIES = 150;
+import {
+  TOKEN_IMAGE_CACHE_MAX_ENTRIES,
+  TOKEN_IMAGE_CACHE_STORAGE_KEY,
+} from "$modules/imageCache/constants";
 
 // Reactive cache for token images using SvelteMap for reactivity
 // Key: token address, Value: cached image data URL or original URL
@@ -17,10 +18,22 @@ const tokenImageCache = new SvelteMap<string, string>();
 const loadingAddresses = new Set<string>();
 const failedTokenImageKeys = new Set<string>();
 
+/**
+ * Builds a stable key for tracking one token image source.
+ *
+ * @param address - Token canister address.
+ * @param imageUrl - Image source URL attempted for the token.
+ * @returns Composite cache key for the token/source pair.
+ */
 function getFailureKey(address: string, imageUrl: string): string {
   return `${address}\n${imageUrl}`;
 }
 
+/**
+ * Safely reads browser localStorage.
+ *
+ * @returns The browser Storage object, or null when localStorage is unavailable.
+ */
 function getPersistentStorage(): Storage | null {
   try {
     return globalThis.localStorage ?? null;
@@ -29,12 +42,17 @@ function getPersistentStorage(): Storage | null {
   }
 }
 
+/**
+ * Reads persisted token image cache entries from localStorage.
+ *
+ * @returns Valid persisted cache entries as address/image URL pairs.
+ */
 function readPersistedCache(): [string, string][] {
   const storage = getPersistentStorage();
   if (!storage) return [];
 
   try {
-    const raw = storage.getItem(STORAGE_KEY);
+    const raw = storage.getItem(TOKEN_IMAGE_CACHE_STORAGE_KEY);
     if (!raw) return [];
 
     const parsed = JSON.parse(raw);
@@ -48,26 +66,38 @@ function readPersistedCache(): [string, string][] {
         typeof entry[1] === "string",
     );
   } catch {
-    storage.removeItem(STORAGE_KEY);
+    storage.removeItem(TOKEN_IMAGE_CACHE_STORAGE_KEY);
     return [];
   }
 }
 
+/**
+ * Persists the in-memory token image cache to localStorage.
+ *
+ * @returns Nothing.
+ */
 function persistCache(): void {
   const storage = getPersistentStorage();
   if (!storage) return;
 
   try {
     const entries = Array.from(tokenImageCache.entries()).slice(
-      -MAX_CACHE_ENTRIES,
+      -TOKEN_IMAGE_CACHE_MAX_ENTRIES,
     );
-    storage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    storage.setItem(TOKEN_IMAGE_CACHE_STORAGE_KEY, JSON.stringify(entries));
   } catch {
     // Storage can fail in private mode or when quota is exceeded. The in-memory
     // cache should still work, so persistence errors are intentionally ignored.
   }
 }
 
+/**
+ * Stores a token image in memory and persistent cache.
+ *
+ * @param address - Token canister address.
+ * @param imageUrl - Cached image source, usually a data URL.
+ * @returns Nothing.
+ */
 function cacheTokenImage(address: string, imageUrl: string): void {
   tokenImageCache.set(address, imageUrl);
   failedTokenImageKeys.delete(getFailureKey(address, imageUrl));
@@ -79,10 +109,13 @@ readPersistedCache().forEach(([address, imageUrl]) => {
 });
 
 /**
- * Get cached token image if available
- * This function is reactive - SvelteMap provides reactivity automatically
- * @param address Token address (canister ID)
- * @returns Cached image URL (data URL or original URL) or null if not cached
+ * Gets the cached token image source for an address.
+ *
+ * SvelteMap provides reactivity, so components reading this value update when
+ * the cache entry changes.
+ *
+ * @param address - Token canister address.
+ * @returns Cached image URL, data URL, blob URL, or null when not cached.
  */
 export function getCachedTokenImage(address: string): string | null {
   // SvelteMap.get() is reactive - components using this will update when cache changes
@@ -90,9 +123,10 @@ export function getCachedTokenImage(address: string): string | null {
 }
 
 /**
- * Check if an image is currently being loaded
- * @param address Token address
- * @returns true if image is being loaded
+ * Checks whether a token image is currently loading.
+ *
+ * @param address - Token canister address.
+ * @returns True when an image request is already in flight for this address.
  */
 export function isImageLoading(address: string): boolean {
   return loadingAddresses.has(address);
@@ -101,9 +135,9 @@ export function isImageLoading(address: string): boolean {
 /**
  * Check if a specific token image source has already failed in this session.
  *
- * @param address Token address.
- * @param imageUrl Image source URL.
- * @returns true when this exact token/image pair already failed to load.
+ * @param address - Token canister address.
+ * @param imageUrl - Image source URL.
+ * @returns True when this exact token/image pair already failed to load.
  */
 export function isTokenImageFailed(address: string, imageUrl: string): boolean {
   return failedTokenImageKeys.has(getFailureKey(address, imageUrl));
@@ -112,21 +146,24 @@ export function isTokenImageFailed(address: string, imageUrl: string): boolean {
 /**
  * Mark a token image source as failed for the current session.
  *
- * @param address Token address.
- * @param imageUrl Image source URL.
+ * @param address - Token canister address.
+ * @param imageUrl - Image source URL.
+ * @returns Nothing.
  */
 export function markTokenImageFailed(address: string, imageUrl: string): void {
   failedTokenImageKeys.add(getFailureKey(address, imageUrl));
 }
 
 /**
- * Load image for a token address and store it in cache
- * Uses fetch to get blob (works with octet-stream and other content types)
- * Converts blob to data URL via FileReader for reliable caching
- * Falls back to Image object if fetch fails
- * @param address Token address
- * @param imageUrl Original image URL
- * @returns Promise that resolves when image is loaded and cached
+ * Loads a token image and stores it in the cache.
+ *
+ * The loader first fetches the image as a blob and persists it as a data URL.
+ * If that fails, it falls back to an Image element and stores either a canvas
+ * data URL or the original URL.
+ *
+ * @param address - Token canister address.
+ * @param imageUrl - Original image source URL.
+ * @returns Promise that resolves after the image is cached or marked failed.
  */
 export async function loadTokenImage(
   address: string,
@@ -257,10 +294,11 @@ export async function loadTokenImage(
 }
 
 /**
- * Load multiple token images in parallel
- * @param addresses Array of token addresses to load
- * @param getImageUrl Function to get image URL for a given address
- * @returns Promise that resolves when all images are loaded (or failed)
+ * Loads multiple token images in parallel.
+ *
+ * @param addresses - Token canister addresses to load.
+ * @param getImageUrl - Resolver that returns an image URL for each address.
+ * @returns Promise that resolves after all image loads settle.
  */
 export async function loadTokenImages(
   addresses: string[],
@@ -275,8 +313,10 @@ export async function loadTokenImages(
 }
 
 /**
- * Clear cache for a specific address
- * @param address Token address
+ * Clears cached image and failed-load state for a token address.
+ *
+ * @param address - Token canister address.
+ * @returns Nothing.
  */
 export function clearCache(address: string): void {
   tokenImageCache.delete(address);
@@ -289,7 +329,9 @@ export function clearCache(address: string): void {
 }
 
 /**
- * Clear all cached images
+ * Clears every cached image and in-flight or failed-load marker.
+ *
+ * @returns Nothing.
  */
 export function clearAllCache(): void {
   tokenImageCache.clear();
@@ -299,8 +341,9 @@ export function clearAllCache(): void {
 }
 
 /**
- * Get cache size
- * @returns Number of cached images
+ * Gets the number of cached token images.
+ *
+ * @returns Number of cached image entries.
  */
 export function getCacheSize(): number {
   return tokenImageCache.size;

@@ -36,17 +36,31 @@
     if (isDone || isCurrent) return "text-green";
     return "text-[#A8ADB7]";
   }
+
+  function stepTrackClass(isActive: boolean): string {
+    return isActive ? "bg-green" : "bg-[#E1E3E8]";
+  }
+
+  function fullTrackClass(): string {
+    return [
+      "absolute left-[calc(16.666667%+14px)] right-[calc(16.666667%+14px)] top-[13px] h-0.5",
+      stepTrackClass(isCompleted),
+    ].join(" ");
+  }
+
+  function progressTrackClass(): string {
+    return [
+      "absolute left-[calc(16.666667%+14px)] right-1/2 top-[13px] h-0.5",
+      stepTrackClass(isConfirming || isCompleted),
+    ].join(" ");
+  }
 </script>
 
 {#if phase !== TxProgressPhase.IDLE}
   <div class="px-2 py-2">
     <div class="relative grid grid-cols-3 items-start px-5">
-      <div
-        class={`absolute left-[calc(16.666667%+14px)] right-[calc(16.666667%+14px)] top-[13px] h-0.5 ${isCompleted ? "bg-green" : "bg-[#E1E3E8]"}`}
-      ></div>
-      <div
-        class={`absolute left-[calc(16.666667%+14px)] right-1/2 top-[13px] h-0.5 ${isConfirming || isCompleted ? "bg-green" : "bg-[#E1E3E8]"}`}
-      ></div>
+      <div class={fullTrackClass()}></div>
+      <div class={progressTrackClass()}></div>
 
       <div class="relative z-10 flex flex-col items-center">
         <div
