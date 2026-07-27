@@ -23,6 +23,7 @@
     getOwnedNftCountForCollection,
     mergeOwnedAndPortfolioNfts,
   } from "$modules/wallet/utils/nftCollections";
+  import { SlidersHorizontal } from "lucide-svelte";
   import { cubicOut } from "svelte/easing";
 
   type Props = {
@@ -35,7 +36,6 @@
     onNavigateToNftSend: (collectionId?: string, tokenId?: bigint) => void;
     onNavigateToReceive: () => void;
     onNavigateToNftReceive: (collectionId?: string) => void;
-    onNavigateToSwap: () => void;
     onNavigateToManageNfts: () => void;
     onTabChange: (tab: WalletTab) => void;
     onNestedViewChange?: (isNested: boolean) => void;
@@ -51,7 +51,6 @@
     onNavigateToNftSend,
     onNavigateToReceive,
     onNavigateToNftReceive,
-    onNavigateToSwap,
     onNavigateToManageNfts,
     onTabChange,
     onNestedViewChange,
@@ -112,15 +111,6 @@
     ),
   );
   const collectionCount = $derived(nftCollections.length);
-  const collectionSummary = $derived(
-    locale
-      .t(
-        collectionCount === 1
-          ? "wallet.nfts.collectionCountSingular"
-          : "wallet.nfts.collectionCountPlural",
-      )
-      .replace("{{count}}", collectionCount.toString()),
-  );
   const isRefreshingNfts = $derived(
     walletNftStore.query.isLoading || nftPortfolioStore.query.isLoading,
   );
@@ -274,8 +264,6 @@
     onToggleBalance={handleToggle}
     onSend={handleSend}
     onReceive={handleReceive}
-    onSwap={onNavigateToSwap}
-    onManageNfts={handleManageNfts}
     onTabChange={handleTabChange}
   />
 
@@ -296,6 +284,22 @@
       >
         {#if activeTab === WalletTab.TOKENS}
           {#if walletStore.query.data}
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-lg font-medium text-[#242424]">
+                {locale.t("wallet.tokens.sectionTitle")}
+                <span class="ml-1 font-normal text-grey">
+                  {enabledTokens.length}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onclick={handleManageTokens}
+                class="flex h-8 w-8 items-center justify-center rounded-md bg-lightgreen text-gray-700 transition-colors hover:bg-lightgreen/80 active:scale-95 cursor-pointer"
+                aria-label={locale.t("wallet.tokens.manageAria")}
+              >
+                <SlidersHorizontal size={18} />
+              </button>
+            </div>
             <TokenList
               tokens={enabledTokens}
               {balanceVisible}
@@ -303,15 +307,6 @@
               onImageError={handleImageError}
               {failedImageLoads}
             />
-
-            <div class="mt-2 text-center">
-              <button
-                onclick={handleManageTokens}
-                class="text-green hover:text-teal-700 text-sm transition-colors"
-              >
-                {locale.t("wallet.manageTokensBtn")}
-              </button>
-            </div>
           {:else if walletStore.query.error}
             <div class="text-center py-8">
               <p class="text-red-600 mb-4">
@@ -326,9 +321,22 @@
           {/if}
         {:else if activeTab === WalletTab.NFTS}
           {#if collectionStore.query.data}
-            <p class="mb-3 text-right text-sm font-normal text-grey">
-              {collectionSummary}
-            </p>
+            <div class="mb-4 flex items-center justify-between">
+              <h3 class="text-lg font-medium text-[#242424]">
+                {locale.t("wallet.nfts.sectionTitle")}
+                <span class="ml-1 font-normal text-grey">
+                  {collectionCount}
+                </span>
+              </h3>
+              <button
+                type="button"
+                onclick={handleManageNfts}
+                class="flex h-8 w-8 items-center justify-center rounded-md bg-walletlightpurple text-gray-700 transition-colors hover:bg-walletlightpurple/80 active:scale-95 cursor-pointer"
+                aria-label={locale.t("wallet.nfts.manageAria")}
+              >
+                <SlidersHorizontal size={21} />
+              </button>
+            </div>
             <NftList
               collections={nftCollections}
               onSelectCollection={handleSelectCollection}

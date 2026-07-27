@@ -158,7 +158,6 @@
           onNavigateToNftSend={navigateToNftSend}
           onNavigateToReceive={navigateToReceive}
           onNavigateToNftReceive={navigateToNftReceive}
-          onNavigateToSwap={navigateToSwap}
           onNavigateToManageNfts={navigateToManageCollections}
           onTabChange={handleSwitchMainTab}
           onNestedViewChange={handleMainNestedViewChange}

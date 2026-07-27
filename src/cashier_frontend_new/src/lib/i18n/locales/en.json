@@ -481,12 +481,14 @@
     },
     "nfts": {
       "summaryTitle": "NFTs",
+      "sectionTitle": "Your collections",
       "collectionsSummarySingular": "in {{count}} collection",
       "collectionsSummaryPlural": "in {{count}} collections",
       "collectionCountSingular": "{{count}} collection",
       "collectionCountPlural": "{{count}} collections",
       "noCollections": "No NFT Collections",
       "manageCta": "+ Manage",
+      "manageAria": "Manage NFTs",
       "manage": {
         "header": "Manage Collections",
         "searchPlaceholder": "Search a collection",
@@ -581,6 +583,10 @@
       "runeId": "Rune ID"
     },
     "nftMessage": "NFT Coming soon! Included in Release 3.",
+    "tokens": {
+      "sectionTitle": "Your tokens",
+      "manageAria": "Manage tokens"
+    },
     "manageTokensBtn": "+Manage tokens",
     "addNftBtn": "+ Add NFT",
     "noTokensMsg": "No tokens found in wallet.",

@@ -23,8 +23,6 @@
     onToggleBalance: () => void;
     onSend: () => void;
     onReceive: () => void;
-    onSwap: () => void;
-    onManageNfts: () => void;
     onTabChange: (tab: WalletTab) => void;
   };
 
@@ -35,8 +33,6 @@
     onToggleBalance,
     onSend,
     onReceive,
-    onSwap,
-    onManageNfts,
     onTabChange,
   }: Props = $props();
 
@@ -117,13 +113,7 @@
         </div>
 
         <div class="mt-6">
-          <WalletActionButtons
-            {activeTab}
-            {onSend}
-            {onReceive}
-            {onSwap}
-            {onManageNfts}
-          />
+          <WalletActionButtons {activeTab} {onSend} {onReceive} />
         </div>
       </div>
     {/key}
