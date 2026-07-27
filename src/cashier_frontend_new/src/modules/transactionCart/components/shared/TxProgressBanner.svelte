@@ -8,50 +8,98 @@
   };
 
   let { phase }: Props = $props();
+
+  const isExecuting = $derived(phase === TxProgressPhase.FE_PHASE);
+  const isConfirming = $derived(phase === TxProgressPhase.BE_PHASE);
+  const isCompleted = $derived(phase === TxProgressPhase.COMPLETED);
+
+  const i18nKey = "links.linkForm.drawers.txCart.action";
+
+  const executeLabel = $derived(
+    isExecuting
+      ? locale.t(`${i18nKey}.stepExecuting`)
+      : locale.t(`${i18nKey}.stepExecuted`),
+  );
+  const confirmLabel = $derived.by(() => {
+    if (isExecuting) return locale.t(`${i18nKey}.stepConfirm`);
+    if (isConfirming) return locale.t(`${i18nKey}.stepConfirming`);
+    return locale.t(`${i18nKey}.stepConfirmed`);
+  });
+
+  function stepClass(isCurrent: boolean, isDone: boolean): string {
+    if (isDone) return "bg-green border-green text-white";
+    if (isCurrent) return "bg-white border-green text-green";
+    return "bg-white border-[#D2D5DA] text-[#A8ADB7]";
+  }
+
+  function labelClass(isCurrent: boolean, isDone: boolean): string {
+    if (isDone || isCurrent) return "text-green";
+    return "text-[#A8ADB7]";
+  }
 </script>
 
-{#if phase === TxProgressPhase.FE_PHASE}
-  <div class="flex items-center gap-3 rounded-lg bg-[#F0FAF6] px-4 py-3">
-    <div
-      class="w-4 h-4 flex-shrink-0 border-2 border-green border-t-transparent rounded-full animate-spin"
-    ></div>
-    <div>
-      <p class="text-[14px] font-semibold text-green leading-tight">
-        {locale.t("links.linkForm.drawers.txCart.action.phase1Label")}
-      </p>
-      <p class="text-[12px] text-gray-700 leading-tight mt-0.5">
-        {locale.t("links.linkForm.drawers.txCart.action.phase1Description")}
-      </p>
-    </div>
-  </div>
-{:else if phase === TxProgressPhase.BE_PHASE}
-  <div class="flex items-center gap-3 rounded-lg bg-[#EFF6FF] px-4 py-3">
-    <div
-      class="w-4 h-4 flex-shrink-0 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"
-    ></div>
-    <div>
-      <p class="text-[14px] font-semibold text-blue-600 leading-tight">
-        {locale.t("links.linkForm.drawers.txCart.action.phase2Label")}
-      </p>
-      <p class="text-[12px] text-gray-700 leading-tight mt-0.5">
-        {locale.t("links.linkForm.drawers.txCart.action.phase2Description")}
-      </p>
-    </div>
-  </div>
-{:else if phase === TxProgressPhase.COMPLETED}
-  <div class="flex items-center gap-3 rounded-lg bg-[#F0FAF6] px-4 py-3">
-    <div
-      class="w-5 h-5 flex-shrink-0 rounded-full bg-green flex items-center justify-center"
-    >
-      <Check size={12} class="text-white" stroke-width={3} />
-    </div>
-    <div>
-      <p class="text-[14px] font-semibold text-green leading-tight">
-        {locale.t("links.linkForm.drawers.txCart.action.phase3Label")}
-      </p>
-      <p class="text-[12px] text-gray-700 leading-tight mt-0.5">
-        {locale.t("links.linkForm.drawers.txCart.action.phase3Description")}
-      </p>
+{#if phase !== TxProgressPhase.IDLE}
+  <div class="px-2 py-2">
+    <div class="relative grid grid-cols-3 items-start px-5">
+      <div
+        class={`absolute left-[calc(16.666667%+14px)] right-[calc(16.666667%+14px)] top-[13px] h-0.5 ${isCompleted ? "bg-green" : "bg-[#E1E3E8]"}`}
+      ></div>
+      <div
+        class={`absolute left-[calc(16.666667%+14px)] right-1/2 top-[13px] h-0.5 ${isConfirming || isCompleted ? "bg-green" : "bg-[#E1E3E8]"}`}
+      ></div>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <div
+          class={`h-7 w-7 rounded-full border-2 flex items-center justify-center ${stepClass(false, !isExecuting)}`}
+        >
+          {#if isExecuting}
+            <div
+              class="h-3.5 w-3.5 rounded-full border-2 border-green border-t-transparent animate-spin"
+            ></div>
+          {:else}
+            <Check size={15} stroke-width={3} />
+          {/if}
+        </div>
+        <p
+          class={`pt-2 text-center text-[13px] font-medium ${labelClass(isExecuting, true)}`}
+        >
+          {executeLabel}
+        </p>
+      </div>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <div
+          class={`h-7 w-7 rounded-full border-2 flex items-center justify-center ${stepClass(isConfirming, isCompleted)}`}
+        >
+          {#if isConfirming}
+            <div
+              class="h-3.5 w-3.5 rounded-full border-2 border-green border-t-transparent animate-spin"
+            ></div>
+          {:else if isCompleted}
+            <Check size={15} stroke-width={3} />
+          {/if}
+        </div>
+        <p
+          class={`pt-2 text-center text-[13px] font-medium ${labelClass(isConfirming, isCompleted)}`}
+        >
+          {confirmLabel}
+        </p>
+      </div>
+
+      <div class="relative z-10 flex flex-col items-center">
+        <div
+          class={`h-7 w-7 rounded-full border-2 flex items-center justify-center ${stepClass(isCompleted, isCompleted)}`}
+        >
+          {#if isCompleted}
+            <Check size={15} stroke-width={3} />
+          {/if}
+        </div>
+        <p
+          class={`pt-2 text-center text-[13px] font-medium ${labelClass(isCompleted, isCompleted)}`}
+        >
+          {locale.t(`${i18nKey}.stepDone`)}
+        </p>
+      </div>
     </div>
   </div>
 {/if}
