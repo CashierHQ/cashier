@@ -246,116 +246,126 @@
 </script>
 
 {#if activeTab === WalletTab.NFTS && selectedCollection}
-  <NftCollectionDetail
-    collection={selectedCollection}
-    nfts={selectedCollectionNfts}
-    initialTokenId={initialSelectedTokenId}
-    onNavigateBack={handleCollectionBack}
-    onReceive={handleReceiveCollection}
-    onSend={handleSendNft}
-    onRefresh={handleRefreshCollectionDetail}
-    isRefreshing={isRefreshingNfts}
-  />
+  <div class="h-full overflow-y-auto">
+    <NftCollectionDetail
+      collection={selectedCollection}
+      nfts={selectedCollectionNfts}
+      initialTokenId={initialSelectedTokenId}
+      onNavigateBack={handleCollectionBack}
+      onReceive={handleReceiveCollection}
+      onSend={handleSendNft}
+      onRefresh={handleRefreshCollectionDetail}
+      isRefreshing={isRefreshingNfts}
+    />
+  </div>
 {:else}
-  <WalletOverviewHeader
-    {activeTab}
-    isBalanceVisible={balanceVisible}
-    {nftCount}
-    onToggleBalance={handleToggle}
-    onSend={handleSend}
-    onReceive={handleReceive}
-    onTabChange={handleTabChange}
-  />
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <WalletOverviewHeader
+      {activeTab}
+      isBalanceVisible={balanceVisible}
+      {nftCount}
+      onToggleBalance={handleToggle}
+      onSend={handleSend}
+      onReceive={handleReceive}
+      onTabChange={handleTabChange}
+    />
 
-  <div class="grid overflow-hidden pb-6 pt-4">
-    {#key activeTab}
-      <div
-        class="col-start-1 row-start-1 w-full"
-        in:horizontalSlide={{
-          xPercent: contentEnterXPercent,
-          duration: WALLET_TAB_SLIDE_DURATION_MS,
-          easing: cubicOut,
-        }}
-        out:horizontalSlide={{
-          xPercent: contentExitXPercent,
-          duration: WALLET_TAB_SLIDE_DURATION_MS,
-          easing: cubicOut,
-        }}
-      >
-        {#if activeTab === WalletTab.TOKENS}
-          {#if walletStore.query.data}
-            <div class="mb-2 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-[#242424]">
-                {locale.t("wallet.tokens.sectionTitle")}
-                <span class="ml-1 font-normal text-grey">
-                  {enabledTokens.length}
-                </span>
-              </h3>
-              <button
-                type="button"
-                onclick={handleManageTokens}
-                class="flex h-8 w-8 items-center justify-center rounded-md bg-lightgreen text-gray-700 transition-colors hover:bg-lightgreen/80 active:scale-95 cursor-pointer"
-                aria-label={locale.t("wallet.tokens.manageAria")}
-              >
-                <SlidersHorizontal size={18} />
-              </button>
-            </div>
-            <TokenList
-              tokens={enabledTokens}
-              {balanceVisible}
-              onSelectToken={handleSelectToken}
-              onImageError={handleImageError}
-              {failedImageLoads}
-            />
-          {:else if walletStore.query.error}
-            <div class="text-center py-8">
-              <p class="text-red-600 mb-4">
-                {locale.t("wallet.errorMsg")}
-                {walletStore.query.error}
-              </p>
-            </div>
-          {:else}
-            <div class="text-center py-8">
-              <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-            </div>
+    <div
+      class="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-x-clip pt-4"
+    >
+      {#key activeTab}
+        <div
+          class="col-start-1 row-start-1 flex min-h-0 w-full overflow-hidden flex-col"
+          in:horizontalSlide={{
+            xPercent: contentEnterXPercent,
+            duration: WALLET_TAB_SLIDE_DURATION_MS,
+            easing: cubicOut,
+          }}
+          out:horizontalSlide={{
+            xPercent: contentExitXPercent,
+            duration: WALLET_TAB_SLIDE_DURATION_MS,
+            easing: cubicOut,
+          }}
+        >
+          {#if activeTab === WalletTab.TOKENS}
+            {#if walletStore.query.data}
+              <div class="mb-2 flex items-center justify-between">
+                <h3 class="text-lg font-medium text-[#242424]">
+                  {locale.t("wallet.tokens.sectionTitle")}
+                  <span class="ml-1 font-normal text-grey">
+                    {enabledTokens.length}
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  onclick={handleManageTokens}
+                  class="flex h-8 w-8 items-center justify-center rounded-md bg-lightgreen text-gray-700 transition-colors hover:bg-lightgreen/80 active:scale-95 cursor-pointer"
+                  aria-label={locale.t("wallet.tokens.manageAria")}
+                >
+                  <SlidersHorizontal size={18} />
+                </button>
+              </div>
+              <div class="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-6">
+                <TokenList
+                  tokens={enabledTokens}
+                  {balanceVisible}
+                  onSelectToken={handleSelectToken}
+                  onImageError={handleImageError}
+                  {failedImageLoads}
+                />
+              </div>
+            {:else if walletStore.query.error}
+              <div class="text-center py-8">
+                <p class="text-red-600 mb-4">
+                  {locale.t("wallet.errorMsg")}
+                  {walletStore.query.error}
+                </p>
+              </div>
+            {:else}
+              <div class="text-center py-8">
+                <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+              </div>
+            {/if}
+          {:else if activeTab === WalletTab.NFTS}
+            {#if collectionStore.query.data}
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-medium text-[#242424]">
+                  {locale.t("wallet.nfts.sectionTitle")}
+                  <span class="ml-1 font-normal text-grey">
+                    {collectionCount}
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  onclick={handleManageNfts}
+                  class="flex h-8 w-8 items-center justify-center rounded-md bg-walletlightpurple text-gray-700 transition-colors hover:bg-walletlightpurple/80 active:scale-95 cursor-pointer"
+                  aria-label={locale.t("wallet.nfts.manageAria")}
+                >
+                  <SlidersHorizontal size={21} />
+                </button>
+              </div>
+              <div class="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-6">
+                <NftList
+                  collections={nftCollections}
+                  onSelectCollection={handleSelectCollection}
+                  onManageNfts={handleManageNfts}
+                />
+              </div>
+            {:else if collectionStore.query.error}
+              <div class="text-center py-8">
+                <p class="text-red-600 mb-4">
+                  {locale.t("wallet.errorMsg")}
+                  {collectionStore.query.error}
+                </p>
+              </div>
+            {:else}
+              <div class="text-center py-8">
+                <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+              </div>
+            {/if}
           {/if}
-        {:else if activeTab === WalletTab.NFTS}
-          {#if collectionStore.query.data}
-            <div class="mb-4 flex items-center justify-between">
-              <h3 class="text-lg font-medium text-[#242424]">
-                {locale.t("wallet.nfts.sectionTitle")}
-                <span class="ml-1 font-normal text-grey">
-                  {collectionCount}
-                </span>
-              </h3>
-              <button
-                type="button"
-                onclick={handleManageNfts}
-                class="flex h-8 w-8 items-center justify-center rounded-md bg-walletlightpurple text-gray-700 transition-colors hover:bg-walletlightpurple/80 active:scale-95 cursor-pointer"
-                aria-label={locale.t("wallet.nfts.manageAria")}
-              >
-                <SlidersHorizontal size={21} />
-              </button>
-            </div>
-            <NftList
-              collections={nftCollections}
-              onSelectCollection={handleSelectCollection}
-              onManageNfts={handleManageNfts}
-            />
-          {:else if collectionStore.query.error}
-            <div class="text-center py-8">
-              <p class="text-red-600 mb-4">
-                {locale.t("wallet.errorMsg")}
-                {collectionStore.query.error}
-              </p>
-            </div>
-          {:else}
-            <div class="text-center py-8">
-              <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-            </div>
-          {/if}
-        {/if}
-      </div>
-    {/key}
+        </div>
+      {/key}
+    </div>
   </div>
 {/if}
