@@ -12,6 +12,7 @@ export type GenericUserLinkStoreVM = {
   completedActions: Action[];
   state: LinkState;
   step: UserLinkStep | undefined;
+  canGoBack: boolean;
   createAction(actionType: ActionTypeValue): Promise<Action>;
   processAction(): Promise<ProcessActionResult>;
   goNext(): Promise<void>;

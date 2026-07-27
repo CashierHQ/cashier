@@ -7,9 +7,11 @@
   const {
     store,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   let submitted = $state(false);
@@ -17,6 +19,13 @@
   let followingEnabled = $derived(store.hasConfiguredXFollowing);
   let likedPostEnabled = $derived(store.hasConfiguredXLikedPost);
   let retweetedPostEnabled = $derived(store.hasConfiguredXRetweetedPost);
+
+  const hasSelectedXLockOption = $derived(
+    ownedAccountEnabled ||
+      followingEnabled ||
+      likedPostEnabled ||
+      retweetedPostEnabled,
+  );
 
   const hasAnyError = $derived(
     (ownedAccountEnabled && store.xOwnedAccountSetupError !== null) ||
@@ -27,6 +36,7 @@
 
   const handleLock = () => {
     submitted = true;
+    if (!hasSelectedXLockOption) return;
     if (hasAnyError) return;
 
     if (ownedAccountEnabled) store.saveXOwnedAccountLock();
@@ -38,6 +48,20 @@
 </script>
 
 <div class="space-y-6">
+  <div class="flex items-center justify-end">
+    <button
+      type="button"
+      class="text-xs font-medium text-[#D26060]"
+      onclick={() => {
+        submitted = false;
+        store.removeXLocks();
+        onReset();
+      }}
+    >
+      {locale.t("links.linkForm.lock.reset")}
+    </button>
+  </div>
+
   <!-- Owned account -->
   <div class="space-y-1.5 {ownedAccountEnabled ? '' : 'opacity-40'}">
     <p class="text-sm font-medium text-foreground">
@@ -273,6 +297,12 @@
     <Info class="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
     <p class="text-sm">{locale.t("links.linkForm.lock.xAllKeysRequired")}</p>
   </div>
+
+  {#if submitted && !hasSelectedXLockOption}
+    <p class="text-left text-xs text-[#D26060]">
+      {locale.t("links.linkForm.lock.errors.xLockRequired")}
+    </p>
+  {/if}
 
   <PrimaryActionButton type="button" onclick={handleLock}>
     {locale.t("links.linkForm.lock.lock")}

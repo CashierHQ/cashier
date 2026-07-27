@@ -177,6 +177,62 @@ describe("LinkListStore.getLinks", () => {
   });
 });
 
+describe("LinkListStore.loading", () => {
+  let store: LinkListStore;
+  let mockQuery: MockManagedState<Link[]>;
+
+  beforeEach(() => {
+    localStorageMock.clear();
+
+    mockQuery = {
+      data: undefined,
+      refresh: vi.fn(),
+      isLoading: false,
+      error: undefined,
+      isSuccess: true,
+      reset: vi.fn(),
+    };
+    const mockManagedState = vi.mocked(managedState);
+    mockManagedState.mockReturnValue(
+      mockQuery as unknown as ReturnType<typeof managedState>,
+    );
+    store = new LinkListStore();
+  });
+
+  it("should show initial persisted links loading before data exists", () => {
+    mockQuery.isLoading = true;
+    mockQuery.data = undefined;
+
+    expect(store.isLoadingInitialPersistedLinks).toBe(true);
+  });
+
+  it("should show initial persisted links loading when current data is empty", () => {
+    mockQuery.isLoading = true;
+    mockQuery.data = [];
+
+    expect(store.isLoadingInitialPersistedLinks).toBe(true);
+  });
+
+  it("should not show initial persisted links loading when persisted links exist", () => {
+    mockQuery.isLoading = true;
+    mockQuery.data = [
+      new Link(
+        "link-1",
+        "Persisted Link",
+        Principal.fromText("aaaaa-aa"),
+        [],
+        LinkType.TIP,
+        BigInt(Date.now()),
+        LinkState.ACTIVE,
+        BigInt(1),
+        BigInt(0),
+      ),
+    ];
+
+    expect(store.isLoadingInitialPersistedLinks).toBe(false);
+  });
+});
+
 describe("LinkListStore.onboarding", () => {
   let store: LinkListStore;
   let mockQuery: MockManagedState<Link[]>;

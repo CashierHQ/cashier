@@ -6,7 +6,9 @@ import {
   isOtpGate,
   isOtpSmsGate,
   isXGate,
+  isXLock,
 } from "$modules/gating/utils/gateHelpers";
+import { GateType } from "$modules/gating/types/gate";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/i18n", () => ({
@@ -128,6 +130,24 @@ describe("isXGate", () => {
   ])("returns false for %j", (key) => {
     expect(isXGate(buildGate(key))).toBe(false);
   });
+});
+
+describe("isXLock", () => {
+  it.each<GateType>([
+    GateType.X_FOLLOWING,
+    GateType.X_OWNED_ACCOUNT,
+    GateType.X_LIKED_POST,
+    GateType.X_RETWEETED_POST,
+  ])("returns true for %s", (type) => {
+    expect(isXLock(type)).toBe(true);
+  });
+
+  it.each<GateType>([GateType.PASSWORD, GateType.OTP_EMAIL, GateType.OTP_SMS])(
+    "returns false for %s",
+    (type) => {
+      expect(isXLock(type)).toBe(false);
+    },
+  );
 });
 
 describe("isOtpGate", () => {

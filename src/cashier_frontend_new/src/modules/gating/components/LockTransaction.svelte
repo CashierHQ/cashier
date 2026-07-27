@@ -63,6 +63,18 @@
     otpDrawerOpen = false;
     toast.success(locale.t("links.linkForm.lock.lockAdded"));
   };
+
+  const onPasswordReset = () => {
+    passwordDrawerOpen = false;
+  };
+
+  const onXReset = () => {
+    xDrawerOpen = false;
+  };
+
+  const onOTPReset = () => {
+    otpDrawerOpen = false;
+  };
 </script>
 
 <div class="flex grow flex-col gap-6 py-2">
@@ -144,7 +156,11 @@
       </div>
     </DrawerHeader>
 
-    <PasswordLockForm {store} onLock={handlePasswordLock} />
+    <PasswordLockForm
+      {store}
+      onLock={handlePasswordLock}
+      onReset={onPasswordReset}
+    />
   </DrawerContent>
 </Drawer>
 
@@ -167,7 +183,7 @@
       </div>
     </DrawerHeader>
 
-    <XLockForm {store} onLock={handleXLock} />
+    <XLockForm {store} onLock={handleXLock} onReset={onXReset} />
   </DrawerContent>
 </Drawer>
 
@@ -190,6 +206,11 @@
       </div>
     </DrawerHeader>
 
-    <OTPLockForm {store} mode={otpLockMode} onLock={handleOTPLock} />
+    <OTPLockForm
+      {store}
+      mode={otpLockMode}
+      onLock={handleOTPLock}
+      onReset={onOTPReset}
+    />
   </DrawerContent>
 </Drawer>

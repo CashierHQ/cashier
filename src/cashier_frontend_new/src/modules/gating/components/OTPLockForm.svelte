@@ -24,10 +24,12 @@
     store,
     mode,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     mode: OTPLockMode;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   const smsEligibleCountries = filterSmsEligibleCountries(COUNTRY_DIAL_CODES);
@@ -150,9 +152,8 @@
             submitted = false;
             phoneDigits = "";
             confirmPhoneDigits = "";
-            store.setOTPPhoneDraft("");
-            store.setOTPPhoneConfirmDraft("");
-            store.setOTPPhoneConfirmDigits("");
+            store.removeOTPSmsLock();
+            onReset();
           }}
         >
           {locale.t("links.linkForm.lock.reset")}
@@ -251,8 +252,8 @@
             submitted = false;
             emailDraft = "";
             confirmEmailDraft = "";
-            store.setOTPEmailDraft("");
-            store.setOTPEmailConfirmDraft("");
+            store.removeOTPEmailLock();
+            onReset();
           }}
         >
           {locale.t("links.linkForm.lock.reset")}
@@ -300,9 +301,11 @@
   </PrimaryActionButton>
 </div>
 
-<DrawerNestedRoot bind:open={countryDrawerOpen}>
-  <DrawerContent class="max-w-full w-[400px] mx-auto p-5">
-    <DrawerHeader class="pb-5 pl-0 pr-0 pt-0">
+<DrawerNestedRoot bind:open={countryDrawerOpen} repositionInputs={false}>
+  <DrawerContent
+    class="max-w-full w-[400px] mx-auto h-[85svh] max-h-[85svh] p-5 sm:h-[400px] sm:min-h-[400px] sm:max-h-[400px] sm:overflow-hidden"
+  >
+    <DrawerHeader class="flex-none pb-5 pl-0 pr-0 pt-0">
       <div class="relative flex items-center justify-center">
         <DrawerTitle class="text-base font-semibold">
           {locale.t("links.linkForm.lock.otp.countryCode")}
@@ -318,17 +321,17 @@
       </div>
     </DrawerHeader>
 
-    <div class="space-y-3">
+    <div class="flex min-h-0 flex-1 flex-col gap-3">
       <input
         type="search"
         bind:value={countrySearch}
         placeholder={locale.t(
           "links.linkForm.lock.otp.searchCountryOrDialCode",
         )}
-        class="h-11 w-full rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm"
+        class="h-11 w-full flex-none rounded-lg border border-border bg-background px-4 text-[16px] outline-none placeholder:text-muted-foreground focus:border-green sm:text-sm"
       />
 
-      <div class="max-h-[55vh] overflow-y-auto">
+      <div class="min-h-0 flex-1 overflow-y-auto scrollbar-hide">
         {#each filteredCountries as country (country.code)}
           <button
             type="button"

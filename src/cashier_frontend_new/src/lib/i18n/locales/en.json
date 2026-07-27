@@ -168,6 +168,7 @@
           "noTokensAvailable": "No tokens available",
           "allTokensSelected": "All available tokens have been selected",
           "atLeastOneAssetRequired": "At least one asset is required",
+          "duplicateAssets": "You selected the same asset more than once.",
           "maxUseMustBeGreaterThanZero": "Max use must be greater than zero",
           "maxUseCannotExceedOnce": "Max use cannot exceed 1"
         },
@@ -283,11 +284,13 @@
           "checkSpam": "Check spam if you don't see it.",
           "didNotGetIt": "Didn't get it? ",
           "resendCode": "Resend code",
+          "resendIn": "Resend in {{time}}",
           "resendingCode": "Resending…",
           "codeResent": "Code resent",
           "codeExpiresIn": "Code expires in {{time}}",
           "digitAriaLabel": "Digit {{number}}",
           "verifyAndUnlock": "Verify & unlock",
+          "tryAgainIn": "Try again in {{time}}",
           "timeMinutes": "{{count}} minutes",
           "timeSeconds": "{{count}} seconds",
           "errors": {
@@ -306,6 +309,7 @@
           "confirmPasswordRequired": "Confirm password is required",
           "passwordsDifferent": "The passwords are different.",
           "xHandleRequired": "X handle is required",
+          "xLockRequired": "Select at least one X lock",
           "connectXAccountFailed": "Failed to connect X account",
           "accessTokenMissing": "Access token missing — please reconnect your X account",
           "unsupportedGateType": "Unsupported gate type"
@@ -396,7 +400,6 @@
         "copyFailed": "Failed to copy link",
         "withdraw": "Withdraw",
         "create": "Create",
-        "goToLinks": "Go to links",
         "linkInfo": "Link info",
         "usageInfo": "Usage info",
         "assetsInLink": "Assets in link",

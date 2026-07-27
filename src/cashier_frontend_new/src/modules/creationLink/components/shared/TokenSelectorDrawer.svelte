@@ -101,7 +101,7 @@
 
 <Drawer bind:open>
   <DrawerContent
-    class="max-w-full w-[400px] mx-auto h-[85svh] max-h-[85svh] sm:h-auto sm:max-h-[80vh]"
+    class="max-w-full w-[400px] mx-auto h-[85svh] max-h-[85svh] sm:h-[400px] sm:min-h-[400px] sm:max-h-[400px] sm:overflow-hidden"
   >
     <DrawerHeader class="flex-none">
       <div class="flex justify-center items-center relative mb-2">

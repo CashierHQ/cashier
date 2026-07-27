@@ -12,9 +12,26 @@ import {
   type Link as SharedLink,
   TokenStandard as SharedTokenStandard,
   calculateIntentFees,
-  calculateMaxAssetAmount,
 } from "$shared";
 import { Err, Ok, type Result } from "ts-results-es";
+
+/**
+ * Calculates the fixed network fee required to fund a link asset transfer.
+ *
+ * This fee is charged once for the link, regardless of the link's max use count.
+ *
+ * @param tokenStandard - The token standard used by the asset ledger.
+ * @param ledgerFee - The ledger transfer fee for the selected asset.
+ * @returns The total fixed network fee required for the creator-to-link transfer.
+ */
+function calculateCreatorToLinkNetworkFee(
+  tokenStandard: SharedTokenStandard,
+  ledgerFee: bigint,
+): bigint {
+  const setupFeeMultiplier =
+    tokenStandard === SharedTokenStandard.ICRC2 ? 2n : 1n;
+  return setupFeeMultiplier * ledgerFee + ledgerFee;
+}
 
 class ValidationService {
   /**
@@ -216,28 +233,28 @@ class ValidationService {
   }
 
   /**
-   * Calculate the required amount of asset for link v3 creation, using the fee calculation logic from shared package
-   * @param asset
-   * @param amount
-   * @param maxUse
-   * @returns Result containing required amount or error
+   * Calculates the required asset balance for v3 link creation.
+   *
+   * The asset amount scales with `maxUse`, while the network fee is charged once
+   * for the link.
+   *
+   * @param asset - The asset metadata used to determine token standard and ledger fee.
+   * @param amount - The asset amount entered by the user.
+   * @param maxUse - The maximum number of times the link can be used.
+   * @returns A result containing the required asset balance, including fixed network fees.
    */
   calculateRequiredAssetAmountV3(
     asset: SharedAsset,
     amount: bigint,
     maxUse: number,
   ): Result<bigint, Error> {
-    const intentFees = calculateIntentFees({
-      intent_participants: SharedIntentParticipants.CreatorToLink,
-      token_standard: asset.token_standard ?? SharedTokenStandard.ICRC2,
-      user_input_amount: amount,
-      asset_network_fee: asset.network_fee ?? 0n,
-      max_use: maxUse,
-    });
-    return Ok(
-      BigInt(intentFees.intent_total_amount) +
-        BigInt(intentFees.intent_total_network_fee),
+    const totalAmount = amount * BigInt(maxUse);
+    const networkFee = calculateCreatorToLinkNetworkFee(
+      asset.token_standard ?? SharedTokenStandard.ICRC2,
+      asset.network_fee ?? 0n,
     );
+
+    return Ok(totalAmount + networkFee);
   }
 
   /**
@@ -267,11 +284,16 @@ class ValidationService {
   }
 
   /**
-   * Calculate the maximum amount for asset for link v3 creation, using the max asset amount calculation logic from shared package
-   * @param tokenAddress
-   * @param maxUse
-   * @param walletTokens
-   * @returns
+   * Calculates the maximum asset amount that can be entered for v3 link creation.
+   *
+   * The returned amount is the selected token balance minus fixed link fees. It is
+   * not divided by `maxUse`, so the Max button stays based on the user's available
+   * balance regardless of the current use count.
+   *
+   * @param tokenAddress - The selected asset token address.
+   * @param maxUse - The maximum number of times the link can be used.
+   * @param walletTokens - The wallet token balances used to locate the asset and fee token.
+   * @returns A result containing the maximum input amount after fixed fees, or an error.
    */
   calculateMaxAssetAmountV3(
     tokenAddress: string,
@@ -319,15 +341,30 @@ class ValidationService {
         ? SharedTokenStandard.ICRC2
         : SharedTokenStandard.ICRC1;
 
-    const maxAssetAmount = calculateMaxAssetAmount({
-      token_balance: assetToken.balance,
-      token_standard: tokenStandard,
-      ledger_fee: assetToken.fee,
-      max_use: maxUse,
-      link_creation_fee: isFeeToken ? feeAmount : undefined,
-      fee_token_standard: isFeeToken ? feeTokenStandard : undefined,
-      is_fee_token: isFeeToken,
-    });
+    const assetNetworkFee = calculateCreatorToLinkNetworkFee(
+      tokenStandard,
+      assetToken.fee,
+    );
+
+    let requiredFeeAmount = 0n;
+    if (isFeeToken) {
+      const requiredFeeAmountResult = this.calculateRequiredFeeAmountV3(
+        feeAmount,
+        feeToken.fee,
+        feeTokenStandard,
+      );
+
+      if (requiredFeeAmountResult.isErr()) {
+        return requiredFeeAmountResult;
+      }
+
+      requiredFeeAmount = requiredFeeAmountResult.unwrap();
+    }
+
+    const overlappingFee = isFeeToken ? assetToken.fee : 0n;
+    const availableBalance =
+      assetToken.balance - requiredFeeAmount - assetNetworkFee + overlappingFee;
+    const maxAssetAmount = availableBalance > 0n ? availableBalance : 0n;
 
     if (maxAssetAmount < 0n) {
       return Err(new Error("Insufficient balance to cover required fees"));

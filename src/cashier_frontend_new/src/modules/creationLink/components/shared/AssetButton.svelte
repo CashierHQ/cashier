@@ -186,18 +186,12 @@
       : "0",
   );
 
-  function focusInput() {
-    const input = document.getElementById(
-      `asset-input-${token?.address || "default"}`,
-    );
-    input?.focus();
-  }
+  let amountInput: HTMLInputElement | null = $state(null);
 
-  function handleInputAreaKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      focusInput();
-    }
+  function selectAmountInputValue() {
+    requestAnimationFrame(() => {
+      amountInput?.select();
+    });
   }
 </script>
 
@@ -219,24 +213,18 @@
               {/if}
               <input
                 id="asset-input-{token?.address || 'default'}"
+                bind:this={amountInput}
                 value={formatDisplayValue(displayValue)}
                 oninput={(e) => handleInput(e.currentTarget.value)}
                 onkeydown={handleKeyDown}
+                onfocus={selectAmountInputValue}
                 onblur={handleBlur}
-                type="number"
+                type="text"
                 class="w-auto min-w-[30px] ml-auto text-end text-[16px] sm:text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 style="width: {inputWidth}; max-width: 92px; position: relative; z-index: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 placeholder="0"
-                min={0}
                 inputmode="decimal"
               />
-              <div
-                role="button"
-                tabindex="0"
-                onclick={focusInput}
-                onkeydown={handleInputAreaKeyDown}
-                class="absolute right-0 top-0 h-full w-[90px] z-20 cursor-pointer"
-              ></div>
             </div>
           {/if}
         </div>
@@ -261,7 +249,7 @@
         <UsdSwitch
           {token}
           amount={parseFloat(tokenValue || "0") || 0}
-          symbol={token?.name ?? ""}
+          symbol={token.symbol}
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}

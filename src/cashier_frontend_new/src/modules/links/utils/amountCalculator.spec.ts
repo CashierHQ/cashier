@@ -71,8 +71,8 @@ describe("calculateRequiredAssetAmount", () => {
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
       const requiredAmounts = result.unwrap();
-      expect(requiredAmounts["0xtoken1"]).toBe(amount1 * 3n + fee1 * (1n + 3n));
-      expect(requiredAmounts["0xtoken2"]).toBe(amount2 * 3n + fee2 * (1n + 3n));
+      expect(requiredAmounts["0xtoken1"]).toBe(amount1 * 3n + fee1 * 2n);
+      expect(requiredAmounts["0xtoken2"]).toBe(amount2 * 3n + fee2 * 2n);
     }
   });
 });

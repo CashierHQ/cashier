@@ -209,6 +209,53 @@ describe("UserLinkStoreV3", () => {
 
       expect(refreshAsync).toHaveBeenCalled();
     });
+
+    it.each([
+      UserLinkStep.ADDRESS_LOCKED,
+      UserLinkStep.GATE,
+      UserLinkStep.ADDRESS_UNLOCKED,
+    ])("it_should_succeed_allow_back_from_%s_when_no_action_exists", (step) => {
+      const store = new UserLinkStoreV3({ id: "link-1" });
+      store.state = {
+        step,
+        goNext: vi.fn(),
+        goBack: vi.fn(),
+        goToLanding: vi.fn(),
+      } as never;
+
+      expect(store.canGoBack).toBe(true);
+    });
+
+    it.each([UserLinkStep.LANDING, UserLinkStep.COMPLETED])(
+      "it_should_fail_disallow_back_from_%s",
+      (step) => {
+        const store = new UserLinkStoreV3({ id: "link-1" });
+        store.state = {
+          step,
+          goNext: vi.fn(),
+          goBack: vi.fn(),
+          goToLanding: vi.fn(),
+        } as never;
+
+        expect(store.canGoBack).toBe(false);
+      },
+    );
+
+    it("it_should_fail_disallow_back_when_action_exists", () => {
+      const detailStore = makeDetailStore({
+        action: { id: "action-1", type: ActionType.RECEIVE },
+      });
+      mocks.LinkDetailStoreV3.mockImplementation(() => detailStore);
+      const store = new UserLinkStoreV3({ id: "link-1" });
+      store.state = {
+        step: UserLinkStep.ADDRESS_UNLOCKED,
+        goNext: vi.fn(),
+        goBack: vi.fn(),
+        goToLanding: vi.fn(),
+      } as never;
+
+      expect(store.canGoBack).toBe(false);
+    });
   });
 
   describe("navigation delegation", () => {

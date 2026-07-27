@@ -4,13 +4,21 @@ import telegramIcon from "$lib/assets/telegram-icon.svg";
 import xIcon from "$lib/assets/x-icon.svg";
 import { locale } from "$lib/i18n";
 import { GateType } from "$modules/gating/types/gate";
+import type { OTPUnlockSession } from "$modules/gating/types/otpUnlockSession";
 import { Mail, RectangleEllipsis, Smartphone } from "lucide-svelte";
 import { COUNTRY_DIAL_CODES } from "$modules/shared/data/countries";
 import { getPhoneDialCode } from "$modules/shared/services/phoneNumber";
 
 export const FALLBACK_LOCK_VALUE_LENGTH = 12;
 export const X_HANDLE_LOCK_TYPE = "xHandle";
+export const TWEET_URL_PATTERN = /^https:\/\/x\.com\/.+\/status\/\d+$/;
 export const OTP_EXPIRY_SECONDS = 10 * 60;
+export const EMPTY_OTP_DIGITS = ["", "", "", "", "", ""];
+export const INITIAL_OTP_UNLOCK_SESSION: OTPUnlockSession = {
+  step: "verify",
+  digits: EMPTY_OTP_DIGITS,
+  expiresAtMs: null,
+};
 
 export const GATE_OPTIONS = [
   {

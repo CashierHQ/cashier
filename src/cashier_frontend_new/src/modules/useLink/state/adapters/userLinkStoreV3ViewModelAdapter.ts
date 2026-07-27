@@ -26,6 +26,10 @@ export class UserLinkStoreV3ViewModelAdapter implements GenericUserLinkStoreVM {
     return this.userLinkStoreV3.step;
   }
 
+  get canGoBack() {
+    return this.userLinkStoreV3.canGoBack;
+  }
+
   async createAction(actionType: ActionTypeValue) {
     const result = await this.userLinkStoreV3.createAction(actionType);
 

@@ -5,6 +5,7 @@
   import LoginModal from "$modules/home/components/LoginModal.svelte";
   import Landing from "$modules/useLink/pages/landing.svelte";
   import Ended from "$modules/useLink/components/Ended.svelte";
+  import UseLinkLandingSkeleton from "$modules/useLink/components/UseLinkLandingSkeleton.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
   import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
@@ -50,6 +51,10 @@
       {:else}
         <Landing {openLoginModal} />
       {/if}
+    {/snippet}
+    {#snippet loading()}
+      <Header onLoginClick={openLoginModal} showLogin={false} />
+      <UseLinkLandingSkeleton />
     {/snippet}
   </RedirectBoundary>
   <Footer />

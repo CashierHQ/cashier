@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import DetailLinkSkeleton from "$modules/detailLink/components/DetailLinkSkeleton.svelte";
   import DetailLink from "$modules/detailLink/pages/detail.svelte";
   import RedirectBoundary from "$modules/routing/components/RedirectBoundary.svelte";
   import { createLinkRouteContext } from "$modules/routing/state/createLinkRouteContext.svelte";
@@ -31,6 +32,12 @@
 </script>
 
 <RedirectBoundary>
+  {#snippet loading()}
+    <PageLayout isLinkFormPage={true}>
+      <DetailLinkSkeleton onBack={handleBack} />
+    </PageLayout>
+  {/snippet}
+
   <PageLayout isLinkFormPage={true}>
     <DetailLink {id} onBack={handleBack} />
   </PageLayout>

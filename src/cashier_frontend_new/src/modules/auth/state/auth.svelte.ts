@@ -158,6 +158,14 @@ export const authState = {
     return account;
   },
 
+  get sessionExpiresAtMs() {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    return walletConnect.current.expiredAtMs;
+  },
+
   // Getter isConnecting
   get isConnecting() {
     return isConnecting;

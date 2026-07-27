@@ -25,8 +25,7 @@ export function calculateRequiredAssetAmount(
       );
     }
 
-    requiredAmounts[asset.address] =
-      totalAmount + token.fee * (BigInt(1) + BigInt(maxUse));
+    requiredAmounts[asset.address] = totalAmount + token.fee * 2n;
   }
 
   return Ok(requiredAmounts);
