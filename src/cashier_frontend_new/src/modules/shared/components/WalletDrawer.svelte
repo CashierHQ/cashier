@@ -12,6 +12,10 @@
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
+  import {
+    WALLET_LOGO_NFT_COLOR,
+    WALLET_LOGO_TOKEN_COLOR,
+  } from "$modules/wallet/constants";
   import { WalletTab } from "$modules/wallet/types";
   import { LoaderCircle, X } from "lucide-svelte";
 
@@ -78,6 +82,12 @@
   function handleMainNestedViewChange(isNested: boolean) {
     walletNavigation.setMainNestedView(isNested);
   }
+
+  const logoColor = $derived(
+    walletNavigation.currentMainTab === WalletTab.NFTS
+      ? WALLET_LOGO_NFT_COLOR
+      : WALLET_LOGO_TOKEN_COLOR,
+  );
 </script>
 
 {#if open}
@@ -97,11 +107,14 @@
   >
     {#if walletNavigation.currentView.type === WalletViewType.MAIN && !walletNavigation.mainViewHasNestedPage}
       <div class="flex items-center justify-between px-4 py-4">
-        <img
-          alt={locale.t("wallet.drawer.logoAlt")}
-          class="max-w-[130px]"
-          src="/logo.svg"
-        />
+        <div
+          role="img"
+          aria-label={locale.t("wallet.drawer.logoAlt")}
+          class="h-[38px] w-[98px] transition-colors duration-300"
+          style:background-color={logoColor}
+          style:mask="url('/logo.svg') no-repeat center / contain"
+          style:-webkit-mask="url('/logo.svg') no-repeat center / contain"
+        ></div>
         <button
           type="button"
           onclick={handleClose}
@@ -128,10 +141,10 @@
     {/if}
 
     <div
-      class="flex-1 flex flex-col overflow-y-auto p-4 {walletNavigation
-        .currentView.type === WalletViewType.MAIN
-        ? 'pt-0'
-        : ''}"
+      class="min-h-0 flex-1 flex flex-col p-4 {walletNavigation.currentView
+        .type === WalletViewType.MAIN
+        ? 'overflow-hidden pt-0'
+        : 'overflow-y-auto'}"
     >
       {#if walletNavigation.currentView.type === WalletViewType.MAIN}
         <WalletPage
@@ -145,7 +158,6 @@
           onNavigateToNftSend={navigateToNftSend}
           onNavigateToReceive={navigateToReceive}
           onNavigateToNftReceive={navigateToNftReceive}
-          onNavigateToSwap={navigateToSwap}
           onNavigateToManageNfts={navigateToManageCollections}
           onTabChange={handleSwitchMainTab}
           onNestedViewChange={handleMainNestedViewChange}
