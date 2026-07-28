@@ -1,5 +1,6 @@
 <script lang="ts">
   import AppLinksList from "$modules/links/components/linksPage/AppLinksList.svelte";
+  import LinksPageSkeleton from "$modules/links/components/linksPage/LinksPageSkeleton.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { groupAndSortByDate } from "$modules/links/utils/groupAndSortByDate";
   import { locale } from "$lib/i18n";
@@ -9,6 +10,8 @@
   } from "$modules/analytics/amplitudeStore";
   // Track Link list landing on page load
   trackEvent(AnalyticsEvent.LINK_CREATION_LINK_LIST_LANDING, {});
+
+  const links = $derived(linkListStore.getLinks());
 </script>
 
 <div class="w-full">
@@ -27,5 +30,9 @@
     </div>
   {/if}
 
-  <AppLinksList groupedLinks={groupAndSortByDate(linkListStore.getLinks())} />
+  {#if linkListStore.isLoadingInitialPersistedLinks}
+    <LinksPageSkeleton />
+  {:else}
+    <AppLinksList groupedLinks={groupAndSortByDate(links)} />
+  {/if}
 </div>

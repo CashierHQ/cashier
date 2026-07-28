@@ -9,18 +9,18 @@ import {
 
 describe("phoneNumber", () => {
   it("formats US phone numbers as the user types", () => {
-    expect(formatPhoneNumberForCountry("4379830751", "US")).toBe(
-      "(437) 983-0751",
+    expect(formatPhoneNumberForCountry("4375551234", "US")).toBe(
+      "(437) 555-1234",
     );
   });
 
   it("strips user-entered phone symbols", () => {
-    expect(getDigitsOnly("(437) 983-0751")).toBe("4379830751");
+    expect(getDigitsOnly("(437) 555-1234")).toBe("4375551234");
   });
 
   it("builds international phone numbers with the selected country dial code", () => {
-    expect(buildInternationalPhoneNumber("US", "4379830751")).toBe(
-      "+14379830751",
+    expect(buildInternationalPhoneNumber("US", "4375551234")).toBe(
+      "+14375551234",
     );
   });
 

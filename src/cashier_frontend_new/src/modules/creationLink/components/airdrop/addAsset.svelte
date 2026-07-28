@@ -326,7 +326,7 @@
       return;
     }
 
-    const maxTokenAmount = maxTotalAmount;
+    const maxTokenAmount = maxTokenBalance;
 
     localTokenAmount = maxTokenAmount.toString();
 

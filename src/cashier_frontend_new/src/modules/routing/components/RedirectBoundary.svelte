@@ -10,8 +10,10 @@
 
   let {
     children,
+    loading,
   }: {
     children: Snippet<[RedirectDecision]>;
+    loading?: Snippet;
   } = $props();
 
   const context = getRouteContext();
@@ -23,7 +25,11 @@
 </script>
 
 {#if decision.kind === "pending"}
-  <ProtectionProcessingState message="Loading..." />
+  {#if loading}
+    {@render loading()}
+  {:else}
+    <ProtectionProcessingState message="Loading..." />
+  {/if}
 {:else if decision.kind === "allow"}
   {@render children(decision)}
 {:else}

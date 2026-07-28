@@ -7,9 +7,11 @@
   const {
     store,
     onLock,
+    onReset,
   }: {
     store: GatingStore;
     onLock: () => void;
+    onReset: () => void;
   } = $props();
 
   let showPassword = $state(false);
@@ -37,7 +39,8 @@
         class="text-xs font-medium text-[#D26060]"
         onclick={() => {
           submitted = false;
-          store.clearPasswordDraft();
+          store.removePasswordLock();
+          onReset();
         }}
       >
         {locale.t("links.linkForm.lock.reset")}
@@ -57,6 +60,7 @@
 
       <button
         type="button"
+        tabindex="-1"
         class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         onclick={() => (showPassword = !showPassword)}
         aria-label={showPassword
@@ -96,6 +100,7 @@
 
       <button
         type="button"
+        tabindex="-1"
         class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         onclick={() => (showConfirmPassword = !showConfirmPassword)}
         aria-label={showConfirmPassword

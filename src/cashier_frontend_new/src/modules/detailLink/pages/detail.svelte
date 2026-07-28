@@ -491,10 +491,6 @@
     }
   }
 
-  function goToLinks() {
-    goto(resolve(paths.links()));
-  }
-
   async function handleProcessAction(): Promise<ProcessActionResult> {
     if (!linkStore) throw new Error("Link store is missing");
 
@@ -630,12 +626,6 @@
           loading={isEndingLink}
         >
           {locale.t("links.linkForm.detail.endLink")}
-        </PrimaryActionButton>
-      {/if}
-
-      {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
-        <PrimaryActionButton onclick={goToLinks}>
-          {locale.t("links.linkForm.detail.goToLinks")}
         </PrimaryActionButton>
       {/if}
     </div>

@@ -18,7 +18,7 @@
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
   import AssetList from "$modules/useLink/components/AssetList.svelte";
   import PasswordUnlockForm from "$modules/gating/components/PasswordUnlockForm.svelte";
-  import { Lock } from "lucide-svelte";
+  import { ChevronLeft, Lock } from "lucide-svelte";
   import { UserLinkStoreV3ViewModelAdapter } from "$modules/useLink/state/adapters/userLinkStoreV3ViewModelAdapter";
   import {
     shouldRedirectErrorTo404,
@@ -254,14 +254,21 @@
     await userStore.goNext();
   };
 
+  const handleUseFlowBack = async () => {
+    if (!userStore) return;
+
+    try {
+      await userStore.goBack();
+    } catch (err) {
+      errorMessage = err instanceof Error ? err.message : String(err);
+    }
+  };
+
   // Register back handler for AppHeader on the use flow
   const handleBack = async () => {
-    if (userStore && userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
-      await userStore.goBack();
-      return;
+    if (userStore?.canGoBack) {
+      await handleUseFlowBack();
     }
-
-    await appHeaderStore.triggerBack();
   };
 
   onMount(() => {
@@ -288,6 +295,19 @@
         class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
       >
         {successMessage}
+      </div>
+    {/if}
+
+    {#if userStore?.canGoBack}
+      <div class="hidden md:flex flex-none items-center mb-2">
+        <button
+          onclick={handleUseFlowBack}
+          class="cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
+          type="button"
+          aria-label={locale.t("links.linkForm.header.back")}
+        >
+          <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
+        </button>
       </div>
     {/if}
 

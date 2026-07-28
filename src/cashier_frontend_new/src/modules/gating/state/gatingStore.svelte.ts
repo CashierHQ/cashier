@@ -1,7 +1,7 @@
 import { locale } from "$lib/i18n";
+import { TWEET_URL_PATTERN } from "$modules/gating/constants";
 import { GateType, type GateDraft } from "$modules/gating/types/gate";
-
-const TWEET_URL_PATTERN = /^https:\/\/x\.com\/.+\/status\/\d+$/;
+import { isValidPhoneNumber } from "libphonenumber-js/min";
 
 export class GatingStore {
   #selectedGateTypes = $state<GateType[]>([]);
@@ -26,6 +26,12 @@ export class GatingStore {
   #otpPhoneDigits = $state("");
   #otpPhoneConfirmDigits = $state("");
   #otpCountryCode = $state("");
+
+  #removeSelectedGateType(type: GateType): void {
+    this.#selectedGateTypes = this.#selectedGateTypes.filter(
+      (selectedType) => selectedType !== type,
+    );
+  }
 
   get selectedGateTypes(): GateType[] {
     return this.#selectedGateTypes;
@@ -178,7 +184,7 @@ export class GatingStore {
     if (phone.length === 0) {
       return locale.t("links.linkForm.lock.otp.errors.phoneRequired");
     }
-    if (!/^\+?[\d\s\-()]{7,20}$/.test(phone))
+    if (!isValidPhoneNumber(phone))
       return locale.t("links.linkForm.lock.otp.errors.phoneInvalid");
     if (phone !== this.#otpPhoneConfirmDraft.trim()) {
       return locale.t("links.linkForm.lock.otp.errors.phoneNumbersDifferent");
@@ -457,6 +463,12 @@ export class GatingStore {
     this.#confirmPassword = "";
   }
 
+  removePasswordLock(): void {
+    this.#removeSelectedGateType(GateType.PASSWORD);
+    this.#configuredPassword = null;
+    this.clearPasswordDraft();
+  }
+
   clearXFollowingDraft(): void {
     this.#xFollowingDraft = "";
     this.#xRewardAccountDraft = "";
@@ -472,6 +484,24 @@ export class GatingStore {
 
   clearXRetweetedPostDraft(): void {
     this.#xRetweetedPostDraft = "";
+  }
+
+  removeXLocks(): void {
+    this.#selectedGateTypes = this.#selectedGateTypes.filter(
+      (selectedType) =>
+        selectedType !== GateType.X_FOLLOWING &&
+        selectedType !== GateType.X_OWNED_ACCOUNT &&
+        selectedType !== GateType.X_LIKED_POST &&
+        selectedType !== GateType.X_RETWEETED_POST,
+    );
+    this.#xFollowingHandle = null;
+    this.#xOwnedAccountHandle = null;
+    this.#xLikedPostUrl = null;
+    this.#xRetweetedPostUrl = null;
+    this.clearXFollowingDraft();
+    this.clearXOwnedAccountDraft();
+    this.clearXLikedPostDraft();
+    this.clearXRetweetedPostDraft();
   }
 
   setOTPEmailDraft(email: string): void {
@@ -520,11 +550,24 @@ export class GatingStore {
     this.#otpEmailConfirmDraft = "";
   }
 
+  removeOTPEmailLock(): void {
+    this.#removeSelectedGateType(GateType.OTP_EMAIL);
+    this.#otpEmail = null;
+    this.clearOTPEmailDraft();
+  }
+
   clearOTPPhoneDraft(): void {
     this.#otpPhoneDraft = "";
     this.#otpPhoneConfirmDraft = "";
     this.#otpPhoneDigits = "";
     this.#otpPhoneConfirmDigits = "";
+  }
+
+  removeOTPSmsLock(): void {
+    this.#removeSelectedGateType(GateType.OTP_SMS);
+    this.#otpPhone = null;
+    this.clearOTPPhoneDraft();
+    this.#otpCountryCode = "";
   }
 
   resetAll(): void {

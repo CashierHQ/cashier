@@ -15,6 +15,7 @@ import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
  */
 export class LinkListStore {
   #linkListQuery;
+  #loadedLinksOwner = $state<string | null>(null);
 
   /** Persisted state for onboarding dismissal */
   #isOnboardingDismissed = $state(
@@ -25,7 +26,10 @@ export class LinkListStore {
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
-        if (!authState.account?.owner) {
+        const owner = authState.account?.owner;
+
+        if (!owner) {
+          this.#loadedLinksOwner = null;
           return [];
         }
 
@@ -35,6 +39,8 @@ export class LinkListStore {
           v3Res.isOk() && v3Res.unwrap().data
             ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
             : [];
+
+        this.#loadedLinksOwner = owner;
 
         return v3Links;
       },
@@ -50,6 +56,7 @@ export class LinkListStore {
       $effect(() => {
         // Reset the data when user logs out
         if (authState.account == null) {
+          this.#loadedLinksOwner = null;
           this.#linkListQuery.reset();
           return;
         }
@@ -61,6 +68,18 @@ export class LinkListStore {
   /** Get the underlying query state */
   get query() {
     return this.#linkListQuery;
+  }
+
+  get isLoadingInitialPersistedLinks() {
+    const owner = authState.account?.owner;
+
+    if (!owner) return false;
+
+    return (
+      this.#linkListQuery.isLoading &&
+      this.#loadedLinksOwner !== owner &&
+      (this.#linkListQuery.data ?? []).length === 0
+    );
   }
 
   /**
