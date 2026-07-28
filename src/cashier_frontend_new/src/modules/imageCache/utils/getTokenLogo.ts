@@ -7,14 +7,8 @@ import {
   CKBTC_CANISTER_ID,
   ICP_LEDGER_CANISTER_ID,
 } from "$modules/token/constants";
+import type { TokenLogoSource } from "$modules/imageCache/types";
 import { getCachedTokenImage } from "$modules/imageCache/utils/imageCache";
-
-type TokenLogoSource = {
-  address: string;
-  runeInfo?: {
-    icon?: string | null;
-  } | null;
-};
 
 /**
  * Get token logo URL based on token address

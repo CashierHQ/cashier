@@ -43,4 +43,5 @@ export {
 export type {
   ImageCacheEntry,
   ImageLoadOptions,
+  TokenLogoSource,
 } from "$modules/imageCache/types";

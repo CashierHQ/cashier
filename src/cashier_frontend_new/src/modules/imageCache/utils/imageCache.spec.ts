@@ -115,6 +115,37 @@ describe("imageCache", () => {
     it("should return null for uncached address", () => {
       expect(getCachedTokenImage("test-address")).toBeNull();
     });
+
+    it("should hydrate valid persisted cache entries on module load", async () => {
+      const address = "persisted-address";
+      const imageUrl = "data:image/png;base64,persisted";
+
+      localStorageData.cashier_token_image_cache = JSON.stringify([
+        [address, imageUrl],
+        ["invalid-entry"],
+        [123, imageUrl],
+      ]);
+
+      vi.resetModules();
+      const { getCachedTokenImage: getHydratedTokenImage } =
+        await import("$modules/imageCache/utils/imageCache");
+
+      expect(getHydratedTokenImage(address)).toBe(imageUrl);
+      expect(getHydratedTokenImage("invalid-entry")).toBeNull();
+    });
+
+    it("should remove corrupted persisted cache data on module load", async () => {
+      localStorageData.cashier_token_image_cache = "{invalid-json";
+
+      vi.resetModules();
+      const { getCacheSize: getHydratedCacheSize } =
+        await import("$modules/imageCache/utils/imageCache");
+
+      expect(getHydratedCacheSize()).toBe(0);
+      expect(globalThis.localStorage.removeItem).toHaveBeenCalledWith(
+        "cashier_token_image_cache",
+      );
+    });
   });
 
   describe("loadTokenImage", () => {
