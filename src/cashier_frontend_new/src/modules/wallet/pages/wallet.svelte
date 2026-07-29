@@ -1,39 +1,64 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import WalletOverviewHeader from "$modules/wallet/components/header/WalletOverviewHeader.svelte";
+  import NftCollectionDetail from "$modules/wallet/components/nft/nftCollectionDetail.svelte";
   import NftList from "$modules/wallet/components/nft/nftList.svelte";
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
+  import {
+    WALLET_TAB_SLIDE_DURATION_MS,
+    WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT,
+    WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
+  } from "$modules/wallet/constants";
   import { WalletTab } from "$modules/wallet/types";
-  import { toast } from "svelte-sonner";
+  import { horizontalSlide } from "$modules/wallet/utils/horizontalSlide";
   import { SvelteSet } from "svelte/reactivity";
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
+  import { collectionStore } from "$modules/wallet/state/collectionStore.svelte";
+  import { nftPortfolioStore } from "$modules/wallet/state/nftPortfolioStore.svelte";
+  import {
+    getOwnedNftCountForCollection,
+    mergeOwnedAndPortfolioNfts,
+  } from "$modules/wallet/utils/nftCollections";
+  import { SlidersHorizontal } from "lucide-svelte";
+  import { cubicOut } from "svelte/easing";
 
   type Props = {
     activeTab?: WalletTab;
+    initialSelectedCollectionId?: string;
+    initialSelectedTokenId?: bigint;
     onNavigateToToken: (token: string) => void;
     onNavigateToManage: () => void;
     onNavigateToSend: () => void;
+    onNavigateToNftSend: (collectionId?: string, tokenId?: bigint) => void;
     onNavigateToReceive: () => void;
-    onNavigateToSwap: () => void;
-    onNavigateToAddNft: () => void;
+    onNavigateToNftReceive: (collectionId?: string) => void;
+    onNavigateToManageNfts: () => void;
     onTabChange: (tab: WalletTab) => void;
+    onNestedViewChange?: (isNested: boolean) => void;
   };
 
   let {
     activeTab = WalletTab.TOKENS,
+    initialSelectedCollectionId,
+    initialSelectedTokenId,
     onNavigateToToken,
     onNavigateToManage,
     onNavigateToSend,
+    onNavigateToNftSend,
     onNavigateToReceive,
-    onNavigateToSwap,
-    onNavigateToAddNft,
+    onNavigateToNftReceive,
+    onNavigateToManageNfts,
     onTabChange,
+    onNestedViewChange,
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
-  let currentTab = $state<WalletTab>(activeTab);
+  let selectedCollectionId = $state<string | null>(null);
+  let initialSelectionApplied = $state(false);
 
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(
@@ -48,10 +73,110 @@
     return walletStore.query.data.filter((token) => token.enabled);
   });
 
+  const visibleNfts = $derived.by(() =>
+    (walletNftStore.query.data ?? []).filter((nft) =>
+      collectionStore.isCollectionEnabled(nft.collectionId),
+    ),
+  );
+  // Registry rows for the collections the user has enabled, with per-collection
+  // counts sourced from both manual wallet NFTs and nftGeek portfolio ownership.
+  const nftCollections = $derived.by(() =>
+    (collectionStore.query.data ?? [])
+      .filter((collection) =>
+        collectionStore.isCollectionEnabled(collection.collectionId),
+      )
+      .map((collection) => {
+        const itemCount = getOwnedNftCountForCollection(
+          visibleNfts,
+          nftPortfolioStore.getTokensForCollection(collection.collectionId),
+          collection.collectionId,
+          collection.name,
+          collection.standard,
+        );
+
+        return {
+          collectionId: collection.collectionId,
+          name: collection.name,
+          description: collection.description,
+          imageUrl: collection.imageUrl,
+          itemCount,
+          standard: collection.standard,
+        };
+      }),
+  );
+  const nftCount = $derived(
+    nftCollections.reduce(
+      (total, collection) => total + collection.itemCount,
+      0,
+    ),
+  );
+  const collectionCount = $derived(nftCollections.length);
+  const isRefreshingNfts = $derived(
+    walletNftStore.query.isLoading || nftPortfolioStore.query.isLoading,
+  );
+  const selectedCollection = $derived.by(() => {
+    if (!selectedCollectionId) return null;
+
+    const collection = nftCollections.find(
+      (collection) => collection.collectionId === selectedCollectionId,
+    );
+    return collection ?? null;
+  });
+  const selectedCollectionNfts = $derived.by(() => {
+    const collectionId = selectedCollectionId;
+    if (!collectionId) return [];
+
+    const collectionName = selectedCollection?.name ?? "";
+    const standard = selectedCollection?.standard;
+
+    return mergeOwnedAndPortfolioNfts(
+      visibleNfts,
+      nftPortfolioStore.getTokensForCollection(collectionId),
+      collectionId,
+      collectionName,
+      standard,
+    );
+  });
+  const contentEnterXPercent = $derived(
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT
+      : WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT,
+  );
+  const contentExitXPercent = $derived(
+    activeTab === WalletTab.NFTS
+      ? WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT
+      : WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT,
+  );
+
   $effect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(BALANCE_VISIBILITY_KEY, String(balanceVisible));
     }
+  });
+
+  $effect(() => {
+    if (initialSelectionApplied || activeTab !== WalletTab.NFTS) {
+      return;
+    }
+
+    if (initialSelectedCollectionId) {
+      selectedCollectionId = initialSelectedCollectionId;
+    }
+
+    initialSelectionApplied = true;
+  });
+
+  $effect(() => {
+    if (activeTab !== WalletTab.NFTS) {
+      selectedCollectionId = null;
+      initialSelectionApplied = false;
+    }
+  });
+
+  $effect(() => {
+    onNestedViewChange?.(
+      activeTab === WalletTab.NFTS && selectedCollectionId !== null,
+    );
   });
 
   function handleToggle() {
@@ -71,96 +196,176 @@
   }
 
   function handleTabChange(tab: WalletTab) {
-    currentTab = tab;
     onTabChange(tab);
   }
 
-  function handleSelectNft(collectionId: string, tokenId: bigint) {
-    // Handle NFT selection (e.g., navigate to NFT details)
-    toast.info("Selected NFT: " + collectionId + " #" + tokenId.toString());
+  function handleSelectCollection(collectionId: string) {
+    selectedCollectionId = collectionId;
   }
 
-  function handleAddNft() {
-    onNavigateToAddNft();
+  function handleCollectionBack() {
+    selectedCollectionId = null;
   }
 
-  function handleLoadMoreNfts() {
-    walletNftStore.loadMore();
+  function handleManageNfts() {
+    onNavigateToManageNfts();
+  }
+
+  function handleReceive() {
+    if (activeTab === WalletTab.NFTS) {
+      onNavigateToNftReceive();
+      return;
+    }
+
+    onNavigateToReceive();
+  }
+
+  function handleSend() {
+    if (activeTab === WalletTab.NFTS) {
+      onNavigateToNftSend();
+      return;
+    }
+
+    onNavigateToSend();
+  }
+
+  function handleReceiveCollection(collectionId: string) {
+    onNavigateToNftReceive(collectionId);
+  }
+
+  function handleSendNft(collectionId: string, tokenId: bigint) {
+    onNavigateToNftSend(collectionId, tokenId);
+  }
+
+  async function handleRefreshCollectionDetail() {
+    await Promise.allSettled([
+      walletNftStore.query.refreshAsync(),
+      nftPortfolioStore.query.refreshAsync(),
+    ]);
   }
 </script>
 
-<NavBar
-  mode="default"
-  activeTab={currentTab}
-  isBalanceVisible={balanceVisible}
-  onToggleBalance={handleToggle}
-  onSend={onNavigateToSend}
-  onReceive={onNavigateToReceive}
-  onSwap={onNavigateToSwap}
-  onTabChange={handleTabChange}
-/>
+{#if activeTab === WalletTab.NFTS && selectedCollection}
+  <div class="h-full overflow-y-auto">
+    <NftCollectionDetail
+      collection={selectedCollection}
+      nfts={selectedCollectionNfts}
+      initialTokenId={initialSelectedTokenId}
+      onNavigateBack={handleCollectionBack}
+      onReceive={handleReceiveCollection}
+      onSend={handleSendNft}
+      onRefresh={handleRefreshCollectionDetail}
+      isRefreshing={isRefreshingNfts}
+    />
+  </div>
+{:else}
+  <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <WalletOverviewHeader
+      {activeTab}
+      isBalanceVisible={balanceVisible}
+      {nftCount}
+      onToggleBalance={handleToggle}
+      onSend={handleSend}
+      onReceive={handleReceive}
+      onTabChange={handleTabChange}
+    />
 
-<div class="pb-6">
-  {#if currentTab === WalletTab.TOKENS}
-    {#if walletStore.query.data}
-      <TokenList
-        tokens={enabledTokens}
-        {balanceVisible}
-        onSelectToken={handleSelectToken}
-        onImageError={handleImageError}
-        {failedImageLoads}
-      />
-
-      <div class="mt-2 text-center">
-        <button
-          onclick={handleManageTokens}
-          class="text-green hover:text-teal-700 text-sm transition-colors"
+    <div
+      class="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] overflow-x-clip pt-4"
+    >
+      {#key activeTab}
+        <div
+          class="col-start-1 row-start-1 flex min-h-0 w-full overflow-hidden flex-col"
+          in:horizontalSlide={{
+            xPercent: contentEnterXPercent,
+            duration: WALLET_TAB_SLIDE_DURATION_MS,
+            easing: cubicOut,
+          }}
+          out:horizontalSlide={{
+            xPercent: contentExitXPercent,
+            duration: WALLET_TAB_SLIDE_DURATION_MS,
+            easing: cubicOut,
+          }}
         >
-          {locale.t("wallet.manageTokensBtn")}
-        </button>
-      </div>
-    {:else if walletStore.query.error}
-      <div class="text-center py-8">
-        <p class="text-red-600 mb-4">
-          {locale.t("wallet.errorMsg")}
-          {walletStore.query.error}
-        </p>
-      </div>
-    {:else}
-      <div class="text-center py-8">
-        <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-      </div>
-    {/if}
-  {:else if currentTab === WalletTab.NFTS}
-    {#if walletNftStore.query.data}
-      <NftList
-        nfts={walletNftStore.query.data}
-        hasMore={walletNftStore.hasMore}
-        onSelectNFT={(collectionId, tokenId) => {
-          handleSelectNft(collectionId, tokenId);
-        }}
-        onLoadMore={handleLoadMoreNfts}
-      />
-
-      <div class="mt-6 text-center">
-        <button
-          onclick={handleAddNft}
-          class="text-green hover:text-teal-700 font-medium text-base transition-colors"
-        >
-          {locale.t("wallet.addNftBtn")}
-        </button>
-      </div>
-    {:else if walletNftStore.query.error}
-      <div class="text-center py-8">
-        <p class="text-red-600 mb-4">
-          {locale.t("wallet.errorMsg")}
-          {walletNftStore.query.error}
-        </p>
-      </div>
-    {:else}
-      <div class="text-center py-8">
-        <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
-      </div>
-    {/if}
-  {/if}
-</div>
+          {#if activeTab === WalletTab.TOKENS}
+            {#if walletStore.query.data}
+              <div class="mb-2 flex items-center justify-between">
+                <h3 class="text-lg font-medium text-[#242424]">
+                  {locale.t("wallet.tokens.sectionTitle")}
+                  <span class="ml-1 font-normal text-grey">
+                    {enabledTokens.length}
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  onclick={handleManageTokens}
+                  class="flex h-8 w-8 items-center justify-center rounded-md bg-lightgreen text-gray-700 transition-colors hover:bg-lightgreen/80 active:scale-95 cursor-pointer"
+                  aria-label={locale.t("wallet.tokens.manageAria")}
+                >
+                  <SlidersHorizontal size={18} />
+                </button>
+              </div>
+              <div class="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-6">
+                <TokenList
+                  tokens={enabledTokens}
+                  {balanceVisible}
+                  onSelectToken={handleSelectToken}
+                  onImageError={handleImageError}
+                  {failedImageLoads}
+                />
+              </div>
+            {:else if walletStore.query.error}
+              <div class="text-center py-8">
+                <p class="text-red-600 mb-4">
+                  {locale.t("wallet.errorMsg")}
+                  {walletStore.query.error}
+                </p>
+              </div>
+            {:else}
+              <div class="text-center py-8">
+                <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+              </div>
+            {/if}
+          {:else if activeTab === WalletTab.NFTS}
+            {#if collectionStore.query.data}
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-medium text-[#242424]">
+                  {locale.t("wallet.nfts.sectionTitle")}
+                  <span class="ml-1 font-normal text-grey">
+                    {collectionCount}
+                  </span>
+                </h3>
+                <button
+                  type="button"
+                  onclick={handleManageNfts}
+                  class="flex h-8 w-8 items-center justify-center rounded-md bg-walletlightpurple text-gray-700 transition-colors hover:bg-walletlightpurple/80 active:scale-95 cursor-pointer"
+                  aria-label={locale.t("wallet.nfts.manageAria")}
+                >
+                  <SlidersHorizontal size={21} />
+                </button>
+              </div>
+              <div class="scrollbar-hide min-h-0 flex-1 overflow-y-auto pb-6">
+                <NftList
+                  collections={nftCollections}
+                  onSelectCollection={handleSelectCollection}
+                  onManageNfts={handleManageNfts}
+                />
+              </div>
+            {:else if collectionStore.query.error}
+              <div class="text-center py-8">
+                <p class="text-red-600 mb-4">
+                  {locale.t("wallet.errorMsg")}
+                  {collectionStore.query.error}
+                </p>
+              </div>
+            {:else}
+              <div class="text-center py-8">
+                <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+              </div>
+            {/if}
+          {/if}
+        </div>
+      {/key}
+    </div>
+  </div>
+{/if}

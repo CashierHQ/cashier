@@ -3,6 +3,10 @@ use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{
     auth::Permission,
+    collection::{
+        CollectionDto, CollectionId, EnableCollectionInput, EnableCollectionsInput,
+        ListCollectionsInput, UpsertCollectionsInput, UpsertCollectionsResult,
+    },
     dto::{
         bitcoin::{
             CreateBridgeTransactionInputArg, GetUserBridgeTransactionsInputArg,
@@ -257,5 +261,56 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         ledger_id: Principal,
     ) -> CanisterClientResult<Result<TokenDto, CanisterError>> {
         self.client.query("get_token_by_id", (ledger_id,)).await
+    }
+
+    /// Lists collections in the registry, paginated
+    pub async fn list_collections(
+        &self,
+        input: ListCollectionsInput,
+    ) -> CanisterClientResult<Vec<CollectionDto>> {
+        self.client.query("list_collections", (input,)).await
+    }
+
+    /// Get a single collection from the registry by id
+    pub async fn get_collection_by_id(
+        &self,
+        collection_id: Principal,
+    ) -> CanisterClientResult<Result<CollectionDto, CanisterError>> {
+        self.client
+            .query("get_collection_by_id", (collection_id,))
+            .await
+    }
+
+    /// Retrieves the ids of the collections enabled by the calling user
+    pub async fn user_get_enabled_collections(&self) -> CanisterClientResult<Vec<CollectionId>> {
+        self.client.query("user_get_enabled_collections", ()).await
+    }
+
+    /// Enables or disables a single collection for the calling user
+    pub async fn user_enable_collection(
+        &self,
+        input: EnableCollectionInput,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client.update("user_enable_collection", (input,)).await
+    }
+
+    /// Enables multiple collections for the calling user in one call
+    pub async fn user_enable_collections_batch(
+        &self,
+        input: EnableCollectionsInput,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("user_enable_collections_batch", (input,))
+            .await
+    }
+
+    /// Upserts a batch of collections into the registry (script/manager-facing)
+    pub async fn collection_manager_upsert_collections(
+        &self,
+        input: UpsertCollectionsInput,
+    ) -> CanisterClientResult<Result<UpsertCollectionsResult, CanisterError>> {
+        self.client
+            .update("collection_manager_upsert_collections", (input,))
+            .await
     }
 }

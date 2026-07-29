@@ -53,7 +53,7 @@ export function parseTokenDto(
  * @returns Array of TokenMetadata
  */
 export function parseListTokens(
-  response: tokenStorage.Result_5,
+  response: tokenStorage.Result_8,
 ): TokenMetadata[] {
   if ("Err" in response) {
     const [errorKind, errorValue] = Object.entries(response.Err)[0];

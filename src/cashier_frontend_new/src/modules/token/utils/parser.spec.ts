@@ -6,7 +6,7 @@ import { parseListTokens } from "$modules/token/utils/parser";
 describe("parseListTokens", () => {
   it("should throw an error for Err response", () => {
     // Arrange
-    const response: tokenStorage.Result_5 = {
+    const response: tokenStorage.Result_8 = {
       Err: { HandleLogicError: "Some error occurred" },
     };
 
@@ -16,7 +16,7 @@ describe("parseListTokens", () => {
 
   it("should return an empty array for empty response", () => {
     // Arrange
-    const response: tokenStorage.Result_5 = {
+    const response: tokenStorage.Result_8 = {
       Ok: {
         need_update_version: false,
         perference: [],
@@ -34,7 +34,7 @@ describe("parseListTokens", () => {
   it("should parse the token response correctly", () => {
     // Arrange
     const mockPrincipal = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    const response: tokenStorage.Result_5 = {
+    const response: tokenStorage.Result_8 = {
       Ok: {
         need_update_version: false,
         perference: [],
@@ -93,7 +93,7 @@ describe("parseListTokens", () => {
     const mockIndexPrincipal = Principal.fromText(
       "qhbym-qaaaa-aaaaa-aaafq-cai",
     );
-    const response: tokenStorage.Result_5 = {
+    const response: tokenStorage.Result_8 = {
       Ok: {
         need_update_version: false,
         perference: [],
@@ -147,7 +147,7 @@ describe("parseListTokens", () => {
   it("should parse rune metadata when present", () => {
     // Arrange
     const mockPrincipal = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    const response: tokenStorage.Result_5 = {
+    const response: tokenStorage.Result_8 = {
       Ok: {
         need_update_version: false,
         perference: [],

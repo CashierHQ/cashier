@@ -5,6 +5,7 @@ use candid::Principal;
 
 pub mod auth;
 pub mod bitcoin;
+pub mod collection;
 pub mod dto;
 pub mod error;
 pub mod icrc7;

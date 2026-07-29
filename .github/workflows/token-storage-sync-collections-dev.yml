@@ -1,0 +1,38 @@
+name: Sync NFT Collections to Token Storage (dev)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync_nft_collections:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup IC tooling
+        uses: ./.github/actions/setup-ic-tools
+
+      - name: Create Deployer private key file
+        run: echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+      # DANGEROUS: This is a plaintext identity import
+      - name: Import Deployer identity
+        run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          dfx identity use deployer
+      # DANGEROUS: Do not echo the private key to the console
+
+      - name: Clean up private key file
+        run: rm private_key.pem
+
+      - name: Sync NFT collections
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: node scripts/sync_nft_collections_to_token_storage.mjs --network dev
