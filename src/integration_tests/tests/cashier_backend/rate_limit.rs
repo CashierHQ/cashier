@@ -84,7 +84,7 @@ async fn it_should_allow_open_gate_after_admin_updates_limit() {
 
         // Raise limit to 5 req/min
         admin_client
-            .admin_gate_rate_limit_update(RateLimitConfig {
+            .admin_rate_limit_update(RateLimitConfig {
                 enabled: true,
                 max_requests: 5,
                 window_secs: 60,
@@ -144,7 +144,7 @@ async fn it_should_allow_open_gate_when_rate_limit_disabled() {
 
         // Disable rate limiting
         admin_client
-            .admin_gate_rate_limit_update(RateLimitConfig {
+            .admin_rate_limit_update(RateLimitConfig {
                 enabled: false,
                 max_requests: 1,
                 window_secs: 60,
@@ -210,7 +210,7 @@ async fn it_should_allow_open_gate_after_admin_resets_user() {
 
         // Admin resets the user
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -244,7 +244,7 @@ async fn it_should_block_all_requests_when_max_requests_is_zero() {
         let admin_client = ctx.new_cashier_backend_client(admin);
 
         admin_client
-            .admin_gate_rate_limit_update(RateLimitConfig {
+            .admin_rate_limit_update(RateLimitConfig {
                 enabled: true,
                 max_requests: 0,
                 window_secs: 60,
@@ -291,7 +291,7 @@ async fn it_should_bypass_rate_limit_when_window_secs_is_zero() {
         let admin_client = ctx.new_cashier_backend_client(admin);
 
         admin_client
-            .admin_gate_rate_limit_update(RateLimitConfig {
+            .admin_rate_limit_update(RateLimitConfig {
                 enabled: true,
                 max_requests: 1,
                 window_secs: 0,
@@ -342,7 +342,7 @@ async fn it_should_fail_admin_update_due_to_unauthorized() {
 
         // Act
         let result = user_client
-            .admin_gate_rate_limit_update(RateLimitConfig {
+            .admin_rate_limit_update(RateLimitConfig {
                 enabled: false,
                 max_requests: 100,
                 window_secs: 1,
@@ -356,8 +356,138 @@ async fn it_should_fail_admin_update_due_to_unauthorized() {
         );
 
         // Verify config was not changed
-        let config = admin_client.admin_gate_rate_limit_get().await.unwrap();
+        let config = admin_client.admin_rate_limit_get().await.unwrap();
         assert_eq!(config, RateLimitConfig::default());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+// `user_open_link_gate` and `user_send_otp` share one `RateLimitConfig`, but each gets its
+// own independent counter. These tests prove that isolation: they're two steps of the same
+// OTP flow (request a code, then submit it), so a shared counter would mean requesting the
+// code exhausts the budget needed to submit it back.
+
+#[tokio::test]
+async fn it_should_not_block_open_gate_after_send_otp_for_same_user() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link_id, gate) =
+            activated_password_gate_link_fixture(ctx, "secret").await;
+
+        let receiver = TestUser::User2.get_principal();
+        let icp_fee = creator_fixture.icp_ledger_fee.clone();
+        let receiver_fixture =
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee).await;
+
+        // send_otp against an arbitrary gate id — the guard fires before the downstream
+        // call, so it doesn't matter that this isn't an OTP-type gate.
+        let _ = receiver_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_send_otp("nonexistent-gate-id")
+            .await
+            .unwrap();
+
+        // Act — open_link_gate for the same user, same window
+        let result = receiver_fixture
+            .open_link_gate(
+                &link_id,
+                &gate.id,
+                gate_service_types::GateKey::Password("secret".to_string()),
+            )
+            .await;
+
+        // Assert — not blocked by the prior send_otp call
+        assert!(
+            result.is_ok(),
+            "open_link_gate should not be rate-limited by a prior send_otp call: {result:?}"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_not_block_send_otp_after_open_gate_for_same_user() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link_id, gate) =
+            activated_password_gate_link_fixture(ctx, "secret").await;
+
+        let receiver = TestUser::User2.get_principal();
+        let icp_fee = creator_fixture.icp_ledger_fee.clone();
+        let receiver_fixture =
+            LinkTestFixtureV3::new(creator_fixture.ctx.clone(), receiver, icp_fee).await;
+
+        // Exhaust GateOpen's budget first
+        let opened = receiver_fixture
+            .open_link_gate(
+                &link_id,
+                &gate.id,
+                gate_service_types::GateKey::Password("secret".to_string()),
+            )
+            .await;
+        assert!(
+            opened.is_ok(),
+            "first open_gate call should succeed: {opened:?}"
+        );
+
+        // Act — send_otp for the same user, same window
+        let result = receiver_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_send_otp("nonexistent-gate-id")
+            .await
+            .unwrap();
+
+        // Assert — not blocked by the prior open_gate call
+        assert!(
+            !matches!(result, Err(CanisterError::RateLimited(_))),
+            "send_otp should not be rate-limited by a prior open_gate call: {result:?}"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_second_send_otp_due_to_rate_limit() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let user = TestUser::User1.get_principal();
+        let user_client = ctx.new_cashier_backend_client(user);
+
+        // First call — should reach the guard and pass it, failing downstream instead
+        // since "nonexistent-gate-id" isn't a real gate.
+        let first = user_client
+            .user_send_otp("nonexistent-gate-id")
+            .await
+            .unwrap();
+        assert!(
+            !matches!(first, Err(CanisterError::RateLimited(_))),
+            "first call should not be rate-limited: {first:?}"
+        );
+
+        // Act — second call in the same window
+        let second = user_client
+            .user_send_otp("nonexistent-gate-id")
+            .await
+            .unwrap();
+
+        // Assert
+        assert!(
+            matches!(second, Err(CanisterError::RateLimited(_))),
+            "expected RateLimited on second call, got {second:?}"
+        );
 
         Ok(())
     })

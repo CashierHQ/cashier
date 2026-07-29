@@ -56,11 +56,6 @@ export const idlFactory = ({ IDL }) => {
     'enabled' : IDL.Bool,
     'base_wait_secs' : IDL.Nat64,
   });
-  const RateLimitConfig = IDL.Record({
-    'window_secs' : IDL.Nat64,
-    'enabled' : IDL.Bool,
-    'max_requests' : IDL.Nat32,
-  });
   const SettingsDto = IDL.Record({
     'inspect_message_enabled' : IDL.Bool,
     'gate_service_canister_id' : IDL.Principal,
@@ -70,6 +65,11 @@ export const idlFactory = ({ IDL }) => {
   const Result_1 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
+  });
+  const RateLimitConfig = IDL.Record({
+    'window_secs' : IDL.Nat64,
+    'enabled' : IDL.Bool,
+    'max_requests' : IDL.Nat32,
   });
   const UpdateSettingArgs = IDL.Record({
     'inspect_message_enabled' : IDL.Opt(IDL.Bool),
@@ -538,13 +538,6 @@ export const idlFactory = ({ IDL }) => {
     'admin_gate_backoff_get' : IDL.Func([], [BackoffConfig], ['query']),
     'admin_gate_backoff_reset_user' : IDL.Func([IDL.Principal], [Result], []),
     'admin_gate_backoff_update' : IDL.Func([BackoffConfig], [Result], []),
-    'admin_gate_rate_limit_get' : IDL.Func([], [RateLimitConfig], ['query']),
-    'admin_gate_rate_limit_reset_user' : IDL.Func(
-        [IDL.Principal],
-        [Result],
-        [],
-      ),
-    'admin_gate_rate_limit_update' : IDL.Func([RateLimitConfig], [Result], []),
     'admin_get_setting' : IDL.Func([], [SettingsDto], ['query']),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
@@ -562,6 +555,9 @@ export const idlFactory = ({ IDL }) => {
         [Result_1],
         [],
       ),
+    'admin_rate_limit_get' : IDL.Func([], [RateLimitConfig], ['query']),
+    'admin_rate_limit_reset_user' : IDL.Func([IDL.Principal], [Result], []),
+    'admin_rate_limit_update' : IDL.Func([RateLimitConfig], [Result], []),
     'admin_update_setting' : IDL.Func([UpdateSettingArgs], [Result], []),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'get_link_details_v2' : IDL.Func(

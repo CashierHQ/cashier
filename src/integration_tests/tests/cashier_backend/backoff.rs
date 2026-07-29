@@ -89,7 +89,7 @@ async fn it_should_allow_retry_after_admin_resets_user() {
 
         // Act — retry with wrong password (backoff reset, rate limit also reset for clean test)
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -151,7 +151,7 @@ async fn it_should_allow_retry_after_admin_sets_short_base_wait() {
 
         // Also reset the rate limit so only backoff is the constraint
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -212,7 +212,7 @@ async fn it_should_allow_retry_after_correct_password_resets_backoff() {
         // Advance past backoff and reset rate limit
         ctx.advance_time(Duration::from_secs(2)).await;
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -229,7 +229,7 @@ async fn it_should_allow_retry_after_correct_password_resets_backoff() {
         // Act — wrong password again (after success reset, new backoff starts at failure #1)
         // Reset rate limit first so only backoff decides the outcome
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -239,7 +239,7 @@ async fn it_should_allow_retry_after_correct_password_resets_backoff() {
             .await;
 
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -292,7 +292,7 @@ async fn it_should_throttle_on_two_separate_links_with_wrong_key() {
 
         // Reset rate limit so it doesn't interfere with the link 2 check
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
@@ -346,7 +346,7 @@ async fn it_should_bypass_backoff_when_base_wait_secs_is_zero() {
 
         // Reset rate limit so only backoff decides the outcome
         admin_client
-            .admin_gate_rate_limit_reset_user(receiver)
+            .admin_rate_limit_reset_user(receiver)
             .await
             .unwrap()
             .unwrap();
