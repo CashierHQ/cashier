@@ -301,7 +301,8 @@
             "phoneInvalid": "Enter a valid phone number",
             "phoneNumbersDifferent": "Phone numbers don't match",
             "invalidCode": "Invalid or expired code. Please try again.",
-            "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying."
+            "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying.",
+            "sendFailed": "Failed to send code. Please try again."
           }
         },
         "errors": {

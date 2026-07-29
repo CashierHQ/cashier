@@ -242,17 +242,19 @@ pub async fn admin_flush_token_standard_cache() -> Result<(), CanisterError> {
     Ok(())
 }
 
-/// Updates the gate API rate limit configuration.
+/// Updates the shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
 ///
-/// Changes take effect immediately on the next `user_open_link_gate` call.
+/// Changes take effect immediately on the next call to either endpoint. Each endpoint
+/// tracks its own independent counter against this shared limit, so exhausting one
+/// endpoint's budget for a user never blocks that same user on the other endpoint.
 /// Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
 ///
 /// # Authorization
 ///
 /// Requires `Permission::Admin`.
 #[update]
-pub fn admin_gate_rate_limit_update(config: RateLimitConfig) -> Result<(), CanisterError> {
-    debug!("[admin_gate_rate_limit_update] config: {config:?}");
+pub fn admin_rate_limit_update(config: RateLimitConfig) -> Result<(), CanisterError> {
+    debug!("[admin_rate_limit_update] config: {config:?}");
     let mut state = get_state();
     let caller = msg_caller();
     state
@@ -264,14 +266,14 @@ pub fn admin_gate_rate_limit_update(config: RateLimitConfig) -> Result<(), Canis
     Ok(())
 }
 
-/// Returns the current gate API rate limit configuration.
+/// Returns the current shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
 ///
 /// # Authorization
 ///
 /// Requires `Permission::Admin`.
 #[query]
-pub fn admin_gate_rate_limit_get() -> RateLimitConfig {
-    debug!("[admin_gate_rate_limit_get]");
+pub fn admin_rate_limit_get() -> RateLimitConfig {
+    debug!("[admin_rate_limit_get]");
     let state = get_state();
     let caller = msg_caller();
     state
@@ -281,14 +283,15 @@ pub fn admin_gate_rate_limit_get() -> RateLimitConfig {
     state.rate_limit_service.get_config()
 }
 
-/// Clears the rate limit state for a specific user, allowing them to make requests immediately.
+/// Clears the rate limit state for a specific user on both `user_open_link_gate` and
+/// `user_send_otp`, allowing them to make requests immediately on either endpoint.
 ///
 /// # Authorization
 ///
 /// Requires `Permission::Admin`.
 #[update]
-pub fn admin_gate_rate_limit_reset_user(user: Principal) -> Result<(), CanisterError> {
-    debug!("[admin_gate_rate_limit_reset_user] user: {user}");
+pub fn admin_rate_limit_reset_user(user: Principal) -> Result<(), CanisterError> {
+    debug!("[admin_rate_limit_reset_user] user: {user}");
     let mut state = get_state();
     let caller = msg_caller();
     state

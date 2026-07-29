@@ -6,6 +6,7 @@
   import { otpUnlockSessionStore } from "$modules/gating/state/otpUnlockSessionStore.svelte";
   import { CircleX, Info, Mail, Smartphone, X } from "lucide-svelte";
   import { onDestroy, onMount } from "svelte";
+  import { otpSendErrorMessage } from "$modules/gating/utils/gateHelpers";
 
   const {
     linkId,
@@ -70,7 +71,7 @@
       if (result.isOk()) {
         otpUnlockSessionStore.markCodeSent(sessionKey);
       } else {
-        error = result.unwrapErr().message;
+        error = otpSendErrorMessage(result.unwrapErr());
       }
     } finally {
       isSending = false;
@@ -88,7 +89,7 @@
         otpUnlockSessionStore.markCodeSent(sessionKey);
         focusDigit(0);
       } else {
-        error = result.unwrapErr().message;
+        error = otpSendErrorMessage(result.unwrapErr());
       }
     } finally {
       isResending = false;
@@ -142,7 +143,39 @@
         onUnlocked();
         onClose();
       } else {
-        error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
+        const message = result.unwrapErr().message;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(message);
+        } catch {
+          parsed = null;
+        }
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          "BackoffThrottled" in parsed
+        ) {
+          const backoffMsg = (parsed as { BackoffThrottled: string })
+            .BackoffThrottled;
+          const match = backoffMsg.match(/Try again in (\d+)s/);
+          const remainingSecs = match ? parseInt(match[1], 10) : 0;
+          const timeStr =
+            remainingSecs >= 60
+              ? `${Math.ceil(remainingSecs / 60)} minutes`
+              : `${remainingSecs} seconds`;
+          const template = locale.t(
+            "links.linkForm.lock.tooManyFailedAttempts",
+          );
+          error = template.replace("{{time}}", timeStr);
+        } else if (
+          parsed &&
+          typeof parsed === "object" &&
+          "RateLimited" in parsed
+        ) {
+          error = locale.t("links.linkForm.lock.tooManyRequests");
+        } else {
+          error = locale.t("links.linkForm.lock.otp.errors.invalidCode");
+        }
       }
     } finally {
       isVerifying = false;
