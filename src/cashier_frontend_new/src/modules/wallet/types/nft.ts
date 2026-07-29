@@ -238,3 +238,27 @@ export class CollectionMetadataMapper {
     };
   }
 }
+
+/**
+ * Unique identifier type for NFTs in the nftGeek system
+ */
+export type NftGeekUniqueIdentifier = {
+  uniqueIdentifierType: string;
+  id: string;
+};
+
+/**
+ * Token type for NFTs in the nftGeek system, including token ID, timestamp, and unique identifier
+ */
+export type NftGeekToken = {
+  tokenId: number;
+  timeMillis: number;
+  uniqueIdentifier: NftGeekUniqueIdentifier;
+};
+
+/**
+ * Response type for the nftGeek registry API, mapping collection IDs to their owned tokens
+ */
+export type NftGeekRegistryResponse = {
+  registry: Record<string, { tokens: NftGeekToken[] }>;
+};

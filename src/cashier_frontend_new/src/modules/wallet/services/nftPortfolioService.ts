@@ -1,22 +1,8 @@
-import type { OwnedTokenRecord } from "$modules/wallet/types/nft";
-
-const NFTGEEK_REGISTRY_BASE_URL =
-  "https://api.nftgeek.app/api/cashier/principal";
-
-type NftGeekUniqueIdentifier = {
-  uniqueIdentifierType: string;
-  id: string;
-};
-
-type NftGeekToken = {
-  tokenId: number;
-  timeMillis: number;
-  uniqueIdentifier: NftGeekUniqueIdentifier;
-};
-
-type NftGeekRegistryResponse = {
-  registry: Record<string, { tokens: NftGeekToken[] }>;
-};
+import type {
+  OwnedTokenRecord,
+  NftGeekRegistryResponse,
+} from "$modules/wallet/types/nft";
+import { NFTGEEK_REGISTRY_BASE_URL } from "$modules/wallet/constants";
 
 /**
  * Service for looking up the current user's NFT portfolio from nftGeek, a 3rd-party

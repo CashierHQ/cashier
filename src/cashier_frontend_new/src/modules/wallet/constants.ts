@@ -8,3 +8,5 @@ export const WALLET_TAB_SLIDE_ENTER_FROM_RIGHT_PERCENT = 100;
 export const WALLET_TAB_SLIDE_ENTER_FROM_LEFT_PERCENT = -100;
 export const WALLET_TAB_SLIDE_EXIT_TO_LEFT_PERCENT = -100;
 export const WALLET_TAB_SLIDE_EXIT_TO_RIGHT_PERCENT = 100;
+export const NFTGEEK_REGISTRY_BASE_URL =
+  "https://api.nftgeek.app/api/cashier/principal";
