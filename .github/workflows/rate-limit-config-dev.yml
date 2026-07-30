@@ -1,0 +1,90 @@
+name: Manage Rate Limit Config (dev)
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'get'
+        type: choice
+        options:
+          - get
+          - update
+          - reset-user
+      enabled:
+        description: 'Whether rate limiting is active (update only)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      max_requests:
+        description: 'Max requests per window (update only)'
+        required: false
+        default: '1'
+        type: string
+      window_secs:
+        description: 'Window duration in seconds (update only)'
+        required: false
+        default: '60'
+        type: string
+      user_principal:
+        description: 'Principal to reset (reset-user only)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  manage_rate_limit_config:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node + pnpm
+        uses: ./.github/actions/setup-node-pnpm
+
+      - name: Setup IC tooling
+        uses: ./.github/actions/setup-ic-tools
+
+      - name: Create Deployer private key file
+        run: echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+      # DANGEROUS: This is a plaintext identity import
+      - name: Import Deployer identity
+        run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          dfx identity use deployer
+      # DANGEROUS: Do not echo the private key to the console
+
+      - name: Clean up private key file
+        run: rm private_key.pem
+
+      - name: Manage rate limit config
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        run: |
+          case "${{ inputs.action }}" in
+            get)
+              node scripts/set-rate-limit.mjs --get --network dev
+              ;;
+            update)
+              node scripts/set-rate-limit.mjs \
+                --enabled "${{ inputs.enabled }}" \
+                --max-requests "${{ inputs.max_requests }}" \
+                --window-secs "${{ inputs.window_secs }}" \
+                --network dev
+              ;;
+            reset-user)
+              if [ -z "${{ inputs.user_principal }}" ]; then
+                echo "user_principal is required for the reset-user action" >&2
+                exit 1
+              fi
+              node scripts/set-rate-limit.mjs --reset-user "${{ inputs.user_principal }}" --network dev
+              ;;
+          esac

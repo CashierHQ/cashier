@@ -301,7 +301,8 @@
             "phoneInvalid": "Enter a valid phone number",
             "phoneNumbersDifferent": "Phone numbers don't match",
             "invalidCode": "Invalid or expired code. Please try again.",
-            "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying."
+            "tooManyFailedAttempts": "Too many failed attempts. Please wait {{time}} before retrying.",
+            "sendFailed": "Failed to send code. Please try again."
           }
         },
         "errors": {
@@ -474,12 +475,97 @@
     }
   },
   "wallet": {
+    "drawer": {
+      "logoAlt": "Cashier logo",
+      "close": "Close wallet"
+    },
     "navBar": {
+      "back": "Back",
       "sendBtn": "Send",
       "receiveBtn": "Receive",
       "swapBtn": "Swap",
+      "manageBtn": "Manage",
+      "toggleBalance": "Toggle balance visibility",
       "tokensTabBtn": "Tokens",
-      "nftsTabBtn": "NFT's"
+      "nftsTabBtn": "NFTs"
+    },
+    "nfts": {
+      "summaryTitle": "NFTs",
+      "sectionTitle": "Your collections",
+      "collectionsSummarySingular": "in {{count}} collection",
+      "collectionsSummaryPlural": "in {{count}} collections",
+      "collectionCountSingular": "{{count}} collection",
+      "collectionCountPlural": "{{count}} collections",
+      "noCollections": "No NFT Collections",
+      "manageCta": "+ Manage",
+      "manageAria": "Manage NFTs",
+      "manage": {
+        "header": "Manage Collections",
+        "searchPlaceholder": "Search a collection",
+        "emptyTitle": "No collections found",
+        "unknownCollection": "Unknown Collection",
+        "itemSingular": "item",
+        "itemPlural": "items",
+        "toggleAria": "Toggle {{collection}}",
+        "toggleError": "Failed to toggle collection"
+      },
+      "detail": {
+        "supply": "Supply: ",
+        "supplyLabel": "Supply",
+        "floor": "Floor: ",
+        "floorPrice": "Floor Price",
+        "type": "Type",
+        "standard": "Standard",
+        "symbol": "Symbol",
+        "canisterId": "Canister ID",
+        "copyCanisterId": "Copy canister ID",
+        "collection": "Collection",
+        "tokenId": "Token ID",
+        "owner": "Owner",
+        "copyOwner": "Copy owner",
+        "mintDate": "Mint Date",
+        "lastTransfer": "Last Transfer",
+        "attributes": "Attributes",
+        "noAttributes": "No attributes found",
+        "aboutCollection": "About {{collection}}",
+        "receiveNft": "Receive NFT",
+        "rarity": "Rarity: ",
+        "refreshAria": "Refresh collection"
+      },
+      "receive": {
+        "header": "Receive NFT",
+        "selectionWarning": "Cashier can only display NFTs from collections you have enabled. Select the collection you expect to receive.",
+        "selectedWarning": "Only NFTs from {{collection}} will appear in your wallet. If you receive an NFT from an unsupported collection, it will not be visible until you enable that collection.",
+        "enabledCollections": "Your enabled collections",
+        "collectionLabel": "Receive NFT Collection",
+        "addressLabel": "Receive ICP Address",
+        "standardFallback": "ICRC-7"
+      },
+      "send": {
+        "header": "Send NFT",
+        "selectionWarning": "Cashier can only display NFTs from collections you have enabled. Select the collection, then choose the NFT you want to send.",
+        "searchCollectionPlaceholder": "Search a collection",
+        "searchNftPlaceholder": "Search a NFT",
+        "enabledCollections": "Your enabled collections",
+        "collectionNfts": "{{collection}} collection",
+        "assetLabel": "Asset",
+        "addressLabel": "Send address",
+        "addressPlaceholder": "Enter Address",
+        "addressExample": "e.g. vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
+        "continueButton": "Continue",
+        "confirmTitle": "Confirm transaction",
+        "youSend": "You send",
+        "to": "To",
+        "network": "Network",
+        "standard": "Standard",
+        "terms": "By confirming, you agree to execute the transaction above and agree to the terms of service.",
+        "feesBreakdown": "Fees breakdown",
+        "totalFees": "Total fees",
+        "confirmButton": "Confirm",
+        "confirmSuccess": "NFT sent successfully.",
+        "standardFallback": "ICRC-7",
+        "emptyNfts": "No NFTs found"
+      }
     },
     "tokenInfo": {
       "aboutToken": "About",
@@ -507,6 +593,10 @@
       "runeId": "Rune ID"
     },
     "nftMessage": "NFT Coming soon! Included in Release 3.",
+    "tokens": {
+      "sectionTitle": "Your tokens",
+      "manageAria": "Manage tokens"
+    },
     "manageTokensBtn": "+Manage tokens",
     "addNftBtn": "+ Add NFT",
     "noTokensMsg": "No tokens found in wallet.",

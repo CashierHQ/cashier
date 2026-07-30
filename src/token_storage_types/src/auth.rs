@@ -10,4 +10,6 @@ pub enum Permission {
     Admin,
     /// Manager of token-related operations
     TokenManager,
+    /// Manager of NFT collection registry operations
+    CollectionManager,
 }

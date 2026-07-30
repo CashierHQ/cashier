@@ -388,6 +388,21 @@ impl<C: CanisterClient> CashierBackendClient<C> {
             .await
     }
 
+    /// Sends an OTP code to the destination configured on the given gate.
+    /// # Arguments
+    /// * `gate_id` - The unique identifier of the OTPEmail or OTPSms gate
+    /// # Returns
+    /// * `Ok(())` - Code generated and dispatched via Brevo
+    /// * `Err(CanisterError)` - Gate not found, not an OTP gate, or Brevo call failed
+    pub async fn user_send_otp(
+        &self,
+        gate_id: &str,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("user_send_otp", (gate_id.to_string(),))
+            .await
+    }
+
     /// Returns link details with gate metadata and the caller's gate open status.
     /// # Arguments
     /// * `link_id` - The link ID
@@ -414,28 +429,28 @@ impl<C: CanisterClient> CashierBackendClient<C> {
             .await
     }
 
-    /// Updates the gate API rate limit configuration.
-    pub async fn admin_gate_rate_limit_update(
+    /// Updates the shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
+    pub async fn admin_rate_limit_update(
         &self,
         config: RateLimitConfig,
     ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
-            .update("admin_gate_rate_limit_update", (config,))
+            .update("admin_rate_limit_update", (config,))
             .await
     }
 
-    /// Returns the current gate API rate limit configuration.
-    pub async fn admin_gate_rate_limit_get(&self) -> CanisterClientResult<RateLimitConfig> {
-        self.client.query("admin_gate_rate_limit_get", ()).await
+    /// Returns the current shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
+    pub async fn admin_rate_limit_get(&self) -> CanisterClientResult<RateLimitConfig> {
+        self.client.query("admin_rate_limit_get", ()).await
     }
 
-    /// Clears the rate limit state for a specific user.
-    pub async fn admin_gate_rate_limit_reset_user(
+    /// Clears the rate limit state for a specific user on both endpoints.
+    pub async fn admin_rate_limit_reset_user(
         &self,
         user: Principal,
     ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
-            .update("admin_gate_rate_limit_reset_user", (user,))
+            .update("admin_rate_limit_reset_user", (user,))
             .await
     }
 

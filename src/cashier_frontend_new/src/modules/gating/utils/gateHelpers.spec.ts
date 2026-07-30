@@ -7,6 +7,7 @@ import {
   isOtpSmsGate,
   isXGate,
   isXLock,
+  otpSendErrorMessage,
 } from "$modules/gating/utils/gateHelpers";
 import { GateType } from "$modules/gating/types/gate";
 import { describe, expect, it, vi } from "vitest";
@@ -205,5 +206,56 @@ describe("isOtpSmsGate", () => {
     { XFollowing: "@handle" },
   ])("returns false for %j", (key) => {
     expect(isOtpSmsGate(buildGate(key))).toBe(false);
+  });
+});
+
+describe("otpSendErrorMessage", () => {
+  it("returns the rate-limited message for a RateLimited variant", () => {
+    const err = new Error(
+      JSON.stringify({
+        RateLimited: "Too many requests. Please wait before retrying.",
+      }),
+    );
+    expect(otpSendErrorMessage(err)).toBe(
+      "links.linkForm.lock.tooManyRequests",
+    );
+  });
+
+  it.each<Error>([
+    new Error(JSON.stringify({ HandleLogicError: "Gate not found" })),
+    new Error(JSON.stringify({ Unauthorized: "nope" })),
+    new Error(JSON.stringify({ BackoffThrottled: "Try again in 30s" })),
+  ])("falls back to the generic send-failed message for %j", (err) => {
+    expect(otpSendErrorMessage(err)).toBe(
+      "links.linkForm.lock.otp.errors.sendFailed",
+    );
+  });
+
+  it("falls back to the generic send-failed message when the error message isn't JSON", () => {
+    const err = new Error("Network request failed");
+    expect(otpSendErrorMessage(err)).toBe(
+      "links.linkForm.lock.otp.errors.sendFailed",
+    );
+  });
+
+  it("falls back to the generic send-failed message for an empty error message", () => {
+    const err = new Error("");
+    expect(otpSendErrorMessage(err)).toBe(
+      "links.linkForm.lock.otp.errors.sendFailed",
+    );
+  });
+
+  it("falls back to the generic send-failed message when the JSON payload isn't an object", () => {
+    const err = new Error(JSON.stringify("RateLimited"));
+    expect(otpSendErrorMessage(err)).toBe(
+      "links.linkForm.lock.otp.errors.sendFailed",
+    );
+  });
+
+  it("never surfaces the raw JSON-stringified error to the caller", () => {
+    const raw = JSON.stringify({ HandleLogicError: "NotFound" });
+    const message = otpSendErrorMessage(new Error(raw));
+    expect(message).not.toContain("{");
+    expect(message).not.toBe(raw);
   });
 });

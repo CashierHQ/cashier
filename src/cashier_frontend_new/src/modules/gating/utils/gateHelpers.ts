@@ -113,3 +113,24 @@ export function isOtpSmsGate(gate: GateForUser): boolean {
   const key = gate.gate.key;
   return "OTPSms" in key || "OTPSmsRedacted" in key;
 }
+
+/**
+ * Maps a sendOtp CanisterError to a user-facing message. Backend errors reach the
+ * frontend JSON-stringified as a single-key variant object, e.g. `{"RateLimited":"..."}`
+ * (see cashierBackend.ts `.mapErr(JSON.stringify)`), so it must never be shown raw.
+ *
+ * @param err - The error to map.
+ * @returns A translated error message for the user.
+ */
+export function otpSendErrorMessage(err: Error): string {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(err.message);
+  } catch {
+    parsed = null;
+  }
+  if (parsed && typeof parsed === "object" && "RateLimited" in parsed) {
+    return locale.t("links.linkForm.lock.tooManyRequests");
+  }
+  return locale.t("links.linkForm.lock.otp.errors.sendFailed");
+}

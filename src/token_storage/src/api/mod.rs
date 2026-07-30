@@ -3,6 +3,8 @@
 
 pub mod admin;
 pub mod bitcoin;
+pub mod collection;
+pub mod collection_manager;
 mod init_and_upgrade;
 mod inspect_message;
 pub mod nft;
@@ -14,6 +16,7 @@ pub mod token_manager;
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use token_storage_types::auth::*;
+use token_storage_types::collection::*;
 use token_storage_types::dto::{bitcoin::*, nft::*};
 use token_storage_types::error::*;
 use token_storage_types::init::*;

@@ -4,3 +4,4 @@ packages:
   - "src/gate_sdk"
   - "src/lib/cashier_shared"
   - ".github/scripts"
+  - "scripts"
