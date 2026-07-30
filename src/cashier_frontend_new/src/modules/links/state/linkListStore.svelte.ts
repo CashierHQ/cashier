@@ -8,6 +8,9 @@ import type { UnifiedLinkList } from "$modules/links/types/linkList";
 import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
 import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 
+/** Number of links fetched per page, and the increment used by `loadMore()`. */
+const PAGE_SIZE = 100;
+
 /**
  * Store managing the list of links.
  * Fetches persisted links from the V3 API and merges local V3 drafts.
@@ -16,6 +19,20 @@ import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 export class LinkListStore {
   #linkListQuery;
   #loadedLinksOwner = $state<string | null>(null);
+
+  /**
+   * How many links to request (offset 0, this many) on every fetch.
+   * Grows by `PAGE_SIZE` each time `loadMore()` is called, so periodic
+   * auto-refreshes keep re-fetching the full set the user has loaded so far
+   * instead of snapping back to just the first page.
+   */
+  #loadedLimit = $state(PAGE_SIZE);
+
+  /** Whether the backend reported more links beyond the currently loaded set. */
+  #hasMore = $state(false);
+
+  /** Whether a `loadMore()` call is in flight (distinct from the initial/background load). */
+  #isLoadingMore = $state(false);
 
   /** Persisted state for onboarding dismissal */
   #isOnboardingDismissed = $state(
@@ -30,16 +47,21 @@ export class LinkListStore {
 
         if (!owner) {
           this.#loadedLinksOwner = null;
+          this.#hasMore = false;
           return [];
         }
 
-        const v3Res = await cashierBackendService.getLinksV3();
+        const v3Res = await cashierBackendService.getLinksV3({
+          offset: 0,
+          limit: this.#loadedLimit,
+        });
 
         const v3Links: Link[] =
           v3Res.isOk() && v3Res.unwrap().data
             ? v3Res.unwrap().data.map(mapV3LinkToFrontend)
             : [];
 
+        this.#hasMore = v3Res.isOk() ? v3Res.unwrap().metadata.is_next : false;
         this.#loadedLinksOwner = owner;
 
         return v3Links;
@@ -57,6 +79,8 @@ export class LinkListStore {
         // Reset the data when user logs out
         if (authState.account == null) {
           this.#loadedLinksOwner = null;
+          this.#loadedLimit = PAGE_SIZE;
+          this.#hasMore = false;
           this.#linkListQuery.reset();
           return;
         }
@@ -65,6 +89,33 @@ export class LinkListStore {
       });
     });
   }
+
+  /** Whether the backend has more links beyond the currently loaded page(s). */
+  get hasMore(): boolean {
+    return this.#hasMore;
+  }
+
+  /** Whether a `loadMore()` call is currently in flight. */
+  get isLoadingMore(): boolean {
+    return this.#isLoadingMore;
+  }
+
+  /**
+   * Loads the next page of links, appending to what's already loaded.
+   * No-ops if there's nothing more to load or a load is already in flight.
+   */
+  async loadMore(): Promise<void> {
+    if (this.#isLoadingMore || !this.#hasMore) return;
+
+    this.#isLoadingMore = true;
+    this.#loadedLimit += PAGE_SIZE;
+    try {
+      await this.#linkListQuery.refreshAsync();
+    } finally {
+      this.#isLoadingMore = false;
+    }
+  }
+
   /** Get the underlying query state */
   get query() {
     return this.#linkListQuery;

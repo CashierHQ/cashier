@@ -15,14 +15,37 @@ export class GateStateV3 implements UserLinkStateV3 {
 
   async goNext(): Promise<void> {
     await this.#store.refreshAsync();
-    this.#store.state = new AddressUnlockedStateV3(this.#store);
+
+    if (this.#allGatesOpen()) {
+      this.#store.state = new AddressUnlockedStateV3(this.#store);
+    }
+    // otherwise the gate re-locked (e.g. timeout) - stay in GateStateV3
   }
 
   async goBack(): Promise<void> {
     if (this.#store.action) {
       throw new Error("Cannot go back: action already exists");
     }
-    this.#store.state = new AddressLockedStateV3(this.#store);
+
+    await this.#store.refreshAsync();
+
+    if (this.#allGatesOpen()) {
+      this.#store.state = new AddressUnlockedStateV3(this.#store);
+    } else {
+      this.#store.state = new AddressLockedStateV3(this.#store);
+    }
+  }
+
+  #allGatesOpen(): boolean {
+    const gates = this.#store.linkDetail.gates;
+    return (
+      gates.length === 0 ||
+      gates.every(
+        (g) =>
+          g.gate_user_status[0]?.status != null &&
+          "Open" in g.gate_user_status[0].status,
+      )
+    );
   }
 
   async goToLanding(): Promise<void> {

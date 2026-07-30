@@ -27,7 +27,7 @@ use cashier_backend_types::{
         link_action::v1::LinkAction,
         user_link::v1::UserLink,
     },
-    service::link::{PaginateInput, PaginateResult},
+    service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
 use cashier_common::utils::get_link_account;
 use cashier_shared::{
@@ -415,19 +415,45 @@ impl<R: Repositories> LinkV3Service<R> {
         caller: Principal,
         input: Option<PaginateInput>,
     ) -> Result<GetLinksResponseV3, CanisterError> {
-        let user_links = self
-            .user_link_repository
-            .get_links_by_user_id(&caller, &input.unwrap_or_default());
+        let requested = input.unwrap_or_default();
 
-        let link_ids = user_links
+        // Pull every link id for the caller up front: `get_links_by_user_id`'s
+        // own pagination is over its stable-storage key order, which sorts by
+        // the random link id rather than creation time, so applying the
+        // caller's offset/limit there can permanently hide newly-created
+        // links behind older ones once a user has more links than one page.
+        // Sort by `created_at` first, then paginate over that.
+        let all_user_links = self.user_link_repository.get_links_by_user_id(
+            &caller,
+            &PaginateInput {
+                offset: 0,
+                limit: usize::MAX,
+            },
+        );
+
+        let link_ids = all_user_links
             .data
             .iter()
             .map(|link_user| link_user.link_id.clone())
             .collect();
 
-        let links = self.link_v3_repository.get_batch(link_ids);
+        let mut links = self.link_v3_repository.get_batch(link_ids);
+        links.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
-        let paginate_result = PaginateResult::new(links, user_links.metadata);
+        let total = links.len();
+        let offset = requested.offset;
+        let limit = requested.limit;
+        let paginated_links: Vec<LinkV3> = links.into_iter().skip(offset).take(limit).collect();
+
+        let metadata = PaginateResultMetadata {
+            total,
+            offset,
+            limit,
+            is_next: offset + limit < total,
+            is_prev: offset > 0,
+        };
+
+        let paginate_result = PaginateResult::new(paginated_links, metadata);
 
         // format response
         Ok(paginate_result.map(|link| link.to_shared()))
@@ -1467,6 +1493,69 @@ mod tests {
         // Assert
         assert_eq!(response.data.len(), 1);
         assert_eq!(response.data[0].id, created.link.id);
+    }
+
+    #[tokio::test]
+    async fn it_should_succeed_get_links_ordered_by_created_at_desc_across_pagination() {
+        // Arrange
+        let repositories = TestRepositories::new();
+        let mut service = LinkV3Service::new(&repositories);
+        let creator = random_principal_id();
+        let canister_id = random_principal_id();
+        let ledger_id = random_principal_id();
+
+        // Create links out of chronological order and with random ids, to
+        // prove ordering doesn't rely on insertion order or on the
+        // (randomly generated) link id sorting lexicographically.
+        let timestamps = [3_000_000u64, 1_000_000u64, 2_000_000u64];
+        let mut created_ids = Vec::new();
+        for created_at in timestamps {
+            let (token_fee_service, mut token_standard_service, token_balance_service) =
+                fixture_of_services(created_at);
+            token_standard_service
+                .token_storage_client
+                .set_token_standards(ledger_id, vec![IcrcStandard::ICRC1]);
+
+            let created = service
+                .create_link(
+                    fixture_of_create_link_input_v3(
+                        SharedActionType::CreateLink,
+                        creator,
+                        canister_id,
+                        ledger_id,
+                    ),
+                    creator,
+                    canister_id,
+                    created_at,
+                    MockTransactionManagerV3::default(),
+                    token_fee_service,
+                    token_standard_service,
+                    token_balance_service,
+                    make_gate_validator(&repositories),
+                )
+                .await
+                .expect("create link should succeed");
+            created_ids.push(created.link.id);
+        }
+
+        // Act: walk both pages
+        let page1 = service
+            .get_links(creator, Some(PaginateInput { offset: 0, limit: 2 }))
+            .await
+            .expect("get links should succeed");
+        let page2 = service
+            .get_links(creator, Some(PaginateInput { offset: 2, limit: 2 }))
+            .await
+            .expect("get links should succeed");
+
+        // Assert: newest link (created_at = 3_000_000) first, oldest
+        // (1_000_000) last, and every link is present exactly once despite
+        // random ids and out-of-order creation.
+        assert_eq!(page1.data.len(), 2);
+        assert_eq!(page1.data[0].id, created_ids[0]);
+        assert_eq!(page1.data[1].id, created_ids[2]);
+        assert_eq!(page2.data.len(), 1);
+        assert_eq!(page2.data[0].id, created_ids[1]);
     }
 
     #[tokio::test]
