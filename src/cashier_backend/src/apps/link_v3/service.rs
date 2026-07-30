@@ -1540,11 +1540,23 @@ mod tests {
 
         // Act: walk both pages
         let page1 = service
-            .get_links(creator, Some(PaginateInput { offset: 0, limit: 2 }))
+            .get_links(
+                creator,
+                Some(PaginateInput {
+                    offset: 0,
+                    limit: 2,
+                }),
+            )
             .await
             .expect("get links should succeed");
         let page2 = service
-            .get_links(creator, Some(PaginateInput { offset: 2, limit: 2 }))
+            .get_links(
+                creator,
+                Some(PaginateInput {
+                    offset: 2,
+                    limit: 2,
+                }),
+            )
             .await
             .expect("get links should succeed");
 
