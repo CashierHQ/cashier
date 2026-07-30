@@ -111,7 +111,10 @@ describe("GateStateV3", () => {
       // exact scenario from the bug where clicking Back right after unlocking
       // (without ever clicking Continue/goNext) sent the user to
       // AddressLockedStateV3 instead of AddressUnlockedStateV3.
-      const gates = [
+      const gates: Array<{
+        gate: { id: string };
+        gate_user_status: [{ status: { Closed: null } | { Open: null } }];
+      }> = [
         {
           gate: { id: "gate-1" },
           gate_user_status: [{ status: { Closed: null } }],

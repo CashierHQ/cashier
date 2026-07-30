@@ -64,7 +64,7 @@ describe("AddressUnlockedStateV3", () => {
           id: "action-1",
           type: ActionType.RECEIVE,
           state: ActionState.PROCESSING,
-        } as Action,
+        } as unknown as Action,
       } as UserLinkStoreV3;
       const stateWithPendingAction = new AddressUnlockedStateV3(
         storeWithPendingAction,
@@ -82,7 +82,7 @@ describe("AddressUnlockedStateV3", () => {
           id: "action-1",
           type: ActionType.RECEIVE,
           state: ActionState.SUCCESS,
-        } as Action,
+        } as unknown as Action,
       } as UserLinkStoreV3;
       const stateWithSuccessAction = new AddressUnlockedStateV3(
         storeWithSuccessAction,
