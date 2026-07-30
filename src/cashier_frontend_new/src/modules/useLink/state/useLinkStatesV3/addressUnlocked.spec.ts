@@ -1,4 +1,5 @@
 import type Action from "$modules/links/types/action/action";
+import { ActionState } from "$modules/links/types/action/actionState";
 import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkStoreV3 } from "$modules/useLink/state/userLinkStoreV3.svelte";
@@ -50,10 +51,46 @@ describe("AddressUnlockedStateV3", () => {
   });
 
   describe("goNext", () => {
-    it("it_should_fail_do_go_next_due_to_not_supported_transition", async () => {
+    it("it_should_fail_do_go_next_due_to_no_action", async () => {
       await expect(state.goNext()).rejects.toThrow(
         "Cannot go next from Address Unlocked state.",
       );
+    });
+
+    it("it_should_fail_do_go_next_due_to_action_not_success", async () => {
+      const storeWithPendingAction = {
+        ...mockStore,
+        action: {
+          id: "action-1",
+          type: ActionType.RECEIVE,
+          state: ActionState.PROCESSING,
+        } as Action,
+      } as UserLinkStoreV3;
+      const stateWithPendingAction = new AddressUnlockedStateV3(
+        storeWithPendingAction,
+      );
+
+      await expect(stateWithPendingAction.goNext()).rejects.toThrow(
+        "Cannot go next from Address Unlocked state.",
+      );
+    });
+
+    it("it_should_succeed_do_transition_to_completed_state_when_action_succeeded", async () => {
+      const storeWithSuccessAction = {
+        ...mockStore,
+        action: {
+          id: "action-1",
+          type: ActionType.RECEIVE,
+          state: ActionState.SUCCESS,
+        } as Action,
+      } as UserLinkStoreV3;
+      const stateWithSuccessAction = new AddressUnlockedStateV3(
+        storeWithSuccessAction,
+      );
+
+      await stateWithSuccessAction.goNext();
+
+      expect(storeWithSuccessAction.state).toBeInstanceOf(CompletedStateV3);
     });
   });
 

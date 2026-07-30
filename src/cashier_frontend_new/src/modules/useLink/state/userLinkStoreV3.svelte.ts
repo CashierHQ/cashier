@@ -70,7 +70,14 @@ export class UserLinkStoreV3 {
       }
     });
 
-    // gate guard: sync state with actual gate open/closed status from backend
+    // gate guard: demote back to locked if a gate that was open re-locks
+    // (e.g. a timed unlock expiring) while the user is sitting on the
+    // unlocked step. This only ever moves the user backward to match
+    // reality; advancing past the locked/gate steps is only ever done via
+    // an explicit goNext() (the user clicking Continue) - see
+    // GateStateV3.goNext()/goBack() - never automatically by this effect,
+    // otherwise reloading the page while on the Gate step right after
+    // unlocking would silently skip straight to unlocked.
     $effect(() => {
       const gates = this.linkDetail.gates;
       if (gates.length === 0) return;
@@ -82,19 +89,10 @@ export class UserLinkStoreV3 {
           "Open" in g.gate_user_status[0].status,
       );
 
-      const step = this.#state.step;
+      const nextStep = resolveGateGuardStep(allOpen, this.#state.step);
 
-      // If gates are closed but state advanced past them, reset back to locked
-      if (!allOpen && step === UserLinkStep.ADDRESS_UNLOCKED) {
+      if (nextStep === UserLinkStep.ADDRESS_LOCKED) {
         this.#state = new AddressLockedStateV3(this);
-      }
-
-      // If all gates are already open, skip locked/gate steps and go to unlocked
-      if (
-        allOpen &&
-        (step === UserLinkStep.ADDRESS_LOCKED || step === UserLinkStep.GATE)
-      ) {
-        this.#state = new AddressUnlockedStateV3(this);
       }
     });
   }
@@ -301,6 +299,29 @@ export function resolveStaleCompletedStep(
   }
   if (!linkEnded) {
     return UserLinkStep.LANDING;
+  }
+  return null;
+}
+
+/**
+ * Resolve the gate guard's reaction to the caller's current gate-open status.
+ * This only ever demotes: if a gate that was open has re-locked (e.g. a timed
+ * unlock expiring) while the user is on the unlocked step, send them back to
+ * locked. It must never promote - advancing past the locked/gate steps is
+ * only ever done via an explicit goNext() (the user clicking Continue), not
+ * automatically here. Otherwise reloading the page while on the Gate step
+ * right after unlocking would silently skip straight to unlocked.
+ * @param allGatesOpen Whether every gate on the link currently reports Open
+ * @param currentStep The current step in the user link flow
+ * @returns the step to transition to, or `null` if the current step should
+ * be left alone.
+ */
+export function resolveGateGuardStep(
+  allGatesOpen: boolean,
+  currentStep: UserLinkStep,
+): UserLinkStep | null {
+  if (!allGatesOpen && currentStep === UserLinkStep.ADDRESS_UNLOCKED) {
+    return UserLinkStep.ADDRESS_LOCKED;
   }
   return null;
 }
