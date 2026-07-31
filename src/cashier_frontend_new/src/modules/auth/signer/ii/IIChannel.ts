@@ -32,6 +32,7 @@ import {
   scopes,
   supportedStandards,
 } from "$modules/auth/signer/ii/constants";
+import type { BatchCallProgress } from "$modules/auth/signer/types";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9
@@ -57,6 +58,9 @@ export class IIChannel implements Channel {
   readonly #agent: HttpAgent;
   readonly #closeListeners = new Set<() => void>();
   readonly #responseListeners = new Set<(response: JsonResponse) => void>();
+  readonly #batchProgressListeners = new Set<
+    (progress: BatchCallProgress) => void
+  >();
   #closed: boolean = false;
 
   constructor(agent: HttpAgent) {
@@ -65,6 +69,29 @@ export class IIChannel implements Channel {
 
   get closed() {
     return this.#closed;
+  }
+
+  /**
+   * Additive hook (not part of the `Channel` interface): notified once per
+   * individual sub-request inside an `icrc112_batch_call_canister` call, as
+   * soon as *that* request settles - independent of the aggregate "response"
+   * event, which only fires once the whole batch (all sequences) has
+   * finished. Consumers must feature-detect this method.
+   * @param listener - callback invoked with a `BatchCallProgress` object
+   */
+  onBatchProgress(listener: (progress: BatchCallProgress) => void): () => void {
+    this.#batchProgressListeners.add(listener);
+    return () => {
+      this.#batchProgressListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Notify all batch progress listeners.
+   * @param progress - the progress object to send to listeners
+   */
+  #notifyBatchProgress(progress: BatchCallProgress): void {
+    this.#batchProgressListeners.forEach((listener) => listener(progress));
   }
 
   /**
@@ -344,97 +371,138 @@ export class IIChannel implements Channel {
           },
         };
         let batchFailed = false;
-        for (const requests of batchCallCanisterRequest.params!.requests) {
+        for (const [
+          sequenceIndex,
+          requests,
+        ] of batchCallCanisterRequest.params!.requests.entries()) {
           // v5: Per-request error responses retain shape from prior versions; cast to satisfy stricter response type
           batchCallCanisterResponse.result.responses.push(
             (await Promise.all(
-              requests.map(async (request) => {
-                if (batchFailed) {
-                  return {
-                    error: {
-                      code: 1001,
-                      message: "Request not processed.",
-                    },
-                  };
-                }
-                try {
-                  const canisterId = Principal.fromText(request.canisterId);
-                  // v5: clone agent per request to avoid accumulating addTransform handlers
-                  // on the shared #agent across batch iterations
-                  const agent = await HttpAgent.from(this.#agent);
-                  // v5: Cbor.encode returns Uint8Array (was ArrayBuffer)
-                  let contentMap: Uint8Array =
-                    undefined as unknown as Uint8Array;
-                  agent.addTransform("update", async (agentRequest) => {
-                    contentMap = Cbor.encode(agentRequest.body);
-                    return agentRequest;
-                  });
-                  const submitResponse = await agent.call(canisterId, {
-                    effectiveCanisterId: canisterId,
-                    methodName: request.method,
-                    arg: fromBase64(request.arg),
-                  });
-                  // v5: pollForResponse signature uses PollingOptions, default {} works
-                  await pollForResponse(
-                    agent,
-                    canisterId,
-                    submitResponse.requestId,
-                  );
-                  const { certificate } = await agent.readState(canisterId, {
-                    // v5: readState path elements must be Uint8Array
-                    paths: [
-                      [
-                        new TextEncoder().encode("request_status"),
-                        submitResponse.requestId,
-                      ],
-                    ],
-                  });
-                  // v5: Certificate.create takes principal: { canisterId } (was canisterId)
-                  // agent.rootKey may be ArrayBuffer | Uint8Array; coerce to Uint8Array
-                  const rootKey = (agent.rootKey ??
-                    MAINNET_ROOT_KEY) as Uint8Array;
-                  const validCertificate = await Certificate.create({
-                    certificate,
-                    rootKey,
-                    principal: { canisterId },
-                  });
-                  // v5: lookup_path replaces lookup for leaf value semantics
-                  const status = validCertificate.lookup_path([
-                    "request_status",
-                    submitResponse.requestId,
-                    "status",
-                  ]);
-                  const reply = validCertificate.lookup_path([
-                    "request_status",
-                    submitResponse.requestId,
-                    "reply",
-                  ]);
-                  if (
-                    status.status !== LookupPathStatus.Found ||
-                    new TextDecoder().decode(status.value) !== "replied" ||
-                    reply.status !== LookupPathStatus.Found
-                  ) {
-                    batchFailed = true;
+              requests.map(async (request, parallelIndex) => {
+                const response = await (async () => {
+                  if (batchFailed) {
                     return {
                       error: {
-                        code: 4000,
-                        message: "Certificate is missing reply.",
+                        code: 1001,
+                        message: "Request not processed.",
                       },
                     };
                   }
-                  if (
-                    request.method.startsWith("icrc1_") ||
-                    request.method.startsWith("icrc2_") ||
-                    request.method.startsWith("icrc7_") ||
-                    request.method.startsWith("icrc37_")
-                  ) {
-                    // Built in validation, basically checks if variant with Err is returned
-                    try {
-                      const value = IDL.decode(
-                        [IDL.Variant({ Err: IDL.Reserved })],
-                        reply.value,
-                      );
-                      if ("Err" in value) {
+                  try {
+                    const canisterId = Principal.fromText(request.canisterId);
+                    // v5: clone agent per request to avoid accumulating addTransform handlers
+                    // on the shared #agent across batch iterations
+                    const agent = await HttpAgent.from(this.#agent);
+                    // v5: Cbor.encode returns Uint8Array (was ArrayBuffer)
+                    let contentMap: Uint8Array =
+                      undefined as unknown as Uint8Array;
+                    agent.addTransform("update", async (agentRequest) => {
+                      contentMap = Cbor.encode(agentRequest.body);
+                      return agentRequest;
+                    });
+                    const submitResponse = await agent.call(canisterId, {
+                      effectiveCanisterId: canisterId,
+                      methodName: request.method,
+                      arg: fromBase64(request.arg),
+                    });
+                    // v5: pollForResponse signature uses PollingOptions, default {} works
+                    await pollForResponse(
+                      agent,
+                      canisterId,
+                      submitResponse.requestId,
+                    );
+                    const { certificate } = await agent.readState(canisterId, {
+                      // v5: readState path elements must be Uint8Array
+                      paths: [
+                        [
+                          new TextEncoder().encode("request_status"),
+                          submitResponse.requestId,
+                        ],
+                      ],
+                    });
+                    // v5: Certificate.create takes principal: { canisterId } (was canisterId)
+                    // agent.rootKey may be ArrayBuffer | Uint8Array; coerce to Uint8Array
+                    const rootKey = (agent.rootKey ??
+                      MAINNET_ROOT_KEY) as Uint8Array;
+                    const validCertificate = await Certificate.create({
+                      certificate,
+                      rootKey,
+                      principal: { canisterId },
+                    });
+                    // v5: lookup_path replaces lookup for leaf value semantics
+                    const status = validCertificate.lookup_path([
+                      "request_status",
+                      submitResponse.requestId,
+                      "status",
+                    ]);
+                    const reply = validCertificate.lookup_path([
+                      "request_status",
+                      submitResponse.requestId,
+                      "reply",
+                    ]);
+                    if (
+                      status.status !== LookupPathStatus.Found ||
+                      new TextDecoder().decode(status.value) !== "replied" ||
+                      reply.status !== LookupPathStatus.Found
+                    ) {
+                      batchFailed = true;
+                      return {
+                        error: {
+                          code: 4000,
+                          message: "Certificate is missing reply.",
+                        },
+                      };
+                    }
+                    if (
+                      request.method.startsWith("icrc1_") ||
+                      request.method.startsWith("icrc2_") ||
+                      request.method.startsWith("icrc7_") ||
+                      request.method.startsWith("icrc37_")
+                    ) {
+                      // Built in validation, basically checks if variant with Err is returned
+                      try {
+                        const value = IDL.decode(
+                          [IDL.Variant({ Err: IDL.Reserved })],
+                          reply.value,
+                        );
+                        if ("Err" in value) {
+                          batchFailed = true;
+                          return {
+                            error: {
+                              code: 1003,
+                              message: "Validation failed.",
+                            },
+                          };
+                        }
+                      } catch {
+                        // If this return error likely the response is not included Err variant
+                        // so we can assume it's valid
+                        return {
+                          result: {
+                            contentMap: toBase64(contentMap!),
+                            certificate: toBase64(certificate),
+                          },
+                        };
+                      }
+                    }
+
+                    if (validationActor) {
+                      const icrc114Args: Icrc114ValidateArgs = {
+                        canister_id: Principal.fromText(request.canisterId),
+                        method: request.method,
+                        arg: new Uint8Array(fromBase64(request.arg)),
+                        res: reply.value,
+                        nonce: request.nonce
+                          ? [new Uint8Array(fromBase64(request.nonce))]
+                          : [],
+                      };
+
+                      const isValid =
+                        await validationActor[ICRC_114_METHOD_NAME](
+                          icrc114Args,
+                        );
+
+                      if (!isValid) {
                         batchFailed = true;
                         return {
                           error: {
@@ -443,59 +511,33 @@ export class IIChannel implements Channel {
                           },
                         };
                       }
-                    } catch {
-                      // If this return error likely the response is not included Err variant
-                      // so we can assume it's valid
-                      return {
-                        result: {
-                          contentMap: toBase64(contentMap!),
-                          certificate: toBase64(certificate),
-                        },
-                      };
                     }
-                  }
-
-                  if (validationActor) {
-                    const icrc114Args: Icrc114ValidateArgs = {
-                      canister_id: Principal.fromText(request.canisterId),
-                      method: request.method,
-                      arg: new Uint8Array(fromBase64(request.arg)),
-                      res: reply.value,
-                      nonce: request.nonce
-                        ? [new Uint8Array(fromBase64(request.nonce))]
-                        : [],
+                    return {
+                      result: {
+                        contentMap: toBase64(contentMap!),
+                        certificate: toBase64(certificate),
+                      },
                     };
-
-                    const isValid =
-                      await validationActor[ICRC_114_METHOD_NAME](icrc114Args);
-
-                    if (!isValid) {
-                      batchFailed = true;
-                      return {
-                        error: {
-                          code: 1003,
-                          message: "Validation failed.",
-                        },
-                      };
-                    }
+                  } catch (error) {
+                    console.error("Error processing request:", error);
+                    batchFailed = true;
+                    return {
+                      error: {
+                        code: 4000,
+                        message: "Request failed.",
+                        data:
+                          error instanceof Error ? error.message : undefined,
+                      },
+                    };
                   }
-                  return {
-                    result: {
-                      contentMap: toBase64(contentMap!),
-                      certificate: toBase64(certificate),
-                    },
-                  };
-                } catch (error) {
-                  console.error("Error processing request:", error);
-                  batchFailed = true;
-                  return {
-                    error: {
-                      code: 4000,
-                      message: "Request failed.",
-                      data: error instanceof Error ? error.message : undefined,
-                    },
-                  };
-                }
+                })();
+                this.#notifyBatchProgress({
+                  sequenceIndex,
+                  parallelIndex,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  response: response as any,
+                });
+                return response;
               }),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             )) as any,

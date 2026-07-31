@@ -6,7 +6,11 @@ import {
   type Transport,
   toBase64,
 } from "@slide-computer/signer";
-import type { Icrc112ExecutionResult } from "$modules/icrc112/types/icrc112Request";
+import type {
+  Icrc112ExecutionResult,
+  OnRequestSettled,
+} from "$modules/icrc112/types/icrc112Request";
+import { hasBatchProgress } from "$modules/icrc112/utils/hasBatchProgress";
 
 // Class of service handler for ICRC-112 requests
 // T is the Transport type used by the Signer
@@ -20,6 +24,9 @@ class Icrc112Service<T extends Transport> {
   /**
    * Send ICRC-112 batch call request using the connected signer
    * @param icrc112Requests - 2D array of ICRC-112 requests (sequences of parallel requests)
+   * @param sender - Principal text of the sender
+   * @param cashierBackendCanisterId - Canister id used for ICRC-114 validation
+   * @param onRequestSettled - Optional callback invoked as each individual sub-request settles
    * @returns The result of the ICRC-112 execution
    */
   async sendBatchRequest(
@@ -29,10 +36,12 @@ class Icrc112Service<T extends Transport> {
         method: string;
         arg: Uint8Array | ArrayBuffer;
         nonce?: Uint8Array | ArrayBuffer;
+        intentIds?: string[];
       }>
     >,
     sender: string,
     cashierBackendCanisterId: string,
+    onRequestSettled?: OnRequestSettled,
   ): Promise<Icrc112ExecutionResult> {
     const requests = icrc112Requests.map((parallelRequests) =>
       parallelRequests.map((request) => {
@@ -65,6 +74,27 @@ class Icrc112Service<T extends Transport> {
         validationCanisterId: cashierBackendCanisterId,
       },
     };
+
+    const intentIdsByPosition = icrc112Requests.map((group) =>
+      group.map((r) => r.intentIds ?? []),
+    );
+
+    let unsubscribeBatchProgress: (() => void) | undefined;
+    if (onRequestSettled) {
+      const channel = await this.signer.openChannel();
+      if (hasBatchProgress(channel)) {
+        unsubscribeBatchProgress = channel.onBatchProgress(
+          ({ sequenceIndex, parallelIndex, response }) => {
+            const intentIds =
+              intentIdsByPosition[sequenceIndex]?.[parallelIndex] ?? [];
+            const success = "result" in response;
+            const error =
+              "error" in response ? JSON.stringify(response.error) : undefined;
+            onRequestSettled(intentIds, success, error);
+          },
+        );
+      }
+    }
 
     try {
       const res = await this.signer.sendRequest<
@@ -129,6 +159,8 @@ class Icrc112Service<T extends Transport> {
         isSuccess: false,
         errors: [error instanceof Error ? error.message : String(error)],
       };
+    } finally {
+      unsubscribeBatchProgress?.();
     }
   }
 }
