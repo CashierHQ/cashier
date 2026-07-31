@@ -8,9 +8,6 @@ import type { UnifiedLinkList } from "$modules/links/types/linkList";
 import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
 import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
 
-/** Number of links fetched per page, and the increment used by `loadMore()`. */
-const PAGE_SIZE = 100;
-
 /**
  * Store managing the list of links.
  * Fetches persisted links from the V3 API and merges local V3 drafts.
