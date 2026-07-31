@@ -2,8 +2,9 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
-  import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
+  import { BUILD_TYPE, II_SIGNER_WALLET_ID } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
+  import type { OpenIdProvider } from "@icp-sdk/auth/client";
 
   type Props = {
     open: boolean;
@@ -15,25 +16,60 @@
   let { open, onOpenChange, onBeforeLogin }: Props = $props();
 
   let isConnecting = $state(false);
+  let connectingProvider = $state<OpenIdProvider | null>(null);
+  let isLegacyConnecting = $state(false);
+
+  const showLegacyLogin = BUILD_TYPE === "dev" || BUILD_TYPE === "local";
+
+  const openIdLoginOptions: {
+    provider: OpenIdProvider;
+    labelKey: string;
+    iconSrc: string;
+    iconAlt: string;
+  }[] = [
+    {
+      provider: "google",
+      labelKey: "home.loginModal.signInWithGoogle",
+      iconSrc: "/social-icon.svg",
+      iconAlt: "Google",
+    },
+    {
+      provider: "apple",
+      labelKey: "home.loginModal.signInWithApple",
+      iconSrc: "/apple-icon.svg",
+      iconAlt: "Apple",
+    },
+    {
+      provider: "microsoft",
+      labelKey: "home.loginModal.signInWithMicrosoft",
+      iconSrc: "/microsoft-icon.svg",
+      iconAlt: "Microsoft",
+    },
+  ];
 
   function handleClose() {
     onOpenChange(false);
   }
 
-  async function handleWalletSelect(walletId: string) {
+  async function handleWalletSelect(
+    walletId: string,
+    openIdProvider?: OpenIdProvider,
+  ) {
     if (isConnecting) return;
 
     onBeforeLogin?.();
 
     try {
       isConnecting = true;
+      connectingProvider = openIdProvider ?? null;
+      isLegacyConnecting = !openIdProvider;
 
       // Map wallet ID to adapter ID
       const adapterId =
         walletId === "internet-identity" ? II_SIGNER_WALLET_ID : walletId;
 
       // Call login method from authState. redirect handled in authState.login()
-      await authState.login(adapterId);
+      await authState.login(adapterId, { openIdProvider });
       // After successful login,close modal
       handleClose();
       toast.success(locale.t("home.loginModal.successMessage"));
@@ -42,6 +78,8 @@
       toast.error(locale.t("home.loginModal.errorMessage"));
     } finally {
       isConnecting = false;
+      connectingProvider = null;
+      isLegacyConnecting = false;
     }
   }
 
@@ -80,38 +118,64 @@
 
     <div class="space-y-4">
       <div class="flex flex-col gap-2">
-        <button
-          type="button"
-          onclick={() => handleWalletSelect("internet-identity")}
-          disabled={isConnecting}
-          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span class="flex items-center w-full text-[14px]">
-            <img
-              alt="Quick Logins"
-              class="h-6 w-6 mr-[10px]"
-              src="/social-icon.svg"
-            />
-            <span class="flex-grow text-left font-medium">
-              {#if isConnecting}
-                {locale.t("home.loginModal.connecting")}
-              {:else}
-                {locale.t("home.loginModal.quickLogins")}
+        {#each openIdLoginOptions as option (option.provider)}
+          <button
+            type="button"
+            onclick={() =>
+              handleWalletSelect("internet-identity", option.provider)}
+            disabled={isConnecting}
+            class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span class="flex items-center w-full text-[14px]">
+              <img
+                alt={option.iconAlt}
+                class="h-6 w-6 mr-[10px]"
+                src={option.iconSrc}
+              />
+              <span class="flex-grow text-left font-medium">
+                {#if connectingProvider === option.provider}
+                  {locale.t("home.loginModal.connecting")}
+                {:else}
+                  {locale.t(option.labelKey)}
+                {/if}
+              </span>
+              {#if connectingProvider === option.provider}
+                <div
+                  class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
+                ></div>
               {/if}
             </span>
-            {#if isConnecting}
-              <div
-                class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
-              ></div>
-            {:else}
+          </button>
+        {/each}
+
+        {#if showLegacyLogin}
+          <button
+            type="button"
+            onclick={() => handleWalletSelect("internet-identity")}
+            disabled={isConnecting}
+            class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span class="flex items-center w-full text-[14px]">
               <img
-                alt="Social Icons"
-                src="/social-icons.svg"
-                class="h-[22px] object-contain"
+                alt="Internet Identity"
+                class="h-6 w-6 mr-[10px]"
+                src="/credit-card-check.svg"
               />
-            {/if}
-          </span>
-        </button>
+              <span class="flex-grow text-left font-medium">
+                {#if isLegacyConnecting}
+                  {locale.t("home.loginModal.connecting")}
+                {:else}
+                  {locale.t("home.loginModal.internetIdentity")}
+                {/if}
+              </span>
+              {#if isLegacyConnecting}
+                <div
+                  class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
+                ></div>
+              {/if}
+            </span>
+          </button>
+        {/if}
 
         <button
           type="button"

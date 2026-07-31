@@ -4,7 +4,7 @@ import {
   type ActorSubclass,
   type Identity,
 } from "@icp-sdk/core/agent";
-import { AuthClient } from "@icp-sdk/auth/client";
+import { AuthClient, type OpenIdProvider } from "@icp-sdk/auth/client";
 import { Adapter, BaseSignerAdapter } from "@windoge98/plug-n-play";
 import {
   type IIAdapterConfig,
@@ -89,19 +89,28 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     return Promise.resolve();
   }
 
-  private initializeAuthClient(): void {
-    try {
-      // v5: AuthClient constructor accepts identity provider URL, derivation origin,
-      // and window opener features directly (previously passed to login())
-      this.authClient = new AuthClient({
-        idleOptions: this.config.idleOptions,
-        identityProvider: this.config.iiProviderUrl || "https://id.ai",
-        derivationOrigin: this.config.derivationOrigin,
-        windowOpenerFeatures: (() => {
+  private createAuthClient(openIdProvider?: OpenIdProvider): AuthClient {
+    const windowOpenerFeatures = openIdProvider
+      ? undefined
+      : (() => {
           const screen = getScreenDimensions();
           return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
-        })(),
-      });
+        })();
+
+    // v5: AuthClient constructor accepts identity provider URL, derivation origin,
+    // and window opener features directly (previously passed to login())
+    return new AuthClient({
+      idleOptions: this.config.idleOptions,
+      identityProvider: this.config.iiProviderUrl || "https://id.ai",
+      derivationOrigin: this.config.derivationOrigin,
+      openIdProvider,
+      windowOpenerFeatures,
+    });
+  }
+
+  private initializeAuthClient(): void {
+    try {
+      this.authClient = this.createAuthClient(this.config.openIdProvider);
     } catch (err) {
       this.handleError("Failed to create AuthClient", err);
       this.setState(Adapter.Status.ERROR);
@@ -136,6 +145,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   async connect(): Promise<Account> {
     try {
       this.setState(Adapter.Status.CONNECTING);
+
+      this.authClient = this.createAuthClient(this.config.openIdProvider);
 
       if (!this.authClient) {
         throw new Error("AuthClient not initialized");
@@ -179,6 +190,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
         maxTimeToLive:
           this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
       });
+
       const account: Account = {
         owner: identity.getPrincipal().toText(),
         subaccount: null,

@@ -5,6 +5,7 @@ import {
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
+import type { IIAdapterConfig } from "$modules/auth/signer/ii/type";
 import {
   BUILD_TYPE,
   FEATURE_FLAGS,
@@ -13,6 +14,7 @@ import {
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
 import { Actor, HttpAgent } from "@icp-sdk/core/agent";
+import type { OpenIdProvider } from "@icp-sdk/auth/client";
 import type { IDL } from "@icp-sdk/core/candid";
 import { DelegationIdentity } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
@@ -102,6 +104,10 @@ let account = $state<{
 } | null>(null);
 
 let sessionManager: SessionManager | null = null;
+
+type AuthLoginOptions = {
+  openIdProvider?: OpenIdProvider;
+};
 
 /**
  * Clear persisted wallet connect state
@@ -254,11 +260,11 @@ export const authState = {
   },
 
   // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
-  async login(walletId: string) {
+  async login(walletId: string, options?: AuthLoginOptions) {
     if (!pnp) {
       throw new Error("PNP is not initialized");
     }
-    await inner_login(walletId);
+    await inner_login(walletId, options);
 
     // Setup session manager
     await setupSessionManager(walletId);
@@ -384,11 +390,44 @@ const setupSessionManager = async (walletId: string) => {
 
 // Perform login
 // only delegated identity
-const inner_login = async (walletId: string) => {
+const applyOpenIdProvider = (
+  walletId: string,
+  openIdProvider?: OpenIdProvider,
+) => {
+  if (!pnp || walletId !== II_SIGNER_WALLET_ID || !openIdProvider) {
+    return () => {};
+  }
+
+  const adapterConfig = pnp.config.adapters?.[walletId]?.config as
+    | IIAdapterConfig
+    | undefined;
+
+  if (!adapterConfig) {
+    return () => {};
+  }
+
+  const previousOpenIdProvider = adapterConfig.openIdProvider;
+  adapterConfig.openIdProvider = openIdProvider;
+
+  return () => {
+    if (previousOpenIdProvider) {
+      adapterConfig.openIdProvider = previousOpenIdProvider;
+      return;
+    }
+
+    delete adapterConfig.openIdProvider;
+  };
+};
+
+const inner_login = async (walletId: string, options?: AuthLoginOptions) => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
   isConnecting = true;
+  const resetOpenIdProvider = applyOpenIdProvider(
+    walletId,
+    options?.openIdProvider,
+  );
   try {
     const res = await pnp.connect(walletId);
 
@@ -404,6 +443,7 @@ const inner_login = async (walletId: string) => {
     console.error("Login failed:", error);
     throw error;
   } finally {
+    resetOpenIdProvider();
     isConnecting = false;
   }
 };
