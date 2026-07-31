@@ -93,6 +93,14 @@
   let showFeeInfoDrawer = $state(false);
   let showTransactionLocksDrawer = $state(false);
   const CREATE_LINK_PROGRESS_SEGMENTS = 4;
+  const canShowTxCart = $derived.by(() => {
+    return (
+      linkStore?.link?.state === LinkState.CREATE_LINK ||
+      (linkStore?.link?.state === LinkState.INACTIVE &&
+        linkStore.action?.type === ActionType.WITHDRAW)
+    );
+  });
+  const shouldShowTxProgressBanner = $derived(canShowTxCart);
 
   function assetAndFeeListToForecastShape(
     list: AssetAndFeeList,
@@ -678,7 +686,7 @@
   />
 {/if}
 
-{#if showTxCart && linkStore && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
+{#if showTxCart && linkStore && linkStore.action && canShowTxCart}
   <LinkTxCart
     isOpen={showTxCart}
     source={{
@@ -689,7 +697,7 @@
         ? Number(linkStore.link.link_use_action_max_count)
         : undefined,
     }}
-    showProgressBanner={linkStore.link?.state === LinkState.CREATE_LINK}
+    showProgressBanner={shouldShowTxProgressBanner}
     {onCloseDrawer}
   />
 {/if}
