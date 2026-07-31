@@ -222,8 +222,13 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
         let link_account = get_link_account(&action.link_id, canister_id)?;
-        let icrc112_requests =
-            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)?;
+        let icrc112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )?;
 
         Ok(CreateActionResultV3 {
             action,
@@ -295,6 +300,7 @@ impl<E: IcEnvironment> TransactionManagerV3 for IcTransactionManager<E> {
                 link_account,
                 canister_id,
                 current_ts,
+                &intent_txs_map,
             )?;
 
             // update intent_txs_map with processed transactions
@@ -799,7 +805,12 @@ mod tests {
         let result = result.unwrap();
         assert!(result.intent_txs_map.contains_key(&intent.id));
         assert!(result.icrc112_requests.is_some());
-        assert!(!result.icrc112_requests.unwrap().is_empty());
+        let icrc112_requests = result.icrc112_requests.unwrap();
+        assert!(!icrc112_requests.is_empty());
+        // The manager must thread `intent_txs_map` through to
+        // `create_icrc_112_requests` so each request is tagged with the
+        // intent(s) that produced it.
+        assert_eq!(icrc112_requests[0][0].intent_ids, vec![intent.id.clone()]);
     }
 
     #[tokio::test]
@@ -917,5 +928,64 @@ mod tests {
         assert!(result.errors.is_empty());
         assert!(*rollup_called.borrow());
         assert_eq!(*execute_called.borrow(), 0);
+    }
+
+    #[tokio::test]
+    async fn it_should_tag_retry_icrc112_requests_with_intent_ids_after_process_action() {
+        // Arrange: a wallet transaction that failed validation - process_action's
+        // `create_icrc_112_requests` call regenerates ICRC-112 requests from
+        // CREATED/FAILED wallet transactions so the FE can retry them, and
+        // those regenerated requests must still carry the correct intent_ids.
+        let manager = fixture_of_manager();
+        let action = fixture_of_action_v3("11111111-1111-1111-1111-111111111111");
+        let intent = fixture_of_intent_v3("intent_v3_id");
+        let tx = fixture_of_wallet_transaction_created("11111111-2222-3333-4444-555555555555");
+        let mut tx_failed = tx.clone();
+        tx_failed.state = TransactionState::Fail;
+        let intent_txs_map = fixture_of_intent_txs_map(&intent.id, vec![tx]);
+
+        let rollup_called = Rc::new(RefCell::new(false));
+        let execute_called = Rc::new(RefCell::new(0));
+        let validation_service = MockValidationService {
+            validate_result: Ok(ValidateActionTransactionsResult {
+                wallet_transactions: vec![tx_failed],
+                canister_transactions: vec![],
+                is_success: false,
+                errors: vec!["wallet tx failed".to_string()],
+            }),
+            rollup_result_v3: Ok(fixture_of_rollup_result_v3(
+                action.clone(),
+                vec![intent.clone()],
+            )),
+            rollup_called: rollup_called.clone(),
+        };
+        let execution_service = MockExecutionService {
+            execute_result: Ok(ExecuteTransactionsResult {
+                transactions: vec![],
+                is_success: true,
+                errors: vec![],
+            }),
+            execute_called: execute_called.clone(),
+        };
+
+        // Act
+        let result = manager
+            .process_action(
+                action,
+                vec![intent.clone()],
+                intent_txs_map,
+                validation_service,
+                execution_service,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert!(!result.is_success);
+        assert!(result.icrc112_requests.is_some());
+        let icrc112_requests = result.icrc112_requests.unwrap();
+        assert!(!icrc112_requests.is_empty());
+        assert_eq!(icrc112_requests[0][0].intent_ids, vec![intent.id.clone()]);
     }
 }

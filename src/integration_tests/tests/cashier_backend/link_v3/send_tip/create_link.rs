@@ -158,6 +158,17 @@ async fn it_should_create_icp_token_tip_link_successfully() {
                         }
                     );
                     assert!(approve_args.amount > tip_amount.clone());
+
+                    // Both the fee and asset intents approve the same ICP asset
+                    // to the same spender, so the backend merges their
+                    // transactions into a single ICRC-112 request. The
+                    // `intent_ids` field must preserve both contributing
+                    // intents, not just one, so the FE can update both rows.
+                    let mut intent_ids = req.intent_ids.clone();
+                    intent_ids.sort();
+                    let mut expected_ids = vec![fee_intent.id.clone(), asset_intent.id.clone()];
+                    expected_ids.sort();
+                    assert_eq!(intent_ids, expected_ids);
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),
             }
@@ -285,8 +296,13 @@ async fn it_should_create_icrc_token_tip_link_successfully() {
 
                     if req.canister_id == Principal::from_text(ICP_PRINCIPAL).unwrap() {
                         assert!(approve_args.amount > icp_fee.clone());
+                        // Different asset (ICP fee vs CKBTC asset) means no
+                        // protocol-key merge, so this request maps to exactly
+                        // the fee intent.
+                        assert_eq!(req.intent_ids, vec![fee_intent.id.clone()]);
                     } else {
                         assert!(approve_args.amount > tip_amount.clone());
+                        assert_eq!(req.intent_ids, vec![asset_intent.id.clone()]);
                     }
                 }
                 _ => panic!("Unexpected method in ICRC-112 request"),

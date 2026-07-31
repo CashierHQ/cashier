@@ -113,8 +113,13 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         let canister_id = self.ic_env.id();
         let link_account = get_link_account(&action.link_id, canister_id)?;
 
-        let icrc112_requests =
-            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)?;
+        let icrc112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )?;
 
         Ok(CreateActionResult {
             action,
@@ -188,6 +193,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 link_account,
                 canister_id,
                 current_ts,
+                &intent_txs_map,
             )?;
 
             // update intent_txs_map with processed transactions
@@ -284,5 +290,9 @@ pub mod tests {
         assert!(!requests.is_empty());
         // and each request group should contain at least one request
         assert!(requests.iter().all(|group| !group.is_empty()));
+        // The manager must thread `intent_txs_map` through to
+        // `create_icrc_112_requests` so each request is tagged with the
+        // intent(s) that produced it.
+        assert_eq!(requests[0][0].intent_ids, vec![intent.id.clone()]);
     }
 }
