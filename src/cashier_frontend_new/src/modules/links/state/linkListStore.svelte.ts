@@ -1,15 +1,12 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { draftLinkRepository } from "$modules/creationLink/repositories/draftLinkRepository";
-import { ONBOARDING_DISMISSED_KEY } from "$modules/links/constants";
+import { ONBOARDING_DISMISSED_KEY, PAGE_SIZE } from "$modules/links/constants";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { Link, LinkMapper } from "$modules/links/types/link/link";
 import type { UnifiedLinkList } from "$modules/links/types/linkList";
 import { UnifiedLinkItemMapper } from "$modules/links/types/linkList";
 import { mapV3LinkToFrontend } from "$modules/links/utils/linkV3Mapper";
-
-/** Number of links fetched per page, and the increment used by `loadMore()`. */
-const PAGE_SIZE = 100;
 
 /**
  * Store managing the list of links.
