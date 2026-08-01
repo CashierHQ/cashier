@@ -191,6 +191,7 @@ export interface Icrc112Request {
   'method' : string,
   'canister_id' : Principal,
   'nonce' : [] | [Uint8Array | number[]],
+  'intent_ids' : Array<string>,
 }
 export interface Icrc114ValidateArgs {
   'arg' : Uint8Array | number[],
