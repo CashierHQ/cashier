@@ -100,6 +100,7 @@ export const idlFactory = ({ IDL }) => {
     'method' : IDL.Text,
     'canister_id' : IDL.Principal,
     'nonce' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'intent_ids' : IDL.Vec(IDL.Text),
   });
   const Chain = IDL.Variant({ 'IC' : IDL.Null });
   const IntentTask = IDL.Variant({
