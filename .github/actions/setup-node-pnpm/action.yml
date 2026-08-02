@@ -1,5 +1,5 @@
 name: "Setup Node + pnpm"
-description: "Installs pnpm and Node.js with pnpm-store caching enabled."
+description: "Installs pnpm and Node.js, with optional pnpm-store caching."
 
 inputs:
   node-version:
@@ -10,6 +10,14 @@ inputs:
     description: "pnpm version to install"
     required: false
     default: "10.6.2"
+  cache:
+    description: >-
+      Whether to cache pnpm's store. Only enable for jobs that actually run
+      `pnpm install` (directly or via `just`) afterwards — otherwise the store
+      directory never gets created, and the post-job cache-save step fails with
+      "Path(s) specified in the action for caching do(es) not exist."
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -24,4 +32,4 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: "pnpm"
+        cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}

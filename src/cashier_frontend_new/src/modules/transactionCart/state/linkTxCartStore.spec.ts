@@ -278,6 +278,7 @@ describe("LinkTxCartStore", () => {
         source.action.icrc_112_requests,
         "test-principal-id",
         CASHIER_BACKEND_CANISTER_ID,
+        expect.any(Function),
       );
       expect(source.handleProcessAction).toHaveBeenCalled();
     });
@@ -374,6 +375,24 @@ describe("LinkTxCartStore", () => {
 
     it("should_set_phase3_on_success", async () => {
       const source = createActionSource(true);
+      vi.mocked(source.handleProcessAction).mockResolvedValue({
+        action: {
+          ...createMockAction(),
+          intents: [
+            {
+              id: "intent-1",
+              type: "TRANSFER",
+              state: "SUCCESS",
+              payload: {
+                amount: 1_000_000n,
+                token: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+              },
+            },
+          ],
+        } as unknown as Action,
+        isSuccess: true,
+        errors: [],
+      } as ProcessActionResult);
       const store = new LinkTxCartStore(source);
       mockMapActionToAssetAndFeeList.mockReturnValue([
         {
@@ -391,6 +410,34 @@ describe("LinkTxCartStore", () => {
       await store.execute();
 
       expect(store.phase).toBe(TxProgressPhase.COMPLETED);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SUCCEED,
+      );
+    });
+
+    it("should_fall_back_to_blanket_succeed_when_no_action_returned", async () => {
+      const source = createActionSource(true);
+      vi.mocked(source.handleProcessAction).mockResolvedValue({
+        action: undefined,
+        isSuccess: true,
+        errors: [],
+      } as unknown as ProcessActionResult);
+      const store = new LinkTxCartStore(source);
+      mockMapActionToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-1",
+            symbol: "ICP",
+          },
+          fee: null,
+        },
+      ]);
+      store.initializeAssets({});
+      store.initialize();
+
+      await store.execute();
+
       expect(store.assetAndFeeList[0].asset.state).toBe(
         AssetProcessState.SUCCEED,
       );
@@ -422,6 +469,132 @@ describe("LinkTxCartStore", () => {
       await expect(store.execute()).rejects.toThrow("backend error");
 
       expect(store.phase).toBe(TxProgressPhase.IDLE);
+    });
+  });
+
+  describe("applyBatchProgress via ICRC-112 execution", () => {
+    function mockTwoRowAssets() {
+      mockMapActionToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-1",
+            symbol: "ICP",
+          },
+          fee: null,
+        },
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            intentId: "intent-2",
+            symbol: "KONG",
+          },
+          fee: null,
+        },
+      ]);
+    }
+
+    it("should_flip_only_the_matching_row_when_one_sub_request_settles_mid_flight", async () => {
+      let resolveIcrc: (v: { isSuccess: boolean }) => void;
+      const icrcPromise = new Promise<{ isSuccess: boolean }>((resolve) => {
+        resolveIcrc = resolve;
+      });
+      mockSendBatchRequest.mockReturnValueOnce(icrcPromise);
+
+      const source = createActionSource(true);
+      const store = new LinkTxCartStore(source);
+      mockTwoRowAssets();
+      store.initializeAssets({});
+      store.initialize();
+
+      const executePromise = store.execute();
+      await vi.waitFor(() => store.phase === TxProgressPhase.FE_PHASE);
+
+      // Grab the onRequestSettled callback passed as the 4th arg and invoke it
+      // as if only intent-1's sub-request has settled so far.
+      const onRequestSettled = mockSendBatchRequest.mock.calls[0][3] as (
+        intentIds: string[],
+        success: boolean,
+      ) => void;
+      onRequestSettled(["intent-1"], true);
+
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+      expect(store.assetAndFeeList[1].asset.state).toBe(
+        AssetProcessState.PROCESSING,
+      );
+
+      resolveIcrc!({ isSuccess: true });
+      await executePromise;
+    });
+
+    it("should_flip_all_matching_rows_together_when_a_merged_request_settles", async () => {
+      let resolveIcrc: (v: { isSuccess: boolean }) => void;
+      const icrcPromise = new Promise<{ isSuccess: boolean }>((resolve) => {
+        resolveIcrc = resolve;
+      });
+      mockSendBatchRequest.mockReturnValueOnce(icrcPromise);
+
+      const source = createActionSource(true);
+      const store = new LinkTxCartStore(source);
+      mockTwoRowAssets();
+      store.initializeAssets({});
+      store.initialize();
+
+      const executePromise = store.execute();
+      await vi.waitFor(() => store.phase === TxProgressPhase.FE_PHASE);
+
+      const onRequestSettled = mockSendBatchRequest.mock.calls[0][3] as (
+        intentIds: string[],
+        success: boolean,
+      ) => void;
+      // A single merged ICRC-112 request settling for both intents.
+      onRequestSettled(["intent-1", "intent-2"], true);
+
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+      expect(store.assetAndFeeList[1].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+
+      resolveIcrc!({ isSuccess: true });
+      await executePromise;
+    });
+
+    it("should_reach_signed_pending_via_fallback_for_a_row_never_reported_by_progress", async () => {
+      let resolveProcess: (v: ProcessActionResult) => void;
+      const processPromise = new Promise<ProcessActionResult>((resolve) => {
+        resolveProcess = resolve;
+      });
+
+      const source = createActionSource(true);
+      vi.mocked(source.handleProcessAction).mockReturnValueOnce(processPromise);
+
+      const store = new LinkTxCartStore(source);
+      mockTwoRowAssets();
+      store.initializeAssets({});
+      store.initialize();
+
+      // Default mockSendBatchRequest resolves success without ever invoking
+      // onRequestSettled - simulating an intent that never produced a wallet tx.
+      const executePromise = store.execute();
+      await vi.waitFor(() => store.phase === TxProgressPhase.BE_PHASE);
+
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+      expect(store.assetAndFeeList[1].asset.state).toBe(
+        AssetProcessState.SIGNED_PENDING,
+      );
+
+      resolveProcess!({
+        action: createMockAction(),
+        isSuccess: true,
+        errors: [],
+      });
+      await executePromise;
     });
   });
 
