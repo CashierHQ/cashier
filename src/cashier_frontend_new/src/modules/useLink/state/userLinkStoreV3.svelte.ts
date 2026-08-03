@@ -82,18 +82,11 @@ export class UserLinkStoreV3 {
           "Open" in g.gate_user_status[0].status,
       );
 
-      const step = this.#state.step;
+      const nextStep = resolveGateGuardStep(allOpen, this.#state.step);
 
-      // If gates are closed but state advanced past them, reset back to locked
-      if (!allOpen && step === UserLinkStep.ADDRESS_UNLOCKED) {
+      if (nextStep === UserLinkStep.ADDRESS_LOCKED) {
         this.#state = new AddressLockedStateV3(this);
-      }
-
-      // If all gates are already open, skip locked/gate steps and go to unlocked
-      if (
-        allOpen &&
-        (step === UserLinkStep.ADDRESS_LOCKED || step === UserLinkStep.GATE)
-      ) {
+      } else if (nextStep === UserLinkStep.ADDRESS_UNLOCKED) {
         this.#state = new AddressUnlockedStateV3(this);
       }
     });
@@ -302,5 +295,27 @@ export function resolveStaleCompletedStep(
   if (!linkEnded) {
     return UserLinkStep.LANDING;
   }
+  return null;
+}
+
+/**
+ * Resolve the use-link step from the current gate status.
+ * @param allOpen Whether every gate on the link is open for the current user.
+ * @param currentStep The current step in the user link flow.
+ * @returns the step to transition to, or `null` if the current step should
+ * be left alone.
+ */
+export function resolveGateGuardStep(
+  allOpen: boolean,
+  currentStep: UserLinkStep,
+): UserLinkStep | null {
+  if (!allOpen && currentStep === UserLinkStep.ADDRESS_UNLOCKED) {
+    return UserLinkStep.ADDRESS_LOCKED;
+  }
+
+  if (allOpen && currentStep === UserLinkStep.ADDRESS_LOCKED) {
+    return UserLinkStep.ADDRESS_UNLOCKED;
+  }
+
   return null;
 }

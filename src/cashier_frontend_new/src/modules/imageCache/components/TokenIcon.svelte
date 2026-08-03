@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { getTokenLogo, getCachedTokenImage } from "$modules/imageCache/utils";
+  import {
+    getCachedTokenImage,
+    getTokenLogo,
+    isTokenImageFailed,
+    markTokenImageFailed,
+  } from "$modules/imageCache/utils";
 
   type Props = {
     address: string;
@@ -30,7 +35,6 @@
    * so parents can cache failures, but we also switch to fallback immediately.
    */
   let localFailed = $state(false);
-  let loaded = $state(false);
   let lastImageSrc = "";
 
   // Size mapping
@@ -58,19 +62,19 @@
   const textSizeClass = $derived(textSizeClasses[size] || "text-xs");
 
   // Get logo URL - check ImageCache first, then fallback to external URL
-  // Priority: 1) logo prop, 2) ImageCache, 3) external URL
+  // Priority: 1) ImageCache, 2) logo prop, 3) external URL
   // This ensures we use cached images when available and only load from external source if not cached
   const imageSrc = $derived.by(() => {
-    // If logo prop is provided, use it (it might already be a cached data URL from parent)
-    if (logo) {
-      return logo;
-    }
-
     // First, check ImageCache - this will return cached data URL if available
     const cachedImage = getCachedTokenImage(address);
     if (cachedImage) {
       // If cached image is a data URL, use it directly (no network request)
       return cachedImage;
+    }
+
+    // If logo prop is provided, use it (it might already be a cached data URL from parent)
+    if (logo) {
+      return logo;
     }
 
     // If not in cache, get external URL (will trigger network request)
@@ -85,11 +89,10 @@
   // better logo URL arrives later, the component should retry it.
   const hasFailed = $derived(
     localFailed ||
+      isTokenImageFailed(address, imageSrc) ||
       failedImageLoads.has(imageSrc) ||
       (!logo && imageSrc === externalImageSrc && failedImageLoads.has(address)),
   );
-
-  const showImage = $derived(loaded && !hasFailed);
 
   // Reset local state when the resolved image source changes (prevents "stuck" failed state).
   // This matters because `imageSrc` can change asynchronously when ImageCache updates.
@@ -98,16 +101,12 @@
     if (current === lastImageSrc) return;
     lastImageSrc = current;
     localFailed = false;
-    loaded = false;
   });
 
   function handleImageError() {
     localFailed = true;
+    markTokenImageFailed(address, imageSrc);
     onImageError(address);
-  }
-
-  function handleImageLoad() {
-    loaded = true;
   }
 
   // Get fallback text - use custom fallbackText or first letter of symbol
@@ -117,23 +116,18 @@
 </script>
 
 <div class="relative {sizeClass} {className}">
+  <div
+    class="absolute inset-0 w-full h-full bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
+  >
+    {fallbackDisplay}
+  </div>
+
   {#if !hasFailed}
     <img
       src={imageSrc}
       alt={symbol}
-      class="absolute inset-0 w-full h-full rounded-full overflow-hidden object-cover transition-opacity {showImage
-        ? 'opacity-100'
-        : 'opacity-0'}"
+      class="absolute inset-0 z-10 w-full h-full rounded-full overflow-hidden object-cover"
       onerror={handleImageError}
-      onload={handleImageLoad}
     />
-  {/if}
-
-  {#if hasFailed || !showImage}
-    <div
-      class="absolute inset-0 w-full h-full bg-gray-200 flex rounded-full items-center justify-center {textSizeClass} overflow-hidden"
-    >
-      {fallbackDisplay}
-    </div>
   {/if}
 </div>

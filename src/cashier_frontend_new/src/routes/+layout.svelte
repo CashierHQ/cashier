@@ -3,6 +3,7 @@
   import favicon from "$lib/assets/favicon.svg";
   import { initLocale } from "$lib/i18n";
   import { Toaster } from "$lib/shadcn/components/ui/sonner";
+  import { onMount } from "svelte";
   import ProtectedIP from "$modules/routing/components/ProtectedIP.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import DebugSessionTimers from "$modules/auth/components/DebugSessionTimers.svelte";
@@ -20,6 +21,10 @@
   $effect(() => {
     void authState.account?.owner; // Subscribe to auth changes for reactivity
     refreshAmplitudeUserIdFromAuth();
+  });
+
+  onMount(() => {
+    void import("$modules/token/state/walletStore.svelte");
   });
 </script>
 

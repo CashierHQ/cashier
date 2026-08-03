@@ -2,6 +2,7 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  resolveGateGuardStep,
   resolveStaleCompletedStep,
   UserLinkStoreV3,
 } from "$modules/useLink/state/userLinkStoreV3.svelte";
@@ -437,6 +438,46 @@ describe("UserLinkStoreV3", () => {
               ),
             ).toBeNull();
           }
+        }
+      }
+    });
+  });
+
+  describe("resolveGateGuardStep", () => {
+    it("it_should_return_to_locked_when_unlocked_step_has_closed_gates", () => {
+      const nextStep = resolveGateGuardStep(
+        false,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_LOCKED);
+    });
+
+    it("it_should_skip_locked_step_when_all_gates_are_open", () => {
+      const nextStep = resolveGateGuardStep(true, UserLinkStep.ADDRESS_LOCKED);
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_UNLOCKED);
+    });
+
+    it("it_should_keep_gate_step_when_all_gates_are_open", () => {
+      const nextStep = resolveGateGuardStep(true, UserLinkStep.GATE);
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_keep_gate_step_when_some_gates_are_closed", () => {
+      const nextStep = resolveGateGuardStep(false, UserLinkStep.GATE);
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_leave_unrelated_steps_alone", () => {
+      for (const currentStep of [
+        UserLinkStep.LANDING,
+        UserLinkStep.COMPLETED,
+      ]) {
+        for (const allOpen of [true, false]) {
+          expect(resolveGateGuardStep(allOpen, currentStep)).toBeNull();
         }
       }
     });

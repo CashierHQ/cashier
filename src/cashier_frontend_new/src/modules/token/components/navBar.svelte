@@ -4,7 +4,7 @@
     balanceToUSDValue,
     parseBalanceUnits,
   } from "$modules/shared/utils/converter";
-  import { getTokenLogo } from "$modules/imageCache";
+  import { getResolvedTokenLogo } from "$modules/imageCache";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { WalletTab } from "$modules/wallet/types";
   import {
@@ -94,8 +94,7 @@
 
   let tokenLogo = $derived.by(() => {
     if (!token) return null;
-    if (token.runeInfo?.icon) return token.runeInfo.icon;
-    return getTokenLogo(token.address);
+    return getResolvedTokenLogo(token);
   });
 
   function handleSend() {

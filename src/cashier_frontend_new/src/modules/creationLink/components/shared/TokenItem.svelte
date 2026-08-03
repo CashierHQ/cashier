@@ -5,7 +5,7 @@
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
+  import { getResolvedTokenLogo, TokenIcon } from "$modules/imageCache";
 
   type Props = {
     token: TokenWithPriceAndBalance;
@@ -45,12 +45,12 @@
     return `~$${formatUsdAmount(usdValue)}`;
   }
 
-  const tokenLogo = token.runeInfo?.icon ?? getTokenLogo(token.address);
-  const formattedBalance = formatBalance(token.balance, token.decimals);
-  const formattedUSD = formatUSDValue(
-    token.balance,
-    token.decimals,
-    token.priceUSD,
+  const tokenLogo = $derived(getResolvedTokenLogo(token));
+  const formattedBalance = $derived(
+    formatBalance(token.balance, token.decimals),
+  );
+  const formattedUSD = $derived(
+    formatUSDValue(token.balance, token.decimals, token.priceUSD),
   );
 
   function handleImageError() {
