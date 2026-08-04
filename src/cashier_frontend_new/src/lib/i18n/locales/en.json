@@ -62,7 +62,9 @@
     "page": {
       "title": "Cashier links",
       "description": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
-      "gotItButton": "Got it!"
+      "gotItButton": "Got it!",
+      "loadMoreButton": "Load more",
+      "loadingMoreButton": "Loading..."
     },
     "disconnectModal": {
       "title": "Disconnect wallet",

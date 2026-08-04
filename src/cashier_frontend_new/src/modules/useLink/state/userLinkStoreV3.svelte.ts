@@ -70,7 +70,14 @@ export class UserLinkStoreV3 {
       }
     });
 
-    // gate guard: sync state with actual gate open/closed status from backend
+    // gate guard: demote back to locked if a gate that was open re-locks
+    // (e.g. a timed unlock expiring) while the user is sitting on the
+    // unlocked step. This only ever moves the user backward to match
+    // reality; advancing past the locked/gate steps is only ever done via
+    // an explicit goNext() (the user clicking Continue) - see
+    // GateStateV3.goNext()/goBack() - never automatically by this effect,
+    // otherwise reloading the page while on the Gate step right after
+    // unlocking would silently skip straight to unlocked.
     $effect(() => {
       const gates = this.linkDetail.gates;
       if (gates.length === 0) return;
@@ -86,8 +93,6 @@ export class UserLinkStoreV3 {
 
       if (nextStep === UserLinkStep.ADDRESS_LOCKED) {
         this.#state = new AddressLockedStateV3(this);
-      } else if (nextStep === UserLinkStep.ADDRESS_UNLOCKED) {
-        this.#state = new AddressUnlockedStateV3(this);
       }
     });
   }
@@ -299,23 +304,18 @@ export function resolveStaleCompletedStep(
 }
 
 /**
- * Resolve the use-link step from the current gate status.
- * @param allOpen Whether every gate on the link is open for the current user.
- * @param currentStep The current step in the user link flow.
+ * Resolve the gate guard's reaction to the caller's current gate-open status.
+ * @param allGatesOpen Whether every gate on the link currently reports Open
+ * @param currentStep The current step in the user link flow
  * @returns the step to transition to, or `null` if the current step should
  * be left alone.
  */
 export function resolveGateGuardStep(
-  allOpen: boolean,
+  allGatesOpen: boolean,
   currentStep: UserLinkStep,
 ): UserLinkStep | null {
-  if (!allOpen && currentStep === UserLinkStep.ADDRESS_UNLOCKED) {
+  if (!allGatesOpen && currentStep === UserLinkStep.ADDRESS_UNLOCKED) {
     return UserLinkStep.ADDRESS_LOCKED;
   }
-
-  if (allOpen && currentStep === UserLinkStep.ADDRESS_LOCKED) {
-    return UserLinkStep.ADDRESS_UNLOCKED;
-  }
-
   return null;
 }

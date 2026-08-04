@@ -33,6 +33,11 @@
   {#if linkListStore.isLoadingInitialPersistedLinks}
     <LinksPageSkeleton />
   {:else}
-    <AppLinksList groupedLinks={groupAndSortByDate(links)} />
+    <AppLinksList
+      groupedLinks={groupAndSortByDate(links)}
+      hasMore={linkListStore.hasMore}
+      isLoadingMore={linkListStore.isLoadingMore}
+      onLoadMore={() => linkListStore.loadMore()}
+    />
   {/if}
 </div>

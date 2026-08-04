@@ -4,3 +4,4 @@ export const LINKS_PAGE_SKELETON_GROUPS = [
   [130, 118, 132, 126],
   [210, 190, 118],
 ];
+export const PAGE_SIZE = 100;
