@@ -260,6 +260,61 @@ describe("WalletTxCartStore", () => {
       expect(store.assetAndFeeList[0].asset.symbol).toBe("TEST");
       expect(mockMapWalletToAssetAndFeeList).toHaveBeenCalledTimes(1);
     });
+
+    it("should keep the preview and execution amount aligned after an amount change", async () => {
+      const source = createWalletSource();
+      const store = new WalletTxCartStore(source);
+
+      store.initialize();
+      store.initializeAssets({});
+
+      mockMapWalletToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            label: "",
+            symbol: "TEST",
+            address: "test-token-address",
+            amount: 20_000n,
+            amountFormattedStr: "0.0002",
+            usdValueStr: "$0.0004",
+            direction: FlowDirection.OUTGOING,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: 10_000n,
+            amountFormattedStr: "0.0001",
+            symbol: "TEST",
+            usdValue: 0.0001,
+          },
+        },
+      ]);
+
+      store.updateSource({ ...source, amount: 10_000n });
+      store.initializeAssets({});
+
+      expect(mockMapWalletToAssetAndFeeList).toHaveBeenLastCalledWith(
+        {
+          amount: 10_000n,
+          tokenAddress: source.token.address,
+        },
+        {},
+      );
+      expect(store.assetAndFeeList[0].asset.amount).toBe(20_000n);
+      expect(store.assetAndFeeList[0].asset.amountFormattedStr).toBe("0.0002");
+      expect(mockMapWalletToAssetAndFeeList).toHaveBeenCalledTimes(2);
+
+      await store.execute();
+
+      expect(mockTransferToPrincipal).toHaveBeenCalledWith(
+        source.to,
+        10_000n,
+        expect.objectContaining({
+          memo: expect.any(Uint8Array),
+          createdAtTime: expect.any(BigInt),
+        }),
+      );
+    });
   });
 
   describe("computeFee", () => {

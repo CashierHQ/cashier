@@ -134,20 +134,16 @@
   });
 
   /**
-   * Update source when prop changes.
+   * Keep the transfer source and its derived preview rows in sync.
+   * updateSource() clears stale rows when the transfer changes, after which
+   * initializeAssets() rebuilds them from the current amount and token data.
    */
   $effect(() => {
     if (walletTxCartStore && source) {
       walletTxCartStore.updateSource(source);
-    }
-  });
-
-  /**
-   * Initialize assets when tokens available or source changes.
-   */
-  $effect(() => {
-    if (walletTxCartStore && Object.keys(tokensMap).length > 0) {
-      walletTxCartStore.initializeAssets(tokensMap);
+      if (Object.keys(tokensMap).length > 0) {
+        walletTxCartStore.initializeAssets(tokensMap);
+      }
     }
   });
 </script>
