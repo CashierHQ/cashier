@@ -119,7 +119,7 @@ vi.mock("$modules/shared/utils/icpAccountId", () => ({
 
 vi.mock("$modules/imageCache", () => ({
   getTokenLogo: vi.fn(),
-  loadTokenImages: vi.fn(),
+  loadTokenImage: vi.fn(),
   getCachedTokenImage: mockGetCachedTokenImage,
 }));
 

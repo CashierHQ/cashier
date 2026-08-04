@@ -477,7 +477,6 @@ describe("UserLinkStoreV3", () => {
 
     it("it_should_never_promote_from_address_locked_even_when_all_gates_are_open", () => {
       const nextStep = resolveGateGuardStep(true, UserLinkStep.ADDRESS_LOCKED);
-
       expect(nextStep).toBeNull();
     });
 

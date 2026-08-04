@@ -357,6 +357,12 @@
             "phase2Description": "Confirming the transactions",
             "phase3Label": "Transaction confirmed",
             "phase3Description": "All steps completed",
+            "stepExecuting": "Executing",
+            "stepExecuted": "Executed",
+            "stepConfirm": "Confirm",
+            "stepConfirming": "Confirming",
+            "stepConfirmed": "Confirmed",
+            "stepDone": "Done",
             "errors": {
               "alreadyClaimed": "This link has no claim available right now — it may be fully claimed or another claim is in progress.",
               "linkUnavailable": "This link is no longer available.",

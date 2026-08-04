@@ -305,12 +305,6 @@ export function resolveStaleCompletedStep(
 
 /**
  * Resolve the gate guard's reaction to the caller's current gate-open status.
- * This only ever demotes: if a gate that was open has re-locked (e.g. a timed
- * unlock expiring) while the user is on the unlocked step, send them back to
- * locked. It must never promote - advancing past the locked/gate steps is
- * only ever done via an explicit goNext() (the user clicking Continue), not
- * automatically here. Otherwise reloading the page while on the Gate step
- * right after unlocking would silently skip straight to unlocked.
  * @param allGatesOpen Whether every gate on the link currently reports Open
  * @param currentStep The current step in the user link flow
  * @returns the step to transition to, or `null` if the current step should

@@ -204,8 +204,8 @@
 
 {#if source}
   <Drawer.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
-    <Drawer.Content class="max-w-full w-[400px] mx-auto p-3">
-      <Drawer.Header>
+    <Drawer.Content class="max-w-full w-[400px] mx-auto p-3 overflow-hidden">
+      <Drawer.Header class="flex-none">
         <div class="flex justify-center items-center relative mb-2 px-3">
           <Drawer.Title
             class="text-[18px] font-semibold leading-[20px] px-8 text-center w-[100%]"
@@ -224,7 +224,7 @@
         </div>
       </Drawer.Header>
 
-      <div class="px-4 pb-4 h-auto">
+      <div class="px-4 pb-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {#if errorMessage}
           <div
             class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
@@ -274,7 +274,7 @@
         </div>
       </div>
 
-      <div class="px-3 mb-2">
+      <div class="px-3 mb-2 flex-none">
         <PrimaryActionButton
           onclick={handleConfirm}
           loading={isProcessing}

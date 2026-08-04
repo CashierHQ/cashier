@@ -12,3 +12,10 @@ export type ImageLoadOptions = {
   skipStore?: boolean;
   forceReload?: boolean;
 };
+
+export type TokenLogoSource = {
+  address: string;
+  runeInfo?: {
+    icon?: string | null;
+  } | null;
+};
