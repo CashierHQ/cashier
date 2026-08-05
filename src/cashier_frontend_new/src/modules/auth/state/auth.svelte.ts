@@ -29,6 +29,7 @@ import { SessionManager } from "$modules/auth/services/sessionManager";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 import { connectPnpFromUserGesture } from "$modules/auth/utils/connectPnpFromUserGesture";
+import type { AuthLoginOptions } from "$modules/auth/types";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -109,10 +110,6 @@ let account = $state<{
 } | null>(null);
 
 let sessionManager: SessionManager | null = null;
-
-type AuthLoginOptions = {
-  openIdProvider?: OpenIdProvider;
-};
 
 /**
  * Clear persisted wallet connect state

@@ -6,6 +6,10 @@
   import { Info } from "lucide-svelte";
   import type { OpenIdProvider } from "@icp-sdk/auth/client";
   import { isAuthenticationPopupClosedError } from "$modules/auth/signer/ii/authenticationPopup";
+  import {
+    GOOGLE_LOGIN_OPTION,
+    SECONDARY_OPEN_ID_LOGIN_OPTIONS,
+  } from "$modules/home/constants";
 
   type Props = {
     open: boolean;
@@ -19,31 +23,6 @@
   let isConnecting = $state(false);
   let connectingProvider = $state<OpenIdProvider | null>(null);
   let isInternetIdentityConnecting = $state(false);
-
-  type OpenIdLoginOption = {
-    provider: OpenIdProvider;
-    labelKey: string;
-    iconSrc: string;
-  };
-
-  const googleOption: OpenIdLoginOption = {
-    provider: "google",
-    labelKey: "home.loginModal.signInWithGoogle",
-    iconSrc: "/social-icon.svg",
-  };
-
-  const secondaryOpenIdLoginOptions: OpenIdLoginOption[] = [
-    {
-      provider: "apple",
-      labelKey: "home.loginModal.signInWithApple",
-      iconSrc: "/apple-icon.svg",
-    },
-    {
-      provider: "microsoft",
-      labelKey: "home.loginModal.signInWithMicrosoft",
-      iconSrc: "/microsoft-icon.svg",
-    },
-  ];
 
   function handleClose() {
     onOpenChange(false);
@@ -121,7 +100,10 @@
         <button
           type="button"
           onclick={() =>
-            handleWalletSelect("internet-identity", googleOption.provider)}
+            handleWalletSelect(
+              "internet-identity",
+              GOOGLE_LOGIN_OPTION.provider,
+            )}
           disabled={isConnecting}
           class="w-full h-12 overflow-hidden border border-[#ebebeb] cursor-pointer rounded-[10px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-stretch bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -132,20 +114,20 @@
               alt=""
               aria-hidden="true"
               class="h-6 w-6"
-              src={googleOption.iconSrc}
+              src={GOOGLE_LOGIN_OPTION.iconSrc}
             />
           </span>
           <span
             class="flex flex-1 items-center gap-2 px-5 text-[14px] whitespace-nowrap"
           >
             <span class="font-semibold">
-              {#if connectingProvider === googleOption.provider}
+              {#if connectingProvider === GOOGLE_LOGIN_OPTION.provider}
                 {locale.t("home.loginModal.connecting")}
               {:else}
-                {locale.t(googleOption.labelKey)}
+                {locale.t(GOOGLE_LOGIN_OPTION.labelKey)}
               {/if}
             </span>
-            {#if connectingProvider === googleOption.provider}
+            {#if connectingProvider === GOOGLE_LOGIN_OPTION.provider}
               <div
                 class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
               ></div>
@@ -154,7 +136,7 @@
         </button>
 
         <div class="flex w-full gap-2">
-          {#each secondaryOpenIdLoginOptions as option (option.provider)}
+          {#each SECONDARY_OPEN_ID_LOGIN_OPTIONS as option (option.provider)}
             <button
               type="button"
               onclick={() =>

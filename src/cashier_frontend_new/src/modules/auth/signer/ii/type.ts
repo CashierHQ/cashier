@@ -1,5 +1,10 @@
 import type { IdleOptions, OpenIdProvider } from "@icp-sdk/auth/client";
 
+export type AuthenticationPopupHost = Pick<
+  Window,
+  "open" | "setInterval" | "clearInterval" | "focus"
+>;
+
 export enum Status {
   CONNECTING = "CONNECTING",
   CONNECTED = "CONNECTED",

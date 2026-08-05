@@ -1,3 +1,5 @@
+import type { AuthenticationPopupHost } from "$modules/auth/signer/ii/type";
+
 export class AuthenticationPopupClosedError extends Error {
   constructor() {
     super("Authentication window was closed");
@@ -9,11 +11,6 @@ export const isAuthenticationPopupClosedError = (
   error: unknown,
 ): error is AuthenticationPopupClosedError =>
   error instanceof Error && error.name === "AuthenticationPopupClosedError";
-
-type AuthenticationPopupHost = Pick<
-  Window,
-  "open" | "setInterval" | "clearInterval" | "focus"
->;
 
 /**
  * Captures the popup opened synchronously by AuthClient.signIn() and rejects

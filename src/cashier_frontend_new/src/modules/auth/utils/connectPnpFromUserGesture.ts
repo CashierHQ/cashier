@@ -1,22 +1,8 @@
 import { PnpState, type PNP } from "@windoge98/plug-n-play";
-
-type PnpConnectionResult = Awaited<ReturnType<PNP["connect"]>>;
-
-type PnpUserGestureInternals = {
-  stateManager: {
-    getCurrentState: () => PnpState;
-    transitionTo: (
-      state: PnpState,
-      context?: { error: unknown },
-    ) => Promise<void>;
-  };
-  connectionManager: {
-    connect: (walletId: string) => Promise<PnpConnectionResult>;
-  };
-  errorManager: {
-    handleError: (error: unknown) => void;
-  };
-};
+import type {
+  PnpConnectionResult,
+  PnpUserGestureInternals,
+} from "$modules/auth/types";
 
 /**
  * Starts the adapter connection before yielding back to the browser.
@@ -29,6 +15,11 @@ type PnpUserGestureInternals = {
  * The transition mutates PNP's state synchronously even though it returns a
  * promise. Starting both operations before awaiting either preserves PNP's
  * normal state lifecycle while keeping window.open() inside the user gesture.
+ *
+ * @param pnp - The initialized Plug and Play instance used for authentication.
+ * @param walletId - The registered wallet adapter identifier to connect.
+ * @returns The account returned by the connected wallet adapter.
+ * @throws The connection error after PNP transitions to its error state.
  */
 export const connectPnpFromUserGesture = (
   pnp: PNP,
