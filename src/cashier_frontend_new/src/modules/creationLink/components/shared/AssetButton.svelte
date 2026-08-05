@@ -224,6 +224,7 @@
                 style="width: {inputWidth}; max-width: 92px; position: relative; z-index: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 placeholder="0"
                 inputmode="decimal"
+                autocomplete="off"
               />
             </div>
           {/if}

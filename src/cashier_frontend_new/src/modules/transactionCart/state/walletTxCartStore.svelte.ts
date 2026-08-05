@@ -34,10 +34,38 @@ export class WalletTxCartStore implements TxCartStore {
 
   /**
    * Update the source reference for reactive updates.
-   * Call this from $effect when source prop changes.
+   *
+   * A changed transfer represents a new confirmation attempt. Clear the
+   * previously derived cart rows so initializeAssets() rebuilds the preview
+   * from the same source that execute() will submit.
    */
   updateSource(newSource: WalletSource): void {
+    const tokenChanged = this.#source.token.address !== newSource.token.address;
+    const transferChanged =
+      tokenChanged ||
+      this.#source.amount !== newSource.amount ||
+      this.#source.receiveType !== newSource.receiveType ||
+      this.#destinationKey(this.#source.to) !==
+        this.#destinationKey(newSource.to);
+
     this.#source = newSource;
+
+    if (!transferChanged) return;
+
+    this.#assetAndFeeList = [];
+    this.#deduplication = this.#createDeduplicationFields();
+
+    if (tokenChanged) {
+      this.#icpLedgerService = null;
+      this.#icrcLedgerService = null;
+      this.initialize();
+    }
+  }
+
+  #destinationKey(destination: WalletSource["to"]): string {
+    return typeof destination === "string"
+      ? `account:${destination}`
+      : `principal:${destination.toText()}`;
   }
 
   /** Reactive asset and fee list for UI */
