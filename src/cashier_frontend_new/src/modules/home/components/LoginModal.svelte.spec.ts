@@ -26,6 +26,7 @@ vi.mock("$lib/i18n", () => ({
         "home.loginModal.signInWithGoogle": "Sign in with Google",
         "home.loginModal.signInWithApple": "Sign in with Apple",
         "home.loginModal.signInWithMicrosoft": "Sign in with Microsoft",
+        "home.loginModal.internetIdentity": "Internet Identity",
         "home.loginModal.poweredByIdAi": "via id.ai",
         "home.loginModal.otherWallets": "Other wallets",
         "home.loginModal.successMessage": "Successfully logged in",
@@ -46,6 +47,31 @@ describe("LoginModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loginMock.mockResolvedValue(undefined);
+  });
+
+  it("always renders exactly the four supported login options", () => {
+    render(LoginModal, {
+      props: {
+        open: true,
+        onOpenChange: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /sign in with google/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /sign in with apple/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /sign in with microsoft/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /internet identity/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /other wallets/i }),
+    ).not.toBeInTheDocument();
   });
 
   it.each([
@@ -80,4 +106,27 @@ describe("LoginModal", () => {
       expect(toastMock.success).toHaveBeenCalledWith("Successfully logged in");
     },
   );
+
+  it("starts direct Internet Identity login", async () => {
+    const onOpenChange = vi.fn();
+
+    render(LoginModal, {
+      props: {
+        open: true,
+        onOpenChange,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /internet identity/i }),
+    );
+
+    await waitFor(() => {
+      expect(authState.login).toHaveBeenCalledWith(II_SIGNER_WALLET_ID, {
+        openIdProvider: undefined,
+      });
+    });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });
