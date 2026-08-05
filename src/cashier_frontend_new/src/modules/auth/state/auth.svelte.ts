@@ -19,11 +19,16 @@ import type { IDL } from "@icp-sdk/core/candid";
 import { DelegationIdentity } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
-import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
+import {
+  createPNP,
+  type ActorSubclass,
+  type PNP,
+} from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
 import { SessionManager } from "$modules/auth/services/sessionManager";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
+import { connectPnpFromUserGesture } from "$modules/auth/utils/connectPnpFromUserGesture";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -429,7 +434,7 @@ const inner_login = async (walletId: string, options?: AuthLoginOptions) => {
     options?.openIdProvider,
   );
   try {
-    const res = await pnp.connect(walletId);
+    const res = await connectPnpFromUserGesture(pnp, walletId);
 
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");

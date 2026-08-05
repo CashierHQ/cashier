@@ -33,6 +33,9 @@ const browserBufferAlias: Plugin = {
 
 export default defineConfig({
   plugins: [browserBufferAlias, tailwindcss(), sveltekit()],
+  server: {
+    allowedHosts: ["rocket-background-amplifier-weeks.trycloudflare.com"],
+  },
   optimizeDeps: {
     include: ["buffer"],
     esbuildOptions: {

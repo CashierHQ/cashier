@@ -5,6 +5,7 @@
   import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
   import type { OpenIdProvider } from "@icp-sdk/auth/client";
+  import { isAuthenticationPopupClosedError } from "$modules/auth/signer/ii/authenticationPopup";
 
   type Props = {
     open: boolean;
@@ -71,8 +72,10 @@
       handleClose();
       toast.success(locale.t("home.loginModal.successMessage"));
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(locale.t("home.loginModal.errorMessage"));
+      if (!isAuthenticationPopupClosedError(error)) {
+        console.error("Login error:", error);
+        toast.error(locale.t("home.loginModal.errorMessage"));
+      }
     } finally {
       isConnecting = false;
       connectingProvider = null;

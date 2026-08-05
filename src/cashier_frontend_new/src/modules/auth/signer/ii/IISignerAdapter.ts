@@ -12,8 +12,11 @@ import {
 } from "$modules/auth/signer/ii/type";
 import { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
-import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
 import { Signer } from "@slide-computer/signer";
+import {
+  detectAuthenticationPopupClose,
+  isAuthenticationPopupClosedError,
+} from "$modules/auth/signer/ii/authenticationPopup";
 
 /**
  * Account interface representing the connected user's account details.
@@ -90,13 +93,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   }
 
   private createAuthClient(openIdProvider?: OpenIdProvider): AuthClient {
-    const windowOpenerFeatures = openIdProvider
-      ? undefined
-      : (() => {
-          const screen = getScreenDimensions();
-          return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
-        })();
-
     // v5: AuthClient constructor accepts identity provider URL, derivation origin,
     // and window opener features directly (previously passed to login())
     return new AuthClient({
@@ -104,7 +100,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       identityProvider: this.config.iiProviderUrl || "https://id.ai",
       derivationOrigin: this.config.derivationOrigin,
       openIdProvider,
-      windowOpenerFeatures,
     });
   }
 
@@ -174,7 +169,11 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       // Not authenticated or invalid session - open login popup
       return await this.performLogin();
     } catch (error) {
-      this.setState(Adapter.Status.ERROR);
+      this.setState(
+        isAuthenticationPopupClosedError(error)
+          ? Adapter.Status.READY
+          : Adapter.Status.ERROR,
+      );
       throw error;
     }
   }
@@ -186,10 +185,13 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       throw new Error("AuthClient not initialized");
     }
     try {
-      const identity = await this.authClient.signIn({
-        maxTimeToLive:
-          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
-      });
+      const identity = await detectAuthenticationPopupClose(() =>
+        this.authClient!.signIn({
+          maxTimeToLive:
+            this.config.delegationTimeout ??
+            BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
+        }),
+      );
 
       const account: Account = {
         owner: identity.getPrincipal().toText(),
@@ -201,6 +203,9 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       this.setState(Adapter.Status.CONNECTED);
       return account;
     } catch (error) {
+      if (isAuthenticationPopupClosedError(error)) {
+        throw error;
+      }
       this.handleError("Login error", error);
       this.setState(Adapter.Status.ERROR);
       const message = error instanceof Error ? error.message : String(error);
