@@ -3,7 +3,7 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
   import { Info } from "lucide-svelte";
-  import type { AuthProvider } from "$modules/auth/types";
+  import type { AuthLoginResult, AuthProvider } from "$modules/auth/types";
   import {
     GOOGLE_LOGIN_OPTION,
     INTERNET_IDENTITY_LOGIN_OPTION,
@@ -15,9 +15,15 @@
     onOpenChange: (open: boolean) => void;
     /** Called when user presses login (e.g. wallet button). Use for analytics. */
     onBeforeLogin?: () => void;
+    authenticate?: (provider: AuthProvider) => Promise<AuthLoginResult>;
   };
 
-  let { open, onOpenChange, onBeforeLogin }: Props = $props();
+  let {
+    open,
+    onOpenChange,
+    onBeforeLogin,
+    authenticate = (provider) => authState.login(provider),
+  }: Props = $props();
 
   let activeProvider = $state<AuthProvider | null>(null);
   let isConnecting = $derived(activeProvider !== null);
@@ -33,7 +39,7 @@
 
     try {
       activeProvider = provider;
-      const result = await authState.login(provider);
+      const result = await authenticate(provider);
       if (result.status === "cancelled") return;
 
       handleClose();
