@@ -1,16 +1,18 @@
 import type { AuthenticationPopupHost } from "$modules/auth/signer/ii/type";
+import { AUTHENTICATION_POPUP_CLOSED_ERROR_NAME } from "$modules/auth/signer/ii/constants";
 
 export class AuthenticationPopupClosedError extends Error {
   constructor() {
     super("Authentication window was closed");
-    this.name = "AuthenticationPopupClosedError";
+    this.name = AUTHENTICATION_POPUP_CLOSED_ERROR_NAME;
   }
 }
 
 export const isAuthenticationPopupClosedError = (
   error: unknown,
 ): error is AuthenticationPopupClosedError =>
-  error instanceof Error && error.name === "AuthenticationPopupClosedError";
+  error instanceof Error &&
+  error.name === AUTHENTICATION_POPUP_CLOSED_ERROR_NAME;
 
 /**
  * Captures the popup opened synchronously by AuthClient.signIn() and rejects
