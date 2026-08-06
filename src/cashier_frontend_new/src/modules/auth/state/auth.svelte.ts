@@ -4,6 +4,7 @@ import {
   IDLE_TIMEOUT_MILLIS_SECOND,
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
+import { authenticateWithInternetIdentity } from "$modules/auth/services/internetIdentityAuthentication";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import type { IIAdapterConfig } from "$modules/auth/signer/ii/type";
 import {
@@ -29,7 +30,7 @@ import { SessionManager } from "$modules/auth/services/sessionManager";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 import { connectPnpFromUserGesture } from "$modules/auth/utils/connectPnpFromUserGesture";
-import type { AuthLoginOptions } from "$modules/auth/types";
+import type { AuthLoginResult, AuthProvider } from "$modules/auth/types";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -142,7 +143,7 @@ const initPnp = async () => {
   } else if (walletId) {
     // try to reconnect
     try {
-      await authState.login(walletId);
+      await establishAuthenticatedSession(walletId);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
@@ -261,22 +262,11 @@ export const authState = {
     });
   },
 
-  // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
-  async login(walletId: string, options?: AuthLoginOptions) {
-    if (!pnp) {
-      throw new Error("PNP is not initialized");
-    }
-    await inner_login(walletId, options);
-
-    // Setup session manager
-    await setupSessionManager(walletId);
-
-    // broadcast login event to another tab
-    broadcastChannel.post(BroadcastMessageLogin);
-    // invoke configured login handler if exists
-    if (loginHandler) {
-      loginHandler();
-    }
+  // Authenticate with the selected provider through Internet Identity.
+  async login(provider: AuthProvider): Promise<AuthLoginResult> {
+    return authenticateWithInternetIdentity(provider, (openIdProvider) =>
+      establishAuthenticatedSession(II_SIGNER_WALLET_ID, openIdProvider),
+    );
   },
 
   // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
@@ -323,7 +313,7 @@ broadcastChannel.onMessage((message) => {
   switch (message) {
     case BroadcastMessageLogin:
       if (walletConnect.current.id) {
-        inner_login(walletConnect.current.id);
+        connectWallet(walletConnect.current.id);
       }
       break;
     case BroadcastMessageLogout:
@@ -421,15 +411,15 @@ const applyOpenIdProvider = (
   };
 };
 
-const inner_login = async (walletId: string, options?: AuthLoginOptions) => {
+const connectWallet = async (
+  walletId: string,
+  openIdProvider?: OpenIdProvider,
+) => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
   isConnecting = true;
-  const resetOpenIdProvider = applyOpenIdProvider(
-    walletId,
-    options?.openIdProvider,
-  );
+  const resetOpenIdProvider = applyOpenIdProvider(walletId, openIdProvider);
   try {
     const res = await connectPnpFromUserGesture(pnp, walletId);
 
@@ -441,13 +431,20 @@ const inner_login = async (walletId: string, options?: AuthLoginOptions) => {
       subaccount: res.subaccount,
     };
     walletConnect.current.id = walletId;
-  } catch (error) {
-    console.error("Login failed:", error);
-    throw error;
   } finally {
     resetOpenIdProvider();
     isConnecting = false;
   }
+};
+
+const establishAuthenticatedSession = async (
+  walletId: string,
+  openIdProvider?: OpenIdProvider,
+) => {
+  await connectWallet(walletId, openIdProvider);
+  await setupSessionManager(walletId);
+  broadcastChannel.post(BroadcastMessageLogin);
+  loginHandler?.();
 };
 
 // Immediately initialize PNP instance on module load

@@ -1,7 +1,7 @@
-import type { OpenIdProvider } from "@icp-sdk/auth/client";
+import type { AuthProvider } from "$modules/auth/types";
 
 export type OpenIdLoginOption = {
-  provider: OpenIdProvider;
+  provider: AuthProvider;
   labelKey: string;
   iconSrc: string;
 };

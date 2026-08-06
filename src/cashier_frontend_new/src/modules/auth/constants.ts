@@ -21,3 +21,5 @@ export const IDLE_TIMEOUT_MILLIS_SECOND =
 export const TARGETS = [CASHIER_BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 
 export const NANOS_IN_MILLIS = BigInt(1000000);
+
+export const INTERNET_IDENTITY_AUTH_PROVIDER = "internetIdentity" as const;

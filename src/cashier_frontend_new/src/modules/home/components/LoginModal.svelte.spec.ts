@@ -2,9 +2,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LoginModal from "./LoginModal.svelte";
-import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { AuthenticationPopupClosedError } from "$modules/auth/signer/ii/authenticationPopup";
 
 const loginMock = vi.hoisted(() => vi.fn());
 const toastMock = vi.hoisted(() => ({
@@ -47,7 +45,7 @@ vi.mock("svelte-sonner", () => ({
 describe("LoginModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    loginMock.mockResolvedValue(undefined);
+    loginMock.mockResolvedValue({ status: "authenticated" });
   });
 
   it("always renders exactly the four supported login options", () => {
@@ -98,9 +96,7 @@ describe("LoginModal", () => {
       );
 
       await waitFor(() => {
-        expect(authState.login).toHaveBeenCalledWith(II_SIGNER_WALLET_ID, {
-          openIdProvider: provider,
-        });
+        expect(authState.login).toHaveBeenCalledWith(provider);
       });
 
       expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -123,9 +119,7 @@ describe("LoginModal", () => {
     );
 
     await waitFor(() => {
-      expect(authState.login).toHaveBeenCalledWith(II_SIGNER_WALLET_ID, {
-        openIdProvider: undefined,
-      });
+      expect(authState.login).toHaveBeenCalledWith("internetIdentity");
     });
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -135,8 +129,8 @@ describe("LoginModal", () => {
     const onOpenChange = vi.fn();
     let resolveLogin!: () => void;
     loginMock.mockReturnValueOnce(
-      new Promise<void>((resolve) => {
-        resolveLogin = resolve;
+      new Promise((resolve) => {
+        resolveLogin = () => resolve({ status: "authenticated" });
       }),
     );
 
@@ -185,7 +179,7 @@ describe("LoginModal", () => {
   it.each(["Google", "Apple", "Microsoft"])(
     "returns %s to the idle state when the authentication popup is closed",
     async (label) => {
-      loginMock.mockRejectedValueOnce(new AuthenticationPopupClosedError());
+      loginMock.mockResolvedValueOnce({ status: "cancelled" });
 
       render(LoginModal, {
         props: {
@@ -215,7 +209,7 @@ describe("LoginModal", () => {
         .mockImplementation(() => undefined);
       loginMock
         .mockRejectedValueOnce(new Error("Authentication failed"))
-        .mockResolvedValueOnce(undefined);
+        .mockResolvedValueOnce({ status: "authenticated" });
 
       render(LoginModal, {
         props: {

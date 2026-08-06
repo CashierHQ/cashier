@@ -1,9 +1,14 @@
 import type { OpenIdProvider } from "@icp-sdk/auth/client";
 import type { PNP, PnpState } from "@windoge98/plug-n-play";
+import type { INTERNET_IDENTITY_AUTH_PROVIDER } from "$modules/auth/constants";
 
-export type AuthLoginOptions = {
-  openIdProvider?: OpenIdProvider;
-};
+export type AuthProvider =
+  | OpenIdProvider
+  | typeof INTERNET_IDENTITY_AUTH_PROVIDER;
+
+export type AuthLoginResult =
+  | { status: "authenticated" }
+  | { status: "cancelled" };
 
 export type PnpConnectionResult = Awaited<ReturnType<PNP["connect"]>>;
 

@@ -2,12 +2,11 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
-  import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
-  import type { OpenIdProvider } from "@icp-sdk/auth/client";
-  import { isAuthenticationPopupClosedError } from "$modules/auth/signer/ii/authenticationPopup";
+  import type { AuthProvider } from "$modules/auth/types";
   import {
     GOOGLE_LOGIN_OPTION,
+    INTERNET_IDENTITY_LOGIN_OPTION,
     SECONDARY_OPEN_ID_LOGIN_OPTIONS,
   } from "$modules/home/constants";
 
@@ -20,45 +19,30 @@
 
   let { open, onOpenChange, onBeforeLogin }: Props = $props();
 
-  let isConnecting = $state(false);
-  let connectingProvider = $state<OpenIdProvider | null>(null);
-  let isInternetIdentityConnecting = $state(false);
+  let activeProvider = $state<AuthProvider | null>(null);
+  let isConnecting = $derived(activeProvider !== null);
 
   function handleClose() {
     onOpenChange(false);
   }
 
-  async function handleWalletSelect(
-    walletId: string,
-    openIdProvider?: OpenIdProvider,
-  ) {
+  async function handleProviderSelect(provider: AuthProvider) {
     if (isConnecting) return;
 
     onBeforeLogin?.();
 
     try {
-      isConnecting = true;
-      connectingProvider = openIdProvider ?? null;
-      isInternetIdentityConnecting = !openIdProvider;
+      activeProvider = provider;
+      const result = await authState.login(provider);
+      if (result.status === "cancelled") return;
 
-      // Map wallet ID to adapter ID
-      const adapterId =
-        walletId === "internet-identity" ? II_SIGNER_WALLET_ID : walletId;
-
-      // Call login method from authState. redirect handled in authState.login()
-      await authState.login(adapterId, { openIdProvider });
-      // After successful login,close modal
       handleClose();
       toast.success(locale.t("home.loginModal.successMessage"));
     } catch (error) {
-      if (!isAuthenticationPopupClosedError(error)) {
-        console.error("Login error:", error);
-        toast.error(locale.t("home.loginModal.errorMessage"));
-      }
+      console.error("Login error:", error);
+      toast.error(locale.t("home.loginModal.errorMessage"));
     } finally {
-      isConnecting = false;
-      connectingProvider = null;
-      isInternetIdentityConnecting = false;
+      activeProvider = null;
     }
   }
 
@@ -99,11 +83,7 @@
       <div class="flex flex-col gap-2">
         <button
           type="button"
-          onclick={() =>
-            handleWalletSelect(
-              "internet-identity",
-              GOOGLE_LOGIN_OPTION.provider,
-            )}
+          onclick={() => handleProviderSelect(GOOGLE_LOGIN_OPTION.provider)}
           disabled={isConnecting}
           class="w-full h-12 overflow-hidden border border-[#ebebeb] cursor-pointer rounded-[10px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-stretch bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -121,13 +101,13 @@
             class="flex flex-1 items-center gap-2 px-5 text-[14px] whitespace-nowrap"
           >
             <span class="font-semibold">
-              {#if connectingProvider === GOOGLE_LOGIN_OPTION.provider}
+              {#if activeProvider === GOOGLE_LOGIN_OPTION.provider}
                 {locale.t("home.loginModal.connecting")}
               {:else}
                 {locale.t(GOOGLE_LOGIN_OPTION.labelKey)}
               {/if}
             </span>
-            {#if connectingProvider === GOOGLE_LOGIN_OPTION.provider}
+            {#if activeProvider === GOOGLE_LOGIN_OPTION.provider}
               <div
                 class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
               ></div>
@@ -139,14 +119,13 @@
           {#each SECONDARY_OPEN_ID_LOGIN_OPTIONS as option (option.provider)}
             <button
               type="button"
-              onclick={() =>
-                handleWalletSelect("internet-identity", option.provider)}
+              onclick={() => handleProviderSelect(option.provider)}
               disabled={isConnecting}
               aria-label={locale.t(option.labelKey)}
               title={locale.t(option.labelKey)}
               class="h-12 flex-1 border border-[#ebebeb] cursor-pointer rounded-[10px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-center bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {#if connectingProvider === option.provider}
+              {#if activeProvider === option.provider}
                 <div
                   class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"
                 ></div>
@@ -163,13 +142,14 @@
 
           <button
             type="button"
-            onclick={() => handleWalletSelect("internet-identity")}
+            onclick={() =>
+              handleProviderSelect(INTERNET_IDENTITY_LOGIN_OPTION.provider)}
             disabled={isConnecting}
-            aria-label={locale.t("home.loginModal.internetIdentity")}
-            title={locale.t("home.loginModal.internetIdentity")}
+            aria-label={locale.t(INTERNET_IDENTITY_LOGIN_OPTION.labelKey)}
+            title={locale.t(INTERNET_IDENTITY_LOGIN_OPTION.labelKey)}
             class="h-12 flex-1 border border-[#ebebeb] cursor-pointer rounded-[10px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-center bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {#if isInternetIdentityConnecting}
+            {#if activeProvider === INTERNET_IDENTITY_LOGIN_OPTION.provider}
               <div
                 class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"
               ></div>
@@ -178,7 +158,7 @@
                 alt=""
                 aria-hidden="true"
                 class="h-5 w-8"
-                src="/icp-logo-mark.svg"
+                src={INTERNET_IDENTITY_LOGIN_OPTION.iconSrc}
               />
             {/if}
           </button>
