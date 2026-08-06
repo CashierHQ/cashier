@@ -89,6 +89,7 @@
       <div class="flex flex-col gap-2">
         <button
           type="button"
+          data-testid="login-google-button"
           onclick={() => handleProviderSelect(GOOGLE_LOGIN_OPTION.provider)}
           disabled={isConnecting}
           class="w-full h-12 overflow-hidden border border-[#ebebeb] cursor-pointer rounded-[10px] ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-stretch bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

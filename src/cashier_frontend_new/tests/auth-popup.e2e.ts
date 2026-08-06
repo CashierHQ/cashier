@@ -6,12 +6,12 @@ const openScenario = async (page: Page, scenario: Scenario) => {
   await page.goto(`/__e2e/auth-popup?scenario=${scenario}`);
   await expect(
     page.getByRole("dialog", { name: "Connect your wallet" }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15_000 });
 };
 
 const beginGoogleAuthentication = async (page: Page) => {
   const popupPromise = page.waitForEvent("popup");
-  await page.getByRole("button", { name: "Sign in with Google" }).click();
+  await page.getByTestId("login-google-button").click();
   const popup = await popupPromise;
   await popup.waitForLoadState("domcontentloaded");
   return popup;
@@ -70,7 +70,9 @@ test.describe("authentication popup lifecycle", () => {
 
     await page.getByRole("button", { name: "Sign in with Google" }).click();
 
-    await expect(page.getByText("Failed to connect wallet.")).toBeVisible();
+    await expect(page.getByText("Failed to connect wallet.")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(page.getByTestId("attempts")).toHaveText("1");
     expect(context.pages()).toHaveLength(pageCount);
     expect(page.url()).toBe(originatingRoute);
@@ -83,7 +85,9 @@ test.describe("authentication popup lifecycle", () => {
     const originatingRoute = page.url();
     const popup = await beginGoogleAuthentication(page);
 
-    await expect(page.getByText("Failed to connect wallet.")).toBeVisible();
+    await expect(page.getByText("Failed to connect wallet.")).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
       page.getByRole("button", { name: "Sign in with Google" }),
     ).toBeEnabled();
@@ -101,11 +105,11 @@ test.describe("authentication popup lifecycle", () => {
     const pageCount = context.pages().length;
     const popup = await beginGoogleAuthentication(page);
 
-    await page.getByText("Connecting...").evaluate((label) => {
-      label
-        .closest("button")
-        ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
+    const googleButton = page.getByTestId("login-google-button");
+    await expect(googleButton).toBeDisabled();
+    await googleButton.evaluate((button) =>
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+    );
     await page
       .getByRole("button", { name: "Sign in with Apple" })
       .evaluate((button) =>

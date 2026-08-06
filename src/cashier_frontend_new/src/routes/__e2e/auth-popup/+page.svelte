@@ -41,11 +41,7 @@
   };
 
   const startAuthentication = (): Promise<void> => {
-    const popup = popupHost.open(
-      "/__e2e/auth-popup/provider",
-      "cashier-authentication",
-      "popup,width=480,height=640",
-    );
+    const popup = popupHost.open("/__e2e/auth-popup/provider", "_blank");
 
     if (!popup) {
       return Promise.reject(new Error("Signer window could not be opened"));
