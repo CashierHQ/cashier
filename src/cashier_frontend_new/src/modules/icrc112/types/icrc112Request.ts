@@ -11,6 +11,7 @@ class Icrc112Request {
     public method: string,
     public canister_id: Principal,
     public nonce?: ArrayBuffer,
+    public intentIds: string[] = [],
   ) {}
 }
 
@@ -42,6 +43,7 @@ export class Icrc112RequestMapper {
       method: b.method,
       canister_id: b.canister_id,
       nonce: nonceArray as ArrayBuffer | undefined,
+      intentIds: b.intent_ids ?? [],
     };
   }
 }
@@ -50,3 +52,13 @@ export type Icrc112ExecutionResult = {
   isSuccess: boolean;
   errors: string[] | null;
 };
+
+/** Called once per individual ICRC-112 sub-request as it settles, before the
+ * aggregate batch result resolves. `intentIds` are the intent(s) the settled
+ * request belongs to (may contain more than one when the backend merged
+ * transactions from different intents into a single request). */
+export type OnRequestSettled = (
+  intentIds: string[],
+  success: boolean,
+  error?: string,
+) => void;

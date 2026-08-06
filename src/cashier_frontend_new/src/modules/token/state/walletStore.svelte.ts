@@ -2,11 +2,14 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import {
   getCachedTokenImage,
-  getTokenLogo,
-  loadTokenImages,
+  getResolvedTokenLogo,
+  loadTokenImage,
 } from "$modules/imageCache";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
-import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import {
+  CKBTC_CANISTER_ID,
+  ICP_LEDGER_CANISTER_ID,
+} from "$modules/token/constants";
 import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -155,8 +158,12 @@ class WalletStore {
         this.#preloadedTokenAddresses.add(address);
       });
 
+      const newTokens = tokens.filter((token) =>
+        newAddresses.includes(token.address),
+      );
+
       // Load images and store them in cache
-      this.#loadAndCacheTokenImages(newAddresses);
+      this.#loadAndCacheTokenImages(newTokens);
     }
 
     // Clean up addresses that are no longer in the token list
@@ -182,17 +189,17 @@ class WalletStore {
   }
 
   /**
-   * Load and cache token images for given addresses
+   * Load and cache token images for given tokens
    * Images are loaded as blobs and converted to data URLs or blob URLs
-   * @param addresses Array of token addresses to load
+   * @param tokens Array of tokens to load images for
    */
-  #loadAndCacheTokenImages(addresses: string[]): void {
+  #loadAndCacheTokenImages(tokens: TokenWithPriceAndBalance[]): void {
     // Use idle callback to avoid blocking other important operations
     const startLoad = () => {
       if (typeof requestIdleCallback !== "undefined") {
         requestIdleCallback(
           () => {
-            this.#loadImages(addresses).catch((error) => {
+            this.#loadImages(tokens).catch((error) => {
               console.warn("Failed to load some token images:", error);
             });
           },
@@ -200,33 +207,37 @@ class WalletStore {
         );
       } else {
         setTimeout(() => {
-          this.#loadImages(addresses).catch((error) => {
+          this.#loadImages(tokens).catch((error) => {
             console.warn("Failed to load some token images:", error);
           });
-        }, 1000);
+        }, 0);
       }
     };
 
-    setTimeout(startLoad, 1000);
+    startLoad();
   }
 
   /**
-   * Load images for given addresses using centralized ImageCache module
-   * @param addresses Array of token addresses
+   * Load images for given tokens using centralized ImageCache module
+   * @param tokens Array of tokens
    */
-  async #loadImages(addresses: string[]): Promise<void> {
-    // Filter out ICP ledger (it's a local file)
-    const addressesToLoad = addresses.filter(
-      (address) => address !== ICP_LEDGER_CANISTER_ID,
+  async #loadImages(tokens: TokenWithPriceAndBalance[]): Promise<void> {
+    // Filter out local images
+    const tokensToLoad = tokens.filter(
+      (token) =>
+        token.address !== ICP_LEDGER_CANISTER_ID &&
+        token.address !== CKBTC_CANISTER_ID,
     );
 
-    if (addressesToLoad.length === 0) {
+    if (tokensToLoad.length === 0) {
       return;
     }
 
     // Use centralized ImageCache module to load images
-    await loadTokenImages(addressesToLoad, (address) =>
-      getTokenLogo(address, true),
+    await Promise.allSettled(
+      tokensToLoad.map((token) =>
+        loadTokenImage(token.address, getResolvedTokenLogo(token, true)),
+      ),
     );
   }
 

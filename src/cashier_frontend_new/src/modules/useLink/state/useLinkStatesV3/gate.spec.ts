@@ -17,6 +17,7 @@ describe("GateStateV3", () => {
       action: null,
       linkDetail: {
         id: "test-link-id",
+        gates: [],
       },
       refreshAsync: vi.fn().mockResolvedValue(undefined),
     } as unknown as UserLinkStoreV3;
@@ -31,9 +32,33 @@ describe("GateStateV3", () => {
   });
 
   describe("goNext", () => {
-    it("it_should_succeed_do_transition_to_address_unlocked_state", async () => {
+    it("it_should_succeed_do_transition_to_address_unlocked_state_when_gates_open", async () => {
       await state.goNext();
+      expect(mockStore.refreshAsync).toHaveBeenCalled();
       expect(mockStore.state).toBeInstanceOf(AddressUnlockedStateV3);
+    });
+
+    it("it_should_stay_in_gate_state_when_gates_still_closed", async () => {
+      const storeWithClosedGates = {
+        state: null,
+        action: null,
+        linkDetail: {
+          id: "test-link-id",
+          gates: [
+            {
+              gate: { id: "gate-1" },
+              gate_user_status: [{ status: { Closed: null } }],
+            },
+          ],
+        },
+        refreshAsync: vi.fn().mockResolvedValue(undefined),
+      } as unknown as UserLinkStoreV3;
+      const stateWithClosedGates = new GateStateV3(storeWithClosedGates);
+
+      await stateWithClosedGates.goNext();
+
+      expect(storeWithClosedGates.refreshAsync).toHaveBeenCalled();
+      expect(storeWithClosedGates.state).toBeNull();
     });
   });
 
@@ -51,9 +76,70 @@ describe("GateStateV3", () => {
       );
     });
 
-    it("it_should_succeed_do_transition_to_address_locked_state", async () => {
+    it("it_should_succeed_do_transition_to_address_locked_state_when_gates_closed", async () => {
+      const storeWithClosedGates = {
+        state: null,
+        action: null,
+        linkDetail: {
+          id: "test-link-id",
+          gates: [
+            {
+              gate: { id: "gate-1" },
+              gate_user_status: [{ status: { Closed: null } }],
+            },
+          ],
+        },
+        refreshAsync: vi.fn().mockResolvedValue(undefined),
+      } as unknown as UserLinkStoreV3;
+      const stateWithClosedGates = new GateStateV3(storeWithClosedGates);
+
+      await stateWithClosedGates.goBack();
+
+      expect(storeWithClosedGates.refreshAsync).toHaveBeenCalled();
+      expect(storeWithClosedGates.state).toBeInstanceOf(AddressLockedStateV3);
+    });
+
+    it("it_should_succeed_do_transition_to_address_unlocked_state_when_gates_open", async () => {
       await state.goBack();
-      expect(mockStore.state).toBeInstanceOf(AddressLockedStateV3);
+      expect(mockStore.refreshAsync).toHaveBeenCalled();
+      expect(mockStore.state).toBeInstanceOf(AddressUnlockedStateV3);
+    });
+
+    it("it_should_refresh_before_checking_gates_so_a_just_unlocked_gate_is_seen", async () => {
+      // Simulates: user unlocks the gate (backend now reports Open) but the
+      // store's cached `gates` snapshot is still stale until refreshed - the
+      // exact scenario from the bug where clicking Back right after unlocking
+      // (without ever clicking Continue/goNext) sent the user to
+      // AddressLockedStateV3 instead of AddressUnlockedStateV3.
+      const gates: Array<{
+        gate: { id: string };
+        gate_user_status: [{ status: { Closed: null } | { Open: null } }];
+      }> = [
+        {
+          gate: { id: "gate-1" },
+          gate_user_status: [{ status: { Closed: null } }],
+        },
+      ];
+      const storeWithStaleGates = {
+        state: null,
+        action: null,
+        linkDetail: {
+          id: "test-link-id",
+          get gates() {
+            return gates;
+          },
+        },
+        refreshAsync: vi.fn().mockImplementation(() => {
+          gates[0].gate_user_status[0].status = { Open: null };
+          return Promise.resolve();
+        }),
+      } as unknown as UserLinkStoreV3;
+      const stateWithStaleGates = new GateStateV3(storeWithStaleGates);
+
+      await stateWithStaleGates.goBack();
+
+      expect(storeWithStaleGates.refreshAsync).toHaveBeenCalled();
+      expect(storeWithStaleGates.state).toBeInstanceOf(AddressUnlockedStateV3);
     });
   });
 

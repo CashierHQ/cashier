@@ -21,7 +21,29 @@ use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
+
+/// Builds a reverse lookup of transaction id -> the intent id(s) that own it.
+/// # Arguments
+/// * `intent_txs_map` - A mapping of intent id -> its transactions, used to tag
+///   each resulting request with the intent(s) it belongs to
+/// # Returns
+/// * `HashMap<String, Vec<String>>` - A map of transaction ids to their owning intent ids
+fn build_tx_id_to_intent_ids(
+    intent_txs_map: &HashMap<String, Vec<Transaction>>,
+) -> HashMap<String, Vec<String>> {
+    let mut map: HashMap<String, BTreeSet<String>> = HashMap::new();
+    for (intent_id, txs) in intent_txs_map.iter() {
+        for tx in txs.iter() {
+            map.entry(tx.id.clone())
+                .or_default()
+                .insert(intent_id.clone());
+        }
+    }
+    map.into_iter()
+        .map(|(tx_id, ids)| (tx_id, ids.into_iter().collect()))
+        .collect()
+}
 
 /// Creates ICRC-112 requests from a list of transactions
 /// The input transactions are topologically sorted based on their dependencies,
@@ -31,6 +53,8 @@ use std::collections::HashMap;
 /// * `link_account` - The account to which the tokens will be transferred
 /// * `canister_id` - The canister ID of the token contract
 /// * `current_ts` - The current timestamp to be used for created_at_time fields
+/// * `intent_txs_map` - Mapping of intent id -> its transactions, used to tag
+///   each resulting request with the intent(s) it belongs to
 /// # Returns
 /// * `Result<Icrc112Requests, CanisterError>` - The resulting Icrc112Requests or an error
 pub fn create_icrc_112_requests(
@@ -38,6 +62,7 @@ pub fn create_icrc_112_requests(
     link_account: Account,
     canister_id: Principal,
     current_ts: u64,
+    intent_txs_map: &HashMap<String, Vec<Transaction>>,
 ) -> Result<Icrc112Requests, CanisterError> {
     // update timestamps of ICRC transactions
     for tx in transactions.iter_mut() {
@@ -57,8 +82,12 @@ pub fn create_icrc_112_requests(
         .filter(|tx| tx.state == TransactionState::Created || tx.state == TransactionState::Fail)
         .collect();
 
+    // reverse lookup: tx id -> owning intent id(s), built before any merging
+    let tx_id_to_intent_ids = build_tx_id_to_intent_ids(intent_txs_map);
+
     // merge transactions by protocol key
-    let wallet_transactions = merge_transactions_by_protocol_key(wallet_transactions);
+    let (wallet_transactions, merged_tx_id_to_intent_ids) =
+        merge_transactions_by_protocol_key(wallet_transactions, &tx_id_to_intent_ids);
 
     let tx_graph: Graph = wallet_transactions.clone().into();
     let sorted_txs = kahn_topological_sort(&tx_graph)?;
@@ -73,8 +102,12 @@ pub fn create_icrc_112_requests(
         let mut group_requests = Vec::<Icrc112Request>::new();
         for tx_id in tx_group.iter() {
             if let Some(tx) = tx_map.get_mut(tx_id) {
+                let intent_ids = merged_tx_id_to_intent_ids
+                    .get(tx_id)
+                    .cloned()
+                    .unwrap_or_default();
                 let icrc_112_request =
-                    convert_tx_to_icrc_112_request(tx, link_account, canister_id)?;
+                    convert_tx_to_icrc_112_request(tx, link_account, canister_id, intent_ids)?;
                 group_requests.push(icrc_112_request);
             }
         }
@@ -89,11 +122,18 @@ pub fn create_icrc_112_requests(
 /// Merges transactions that share the same protocol key.
 /// # Arguments
 /// * `transactions` - A vector of Transactions to be merged.
+/// * `tx_id_to_intent_ids` - Reverse lookup of original transaction id -> owning intent id(s).
 /// # Returns
-/// * `Vec<Transaction>` - A vector of merged Transactions.
-pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec<Transaction> {
+/// * `(Vec<Transaction>, HashMap<String, Vec<String>>)` - The merged transactions, and a map
+///   from each resulting (representative) transaction id to the union of intent ids
+///   contributed by every original transaction folded into it.
+pub fn merge_transactions_by_protocol_key(
+    transactions: Vec<Transaction>,
+    tx_id_to_intent_ids: &HashMap<String, Vec<String>>,
+) -> (Vec<Transaction>, HashMap<String, Vec<String>>) {
     let mut merged_map: HashMap<String, Vec<Transaction>> = HashMap::new();
     let mut merged_transactions: Vec<Transaction> = Vec::new();
+    let mut merged_tx_id_to_intent_ids: HashMap<String, Vec<String>> = HashMap::new();
 
     for tx in transactions.into_iter() {
         merged_map
@@ -104,7 +144,10 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
 
     for (_key, tx_group) in merged_map.into_iter() {
         if tx_group.len() == 1 {
-            merged_transactions.push(tx_group.into_iter().next().unwrap());
+            let tx = tx_group.into_iter().next().unwrap();
+            let intent_ids = tx_id_to_intent_ids.get(&tx.id).cloned().unwrap_or_default();
+            merged_tx_id_to_intent_ids.insert(tx.id.clone(), intent_ids);
+            merged_transactions.push(tx);
         } else {
             // sort the transactions by id before merging to ensure deterministic behavior
             let mut sorted_tx_group = tx_group;
@@ -115,11 +158,20 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
                 merged_tx.merge_with(tx);
             }
 
+            // union intent ids across every original transaction in this group,
+            // not just the representative, so cross-intent merges are preserved
+            let intent_ids: BTreeSet<String> = sorted_tx_group
+                .iter()
+                .flat_map(|tx| tx_id_to_intent_ids.get(&tx.id).cloned().unwrap_or_default())
+                .collect();
+
+            merged_tx_id_to_intent_ids
+                .insert(merged_tx.id.clone(), intent_ids.into_iter().collect());
             merged_transactions.push(merged_tx);
         }
     }
 
-    merged_transactions
+    (merged_transactions, merged_tx_id_to_intent_ids)
 }
 
 /// Converts a Transaction to an Icrc112Request for ICRC-1 or ICRC-2 token transfers.
@@ -127,12 +179,14 @@ pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec
 /// * `tx` - The transaction to convert.
 /// * `link_account` - The account to which the tokens will be transferred.
 /// * `canister_id` - The canister ID of the token contract.
+/// * `intent_ids` - The intent id(s) that own this (possibly merged) transaction.
 /// # Returns
 /// * `Result<Icrc112Request, CanisterError>` - The resulting Icrc112Request or an error if the conversion fails.
 pub fn convert_tx_to_icrc_112_request(
     tx: &mut Transaction,
     link_account: Account,
     canister_id: Principal,
+    intent_ids: Vec<String>,
 ) -> Result<Icrc112Request, CanisterError> {
     match &mut tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -168,6 +222,7 @@ pub fn convert_tx_to_icrc_112_request(
                 method: canister_call.method,
                 arg: canister_call.arg,
                 nonce: Some(nonce),
+                intent_ids,
             })
         }
         Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
@@ -209,6 +264,7 @@ pub fn convert_tx_to_icrc_112_request(
                 method: canister_call.method,
                 arg: canister_call.arg,
                 nonce: Some(nonce),
+                intent_ids,
             })
         }
         _ => Err(CanisterError::HandleLogicError(
@@ -262,10 +318,12 @@ mod tests {
             subaccount: None,
         };
         let canister_id = random_principal_id();
+        let intent_ids = vec!["intent-1".to_string()];
 
         // Act
         let icrc_112_request =
-            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id).unwrap();
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, intent_ids.clone())
+                .unwrap();
 
         // Assert
         assert_eq!(
@@ -279,6 +337,7 @@ mod tests {
             }
         );
         assert_eq!(icrc_112_request.method, "icrc1_transfer");
+        assert_eq!(icrc_112_request.intent_ids, intent_ids);
     }
 
     #[test]
@@ -315,10 +374,12 @@ mod tests {
             subaccount: None,
         };
         let canister_id = random_principal_id();
+        let intent_ids = vec!["intent-1".to_string()];
 
         // Act
         let icrc_112_request =
-            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id).unwrap();
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, intent_ids.clone())
+                .unwrap();
 
         // Assert
         assert_eq!(
@@ -331,6 +392,7 @@ mod tests {
             }
         );
         assert_eq!(icrc_112_request.method, "icrc2_approve");
+        assert_eq!(icrc_112_request.intent_ids, intent_ids);
     }
 
     #[test]
@@ -391,15 +453,33 @@ mod tests {
         };
         let canister_id = random_principal_id();
         let current_ts = 1_632_192_100_000_000_000;
+        let intent_txs_map = HashMap::from([
+            ("intent-1".to_string(), vec![tx1.clone()]),
+            ("intent-2".to_string(), vec![tx2.clone()]),
+        ]);
 
         // Act
-        let icrc_112_requests =
-            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)
-                .unwrap();
+        let icrc_112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )
+        .unwrap();
 
         // Assert
         assert_eq!(icrc_112_requests.len(), 1);
         assert_eq!(icrc_112_requests[0].len(), 2);
+        let mut request_intent_ids: Vec<Vec<String>> = icrc_112_requests[0]
+            .iter()
+            .map(|r| r.intent_ids.clone())
+            .collect();
+        request_intent_ids.sort();
+        assert_eq!(
+            request_intent_ids,
+            vec![vec!["intent-1".to_string()], vec!["intent-2".to_string()]]
+        );
     }
 
     #[test]
@@ -466,9 +546,14 @@ mod tests {
         };
 
         let transactions = vec![tx1, tx2];
+        let tx_id_to_intent_ids = HashMap::from([
+            (tx1_id.clone(), vec!["intent-1".to_string()]),
+            (tx2_id.clone(), vec!["intent-2".to_string()]),
+        ]);
 
         // Act
-        let merged_transactions = merge_transactions_by_protocol_key(transactions);
+        let (merged_transactions, merged_tx_id_to_intent_ids) =
+            merge_transactions_by_protocol_key(transactions, &tx_id_to_intent_ids);
 
         // Assert
         assert_eq!(merged_transactions.len(), 1);
@@ -480,6 +565,15 @@ mod tests {
         } else {
             panic!("Merged transaction is not an ICRC-2 Approve");
         }
+        let mut intent_ids = merged_tx_id_to_intent_ids
+            .get(&merged_transactions[0].id)
+            .cloned()
+            .unwrap();
+        intent_ids.sort();
+        assert_eq!(
+            intent_ids,
+            vec!["intent-1".to_string(), "intent-2".to_string()]
+        );
     }
 
     #[test]
@@ -546,9 +640,14 @@ mod tests {
         };
 
         let transactions = vec![tx1, tx2];
+        let tx_id_to_intent_ids = HashMap::from([
+            (tx1_id.clone(), vec!["intent-1".to_string()]),
+            (tx2_id.clone(), vec!["intent-1".to_string()]),
+        ]);
 
         // Act
-        let merged_transactions = merge_transactions_by_protocol_key(transactions);
+        let (merged_transactions, merged_tx_id_to_intent_ids) =
+            merge_transactions_by_protocol_key(transactions, &tx_id_to_intent_ids);
 
         // Assert
         assert_eq!(merged_transactions.len(), 1);
@@ -560,6 +659,10 @@ mod tests {
         } else {
             panic!("Merged transaction is not an ICRC-1 Transfer");
         }
+        assert_eq!(
+            merged_tx_id_to_intent_ids.get(&merged_transactions[0].id),
+            Some(&vec!["intent-1".to_string()])
+        );
     }
 
     #[test]
@@ -626,7 +729,7 @@ mod tests {
             group: 1u16,
         };
 
-        let mut transactions = vec![tx1, tx2];
+        let mut transactions = vec![tx1.clone(), tx2.clone()];
 
         let link_account = Account {
             owner: random_principal_id(),
@@ -634,11 +737,20 @@ mod tests {
         };
         let canister_id = random_principal_id();
         let current_ts = 1_632_192_300_000_000_000;
+        let intent_txs_map = HashMap::from([
+            ("gate_fee_intent".to_string(), vec![tx1]),
+            ("link_creation_fee_intent".to_string(), vec![tx2]),
+        ]);
 
         // Act
-        let icrc_112_requests =
-            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)
-                .unwrap();
+        let icrc_112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )
+        .unwrap();
 
         // Assert
         assert_eq!(icrc_112_requests.len(), 1);
@@ -648,5 +760,143 @@ mod tests {
         let icrc2_approve_args = Decode!(icrc112_request.arg.as_slice(), ApproveArgs).unwrap();
         assert_eq!(icrc2_approve_args.amount, Nat::from(800u64));
         assert_eq!(icrc2_approve_args.created_at_time, Some(merged_ts));
+
+        // Two different intents (gate fee + link creation fee) merged into a single
+        // ICRC-112 request must preserve both intent ids, not just the representative's.
+        let mut intent_ids = icrc112_request.intent_ids.clone();
+        intent_ids.sort();
+        assert_eq!(
+            intent_ids,
+            vec![
+                "gate_fee_intent".to_string(),
+                "link_creation_fee_intent".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn it_should_propagate_single_intent_id_to_icrc112_request() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64;
+        let start_ts = 1_632_192_100_000_000_000u64;
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+        let tx_id = random_id_string();
+
+        let tx = Transaction {
+            id: tx_id.clone(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from,
+                to,
+                asset,
+                amount,
+                memo,
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let mut transactions = vec![tx.clone()];
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_200_000_000_000;
+        let intent_txs_map = HashMap::from([("intent-only".to_string(), vec![tx])]);
+
+        // Act
+        let icrc_112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )
+        .unwrap();
+
+        // Assert
+        assert_eq!(icrc_112_requests.len(), 1);
+        assert_eq!(icrc_112_requests[0].len(), 1);
+        assert_eq!(
+            icrc_112_requests[0][0].intent_ids,
+            vec!["intent-only".to_string()]
+        );
+    }
+
+    #[test]
+    fn it_should_propagate_shared_tx_id_across_multiple_intents() {
+        // Arrange: a single transaction already assigned to two different intents in
+        // intent_txs_map (simulating merge_fee_transactions_by_group's upstream merge),
+        // with no protocol-key merge involved.
+        let created_at = 1_632_192_000_000_000_000u64;
+        let start_ts = 1_632_192_100_000_000_000u64;
+        let asset = Asset::default();
+        let amount = Nat::from(500u64);
+        let from = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+        let tx_id = random_id_string();
+
+        let tx = Transaction {
+            id: tx_id.clone(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from,
+                spender,
+                asset,
+                amount,
+                memo,
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let mut transactions = vec![tx.clone()];
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_200_000_000_000;
+        let intent_txs_map = HashMap::from([
+            ("gate_fee_intent".to_string(), vec![tx.clone()]),
+            ("link_creation_fee_intent".to_string(), vec![tx]),
+        ]);
+
+        // Act
+        let icrc_112_requests = create_icrc_112_requests(
+            &mut transactions,
+            link_account,
+            canister_id,
+            current_ts,
+            &intent_txs_map,
+        )
+        .unwrap();
+
+        // Assert
+        assert_eq!(icrc_112_requests.len(), 1);
+        assert_eq!(icrc_112_requests[0].len(), 1);
+        let mut intent_ids = icrc_112_requests[0][0].intent_ids.clone();
+        intent_ids.sort();
+        assert_eq!(
+            intent_ids,
+            vec![
+                "gate_fee_intent".to_string(),
+                "link_creation_fee_intent".to_string()
+            ]
+        );
     }
 }

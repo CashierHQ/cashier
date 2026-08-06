@@ -13,9 +13,11 @@ use crate::{
     runes::ic_omnity_bitcoin::IcOmnityBitcoin,
     services::{
         auth::{AuthService, AuthServiceStorage},
+        collection_registry::CollectionRegistryService,
         settings::SettingsService,
         token_registry::TokenRegistryService,
         user_bitcoin::UserCkBtcService,
+        user_collection::UserCollectionService,
         user_nft::UserNftService,
         user_preference::UserPreferenceService,
         user_runes::UserRunesService,
@@ -36,6 +38,8 @@ pub struct CanisterState {
     pub user_runes: UserRunesService<ThreadlocalRepositories>,
     pub omnity_bitcoin: IcOmnityBitcoin,
     pub token_metadata_fetcher: IcTokenMetadataFetcher,
+    pub collection_registry: CollectionRegistryService<ThreadlocalRepositories>,
+    pub user_collection: UserCollectionService<ThreadlocalRepositories>,
 }
 
 impl CanisterState {
@@ -62,6 +66,8 @@ impl CanisterState {
             user_runes: UserRunesService::new(&repo, omnity_bitcoin_id),
             omnity_bitcoin,
             token_metadata_fetcher,
+            collection_registry: CollectionRegistryService::new(&repo),
+            user_collection: UserCollectionService::new(&repo),
         }
     }
 

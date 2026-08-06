@@ -358,6 +358,7 @@
                 ? Number(userStore.link.link_use_action_max_count)
                 : undefined,
             }}
+            showProgressBanner={true}
             {onCloseDrawer}
           />
         {/if}

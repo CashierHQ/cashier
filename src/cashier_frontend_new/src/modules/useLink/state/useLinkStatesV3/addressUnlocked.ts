@@ -1,6 +1,7 @@
 import type { CreateActionResponseV3 } from "$modules/detailLink/types/dto/create_action_v3";
 import type { ProcessActionResponseV3 } from "$modules/detailLink/types/dto/process_action_v3";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { ActionState } from "$modules/links/types/action/actionState";
 import {
   ActionType,
   type ActionTypeValue,
@@ -20,6 +21,10 @@ export class AddressUnlockedStateV3 implements UserActionCapableStateV3 {
   }
 
   async goNext(): Promise<void> {
+    if (this.#store.action?.state === ActionState.SUCCESS) {
+      this.#store.state = new CompletedStateV3();
+      return;
+    }
     throw new Error("Cannot go next from Address Unlocked state.");
   }
 

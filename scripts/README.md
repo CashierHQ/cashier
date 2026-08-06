@@ -59,6 +59,76 @@ After running the sync, inspect:
 git diff scripts/args/token_storage_args.template
 ```
 
+## Sync NFT Collections
+
+Use `sync_nft_collections_to_token_storage.mjs` to fetch NFT collection metadata from nftGeek and Toniq (Entrepot), merge it, and push it into the `token_storage` canister's collection registry.
+
+The script:
+
+- fetches the canonical collection list (canister id, name, standard) from nftGeek's `/api/1/collections`
+- enriches each collection with description/image/royalty from Toniq's `/api/collections`, matched by canister id
+- ignores Toniq's own `standard` field (inconsistent values like `"legacy1.5"`) — nftGeek's `interface` is always used instead
+- **skips any collection missing full metadata** — `name`, `description`, `image`, and `standard` must all be genuinely present (no canister-id-as-name or guessed `"EXT"` standard fallback); a collection missing any of these is dropped rather than indexed with placeholder data
+- marks every collection it indexes with `is_default = true`, since this script is the registry's sole source of "default" (curated, non-Cashier) collections
+- batches the merged records and calls `collection_manager_upsert_collections` on `token_storage` via `dfx canister call`, upserting (replacing, not duplicating) by `collection_id`
+
+DGDG (`https://dgdg.app/nfts/collections`) is **not** used as a source — it's a client-rendered page, not a JSON API (fetching it returns HTML), so `total_items`/`floor_price` currently have no data source and default to `0`/`null`. Revisit if DGDG exposes a real JSON endpoint later.
+
+Unlike `sync_omnity_runes_to_token_storage.mjs`, this makes a **live authenticated update call**, not a template-file patch — it uses your ambient `dfx identity`, which must hold `Permission::Admin` or `Permission::CollectionManager` on the target canister.
+
+Prerequisites:
+
+- run from the repository root
+- network access to nftGeek/Toniq and to the target IC network
+- `dfx identity` set to a principal holding `Permission::Admin` or `Permission::CollectionManager` on `token_storage`
+
+Dry run first (fetches and merges, prints a summary + sample, does not call the canister):
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs --dry-run
+```
+
+Apply changes:
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs --network local
+node scripts/sync_nft_collections_to_token_storage.mjs --network ic
+```
+
+Optional flags:
+
+```bash
+node scripts/sync_nft_collections_to_token_storage.mjs \
+  --canister-id token_storage \
+  --limit 50 \
+  --batch-size 100
+```
+
+### Sync NFT Collections via CI (dev)
+
+`.github/workflows/token-storage-sync-collections-dev.yml` runs this same script against the
+`dev` network from a `workflow_dispatch` trigger (no inputs — always a live, full sync at the
+script's own defaults), so it can be (re)run without anyone using a local `dfx identity`. It
+authenticates with the `dev` Environment's `DEPLOYER` identity, the same one
+`gate-secrets-dev.yml`/`gate-password-hashing-mode-dev.yml` use. Unlike those, `DEPLOYER` isn't
+implicitly guaranteed to hold `Permission::Admin`/`Permission::CollectionManager` on
+`token_storage` — this script's identity requirement (see Prerequisites above) needs to be
+verified (or granted, via `admin_permissions_add`) for `DEPLOYER` on the dev `token_storage`
+canister before this workflow can succeed there.
+
+To run it:
+
+```bash
+gh workflow run token-storage-sync-collections-dev.yml --repo CashierHQ/cashier --ref <branch>
+```
+
+or from the GitHub UI: Actions tab → "Sync NFT Collections to Token Storage (dev)" → Run
+workflow (choose branch).
+
+Note: GitHub only resolves a workflow by filename (both via the UI and the API/`gh` CLI) once
+that file exists on the repository's default branch — it must be merged there first before it
+can be dispatched at all, even against a different `--ref`.
+
 ## Set the Gate canister secrets
 
 - Populate the secrets in the `.env` file

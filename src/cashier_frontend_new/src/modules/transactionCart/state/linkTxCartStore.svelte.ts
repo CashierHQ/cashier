@@ -161,6 +161,32 @@ export class LinkTxCartStore implements TxCartStore {
   }
 
   /**
+   * Incrementally transition rows as individual ICRC-112 sub-requests settle,
+   * instead of waiting for the whole batch to resolve. Only touches rows
+   * currently PROCESSING (never regresses a row a later phase already moved
+   * past). When one physical ICRC-112 call represents more than one intent
+   * (backend-side merge), every matching row flips together, honestly
+   * reflecting that they share one on-chain call.
+   */
+  applyBatchProgress(intentIds: string[], success: boolean): void {
+    if (intentIds.length === 0) return;
+    this.#assetAndFeeList = this.#assetAndFeeList.map((item) => {
+      if (!item.asset.intentId || !intentIds.includes(item.asset.intentId))
+        return item;
+      if (item.asset.state !== AssetProcessState.PROCESSING) return item;
+      return {
+        ...item,
+        asset: {
+          ...item.asset,
+          state: success
+            ? AssetProcessState.SIGNED_PENDING
+            : AssetProcessState.FAILED,
+        },
+      };
+    });
+  }
+
+  /**
    * Execute action transaction (ICRC-112 batch + processAction).
    * Transitions: CREATED → PROCESSING → [SIGNED_PENDING after ICRC-112] → SUCCEED after backend
    * @returns ProcessActionResult from handleProcessAction
@@ -187,6 +213,7 @@ export class LinkTxCartStore implements TxCartStore {
           action.icrc_112_requests,
           authState.account!.owner,
           CASHIER_BACKEND_CANISTER_ID,
+          (intentIds, success) => this.applyBatchProgress(intentIds, success),
         );
         if (!icrcResult.isSuccess) {
           this.#phase = TxProgressPhase.IDLE;
@@ -205,14 +232,17 @@ export class LinkTxCartStore implements TxCartStore {
       // Completed: all transactions done
       this.#phase = TxProgressPhase.COMPLETED;
 
-      // When backend reports is_success: true, show full green checkmarks
-      if (result.isSuccess) {
+      // Prefer the authoritative per-intent state from the backend when available,
+      // on both success and partial-failure - more correct than assuming
+      // isSuccess implies every row is SUCCEED (e.g. an intent that never
+      // needed a wallet tx keeps its own true state).
+      if (result.action) {
+        this.syncStatesFromAction(result.action);
+      } else if (result.isSuccess) {
         this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
           ...item,
           asset: { ...item.asset, state: AssetProcessState.SUCCEED },
         }));
-      } else if (result.action) {
-        this.syncStatesFromAction(result.action);
       }
 
       return result;

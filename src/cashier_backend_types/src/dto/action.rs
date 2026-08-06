@@ -239,6 +239,8 @@ pub struct Icrc112Request {
     pub method: String,
     pub arg: Vec<u8>,
     pub nonce: Option<Vec<u8>>,
+    /// Ids of the intent(s) that produced this request.    
+    pub intent_ids: Vec<String>,
 }
 
 pub type ParallelRequests = Vec<Icrc112Request>;

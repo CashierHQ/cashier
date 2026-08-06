@@ -7,6 +7,8 @@ import {
   clearAllCache,
   getCacheSize,
   isImageLoading,
+  isTokenImageFailed,
+  markTokenImageFailed,
 } from "$modules/imageCache/utils/imageCache";
 
 describe("imageCache", () => {
@@ -14,9 +16,26 @@ describe("imageCache", () => {
   let originalImage: typeof Image;
   let originalFetch: typeof fetch;
   let originalDocument: typeof document;
+  let originalLocalStorage: Storage | undefined;
   let mockFileReader: FileReader;
+  let localStorageData: Record<string, string>;
 
   beforeEach(() => {
+    localStorageData = {};
+    originalLocalStorage = globalThis.localStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: vi.fn((key: string) => localStorageData[key] ?? null),
+        setItem: vi.fn((key: string, value: string) => {
+          localStorageData[key] = value;
+        }),
+        removeItem: vi.fn((key: string) => {
+          delete localStorageData[key];
+        }),
+      },
+    });
+
     // Mock document.createElement for canvas (needed for server environment)
     originalDocument = global.document;
     global.document = {
@@ -81,6 +100,14 @@ describe("imageCache", () => {
     global.fetch = originalFetch;
     global.Image = originalImage;
     clearAllCache();
+    if (originalLocalStorage) {
+      Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: originalLocalStorage,
+      });
+    } else {
+      delete (globalThis as { localStorage?: Storage }).localStorage;
+    }
     vi.clearAllMocks();
   });
 
@@ -88,17 +115,110 @@ describe("imageCache", () => {
     it("should return null for uncached address", () => {
       expect(getCachedTokenImage("test-address")).toBeNull();
     });
+
+    it("should hydrate valid persisted cache entries on module load", async () => {
+      const address = "persisted-address";
+      const imageUrl = "data:image/png;base64,persisted";
+
+      localStorageData.cashier_token_image_cache = JSON.stringify([
+        [address, imageUrl],
+        ["invalid-entry"],
+        [123, imageUrl],
+      ]);
+
+      vi.resetModules();
+      const { getCachedTokenImage: getHydratedTokenImage } =
+        await import("$modules/imageCache/utils/imageCache");
+
+      expect(getHydratedTokenImage(address)).toBe(imageUrl);
+      expect(getHydratedTokenImage("invalid-entry")).toBeNull();
+    });
+
+    it("should remove corrupted persisted cache data on module load", async () => {
+      localStorageData.cashier_token_image_cache = "{invalid-json";
+
+      vi.resetModules();
+      const { getCacheSize: getHydratedCacheSize } =
+        await import("$modules/imageCache/utils/imageCache");
+
+      expect(getHydratedCacheSize()).toBe(0);
+      expect(globalThis.localStorage.removeItem).toHaveBeenCalledWith(
+        "cashier_token_image_cache",
+      );
+    });
   });
 
   describe("loadTokenImage", () => {
-    it("should cache IC Explorer URLs directly without fetch (no CORS on that CDN)", async () => {
+    it("should cache fetched IC Explorer images as data URLs", async () => {
       const address = "ss2fx-dyaaa-aaaar-qacoq-cai";
       const imageUrl = `https://api.icexplorer.io/images/${address}`;
+      global.fetch = vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve({} as Blob),
+        } as Response),
+      ) as typeof fetch;
+      global.FileReader = vi.fn(
+        () =>
+          ({
+            readAsDataURL: vi.fn(function (this: FileReader) {
+              Object.defineProperty(this, "result", {
+                configurable: true,
+                value: "data:image/png;base64,test",
+              });
+              this.onloadend?.({
+                target: { result: "data:image/png;base64,test" },
+              } as ProgressEvent<FileReader>);
+            }),
+            onloadend: null,
+            onerror: null,
+          }) as unknown as FileReader,
+      ) as unknown as typeof FileReader;
 
       await loadTokenImage(address, imageUrl);
 
-      expect(getCachedTokenImage(address)).toBe(imageUrl);
-      expect(global.fetch).not.toHaveBeenCalled();
+      expect(getCachedTokenImage(address)).toBe("data:image/png;base64,test");
+      expect(global.fetch).toHaveBeenCalledWith(imageUrl, {
+        cache: "force-cache",
+        mode: "cors",
+      });
+    });
+
+    it("should persist cached image entries across reloads", async () => {
+      const address = "ss2fx-dyaaa-aaaar-qacoq-cai";
+      const imageUrl = `https://api.icexplorer.io/images/${address}`;
+      global.fetch = vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          blob: () => Promise.resolve({} as Blob),
+        } as Response),
+      ) as typeof fetch;
+      global.FileReader = vi.fn(
+        () =>
+          ({
+            readAsDataURL: vi.fn(function (this: FileReader) {
+              Object.defineProperty(this, "result", {
+                configurable: true,
+                value: "data:image/png;base64,test",
+              });
+              this.onloadend?.({
+                target: { result: "data:image/png;base64,test" },
+              } as ProgressEvent<FileReader>);
+            }),
+            onloadend: null,
+            onerror: null,
+          }) as unknown as FileReader,
+      ) as unknown as typeof FileReader;
+
+      await loadTokenImage(address, imageUrl);
+
+      const persistedEntries = JSON.parse(
+        localStorageData.cashier_token_image_cache,
+      ) as [string, string][];
+      expect(persistedEntries).toContainEqual([
+        address,
+        "data:image/png;base64,test",
+      ]);
     });
 
     it("should load image and cache it", async () => {
@@ -149,6 +269,27 @@ describe("imageCache", () => {
 
       // Should resolve immediately without creating new Image
       await secondLoadPromise;
+      expect(global.Image).toHaveBeenCalledTimes(1);
+    });
+
+    it("should remember failed token image sources for the current session", async () => {
+      const address = "test-address";
+      const imageUrl = "https://example.com/missing.png";
+
+      const loadPromise = loadTokenImage(address, imageUrl);
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      if (mockImage.onerror) {
+        mockImage.onerror(new Event("error"));
+      }
+
+      await loadPromise;
+
+      expect(isTokenImageFailed(address, imageUrl)).toBe(true);
+
+      await loadTokenImage(address, imageUrl);
       expect(global.Image).toHaveBeenCalledTimes(1);
     });
   });
@@ -215,6 +356,24 @@ describe("imageCache", () => {
 
       clearCache(address);
       expect(getCachedTokenImage(address)).toBeNull();
+      const persistedEntries = JSON.parse(
+        localStorageData.cashier_token_image_cache,
+      ) as [string, string][];
+      expect(persistedEntries).not.toContainEqual([
+        address,
+        "data:image/png;base64,test",
+      ]);
+    });
+
+    it("should clear failed image state for a specific address", () => {
+      const address = "test-address";
+      const imageUrl = "https://example.com/missing.png";
+
+      markTokenImageFailed(address, imageUrl);
+      expect(isTokenImageFailed(address, imageUrl)).toBe(true);
+
+      clearCache(address);
+      expect(isTokenImageFailed(address, imageUrl)).toBe(false);
     });
   });
 
@@ -265,6 +424,7 @@ describe("imageCache", () => {
       expect(getCachedTokenImage(address1)).toBeNull();
       expect(getCachedTokenImage(address2)).toBeNull();
       expect(getCacheSize()).toBe(0);
+      expect(localStorageData.cashier_token_image_cache).toBe("[]");
     });
   });
 

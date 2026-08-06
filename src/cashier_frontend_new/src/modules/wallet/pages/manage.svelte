@@ -2,7 +2,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import NavBar from "$modules/token/components/navBar.svelte";
-  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
+  import { getResolvedTokenLogo, TokenIcon } from "$modules/imageCache";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
@@ -149,12 +149,12 @@
               type="text"
               bind:value={searchQuery}
               placeholder={locale.t("wallet.manage.searchPlaceholder")}
-              class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-500 text-gray-900 placeholder-gray-400"
+              class="w-full pl-12 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-teal-500 text-gray-900 placeholder-gray-400"
             />
           </div>
           <button
             onclick={handleImport}
-            class="w-[54px] h-[54px] rounded-xl border border-gray-200 flex items-center justify-center bg-white transition-colors"
+            class="w-[42px] h-[42px] rounded-lg border border-gray-200 flex items-center justify-center bg-white transition-colors"
             aria-label={locale.t("wallet.manage.importButtonAria")}
           >
             <Plus class="w-6 h-6 text-green" />
@@ -162,7 +162,7 @@
           <button
             onclick={handleRefresh}
             disabled={isRefreshing}
-            class="w-[54px] h-[54px] rounded-xl border border-gray-200 flex items-center justify-center transition-all disabled:cursor-not-allowed"
+            class="w-[42px] h-[42px] rounded-lg border border-gray-200 flex items-center justify-center transition-all disabled:cursor-not-allowed"
             aria-label={locale.t("wallet.manage.refreshButtonAria")}
           >
             <RefreshCw
@@ -207,7 +207,7 @@
                     <TokenIcon
                       address={token.address}
                       symbol={token.symbol}
-                      logo={token.runeInfo?.icon ?? getTokenLogo(token.address)}
+                      logo={getResolvedTokenLogo(token)}
                       size="md"
                       {failedImageLoads}
                       onImageError={handleImageError}

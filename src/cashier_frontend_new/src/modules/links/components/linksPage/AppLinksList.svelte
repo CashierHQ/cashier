@@ -8,11 +8,18 @@
   } from "$modules/links/types/linkList";
   import { paths } from "$modules/routing/paths";
   import { formatDate } from "$modules/shared/utils/formatDate";
+  import { locale } from "$lib/i18n";
 
   const {
     groupedLinks,
+    hasMore = false,
+    isLoadingMore = false,
+    onLoadMore,
   }: {
     groupedLinks: GroupedLink[];
+    hasMore?: boolean;
+    isLoadingMore?: boolean;
+    onLoadMore?: () => void;
   } = $props();
 
   function handleLinkClick(link: UnifiedLinkItem) {
@@ -44,6 +51,17 @@
           </ul>
         {/each}
       </div>
+      {#if hasMore}
+        <button
+          class="text-green text-sm font-bold mt-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          disabled={isLoadingMore}
+          onclick={() => onLoadMore?.()}
+          >{isLoadingMore
+            ? locale.t("links.page.loadingMoreButton")
+            : locale.t("links.page.loadMoreButton")}</button
+        >
+      {/if}
     {/if}
   </div>
 </div>

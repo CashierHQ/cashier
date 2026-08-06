@@ -2,6 +2,7 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  resolveGateGuardStep,
   resolveStaleCompletedStep,
   UserLinkStoreV3,
 } from "$modules/useLink/state/userLinkStoreV3.svelte";
@@ -437,6 +438,57 @@ describe("UserLinkStoreV3", () => {
               ),
             ).toBeNull();
           }
+        }
+      }
+    });
+  });
+
+  // UserLinkStoreV3's gate-guard effect only decides state transitions by
+  // delegating to this pure function, so it's tested directly here rather
+  // than through the store (this spec file runs in a plain Node environment
+  // with no Svelte effect root, so $effect bodies never fire).
+  describe("resolveGateGuardStep", () => {
+    it("it_should_demote_to_address_locked_when_an_open_gate_re_locks_while_unlocked", () => {
+      const nextStep = resolveGateGuardStep(
+        false,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      );
+
+      expect(nextStep).toBe(UserLinkStep.ADDRESS_LOCKED);
+    });
+
+    it("it_should_leave_address_unlocked_alone_when_gates_are_still_open", () => {
+      const nextStep = resolveGateGuardStep(
+        true,
+        UserLinkStep.ADDRESS_UNLOCKED,
+      );
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_never_promote_from_gate_even_when_all_gates_are_open", () => {
+      // Regression test: reloading the page right after unlocking the gate
+      // (while still on the Gate step) must NOT auto-advance to
+      // AddressUnlocked - only an explicit goNext() (Continue click) may.
+      const nextStep = resolveGateGuardStep(true, UserLinkStep.GATE);
+
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_never_promote_from_address_locked_even_when_all_gates_are_open", () => {
+      const nextStep = resolveGateGuardStep(true, UserLinkStep.ADDRESS_LOCKED);
+      expect(nextStep).toBeNull();
+    });
+
+    it("it_should_leave_other_steps_alone_regardless_of_gate_status", () => {
+      for (const currentStep of [
+        UserLinkStep.LANDING,
+        UserLinkStep.ADDRESS_LOCKED,
+        UserLinkStep.GATE,
+        UserLinkStep.COMPLETED,
+      ]) {
+        for (const allGatesOpen of [true, false]) {
+          expect(resolveGateGuardStep(allGatesOpen, currentStep)).toBeNull();
         }
       }
     });

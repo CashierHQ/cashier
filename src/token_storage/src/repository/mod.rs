@@ -1,11 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+pub mod collection_registry;
 pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
 pub mod user_bridge_address;
 pub mod user_bridge_transaction;
+pub mod user_collection;
 pub mod user_nft;
 pub mod user_preference;
 pub mod user_token;
@@ -28,12 +30,17 @@ use token_storage_types::{
         bridge_address::{BridgeAddress, BridgeAddressCodec},
         bridge_transaction::{BridgeTransaction, BridgeTransactionCodec},
     },
+    collection::{CollectionId, RegistryCollection, RegistryCollectionCodec, UserCollectionCodec},
     nft::{Nft, UserNftCodec},
     token::{RegistryToken, RegistryTokenCodec},
     user::{UserPreference, UserPreferenceCodec},
 };
 
 use crate::repository::{
+    collection_registry::{
+        CollectionRegistryRepository, CollectionRegistryRepositoryStorage,
+        ThreadlocalCollectionRegistryRepositoryStorage,
+    },
     settings::{Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage},
     token_registry::{
         ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
@@ -50,6 +57,10 @@ use crate::repository::{
     user_bridge_transaction::{
         ThreadlocalUserBridgeRepositoryStorage, UserBridgeTransactionRepository,
         UserBridgeTransactionRepositoryStorage,
+    },
+    user_collection::{
+        ThreadlocalUserCollectionRepositoryStorage, UserCollectionRepository,
+        UserCollectionRepositoryStorage,
     },
     user_nft::{ThreadlocalUserNftRepositoryStorage, UserNftRepository, UserNftRepositoryStorage},
     user_preference::{
@@ -100,6 +111,8 @@ const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(7);
 const USER_NFT_MEMORY_ID: MemoryId = MemoryId::new(8);
 const USER_BRIDGE_ADDRESS_MEMORY_ID: MemoryId = MemoryId::new(9);
 const USER_BRIDGE_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
+const COLLECTION_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(11);
+const USER_COLLECTION_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 /// A trait for accessing repositories
 pub trait Repositories {
@@ -111,6 +124,8 @@ pub trait Repositories {
     type UserNft: Storage<UserNftRepositoryStorage>;
     type UserBridgeAddress: Storage<UserBridgeAddressRepositoryStorage>;
     type UserBridgeTransaction: Storage<UserBridgeTransactionRepositoryStorage>;
+    type CollectionRegistry: Storage<CollectionRegistryRepositoryStorage>;
+    type UserCollection: Storage<UserCollectionRepositoryStorage>;
 
     /// Get the settings repository
     fn settings(&self) -> SettingsRepository<Self::Settings>;
@@ -132,6 +147,10 @@ pub trait Repositories {
     fn user_bridge_transaction(
         &self,
     ) -> UserBridgeTransactionRepository<Self::UserBridgeTransaction>;
+    /// Get the NFT collection registry repository
+    fn collection_registry(&self) -> CollectionRegistryRepository<Self::CollectionRegistry>;
+    /// Get the user's enabled-collections repository
+    fn user_collection(&self) -> UserCollectionRepository<Self::UserCollection>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -146,6 +165,8 @@ impl Repositories for ThreadlocalRepositories {
     type UserNft = ThreadlocalUserNftRepositoryStorage;
     type UserBridgeAddress = ThreadlocalUserBridgeAddressRepositoryStorage;
     type UserBridgeTransaction = ThreadlocalUserBridgeRepositoryStorage;
+    type CollectionRegistry = ThreadlocalCollectionRegistryRepositoryStorage;
+    type UserCollection = ThreadlocalUserCollectionRepositoryStorage;
 
     fn settings(&self) -> SettingsRepository<Self::Settings> {
         SettingsRepository::new(&SETTINGS_STORE)
@@ -181,6 +202,14 @@ impl Repositories for ThreadlocalRepositories {
         &self,
     ) -> UserBridgeTransactionRepository<Self::UserBridgeTransaction> {
         UserBridgeTransactionRepository::new(&USER_BRIDGE_TRANSACTION_STORE)
+    }
+
+    fn collection_registry(&self) -> CollectionRegistryRepository<Self::CollectionRegistry> {
+        CollectionRegistryRepository::new(&COLLECTION_REGISTRY_STORE)
+    }
+
+    fn user_collection(&self) -> UserCollectionRepository<Self::UserCollection> {
+        UserCollectionRepository::new(&USER_COLLECTION_STORE)
     }
 }
 
@@ -275,6 +304,22 @@ thread_local! {
                 MEMORY_MANAGER.with_borrow(|m| m.get(USER_BRIDGE_TRANSACTION_MEMORY_ID)),
             )
         );
+
+    // Centralized NFT collection registry
+    static COLLECTION_REGISTRY_STORE: RefCell<VersionedBTreeMap<CollectionId, RegistryCollection, RegistryCollectionCodec, Memory>> =
+        RefCell::new(
+            VersionedBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(COLLECTION_REGISTRY_MEMORY_ID)),
+            )
+        );
+
+    // Store user's enabled NFT collections
+    static USER_COLLECTION_STORE: RefCell<VersionedBTreeMap<Principal, HashSet<CollectionId>, UserCollectionCodec, Memory>> =
+        RefCell::new(
+            VersionedBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_COLLECTION_MEMORY_ID)),
+            )
+        );
 }
 
 #[cfg(test)]
@@ -293,6 +338,8 @@ pub mod tests {
         user_nft: Rc<RefCell<UserNftRepositoryStorage>>,
         user_bridge_address: Rc<RefCell<UserBridgeAddressRepositoryStorage>>,
         user_bridge_transaction: Rc<RefCell<UserBridgeTransactionRepositoryStorage>>,
+        collection_registry: Rc<RefCell<CollectionRegistryRepositoryStorage>>,
+        user_collection: Rc<RefCell<UserCollectionRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -329,6 +376,12 @@ pub mod tests {
                 user_bridge_transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_BRIDGE_TRANSACTION_MEMORY_ID),
                 ))),
+                collection_registry: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(COLLECTION_REGISTRY_MEMORY_ID),
+                ))),
+                user_collection: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(USER_COLLECTION_MEMORY_ID),
+                ))),
             }
         }
     }
@@ -356,6 +409,21 @@ pub mod tests {
                     BridgeTransactionCodec,
                     Memory,
                 >,
+            >,
+        >;
+        type CollectionRegistry = Rc<
+            RefCell<
+                VersionedBTreeMap<
+                    CollectionId,
+                    RegistryCollection,
+                    RegistryCollectionCodec,
+                    Memory,
+                >,
+            >,
+        >;
+        type UserCollection = Rc<
+            RefCell<
+                VersionedBTreeMap<Principal, HashSet<CollectionId>, UserCollectionCodec, Memory>,
             >,
         >;
 
@@ -396,6 +464,19 @@ pub mod tests {
         ) -> UserBridgeTransactionRepository<Rc<RefCell<UserBridgeTransactionRepositoryStorage>>>
         {
             UserBridgeTransactionRepository::new(self.user_bridge_transaction.clone())
+        }
+
+        fn collection_registry(
+            &self,
+        ) -> CollectionRegistryRepository<Rc<RefCell<CollectionRegistryRepositoryStorage>>>
+        {
+            CollectionRegistryRepository::new(self.collection_registry.clone())
+        }
+
+        fn user_collection(
+            &self,
+        ) -> UserCollectionRepository<Rc<RefCell<UserCollectionRepositoryStorage>>> {
+            UserCollectionRepository::new(self.user_collection.clone())
         }
     }
 }

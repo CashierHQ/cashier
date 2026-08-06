@@ -191,6 +191,7 @@ export interface Icrc112Request {
   'method' : string,
   'canister_id' : Principal,
   'nonce' : [] | [Uint8Array | number[]],
+  'intent_ids' : Array<string>,
 }
 export interface Icrc114ValidateArgs {
   'arg' : Uint8Array | number[],
@@ -557,33 +558,6 @@ export interface _SERVICE {
    */
   'admin_gate_backoff_update' : ActorMethod<[BackoffConfig], Result>,
   /**
-   * Returns the current gate API rate limit configuration.
-   * 
-   * # Authorization
-   * 
-   * Requires `Permission::Admin`.
-   */
-  'admin_gate_rate_limit_get' : ActorMethod<[], RateLimitConfig>,
-  /**
-   * Clears the rate limit state for a specific user, allowing them to make requests immediately.
-   * 
-   * # Authorization
-   * 
-   * Requires `Permission::Admin`.
-   */
-  'admin_gate_rate_limit_reset_user' : ActorMethod<[Principal], Result>,
-  /**
-   * Updates the gate API rate limit configuration.
-   * 
-   * Changes take effect immediately on the next `user_open_link_gate` call.
-   * Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
-   * 
-   * # Authorization
-   * 
-   * Requires `Permission::Admin`.
-   */
-  'admin_gate_rate_limit_update' : ActorMethod<[RateLimitConfig], Result>,
-  /**
    * Returns the current canister settings (for verification).
    * 
    * # Returns
@@ -618,6 +592,36 @@ export interface _SERVICE {
     [Principal, Array<Permission>],
     Result_1
   >,
+  /**
+   * Returns the current shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_rate_limit_get' : ActorMethod<[], RateLimitConfig>,
+  /**
+   * Clears the rate limit state for a specific user on both `user_open_link_gate` and
+   * `user_send_otp`, allowing them to make requests immediately on either endpoint.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_rate_limit_reset_user' : ActorMethod<[Principal], Result>,
+  /**
+   * Updates the shared rate limit configuration for `user_open_link_gate` and `user_send_otp`.
+   * 
+   * Changes take effect immediately on the next call to either endpoint. Each endpoint
+   * tracks its own independent counter against this shared limit, so exhausting one
+   * endpoint's budget for a user never blocks that same user on the other endpoint.
+   * Set `enabled: false` to disable rate limiting entirely (e.g. for emergency access).
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`.
+   */
+  'admin_rate_limit_update' : ActorMethod<[RateLimitConfig], Result>,
   /**
    * Updates canister settings. Every field in `arg` is optional; only provided (`Some`) fields are
    * applied, the rest left unchanged. Canister-id changes are persisted in stable memory.

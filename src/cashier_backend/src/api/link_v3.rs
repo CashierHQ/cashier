@@ -23,6 +23,7 @@ use cashier_backend_types::{
             SyncAssetBalanceCacheResponseV3,
         },
     },
+    rate_limit::RateLimitScope,
     repository::keys::RequestLockKey,
     service::link::PaginateInput,
 };
@@ -299,7 +300,8 @@ async fn user_open_link_gate(
     let mut backoff_guard = BackoffGuard::new(&backoff_service, caller, now_ns)?;
 
     let mut rate_service = get_state().rate_limit_service;
-    let _rate_guard = RateLimitGuard::new(&mut rate_service, caller, now_ns)?;
+    let _rate_guard =
+        RateLimitGuard::new(&mut rate_service, caller, RateLimitScope::GateOpen, now_ns)?;
 
     backoff_guard.mark_attempted();
 
@@ -330,6 +332,12 @@ async fn user_send_otp(gate_id: String) -> Result<(), CanisterError> {
     debug!("[user_send_otp] gate_id: {gate_id}");
 
     let caller = msg_caller();
+    let now_ns = get_state().env.time();
+
+    let mut rate_service = get_state().rate_limit_service;
+    let _rate_guard =
+        RateLimitGuard::new(&mut rate_service, caller, RateLimitScope::SendOtp, now_ns)?;
+
     let gate_service = get_state().gate_service;
     gate_service.send_otp(&gate_id, caller).await
 }
