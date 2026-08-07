@@ -1,7 +1,7 @@
 <script lang="ts">
   import { env } from "$env/dynamic/public";
   import { page } from "$app/state";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import LoginModal from "$modules/home/components/LoginModal.svelte";
   import { authenticateWithInternetIdentity } from "$modules/auth/services/internetIdentityAuthentication";
   import { detectAuthenticationPopupClose } from "$modules/auth/signer/ii/authenticationPopup";
@@ -25,6 +25,7 @@
   let attempts = $state(0);
   let focusRestorations = $state(0);
   let successSignals = $state(0);
+  let fixtureReady = $state(false);
   let removeAuthenticationListener = () => {};
 
   const popupHost: AuthenticationPopupHost = {
@@ -41,7 +42,10 @@
   };
 
   const startAuthentication = (): Promise<void> => {
-    const popup = popupHost.open("/__e2e/auth-popup/provider", "_blank");
+    const popup = popupHost.open(
+      "/__e2e/auth-popup/provider",
+      "cashier-authentication",
+    );
 
     if (!popup) {
       return Promise.reject(new Error("Signer window could not be opened"));
@@ -90,11 +94,16 @@
     }
   };
 
+  onMount(() => {
+    fixtureReady = true;
+  });
+
   onDestroy(() => removeAuthenticationListener());
 </script>
 
 {#if fixtureEnabled}
   <main>
+    <p data-testid="fixture-ready">{fixtureReady ? "ready" : "loading"}</p>
     <p data-testid="scenario">{scenario}</p>
     <p data-testid="attempts">{attempts}</p>
     <p data-testid="focus-restorations">{focusRestorations}</p>

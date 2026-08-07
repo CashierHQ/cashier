@@ -8,6 +8,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // Keep cold-started browser runs deterministic on shared CI runners.
   workers: process.env.CI ? 1 : undefined,
+  timeout: process.env.CI ? 60_000 : 30_000,
   reporter: "list",
   expect: {
     timeout: process.env.CI ? 15_000 : 5_000,

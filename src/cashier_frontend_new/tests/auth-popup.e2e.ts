@@ -4,6 +4,9 @@ type Scenario = "success" | "cancel" | "blocked" | "timeout";
 
 const openScenario = async (page: Page, scenario: Scenario) => {
   await page.goto(`/__e2e/auth-popup?scenario=${scenario}`);
+  await expect(page.getByTestId("fixture-ready")).toHaveText("ready", {
+    timeout: 30_000,
+  });
   await expect(
     page.getByRole("dialog", { name: "Connect your wallet" }),
   ).toBeVisible({ timeout: 15_000 });

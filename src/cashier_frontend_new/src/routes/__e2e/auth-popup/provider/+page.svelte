@@ -8,7 +8,8 @@
       { type: "cashier-e2e-authenticated" },
       window.location.origin,
     );
-    window.close();
+    // Allow the browser automation click to settle before the tab disappears.
+    window.setTimeout(() => window.close(), 50);
   }
 </script>
 
