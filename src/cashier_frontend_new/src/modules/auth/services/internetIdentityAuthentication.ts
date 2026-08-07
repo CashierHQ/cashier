@@ -1,11 +1,10 @@
-import type { OpenIdProvider } from "@icp-sdk/auth/client";
 import { INTERNET_IDENTITY_AUTH_PROVIDER } from "$modules/auth/constants";
 import { isAuthenticationPopupClosedError } from "$modules/auth/signer/ii/authenticationPopup";
-import type { AuthLoginResult, AuthProvider } from "$modules/auth/types";
-
-type ConnectWithInternetIdentity = (
-  openIdProvider?: OpenIdProvider,
-) => Promise<void>;
+import type {
+  AuthLoginResult,
+  AuthProvider,
+  ConnectWithInternetIdentity,
+} from "$modules/auth/types";
 
 /**
  * Authenticates with Internet Identity using the selected login provider.

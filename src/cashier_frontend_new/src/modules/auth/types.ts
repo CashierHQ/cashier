@@ -10,6 +10,10 @@ export type AuthLoginResult =
   | { status: "authenticated" }
   | { status: "cancelled" };
 
+export type ConnectWithInternetIdentity = (
+  openIdProvider?: OpenIdProvider,
+) => Promise<void>;
+
 export type PnpConnectionResult = Awaited<ReturnType<PNP["connect"]>>;
 
 export type PnpUserGestureInternals = {
