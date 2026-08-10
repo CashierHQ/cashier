@@ -1,4 +1,4 @@
-use cashier_backend_types::{error::CanisterError, link_v2::graph::Graph};
+use cashier_backend_types::{error::CanisterError, transaction_manager::Graph};
 use std::collections::{HashMap, VecDeque};
 
 /// Perform Kahn's algorithm for topological sorting

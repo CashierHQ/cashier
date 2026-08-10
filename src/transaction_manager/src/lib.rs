@@ -7,5 +7,4 @@ pub mod icrc_token;
 pub mod intents;
 pub mod transaction;
 pub mod utils;
-pub mod v2;
 pub mod v3;
