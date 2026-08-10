@@ -121,7 +121,6 @@ impl From<Vec<Transaction>> for Graph {
 mod tests {
     use std::collections::HashSet;
 
-    use crate::link_v2::graph::Graph;
     use crate::repository::intent::v1::{
         Intent, IntentState, IntentTask, IntentType, TransferData,
     };
@@ -132,6 +131,7 @@ mod tests {
         asset::v1::Asset,
         common::{Chain, Wallet},
     };
+    use crate::transaction_manager::graph::Graph;
     use candid::Nat;
 
     // Generate a mock Intent

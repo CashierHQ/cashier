@@ -2,7 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::repository::{asset::v3::AssetV3, link::v3::LinkV3};
+use cashier_backend_types::{
+    constant::{
+        INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
+        INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+    },
+    repository::{
+        asset::v3::AssetV3,
+        link::{v1::LinkType, v3::LinkV3},
+    },
+};
 
 /// Helper function to extract asset principals from a LinkV3
 /// # Arguments
@@ -19,14 +28,39 @@ pub fn link_v3_asset_principals(link: &LinkV3) -> Vec<Principal> {
     assets.iter().map(|asset| asset.address).collect()
 }
 
+/// Generate the label for an intent based on the link type and asset
+/// # Arguments
+/// * `link_type` - The type of the link (e.g. SendTip, SendAirdrop, SendTokenBasket, ReceivePayment)
+/// * `asset` - The asset associated with the intent
+/// # Returns
+/// * `String` - The generated intent label in the format of "{INTENT_LABEL}_{ASSET_PRINCIPAL}"
+pub fn generate_intent_asset_label(link_type: LinkType, ledger_id: Principal) -> String {
+    match link_type {
+        LinkType::SendTip => format!("{}_{}", INTENT_LABEL_SEND_TIP_ASSET, ledger_id.to_text()),
+        LinkType::SendAirdrop => format!(
+            "{}_{}",
+            INTENT_LABEL_SEND_AIRDROP_ASSET,
+            ledger_id.to_text()
+        ),
+        LinkType::SendTokenBasket => format!(
+            "{}_{}",
+            INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+            ledger_id.to_text()
+        ),
+        LinkType::ReceivePayment => format!(
+            "{}_{}",
+            INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+            ledger_id.to_text()
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use candid::Nat;
     use cashier_backend_types::repository::{
-        asset::v3::TokenStandardV3,
-        asset_info::v3::AssetInfoV3,
-        link::{v1::LinkType, v3::LinkState},
+        asset::v3::TokenStandardV3, asset_info::v3::AssetInfoV3, link::v3::LinkState,
     };
     use cashier_common::test_utils::{random_id_string, random_principal_id};
 
@@ -71,5 +105,30 @@ mod tests {
         assert_eq!(asset_principals.len(), 2);
         assert!(asset_principals.contains(&ledger_id_1));
         assert!(asset_principals.contains(&ledger_id_2));
+    }
+
+    #[test]
+    fn it_should_generate_intent_asset_label() {
+        // Arrange
+        let ledger_id = random_principal_id();
+        let link_types = vec![
+            LinkType::SendTip,
+            LinkType::SendAirdrop,
+            LinkType::SendTokenBasket,
+            LinkType::ReceivePayment,
+        ];
+
+        // Act & Assert
+        for link_type in link_types {
+            let label = generate_intent_asset_label(link_type, ledger_id);
+            let expected_prefix = match link_type {
+                LinkType::SendTip => INTENT_LABEL_SEND_TIP_ASSET,
+                LinkType::SendAirdrop => INTENT_LABEL_SEND_AIRDROP_ASSET,
+                LinkType::SendTokenBasket => INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                LinkType::ReceivePayment => INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+            };
+            let expected_label = format!("{}_{}", expected_prefix, ledger_id.to_text());
+            assert_eq!(label, expected_label);
+        }
     }
 }

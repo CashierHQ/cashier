@@ -3,8 +3,8 @@
 
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{graph::Graph, transaction_manager::ExecuteTransactionsResult},
     repository::transaction::v1::{FromCallType, Transaction, TransactionState},
+    transaction_manager::{ExecuteTransactionsResult, Graph},
 };
 use std::collections::HashMap;
 

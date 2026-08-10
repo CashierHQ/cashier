@@ -3,10 +3,9 @@
 
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::{
-    action::v1::{Action, ActionState, ActionType},
     asset::v1::Asset,
     common::{Chain, Wallet},
-    intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData, TransferFromData},
+    intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData},
     transaction::v1::{
         FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
         Transaction, TransactionState,
@@ -16,7 +15,6 @@ use cashier_common::{
     constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL},
     test_utils,
 };
-use std::collections::HashMap;
 
 pub fn random_id_string() -> String {
     test_utils::random_id_string()
@@ -411,110 +409,4 @@ pub fn generate_mock_icrc1_wallet_to_link_transactions(
     );
 
     vec![transfer_tx]
-}
-
-/// Generate a mock Action along with its associated Intents and Transactions for creating a link
-/// # Arguments
-/// * `from` - Principal of the sender wallet
-/// * `link_account` - Principal of the link account
-/// * `cashier_be` - Principal of the Cashier backend canister
-/// * `treasury` - Principal of the treasury wallet
-/// * `asset` - Asset to be transferred
-/// * `amount` - Amount to be transferred
-/// # Returns
-/// * `(Action, Vec<Intent>, HashMap<String, Vec<Transaction>>)` - The generated Action, associated Intents, and a map of Intent IDs to their Transactions
-pub fn generate_mock_create_action(
-    from: Principal,
-    link_account: Principal,
-    cashier_be: Principal,
-    treasury: Principal,
-    asset: Asset,
-    amount: Nat,
-) -> (Action, Vec<Intent>, HashMap<String, Vec<Transaction>>) {
-    let action_id = random_id_string();
-    let from_wallet = Wallet::IC {
-        address: from,
-        subaccount: None,
-    };
-    let link_wallet = Wallet::IC {
-        address: link_account,
-        subaccount: None,
-    };
-    let treasury_wallet = Wallet::IC {
-        address: treasury,
-        subaccount: None,
-    };
-    let cashier_be_wallet = Wallet::IC {
-        address: cashier_be,
-        subaccount: None,
-    };
-    let icp_asset = Asset::IC {
-        address: ICP_CANISTER_PRINCIPAL,
-    };
-    let create_link_amount = Nat::from(CREATE_LINK_FEE);
-    let wallet_to_treasury_intent = Intent {
-        id: random_id_string(),
-        state: IntentState::Created,
-        created_at: 0,
-        dependency: vec![],
-        chain: Chain::IC,
-        task: IntentTask::TransferWalletToTreasury,
-        r#type: IntentType::TransferFrom(TransferFromData {
-            from: from_wallet.clone(),
-            to: treasury_wallet,
-            spender: cashier_be_wallet.clone(),
-            asset: icp_asset,
-            amount: create_link_amount.clone(),
-            actual_amount: None,
-            approve_amount: None,
-        }),
-        label: "create_link_action_intent".to_string(),
-    };
-
-    let fee_transactions =
-        generate_mock_wallet_to_treasury_transactions(from, cashier_be, treasury);
-
-    let wallet_to_link_intent = Intent {
-        id: random_id_string(),
-        state: IntentState::Created,
-        created_at: 0,
-        dependency: vec![],
-        chain: Chain::IC,
-        task: IntentTask::TransferWalletToLink,
-        r#type: IntentType::TransferFrom(TransferFromData {
-            from: from_wallet,
-            to: link_wallet,
-            spender: cashier_be_wallet,
-            asset: asset.clone(),
-            amount: amount.clone(),
-            actual_amount: None,
-            approve_amount: None,
-        }),
-        label: "wallet_to_link_intent".to_string(),
-    };
-    let asset_transactions = generate_mock_icrc2_wallet_to_link_transactions(
-        from,
-        cashier_be,
-        link_account,
-        asset,
-        amount,
-    );
-
-    let mut intent_transactions_map = HashMap::new();
-    intent_transactions_map.insert(wallet_to_treasury_intent.id.clone(), fee_transactions);
-    intent_transactions_map.insert(wallet_to_link_intent.id.clone(), asset_transactions);
-
-    let action = Action {
-        id: action_id,
-        state: ActionState::Created,
-        creator: from,
-        r#type: ActionType::CreateLink,
-        link_id: link_account.to_string(),
-    };
-
-    (
-        action,
-        vec![wallet_to_treasury_intent, wallet_to_link_intent],
-        intent_transactions_map,
-    )
 }

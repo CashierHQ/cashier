@@ -3,15 +3,9 @@
 
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::transaction_manager::{
-        ExecuteTransactionsResult, RollupActionStateResult, ValidateActionTransactionsResult,
-    },
     link_v3::transaction_manager::RollupActionStateResultV3,
-    repository::{
-        action::{v1::Action, v3::ActionV3},
-        intent::{v1::Intent, v3::IntentV3},
-        transaction::v1::Transaction,
-    },
+    repository::{action::v3::ActionV3, intent::v3::IntentV3, transaction::v1::Transaction},
+    transaction_manager::{ExecuteTransactionsResult, ValidateActionTransactionsResult},
 };
 use std::{collections::HashMap, future::Future, pin::Pin};
 
@@ -56,21 +50,6 @@ pub trait ValidationService {
     /// # Returns
     /// * `()` - No return value, the function updates the transaction states in place
     fn rollup_icrc2_wallet_transaction_state(&self, transactions: &mut [Transaction]);
-
-    /// Rollup the action state based on the transaction states and dependencies
-    /// # Arguments
-    /// * `action` - The action for which the state needs to be rolled up
-    /// * `intents` - The intents associated with the action
-    /// * `intent_txs_map` - A map of intent IDs to their associated transactions
-    /// # Returns
-    /// * `Ok(RollupActionStateResult)` - The rolled up action state result if successful
-    /// * `Err(CanisterError)` - If error occurs during rollup
-    fn rollup_action_state(
-        &self,
-        action: Action,
-        intents: &[Intent],
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Result<RollupActionStateResult, CanisterError>;
 
     /// Rollup the action state based on the transaction states and dependencies for V3 action
     /// # Arguments

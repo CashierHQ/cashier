@@ -20,9 +20,10 @@ use token_storage_types::token::IcrcStandard;
 use transaction_manager::intents::v3::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::{
-    link_v2::links::shared::utils::generate_intent_asset_label,
-    link_v3::utils::link_v3_asset_principals, token_balance::traits::TokenBalanceFetcher,
-    token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
+    link_v3::utils::{generate_intent_asset_label, link_v3_asset_principals},
+    token_balance::traits::TokenBalanceFetcher,
+    token_fee::traits::TokenFeeCache,
+    token_standard::traits::TokenStandardCache,
 };
 use uuid::Uuid;
 

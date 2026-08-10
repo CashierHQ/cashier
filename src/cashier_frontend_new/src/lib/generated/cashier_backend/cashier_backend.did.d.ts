@@ -8,17 +8,9 @@ export interface Action {
   'intents' : Array<Intent>,
   'link_id' : [] | [string],
   'action_type' : ActionType_1,
-  'action_state' : IntentState_1,
+  'action_state' : IntentState,
   'creator_address_type' : AddressType,
   'intent_ids' : [] | [Array<string>],
-}
-export interface ActionDto {
-  'id' : string,
-  'icrc_112_requests' : [] | [Array<Array<Icrc112Request>>],
-  'creator' : Principal,
-  'intents' : Array<IntentDto>,
-  'type' : ActionType_1,
-  'state' : IntentState_1,
 }
 export type ActionType = { 'Withdraw' : null } |
   { 'Send' : null } |
@@ -33,22 +25,16 @@ export type AddressType = { 'Gate' : null } |
   { 'User' : null } |
   { 'Treasury' : null } |
   { 'Creator' : null };
-export type Asset = { 'IC' : { 'address' : Principal } };
-export interface AssetInfo {
-  'asset' : Asset_1,
-  'label' : string,
-  'available_amount' : [] | [bigint],
-  'amount' : bigint,
-}
-export interface AssetInfoDto {
-  'asset' : Asset,
-  'amount_per_link_use_action' : bigint,
-  'label' : string,
-}
-export interface Asset_1 {
+export interface Asset {
   'token_standard' : [] | [TokenStandard],
   'address' : Principal,
   'network_fee' : [] | [bigint],
+}
+export interface AssetInfo {
+  'asset' : Asset,
+  'label' : string,
+  'available_amount' : [] | [bigint],
+  'amount' : bigint,
 }
 export interface BackoffConfig {
   'enabled' : boolean,
@@ -103,28 +89,16 @@ export interface CashierBackendInitData {
   'log_settings' : [] | [LogServiceSettings],
   'token_standard_cache_ttl_ns' : [] | [bigint],
 }
-export type Chain = { 'IC' : null };
-export interface CreateActionInput {
-  'link_id' : string,
-  'action_type' : ActionType_1,
-}
 export interface CreateActionInputV3 { 'action' : Action, 'link_id' : string }
 export interface CreateActionResponseV3 {
   'action' : Action,
   'link' : Link,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
-export interface CreateLinkDto { 'action' : ActionDto, 'link' : LinkDto }
-export interface CreateLinkInput {
-  'title' : string,
-  'asset_info' : Array<AssetInfoDto>,
-  'link_type' : LinkType_1,
-  'link_use_action_max_count' : bigint,
-}
 export interface CreateLinkInputV3 {
   'title' : string,
   'action' : Action,
-  'link_type' : LinkType_1,
+  'link_type' : LinkType,
   'gate_keys' : [] | [Array<GateKey>],
   'max_use' : bigint,
 }
@@ -135,8 +109,6 @@ export interface CreateLinkResponseV3 {
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export interface DisableLinkResponseV3 { 'link' : Link }
-export type FromCallType = { 'Canister' : null } |
-  { 'Wallet' : null };
 export interface Gate {
   'id' : string,
   'key' : GateKey,
@@ -173,19 +145,11 @@ export interface GetLinkDetailsResponseV3 {
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
 export interface GetLinkOptions { 'action_type' : ActionType_1 }
-export interface GetLinkResp {
-  'action' : [] | [ActionDto],
-  'link_user_state' : LinkUserStateDto,
-  'link' : LinkDto,
-}
 export interface GetLinkResponseV3 {
   'link' : Link,
   'actions' : Array<Action>,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
-export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
-  { 'Icrc1Transfer' : Icrc1Transfer } |
-  { 'Icrc2TransferFrom' : Icrc2TransferFrom };
 export interface Icrc112Request {
   'arg' : Uint8Array | number[],
   'method' : string,
@@ -199,14 +163,6 @@ export interface Icrc114ValidateArgs {
   'method' : string,
   'canister_id' : Principal,
   'nonce' : [] | [Uint8Array | number[]],
-}
-export interface Icrc1Transfer {
-  'to' : Wallet,
-  'ts' : [] | [bigint],
-  'asset' : Asset,
-  'from' : Wallet,
-  'memo' : [] | [Uint8Array | number[]],
-  'amount' : bigint,
 }
 export interface Icrc21ConsentInfo {
   'metadata' : Icrc21ConsentMessageMetadata,
@@ -248,91 +204,41 @@ export interface Icrc21SupportedStandard { 'url' : string, 'name' : string }
 export interface Icrc28TrustedOriginsResponse {
   'trusted_origins' : Array<string>,
 }
-export interface Icrc2Approve {
-  'ts' : [] | [bigint],
-  'asset' : Asset,
-  'from' : Wallet,
-  'memo' : [] | [Uint8Array | number[]],
-  'amount' : bigint,
-  'spender' : Wallet,
-}
-export interface Icrc2TransferFrom {
-  'to' : Wallet,
-  'ts' : [] | [bigint],
-  'asset' : Asset,
-  'from' : Wallet,
-  'memo' : [] | [Uint8Array | number[]],
-  'amount' : bigint,
-  'spender' : Wallet,
-}
 export interface Intent {
   'id' : string,
   'action_id' : [] | [string],
   'user_fee' : [] | [bigint],
   'total_amount' : [] | [bigint],
-  'asset' : Asset_1,
+  'asset' : Asset,
   'dest_address_type' : AddressType,
   'dest_address' : Principal,
   'label' : string,
   'source_address' : Principal,
-  'intent_state' : IntentState_1,
+  'intent_state' : IntentState,
   'source_address_type' : AddressType,
   'dependencies' : [] | [Array<string>],
   'amount' : bigint,
   'network_fee' : [] | [bigint],
-  'intent_type' : IntentType_1,
-}
-export interface IntentDto {
-  'id' : string,
-  'chain' : Chain,
-  'task' : IntentTask,
-  'type' : IntentType,
-  'created_at' : bigint,
-  'state' : IntentState_1,
-  'transactions' : Array<TransactionDto>,
+  'intent_type' : IntentType,
 }
 export type IntentState = { 'Fail' : null } |
   { 'Success' : null } |
   { 'Processing' : null } |
   { 'Created' : null };
-export type IntentState_1 = { 'Fail' : null } |
-  { 'Success' : null } |
-  { 'Processing' : null } |
-  { 'Created' : null };
-export type IntentTask = { 'TransferWalletToLink' : null } |
-  { 'TransferLinkToWallet' : null } |
-  { 'TransferWalletToTreasury' : null };
-export type IntentType = { 'Transfer' : TransferData } |
-  { 'TransferFrom' : TransferFromData };
-export type IntentType_1 = { 'Send' : null } |
+export type IntentType = { 'Send' : null } |
   { 'Receive' : null };
 export interface Link {
   'id' : string,
   'title' : string,
   'creator' : Principal,
   'asset_info' : Array<AssetInfo>,
-  'link_state' : LinkState_1,
-  'link_type' : LinkType_1,
+  'link_state' : LinkState,
+  'link_type' : LinkType,
   'created_at' : [] | [bigint],
   'use_count' : bigint,
   'max_use' : bigint,
 }
-export interface LinkDto {
-  'id' : string,
-  'title' : string,
-  'creator' : Principal,
-  'asset_info' : Array<AssetInfoDto>,
-  'link_type' : LinkType_1,
-  'create_at' : bigint,
-  'state' : LinkState,
-  'link_use_action_max_count' : bigint,
-  'link_use_action_counter' : bigint,
-}
-export type LinkState = { 'Inactive' : null } |
-  { 'Active' : null } |
-  { 'CreateLink' : null } |
-  { 'InactiveEnded' : null };
-export type LinkState_1 = { 'Ended' : null } |
+export type LinkState = { 'Ended' : null } |
   { 'Preview' : null } |
   { 'ChooseType' : null } |
   { 'Inactive' : null } |
@@ -343,19 +249,6 @@ export type LinkType = { 'SendAirdrop' : null } |
   { 'SendTip' : null } |
   { 'ReceivePayment' : null } |
   { 'SendTokenBasket' : null };
-export type LinkType_1 = { 'SendAirdrop' : null } |
-  { 'SendTip' : null } |
-  { 'ReceivePayment' : null } |
-  { 'SendTokenBasket' : null };
-export type LinkUserState = { 'Address' : null } |
-  { 'GateClosed' : null } |
-  { 'GateOpened' : null } |
-  { 'Completed' : null };
-export interface LinkUserStateDto {
-  'link_id' : string,
-  'user_id' : Principal,
-  'state' : [] | [LinkUserState],
-}
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
@@ -369,7 +262,7 @@ export interface OpenGateSuccessResult {
 export interface PaginateInput { 'offset' : bigint, 'limit' : bigint }
 export interface PaginateResult {
   'metadata' : PaginateResultMetadata,
-  'data' : Array<LinkDto>,
+  'data' : Array<Link>,
 }
 export interface PaginateResultMetadata {
   'is_next' : boolean,
@@ -378,17 +271,8 @@ export interface PaginateResultMetadata {
   'offset' : bigint,
   'limit' : bigint,
 }
-export interface PaginateResult_1 {
-  'metadata' : PaginateResultMetadata,
-  'data' : Array<Link>,
-}
 export type Permission = { 'Admin' : null };
-export interface ProcessActionDto {
-  'action' : ActionDto,
-  'link' : LinkDto,
-  'errors' : Array<string>,
-  'is_success' : boolean,
-}
+export interface ProcessActionInputV3 { 'action_id' : string }
 export interface ProcessActionResponseV3 {
   'action' : Action,
   'link' : Link,
@@ -396,8 +280,6 @@ export interface ProcessActionResponseV3 {
   'is_success' : boolean,
   'icrc112_requests' : [] | [Array<Array<Icrc112Request>>],
 }
-export interface ProcessActionV2Input { 'action_id' : string }
-export type Protocol = { 'IC' : IcTransaction };
 export interface RateLimitConfig {
   'window_secs' : bigint,
   'enabled' : boolean,
@@ -407,35 +289,23 @@ export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_10 = { 'Ok' : DisableLinkResponseV3 } |
+export type Result_10 = { 'Ok' : ProcessActionResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_11 = { 'Ok' : GetLinkDetailsResponseV3 } |
+export type Result_2 = { 'Ok' : GetLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_12 = { 'Ok' : PaginateResult } |
-  { 'Err' : CanisterError };
-export type Result_13 = { 'Ok' : PaginateResult_1 } |
-  { 'Err' : CanisterError };
-export type Result_14 = { 'Ok' : OpenGateSuccessResult } |
-  { 'Err' : CanisterError };
-export type Result_15 = { 'Ok' : ProcessActionDto } |
-  { 'Err' : CanisterError };
-export type Result_16 = { 'Ok' : ProcessActionResponseV3 } |
-  { 'Err' : CanisterError };
-export type Result_2 = { 'Ok' : GetLinkResp } |
-  { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : GetLinkResponseV3 } |
-  { 'Err' : CanisterError };
-export type Result_4 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_3 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_5 = { 'Ok' : ActionDto } |
+export type Result_4 = { 'Ok' : CreateActionResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_6 = { 'Ok' : CreateActionResponseV3 } |
+export type Result_5 = { 'Ok' : CreateLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : CreateLinkDto } |
+export type Result_6 = { 'Ok' : DisableLinkResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : CreateLinkResponseV3 } |
+export type Result_7 = { 'Ok' : GetLinkDetailsResponseV3 } |
   { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : LinkDto } |
+export type Result_8 = { 'Ok' : PaginateResult } |
+  { 'Err' : CanisterError };
+export type Result_9 = { 'Ok' : OpenGateSuccessResult } |
   { 'Err' : CanisterError };
 export interface SettingsDto {
   'inspect_message_enabled' : boolean,
@@ -444,41 +314,11 @@ export interface SettingsDto {
 }
 export type TokenStandard = { 'ICRC1' : null } |
   { 'ICRC2' : null };
-export interface TransactionDto {
-  'id' : string,
-  'protocol' : Protocol,
-  'from_call_type' : FromCallType,
-  'created_at' : bigint,
-  'state' : IntentState_1,
-  'dependency' : [] | [Array<string>],
-  'group' : number,
-}
-export interface TransferData {
-  'to' : Wallet,
-  'asset' : Asset,
-  'from' : Wallet,
-  'amount' : bigint,
-}
-export interface TransferFromData {
-  'to' : Wallet,
-  'asset' : Asset,
-  'from' : Wallet,
-  'actual_amount' : [] | [bigint],
-  'amount' : bigint,
-  'approve_amount' : [] | [bigint],
-  'spender' : Wallet,
-}
 export interface UpdateSettingArgs {
   'inspect_message_enabled' : [] | [boolean],
   'gate_service_canister_id' : [] | [Principal],
   'token_storage_canister_id' : [] | [Principal],
 }
-export type Wallet = {
-    'IC' : {
-      'subaccount' : [] | [Uint8Array | number[]],
-      'address' : Principal,
-    }
-  };
 export interface _SERVICE {
   /**
    * Clears all cached token fees from the service.
@@ -644,25 +484,6 @@ export interface _SERVICE {
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   /**
    * Retrieves a specific link by its ID with optional action data.
-   * 
-   * This endpoint is accessible to both anonymous and authenticated users. The response
-   * includes the link details and optionally associated action data based on the caller's
-   * permissions and the requested action type.
-   * 
-   * # Arguments
-   * * `link_id` - The unique identifier of the link to retrieve
-   * * `options` - Optional parameters including action type to include in response
-   * 
-   * # Returns
-   * * `Ok(LinkDto)` - Link data
-   * * `Err(String)` - Error message if link not found or access denied
-   */
-  'get_link_details_v2' : ActorMethod<
-    [string, [] | [GetLinkOptions]],
-    Result_2
-  >,
-  /**
-   * Retrieves a specific link by its ID with optional action data.
    * # Arguments
    * * `link_id` - The unique identifier of the link to retrieve
    * * `options` - Optional parameters including action type to include in response
@@ -672,7 +493,7 @@ export interface _SERVICE {
    */
   'get_link_details_v3' : ActorMethod<
     [string, [] | [GetLinkOptions]],
-    Result_3
+    Result_2
   >,
   'icrc10_supported_standards' : ActorMethod<
     [],
@@ -681,22 +502,13 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_4
+    Result_3
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
   /**
    * Returns the inspect message status.
    */
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  /**
-   * Creates a new action V2.
-   * # Arguments
-   * * `input` - Action creation data
-   * # Returns
-   * * `Ok(ActionDto)` - The created action data
-   * * `Err(CanisterError)` - If action creation fails or validation errors occur
-   */
-  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_5>,
   /**
    * Creates a new action V3.
    * # Arguments
@@ -705,16 +517,7 @@ export interface _SERVICE {
    * * `Ok(CreateActionResponse)` - The created action data
    * * `Err(CanisterError)` - If action creation fails or validation errors occur
    */
-  'user_create_action_v3' : ActorMethod<[CreateActionInputV3], Result_6>,
-  /**
-   * Creates a new link V2
-   * # Arguments
-   * * `input` - Link creation data
-   * # Returns
-   * * `Ok(CreateLinkDto)` - The created link data
-   * * `Err(CanisterError)` - If link creation fails or validation errors occur
-   */
-  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_7>,
+  'user_create_action_v3' : ActorMethod<[CreateActionInputV3], Result_4>,
   /**
    * Creates a new link V3, optionally with one or more gates.
    * # Arguments
@@ -723,16 +526,7 @@ export interface _SERVICE {
    * * `Ok(CreateLinkResponseV3)` - The created link data and any registered gates
    * * `Err(CanisterError)` - If link creation fails or validation errors occur
    */
-  'user_create_link_v3' : ActorMethod<[CreateLinkInputV3], Result_8>,
-  /**
-   * Disables an existing link V2
-   * # Arguments
-   * * `link_id` - The ID of the link to disable
-   * # Returns
-   * * `Ok(LinkDto)` - The disabled link data
-   * * `Err(CanisterError)` - If disabling fails or unauthorized
-   */
-  'user_disable_link_v2' : ActorMethod<[string], Result_9>,
+  'user_create_link_v3' : ActorMethod<[CreateLinkInputV3], Result_5>,
   /**
    * Disables a link by its ID
    * # Arguments
@@ -741,7 +535,7 @@ export interface _SERVICE {
    * * `Ok(DisableLinkResponseV3)` - Confirmation of link being disabled
    * * `Err(String)` - Error message if link not found, access denied, or already disabled
    */
-  'user_disable_link_v3' : ActorMethod<[string], Result_10>,
+  'user_disable_link_v3' : ActorMethod<[string], Result_6>,
   /**
    * Returns link details together with gate metadata and the caller's gate status.
    * # Arguments
@@ -753,22 +547,8 @@ export interface _SERVICE {
    */
   'user_get_link_details_v3' : ActorMethod<
     [string, [] | [GetLinkOptions]],
-    Result_11
+    Result_7
   >,
-  /**
-   * Retrieves a paginated list of links created by the authenticated caller.
-   * 
-   * This endpoint requires the caller to be authenticated (non-anonymous) and returns
-   * only the links that were created by the calling principal.
-   * 
-   * # Arguments
-   * * `input` - Optional pagination parameters (page size, offset, etc.)
-   * 
-   * # Returns
-   * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
-   * * `Err(CanisterError)` - Error message if retrieval fails
-   */
-  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_12>,
   /**
    * Retrieves a paginated list of links for the caller.
    * # Arguments
@@ -777,7 +557,7 @@ export interface _SERVICE {
    * * `Ok(GetLinksResponseV3)` - A paginated list of the caller's links
    * * `Err(CanisterError)` - If retrieval fails or validation errors occur
    */
-  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_13>,
+  'user_get_links_v3' : ActorMethod<[[] | [PaginateInput]], Result_8>,
   /**
    * Opens a gate for the caller on the specified link.
    * The caller must provide the gate ID (obtained from `user_get_link_details_v3`) and the
@@ -791,16 +571,7 @@ export interface _SERVICE {
    * * `Ok(OpenGateSuccessResult)` - Gate and updated user status
    * * `Err(CanisterError)` - If the key is wrong or the gate is not found
    */
-  'user_open_link_gate' : ActorMethod<[string, string, GateKey], Result_14>,
-  /**
-   * Processes a created action V2.
-   * # Arguments
-   * * `input` - Action processing data
-   * # Returns
-   * * `Ok(ProcessActionDto)` - The processed action data
-   * * `Err(CanisterError)` - If action processing fails or validation errors occur
-   */
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_15>,
+  'user_open_link_gate' : ActorMethod<[string, string, GateKey], Result_9>,
   /**
    * Processes a created action V3.
    * # Arguments
@@ -809,7 +580,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionResponseV3)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v3' : ActorMethod<[ProcessActionV2Input], Result_16>,
+  'user_process_action_v3' : ActorMethod<[ProcessActionInputV3], Result_10>,
   /**
    * Sends an OTP code to the destination configured on the given gate.
    * 
@@ -831,7 +602,7 @@ export interface _SERVICE {
    * * `Ok(SyncAssetBalanceCacheResponseV3)` - The updated link data
    * * `Err(CanisterError)` - If link not found, access denied, or balance fetch fails
    */
-  'user_sync_asset_balance_cache' : ActorMethod<[string], Result_10>,
+  'user_sync_asset_balance_cache' : ActorMethod<[string], Result_6>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

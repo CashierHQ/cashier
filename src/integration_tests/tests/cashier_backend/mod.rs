@@ -6,7 +6,6 @@ pub mod admin;
 pub mod backoff;
 pub mod init_and_upgrade;
 pub mod inspect_message;
-pub mod link_v2;
 pub mod link_v3;
 pub mod rate_limit;
 pub mod request_lock;
