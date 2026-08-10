@@ -1,13 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 import Wallet from "$modules/links/types/wallet";
-import type { Wallet as BackendWallet } from "$lib/generated/cashier_backend/cashier_backend.did";
 
-describe("Wallet.fromBackendType", () => {
-  it("maps IC wallet to frontend Wallet", () => {
+describe("Wallet", () => {
+  it("constructs a wallet without a subaccount", () => {
     const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-    const backend: BackendWallet = { IC: { address: p, subaccount: [] } };
-    const w = Wallet.fromBackendType(backend);
+    const w = new Wallet(p, null);
+
     expect(w.address.toText()).toBe(p.toText());
     expect(w.subaccount).toBeNull();
   });

@@ -1,5 +1,4 @@
-import type { LinkState as BackendLinkState } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { assertUnreachable, rsMatch } from "$lib/rsMatch";
+import { assertUnreachable } from "$lib/rsMatch";
 import { LinkState as SharedLinkState } from "$shared";
 
 export class LinkState {
@@ -24,34 +23,6 @@ export type LinkStateValue =
   | typeof LinkState.INACTIVE_ENDED;
 
 export class LinkStateMapper {
-  static toBackend(value: LinkStateValue): BackendLinkState {
-    switch (value) {
-      case LinkState.INACTIVE:
-        return { Inactive: null };
-      case LinkState.ACTIVE:
-        return { Active: null };
-      case LinkState.CREATE_LINK:
-        return { CreateLink: null };
-      case LinkState.INACTIVE_ENDED:
-        return { InactiveEnded: null };
-      case LinkState.CHOOSING_TYPE:
-      case LinkState.ADDING_ASSET:
-      case LinkState.PREVIEW:
-        throw new Error(`Cannot convert link state ${value} to backend type`);
-      default:
-        assertUnreachable(value);
-    }
-  }
-
-  static fromBackendType(b: BackendLinkState): LinkStateValue {
-    return rsMatch(b, {
-      Inactive: () => LinkState.INACTIVE,
-      Active: () => LinkState.ACTIVE,
-      CreateLink: () => LinkState.CREATE_LINK,
-      InactiveEnded: () => LinkState.INACTIVE_ENDED,
-    });
-  }
-
   static fromSharedLinkState(state: SharedLinkState): LinkStateValue {
     switch (state) {
       case SharedLinkState.ChooseType:

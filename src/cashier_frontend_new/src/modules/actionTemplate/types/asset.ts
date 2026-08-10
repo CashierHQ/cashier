@@ -1,4 +1,4 @@
-import { type Asset_1 as BackendSharedAsset } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { type Asset as BackendSharedAsset } from "$lib/generated/cashier_backend/cashier_backend.did";
 import {
   SharedTokenStandardMapper,
   type SharedTokenStandardValue,

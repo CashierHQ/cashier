@@ -1,4 +1,3 @@
-import type { LinkDto as BackendLinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import type { Link as SharedLink } from "$shared";
 import { Principal } from "@icp-sdk/core/principal";
 import {
@@ -68,34 +67,6 @@ export type SerializedLink = {
 };
 
 export class LinkMapper {
-  static fromBackendType(b: BackendLinkDto): Link {
-    return new Link(
-      b.id,
-      b.title,
-      b.creator,
-      (b.asset_info || []).map((a) => AssetInfoMapper.fromBackendType(a)),
-      LinkTypeMapper.fromBackendType(b.link_type),
-      b.create_at,
-      LinkStateMapper.fromBackendType(b.state),
-      b.link_use_action_max_count,
-      b.link_use_action_counter,
-    );
-  }
-
-  static toBackendType(link: Link): BackendLinkDto {
-    return {
-      id: link.id,
-      title: link.title,
-      creator: link.creator,
-      asset_info: link.asset_info.map(AssetInfoMapper.toBackendType),
-      link_type: LinkTypeMapper.toBackendType(link.link_type),
-      create_at: link.create_at,
-      state: LinkStateMapper.toBackend(link.state),
-      link_use_action_max_count: link.link_use_action_max_count,
-      link_use_action_counter: link.link_use_action_counter,
-    };
-  }
-
   static fromSharedLink(link: SharedLink): Link {
     return new Link(
       link.id,

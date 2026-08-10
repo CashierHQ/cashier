@@ -1,57 +1,32 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@icp-sdk/core/principal";
 import {
-  TransferDataMapper,
-  TransferFromDataMapper,
+  TransferData,
+  TransferFromData,
 } from "$modules/links/types/action/intentType";
-import type {
-  TransferData as BackendTransferData,
-  TransferFromData as BackendTransferFromData,
-} from "$lib/generated/cashier_backend/cashier_backend.did";
+import Asset from "$modules/links/types/asset";
+import Wallet from "$modules/links/types/wallet";
 
 describe("IntentType payloads", () => {
   it("constructs TransferData correctly", () => {
     const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-    const to: BackendTransferData["to"] = {
-      IC: { address: p, subaccount: [] },
-    };
-    const from: BackendTransferData["from"] = {
-      IC: { address: p, subaccount: [] },
-    };
-    const asset: BackendTransferData["asset"] = { IC: { address: p } };
+    const to = new Wallet(p, null);
+    const from = new Wallet(p, null);
+    const asset = Asset.IC(p);
 
-    const td = TransferDataMapper.fromBackendType({
-      to,
-      asset,
-      from,
-      amount: 10n,
-    });
+    const td = new TransferData(to, asset, from, 10n);
     expect(td.amount).toBe(10n);
     expect(td.to.address.toText()).toBe(p.toText());
   });
 
   it("constructs TransferFromData correctly", () => {
     const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-    const to: BackendTransferFromData["to"] = {
-      IC: { address: p, subaccount: [] },
-    };
-    const from: BackendTransferFromData["from"] = {
-      IC: { address: p, subaccount: [] },
-    };
-    const asset: BackendTransferFromData["asset"] = { IC: { address: p } };
-    const spender: BackendTransferFromData["spender"] = {
-      IC: { address: p, subaccount: [] },
-    };
+    const to = new Wallet(p, null);
+    const from = new Wallet(p, null);
+    const asset = Asset.IC(p);
+    const spender = new Wallet(p, null);
 
-    const tfd = TransferFromDataMapper.fromBackendType({
-      to,
-      asset,
-      from,
-      actual_amount: [5n],
-      amount: 10n,
-      approve_amount: [2n],
-      spender,
-    });
+    const tfd = new TransferFromData(to, asset, from, 5n, 10n, 2n, spender);
 
     expect(tfd.amount).toBe(10n);
     expect(tfd.actual_amount).toBe(5n);

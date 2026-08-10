@@ -1,5 +1,3 @@
-import type { IntentTask as BackendIntentTask } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { rsMatch } from "$lib/rsMatch";
 import {
   type Intent as SharedIntent,
   AddressType as SharedAddressType,
@@ -14,18 +12,6 @@ class IntentTask {
 }
 
 export class IntentTaskMapper {
-  /**
-   * @param b BackendIntentTask from backend
-   * @returns IntentTask instance
-   */
-  static fromBackendType(b: BackendIntentTask): IntentTask {
-    return rsMatch(b, {
-      TransferWalletToLink: () => IntentTask.TRANSFER_WALLET_TO_LINK,
-      TransferLinkToWallet: () => IntentTask.TRANSFER_LINK_TO_WALLET,
-      TransferWalletToTreasury: () => IntentTask.TRANSFER_WALLET_TO_TREASURY,
-    });
-  }
-
   static fromSharedType(s: SharedIntent): IntentTask {
     if (s.source_address_type === SharedAddressType.Creator) {
       if (s.dest_address_type === SharedAddressType.Link) {

@@ -57,7 +57,7 @@ class CanisterBackendService {
       offset: 0,
       limit: 100,
     },
-  ): Promise<Result<cashierBackend.PaginateResult_1, Error>> {
+  ): Promise<Result<cashierBackend.PaginateResult, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });
@@ -73,11 +73,9 @@ class CanisterBackendService {
     );
 
     return responseToResult<
-      cashierBackend.PaginateResult_1,
+      cashierBackend.PaginateResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_13).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
@@ -146,9 +144,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.GetLinkDetailsResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_11).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
@@ -173,9 +169,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.OpenGateSuccessResult,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_14).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   async sendOtp(gateId: string): Promise<Result<null, Error>> {
@@ -238,9 +232,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_10).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
@@ -263,9 +255,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.DisableLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_10).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
@@ -326,9 +316,7 @@ class CanisterBackendService {
     return responseToResult<
       cashierBackend.GetLinkResponseV3,
       cashierBackend.CanisterError
-    >(response as cashierBackend.Result_3).mapErr(
-      (err) => new Error(JSON.stringify(err)),
-    );
+    >(response).mapErr((err) => new Error(JSON.stringify(err)));
   }
 }
 
