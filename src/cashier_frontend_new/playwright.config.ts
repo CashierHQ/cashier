@@ -4,7 +4,15 @@ export default defineConfig({
   testDir: "./tests",
   testMatch: "**/*.e2e.ts",
   fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  // Keep cold-started browser runs deterministic on shared CI runners.
+  workers: process.env.CI ? 1 : undefined,
+  timeout: process.env.CI ? 60_000 : 30_000,
   reporter: "list",
+  expect: {
+    timeout: process.env.CI ? 15_000 : 5_000,
+  },
   use: {
     baseURL: "http://localhost:3001",
     trace: "on-first-retry",
@@ -19,6 +27,22 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
+    },
+    {
+      name: "mobile-safari",
+      use: { ...devices["iPhone 13"] },
     },
   ],
 });

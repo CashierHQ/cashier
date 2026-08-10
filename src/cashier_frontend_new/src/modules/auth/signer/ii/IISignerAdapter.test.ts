@@ -5,26 +5,34 @@ import { describe, expect, it, vi } from "vitest";
 import type { Identity } from "@icp-sdk/core/agent";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 
+const authClientMocks = vi.hoisted(() => ({
+  getIdentity: vi.fn(),
+  isAuthenticated: vi.fn(),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+}));
+
 vi.mock("@icp-sdk/auth/client", () => ({
   AuthClient: class {
     public isAuthenticated(): boolean {
-      return false;
+      return authClientMocks.isAuthenticated();
     }
 
-    public async signOut(): Promise<void> {
-      return Promise.resolve();
+    public getIdentity(): Promise<Identity> {
+      return authClientMocks.getIdentity();
+    }
+
+    public signIn(options: { maxTimeToLive: bigint }): Promise<Identity> {
+      return authClientMocks.signIn(options);
+    }
+
+    public signOut(): Promise<void> {
+      return authClientMocks.signOut();
     }
   },
 }));
 
-type TestAuthClient = {
-  isAuthenticated: () => boolean;
-  getIdentity: () => Promise<Identity>;
-  signIn: (options: { maxTimeToLive: bigint }) => Promise<Identity>;
-};
-
 type TestableAdapter = {
-  authClient: TestAuthClient;
   initAgentAndSigner: (identity: Identity) => Promise<void>;
 };
 
@@ -37,26 +45,24 @@ describe("IISignerAdapter renewal", () => {
     const identity = {
       getPrincipal: () => principal,
     } as unknown as Identity;
-    const signIn = vi.fn().mockResolvedValue(identity);
+    authClientMocks.isAuthenticated.mockReturnValue(true);
+    authClientMocks.getIdentity.mockResolvedValue(identity);
+    authClientMocks.signIn.mockResolvedValue(identity);
+    authClientMocks.signOut.mockResolvedValue(undefined);
     const adapter = new IISignerAdapter({
       iiProviderUrl: "https://identity.ic0.app",
       idleOptions: { disableIdle: true },
     });
     const testableAdapter = adapter as unknown as TestableAdapter;
-    testableAdapter.authClient = {
-      isAuthenticated: () => true,
-      getIdentity: async () => identity,
-      signIn,
-    };
     testableAdapter.initAgentAndSigner = vi.fn().mockResolvedValue(undefined);
 
     await adapter.connect();
-    expect(signIn).not.toHaveBeenCalled();
+    expect(authClientMocks.signIn).not.toHaveBeenCalled();
 
     await adapter.renewSession();
 
-    expect(signIn).toHaveBeenCalledOnce();
-    expect(signIn).toHaveBeenCalledWith({
+    expect(authClientMocks.signIn).toHaveBeenCalledOnce();
+    expect(authClientMocks.signIn).toHaveBeenCalledWith({
       maxTimeToLive: BigInt(60 * 60 * 1_000 * 1_000 * 1_000),
     });
   });

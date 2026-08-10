@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint .",
     "test:unit": "vitest",
-    "test:e2e": "playwright install chromium && playwright test",
+    "test:e2e": "playwright install --with-deps chromium firefox webkit && playwright test",
     "test": "pnpm test:unit --run",
     "add:ui": "pnpm dlx shadcn-svelte@latest add"
   },

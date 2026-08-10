@@ -7,10 +7,14 @@ import {
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
 import { AuthSessionMessageGuard } from "$modules/auth/services/authSessionMessageGuard";
+import { authenticateWithInternetIdentity } from "$modules/auth/services/internetIdentityAuthentication";
 import { SessionLifecycleManager } from "$modules/auth/services/sessionLifecycleManager";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
+import type { IIAdapterConfig } from "$modules/auth/signer/ii/type";
 import type {
   AuthBroadcastMessage,
+  AuthLoginResult,
+  AuthProvider,
   LogoutReason,
   SessionLifecycleTimestampOverrides,
   SessionLifecycleTimestamps,
@@ -23,6 +27,7 @@ import {
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
 import { Actor, HttpAgent } from "@icp-sdk/core/agent";
+import type { OpenIdProvider } from "@icp-sdk/auth/client";
 import type { IDL } from "@icp-sdk/core/candid";
 import { DelegationIdentity } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
@@ -35,6 +40,7 @@ import {
 import { PersistedState } from "runed";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
+import { connectPnpFromUserGesture } from "$modules/auth/utils/connectPnpFromUserGesture";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -164,7 +170,7 @@ const initPnp = async () => {
   } else if (walletId) {
     // try to reconnect
     try {
-      await inner_login(walletId);
+      await connectWallet(walletId);
       await setupSessionLifecycle(walletId, {
         sessionId: walletConnect.current.sessionId ?? undefined,
         hardExpiresAtMs: walletConnect.current.expiredAtMs ?? undefined,
@@ -288,25 +294,11 @@ export const authState = {
     });
   },
 
-  // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
-  async login(walletId: string) {
-    if (!pnp) {
-      throw new Error("PNP is not initialized");
-    }
-    await inner_login(walletId, { renew: account !== null });
-
-    const session = await setupSessionLifecycle(walletId);
-
-    // broadcast login event to another tab
-    broadcastChannel.post({
-      type: AUTH_BROADCAST_MESSAGE_LOGIN,
-      walletId,
-      ...session,
-    });
-    // invoke configured login handler if exists
-    if (loginHandler) {
-      loginHandler();
-    }
+  // Authenticate with the selected provider through Internet Identity.
+  async login(provider: AuthProvider): Promise<AuthLoginResult> {
+    return authenticateWithInternetIdentity(provider, (openIdProvider) =>
+      establishAuthenticatedSession(II_SIGNER_WALLET_ID, openIdProvider),
+    );
   },
 
   // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
@@ -425,7 +417,7 @@ const handleAuthBroadcastMessage = async (
     // deployment may still be open.
     if (message === AUTH_BROADCAST_MESSAGE_LOGIN) {
       if (walletConnect.current.id) {
-        await inner_login(walletConnect.current.id);
+        await connectWallet(walletConnect.current.id);
         await setupSessionLifecycle(walletConnect.current.id);
       }
       return;
@@ -439,7 +431,7 @@ const handleAuthBroadcastMessage = async (
       case AUTH_BROADCAST_MESSAGE_LOGIN:
         if (!sessionMessageGuard.shouldAcceptLogin(message)) return;
         sessionLifecycleManager.exit();
-        await inner_login(message.walletId, { restoreFromStorage: true });
+        await connectWallet(message.walletId, { restoreFromStorage: true });
         await setupSessionLifecycle(message.walletId, message);
         return;
       case AUTH_BROADCAST_MESSAGE_LOGOUT:
@@ -554,22 +546,59 @@ const setupSessionLifecycle = async (
   return { sessionId, hardExpiresAtMs, idleExpiresAtMs };
 };
 
+const applyOpenIdProvider = (
+  walletId: string,
+  openIdProvider?: OpenIdProvider,
+) => {
+  if (!pnp || walletId !== II_SIGNER_WALLET_ID || !openIdProvider) {
+    return () => {};
+  }
+
+  const adapterConfig = pnp.config.adapters?.[walletId]?.config as
+    | IIAdapterConfig
+    | undefined;
+
+  if (!adapterConfig) {
+    return () => {};
+  }
+
+  const previousOpenIdProvider = adapterConfig.openIdProvider;
+  adapterConfig.openIdProvider = openIdProvider;
+
+  return () => {
+    if (previousOpenIdProvider) {
+      adapterConfig.openIdProvider = previousOpenIdProvider;
+      return;
+    }
+
+    delete adapterConfig.openIdProvider;
+  };
+};
+
 /**
  * Connects, renews, or rehydrates the delegated identity for this tab.
  *
  * @param walletId - Wallet adapter identifier.
- * @param options - Whether to force a fresh provider delegation or rehydrate
- * the delegation written by another tab.
+ * @param options - Selected OpenID provider and whether to force a fresh
+ * provider delegation or rehydrate the delegation written by another tab.
  * @returns A promise that resolves after the local account is updated.
  */
-const inner_login = async (
+const connectWallet = async (
   walletId: string,
-  options: { renew?: boolean; restoreFromStorage?: boolean } = {},
+  options: {
+    openIdProvider?: OpenIdProvider;
+    renew?: boolean;
+    restoreFromStorage?: boolean;
+  } = {},
 ): Promise<void> => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
   isConnecting = true;
+  const resetOpenIdProvider = applyOpenIdProvider(
+    walletId,
+    options.openIdProvider,
+  );
   try {
     const iiAdapter =
       walletId === II_SIGNER_WALLET_ID && pnp.adapter
@@ -580,7 +609,7 @@ const inner_login = async (
         ? await iiAdapter.restoreSessionFromStorage()
         : options.renew && iiAdapter
           ? await iiAdapter.renewSession()
-          : await pnp.connect(walletId);
+          : await connectPnpFromUserGesture(pnp, walletId);
 
     if (!res || res.owner === null) {
       throw new Error("Login failed: owner is null");
@@ -590,12 +619,27 @@ const inner_login = async (
       subaccount: res.subaccount,
     };
     walletConnect.current.id = walletId;
-  } catch (error) {
-    console.error("Login failed:", error);
-    throw error;
   } finally {
+    resetOpenIdProvider();
     isConnecting = false;
   }
+};
+
+const establishAuthenticatedSession = async (
+  walletId: string,
+  openIdProvider?: OpenIdProvider,
+) => {
+  await connectWallet(walletId, {
+    openIdProvider,
+    renew: account !== null,
+  });
+  const session = await setupSessionLifecycle(walletId);
+  broadcastChannel.post({
+    type: AUTH_BROADCAST_MESSAGE_LOGIN,
+    walletId,
+    ...session,
+  });
+  loginHandler?.();
 };
 
 // Immediately initialize PNP instance on module load

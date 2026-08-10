@@ -59,3 +59,6 @@ jobs:
 
       - name: Run frontend tests
         run: just test_frontend
+
+      - name: Run frontend browser tests
+        run: pnpm --filter cashier_frontend_new test:e2e

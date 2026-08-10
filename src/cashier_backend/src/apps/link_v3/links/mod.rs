@@ -27,7 +27,7 @@ use crate::apps::{
     token_fee::traits::TokenFeeCache, token_standard::traits::TokenStandardCache,
 };
 
-/// Enum representing the different types of links in LinkV2
+/// Enum representing the different types of links in LinkV3
 #[allow(clippy::enum_variant_names)]
 pub enum LinkV3Types {
     TipLink(tip_link::TipLink),

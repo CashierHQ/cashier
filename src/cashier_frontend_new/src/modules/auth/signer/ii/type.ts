@@ -1,4 +1,9 @@
-import type { IdleOptions } from "@icp-sdk/auth/client";
+import type { IdleOptions, OpenIdProvider } from "@icp-sdk/auth/client";
+
+export type AuthenticationPopupHost = Pick<
+  Window,
+  "open" | "setInterval" | "clearInterval" | "focus"
+>;
 
 export enum Status {
   CONNECTING = "CONNECTING",
@@ -35,6 +40,7 @@ interface GlobalPnpConfig {
 export interface IIAdapterConfig extends GlobalPnpConfig {
   iiProviderUrl?: string;
   idleOptions?: IdleOptions;
+  openIdProvider?: OpenIdProvider;
 }
 
 // copy from windoge98/plug-n-play, they don't export this function

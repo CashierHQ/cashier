@@ -4,7 +4,7 @@ import {
   type ActorSubclass,
   type Identity,
 } from "@icp-sdk/core/agent";
-import { AuthClient } from "@icp-sdk/auth/client";
+import { AuthClient, type OpenIdProvider } from "@icp-sdk/auth/client";
 import { Adapter, BaseSignerAdapter } from "@windoge98/plug-n-play";
 import {
   type IIAdapterConfig,
@@ -12,8 +12,11 @@ import {
 } from "$modules/auth/signer/ii/type";
 import { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
-import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
 import { Signer } from "@slide-computer/signer";
+import {
+  detectAuthenticationPopupClose,
+  isAuthenticationPopupClosedError,
+} from "$modules/auth/signer/ii/authenticationPopup";
 
 /**
  * Account interface representing the connected user's account details.
@@ -102,23 +105,20 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     return Promise.resolve();
   }
 
-  private createAuthClient(): AuthClient {
+  private createAuthClient(openIdProvider?: OpenIdProvider): AuthClient {
+    // v5: AuthClient constructor accepts identity provider URL, derivation origin,
+    // and window opener features directly (previously passed to login())
     return new AuthClient({
       idleOptions: this.config.idleOptions,
       identityProvider: this.config.iiProviderUrl || "https://id.ai",
       derivationOrigin: this.config.derivationOrigin,
-      windowOpenerFeatures: (() => {
-        const screen = getScreenDimensions();
-        return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
-      })(),
+      openIdProvider,
     });
   }
 
   private initializeAuthClient(): void {
     try {
-      // v5: AuthClient constructor accepts identity provider URL, derivation origin,
-      // and window opener features directly (previously passed to login())
-      this.authClient = this.createAuthClient();
+      this.authClient = this.createAuthClient(this.config.openIdProvider);
     } catch (err) {
       this.handleError("Failed to create AuthClient", err);
       this.setState(Adapter.Status.ERROR);
@@ -154,6 +154,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     try {
       this.setState(Adapter.Status.CONNECTING);
 
+      this.authClient = this.createAuthClient(this.config.openIdProvider);
+
       if (!this.authClient) {
         throw new Error("AuthClient not initialized");
       }
@@ -180,7 +182,11 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       // Not authenticated or invalid session - open login popup
       return await this.performLogin();
     } catch (error) {
-      this.setState(Adapter.Status.ERROR);
+      this.setState(
+        isAuthenticationPopupClosedError(error)
+          ? Adapter.Status.READY
+          : Adapter.Status.ERROR,
+      );
       throw error;
     }
   }
@@ -193,10 +199,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
    * @throws If the identity provider rejects or cannot complete renewal.
    */
   async renewSession(): Promise<Account> {
-    if (!this.authClient) {
-      this.initializeAuthClient();
-    }
     this.resetIdentityResources();
+    this.authClient = this.createAuthClient(this.config.openIdProvider);
     return this.performLogin();
   }
 
@@ -208,7 +212,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
    */
   refreshSessionFromStorage(): void {
     this.resetIdentityResources();
-    this.authClient = this.createAuthClient();
+    this.authClient = this.createAuthClient(this.config.openIdProvider);
   }
 
   /**
@@ -229,10 +233,14 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       throw new Error("AuthClient not initialized");
     }
     try {
-      const identity = await this.authClient.signIn({
-        maxTimeToLive:
-          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
-      });
+      const identity = await detectAuthenticationPopupClose(() =>
+        this.authClient!.signIn({
+          maxTimeToLive:
+            this.config.delegationTimeout ??
+            BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 hour in nanoseconds
+        }),
+      );
+
       const account: Account = {
         owner: identity.getPrincipal().toText(),
         subaccount: null,
@@ -243,6 +251,9 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       this.setState(Adapter.Status.CONNECTED);
       return account;
     } catch (error) {
+      if (isAuthenticationPopupClosedError(error)) {
+        throw error;
+      }
       this.handleError("Login error", error);
       this.setState(Adapter.Status.ERROR);
       const message = error instanceof Error ? error.message : String(error);

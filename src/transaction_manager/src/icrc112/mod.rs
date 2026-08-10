@@ -9,11 +9,11 @@ use candid::Principal;
 use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests},
     error::CanisterError,
-    link_v2::graph::Graph,
     repository::{
         asset::v1::Asset,
         transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction, TransactionState},
     },
+    transaction_manager::Graph,
 };
 use cashier_common::utils::nonce_from_tx_id;
 use icrc_112_utils::build_canister_call;

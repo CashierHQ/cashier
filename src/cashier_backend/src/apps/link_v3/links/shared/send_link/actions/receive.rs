@@ -21,8 +21,8 @@ use transaction_manager::intents::v3::transfer_link_to_wallet::TransferLinkToWal
 use uuid::Uuid;
 
 use crate::apps::{
-    link_v2::links::shared::utils::generate_intent_asset_label,
-    link_v3::utils::link_v3_asset_principals, token_fee::traits::TokenFeeCache,
+    link_v3::utils::{generate_intent_asset_label, link_v3_asset_principals},
+    token_fee::traits::TokenFeeCache,
     token_standard::traits::TokenStandardCache,
 };
 

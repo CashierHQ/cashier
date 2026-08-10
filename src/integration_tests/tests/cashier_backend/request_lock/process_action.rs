@@ -1,43 +1,48 @@
 use std::sync::Arc;
 
-use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
-use crate::constant;
+use crate::cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture;
+use crate::constant::ICP_TOKEN;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
-use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v2::dto::{ProcessActionDto, ProcessActionV2Input};
-use cashier_backend_types::repository::action::v1::ActionType;
+use cashier_backend_types::link_v3::dto::action::{
+    CreateActionInputV3, ProcessActionInputV3, ProcessActionResponseV3,
+};
 
 #[tokio::test]
 async fn test_request_lock_for_process_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap_or_default();
 
-        // Setup user and create link v2
-        let mut creator_fixture = TipLinkV2Fixture::new(
+        // Setup user and create link v3
+        let mut creator_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
-            constant::ICP_TOKEN,
+            ICP_TOKEN,
             Nat::from(100_000_000u64),
+            icp_ledger_fee.clone(),
+            icp_ledger_fee,
         )
         .await;
 
-        let dto = creator_fixture.activate_link().await;
+        let activate_result = creator_fixture.activate_link().await;
+        let link_id = activate_result.link.id.clone();
 
-        let create_action_input = CreateActionInput {
-            link_id: dto.link.id.clone(),
-            action_type: ActionType::Receive,
+        let create_action_input = CreateActionInputV3 {
+            link_id: link_id.clone(),
+            action: creator_fixture.link_fixture.receive_action(link_id, caller),
         };
         let receive_action = creator_fixture
             .link_fixture
-            .create_action_v2(create_action_input)
+            .create_action_v3(create_action_input)
             .await
             .unwrap();
 
-        // Act - submit 3 create_action calls concurrently
+        // Act - submit 3 process_action calls concurrently
         let mut msgs: Vec<ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId> =
             Vec::with_capacity(3);
         for _ in 0..3 {
@@ -47,15 +52,16 @@ async fn test_request_lock_for_process_action() {
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()
-                    .submit_process_action_v2(ProcessActionV2Input {
-                        action_id: receive_action.id.clone(),
+                    .submit_process_action_v3(ProcessActionInputV3 {
+                        action_id: receive_action.action.id.clone(),
                     })
                     .await
                     .unwrap(),
             );
         }
 
-        let mut results: Vec<Result<ProcessActionDto, CanisterError>> = Vec::with_capacity(3);
+        let mut results: Vec<Result<ProcessActionResponseV3, CanisterError>> =
+            Vec::with_capacity(3);
         for msg in msgs {
             results.push(
                 creator_fixture

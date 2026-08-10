@@ -1,31 +1,35 @@
 use std::sync::Arc;
 
-use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
-use crate::constant;
+use crate::cashier_backend::link_v3::send_tip::fixture::TipLinkV3Fixture;
+use crate::constant::ICP_TOKEN;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
 use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v2::dto::CreateLinkDto;
+use cashier_backend_types::link_v3::dto::link::CreateLinkResponseV3;
 
 #[tokio::test]
 async fn test_request_lock_for_create_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap_or_default();
 
-        // Setup user and create link v2
-        let mut creator_fixture = TipLinkV2Fixture::new(
+        // Setup user and create link v3
+        let mut creator_fixture = TipLinkV3Fixture::new(
             Arc::new(ctx.clone()),
             caller,
-            constant::ICP_TOKEN,
+            ICP_TOKEN,
             Nat::from(100_000_000u64),
+            icp_ledger_fee.clone(),
+            icp_ledger_fee,
         )
         .await;
 
         creator_fixture.airdrop_icp_and_asset().await;
 
-        // Act - submit 3 create_action calls concurrently
+        // Act - submit 3 create_link calls concurrently
         let mut msgs: Vec<ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId> =
             Vec::with_capacity(3);
         for _ in 0..3 {
@@ -35,13 +39,13 @@ async fn test_request_lock_for_create_link() {
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()
-                    .submit_user_create_link_v2(creator_fixture.tip_link_input().unwrap())
+                    .submit_user_create_link_v3(creator_fixture.tip_link_input().unwrap())
                     .await
                     .unwrap(),
             );
         }
 
-        let mut results: Vec<Result<CreateLinkDto, CanisterError>> = Vec::with_capacity(3);
+        let mut results: Vec<Result<CreateLinkResponseV3, CanisterError>> = Vec::with_capacity(3);
         for msg in msgs {
             results.push(
                 creator_fixture

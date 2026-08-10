@@ -4,11 +4,11 @@
 use crate::utils::topological_sort::kahn_topological_sort;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::graph::Graph,
     repository::{
         intent::{v1::Intent, v3::IntentV3},
         transaction::v1::Transaction,
     },
+    transaction_manager::Graph,
 };
 use std::collections::{HashMap, HashSet};
 

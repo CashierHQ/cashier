@@ -6,10 +6,9 @@ use cashier_backend_types::{
     auth::Permission,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto},
+        link::GetLinkOptions,
     },
     error::CanisterError,
-    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     link_v3::dto::{
         action::{
             CreateActionInputV3, CreateActionResponseV3, ProcessActionInputV3,
@@ -21,7 +20,7 @@ use cashier_backend_types::{
             SyncAssetBalanceCacheResponseV3,
         },
     },
-    service::link::{PaginateInput, PaginateResult},
+    service::link::PaginateInput,
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use gate_service_types::{GateKey, OpenGateSuccessResult};
@@ -133,100 +132,6 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.query("get_canister_build_data", ()).await
     }
 
-    /// Creates a new link.
-    pub async fn user_create_link(
-        &self,
-        input: CreateLinkInput,
-    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("user_create_link", ((input),)).await
-    }
-
-    /// Creates a new link V2.
-    /// # Arguments
-    /// * `input` - Link creation data
-    /// # Returns
-    /// * `Ok(CreateLinkDto)` - The created link data
-    /// * `Err(CanisterError)` - If link creation fails or validation errors occur
-    pub async fn user_create_link_v2(
-        &self,
-        input: CreateLinkInput,
-    ) -> CanisterClientResult<Result<CreateLinkDto, CanisterError>> {
-        self.client.update("user_create_link_v2", ((input),)).await
-    }
-
-    /// Disables a link V2.
-    /// # Arguments
-    /// * `link_id` - The ID of the link to disable
-    /// # Returns
-    /// * `Ok(LinkDto)` - The disabled link data
-    /// * `Err(CanisterError)` - If disabling fails or unauthorized
-    pub async fn user_disable_link_v2(
-        &self,
-        link_id: &str,
-    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("user_disable_link_v2", (link_id,)).await
-    }
-
-    /// Creates a new action V2.
-    /// # Arguments
-    /// * `input` - Action creation data
-    /// # Returns
-    /// * `Ok(ActionDto)` - The created action data
-    /// * `Err(CanisterError)` - If action creation fails or validation errors occur
-    pub async fn user_create_action_v2(
-        &self,
-        input: CreateActionInput,
-    ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
-        self.client
-            .update("user_create_action_v2", ((input),))
-            .await
-    }
-
-    /// Processes a created action V2.
-    /// # Arguments
-    /// * `input` - Action processing data
-    /// # Returns
-    /// * `Ok(ProcessActionDto)` - The processed action data
-    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
-    pub async fn user_process_action_v2(
-        &self,
-        input: ProcessActionV2Input,
-    ) -> CanisterClientResult<Result<ProcessActionDto, CanisterError>> {
-        self.client
-            .update("user_process_action_v2", ((input),))
-            .await
-    }
-
-    /// Retrieves a paginated list of links of caller.
-    /// # Arguments
-    /// * `options` - Pagination options
-    /// # Returns
-    /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
-    /// * `Err(String)` - If retrieval fails
-    pub async fn user_get_links_v2(
-        &self,
-        options: Option<PaginateInput>,
-    ) -> CanisterClientResult<Result<PaginateResult<LinkDto>, CanisterError>> {
-        self.client.query("user_get_links_v2", (options,)).await
-    }
-
-    /// Retrieves a specific link by its ID with optional action data.
-    /// # Arguments
-    /// * `link_id` - The unique identifier of the link to retrieve
-    /// * `options` - Optional parameters including action type to include in response
-    /// # Returns
-    /// * `Ok(GetLinkResp)` - The link details response
-    /// * `Err(CanisterError)` - Error if the link not found or access denied
-    pub async fn get_link_details_v2(
-        &self,
-        link_id: &str,
-        options: Option<GetLinkOptions>,
-    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
-        self.client
-            .query("get_link_details_v2", (link_id, options))
-            .await
-    }
-
     /// Creates a new action.
     pub async fn user_create_action(
         &self,
@@ -249,15 +154,6 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: UpdateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
         self.client.update("user_update_action", ((input),)).await
-    }
-
-    /// Retrieves a specific link by its ID with optional action data.
-    pub async fn get_link(
-        &self,
-        id: String,
-        options: Option<GetLinkOptions>,
-    ) -> CanisterClientResult<Result<GetLinkResp, String>> {
-        self.client.query("get_link", (id, options)).await
     }
 
     pub async fn icrc114_validate(&self, args: Icrc114ValidateArgs) -> CanisterClientResult<bool> {
@@ -498,42 +394,6 @@ mod pic {
             self.client.await_call(msg_id).await
         }
 
-        pub async fn submit_user_create_action_v2(
-            &self,
-            args: CreateActionInput,
-        ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("create_action_v2", (args,)).await
-        }
-
-        pub async fn submit_user_create_link_v2(
-            &self,
-            args: CreateLinkInput,
-        ) -> CanisterClientResult<RawMessageId> {
-            self.client
-                .submit_call("user_create_link_v2", (args,))
-                .await
-        }
-
-        /// Submit a create_action_v2 call and return the message ID (PocketIC only).
-        pub async fn submit_create_action_v2(
-            &self,
-            args: CreateActionInput,
-        ) -> CanisterClientResult<RawMessageId> {
-            self.client
-                .submit_call("user_create_action_v2", (args,))
-                .await
-        }
-
-        /// Submit a process_action_v2 call and return the message ID (PocketIC only).
-        pub async fn submit_process_action_v2(
-            &self,
-            args: ProcessActionV2Input,
-        ) -> CanisterClientResult<RawMessageId> {
-            self.client
-                .submit_call("user_process_action_v2", (args,))
-                .await
-        }
-
         /// Submit a process_action_v3 call and return the message ID (PocketIC only).
         pub async fn submit_process_action_v3(
             &self,
@@ -541,6 +401,16 @@ mod pic {
         ) -> CanisterClientResult<RawMessageId> {
             self.client
                 .submit_call("user_process_action_v3", (args,))
+                .await
+        }
+
+        /// Submit a user_create_link_v3 call and return the message ID (PocketIC only).
+        pub async fn submit_user_create_link_v3(
+            &self,
+            args: CreateLinkInputV3,
+        ) -> CanisterClientResult<RawMessageId> {
+            self.client
+                .submit_call("user_create_link_v3", (args,))
                 .await
         }
     }

@@ -348,9 +348,6 @@ mod tests {
     use candid::Nat;
     use cashier_backend_types::{
         error::CanisterError,
-        link_v2::transaction_manager::{
-            ExecuteTransactionsResult, ValidateActionTransactionsResult,
-        },
         link_v3::transaction_manager::RollupActionStateResultV3,
         repository::{
             action::{
@@ -368,6 +365,7 @@ mod tests {
                 Protocol, Transaction, TransactionState,
             },
         },
+        transaction_manager::{ExecuteTransactionsResult, ValidateActionTransactionsResult},
     };
     use icrc_ledger_types::icrc1::account::Account;
     use icrc_ledger_types::icrc1::transfer::Memo;
@@ -393,20 +391,6 @@ mod tests {
 
         fn rollup_icrc2_wallet_transaction_state(&self, _transactions: &mut [Transaction]) {
             *self.rollup_called.borrow_mut() = true;
-        }
-
-        fn rollup_action_state(
-            &self,
-            _action: cashier_backend_types::repository::action::v1::Action,
-            _intents: &[cashier_backend_types::repository::intent::v1::Intent],
-            _intent_txs_map: HashMap<String, Vec<Transaction>>,
-        ) -> Result<
-            cashier_backend_types::link_v2::transaction_manager::RollupActionStateResult,
-            CanisterError,
-        > {
-            Err(CanisterError::HandleLogicError(
-                "unused in v3 tests".to_string(),
-            ))
         }
 
         fn rollup_action_state_v3(
