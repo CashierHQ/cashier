@@ -28,6 +28,7 @@
   let logoutReason = $state<LogoutReason | null>(null);
   let appliedLoginCount = $state(0);
   let appliedLogoutCount = $state(0);
+  let fixtureReady = $state(false);
   let hardTimeoutMs = 3_000;
   let idleTimeoutMs = 2_000;
 
@@ -183,6 +184,8 @@
     } else {
       persistSession(null);
     }
+
+    fixtureReady = true;
   });
 
   onDestroy(() => {
@@ -193,6 +196,7 @@
 </script>
 
 <main>
+  <p data-testid="fixture-ready">{fixtureReady ? "ready" : "loading"}</p>
   <p data-testid="status">{session ? "authenticated" : "logged-out"}</p>
   <p data-testid="session-id">{session?.sessionId ?? "none"}</p>
   <p data-testid="hard-expiry">{session?.hardExpiresAtMs ?? 0}</p>
