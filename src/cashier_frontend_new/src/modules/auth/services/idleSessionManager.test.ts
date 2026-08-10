@@ -19,7 +19,13 @@ describe("IdleSessionManager", () => {
     vi.useRealTimers();
   });
 
-  it("refreshes inactivity when this tab receives user input", () => {
+  it.each([
+    ["mousedown", () => new MouseEvent("mousedown")],
+    ["mousemove", () => new MouseEvent("mousemove")],
+    ["keydown", () => new KeyboardEvent("keydown")],
+    ["touchstart", () => new Event("touchstart")],
+    ["wheel", () => new WheelEvent("wheel")],
+  ])("refreshes inactivity on %s", (_eventName, createEvent) => {
     const onIdle = vi.fn();
     manager = new IdleSessionManager({
       idleTimeoutMs: 500,
@@ -28,7 +34,25 @@ describe("IdleSessionManager", () => {
     });
 
     vi.advanceTimersByTime(400);
-    document.dispatchEvent(new MouseEvent("mousemove"));
+    document.dispatchEvent(createEvent());
+    vi.advanceTimersByTime(100);
+
+    expect(onIdle).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(400);
+    expect(onIdle).toHaveBeenCalledTimes(1);
+  });
+
+  it("refreshes inactivity when the window scrolls", () => {
+    const onIdle = vi.fn();
+    manager = new IdleSessionManager({
+      idleTimeoutMs: 500,
+      initialExpiresAtMs: 10_500,
+      onIdle,
+    });
+
+    vi.advanceTimersByTime(400);
+    window.dispatchEvent(new Event("scroll"));
     vi.advanceTimersByTime(100);
 
     expect(onIdle).not.toHaveBeenCalled();

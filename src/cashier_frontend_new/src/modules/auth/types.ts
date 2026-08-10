@@ -25,6 +25,7 @@ export type SessionLifecycleOptions = {
 };
 
 export type SessionLifecycleTimestamps = {
+  sessionId: string;
   hardExpiresAtMs: number;
   idleExpiresAtMs: number;
 };
@@ -39,15 +40,18 @@ export type AuthBroadcastMessage =
   | typeof AUTH_BROADCAST_MESSAGE_LOGOUT
   | {
       type: typeof AUTH_BROADCAST_MESSAGE_LOGIN;
+      sessionId: string;
       walletId: string;
       hardExpiresAtMs: number;
       idleExpiresAtMs: number;
     }
   | {
       type: typeof AUTH_BROADCAST_MESSAGE_LOGOUT;
+      sessionId: string;
       reason: LogoutReason;
     }
   | {
       type: typeof AUTH_BROADCAST_MESSAGE_ACTIVITY;
+      sessionId: string;
       idleExpiresAtMs: number;
     };

@@ -6,6 +6,7 @@ import {
   IDLE_TIMEOUT_MILLIS_SECOND,
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
+import { AuthSessionMessageGuard } from "$modules/auth/services/authSessionMessageGuard";
 import { SessionLifecycleManager } from "$modules/auth/services/sessionLifecycleManager";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import type {
@@ -26,7 +27,11 @@ import type { IDL } from "@icp-sdk/core/candid";
 import { DelegationIdentity } from "@icp-sdk/core/identity";
 import { Principal } from "@icp-sdk/core/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
-import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
+import {
+  createPNP,
+  type ActorSubclass,
+  type PNP,
+} from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
@@ -89,10 +94,12 @@ let loginHandler: (() => void) | null = null;
 
 // state to store connected wallet ID for reconnecting later
 const walletConnect = new PersistedState<{
+  sessionId: string | null;
   id: string | null;
   expiredAtMs: number | null;
   idleExpiresAtMs: number | null;
 }>("connectedWallet", {
+  sessionId: null,
   id: null,
   expiredAtMs: null,
   idleExpiresAtMs: null,
@@ -111,6 +118,7 @@ let account = $state<{
 } | null>(null);
 
 const sessionLifecycleManager = new SessionLifecycleManager();
+const sessionMessageGuard = new AuthSessionMessageGuard();
 let logoutInFlight: Promise<void> | null = null;
 
 /**
@@ -118,10 +126,12 @@ let logoutInFlight: Promise<void> | null = null;
  */
 const resetLoginState = () => {
   walletConnect.current = {
+    sessionId: null,
     id: null,
     expiredAtMs: null,
     idleExpiresAtMs: null,
   };
+  sessionMessageGuard.clear();
   account = null;
 };
 
@@ -143,6 +153,11 @@ const initPnp = async () => {
     isSessionExpired(walletConnect.current.idleExpiresAtMs);
 
   if (hardExpiryPassed || idleExpiryPassed) {
+    try {
+      await IISignerAdapter.clearStoredSession();
+    } catch (error) {
+      console.error("Failed to clear expired authentication session:", error);
+    }
     resetLoginState();
     isReady = true;
     return;
@@ -151,6 +166,7 @@ const initPnp = async () => {
     try {
       await inner_login(walletId);
       await setupSessionLifecycle(walletId, {
+        sessionId: walletConnect.current.sessionId ?? undefined,
         hardExpiresAtMs: walletConnect.current.expiredAtMs ?? undefined,
         idleExpiresAtMs: walletConnect.current.idleExpiresAtMs ?? undefined,
       });
@@ -277,7 +293,7 @@ export const authState = {
     if (!pnp) {
       throw new Error("PNP is not initialized");
     }
-    await inner_login(walletId);
+    await inner_login(walletId, { renew: account !== null });
 
     const session = await setupSessionLifecycle(walletId);
 
@@ -368,6 +384,8 @@ const logoutEverywhere = (
 ): Promise<void> => {
   if (logoutInFlight) return logoutInFlight;
 
+  const sessionId = sessionMessageGuard.currentSessionId;
+
   logoutInFlight = (async () => {
     try {
       await inner_logout();
@@ -375,9 +393,10 @@ const logoutEverywhere = (
       console.error("Logout failed:", error);
       throw error;
     } finally {
-      if (shouldBroadcast) {
+      if (shouldBroadcast && sessionId) {
         broadcastChannel.post({
           type: AUTH_BROADCAST_MESSAGE_LOGOUT,
+          sessionId,
           reason,
         });
       }
@@ -418,16 +437,18 @@ const handleAuthBroadcastMessage = async (
 
     switch (message.type) {
       case AUTH_BROADCAST_MESSAGE_LOGIN:
+        if (!sessionMessageGuard.shouldAcceptLogin(message)) return;
         sessionLifecycleManager.exit();
-        await inner_login(message.walletId);
+        await inner_login(message.walletId, { restoreFromStorage: true });
         await setupSessionLifecycle(message.walletId, message);
         return;
       case AUTH_BROADCAST_MESSAGE_LOGOUT:
+        if (!sessionMessageGuard.isCurrent(message.sessionId)) return;
         await logoutEverywhere(message.reason, false);
         return;
       case AUTH_BROADCAST_MESSAGE_ACTIVITY:
         if (
-          walletConnect.current.id &&
+          sessionMessageGuard.isCurrent(message.sessionId) &&
           message.idleExpiresAtMs > (walletConnect.current.idleExpiresAtMs ?? 0)
         ) {
           walletConnect.current = {
@@ -476,6 +497,7 @@ const setupSessionLifecycle = async (
   const delegationIdentity = identity as DelegationIdentity;
 
   const now = Date.now();
+  const sessionId = timestamps.sessionId ?? globalThis.crypto.randomUUID();
   const hardExpiresAtMs =
     timestamps.hardExpiresAtMs ??
     now + calculateDelegationExpirationMs(delegationIdentity.getDelegation());
@@ -484,6 +506,7 @@ const setupSessionLifecycle = async (
 
   // Store absolute deadlines so reloads and new tabs inherit the same session.
   walletConnect.current = {
+    sessionId,
     id: walletId,
     expiredAtMs: hardExpiresAtMs,
     idleExpiresAtMs,
@@ -508,7 +531,7 @@ const setupSessionLifecycle = async (
       void logoutEverywhere("idle-expiry");
     },
     onActivity: (nextIdleExpiresAtMs) => {
-      if (!walletConnect.current.id) return;
+      if (!sessionMessageGuard.isCurrent(sessionId)) return;
 
       walletConnect.current = {
         ...walletConnect.current,
@@ -516,25 +539,50 @@ const setupSessionLifecycle = async (
       };
       broadcastChannel.post({
         type: AUTH_BROADCAST_MESSAGE_ACTIVITY,
+        sessionId,
         idleExpiresAtMs: nextIdleExpiresAtMs,
       });
     },
   });
 
-  return { hardExpiresAtMs, idleExpiresAtMs };
+  sessionMessageGuard.activate({
+    sessionId,
+    hardExpiresAtMs,
+    idleExpiresAtMs,
+  });
+
+  return { sessionId, hardExpiresAtMs, idleExpiresAtMs };
 };
 
-// Perform login
-// only delegated identity
-const inner_login = async (walletId: string) => {
+/**
+ * Connects, renews, or rehydrates the delegated identity for this tab.
+ *
+ * @param walletId - Wallet adapter identifier.
+ * @param options - Whether to force a fresh provider delegation or rehydrate
+ * the delegation written by another tab.
+ * @returns A promise that resolves after the local account is updated.
+ */
+const inner_login = async (
+  walletId: string,
+  options: { renew?: boolean; restoreFromStorage?: boolean } = {},
+): Promise<void> => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
   isConnecting = true;
   try {
-    const res = await pnp.connect(walletId);
+    const iiAdapter =
+      walletId === II_SIGNER_WALLET_ID && pnp.adapter
+        ? (pnp.provider as IISignerAdapter)
+        : null;
+    const res =
+      options.restoreFromStorage && iiAdapter
+        ? await iiAdapter.restoreSessionFromStorage()
+        : options.renew && iiAdapter
+          ? await iiAdapter.renewSession()
+          : await pnp.connect(walletId);
 
-    if (res.owner === null) {
+    if (!res || res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
     account = {

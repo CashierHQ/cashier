@@ -69,6 +69,27 @@ describe("SessionLifecycleManager", () => {
     expect(onIdleExpiry).toHaveBeenCalledTimes(1);
   });
 
+  it("never extends the hard deadline when local activity refreshes idle", () => {
+    const onHardExpiry = vi.fn();
+    const onIdleExpiry = vi.fn();
+    manager.renew({
+      hardExpiresAtMs: 11_000,
+      idleExpiresAtMs: 10_500,
+      idleTimeoutMs: 500,
+      onHardExpiry,
+      onIdleExpiry,
+    });
+
+    vi.advanceTimersByTime(400);
+    document.dispatchEvent(new MouseEvent("mousemove"));
+    vi.advanceTimersByTime(400);
+    document.dispatchEvent(new KeyboardEvent("keydown"));
+    vi.advanceTimersByTime(200);
+
+    expect(onHardExpiry).toHaveBeenCalledTimes(1);
+    expect(onIdleExpiry).not.toHaveBeenCalled();
+  });
+
   it("cancels every callback when the session logs out", () => {
     const onHardExpiry = vi.fn();
     const onIdleExpiry = vi.fn();
