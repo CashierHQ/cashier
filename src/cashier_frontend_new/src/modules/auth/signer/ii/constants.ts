@@ -84,6 +84,9 @@ export const scopes: Array<{
 
 export const ICRC_114_METHOD_NAME = "icrc114_validate";
 
+export const AUTHENTICATION_POPUP_CLOSED_ERROR_NAME =
+  "AuthenticationPopupClosedError";
+
 export const MAINNET_ROOT_KEY = new Uint8Array(
   IC_ROOT_KEY.match(/[\da-f]{2}/gi)!.map((h) => parseInt(h, 16)),
 ).buffer;
