@@ -1,6 +1,6 @@
 import type {
-  LinkState_1 as BackendLinkStateV3,
-  LinkType_1 as BackendLinkTypeV3,
+  LinkState as BackendLinkStateV3,
+  LinkType as BackendLinkTypeV3,
   Link as BackendSharedLink,
   GetLinkDetailsResponseV3,
   GetLinkResponseV3,

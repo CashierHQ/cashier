@@ -227,17 +227,34 @@ describe("SessionManager", () => {
 
     it("should remove load event listener", () => {
       const timeout = 5000;
+      const addEventListenerSpy = vi.spyOn(window, "addEventListener");
       const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
       sessionManager = new SessionManager({ timeout });
+      const registeredListener = addEventListenerSpy.mock.calls.find(
+        ([eventName]) => eventName === "load",
+      )?.[1];
 
       sessionManager.exit();
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith(
         "load",
-        expect.any(Function),
+        registeredListener,
         true,
       );
+    });
+
+    it("should not restart after exit when the window load event fires", () => {
+      const onTimeout = vi.fn();
+      const timeout = 5000;
+
+      sessionManager = new SessionManager({ timeout, onTimeout });
+      sessionManager.exit();
+      window.dispatchEvent(new Event("load"));
+      vi.advanceTimersByTime(timeout);
+
+      expect(onTimeout).not.toHaveBeenCalled();
+      expect(sessionManager.timeoutID).toBeUndefined();
     });
 
     it("should prevent callbacks from being called after exit", () => {

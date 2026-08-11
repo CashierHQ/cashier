@@ -45,6 +45,19 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private authClient: AuthClient | null = null;
   private identity: Identity | null = null;
 
+  /**
+   * Removes a persisted delegation without opening an authentication window.
+   * Used when Cashier detects an expired hard or idle deadline during startup.
+   *
+   * @returns A promise that resolves after persisted authentication is cleared.
+   */
+  static async clearStoredSession(): Promise<void> {
+    const authClient = new AuthClient({
+      idleOptions: { disableIdle: true },
+    });
+    await authClient.signOut();
+  }
+
   constructor(
     args:
       | { adapter: Adapter.Config; config: IIAdapterConfig }
@@ -178,6 +191,41 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     }
   }
 
+  /**
+   * Requests a fresh delegation even when the current delegation is still
+   * authenticated.
+   *
+   * @returns The account associated with the renewed delegation.
+   * @throws If the identity provider rejects or cannot complete renewal.
+   */
+  async renewSession(): Promise<Account> {
+    this.resetIdentityResources();
+    this.authClient = this.createAuthClient(this.config.openIdProvider);
+    return this.performLogin();
+  }
+
+  /**
+   * Recreates the AuthClient so this tab hydrates the delegation persisted by
+   * another tab without deleting the shared authentication storage.
+   *
+   * @returns Nothing.
+   */
+  refreshSessionFromStorage(): void {
+    this.resetIdentityResources();
+    this.authClient = this.createAuthClient(this.config.openIdProvider);
+  }
+
+  /**
+   * Rehydrates and connects the delegation written by another Cashier tab.
+   *
+   * @returns The account associated with the rehydrated delegation.
+   * @throws If persisted authentication data is missing, expired, or invalid.
+   */
+  async restoreSessionFromStorage(): Promise<Account> {
+    this.refreshSessionFromStorage();
+    return this.connect();
+  }
+
   // v5: signIn() returns Promise<Identity> directly; identityProvider/derivationOrigin/
   // windowOpenerFeatures moved to AuthClient constructor (set in initializeAuthClient)
   private async performLogin(): Promise<Account> {
@@ -254,7 +302,16 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // Cleanup logic specific to II
   protected cleanupInternal(): void {
     this.authClient = null;
+    this.resetIdentityResources();
+  }
+
+  private resetIdentityResources(): void {
+    this.identity = null;
     this.agent = null;
+    this.signer = null;
+    this.signerAgent = null;
+    this.transport = null;
+    this.actorCache.clear();
   }
 
   /**

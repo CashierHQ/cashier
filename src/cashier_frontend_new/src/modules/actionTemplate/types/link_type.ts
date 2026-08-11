@@ -1,4 +1,4 @@
-import { type LinkType_1 as BackendSharedLinkType } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { type LinkType as BackendSharedLinkType } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 import { LinkType as SharedLinkType } from "$shared";
 

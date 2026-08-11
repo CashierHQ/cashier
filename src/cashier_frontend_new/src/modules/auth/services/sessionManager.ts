@@ -19,6 +19,8 @@ export class SessionManager {
   callbacks: TimeoutCB[] = [];
   timeout?: SessionManagerOptions["timeout"];
   timeoutID?: number = undefined;
+  private readonly resetTimer: () => void;
+  private exited = false;
 
   /**
    * @param options {@link IdleManagerOptions}
@@ -29,11 +31,11 @@ export class SessionManager {
     this.callbacks = onTimeout ? [onTimeout] : [];
     this.timeout = timeout;
 
-    const _resetTimer = this._resetTimer.bind(this);
+    this.resetTimer = this._resetTimer.bind(this);
 
-    window.addEventListener("load", _resetTimer, true);
+    window.addEventListener("load", this.resetTimer, true);
 
-    _resetTimer();
+    this.resetTimer();
   }
 
   /**
@@ -47,14 +49,20 @@ export class SessionManager {
    * Cleans up the timeout manager and its listeners
    */
   public exit(): void {
-    clearTimeout(this.timeoutID);
-    window.removeEventListener("load", this._resetTimer, true);
+    if (this.exited) return;
+
+    this.exited = true;
+    window.clearTimeout(this.timeoutID);
+    this.timeoutID = undefined;
+    window.removeEventListener("load", this.resetTimer, true);
   }
 
   /**
    * Resets the timeouts during cleanup
    */
   _resetTimer(): void {
+    if (this.exited) return;
+
     window.clearTimeout(this.timeoutID);
     this.timeoutID = window.setTimeout(() => {
       this.callbacks.forEach((cb) => cb());

@@ -1,15 +1,15 @@
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
-import { AssetInfo, AssetInfoMapper } from "$modules/links/types/link/asset";
+import { Asset, AssetInfo } from "$modules/links/types/link/asset";
 import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkTypeMapper } from "$modules/links/types/link/linkType";
 
 /**
- * Map V3 backend LinkState_1 (Created|Active|Inactive|Ended) to frontend LinkState.
+ * Map the V3 backend LinkState to the frontend LinkState.
  */
 function mapV3LinkStateToFrontend(
-  state: cashierBackend.LinkState_1,
+  state: cashierBackend.LinkState,
 ): import("$modules/links/types/link/linkState").LinkStateValue {
   return rsMatch(state, {
     Created: () => LinkState.CREATE_LINK,
@@ -30,11 +30,7 @@ function mapV3AssetInfo(
   info: cashierBackend.AssetInfo,
 ): InstanceType<typeof import("$modules/links/types/link/asset").AssetInfo> {
   return new AssetInfo(
-    AssetInfoMapper.fromBackendType({
-      asset: { IC: { address: info.asset.address } },
-      amount_per_link_use_action: info.amount,
-      label: info.label,
-    }).asset,
+    Asset.IC(info.asset.address),
     info.amount,
     info.label,
     info.available_amount.length > 0 ? info.available_amount[0] : undefined,

@@ -1,12 +1,24 @@
 import { TypedBroadcastChannel } from "$lib/broadcast";
-import { assertUnreachable } from "$lib/rsMatch";
 import {
+  AUTH_BROADCAST_MESSAGE_ACTIVITY,
+  AUTH_BROADCAST_MESSAGE_LOGIN,
+  AUTH_BROADCAST_MESSAGE_LOGOUT,
   IDLE_TIMEOUT_MILLIS_SECOND,
   TIMEOUT_NANO_SEC,
 } from "$modules/auth/constants";
+import { AuthSessionMessageGuard } from "$modules/auth/services/authSessionMessageGuard";
 import { authenticateWithInternetIdentity } from "$modules/auth/services/internetIdentityAuthentication";
+import { SessionLifecycleManager } from "$modules/auth/services/sessionLifecycleManager";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import type { IIAdapterConfig } from "$modules/auth/signer/ii/type";
+import type {
+  AuthBroadcastMessage,
+  AuthLoginResult,
+  AuthProvider,
+  LogoutReason,
+  SessionLifecycleTimestampOverrides,
+  SessionLifecycleTimestamps,
+} from "$modules/auth/types";
 import {
   BUILD_TYPE,
   FEATURE_FLAGS,
@@ -26,11 +38,9 @@ import {
   type PNP,
 } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { SessionManager } from "$modules/auth/services/sessionManager";
 import { calculateDelegationExpirationMs } from "$modules/auth/utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "$modules/auth/utils/isSessionExpired";
 import { connectPnpFromUserGesture } from "$modules/auth/utils/connectPnpFromUserGesture";
-import type { AuthLoginResult, AuthProvider } from "$modules/auth/types";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -69,11 +79,10 @@ const CONFIG: CreatePnpArgs = {
               : undefined,
         // idle options
         idleOptions: {
-          idleTimeout: IDLE_TIMEOUT_MILLIS_SECOND,
-          disableDefaultIdleCallback: false,
-          onIdle: () => {
-            authState.logout();
-          },
+          // Cashier coordinates inactivity across tabs itself. The SDK's idle
+          // manager is per-tab and can otherwise log out an active session when
+          // an unused background tab reaches its timeout.
+          disableIdle: true,
         },
       },
     },
@@ -91,11 +100,15 @@ let loginHandler: (() => void) | null = null;
 
 // state to store connected wallet ID for reconnecting later
 const walletConnect = new PersistedState<{
+  sessionId: string | null;
   id: string | null;
   expiredAtMs: number | null;
+  idleExpiresAtMs: number | null;
 }>("connectedWallet", {
+  sessionId: null,
   id: null,
   expiredAtMs: null,
+  idleExpiresAtMs: null,
 });
 
 // state to indicate if we are reconnecting
@@ -110,16 +123,21 @@ let account = $state<{
   subaccount: string | null;
 } | null>(null);
 
-let sessionManager: SessionManager | null = null;
+const sessionLifecycleManager = new SessionLifecycleManager();
+const sessionMessageGuard = new AuthSessionMessageGuard();
+let logoutInFlight: Promise<void> | null = null;
 
 /**
  * Clear persisted wallet connect state
  */
 const resetLoginState = () => {
   walletConnect.current = {
+    sessionId: null,
     id: null,
     expiredAtMs: null,
+    idleExpiresAtMs: null,
   };
+  sessionMessageGuard.clear();
   account = null;
 };
 
@@ -133,17 +151,31 @@ const initPnp = async () => {
   const walletId = walletConnect.current.id;
 
   // If session is expired, clear persisted state and do not reconnect
-  if (
+  const hardExpiryPassed =
     walletConnect.current.expiredAtMs &&
-    isSessionExpired(walletConnect.current.expiredAtMs)
-  ) {
+    isSessionExpired(walletConnect.current.expiredAtMs);
+  const idleExpiryPassed =
+    walletConnect.current.idleExpiresAtMs &&
+    isSessionExpired(walletConnect.current.idleExpiresAtMs);
+
+  if (hardExpiryPassed || idleExpiryPassed) {
+    try {
+      await IISignerAdapter.clearStoredSession();
+    } catch (error) {
+      console.error("Failed to clear expired authentication session:", error);
+    }
     resetLoginState();
     isReady = true;
     return;
   } else if (walletId) {
     // try to reconnect
     try {
-      await establishAuthenticatedSession(walletId);
+      await connectWallet(walletId);
+      await setupSessionLifecycle(walletId, {
+        sessionId: walletConnect.current.sessionId ?? undefined,
+        hardExpiresAtMs: walletConnect.current.expiredAtMs ?? undefined,
+        idleExpiresAtMs: walletConnect.current.idleExpiresAtMs ?? undefined,
+      });
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
@@ -271,12 +303,7 @@ export const authState = {
 
   // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
   async logout() {
-    await inner_logout();
-    broadcastChannel.post("Logout");
-    // invoke configured logout handler if exists, otherwise default to redirect to '/'
-    if (logoutHandler) {
-      logoutHandler();
-    }
+    await logoutEverywhere("manual");
   },
 
   // Configure a custom login handler that will be invoked when `authState.login` completes successfully.
@@ -303,48 +330,150 @@ export const authState = {
 // ----------------------------------------------------------------------------
 // Broadcast channel start - A channel to broadcast login/logout messages
 // ---------------------------------------------------------------------------
-const broadcastChannel = new TypedBroadcastChannel<"Login" | "Logout">(
+const broadcastChannel = new TypedBroadcastChannel<AuthBroadcastMessage>(
   "authService",
 );
-const BroadcastMessageLogin = "Login";
-const BroadcastMessageLogout = "Logout";
 
 broadcastChannel.onMessage((message) => {
-  switch (message) {
-    case BroadcastMessageLogin:
-      if (walletConnect.current.id) {
-        connectWallet(walletConnect.current.id);
-      }
-      break;
-    case BroadcastMessageLogout:
-      inner_logout();
-      break;
-    default:
-      assertUnreachable(message);
-  }
+  void handleAuthBroadcastMessage(message);
 });
 // ---------------------------------------------------------------------------
 // Broadcast channel end
 // ---------------------------------------------------------------------------
 
-// Perform logout
+/**
+ * Disconnects the local wallet and clears every local session timer and state
+ * value.
+ *
+ * @returns A promise that resolves after local logout cleanup completes.
+ * @throws If Plug-N-Play has not initialized or wallet disconnection fails.
+ */
 const inner_logout = async () => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
+  sessionLifecycleManager.exit();
   try {
     await pnp.disconnect();
+  } finally {
     resetLoginState();
-  } catch (error) {
-    console.error("Logout failed:", error);
-    throw error;
   }
 };
 
 /**
- * Setup session manager with delegation expiration timeout.
+ * Logs out this tab and, by default, broadcasts the logout to every Cashier
+ * tab. Concurrent logout attempts share one in-flight operation.
+ *
+ * @param reason - User action or expiry condition that initiated logout.
+ * @param shouldBroadcast - Whether to notify the other Cashier tabs. Received
+ * broadcast messages pass `false` to avoid rebroadcast loops.
+ * @returns A promise that resolves after logout and notification handling.
+ * @throws If the local wallet cannot be disconnected.
  */
-const setupSessionManager = async (walletId: string) => {
+const logoutEverywhere = (
+  reason: LogoutReason,
+  shouldBroadcast = true,
+): Promise<void> => {
+  if (logoutInFlight) return logoutInFlight;
+
+  const sessionId = sessionMessageGuard.currentSessionId;
+
+  logoutInFlight = (async () => {
+    try {
+      await inner_logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      throw error;
+    } finally {
+      if (shouldBroadcast && sessionId) {
+        broadcastChannel.post({
+          type: AUTH_BROADCAST_MESSAGE_LOGOUT,
+          sessionId,
+          reason,
+        });
+      }
+      logoutHandler?.();
+    }
+  })().finally(() => {
+    logoutInFlight = null;
+  });
+
+  return logoutInFlight;
+};
+
+/**
+ * Applies a login, logout, or activity message received from another Cashier
+ * tab.
+ *
+ * @param message - Legacy or structured authentication synchronization
+ * message received through the auth broadcast channel.
+ * @returns A promise that resolves after the local tab has synchronized.
+ */
+const handleAuthBroadcastMessage = async (
+  message: AuthBroadcastMessage,
+): Promise<void> => {
+  try {
+    // Keep accepting the legacy string messages while tabs from an older
+    // deployment may still be open.
+    if (message === AUTH_BROADCAST_MESSAGE_LOGIN) {
+      if (walletConnect.current.id) {
+        await connectWallet(walletConnect.current.id);
+        await setupSessionLifecycle(walletConnect.current.id);
+      }
+      return;
+    }
+    if (message === AUTH_BROADCAST_MESSAGE_LOGOUT) {
+      await logoutEverywhere("manual", false);
+      return;
+    }
+
+    switch (message.type) {
+      case AUTH_BROADCAST_MESSAGE_LOGIN:
+        if (!sessionMessageGuard.shouldAcceptLogin(message)) return;
+        sessionLifecycleManager.exit();
+        await connectWallet(message.walletId, { restoreFromStorage: true });
+        await setupSessionLifecycle(message.walletId, message);
+        return;
+      case AUTH_BROADCAST_MESSAGE_LOGOUT:
+        if (!sessionMessageGuard.isCurrent(message.sessionId)) return;
+        await logoutEverywhere(message.reason, false);
+        return;
+      case AUTH_BROADCAST_MESSAGE_ACTIVITY:
+        if (
+          sessionMessageGuard.isCurrent(message.sessionId) &&
+          message.idleExpiresAtMs > (walletConnect.current.idleExpiresAtMs ?? 0)
+        ) {
+          walletConnect.current = {
+            ...walletConnect.current,
+            idleExpiresAtMs: message.idleExpiresAtMs,
+          };
+          sessionLifecycleManager.syncActivity(message.idleExpiresAtMs);
+        }
+        return;
+    }
+  } catch (error) {
+    console.error("Failed to synchronize authentication state:", error);
+  }
+};
+
+/**
+ * Installs a replacement hard-expiry and shared idle-expiry lifecycle for an
+ * authenticated Internet Identity session.
+ *
+ * @param walletId - Connected wallet adapter identifier. Only the Internet
+ * Identity signer is supported.
+ * @param timestamps - Optional absolute deadlines restored from persistence or
+ * received from another tab. Missing deadlines are derived from the current
+ * delegation and idle configuration.
+ * @returns The absolute hard- and idle-expiry timestamps applied to the
+ * session.
+ * @throws If the adapter is unsupported, authentication is unavailable, or a
+ * supplied/restored session has already expired.
+ */
+const setupSessionLifecycle = async (
+  walletId: string,
+  timestamps: SessionLifecycleTimestampOverrides = {},
+): Promise<SessionLifecycleTimestamps> => {
   if (walletId !== II_SIGNER_WALLET_ID) {
     throw new Error("Session manager is only supported for II signer");
   }
@@ -359,29 +488,64 @@ const setupSessionManager = async (walletId: string) => {
   const identity = await iiAdapter.getAuthClient()?.getIdentity();
   const delegationIdentity = identity as DelegationIdentity;
 
-  const delegationExpirationInMillis = calculateDelegationExpirationMs(
-    delegationIdentity.getDelegation(),
-  );
+  const now = Date.now();
+  const sessionId = timestamps.sessionId ?? globalThis.crypto.randomUUID();
+  const hardExpiresAtMs =
+    timestamps.hardExpiresAtMs ??
+    now + calculateDelegationExpirationMs(delegationIdentity.getDelegation());
+  const idleExpiresAtMs =
+    timestamps.idleExpiresAtMs ?? now + IDLE_TIMEOUT_MILLIS_SECOND;
 
-  // Store last logged in timestamp for session expiration check on next init
+  // Store absolute deadlines so reloads and new tabs inherit the same session.
   walletConnect.current = {
+    sessionId,
     id: walletId,
-    expiredAtMs: Date.now() + delegationExpirationInMillis,
+    expiredAtMs: hardExpiresAtMs,
+    idleExpiresAtMs,
   };
-  if (delegationExpirationInMillis <= 0) {
-    await inner_logout();
-    return;
+  if (hardExpiresAtMs <= now) {
+    await logoutEverywhere("hard-expiry");
+    throw new Error("Cannot start an expired authentication session");
   }
-  sessionManager = new SessionManager({
-    timeout: delegationExpirationInMillis,
+  if (idleExpiresAtMs <= now) {
+    await logoutEverywhere("idle-expiry");
+    throw new Error("Cannot restore an inactive authentication session");
+  }
+
+  sessionLifecycleManager.renew({
+    hardExpiresAtMs,
+    idleExpiresAtMs,
+    idleTimeoutMs: IDLE_TIMEOUT_MILLIS_SECOND,
+    onHardExpiry: () => {
+      void logoutEverywhere("hard-expiry");
+    },
+    onIdleExpiry: () => {
+      void logoutEverywhere("idle-expiry");
+    },
+    onActivity: (nextIdleExpiresAtMs) => {
+      if (!sessionMessageGuard.isCurrent(sessionId)) return;
+
+      walletConnect.current = {
+        ...walletConnect.current,
+        idleExpiresAtMs: nextIdleExpiresAtMs,
+      };
+      broadcastChannel.post({
+        type: AUTH_BROADCAST_MESSAGE_ACTIVITY,
+        sessionId,
+        idleExpiresAtMs: nextIdleExpiresAtMs,
+      });
+    },
   });
-  sessionManager.registerCallback(async () => {
-    await inner_logout();
+
+  sessionMessageGuard.activate({
+    sessionId,
+    hardExpiresAtMs,
+    idleExpiresAtMs,
   });
+
+  return { sessionId, hardExpiresAtMs, idleExpiresAtMs };
 };
 
-// Perform login
-// only delegated identity
 const applyOpenIdProvider = (
   walletId: string,
   openIdProvider?: OpenIdProvider,
@@ -411,19 +575,43 @@ const applyOpenIdProvider = (
   };
 };
 
+/**
+ * Connects, renews, or rehydrates the delegated identity for this tab.
+ *
+ * @param walletId - Wallet adapter identifier.
+ * @param options - Selected OpenID provider and whether to force a fresh
+ * provider delegation or rehydrate the delegation written by another tab.
+ * @returns A promise that resolves after the local account is updated.
+ */
 const connectWallet = async (
   walletId: string,
-  openIdProvider?: OpenIdProvider,
-) => {
+  options: {
+    openIdProvider?: OpenIdProvider;
+    renew?: boolean;
+    restoreFromStorage?: boolean;
+  } = {},
+): Promise<void> => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
   }
   isConnecting = true;
-  const resetOpenIdProvider = applyOpenIdProvider(walletId, openIdProvider);
+  const resetOpenIdProvider = applyOpenIdProvider(
+    walletId,
+    options.openIdProvider,
+  );
   try {
-    const res = await connectPnpFromUserGesture(pnp, walletId);
+    const iiAdapter =
+      walletId === II_SIGNER_WALLET_ID && pnp.adapter
+        ? (pnp.provider as IISignerAdapter)
+        : null;
+    const res =
+      options.restoreFromStorage && iiAdapter
+        ? await iiAdapter.restoreSessionFromStorage()
+        : options.renew && iiAdapter
+          ? await iiAdapter.renewSession()
+          : await connectPnpFromUserGesture(pnp, walletId);
 
-    if (res.owner === null) {
+    if (!res || res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
     account = {
@@ -441,9 +629,16 @@ const establishAuthenticatedSession = async (
   walletId: string,
   openIdProvider?: OpenIdProvider,
 ) => {
-  await connectWallet(walletId, openIdProvider);
-  await setupSessionManager(walletId);
-  broadcastChannel.post(BroadcastMessageLogin);
+  await connectWallet(walletId, {
+    openIdProvider,
+    renew: account !== null,
+  });
+  const session = await setupSessionLifecycle(walletId);
+  broadcastChannel.post({
+    type: AUTH_BROADCAST_MESSAGE_LOGIN,
+    walletId,
+    ...session,
+  });
   loginHandler?.();
 };
 

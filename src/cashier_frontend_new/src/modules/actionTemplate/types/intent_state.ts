@@ -1,4 +1,4 @@
-import { type IntentState_1 as BackendSharedIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { type IntentState as BackendSharedIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 import { IntentState as SharedIntentState } from "$shared";
 
